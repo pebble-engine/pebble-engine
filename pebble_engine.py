@@ -1223,7 +1223,7 @@ def _banner():
     client, reason = get_llm_client()
     engine_status = "loaded" if _ENGINE_OK else "degraded (no design_system.py)"
     print()
-    print("  " + "─" * 56)
+    print("  " + "-" * 56)
     print(f"   Pebble Engine")
     print(f"   ui-ux-pro-max engine: {engine_status}")
     if reason == "ok":
@@ -1235,7 +1235,7 @@ def _banner():
     else:
         print(f"   auto-build mode:      unavailable")
         print(f"     reason: {reason}")
-    print("  " + "─" * 56)
+    print("  " + "-" * 56)
 
 
 def serve(port: int = 8000, open_browser: bool = True) -> None:

@@ -1,1733 +1,1216 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pebble Engine</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231a1612'/%3E%3Cpath fill='%23b8472d' d='M16.4 6c-5.6-.4-10.4 3.5-10.9 8.8-.7 6.2 3.6 11.6 9.5 12.3 5.9.7 11.2-3.6 11.9-9.5.7-5.9-3.6-11.2-10.5-11.6z'/%3E%3C/svg%3E">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pebble Engine v3.0</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@400;500;600;700&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* Aesthetic direction: editorial cookbook from a Tokyo bookshop —
-   cream paper, ink type, a single oxblood accent. The page eats its own dog food. */
+/* ========================================
+   PEBBLE ENGINE v3.0 - CLEAN MODERN UI
+======================================== */
 
 :root {
-  --paper:       #f4ede4;
-  --paper-shade: #ecddc8;
-  --paper-deep:  #dfcdb0;
-  --ink:         #1a1612;
-  --ink-soft:    #4a3f37;
-  --rule:        #d8c4a8;
-  --accent:      #b8472d;
-  --accent-soft: #d96e4b;
-  --good:        #5a7a3a;
-  --radius:      0;
+  --bg: #ffffff;
+  --surface: #f8f9fa;
+  --border: #e5e7eb;
+  --text: #111827;
+  --text-soft: #6b7280;
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --accent: #10b981;
+  --warning: #f59e0b;
+  --error: #ef4444;
+  --recommended: #ecfdf5;
+  --recommended-border: #10b981;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html, body {
-  background: var(--paper);
-  color: var(--ink);
-  font-family: 'Inter', system-ui, sans-serif;
-  font-size: 16px;
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
   line-height: 1.6;
-  height: 100%;
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
 }
 
-body { display: flex; flex-direction: column; }
-
-/* ─────────────────────────────────────────────
-   SPLASH OVERLAY
-   Covers everything on load, then fades out.
-───────────────────────────────────────────── */
-
-#splash {
-  position: fixed;
-  inset: 0;
-  background: var(--ink);
-  z-index: 1000;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-  transition: opacity 700ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-#splash.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.splash-pebble {
-  width: 52px;
-  height: 52px;
-  margin-bottom: 2rem;
-  animation: splashPebble 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  opacity: 0;
-}
-
-@keyframes splashPebble {
-  from { opacity: 0; transform: scale(0.7) translateY(12px); }
-  to   { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.splash-wordmark {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: clamp(3rem, 8vw, 5rem);
-  font-weight: 400;
-  color: var(--paper);
-  letter-spacing: -0.03em;
-  font-variation-settings: 'opsz' 144, 'SOFT' 100;
-  line-height: 1;
-  animation: splashWord 1s 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  opacity: 0;
-}
-
-@keyframes splashWord {
-  from { opacity: 0; transform: translateY(16px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
-
-.splash-tagline {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 1rem;
-  color: #6b5e54;
-  margin-top: 0.75rem;
-  animation: splashWord 1s 400ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  opacity: 0;
-}
-
-.splash-bar-wrap {
-  width: 200px;
-  height: 2px;
-  background: #2d2420;
-  margin-top: 3rem;
-  overflow: hidden;
-  animation: splashWord 600ms 600ms ease both;
-  opacity: 0;
-}
-
-.splash-bar {
-  height: 100%;
-  width: 0%;
-  background: var(--accent);
-  transition: width 2200ms cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.splash-status {
-  margin-top: 1rem;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  color: #4a3f37;
-  font-weight: 500;
-  animation: splashWord 600ms 700ms ease both;
-  opacity: 0;
-  height: 1em;
-  transition: opacity 300ms;
-}
-
-/* ─────────────────────────────────────────────
+/* ========================================
    HEADER
-───────────────────────────────────────────── */
+======================================== */
 
 header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem 1.5rem;
+}
+
+.header-content {
+  max-width: 900px;
+  margin: 0 auto;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  padding: 1.75rem 3rem;
-  border-bottom: 1px solid var(--rule);
-  flex-shrink: 0;
+  justify-content: space-between;
 }
 
 .logo {
-  display: flex; align-items: center; gap: 0.75rem;
-  font-family: 'Fraunces', serif;
-  font-weight: 500; font-style: italic; font-size: 1.05rem;
-  font-variation-settings: 'opsz' 24, 'SOFT' 100;
-  color: var(--ink);
-  cursor: pointer;
-  background: none; border: none; padding: 0;
-  transition: color 150ms;
-}
-.logo:hover { color: var(--accent); }
-.logo svg { width: 22px; height: 22px; }
-
-.header-right {
-  display: flex; align-items: center; gap: 1.75rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text);
 }
 
-.nav-link {
-  font-family: 'Inter', sans-serif;
+.version {
   font-size: 0.75rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--text-soft);
   font-weight: 500;
-  background: none; border: none; cursor: pointer;
-  padding: 0;
-  transition: color 150ms;
+  background: var(--bg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
 }
-.nav-link:hover { color: var(--accent); }
-.nav-link.active { color: var(--accent); }
 
-.health-pill {
-  display: flex; align-items: center; gap: 0.5rem;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: var(--ink-soft);
-  font-weight: 500;
-  padding: 0.4rem 0.75rem;
-  border: 1px solid var(--rule);
-  cursor: pointer;
-  transition: border-color 150ms;
-}
-.health-pill:hover { border-color: var(--ink-soft); }
-
-.health-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--paper-deep);
-  flex-shrink: 0;
-}
-.health-dot.live { background: var(--good); }
-.health-dot.warn { background: var(--accent); }
-
-/* ─────────────────────────────────────────────
-   MAIN STAGE
-───────────────────────────────────────────── */
+/* ========================================
+   MAIN CONTAINER
+======================================== */
 
 main {
-  flex: 1;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.step-indicator {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.step {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
   justify-content: center;
-  padding: 4rem 3rem 5rem;
-  overflow-y: auto;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-soft);
+  transition: all 0.2s;
 }
 
-.scene {
+.step.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+.step.completed {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+}
+
+/* ========================================
+   QUESTION CARD
+======================================== */
+
+.question-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.question-header {
+  margin-bottom: 1.5rem;
+}
+
+.question-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--text);
+}
+
+.question-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-soft);
+}
+
+/* ========================================
+   INDUSTRY DETECTION BANNER
+======================================== */
+
+.industry-banner {
+  background: var(--recommended);
+  border: 1px solid var(--recommended-border);
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
   display: none;
-  max-width: 720px;
-  width: 100%;
-  animation: enter 600ms cubic-bezier(0.16, 1, 0.3, 1);
-}
-.scene.active { display: block; }
-.scene.wide   { max-width: 980px; }
-
-@keyframes enter {
-  from { opacity: 0; transform: translateY(18px); }
-  to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ─────────────────────────────────────────────
-   TYPOGRAPHY HELPERS
-───────────────────────────────────────────── */
+.industry-banner.show {
+  display: block;
+}
 
-.eyebrow {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
+.industry-banner-title {
+  font-size: 0.875rem;
   font-weight: 600;
   color: var(--accent);
-  margin-bottom: 1.25rem;
-}
-
-.eyebrow.good { color: var(--good); }
-.eyebrow.muted { color: var(--ink-soft); }
-
-.display {
-  font-family: 'Fraunces', serif;
-  font-weight: 400;
-  font-size: clamp(2.25rem, 5.5vw, 3.5rem);
-  line-height: 1.1;
-  letter-spacing: -0.02em;
-  font-variation-settings: 'opsz' 96, 'SOFT' 100;
-  margin-bottom: 1.25rem;
-  color: var(--ink);
-}
-.display em { font-style: italic; }
-.display .accent { color: var(--accent); font-style: normal; }
-
-.subtitle {
-  font-family: 'Fraunces', serif;
-  font-style: italic;
-  font-size: 1.1rem;
-  color: var(--ink-soft);
-  margin-bottom: 2.25rem;
-  max-width: 560px;
-  line-height: 1.5;
-}
-
-.body-text {
-  font-size: 0.95rem;
-  color: var(--ink-soft);
-  line-height: 1.7;
-  max-width: 520px;
-  margin-bottom: 2.5rem;
-}
-
-/* ─────────────────────────────────────────────
-   INPUTS
-───────────────────────────────────────────── */
-
-.field { margin-bottom: 2rem; }
-
-.field label {
-  display: block;
-  font-family: 'Inter', sans-serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-  font-weight: 600;
-  color: var(--ink-soft);
-  margin-bottom: 0.75rem;
-}
-
-input[type="text"], input[type="password"], textarea {
-  width: 100%;
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--ink);
-  font-family: 'Inter', sans-serif;
-  font-size: 1.1rem;
-  padding: 0.7rem 0;
-  color: var(--ink);
-  outline: none;
-  transition: border-color 200ms, border-width 200ms;
-  resize: none;
-}
-textarea { min-height: 3.5em; line-height: 1.5; font-size: 1.2rem; }
-input:focus, textarea:focus { border-bottom: 2px solid var(--accent); }
-input::placeholder, textarea::placeholder { color: var(--ink-soft); opacity: 0.4; font-style: italic; }
-
-.field.error input, .field.error textarea { border-bottom-color: var(--accent); animation: shake 280ms; }
-@keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25%  { transform: translateX(-5px); }
-  75%  { transform: translateX(5px); }
-}
-
-.field-row {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-end;
-}
-
-.field-row input { flex: 1; }
-
-/* ─────────────────────────────────────────────
-   BUTTONS
-───────────────────────────────────────────── */
-
-.actions {
-  display: flex; align-items: center; gap: 1.75rem; flex-wrap: wrap;
-}
-
-button {
-  background: none; border: none; cursor: pointer;
-  font-family: 'Inter', sans-serif; font-size: 0.95rem;
-  color: var(--ink); padding: 0; transition: color 150ms;
-}
-button:hover { color: var(--accent); }
-
-button.primary {
-  background: var(--ink); color: var(--paper);
-  padding: 0.85rem 1.75rem; font-weight: 600; font-size: 0.9rem;
-  letter-spacing: 0.03em; transition: background 200ms;
-}
-button.primary:hover { background: var(--accent); color: var(--paper); }
-button.primary::after { content: "  →"; display: inline-block; transition: transform 200ms; }
-button.primary:hover::after { transform: translateX(4px); }
-button.primary:disabled { background: var(--paper-deep); color: var(--ink-soft); cursor: not-allowed; }
-button.primary:disabled:hover { background: var(--paper-deep); }
-button.primary:disabled::after { content: ""; }
-
-button.ghost { color: var(--ink-soft); font-size: 0.85rem; }
-button.ghost:hover { color: var(--accent); }
-
-button.small-btn {
-  font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
-  color: var(--ink-soft); border-bottom: 1px solid var(--rule);
-  padding-bottom: 1px; font-weight: 500; background: none;
-}
-button.small-btn:hover { color: var(--accent); border-bottom-color: var(--accent-soft); }
-
-.kbd-hint {
-  margin-left: auto; font-size: 0.7rem; letter-spacing: 0.15em;
-  text-transform: uppercase; color: var(--ink-soft); opacity: 0.55;
-}
-.kbd-hint kbd {
-  font-family: 'Inter', sans-serif; font-size: 0.7rem;
-  background: var(--paper-shade); border: 1px solid var(--rule);
-  padding: 1px 6px; margin: 0 2px;
-}
-
-/* ─────────────────────────────────────────────
-   SETUP / SETTINGS SPECIFIC
-───────────────────────────────────────────── */
-
-.step-list { margin: 2rem 0; }
-
-.step-item {
-  display: grid; grid-template-columns: 2.5rem 1fr;
-  gap: 0; padding: 1.5rem 0;
-  border-top: 1px solid var(--rule);
-}
-.step-item:last-child { border-bottom: 1px solid var(--rule); }
-
-.step-num {
-  font-family: 'Fraunces', serif; font-style: italic;
-  font-size: 1.5rem; color: var(--accent); line-height: 1;
-  font-variation-settings: 'opsz' 48; padding-top: 2px;
-}
-
-.step-body {}
-.step-body strong { font-weight: 600; font-size: 0.95rem; display: block; margin-bottom: 0.35rem; }
-.step-body p { font-size: 0.875rem; color: var(--ink-soft); line-height: 1.6; margin-bottom: 0.75rem; }
-
-.provider-toggle {
-  display: flex; gap: 0; margin-bottom: 0.75rem;
-}
-.provider-btn {
-  flex: 1; padding: 0.65rem 1rem; font-family: 'Inter', sans-serif;
-  font-size: 0.8rem; font-weight: 500; letter-spacing: 0.08em;
-  text-transform: uppercase; border: 1px solid var(--rule);
-  background: transparent; color: var(--ink-soft); cursor: pointer;
-  transition: all 150ms;
-}
-.provider-btn + .provider-btn { border-left: none; }
-.provider-btn.active {
-  background: var(--ink); color: var(--paper); border-color: var(--ink);
-}
-
-.pill-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.5rem; }
-.info-pill {
-  font-family: 'Inter', sans-serif; font-size: 0.7rem;
-  letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
-  padding: 0.3rem 0.65rem; border: 1px solid var(--rule); color: var(--ink-soft);
-}
-.info-pill.live { color: var(--good); border-color: var(--good); }
-
-/* ─────────────────────────────────────────────
-   QUIZ FIELDS (scene-basics multi-field layout)
-───────────────────────────────────────────── */
-
-.quiz-fields { display: flex; flex-direction: column; gap: 0; margin-bottom: 2.5rem; }
-.quiz-fields .field { margin-bottom: 1.5rem; }
-
-/* ─────────────────────────────────────────────
-   FUNCTION GRID (scene-function tap cards)
-───────────────────────────────────────────── */
-
-.function-grid {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 1rem; margin: 1.5rem 0 2rem;
-}
-
-.fn-card {
-  border: 1px solid var(--rule); padding: 1.25rem 1rem;
-  text-align: left; display: flex; flex-direction: column; gap: 0.45rem;
-  background: transparent; cursor: pointer;
-  transition: border-color 180ms, background 180ms;
-}
-.fn-card:hover { border-color: var(--ink-soft); background: var(--paper-shade); }
-.fn-card.selected { border-color: var(--accent); background: var(--paper-shade); border-width: 2px; }
-.fn-card.selected .fn-label { color: var(--accent); }
-
-.fn-icon { font-size: 1.4rem; line-height: 1; }
-.fn-label { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 0.875rem; color: var(--ink); }
-.fn-desc  { font-size: 0.75rem; color: var(--ink-soft); line-height: 1.45; }
-
-@media (max-width: 720px) { .function-grid { grid-template-columns: repeat(2, 1fr); } }
-
-/* ─────────────────────────────────────────────
-   QUESTION SCENE
-───────────────────────────────────────────── */
-
-.act-tag {
-  font-family: 'Inter', sans-serif; font-size: 0.7rem;
-  letter-spacing: 0.25em; text-transform: uppercase;
-  color: var(--accent); margin-bottom: 1.5rem; font-weight: 600;
-}
-
-.question {
-  font-family: 'Fraunces', serif; font-weight: 400;
-  font-size: clamp(1.85rem, 4.5vw, 2.85rem); line-height: 1.15;
-  letter-spacing: -0.02em;
-  font-variation-settings: 'opsz' 72, 'SOFT' 50;
-  margin-bottom: 1.25rem;
-}
-
-.hint {
-  font-family: 'Fraunces', serif; font-style: italic; font-size: 1rem;
-  color: var(--ink-soft); margin-bottom: 2.5rem; line-height: 1.6;
-  max-width: 600px;
-}
-
-.input-row { margin-bottom: 2.5rem; }
-.input-row.error input, .input-row.error textarea {
-  border-bottom-color: var(--accent); animation: shake 280ms;
-}
-
-/* ─────────────────────────────────────────────
-   CHOICE CARDS (post-quiz fork)
-───────────────────────────────────────────── */
-
-.choice-cards {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-top: 2.5rem;
-}
-
-.choice-card {
-  background: var(--paper-shade); border: 1px solid var(--rule);
-  border-left: 3px solid transparent; padding: 2rem;
-  cursor: pointer; transition: border-color 200ms, transform 200ms;
-  text-align: left; display: flex; flex-direction: column; gap: 0.75rem;
-}
-.choice-card:hover { border-left-color: var(--accent); transform: translateY(-2px); }
-.choice-card.disabled { opacity: 0.45; cursor: not-allowed; }
-.choice-card.disabled:hover { border-left-color: transparent; transform: none; }
-
-.choice-icon {
-  font-family: 'Fraunces', serif; font-style: italic; font-size: 2rem;
-  color: var(--accent); line-height: 1; font-variation-settings: 'opsz' 72;
-}
-.choice-title {
-  font-family: 'Fraunces', serif; font-size: 1.4rem; line-height: 1.2;
-  font-variation-settings: 'opsz' 48;
-}
-.choice-desc { font-size: 0.85rem; color: var(--ink-soft); line-height: 1.6; }
-.choice-meta {
-  font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--ink-soft); font-weight: 500; margin-top: auto;
-}
-.choice-meta.warn { color: var(--accent); }
-
-/* ─────────────────────────────────────────────
-   BUILDING
-───────────────────────────────────────────── */
-
-.building-wrap { text-align: center; padding: 3rem 0 4rem; }
-.building-headline {
-  font-family: 'Fraunces', serif; font-style: italic;
-  font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1;
-  font-variation-settings: 'opsz' 96, 'SOFT' 100; margin-bottom: 1rem;
-}
-.building-dots::after {
-  content: ''; display: inline-block; width: 1.2em; text-align: left;
-  animation: dots 1.4s infinite steps(4);
-}
-@keyframes dots {
-  0% { content: ''; } 25% { content: '.'; } 50% { content: '..'; } 75% { content: '...'; }
-}
-.building-step {
-  font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--accent); font-weight: 500; height: 1.2em; transition: opacity 300ms;
-  margin-top: 1.75rem;
-}
-.building-elapsed {
-  font-family: 'Fraunces', serif; font-style: italic; font-size: 1rem;
-  color: var(--ink-soft); opacity: 0.65; margin-top: 1.25rem;
-}
-
-/* ─────────────────────────────────────────────
-   RESULTS / BUILT / DETAIL
-───────────────────────────────────────────── */
-
-.results-card {
-  background: var(--paper-shade); border-left: 3px solid var(--accent);
-  padding: 1.75rem 2rem; max-height: 55vh; overflow-y: auto; margin-bottom: 2rem;
-  font-size: 0.82rem; line-height: 1.65;
-}
-.results-card pre { white-space: pre-wrap; word-break: break-word; font-family: 'Inter', sans-serif; }
-.results-card::-webkit-scrollbar { width: 6px; }
-.results-card::-webkit-scrollbar-thumb { background: var(--rule); }
-
-.file-grid {
-  background: var(--paper-shade); border-left: 3px solid var(--good);
-  padding: 1.5rem 2rem; margin-bottom: 2rem; max-height: 40vh; overflow-y: auto;
-}
-.file-grid h4 {
-  font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
-  color: var(--ink-soft); font-weight: 600; margin-bottom: 1rem;
-}
-.file-grid ul { list-style: none; }
-.file-grid li {
-  padding: 0.4rem 0; border-bottom: 1px dashed var(--rule);
-  font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;
-}
-.file-grid li:last-child { border-bottom: none; }
-.file-link { font-size: 0.75rem; color: var(--accent); text-decoration: none; letter-spacing: 0.05em; }
-.file-link:hover { text-decoration: underline; }
-
-.note {
-  font-family: 'Fraunces', serif; font-style: italic; font-size: 0.95rem;
-  color: var(--ink-soft); margin-top: 1.5rem; max-width: 560px; line-height: 1.6;
-}
-
-.copied {
-  display: inline-block; color: var(--accent);
-  font-family: 'Fraunces', serif; font-style: italic; font-size: 0.95rem;
-  opacity: 0; transform: translateX(-8px); transition: opacity 200ms, transform 200ms;
-}
-.copied.show { opacity: 1; transform: translateX(0); }
-
-/* ─────────────────────────────────────────────
-   BRIEFS DASHBOARD
-───────────────────────────────────────────── */
-
-.briefs-header {
-  display: flex; justify-content: space-between; align-items: flex-end;
-  margin-bottom: 2.5rem; border-bottom: 1px solid var(--rule); padding-bottom: 1.5rem;
-}
-.briefs-title {
-  font-family: 'Fraunces', serif; font-style: italic;
-  font-size: clamp(2.5rem, 5vw, 3.5rem); font-variation-settings: 'opsz' 96, 'SOFT' 100;
-  letter-spacing: -0.02em;
-}
-.briefs-count { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-soft); font-weight: 500; }
-
-.brief-row {
-  display: grid; grid-template-columns: 1fr auto auto; gap: 1.5rem;
-  align-items: center; padding: 1.25rem 0; border-bottom: 1px solid var(--rule);
-  cursor: pointer; transition: padding 150ms;
-}
-.brief-row:hover { padding-left: 0.75rem; padding-right: 0.75rem; background: var(--paper-shade); }
-.brief-name { font-family: 'Fraunces', serif; font-size: 1.25rem; font-variation-settings: 'opsz' 36; margin-bottom: 0.25rem; }
-.brief-direction { font-family: 'Fraunces', serif; font-style: italic; font-size: 0.9rem; color: var(--ink-soft); }
-.brief-status {
-  font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 600;
-  padding: 0.3rem 0.7rem; border: 1px solid var(--rule); color: var(--ink-soft); white-space: nowrap;
-}
-.brief-status.built { color: var(--good); border-color: var(--good); }
-.brief-date { font-size: 0.75rem; color: var(--ink-soft); white-space: nowrap; }
-.empty-state { text-align: center; padding: 4rem 2rem; color: var(--ink-soft); }
-.empty-state h3 { font-family: 'Fraunces', serif; font-style: italic; font-size: 1.5rem; margin-bottom: 0.75rem; font-variation-settings: 'opsz' 48; }
-
-/* ─────────────────────────────────────────────
-   VX GRID (single-select cards for emotional + visual)
-───────────────────────────────────────────── */
-
-.vx-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1rem;
-  margin-top: 1.5rem;
-}
-
-.vx-card {
-  background: var(--paper-shade);
-  border: 1px solid var(--rule);
-  border-left: 3px solid transparent;
-  padding: 1.25rem 1.25rem 1rem;
-  cursor: pointer;
-  text-align: left;
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  transition: border-color 150ms, background 150ms;
-}
-
-.vx-card:hover {
-  border-left-color: var(--accent-soft);
-  background: var(--paper-deep);
-}
-
-.vx-card.selected {
-  border-left-color: var(--accent);
-  background: var(--paper-deep);
-}
-
-.vx-icon {
-  font-size: 1.4rem;
-  line-height: 1;
   margin-bottom: 0.25rem;
 }
 
-.vx-label {
-  font-family: 'Fraunces', serif;
-  font-size: 1rem;
-  font-variation-settings: 'opsz' 36;
-  color: var(--ink);
-  line-height: 1.2;
+.industry-banner-text {
+  font-size: 0.875rem;
+  color: var(--text);
 }
 
-.vx-card.selected .vx-label { color: var(--accent); }
+/* ========================================
+   FORM INPUTS
+======================================== */
 
-.vx-desc {
-  font-family: 'Inter', sans-serif;
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+input[type="text"],
+textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 1rem;
+  font-family: inherit;
+  transition: border-color 0.2s;
+}
+
+input[type="text"]:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ========================================
+   OPTION CARDS (SINGLE SELECT)
+======================================== */
+
+.options-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .options-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.option-card {
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+}
+
+.option-card:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.option-card.selected {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+
+.option-card.recommended {
+  border-color: var(--recommended-border);
+  background: var(--recommended);
+}
+
+.option-card.recommended .option-badge {
+  display: inline-block;
   font-size: 0.75rem;
-  color: var(--ink-soft);
+  font-weight: 600;
+  color: var(--accent);
+  background: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+}
+
+.option-badge {
+  display: none;
+}
+
+.option-title {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  color: var(--text);
+}
+
+.option-description {
+  font-size: 0.875rem;
+  color: var(--text-soft);
   line-height: 1.5;
 }
 
-@media (max-width: 720px) {
-  .vx-grid { grid-template-columns: 1fr 1fr; }
+.option-explanation {
+  font-size: 0.75rem;
+  color: var(--accent);
+  margin-top: 0.5rem;
+  display: none;
 }
 
-@media (max-width: 720px) {
-  header { padding: 1.25rem 1.5rem; flex-wrap: wrap; gap: 0.75rem; }
-  main { padding: 2rem 1.5rem; }
-  .header-right { gap: 1rem; }
-  .choice-cards { grid-template-columns: 1fr; }
-  .brief-row { grid-template-columns: 1fr; gap: 0.5rem; }
-  .kbd-hint { display: none; }
+.option-card.recommended .option-explanation {
+  display: block;
+}
+
+/* ========================================
+   MULTI-SELECT CHECKBOXES
+======================================== */
+
+.checkbox-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+.checkbox-option {
+  border: 2px solid var(--border);
+  border-radius: 6px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: white;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.checkbox-option:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.checkbox-option.selected {
+  border-color: var(--primary);
+  background: #eff6ff;
+}
+
+.checkbox-option input[type="checkbox"] {
+  margin-top: 0.125rem;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+}
+
+.checkbox-content {
+  flex: 1;
+}
+
+.checkbox-title {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.125rem;
+}
+
+.checkbox-description {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+}
+
+/* ========================================
+   BUTTONS
+======================================== */
+
+.button-group {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-soft);
+}
+
+.btn-ghost:hover {
+  background: var(--surface);
+}
+
+/* ========================================
+   LOADING & RESULTS
+======================================== */
+
+.loading-screen {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 1.5rem;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-text {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.5rem;
+}
+
+.loading-subtext {
+  font-size: 0.875rem;
+  color: var(--text-soft);
+}
+
+.results-screen {
+  display: none;
+}
+
+.results-screen.show {
+  display: block;
+}
+
+.results-header {
+  background: var(--accent);
+  color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.results-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.results-subtitle {
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+.prompt-box {
+  background: #f9fafb;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.5rem;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  max-height: 500px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  margin-bottom: 1rem;
+}
+
+.hidden {
+  display: none !important;
 }
 </style>
 </head>
 <body>
 
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     SPLASH (position:fixed, covers everything)
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-
-<div id="splash">
-  <svg class="splash-pebble" viewBox="0 0 52 52" xmlns="http://www.w3.org/2000/svg">
-    <path fill="#b8472d" d="M27 5.5C17.3 4.8 9.2 11.5 8.4 21c-.8 10.2 6.2 19.2 15.8 20.4 9.6 1.2 18.4-6 19.6-16 1.2-10-6-19-16.8-19.9z"/>
-  </svg>
-  <div class="splash-wordmark">Pebble Engine</div>
-  <div class="splash-tagline">Briefing engine for websites that don't look generated.</div>
-  <div class="splash-bar-wrap">
-    <div class="splash-bar" id="splash-bar"></div>
-  </div>
-  <div class="splash-status" id="splash-status">Initializing</div>
-</div>
-
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     HEADER
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-
 <header>
-  <button class="logo" onclick="goWelcome()">
-    <svg viewBox="0 0 24 24" fill="#b8472d" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12.3 3.2c-4.2-.3-7.8 2.6-8.2 6.6-.5 4.6 2.7 8.7 7.1 9.2 4.4.5 8.4-2.7 8.9-7.1.5-4.4-2.7-8.4-7.8-8.7z"/>
-    </svg>
-    <span>Pebble Engine</span>
-  </button>
-  <div class="header-right">
-    <button class="nav-link" id="nav-briefs" onclick="goBriefs()">Briefs</button>
-    <button class="nav-link" id="nav-settings" onclick="goSettings()">Settings</button>
-    <div id="progress" class="nav-link" style="cursor:default;pointer-events:none;"></div>
-    <button class="health-pill" onclick="goSettings()" title="Click to open settings">
-      <span class="health-dot" id="health-dot"></span>
-      <span id="health-text">starting</span>
-    </button>
+  <div class="header-content">
+    <div class="logo">Pebble Engine</div>
+    <div class="version">v3.0</div>
   </div>
 </header>
 
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     SCENES
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
-
 <main>
-
-<!-- 1. WELCOME -->
-<section id="scene-welcome" class="scene">
-  <div class="eyebrow">Pebble Engine</div>
-  <div class="display" style="font-size:clamp(3.5rem,9vw,6rem);line-height:0.95;margin-bottom:1.5rem;">
-    Briefs that<br><em class="accent">build.</em>
-  </div>
-  <div class="subtitle" style="font-size:1.25rem;">
-    Fourteen questions. One brief. A website that doesn't look like every other website.
-  </div>
-  <div class="actions">
-    <button class="primary" onclick="startQuiz()">Begin new brief</button>
-    <button class="ghost" onclick="goBriefs()">View saved briefs →</button>
-    <div class="kbd-hint">Press <kbd>Enter</kbd> to begin</div>
-  </div>
-</section>
-
-<!-- 2. SETUP (first run / no API key) -->
-<section id="scene-setup" class="scene">
-  <div class="eyebrow">First-time setup</div>
-  <div class="display">Let's get<br>you <em class="accent">connected.</em></div>
-  <div class="subtitle">
-    Pebble Engine needs one API key to build websites for you. It takes about sixty seconds.
+  <!-- STEP INDICATOR -->
+  <div class="step-indicator" id="stepIndicator">
+    <!-- Steps will be generated dynamically -->
   </div>
 
-  <div class="step-list">
-    <div class="step-item">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <strong>Pick your provider</strong>
-        <p>Gemini is recommended — you probably have free tokens through Google Ultra. Claude is the alternative if you prefer Anthropic.</p>
-        <div class="provider-toggle">
-          <button class="provider-btn active" id="btn-gemini" onclick="pickProvider('gemini')">Gemini (recommended)</button>
-          <button class="provider-btn" id="btn-anthropic" onclick="pickProvider('anthropic')">Claude (Anthropic)</button>
-        </div>
-      </div>
-    </div>
+  <!-- QUESTION CONTAINER -->
+  <div id="questionContainer">
+    <!-- Questions will be rendered here -->
+  </div>
 
-    <div class="step-item">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <strong>Get your API key</strong>
-        <p id="setup-key-desc">Go to Google AI Studio, sign in with your Google account, and create an API key. It's free.</p>
-        <button class="small-btn" id="setup-link-btn" onclick="openKeyPage()">Open Google AI Studio →</button>
-      </div>
-    </div>
-
-    <div class="step-item">
-      <div class="step-num">3</div>
-      <div class="step-body">
-        <strong>Paste it here</strong>
-        <p>Copy the key from the site and paste it in the box below.</p>
-        <div class="field" id="setup-field">
-          <div class="field-row">
-            <input type="password" id="setup-key-input" placeholder="Paste your API key here">
-            <button class="small-btn" onclick="toggleKeyVisibility('setup-key-input', this)">Show</button>
-          </div>
-        </div>
-      </div>
+  <!-- LOADING SCREEN -->
+  <div id="loadingScreen" class="hidden">
+    <div class="loading-screen">
+      <div class="spinner"></div>
+      <div class="loading-text">Generating Your Brief...</div>
+      <div class="loading-subtext" id="loadingSubtext">Researching industry best practices...</div>
     </div>
   </div>
 
-  <div class="actions">
-    <button class="primary" id="setup-save-btn" onclick="saveSetup()">Save and continue</button>
-    <span id="setup-error" style="font-size:0.85rem;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;display:none;"></span>
-  </div>
-
-  <div class="note" style="margin-top:2rem;">
-    Your API key is saved to a <code>.env</code> file inside the Pebble Engine folder on your computer. It never leaves your machine.
-  </div>
-</section>
-
-<!-- 3. SETTINGS -->
-<section id="scene-settings" class="scene">
-  <div class="eyebrow">Settings</div>
-  <div class="display">Engine <em class="accent">config.</em></div>
-
-  <div class="step-list">
-    <div class="step-item">
-      <div class="step-num">1</div>
-      <div class="step-body">
-        <strong>Provider</strong>
-        <p>Gemini 3.1 Pro for everyday work. Claude Opus 4.6 as a second opinion on high-stakes builds.</p>
-        <div class="provider-toggle" style="max-width:400px;">
-          <button class="provider-btn" id="settings-btn-gemini" onclick="settingsPickProvider('gemini')">Gemini</button>
-          <button class="provider-btn" id="settings-btn-anthropic" onclick="settingsPickProvider('anthropic')">Claude (Anthropic)</button>
-        </div>
-      </div>
+  <!-- RESULTS SCREEN -->
+  <div id="resultsScreen" class="results-screen">
+    <div class="results-header">
+      <div class="results-title">✓ Brief Generated!</div>
+      <div class="results-subtitle">Your custom website brief is ready</div>
     </div>
-
-    <div class="step-item">
-      <div class="step-num">2</div>
-      <div class="step-body">
-        <strong>API key</strong>
-        <p id="settings-key-desc">Your Gemini key from Google AI Studio.</p>
-        <div class="field">
-          <div class="field-row">
-            <input type="password" id="settings-key-input" placeholder="Paste new key to replace">
-            <button class="small-btn" onclick="toggleKeyVisibility('settings-key-input', this)">Show</button>
-          </div>
-        </div>
-        <div class="pill-row" id="settings-status-pills"></div>
-      </div>
+    <div class="button-group" style="justify-content: center; margin-bottom: 2rem;">
+      <button class="btn-primary" onclick="copyPrompt()">Copy to Clipboard</button>
+      <button class="btn-secondary" onclick="downloadPrompt()">Download</button>
+      <button class="btn-ghost" onclick="location.reload()">Start Over</button>
     </div>
+    <div class="prompt-box" id="promptBox"></div>
   </div>
-
-  <div class="actions">
-    <button class="primary" onclick="saveSettings()">Save changes</button>
-    <button class="ghost" onclick="goBack()">← Back</button>
-    <span id="settings-feedback" class="copied"></span>
-  </div>
-</section>
-
-<!-- 4. BASICS (Scene 1 of 6) -->
-<section id="scene-basics" class="scene">
-  <div class="eyebrow">1 of 6 — The business</div>
-  <div class="question">Tell me about the business.</div>
-  <div class="quiz-fields">
-    <div class="field" id="field-name">
-      <label for="f-name">Business name</label>
-      <input type="text" id="f-name" placeholder="e.g. Squito Pest Control">
-    </div>
-    <div class="field" id="field-industry">
-      <label for="f-industry">Type of business</label>
-      <input type="text" id="f-industry" placeholder="pest control · dental practice · yoga studio · law firm">
-    </div>
-    <div class="field" id="field-location">
-      <label for="f-location">Where they serve</label>
-      <input type="text" id="f-location" placeholder="Bay Shore, NY · Suffolk County · Nationwide">
-    </div>
-  </div>
-  <div id="basics-error" style="display:none;color:var(--accent);font-family:'Fraunces',serif;font-style:italic;margin-bottom:1rem;">
-    Please fill in all three fields above before continuing.
-  </div>
-  <div class="actions">
-    <button class="primary" onclick="basicsNext()">Next</button>
-    <div class="kbd-hint"><kbd>Enter</kbd> next</div>
-  </div>
-</section>
-
-<!-- 5. EMOTIONAL DIRECTION (Scene 2 of 6) -->
-<section id="scene-emotional" class="scene wide">
-  <div class="eyebrow">2 of 6 — The feeling</div>
-  <div class="question">How should visitors feel when they land on the site?</div>
-  <div class="hint">Pick the one that fits best — this shapes the typography, motion, copy tone, and color of the entire site.</div>
-  <div class="vx-grid" id="emotional-grid"></div>
-  <div class="actions">
-    <button class="primary" onclick="emotionalNext()">Next</button>
-    <button class="ghost" onclick="showOnly('scene-basics'); setProgress('1 / 6')">← Back</button>
-  </div>
-</section>
-
-<!-- 6. FUNCTION (Scene 3 of 6) -->
-<section id="scene-function" class="scene wide">
-  <div class="eyebrow">3 of 6 — What it does</div>
-  <div class="question">What does <span id="fn-name">the site</span> need to do?</div>
-  <div class="hint">Tap everything that applies. These drive the features the engine builds.</div>
-  <div class="function-grid" id="function-grid"></div>
-  <div class="actions">
-    <button class="primary" onclick="functionNext()">Next</button>
-    <button class="ghost" onclick="showOnly('scene-emotional'); setProgress('2 / 6')">← Back</button>
-  </div>
-</section>
-
-<!-- 7. VISUAL EXPERIENCE (Scene 4 of 6) -->
-<section id="scene-visual" class="scene wide">
-  <div class="eyebrow">4 of 6 — The experience</div>
-  <div class="question">What kind of visual experience?</div>
-  <div class="hint">This sets the animation intensity, scroll effects, and whether 3D is used.</div>
-  <div class="vx-grid" id="visual-grid"></div>
-  <div class="actions">
-    <button class="primary" onclick="visualNext()">Next</button>
-    <button class="ghost" onclick="showOnly('scene-function'); setProgress('3 / 6')">← Back</button>
-  </div>
-</section>
-
-<!-- 8. INTEGRATIONS (Scene 5 of 6 — shown only when booking/payment/ecommerce selected) -->
-<section id="scene-integrations" class="scene">
-  <div class="eyebrow">5 of 6 — Integrations</div>
-  <div class="question">Any systems already in place?</div>
-  <div class="hint">Type the name or "none yet" — the engine recommends the right option based on the business type.</div>
-  <div id="integ-fields" class="quiz-fields"></div>
-  <div class="actions">
-    <button class="primary" onclick="integNext()">Next</button>
-    <button class="ghost" onclick="showOnly('scene-visual'); setProgress('4 / 6')">← Back</button>
-  </div>
-</section>
-
-<!-- 9. LOOK (Scene 6 of 6) -->
-<section id="scene-look" class="scene">
-  <div class="eyebrow">6 of 6 — Visual direction</div>
-  <div class="question">Almost done. Two quick things.</div>
-  <div class="hint">These are both optional — skip either or both and the engine fills in the gaps.</div>
-
-  <div class="field" style="margin-bottom:1.5rem;">
-    <label for="f-aesthetic">Describe the visual feel (optional)</label>
-    <textarea id="f-aesthetic" rows="2" placeholder="e.g. 1970s service-station signage, warmer and cleaner — or leave blank"></textarea>
-  </div>
-
-  <div class="field">
-    <label for="f-reference">Reference site for inspiration (optional)</label>
-    <input type="text" id="f-reference" placeholder="dribbble.com/shots/... · a competitor URL · any site you like the feel of">
-    <div style="font-family:'Fraunces',serif;font-style:italic;font-size:0.82rem;color:var(--ink-soft);margin-top:0.5rem;">
-      Gemini will browse this URL and extract the color palette, typography feel, and spacing rhythm — not copy the layout.
-    </div>
-  </div>
-
-  <div class="actions" style="margin-top:2rem;">
-    <button class="primary" onclick="lookNext()">Build the brief</button>
-    <button class="ghost" id="look-back-btn" onclick="lookBack()">← Back</button>
-    <div class="kbd-hint"><kbd>Cmd/Ctrl+Enter</kbd> continue</div>
-  </div>
-</section>
-
-<!-- 5. CHOICE (removed — quiz now goes straight to prompt generation) -->
-<section id="scene-choice" class="scene" style="display:none !important;"></section>
-
-<!-- 6. BUILDING -->
-<section id="scene-building" class="scene">
-  <div class="building-wrap">
-    <div class="building-headline">Building your site<span class="building-dots"></span></div>
-    <div class="building-step" id="building-step">Sending brief</div>
-    <div class="building-elapsed" id="building-elapsed">0s elapsed</div>
-  </div>
-</section>
-
-<!-- 7. BUILT (auto-build complete) -->
-<section id="scene-built" class="scene">
-  <div class="eyebrow good">✓ Built</div>
-  <div class="display" id="built-title"></div>
-  <div class="subtitle" id="built-stats" style="font-style:italic;color:var(--ink-soft);"></div>
-  <div class="file-grid">
-    <h4>Files generated</h4>
-    <ul id="file-list"></ul>
-  </div>
-  <div class="actions">
-    <button class="primary" id="preview-btn">Preview the site</button>
-    <button class="ghost" onclick="showPromptView()">View the prompt</button>
-    <button class="ghost" onclick="goBriefs()">Saved briefs →</button>
-  </div>
-  <div class="note">
-    Files saved to <code id="built-path"></code>. Open the folder in Antigravity to edit or continue iterating.
-  </div>
-</section>
-
-<!-- 8. RESULTS (prompt-only) -->
-<section id="scene-results" class="scene">
-  <div class="eyebrow">Ready to paste</div>
-  <div class="display" id="results-title"></div>
-  <div class="subtitle" id="results-summary"></div>
-  <div class="results-card"><pre id="results-content"></pre></div>
-  <div class="actions">
-    <button class="primary" onclick="copyPrompt()">Copy to clipboard</button>
-    <button class="ghost" onclick="downloadPrompt()">Download .md</button>
-    <span class="copied" id="copied">copied</span>
-  </div>
-  <div class="note">
-    Paste into Antigravity's agent panel with <code>skills/</code> loaded as workspace skills. Brief saved to <code id="saved-path">output/</code>.
-  </div>
-  <div style="margin-top:2rem;">
-    <button class="ghost" onclick="goWelcome()">↺ New brief</button>
-  </div>
-</section>
-
-<!-- 9. BRIEFS DASHBOARD -->
-<section id="scene-briefs" class="scene wide">
-  <div class="briefs-header">
-    <div class="briefs-title">Saved briefs</div>
-    <div class="briefs-count" id="briefs-count"></div>
-  </div>
-  <div id="briefs-list"></div>
-  <div style="margin-top:2rem;">
-    <button class="ghost" onclick="goBack()">← Back</button>
-  </div>
-</section>
-
-<!-- 10. BRIEF DETAIL -->
-<section id="scene-detail" class="scene">
-  <div class="eyebrow" id="detail-status">Brief</div>
-  <div class="display" id="detail-title"></div>
-  <div class="subtitle" id="detail-direction"></div>
-  <div id="detail-files-wrap" style="display:none;">
-    <div class="file-grid"><h4>Files</h4><ul id="detail-file-list"></ul></div>
-  </div>
-  <div class="results-card"><pre id="detail-prompt"></pre></div>
-  <div class="actions">
-    <button class="primary" id="detail-preview-btn" style="display:none;">Preview the site</button>
-    <button class="ghost" onclick="copyDetailPrompt()">Copy prompt</button>
-    <button class="ghost" onclick="goBriefs()">← All briefs</button>
-    <span class="copied" id="detail-copied">copied</span>
-  </div>
-</section>
-
 </main>
 
-<!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-     JAVASCRIPT
-     ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
 <script>
-// ─── Questions ───────────────────────────────────────────
-// ─── What-the-site-does options ─────────────────────────
-const FUNCTIONS = [
-  { key:'booking',   label:'Online booking',      icon:'📅', desc:'Clients schedule appointments online' },
-  { key:'payment',   label:'Collect payment',     icon:'💳', desc:'Deposits or full payment at booking' },
-  { key:'portfolio', label:'Show work / gallery', icon:'🖼',  desc:'Photos, case studies, or past projects' },
-  { key:'leads',     label:'Capture leads',       icon:'📋', desc:'Contact form, quote request, or inquiry' },
-  { key:'ecommerce', label:'Sell products',       icon:'🛒', desc:'Online store with cart and checkout' },
-  { key:'presence',  label:'Just be findable',    icon:'📍', desc:'Hours, location, contact, and about' },
-];
+// ========================================
+// PEBBLE ENGINE v3.0 - SMART QUIZ
+// ========================================
 
-const EMOTIONAL_OPTIONS = [
-  { key:'trusting',  icon:'🤝', label:'Trusting & confident',  desc:'Credibility-first. Proof, calm motion, clear hierarchy.' },
-  { key:'excited',   icon:'⚡', label:'Excited & inspired',    desc:'Energetic. Bold hero, punchy copy, momentum.' },
-  { key:'impressed', icon:'✨', label:'Impressed & curious',   desc:'Cinematic reveals. Editorial layout. Intrigue.' },
-  { key:'calm',      icon:'🌿', label:'Calm & comfortable',    desc:'Warm and frictionless. Gentle motion. Soft palette.' },
-  { key:'premium',   icon:'💎', label:'Premium & high-end',    desc:'Restrained luxury. Slow deliberate motion. Elite tone.' },
-  { key:'custom',    icon:'✏️', label:'Something else...',     desc:'Custom — describe in the final notes field.' },
-];
-
-const VISUAL_OPTIONS = [
-  { key:'smooth',    icon:'🎯', label:'Smooth & professional', desc:'Subtle GSAP reveals. Clean. No scroll-jacking.' },
-  { key:'cinematic', icon:'🎬', label:'Cinematic scrolling',   desc:'Scroll-driven scenes. Parallax. SplitText. Pinned sections.' },
-  { key:'playful',   icon:'🎮', label:'Interactive & playful', desc:'Hover effects. Cursor details. Tactile microinteractions.' },
-  { key:'showcase',  icon:'🏆', label:'Product showcase',      desc:'Large imagery. Scroll-driven product reveals. Lifestyle visuals.' },
-  { key:'threedee',  icon:'🌐', label:'3D or motion-heavy',    desc:'Three.js / WebGL. Immersive hero. Spatial transitions.' },
-  { key:'custom',    icon:'✏️', label:'Something else...',     desc:'Custom — describe in the final notes field.' },
-];
-
-
-// ─── State ───────────────────────────────────────────────
-const answers    = {};
-let healthState  = null;
-let setupProvider = 'gemini';
-let settingsProvider = 'gemini';
-let _prevScene   = null;
-let _lastPrompt  = '';
-let _buildTimer  = null;
-let _elapsedTimer = null;
-
-// ─── SPLASH ──────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  // Kick off the bar animation after a tick (so CSS transition fires)
-  setTimeout(() => {
-    document.getElementById('splash-bar').style.width = '60%';
-    document.getElementById('splash-status').textContent = 'Loading skills';
-  }, 100);
-
-  // Meanwhile, do the health check
-  checkHealth().then(health => {
-    // Complete the bar
-    document.getElementById('splash-bar').style.width = '100%';
-    document.getElementById('splash-status').textContent = 'Ready';
-
-    // Wait for bar animation then dismiss splash
-    setTimeout(() => dismissSplash(health), 800);
-  }).catch(() => {
-    document.getElementById('splash-bar').style.width = '100%';
-    setTimeout(() => dismissSplash(null), 800);
-  });
-});
-
-function dismissSplash(health) {
-  const splash = document.getElementById('splash');
-  splash.classList.add('hidden');
-  setTimeout(() => { splash.style.display = 'none'; }, 700);
-
-  if (!health || !health.llm_ready) {
-    // First run or no key configured — show setup
-    if (!health || (!health.google_key_set && !health.anthropic_key_set)) {
-      showOnly('scene-setup');
-    } else {
-      // Has a key but LLM failed for another reason — go to welcome
-      showOnly('scene-welcome');
+// INDUSTRY DATABASE
+const INDUSTRIES = {
+  'plumbing': {
+    category: 'Home Services',
+    recommendations: {
+      target_audience: 'Homeowners',
+      primary_goal: 'Call Now',
+      brand_position: 'Professional & Established',
+      brand_tone: 'Friendly & Approachable',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'Home service businesses convert best with light, approachable designs and prominent emergency CTAs.'
     }
-  } else {
-    showOnly('scene-welcome');
+  },
+  'hvac': {
+    category: 'Home Services',
+    recommendations: {
+      target_audience: 'Homeowners',
+      primary_goal: 'Call Now',
+      brand_position: 'Professional & Established',
+      brand_tone: 'Friendly & Approachable',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'HVAC businesses need trustworthy, clean designs with clear emergency contact options.'
+    }
+  },
+  'electrical': {
+    category: 'Home Services',
+    recommendations: {
+      target_audience: 'Homeowners',
+      primary_goal: 'Call Now',
+      brand_position: 'Professional & Established',
+      brand_tone: 'Friendly & Approachable',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'Electrical services require trust and immediate contact options for emergencies.'
+    }
+  },
+  'restaurant': {
+    category: 'Food & Hospitality',
+    recommendations: {
+      target_audience: 'Local Diners',
+      primary_goal: 'View Menu',
+      brand_position: 'Accessible & Community',
+      brand_tone: 'Friendly & Inviting',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'Restaurants need appetizing food photography and easy access to menu and hours.'
+    }
+  },
+  'cafe': {
+    category: 'Food & Hospitality',
+    recommendations: {
+      target_audience: 'Local Consumers',
+      primary_goal: 'View Menu',
+      brand_position: 'Accessible & Community',
+      brand_tone: 'Friendly & Inviting',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'Cafes succeed with warm, inviting designs and prominent menu display.'
+    }
+  },
+  'lawyer': {
+    category: 'Professional Services',
+    recommendations: {
+      target_audience: 'Individuals or Businesses',
+      primary_goal: 'Schedule Consultation',
+      brand_position: 'Professional & Established',
+      brand_tone: 'Professional & Formal',
+      visual_aesthetic: 'technical_professional',
+      motion_intensity: 'minimal',
+      explanation: 'Legal services need credible, structured designs with clear credentials.'
+    }
+  },
+  'dentist': {
+    category: 'Health & Wellness',
+    recommendations: {
+      target_audience: 'Local Individuals',
+      primary_goal: 'Book Appointment',
+      brand_position: 'Accessible & Community',
+      brand_tone: 'Friendly & Warm',
+      visual_aesthetic: 'minimal_refined',
+      motion_intensity: 'minimal',
+      explanation: 'Dental practices need calming, clean designs that reduce patient anxiety.'
+    }
+  },
+  'yoga': {
+    category: 'Health & Wellness',
+    recommendations: {
+      target_audience: 'Local Individuals',
+      primary_goal: 'Book Appointment',
+      brand_position: 'Accessible & Community',
+      brand_tone: 'Friendly & Warm',
+      visual_aesthetic: 'minimal_refined',
+      motion_intensity: 'minimal',
+      explanation: 'Wellness spaces need peaceful, uncluttered designs with soft colors.'
+    }
+  },
+  'real-estate': {
+    category: 'Real Estate',
+    recommendations: {
+      target_audience: 'Home Buyers',
+      primary_goal: 'Browse Listings',
+      brand_position: 'Professional & Trustworthy',
+      brand_tone: 'Professional & Friendly',
+      visual_aesthetic: 'clean_modern',
+      motion_intensity: 'smooth',
+      explanation: 'Real estate sites need clean, searchable layouts with excellent property photos.'
+    }
   }
-}
-
-// ─── HEALTH ──────────────────────────────────────────────
-async function checkHealth() {
-  const res = await fetch('/api/health');
-  healthState = await res.json();
-  applyHealthUI(healthState);
-  return healthState;
-}
-
-// Ping every 30 seconds — catch server dying mid-session
-setInterval(async () => {
-  try {
-    await checkHealth();
-  } catch {
-    const dot  = document.getElementById('health-dot');
-    const text = document.getElementById('health-text');
-    dot.className  = 'health-dot warn';
-    text.textContent = '⚠ Server offline — restart the launcher';
-  }
-}, 30000);
-
-function applyHealthUI(h) {
-  const dot  = document.getElementById('health-dot');
-  const text = document.getElementById('health-text');
-  if (h && h.llm_ready) {
-    dot.className  = 'health-dot live';
-    const p = h.provider === 'gemini' ? 'Gemini' : h.provider === 'anthropic' ? 'Claude' : (h.provider || '');
-    text.textContent = `${p} · ${h.model}`;
-  } else {
-    dot.className  = 'health-dot warn';
-    text.textContent = 'No API key — click to setup';
-  }
-}
-
-// ─── NAV ─────────────────────────────────────────────────
-function showOnly(id) {
-  document.querySelectorAll('.scene').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  document.getElementById('nav-briefs').classList.remove('active');
-  document.getElementById('nav-settings').classList.remove('active');
-}
-
-function goWelcome()  { _prevScene = null; showOnly('scene-welcome'); setProgress(''); }
-function goBriefs()   { _prevScene = currentScene(); showOnly('scene-briefs'); document.getElementById('nav-briefs').classList.add('active'); setProgress(''); loadBriefs(); }
-function goSettings() { _prevScene = currentScene(); populateSettings(); showOnly('scene-settings'); document.getElementById('nav-settings').classList.add('active'); setProgress(''); }
-function goBack()     { showOnly(_prevScene || 'scene-welcome'); }
-
-function setProgress(t) { document.getElementById('progress').textContent = t; }
-
-function currentScene() {
-  const el = document.querySelector('.scene.active');
-  return el ? el.id : null;
-}
-
-// ─── SETUP (first run) ───────────────────────────────────
-const PROVIDER_INFO = {
-  gemini:    { desc: 'Your key comes from Google AI Studio (aistudio.google.com/apikey). It starts with AIza.', url: 'https://aistudio.google.com/apikey', link: 'Open Google AI Studio →' },
-  anthropic: { desc: 'Your key comes from the Anthropic console (console.anthropic.com/settings/keys). It starts with sk-ant.', url: 'https://console.anthropic.com/settings/keys', link: 'Open Anthropic Console →' },
 };
 
-function pickProvider(p) {
-  setupProvider = p;
-  document.getElementById('btn-gemini').classList.toggle('active', p === 'gemini');
-  document.getElementById('btn-anthropic').classList.toggle('active', p === 'anthropic');
-  document.getElementById('setup-key-desc').textContent = PROVIDER_INFO[p].desc;
-  document.getElementById('setup-link-btn').textContent  = PROVIDER_INFO[p].link;
-}
+// QUIZ STATE
+const state = {
+  currentStep: 0,
+  answers: {},
+  detectedIndustry: null,
+  recommendations: null
+};
 
-function openKeyPage() {
-  window.open(PROVIDER_INFO[setupProvider].url, '_blank');
-}
-
-async function saveSetup() {
-  const key = document.getElementById('setup-key-input').value.trim();
-  const errEl = document.getElementById('setup-error');
-  if (!key) {
-    errEl.textContent = 'Please paste your API key first — it should start with AIza (Gemini) or sk-ant (Claude).';
-    errEl.style.display = 'inline';
-    return;
-  }
-  errEl.style.display = 'none';
-  const btn = document.getElementById('setup-save-btn');
-  btn.disabled = true; btn.textContent = 'Saving...';
-
-  try {
-    console.log('Pebble Engine: saving API key...');
-    const res = await fetch('/api/setup', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ provider: setupProvider, api_key: key }),
-    });
-    const data = await res.json();
-    console.log('Pebble Engine: setup response', data);
-    if (!res.ok) throw new Error(data.error || `Server returned ${res.status}`);
-    if (!data.ok) throw new Error(data.reason || 'Key was saved but could not connect to the AI provider. Check the key and try again.');
-    healthState = await (await fetch('/api/health')).json();
-    applyHealthUI(healthState);
-    console.log('Pebble Engine: setup complete, going to welcome');
-    goWelcome();
-  } catch(e) {
-    console.error('Pebble Engine: setup error', e);
-    const msg = e.message.includes('fetch')
-      ? 'Cannot reach the Pebble Engine server. Make sure the launcher is still running in the background.'
-      : `Error: ${e.message}`;
-    errEl.textContent = msg;
-    errEl.style.display = 'inline';
-  } finally {
-    btn.disabled = false; btn.textContent = 'Save and continue';
-  }
-}
-
-function toggleKeyVisibility(inputId, btn) {
-  const inp = document.getElementById(inputId);
-  if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'Hide'; }
-  else { inp.type = 'password'; btn.textContent = 'Show'; }
-}
-
-// ─── SETTINGS ────────────────────────────────────────────
-function settingsPickProvider(p) {
-  settingsProvider = p;
-  document.getElementById('settings-btn-gemini').classList.toggle('active', p === 'gemini');
-  document.getElementById('settings-btn-anthropic').classList.toggle('active', p === 'anthropic');
-  document.getElementById('settings-key-desc').textContent =
-    p === 'gemini' ? 'Your Gemini key from Google AI Studio (aistudio.google.com/apikey).'
-                   : 'Your Anthropic key from console.anthropic.com/settings/keys.';
-}
-
-function populateSettings() {
-  if (!healthState) return;
-  const p = healthState.provider || 'gemini';
-  settingsProvider = p;
-  document.getElementById('settings-btn-gemini').classList.toggle('active', p === 'gemini');
-  document.getElementById('settings-btn-anthropic').classList.toggle('active', p === 'anthropic');
-  settingsPickProvider(p);
-
-  const pills = document.getElementById('settings-status-pills');
-  if (healthState.llm_ready) {
-    pills.innerHTML = `<span class="info-pill live">✓ connected</span><span class="info-pill">${healthState.model}</span>`;
-  } else {
-    pills.innerHTML = `<span class="info-pill warn">⚠ not connected</span>`;
-  }
-}
-
-async function saveSettings() {
-  const key = document.getElementById('settings-key-input').value.trim();
-  const fb  = document.getElementById('settings-feedback');
-
-  if (!key) {
-    fb.textContent = 'Paste a new key to update, or just go back.';
-    fb.classList.add('show');
-    setTimeout(() => fb.classList.remove('show'), 2500);
-    return;
-  }
-
-  try {
-    const res = await fetch('/api/setup', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ provider: settingsProvider, api_key: key }),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Failed');
-    healthState = await (await fetch('/api/health')).json();
-    applyHealthUI(healthState);
-    populateSettings();
-    document.getElementById('settings-key-input').value = '';
-    fb.textContent = 'Saved.';
-    fb.classList.add('show');
-    setTimeout(() => fb.classList.remove('show'), 2000);
-  } catch(e) {
-    fb.textContent = `Error: ${e.message}`;
-    fb.classList.add('show');
-    setTimeout(() => fb.classList.remove('show'), 3000);
-  }
-}
-
-// ─── Quiz: 6-scene flow ──────────────────────────────────
-
-function startQuiz() {
-  const saved = localStorage.getItem('pebble-draft');
-  if (saved) {
-    try {
-      const p = JSON.parse(saved);
-      if (p._ts && Date.now() - p._ts < 3600000) { Object.assign(answers, p); delete answers._ts; }
-    } catch {}
-  }
-  if (answers.business_name) document.getElementById('f-name').value = answers.business_name;
-  if (answers.business_type) document.getElementById('f-industry').value = answers.business_type;
-  else if (answers.industry) document.getElementById('f-industry').value = answers.industry;
-  if (answers.location)      document.getElementById('f-location').value = answers.location;
-  showOnly('scene-basics');
-  setProgress('1 / 6');
-  setTimeout(() => document.getElementById('f-name').focus(), 80);
-}
-
-function basicsNext() {
-  const name = document.getElementById('f-name').value.trim();
-  const ind  = document.getElementById('f-industry').value.trim();
-  const loc  = document.getElementById('f-location').value.trim();
-  const errEl = document.getElementById('basics-error');
-  let ok = true;
-  [['f-name',name],['f-industry',ind],['f-location',loc]].forEach(([id,v]) => {
-    if (!v) {
-      const el = document.getElementById(id);
-      if (el) {
-        el.parentElement.classList.add('error');
-        setTimeout(() => el.parentElement.classList.remove('error'), 1200);
-        el.focus();
+// QUESTION DEFINITIONS
+const QUESTIONS = [
+  {
+    id: 'basics',
+    type: 'text_multi',
+    title: 'Tell us about your business',
+    subtitle: 'Basic information to get started',
+    fields: [
+      { name: 'business_name', label: 'Business Name', placeholder: 'Vinny\'s Plumbing' },
+      { name: 'business_type', label: 'Type of Business', placeholder: 'plumbing' },
+      { name: 'location', label: 'Location / Service Area', placeholder: 'Suffolk County, NY' }
+    ],
+    onComplete: (answers) => {
+      // Detect industry
+      const businessType = answers.business_type.toLowerCase().trim();
+      const detected = detectIndustry(businessType);
+      if (detected) {
+        state.detectedIndustry = detected.category;
+        state.recommendations = detected.recommendations;
+        showIndustryBanner(detected.category, detected.recommendations.explanation);
       }
-      ok = false;
     }
-  });
-  if (!ok) {
-    errEl.style.display = 'block';
-    setTimeout(() => { errEl.style.display = 'none'; }, 4000);
+  },
+  {
+    id: 'target_audience',
+    type: 'single_select',
+    title: 'Who visits your site?',
+    subtitle: 'Understanding your audience helps us recommend the right tone and complexity',
+    options: [
+      { value: 'homeowners', label: 'Homeowners', description: 'Residential property owners in your service area' },
+      { value: 'businesses', label: 'Business Owners', description: 'Other businesses (B2B services)' },
+      { value: 'consumers', label: 'Consumers', description: 'General public (B2C products/services)' },
+      { value: 'individuals', label: 'Individuals', description: 'People seeking personal services' }
+    ],
+    getRecommended: () => state.recommendations?.target_audience
+  },
+  {
+    id: 'primary_goal',
+    type: 'single_select',
+    title: 'What\'s the #1 action you want visitors to take?',
+    subtitle: 'This determines CTA placement and hierarchy',
+    options: [
+      { value: 'call', label: 'Call Now', description: 'Emergency dispatch or immediate phone contact' },
+      { value: 'book', label: 'Book Appointment', description: 'Schedule service or consultation' },
+      { value: 'quote', label: 'Request Quote', description: 'Get pricing or proposal' },
+      { value: 'browse', label: 'Browse Portfolio/Products', description: 'View work, listings, or products' },
+      { value: 'purchase', label: 'Make Purchase', description: 'Buy products or services online' }
+    ],
+    getRecommended: () => state.recommendations?.primary_goal
+  },
+  {
+    id: 'brand_position',
+    type: 'single_select',
+    title: 'How should your brand be positioned?',
+    subtitle: 'This affects visual weight, pricing display, and overall aesthetic',
+    options: [
+      { value: 'premium', label: 'Premium / Luxury', description: 'High-end, exclusive, sophisticated' },
+      { value: 'professional', label: 'Professional & Established', description: 'Trustworthy, credible, experienced' },
+      { value: 'accessible', label: 'Accessible & Community', description: 'Approachable, welcoming, local' },
+      { value: 'budget', label: 'Budget / Value', description: 'Affordable, no-frills, practical' }
+    ],
+    getRecommended: () => state.recommendations?.brand_position
+  },
+  {
+    id: 'brand_tone',
+    type: 'single_select',
+    title: 'What tone should your copy have?',
+    subtitle: 'This affects all text on the site - headlines, buttons, descriptions',
+    options: [
+      { value: 'professional_formal', label: 'Professional & Formal', description: 'Authoritative, serious, precise' },
+      { value: 'friendly_approachable', label: 'Friendly & Approachable', description: 'Warm, conversational, human' },
+      { value: 'technical_expert', label: 'Technical & Expert', description: 'Data-driven, specific, detailed' },
+      { value: 'creative_confident', label: 'Creative & Confident', description: 'Bold, opinionated, distinctive' }
+    ],
+    getRecommended: () => state.recommendations?.brand_tone
+  },
+  {
+    id: 'visual_aesthetic',
+    type: 'single_select',
+    title: 'What visual aesthetic fits best?',
+    subtitle: 'This determines colors, backgrounds, typography, and overall feel',
+    options: [
+      { value: 'clean_modern', label: 'Clean & Modern', description: 'Light backgrounds, simple navigation, trustworthy. Best for home services, wellness, food.' },
+      { value: 'premium_editorial', label: 'Premium & Editorial', description: 'Dark backgrounds, large imagery, sophisticated. Best for luxury, high-end real estate, jewelry.' },
+      { value: 'bold_energetic', label: 'Bold & Energetic', description: 'Bright colors, dynamic layouts, exciting. Best for creative agencies, events, youth brands.' },
+      { value: 'minimal_refined', label: 'Minimal & Refined', description: 'Generous whitespace, elegant, calm. Best for wellness, professional services, upscale retail.' },
+      { value: 'technical_professional', label: 'Technical & Professional', description: 'Structured, data-focused, credible. Best for law, accounting, B2B services.' }
+    ],
+    getRecommended: () => {
+      const rec = state.recommendations?.visual_aesthetic;
+      return rec === 'clean_modern' ? 'Clean & Modern' :
+             rec === 'premium_editorial' ? 'Premium & Editorial' :
+             rec === 'minimal_refined' ? 'Minimal & Refined' :
+             rec === 'technical_professional' ? 'Technical & Professional' : null;
+    }
+  },
+  {
+    id: 'motion_intensity',
+    type: 'single_select',
+    title: 'How much animation and motion?',
+    subtitle: 'More motion = more visual interest, but can slow load times on mobile',
+    options: [
+      { value: 'minimal', label: 'Minimal', description: 'Fade-ins only. Fast, clean, no distractions. Best for professional services, emergency services.' },
+      { value: 'smooth', label: 'Smooth', description: 'Subtle GSAP scroll reveals. Polished without being flashy. Best for most businesses.' },
+      { value: 'cinematic', label: 'Cinematic', description: 'Parallax, pinned sections, story-driven. Best for luxury, creative agencies, product showcases.' },
+      { value: 'interactive', label: 'Interactive', description: 'Hover effects, micro-interactions, playful. Best for tech, apps, creative work.' }
+    ],
+    getRecommended: () => {
+      const rec = state.recommendations?.motion_intensity;
+      return rec === 'minimal' ? 'Minimal' :
+             rec === 'smooth' ? 'Smooth' : null;
+    }
+  },
+  {
+    id: 'site_functions',
+    type: 'multi_select',
+    title: 'What does your site need to do?',
+    subtitle: 'Select all that apply',
+    options: [
+      { value: 'booking', label: 'Online Booking', description: 'Clients schedule appointments' },
+      { value: 'payment', label: 'Collect Payment', description: 'Deposits or full payment online' },
+      { value: 'portfolio', label: 'Show Work / Gallery', description: 'Photos, case studies, projects' },
+      { value: 'leads', label: 'Capture Leads', description: 'Contact form, quote request' },
+      { value: 'ecommerce', label: 'Sell Products', description: 'Online store with checkout' },
+      { value: 'presence', label: 'Just Be Findable', description: 'Hours, location, contact info' }
+    ],
+    getRecommended: () => {
+      // Return array of recommended functions
+      const type = state.answers.business_type?.toLowerCase();
+      if (type?.includes('plumb') || type?.includes('hvac') || type?.includes('electric')) {
+        return ['booking', 'leads', 'presence'];
+      }
+      return null;
+    }
+  },
+  {
+    id: 'integrations',
+    type: 'conditional_text',
+    title: 'Any existing systems to integrate?',
+    subtitle: 'Leave blank if you don\'t have these yet',
+    condition: () => {
+      const fns = state.answers.site_functions || [];
+      return fns.includes('booking') || fns.includes('payment') || fns.includes('ecommerce');
+    },
+    fields: [
+      {
+        name: 'booking_system',
+        label: 'Booking System',
+        placeholder: 'Housecall Pro, Calendly, etc.',
+        show: () => (state.answers.site_functions || []).includes('booking')
+      },
+      {
+        name: 'payment_system',
+        label: 'Payment System',
+        placeholder: 'Stripe, Square, etc.',
+        show: () => (state.answers.site_functions || []).includes('payment') ||
+                    (state.answers.site_functions || []).includes('ecommerce')
+      }
+    ]
+  },
+  {
+    id: 'reference',
+    type: 'text_multi',
+    title: 'Visual inspiration (optional)',
+    subtitle: 'Help us understand your aesthetic preferences',
+    fields: [
+      { name: 'reference_url', label: 'Reference Website URL', placeholder: 'https://dribbble.com/shots/...', required: false },
+      { name: 'extra_context', label: 'Additional Notes', placeholder: 'Any specific requests or context...', type: 'textarea', required: false }
+    ]
+  }
+];
+
+// UTILITY FUNCTIONS
+function detectIndustry(businessType) {
+  const type = businessType.toLowerCase().trim();
+
+  // Direct matches
+  if (INDUSTRIES[type]) {
+    return INDUSTRIES[type];
+  }
+
+  // Fuzzy matches
+  for (const [key, data] of Object.entries(INDUSTRIES)) {
+    if (type.includes(key) || key.includes(type)) {
+      return data;
+    }
+  }
+
+  // Category matches
+  const homeServices = ['pest', 'clean', 'landscape', 'roof', 'paint', 'locksmith', 'handyman'];
+  if (homeServices.some(s => type.includes(s))) {
+    return INDUSTRIES['plumbing']; // Use plumbing as template for home services
+  }
+
+  return null;
+}
+
+function showIndustryBanner(category, explanation) {
+  const banner = document.createElement('div');
+  banner.className = 'industry-banner show';
+  banner.innerHTML = `
+    <div class="industry-banner-title">✓ Detected: ${category}</div>
+    <div class="industry-banner-text">${explanation}</div>
+  `;
+
+  // Insert after question header in next question
+  setTimeout(() => {
+    const questionCard = document.querySelector('.question-card');
+    if (questionCard) {
+      const header = questionCard.querySelector('.question-header');
+      if (header) {
+        header.after(banner);
+      }
+    }
+  }, 100);
+}
+
+// RENDER FUNCTIONS
+function renderStepIndicator() {
+  const container = document.getElementById('stepIndicator');
+  const totalSteps = QUESTIONS.filter(q => {
+    if (q.type === 'conditional_text' && q.condition) {
+      return q.condition();
+    }
+    return true;
+  }).length;
+
+  let html = '';
+  for (let i = 0; i < totalSteps; i++) {
+    const status = i < state.currentStep ? 'completed' :
+                   i === state.currentStep ? 'active' : '';
+    html += `<div class="step ${status}">${i + 1}</div>`;
+    if (i < totalSteps - 1) {
+      html += '<div class="step-divider"></div>';
+    }
+  }
+
+  container.innerHTML = html;
+}
+
+function renderQuestion(question) {
+  const container = document.getElementById('questionContainer');
+
+  let html = `
+    <div class="question-card">
+      <div class="question-header">
+        <h2 class="question-title">${question.title}</h2>
+        <p class="question-subtitle">${question.subtitle}</p>
+      </div>
+  `;
+
+  // Render based on type
+  if (question.type === 'text_multi') {
+    question.fields.forEach(field => {
+      if (field.show && !field.show()) return;
+
+      const value = state.answers[field.name] || '';
+      const inputType = field.type === 'textarea' ?
+        `<textarea name="${field.name}" placeholder="${field.placeholder}">${value}</textarea>` :
+        `<input type="text" name="${field.name}" placeholder="${field.placeholder}" value="${value}">`;
+
+      html += `
+        <div class="form-group">
+          <label>${field.label}</label>
+          ${inputType}
+        </div>
+      `;
+    });
+  }
+
+  else if (question.type === 'single_select') {
+    const recommended = question.getRecommended ? question.getRecommended() : null;
+
+    html += '<div class="options-grid">';
+    question.options.forEach(option => {
+      const isRecommended = recommended &&
+        (option.label === recommended || option.label.includes(recommended) || option.value === recommended.toLowerCase().replace(/ /g, '_'));
+      const isSelected = state.answers[question.id] === option.value;
+
+      html += `
+        <div class="option-card ${isRecommended ? 'recommended' : ''} ${isSelected ? 'selected' : ''}"
+             onclick="selectOption('${question.id}', '${option.value}')">
+          ${isRecommended ? '<div class="option-badge">✓ Recommended</div>' : ''}
+          <div class="option-title">${option.label}</div>
+          <div class="option-description">${option.description}</div>
+          ${isRecommended ? `<div class="option-explanation">Best for ${state.detectedIndustry}</div>` : ''}
+        </div>
+      `;
+    });
+    html += '</div>';
+  }
+
+  else if (question.type === 'multi_select') {
+    const recommended = question.getRecommended ? question.getRecommended() : null;
+    const selected = state.answers[question.id] || [];
+
+    html += '<div class="checkbox-grid">';
+    question.options.forEach(option => {
+      const isRecommended = recommended && Array.isArray(recommended) && recommended.includes(option.value);
+      const isSelected = selected.includes(option.value);
+
+      html += `
+        <label class="checkbox-option ${isSelected ? 'selected' : ''}">
+          <input type="checkbox" value="${option.value}"
+                 ${isSelected ? 'checked' : ''}
+                 onchange="toggleCheckbox('${question.id}', '${option.value}')">
+          <div class="checkbox-content">
+            <div class="checkbox-title">${option.label} ${isRecommended ? '✓' : ''}</div>
+            <div class="checkbox-description">${option.description}</div>
+          </div>
+        </label>
+      `;
+    });
+    html += '</div>';
+  }
+
+  else if (question.type === 'conditional_text') {
+    let hasVisibleFields = false;
+    question.fields.forEach(field => {
+      if (field.show && !field.show()) return;
+      hasVisibleFields = true;
+
+      const value = state.answers[field.name] || '';
+      html += `
+        <div class="form-group">
+          <label>${field.label}</label>
+          <input type="text" name="${field.name}" placeholder="${field.placeholder}" value="${value}">
+        </div>
+      `;
+    });
+
+    if (!hasVisibleFields) {
+      // Skip this question
+      nextStep();
+      return;
+    }
+  }
+
+  // Buttons
+  html += `
+    <div class="button-group">
+      ${state.currentStep > 0 ? '<button class="btn-secondary" onclick="prevStep()">Back</button>' : ''}
+      <button class="btn-primary" onclick="nextStep()">
+        ${state.currentStep === QUESTIONS.length - 1 ? 'Generate Brief' : 'Continue'}
+      </button>
+    </div>
+  </div>
+  `;
+
+  container.innerHTML = html;
+}
+
+// USER INTERACTION
+function selectOption(questionId, value) {
+  state.answers[questionId] = value;
+  renderQuestion(QUESTIONS[state.currentStep]);
+}
+
+function toggleCheckbox(questionId, value) {
+  if (!state.answers[questionId]) {
+    state.answers[questionId] = [];
+  }
+
+  const index = state.answers[questionId].indexOf(value);
+  if (index > -1) {
+    state.answers[questionId].splice(index, 1);
+  } else {
+    state.answers[questionId].push(value);
+  }
+}
+
+function nextStep() {
+  const question = QUESTIONS[state.currentStep];
+
+  // Collect answers from form fields
+  const form = document.querySelector('.question-card');
+  if (form) {
+    const inputs = form.querySelectorAll('input[type="text"], textarea');
+    inputs.forEach(input => {
+      state.answers[input.name] = input.value;
+    });
+  }
+
+  // Validate
+  if (question.type === 'text_multi') {
+    const requiredFields = question.fields.filter(f => f.required !== false && (!f.show || f.show()));
+    const missing = requiredFields.find(f => !state.answers[f.name] || !state.answers[f.name].trim());
+    if (missing) {
+      alert(`Please fill in: ${missing.label}`);
+      return;
+    }
+  }
+
+  // Run onComplete callback
+  if (question.onComplete) {
+    question.onComplete(state.answers);
+  }
+
+  // Move to next step
+  state.currentStep++;
+
+  // Check if we're done
+  if (state.currentStep >= QUESTIONS.length) {
+    submitQuiz();
     return;
   }
-  errEl.style.display = 'none';
-  answers.business_name = name; answers.business_type = ind; answers.industry = ind; answers.location = loc;
-  saveDraft();
-  buildVxGrid('emotional-grid', EMOTIONAL_OPTIONS, 'emotional_direction');
-  showOnly('scene-emotional'); setProgress('2 / 6');
+
+  // Skip conditional questions that don't meet condition
+  const nextQ = QUESTIONS[state.currentStep];
+  if (nextQ.type === 'conditional_text' && nextQ.condition && !nextQ.condition()) {
+    nextStep();
+    return;
+  }
+
+  renderStepIndicator();
+  renderQuestion(QUESTIONS[state.currentStep]);
+  window.scrollTo(0, 0);
 }
 
-// ─── VX Grid (single-select) ─────────────────────────────
+function prevStep() {
+  if (state.currentStep > 0) {
+    state.currentStep--;
 
-function buildVxGrid(gridId, options, answerKey) {
-  const current = answers[answerKey];
-  document.getElementById(gridId).innerHTML = options.map(opt =>
-    `<button class="vx-card ${current === opt.key ? 'selected' : ''}"
-       onclick="selectVx('${gridId}','${answerKey}','${opt.key}',this)">
-       <span class="vx-icon">${opt.icon}</span>
-       <span class="vx-label">${opt.label}</span>
-       <span class="vx-desc">${opt.desc}</span>
-     </button>`
-  ).join('');
+    // Skip conditional questions going backwards too
+    const prevQ = QUESTIONS[state.currentStep];
+    if (prevQ.type === 'conditional_text' && prevQ.condition && !prevQ.condition()) {
+      prevStep();
+      return;
+    }
+
+    renderStepIndicator();
+    renderQuestion(QUESTIONS[state.currentStep]);
+    window.scrollTo(0, 0);
+  }
 }
 
-function selectVx(gridId, answerKey, key, btn) {
-  document.querySelectorAll(`#${gridId} .vx-card`).forEach(c => c.classList.remove('selected'));
-  btn.classList.add('selected');
-  answers[answerKey] = key;
-}
+// SUBMIT
+async function submitQuiz() {
+  // Show loading
+  document.getElementById('questionContainer').classList.add('hidden');
+  document.getElementById('stepIndicator').classList.add('hidden');
+  document.getElementById('loadingScreen').classList.remove('hidden');
 
-function emotionalNext() {
-  if (!answers.emotional_direction) answers.emotional_direction = 'trusting';
-  saveDraft();
-  document.getElementById('fn-name').textContent = answers.business_name || 'the site';
-  buildFunctionGrid();
-  showOnly('scene-function'); setProgress('3 / 6');
-}
-
-// ─── Function grid (multi-select) ────────────────────────
-
-function buildFunctionGrid() {
-  const sel = new Set(answers.site_functions || []);
-  document.getElementById('function-grid').innerHTML = FUNCTIONS.map(fn =>
-    `<button class="fn-card ${sel.has(fn.key)?'selected':''}" onclick="toggleFn('${fn.key}',this)">
-       <span class="fn-icon">${fn.icon}</span>
-       <span class="fn-label">${fn.label}</span>
-       <span class="fn-desc">${fn.desc}</span>
-     </button>`
-  ).join('');
-}
-
-function toggleFn(key, btn) {
-  const sel = new Set(answers.site_functions || []);
-  if (sel.has(key)) { sel.delete(key); btn.classList.remove('selected'); }
-  else              { sel.add(key);    btn.classList.add('selected'); }
-  answers.site_functions = [...sel];
-}
-
-function functionNext() {
-  if (!answers.site_functions || !answers.site_functions.length) answers.site_functions = ['presence'];
-  saveDraft();
-  buildVxGrid('visual-grid', VISUAL_OPTIONS, 'visual_experience');
-  showOnly('scene-visual'); setProgress('4 / 6');
-}
-
-function visualNext() {
-  if (!answers.visual_experience) answers.visual_experience = 'smooth';
-  saveDraft();
-  const needsInteg = ['booking','payment','ecommerce'].some(k => answers.site_functions.includes(k));
-  if (needsInteg) { buildIntegFields(); showOnly('scene-integrations'); setProgress('5 / 6'); }
-  else { if (answers.aesthetic_direction) document.getElementById('f-aesthetic').value = answers.aesthetic_direction; showOnly('scene-look'); setProgress('6 / 6'); }
-}
-
-function buildIntegFields() {
-  const fns = new Set(answers.site_functions || []);
-  let html = '';
-  if (fns.has('booking')) html += `<div class="field"><label>Booking / scheduling system</label><input type="text" id="f-booking" value="${escHTML(answers.booking_system||'')}" placeholder="Calendly · Acuity · Square Appointments · Booksy · none yet"></div>`;
-  if (fns.has('payment')||fns.has('ecommerce')) html += `<div class="field"><label>Payment system</label><input type="text" id="f-payment" value="${escHTML(answers.payment_system||'')}" placeholder="Stripe · Square · PayPal · Shopify · none yet"></div>`;
-  document.getElementById('integ-fields').innerHTML = html;
-  setTimeout(() => { const el = document.querySelector('#integ-fields input'); if (el) el.focus(); }, 80);
-}
-
-function integNext() {
-  const bEl = document.getElementById('f-booking');
-  const pEl = document.getElementById('f-payment');
-  if (bEl) answers.booking_system = bEl.value.trim() || 'none specified';
-  if (pEl) answers.payment_system = pEl.value.trim() || 'none specified';
-  saveDraft();
-  if (answers.aesthetic_direction) document.getElementById('f-aesthetic').value = answers.aesthetic_direction;
-  showOnly('scene-look'); setProgress('6 / 6');
-}
-
-function lookBack() {
-  const needsInteg = ['booking','payment','ecommerce'].some(k => (answers.site_functions||[]).includes(k));
-  showOnly(needsInteg ? 'scene-integrations' : 'scene-visual');
-  setProgress(needsInteg ? '5 / 6' : '4 / 6');
-}
-
-// Emotional/visual key → human label maps for the prompt
-const EMOTIONAL_LABELS = {
-  trusting:  'Trusting and confident',
-  excited:   'Excited and inspired',
-  impressed: 'Impressed and curious',
-  calm:      'Calm and comfortable',
-  premium:   'Premium, high-end, or elite',
-  custom:    'Custom (see extra context)',
-};
-const VISUAL_LABELS = {
-  smooth:    'Smooth and professional — subtle animations',
-  cinematic: 'Cinematic scrolling — big visual moments',
-  playful:   'Interactive and playful — hover effects',
-  showcase:  'High-end product or brand showcase',
-  threedee:  '3D, motion-heavy, or experimental',
-  custom:    'Custom (see extra context)',
-};
-
-function lookNext() {
-  const ae  = document.getElementById('f-aesthetic').value.trim();
-  const ref = document.getElementById('f-reference') ? document.getElementById('f-reference').value.trim() : '';
-
-  answers.emotional_direction = EMOTIONAL_LABELS[answers.emotional_direction] || answers.emotional_direction || 'Trusting and confident';
-  answers.visual_experience   = VISUAL_LABELS[answers.visual_experience]   || answers.visual_experience   || 'Smooth and professional -- subtle animations';
-
-  const fnLabels = {
-    booking:   'Book appointments online',
-    payment:   'Collect payment online',
-    portfolio: 'Show portfolio / past work',
-    leads:     'Capture leads and quote requests',
-    ecommerce: 'Sell products online',
-    presence:  'Be findable (hours, location, contact)',
+  // Map answers to API format
+  const payload = {
+    business_name: state.answers.business_name,
+    business_type: state.answers.business_type,
+    industry: state.answers.business_type,
+    location: state.answers.location,
+    emotional_direction: mapToLegacyFormat('emotional_direction'),
+    visual_experience: mapToLegacyFormat('visual_experience'),
+    site_functions: state.answers.site_functions || [],
+    booking_system: state.answers.booking_system || '',
+    payment_system: state.answers.payment_system || '',
+    reference_url: state.answers.reference_url || '',
+    extra_context: state.answers.extra_context || '',
+    visitor_action: (state.answers.site_functions || []).join('; ')
   };
-  const fns = answers.site_functions || [];
-  answers.visitor_action = fns.map(k => fnLabels[k] || k).join('; ') || 'Be findable online';
 
-  const extraParts = [];
-  if (ae) extraParts.push('Visual feel: ' + ae);
-  answers.extra_context = extraParts.join('\n');
-  answers.reference_url = ref;
-  if (!answers.booking_system) answers.booking_system = '';
-
-  saveDraft();
-  generatePromptDirect();
-}
-
-function saveDraft() {
-  localStorage.setItem('pebble-draft', JSON.stringify({...answers, _ts: Date.now()}));
-}
-
-// Skips the old fork screen -- goes straight to prompt generation
-async function generatePromptDirect() {
-  document.getElementById('building-step').textContent = 'Composing your brief...';
-  showOnly('scene-building'); setProgress('');
   try {
-    const res = await fetch('/api/build', {
+    // Update loading text
+    document.getElementById('loadingSubtext').textContent = 'Researching industry best practices...';
+
+    const response = await fetch('/api/build', {
       method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(answers),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
     });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || 'Server error ' + res.status);
 
-    document.getElementById('results-title').innerHTML =
-      'Prompt ready for <em class="accent">' + escHTML(answers.business_name) + '.</em>';
-    document.getElementById('results-summary').textContent =
-      'Paste into Antigravity agent panel. ' +
-      (data.warning_count > 0 ? data.warning_count + ' anti-slop note(s) folded in. ' : '') +
-      'Brief saved to ' + data.saved_to;
-    document.getElementById('results-content').textContent = data.prompt;
-    document.getElementById('saved-path').textContent = data.saved_to;
-    localStorage.removeItem('pebble-draft');
-    showOnly('scene-results');
-  } catch(e) {
-    const isNetwork = e instanceof TypeError && e.message.toLowerCase().includes('fetch');
-    document.getElementById('results-title').innerHTML = 'Something <em class="accent">went wrong.</em>';
-    document.getElementById('results-summary').textContent = isNetwork
-      ? 'Cannot reach Pebble Engine. Make sure the launcher is still running in the background.'
-      : String(e);
-    document.getElementById('results-content').textContent = '';
-    showOnly('scene-results');
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to generate brief');
+    }
+
+    // Show results
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('resultsScreen').classList.add('show');
+    document.getElementById('promptBox').textContent = data.prompt;
+
+    // Store for copy/download
+    window.generatedPrompt = data.prompt;
+
+  } catch (error) {
+    alert('Error generating brief: ' + error.message);
+    document.getElementById('loadingScreen').classList.add('hidden');
+    document.getElementById('questionContainer').classList.remove('hidden');
+    document.getElementById('stepIndicator').classList.remove('hidden');
   }
 }
 
-// Kept for back-compat
-function showChoice() { generatePromptDirect(); }
+function mapToLegacyFormat(field) {
+  // Map new quiz answers to old format expected by backend
+  const mappings = {
+    emotional_direction: {
+      'professional_formal': 'Trusting and confident',
+      'friendly_approachable': 'Calm and comfortable',
+      'technical_expert': 'Trusting and confident',
+      'creative_confident': 'Excited and inspired'
+    },
+    visual_experience: {
+      'minimal': 'Smooth and professional',
+      'smooth': 'Smooth and professional',
+      'cinematic': 'Cinematic scrolling',
+      'interactive': 'Interactive and playful'
+    }
+  };
 
-// ─── AUTO-BUILD ──────────────────────────────────────────
-async function chooseBuild() {
-  showOnly('scene-building');
-  startBuildAnim();
-  try {
-    const res = await fetch('/api/generate', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(answers),
-    });
-    const data = await res.json();
-    stopBuildAnim();
-    res.ok ? showBuiltSuccess(data) : showBuiltError(data);
-    localStorage.removeItem('pebble-draft');
-  } catch(e) {
-    stopBuildAnim();
-    const isNetworkError = e instanceof TypeError && e.message.toLowerCase().includes('fetch');
-    showBuiltError({
-      error: isNetworkError
-        ? 'Connection to Pebble Engine lost. The server may have stopped running. Close this window, double-click the launcher again, and try the brief from "Saved Briefs."'
-        : String(e),
-    });
+  // Use motion_intensity for visual_experience
+  if (field === 'visual_experience') {
+    const motion = state.answers.motion_intensity;
+    return mappings.visual_experience[motion] || 'Smooth and professional';
   }
-}
 
-function startBuildAnim() {
-  const stepEl    = document.getElementById('building-step');
-  const elapsedEl = document.getElementById('building-elapsed');
-  const start     = Date.now();
-  let idx = 0;
-  stepEl.textContent = BUILD_STEPS[0];
-
-  _buildTimer = setInterval(() => {
-    idx = (idx + 1) % BUILD_STEPS.length;
-    stepEl.style.opacity = '0';
-    setTimeout(() => { stepEl.textContent = BUILD_STEPS[idx]; stepEl.style.opacity = '1'; }, 250);
-  }, 5000);
-
-  _elapsedTimer = setInterval(() => {
-    elapsedEl.textContent = `${Math.floor((Date.now() - start) / 1000)}s elapsed`;
-  }, 1000);
-}
-
-function stopBuildAnim() {
-  clearInterval(_buildTimer); clearInterval(_elapsedTimer);
-  _buildTimer = null; _elapsedTimer = null;
-}
-
-function showBuiltSuccess(data) {
-  document.getElementById('built-title').innerHTML =
-    `<em class="accent">${escHTML(answers.business_name)}</em> is built.`;
-  document.getElementById('built-stats').textContent =
-    `${data.file_count} file${data.file_count === 1 ? '' : 's'} · ${data.elapsed_seconds}s · ${data.model}` +
-    (data.warning_count > 0 ? ` · ${data.warning_count} slop warning${data.warning_count > 1 ? 's' : ''} resolved` : '');
-  document.getElementById('file-list').innerHTML = (data.files_written || []).map(f =>
-    `<li><code>${escHTML(f)}</code><a class="file-link" href="/preview/${data.slug}/${encodeURI(f)}" target="_blank">view →</a></li>`
-  ).join('');
-  document.getElementById('built-path').textContent = data.saved_to + 'site/';
-  document.getElementById('preview-btn').onclick = () => window.open(data.preview_url, '_blank');
-  _lastPrompt = data.prompt;
-  showOnly('scene-built');
-}
-
-function showBuiltError(data) {
-  document.getElementById('results-title').innerHTML = data.prompt
-    ? `Auto-build <em class="accent">failed.</em> Prompt is still ready.`
-    : `Something <em class="accent">broke.</em>`;
-  document.getElementById('results-summary').textContent = data.error || 'Unknown error. Check terminal output.';
-  document.getElementById('results-content').textContent = data.prompt || JSON.stringify(data, null, 2);
-  document.getElementById('saved-path').textContent = data.saved_to || 'output/';
-  showOnly('scene-results');
-}
-
-function showPromptView() {
-  document.getElementById('results-title').innerHTML = `Prompt for <em class="accent">${escHTML(answers.business_name)}</em>`;
-  document.getElementById('results-summary').textContent = 'The brief that built the site.';
-  document.getElementById('results-content').textContent = _lastPrompt;
-  showOnly('scene-results');
-}
-
-// ─── DOWNLOAD (prompt-only) ──────────────────────────────
-async function chooseDownload() {
-  showOnly('scene-building');
-  document.getElementById('building-step').textContent = 'Composing brief';
-  try {
-    const res = await fetch('/api/build', {
-      method: 'POST', headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(answers),
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || `Server ${res.status}`);
-    document.getElementById('results-title').innerHTML = `Brief for <em class="accent">${escHTML(answers.business_name)}</em>`;
-    document.getElementById('results-summary').textContent = data.warning_count > 0
-      ? `${data.warning_count} anti-slop warning${data.warning_count > 1 ? 's' : ''} baked into the prompt.`
-      : 'Clean run — no anti-slop warnings.';
-    document.getElementById('results-content').textContent = data.prompt;
-    document.getElementById('saved-path').textContent = data.saved_to;
-    localStorage.removeItem('pebble-draft');
-    showOnly('scene-results');
-  } catch(e) {
-    document.getElementById('results-title').innerHTML = 'Something <em class="accent">broke.</em>';
-    document.getElementById('results-summary').textContent = String(e);
-    document.getElementById('results-content').textContent = '';
-    showOnly('scene-results');
+  // Use brand_tone for emotional_direction
+  if (field === 'emotional_direction') {
+    const tone = state.answers.brand_tone;
+    return mappings.emotional_direction[tone] || 'Trusting and confident';
   }
+
+  return '';
 }
 
+// RESULTS ACTIONS
 function copyPrompt() {
-  navigator.clipboard.writeText(document.getElementById('results-content').textContent).then(() => {
-    const c = document.getElementById('copied'); c.classList.add('show');
-    setTimeout(() => c.classList.remove('show'), 1800);
-  });
+  if (!window.generatedPrompt) return;
+
+  navigator.clipboard.writeText(window.generatedPrompt)
+    .then(() => {
+      alert('Prompt copied to clipboard!');
+    })
+    .catch(() => {
+      // Fallback
+      const textarea = document.createElement('textarea');
+      textarea.value = window.generatedPrompt;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('Prompt copied to clipboard!');
+    });
 }
 
 function downloadPrompt() {
-  const text = document.getElementById('results-content').textContent;
-  const slug = (answers.business_name || 'brief').toLowerCase().replace(/[^\w]+/g, '-');
+  if (!window.generatedPrompt) return;
+
+  const filename = (state.answers.business_name || 'brief').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-PROMPT.md';
+  const blob = new Blob([window.generatedPrompt], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([text], {type:'text/markdown'}));
-  a.download = `${slug}-PROMPT.md`; a.click();
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
-// ─── BRIEFS DASHBOARD ────────────────────────────────────
-async function loadBriefs() {
-  const listEl  = document.getElementById('briefs-list');
-  const countEl = document.getElementById('briefs-count');
-  listEl.innerHTML = '<div class="empty-state">Loading…</div>';
-  try {
-    const data = await (await fetch('/api/briefs')).json();
-    const briefs = data.briefs || [];
-    countEl.textContent = `${briefs.length} ${briefs.length === 1 ? 'project' : 'projects'}`;
-    if (!briefs.length) {
-      listEl.innerHTML = '<div class="empty-state"><h3>No saved briefs yet</h3><div>Run through the quiz and your first project appears here.</div></div>';
-      return;
-    }
-    listEl.innerHTML = briefs.map(b => `
-      <div class="brief-row" onclick="viewBrief('${b.slug}')">
-        <div>
-          <div class="brief-name">${escHTML(b.business_name)} <span style="font-family:Fraunces,serif;font-style:italic;color:var(--ink-soft);font-size:0.85rem;font-weight:400;">— ${escHTML(b.industry)}</span></div>
-          <div class="brief-direction">${escHTML(b.aesthetic_direction || '(no direction set)')}</div>
-        </div>
-        <div class="brief-status ${b.has_site ? 'built' : ''}">${b.has_site ? '✓ built' : 'prompt only'}</div>
-        <div class="brief-date">${fmtDate(b.created_at)}</div>
-      </div>`).join('');
-  } catch(e) {
-    listEl.innerHTML = `<div class="empty-state">Failed to load: ${escHTML(String(e))}</div>`;
-  }
-}
-
-async function viewBrief(slug) {
-  showOnly('scene-detail');
-  try {
-    const data = await (await fetch(`/api/briefs/${slug}`)).json();
-    const b = data.brief;
-    document.getElementById('detail-status').textContent  = data.has_site ? '✓ Built' : 'Prompt only';
-    document.getElementById('detail-title').textContent   = b.business_name;
-    document.getElementById('detail-direction').textContent = b.aesthetic_direction || '';
-    document.getElementById('detail-prompt').textContent  = data.prompt || '(no prompt saved)';
-
-    if (data.has_site && data.files.length) {
-      document.getElementById('detail-files-wrap').style.display = 'block';
-      document.getElementById('detail-file-list').innerHTML = data.files.map(f =>
-        `<li><code>${escHTML(f)}</code><a class="file-link" href="/preview/${slug}/${encodeURI(f)}" target="_blank">view →</a></li>`
-      ).join('');
-      const pb = document.getElementById('detail-preview-btn');
-      pb.style.display = 'inline-block';
-      pb.onclick = () => window.open(`/preview/${slug}/`, '_blank');
-    } else {
-      document.getElementById('detail-files-wrap').style.display = 'none';
-      document.getElementById('detail-preview-btn').style.display = 'none';
-    }
-  } catch(e) {
-    document.getElementById('detail-title').textContent  = 'Failed to load';
-    document.getElementById('detail-prompt').textContent = String(e);
-  }
-}
-
-function copyDetailPrompt() {
-  navigator.clipboard.writeText(document.getElementById('detail-prompt').textContent).then(() => {
-    const c = document.getElementById('detail-copied'); c.classList.add('show');
-    setTimeout(() => c.classList.remove('show'), 1800);
-  });
-}
-
-// ─── UTIL ────────────────────────────────────────────────
-function escHTML(s) {
-  return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-}
-function fmtDate(iso) {
-  if (!iso) return '';
-  try { const d = new Date(iso); return d.toLocaleDateString(undefined, {month:'short', day:'numeric'}) + ' ' + d.toLocaleTimeString(undefined, {hour:'numeric', minute:'2-digit'}); }
-  catch { return iso.slice(0,10); }
-}
-
-// ─── KEYBOARD ────────────────────────────────────────────
-document.addEventListener('keydown', e => {
-  const sc = currentScene();
-  if (!sc) return;
-  if (e.key === 'Enter' && !e.shiftKey) {
-    if (sc === 'scene-welcome')            { e.preventDefault(); startQuiz(); }
-    else if (sc === 'scene-basics')        { e.preventDefault(); basicsNext(); }
-    else if (sc === 'scene-emotional')     { e.preventDefault(); emotionalNext(); }
-    else if (sc === 'scene-function')      { e.preventDefault(); functionNext(); }
-    else if (sc === 'scene-visual')        { e.preventDefault(); visualNext(); }
-    else if (sc === 'scene-integrations')  { e.preventDefault(); integNext(); }
-    else if (sc === 'scene-look') {
-      if (e.target.tagName === 'TEXTAREA' && !e.metaKey && !e.ctrlKey) return;
-      e.preventDefault(); lookNext();
-    }
-  } else if (e.key === 'Escape') {
-    if (sc === 'scene-basics')             goWelcome();
-    else if (sc === 'scene-emotional')     { showOnly('scene-basics'); setProgress('1 / 6'); }
-    else if (sc === 'scene-function')      { showOnly('scene-emotional'); setProgress('2 / 6'); }
-    else if (sc === 'scene-visual')        { showOnly('scene-function'); setProgress('3 / 6'); }
-    else if (sc === 'scene-integrations')  { showOnly('scene-visual'); setProgress('4 / 6'); }
-    else if (sc === 'scene-look')          lookBack();
-    else if (sc === 'scene-choice')        { showOnly('scene-look'); setProgress('6 / 6'); }
-    else if (sc === 'scene-settings')      goBack();
-    else if (sc === 'scene-detail')        goBriefs();
-    else if (sc === 'scene-briefs')        goWelcome();
-    else if (sc === 'scene-results' || sc === 'scene-built') goWelcome();
-  }
-});
+// INIT
+renderStepIndicator();
+renderQuestion(QUESTIONS[0]);
 </script>
 </body>
 </html>
