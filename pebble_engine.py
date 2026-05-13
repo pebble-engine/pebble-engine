@@ -445,7 +445,162 @@ You are building a complete, production-quality website. Read every section of t
 
 ---
 
-## 2. Visual Reference & Inspiration
+## 2. MANDATORY OUTPUT STRUCTURE
+
+**THIS IS NOT OPTIONAL. BUILD ALL OF THE FOLLOWING.**
+
+### Required Pages (Separate Routes)
+
+You MUST create these pages as separate Next.js routes:
+
+1. **Homepage** (`app/page.tsx`)
+   - The main landing page with all sections listed below
+
+2. **Services Page** (`app/services/page.tsx`)
+   - Detailed breakdown of each service offered
+   - Individual service cards with descriptions, pricing guidance, and CTAs
+   - Service area coverage map or list
+   - FAQ specific to services
+
+3. **About Page** (`app/about/page.tsx`)
+   - Company history and story
+   - Owner/team photos and bios (use Unsplash team images provided in section 8b)
+   - Licenses, certifications, years in business
+   - Why choose us / what makes us different
+   - Service area details
+
+4. **Contact Page** (`app/contact/page.tsx`)
+   - Contact form (name, email/phone, message)
+   - Business hours
+   - Service area map or coverage area
+   - Phone number prominent
+   - Email and physical address if applicable
+
+### Homepage Sections (Build in This Order)
+
+The homepage (`app/page.tsx`) MUST include ALL of these sections:
+
+**1. Hero Section**
+- Full-height section (min-h-[100dvh])
+- Headline from the Business Intelligence skill page structure
+- Subheadline with specific claims (location, years, family-owned, licensed)
+- TWO CTAs: Primary emergency CTA + Secondary booking CTA
+- Use hero image from section 8b (Unsplash images provided)
+- Include service area in eyebrow text above headline
+
+**2. Services Overview**
+- Heading: "Complete [Business Type] Services" or similar from BI skill
+- 3-6 service cards in grid layout
+- Each card MUST have:
+  - Service image (use service images from section 8b)
+  - Service name
+  - 2-3 sentence description (specific, not vague)
+  - CTA to services page
+- Use GSAP scroll reveals as specified in Stack skill
+
+**3. Service Area**
+- Heading: "Serving [Location]"
+- Either: Interactive map embed OR city/town list
+- Prominent display of coverage area
+- "Don't see your area? Call us: [BUSINESS PHONE]"
+
+**4. Social Proof**
+- If real testimonials provided: Display 2-3 testimonial cards
+- If NO testimonials: Display trust badges instead:
+  - Licensed & Insured
+  - Years in business
+  - Family owned (if applicable)
+  - BBB rating (if applicable)
+- DO NOT invent fake testimonials
+
+**5. About Preview**
+- Heading: "Who We Are" or "[Business Name] Story"
+- Owner photo (use team image from section 8b)
+- 2-3 paragraphs about the business
+- Link to full About page
+- Highlight: Years in business, family-owned status, local expertise
+
+**6. FAQ Section (If Applicable)**
+- 4-6 common questions specific to this industry
+- Answers should be helpful and specific
+- Use accordion or simple Q&A format
+
+**7. Final CTA Section**
+- Heading: Action-oriented ("Ready to fix that leak?" / "Schedule your appointment")
+- Large CTA button: [BUSINESS PHONE]
+- Secondary CTA: Book Online or Contact Form
+- Background: Can use subtle background image or solid color
+
+**8. Footer**
+- Company name and tagline
+- Quick links: Services, About, Contact
+- Service area
+- Phone number (clickable tel: link)
+- Email address placeholder: [EMAIL]
+- Physical address placeholder: [ADDRESS]
+- Hours of operation
+- License number placeholder (if applicable to industry)
+- Social media placeholders
+- Copyright notice
+
+### Navigation Requirements
+
+**Header (Sticky Navigation):**
+- Logo / Business name
+- Links: Services, About, Contact
+- Prominent phone CTA button: [BUSINESS PHONE]
+- Mobile hamburger menu
+- Hide on scroll down, show on scroll up (use GSAP)
+- Background blur or solid color on scroll
+
+### Image Usage (CRITICAL)
+
+Section 8b provides Unsplash image URLs. You MUST use these exact URLs:
+
+```tsx
+// Example - DO THIS:
+<img src="https://source.unsplash.com/1600x900/?professional-plumber-working" alt="..." />
+
+// NOT THIS:
+<img src="/images/hero.jpg" alt="..." />
+```
+
+Every image must:
+- Use the Unsplash URL provided in section 8b
+- Have descriptive alt text
+- Be listed in TODO_ASSETS.md for client replacement
+
+### Content Requirements
+
+**DO:**
+- Use [BUSINESS PHONE], [EMAIL], [ADDRESS] placeholders
+- Write specific, concrete copy based on Business Intelligence skill
+- Follow industry-specific page structure from BI skill
+- Apply emotional direction and visual experience settings
+- Use real Unsplash image URLs from section 8b
+
+**DO NOT:**
+- Invent phone numbers (especially 555 numbers)
+- Create fake testimonials
+- Use vague copy ("world-class", "unrivaled", "where X meets Y")
+- Use local file paths for images (/images/...) - use Unsplash URLs
+- Skip any required sections listed above
+
+### Delivery Checklist
+
+Before you finish, verify you built:
+- [ ] 4 pages: Homepage, Services, About, Contact
+- [ ] All 8 homepage sections
+- [ ] Sticky navigation with hide/show scroll behavior
+- [ ] All images use Unsplash URLs from section 8b
+- [ ] [BUSINESS PHONE] placeholder in header, hero, and footer
+- [ ] Mobile responsive (Tailwind responsive classes)
+- [ ] GSAP animations on scroll (from Stack skill)
+- [ ] All documentation files (README, HANDOFF, TODO_ASSETS, etc.)
+
+---
+
+## 3. Visual Reference & Inspiration
 
 {reference_block}
 
