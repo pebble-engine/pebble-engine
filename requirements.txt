@@ -1,0 +1,15 @@
+# Pebble Engine — OPTIONAL dependencies
+#
+# The quiz, brief generation, and prompt download work without these.
+# Install for auto-build mode (the engine calls an LLM and writes
+# real website files to disk):
+#
+#     pip install -r requirements.txt
+
+# --- Gemini (default provider) ---
+# Google AI Ultra users get higher limits included with their subscription.
+google-genai>=1.0.0
+
+# --- Anthropic Claude (premium / second-opinion option) ---
+# Switch via: PEBBLE_PROVIDER=anthropic in your .env file
+anthropic>=0.40.0
