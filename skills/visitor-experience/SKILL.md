@@ -19,9 +19,9 @@ The emotional direction answer defines the underlying personality of the entire 
 **The goal:** The visitor should feel reassured within the first 3 seconds. Doubt must be eliminated before it forms.
 
 **Typography:**
-- Clean, legible heading font — geometric or humanist sans-serif with strong weight contrast
-- No decorative or experimental typefaces
-- Body text at comfortable size (17–18px), generous line height (1.7)
+- Distinctive heading font with authority — choose from: Oswald (condensed, commanding), Syne (geometric, modern), Manrope heavy (solid, trustworthy), Fraunces (warm editorial), or Playfair Display (established, credible)
+- Do NOT use Inter, Roboto, Poppins, DM Sans, or any convergence font as a heading — these signal "generic AI output" and undermine trust
+- Body text at comfortable size (17–18px), generous line height (1.7); Inter is acceptable for body only when paired with a distinctive heading face
 - Font weight contrast: bold headings, regular body, no thin weights
 
 **Motion:**

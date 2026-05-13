@@ -729,43 +729,6 @@ const QUESTIONS = [
     getRecommended: () => state.recommendations?.brand_tone
   },
   {
-    id: 'visual_aesthetic',
-    type: 'single_select',
-    title: 'What visual aesthetic fits best?',
-    subtitle: 'This determines colors, backgrounds, typography, and overall feel',
-    options: [
-      { value: 'clean_modern', label: 'Clean & Modern', description: 'Light backgrounds, simple navigation, trustworthy. Best for home services, wellness, food.' },
-      { value: 'premium_editorial', label: 'Premium & Editorial', description: 'Dark backgrounds, large imagery, sophisticated. Best for luxury, high-end real estate, jewelry.' },
-      { value: 'bold_energetic', label: 'Bold & Energetic', description: 'Bright colors, dynamic layouts, exciting. Best for creative agencies, events, youth brands.' },
-      { value: 'minimal_refined', label: 'Minimal & Refined', description: 'Generous whitespace, elegant, calm. Best for wellness, professional services, upscale retail.' },
-      { value: 'technical_professional', label: 'Technical & Professional', description: 'Structured, data-focused, credible. Best for law, accounting, B2B services.' }
-    ],
-    getRecommended: () => {
-      const rec = state.recommendations?.visual_aesthetic;
-      return rec === 'clean_modern' ? 'Clean & Modern' :
-             rec === 'premium_editorial' ? 'Premium & Editorial' :
-             rec === 'minimal_refined' ? 'Minimal & Refined' :
-             rec === 'technical_professional' ? 'Technical & Professional' : null;
-    }
-  },
-  {
-    id: 'motion_intensity',
-    type: 'single_select',
-    title: 'How much animation and motion?',
-    subtitle: 'More motion = more visual interest, but can slow load times on mobile',
-    options: [
-      { value: 'minimal', label: 'Minimal', description: 'Fade-ins only. Fast, clean, no distractions. Best for professional services, emergency services.' },
-      { value: 'smooth', label: 'Smooth', description: 'Subtle GSAP scroll reveals. Polished without being flashy. Best for most businesses.' },
-      { value: 'cinematic', label: 'Cinematic', description: 'Parallax, pinned sections, story-driven. Best for luxury, creative agencies, product showcases.' },
-      { value: 'interactive', label: 'Interactive', description: 'Hover effects, micro-interactions, playful. Best for tech, apps, creative work.' }
-    ],
-    getRecommended: () => {
-      const rec = state.recommendations?.motion_intensity;
-      return rec === 'minimal' ? 'Minimal' :
-             rec === 'smooth' ? 'Smooth' : null;
-    }
-  },
-  {
     id: 'site_functions',
     type: 'multi_select',
     title: 'What does your site need to do?',
@@ -816,9 +779,11 @@ const QUESTIONS = [
     id: 'reference',
     type: 'text_multi',
     title: 'Visual inspiration (optional)',
-    subtitle: 'Help us understand your aesthetic preferences',
+    subtitle: 'Up to 3 reference sites — the engine synthesizes what they share',
     fields: [
-      { name: 'reference_url', label: 'Reference Website URL', placeholder: 'https://dribbble.com/shots/...', required: false },
+      { name: 'reference_url',   label: 'Reference Website #1', placeholder: 'https://...', required: false },
+      { name: 'reference_url_2', label: 'Reference Website #2', placeholder: 'https://...', required: false },
+      { name: 'reference_url_3', label: 'Reference Website #3', placeholder: 'https://...', required: false },
       { name: 'extra_context', label: 'Additional Notes', placeholder: 'Any specific requests or context...', type: 'textarea', required: false }
     ]
   }
@@ -872,12 +837,7 @@ function showIndustryBanner(category, explanation) {
 // RENDER FUNCTIONS
 function renderStepIndicator() {
   const container = document.getElementById('stepIndicator');
-  const totalSteps = QUESTIONS.filter(q => {
-    if (q.type === 'conditional_text' && q.condition) {
-      return q.condition();
-    }
-    return true;
-  }).length;
+  const totalSteps = QUESTIONS.length;
 
   let html = '';
   for (let i = 0; i < totalSteps; i++) {
@@ -1101,12 +1061,14 @@ async function submitQuiz() {
     business_type: state.answers.business_type,
     industry: state.answers.business_type,
     location: state.answers.location,
-    emotional_direction: mapToLegacyFormat('emotional_direction'),
-    visual_experience: mapToLegacyFormat('visual_experience'),
+    brand_position: state.answers.brand_position || 'professional',
+    brand_tone: state.answers.brand_tone || 'professional_formal',
     site_functions: state.answers.site_functions || [],
     booking_system: state.answers.booking_system || '',
     payment_system: state.answers.payment_system || '',
     reference_url: state.answers.reference_url || '',
+    reference_url_2: state.answers.reference_url_2 || '',
+    reference_url_3: state.answers.reference_url_3 || '',
     extra_context: state.answers.extra_context || '',
     visitor_action: (state.answers.site_functions || []).join('; ')
   };
@@ -1184,14 +1146,13 @@ function copyPrompt() {
       alert('Prompt copied to clipboard!');
     })
     .catch(() => {
-      // Fallback
-      const textarea = document.createElement('textarea');
-      textarea.value = window.generatedPrompt;
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textarea);
-      alert('Prompt copied to clipboard!');
+      // Clipboard API unavailable (e.g. non-HTTPS context) — surface the prompt box so the user can select-all and copy manually
+      const box = document.getElementById('promptBox');
+      if (box) {
+        box.focus();
+        window.getSelection()?.selectAllChildren(box);
+      }
+      alert('Could not copy automatically. Press Ctrl+A / Cmd+A in the prompt box to select all, then copy.');
     });
 }
 

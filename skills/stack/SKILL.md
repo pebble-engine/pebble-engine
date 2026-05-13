@@ -47,6 +47,8 @@ project-name/
 │   ├── layout/
 │   │   ├── Header.tsx
 │   │   └── Footer.tsx
+│   ├── providers/           ← client-side wrappers (always required)
+│   │   └── LenisProvider.tsx
 │   └── three/               ← Three.js / R3F components (only if 3D needed)
 │       └── Scene.tsx
 ├── lib/
@@ -249,8 +251,13 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Allow external image domains if used
-    remotePatterns: [],
+    // Allow external image domains for placeholder images.
+    // Add the client's CDN/host here before launch.
+    remotePatterns: [
+      { protocol: "https", hostname: "images.pexels.com" },
+      { protocol: "https", hostname: "picsum.photos" },
+      { protocol: "https", hostname: "images.unsplash.com" },
+    ],
   },
 };
 export default nextConfig;
@@ -297,80 +304,179 @@ module.exports = {
 
 ## app/globals.css
 
-This is the single source of truth for brand tokens. Every color and font goes here as a CSS custom property so Tailwind and plain CSS both use the same values:
+This is the single source of truth for brand tokens. Every color goes here as a CSS custom property. Font variables (`--font-display`, `--font-body`) are set automatically by `next/font` via the class on `<html>` — do NOT re-declare them here.
 
 ```css
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  /* Prevent tap flash on iOS */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Font rendering */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Safe area insets for notched iPhones */
+  body {
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left:   env(safe-area-inset-left);
+    padding-right:  env(safe-area-inset-right);
+  }
+
+  /* Prevent font size inflation on iPhone landscape */
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Prevent input zoom on iOS */
+  input, textarea, select {
+    font-size: 16px;
+  }
+
+  /* Never set scroll-behavior: smooth — Lenis handles scroll */
+}
+
 :root {
-  /* Brand colors — replace values with those from the brief */
-  --color-dominant: #1a1a1a;
-  --color-secondary: #f5f0e8;
-  --color-accent:    #c8432a;
-  --color-surface:   #ffffff;
-  --color-text:      #1a1a1a;
+  /*
+   * BRAND COLORS — replace EVERY value with the brief's design system.
+   * These are NOT universal defaults. Read the BI Skill before choosing.
+   *
+   * Light backgrounds (home services, wellness, food, professional services):
+   *   dominant: #FFFFFF   secondary: #F9FAFB   surface: #FFFFFF   text: #111827
+   *   accent: trust=blue #2563EB, urgency=amber #D97706, growth=green #059669
+   *
+   * Dark backgrounds (luxury, tech/SaaS, creative agencies, nightlife):
+   *   dominant: #0A0A0A   secondary: #1A1A1A   surface: #111111   text: #F9FAFB
+   *   accent: gold #C8A96E, electric #3B82F6, emerald #10B981
+   *
+   * The defaults below are light-background. Override for dark industries.
+   */
+  --color-dominant:  #FFFFFF;
+  --color-secondary: #F9FAFB;
+  --color-accent:    #2563EB;
+  --color-surface:   #FFFFFF;
+  --color-text:      #111827;
 
-  /* Typography — replace with actual font names from the brief */
-  --font-display: "Fraunces", serif;
-  --font-body:    "Inter", sans-serif;
-
-  /* Smooth scroll via Lenis — do not set scroll-behavior: smooth here */
+  /*
+   * Font variables are injected by next/font in app/layout.tsx.
+   * --font-display and --font-body are set on <html> automatically.
+   * Use via Tailwind utilities: font-display, font-body
+   * Do not redeclare them here — next/font owns these values.
+   */
 }
 
 html, body {
   overflow-x: hidden;
 }
 
-/* Reduce motion for accessibility */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
   }
 }
 ```
 
 ---
 
-## app/layout.tsx — Root Layout with Lenis
+## app/layout.tsx — Root Layout
+
+The root layout must be a **Server Component** so it can export `metadata`. Lenis and ScrollTrigger live in a separate client provider.
+
+**CRITICAL — two fonts must be loaded here.** If only one font is loaded, the display font fallback is browser serif and the heading will look generic. Load both:
 
 ```tsx
-"use client";
-
+// app/layout.tsx — Server Component (NO "use client" here)
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { useEffect, useRef } from "react";
-import Lenis from "lenis";
+import { Inter, Fraunces } from "next/font/google";
+import { LenisProvider } from "@/components/providers/LenisProvider";
 import "./globals.css";
 
+// Body font — neutral and readable. Replace if the brief calls for something else.
 const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
+
+// Display/heading font — MUST be distinctive (see No-Slop Skill for banned fonts).
+// Replace "Fraunces" with whatever the brief specifies.
+// Other acceptable imports: Oswald, Syne, Playfair_Display, Instrument_Serif,
+// Space_Mono, Manrope, Bebas_Neue — match to industry and emotional direction.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  variable: "--font-display",
+  axes: ["opsz"],
+});
+
+export const metadata: Metadata = {
+  title: "[Business Name]",
+  description: "[Business tagline — specific, not vague]",
+  other: {
+    // viewport-fit=cover is required for iOS safe-area env() to work
+    "viewport": "width=device-width, initial-scale=1, viewport-fit=cover",
+    // Prevents iOS from auto-linking phone numbers and breaking layouts
+    "format-detection": "telephone=no",
+  },
+};
 
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Pass BOTH font variables to <html> so Tailwind font-display and font-body work
+  return (
+    <html lang="en" className={`${inter.variable} ${fraunces.variable}`}>
+      <body>
+        <LenisProvider>{children}</LenisProvider>
+      </body>
+    </html>
+  );
+}
+```
+
+```tsx
+// components/providers/LenisProvider.tsx — Client Component
+"use client";
+
+import { useEffect, useRef } from "react";
+import Lenis from "lenis";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+// Register and configure ScrollTrigger once at the app root.
+// These two lines are iOS requirements — do not move them into individual components.
+gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.normalizeScroll(true);                   // fixes iOS scroll position misreporting
+ScrollTrigger.config({ ignoreMobileResize: true });    // prevents address-bar resize from jumping animations
+
+export function LenisProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
-    // Initialize Lenis smooth scroll
     lenisRef.current = new Lenis({
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
+      smoothTouch: false,   // use native momentum on touch — enabling this causes lag on iOS
+      touchMultiplier: 2,
+      infinite: false,
+      overscroll: false,    // prevents rubber-band conflict with GSAP
     });
 
-    // Integrate Lenis with GSAP ticker for ScrollTrigger compatibility
-    const raf = (time: number) => {
-      lenisRef.current?.raf(time);
-    };
+    // Refresh all ScrollTrigger positions after fonts finish loading.
+    // Without this, trigger positions are wrong on slow connections (common on iPhone).
+    document.fonts.ready.then(() => ScrollTrigger.refresh());
 
-    // Use requestAnimationFrame loop
     let rafId: number;
     const animate = (time: number) => {
-      raf(time);
+      lenisRef.current?.raf(time);
       rafId = requestAnimationFrame(animate);
     };
     rafId = requestAnimationFrame(animate);
@@ -381,11 +487,7 @@ export default function RootLayout({
     };
   }, []);
 
-  return (
-    <html lang="en" className={inter.variable}>
-      <body>{children}</body>
-    </html>
-  );
+  return <>{children}</>;
 }
 ```
 

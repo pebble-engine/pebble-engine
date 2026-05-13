@@ -1,0 +1,19 @@
+# secrets — never commit
+.env
+
+# generated output (client sites)
+output/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Claude Code internal
+.claude/
+
+# OS
+.DS_Store
+Thumbs.db

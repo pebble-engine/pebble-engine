@@ -27,6 +27,8 @@ import os
 import re
 import sys
 import time
+import urllib.parse
+import urllib.request
 import webbrowser
 from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
@@ -182,86 +184,176 @@ def _slugify(text: str) -> str:
 
 
 # --------------------------------------------------------------------------
-# IMAGE SOURCING SYSTEM (Unsplash)
+# IMAGE SOURCING SYSTEM
+# Primary:  Pexels API (keyword-relevant, requires PEXELS_API_KEY in .env)
+# Fallback: Picsum Photos (seed-based, no key needed, generic photos)
 # --------------------------------------------------------------------------
 
-# Unsplash image search queries by industry and section type
-IMAGE_QUERIES = {
-    "hero": {
-        "plumbing": ["professional plumber working", "plumbing repair service", "plumber tools professional"],
-        "hvac": ["hvac technician professional", "air conditioning repair", "heating system service"],
-        "electrical": ["electrician working professional", "electrical repair service", "electrician tools"],
-        "restaurant": ["restaurant interior modern", "restaurant dining elegant", "chef cooking kitchen"],
-        "cafe": ["coffee shop interior modern", "cafe atmosphere cozy", "barista coffee"],
-        "yoga": ["yoga studio peaceful", "yoga class group", "wellness space modern"],
-        "lawyer": ["law office professional", "lawyer meeting client", "legal office modern"],
-        "real estate": ["modern home exterior", "real estate professional", "luxury home interior"],
-        "dentist": ["dental office modern", "dentist professional smiling", "dental clinic clean"],
-        "default": ["professional business office", "modern workspace", "professional service"],
-    },
-    "service": {
-        "plumbing": ["plumbing tools close-up", "pipe repair work", "water fixture installation"],
-        "hvac": ["hvac equipment modern", "air conditioning unit", "heating system"],
-        "electrical": ["electrical panel professional", "wiring work closeup", "electrical tools"],
-        "restaurant": ["food plating elegant", "restaurant dish gourmet", "culinary presentation"],
-        "cafe": ["coffee latte art", "pastry display bakery", "espresso machine"],
-        "default": ["professional tools workspace", "service quality detail", "professional equipment"],
-    },
-    "team": {
-        "default": ["professional portrait business", "business professional smiling", "team member professional"],
-    },
-    "about": {
-        "default": ["business team meeting", "professionals collaborating", "office team working"],
-    },
+# Maps industry keywords → (main scene query, people/team query)
+_PEXELS_QUERIES: dict[str, tuple[str, str]] = {
+    # Home services
+    "plumbing":          ("plumber pipe repair bathroom",        "plumber technician worker"),
+    "electrician":       ("electrical wiring installation",      "electrician worker professional"),
+    "electrical":        ("electrical wiring installation",      "electrician worker professional"),
+    "hvac":              ("air conditioning heating system",     "hvac technician professional"),
+    "roofing":           ("roof shingles construction",          "roofer contractor worker"),
+    "landscaping":       ("garden landscape lawn design",        "landscaper gardener worker"),
+    "cleaning":          ("clean modern interior spotless",      "cleaning service professional"),
+    "painting":          ("interior painting home",              "painter contractor worker"),
+    "general contractor":("home renovation construction",        "contractor builder worker"),
+    "construction":      ("construction building site",          "construction worker builder"),
+    "moving":            ("moving boxes relocation truck",       "movers professional team"),
+    "pest control":      ("clean pest free home interior",       "pest control technician"),
+    "pool":              ("swimming pool luxury backyard",       "pool technician professional"),
+    "fence":             ("fence installation backyard",         "fence contractor worker"),
+    "flooring":          ("hardwood floor installation",         "flooring contractor worker"),
+    # Health & wellness
+    "yoga":              ("yoga studio peaceful zen",            "yoga instructor class"),
+    "fitness":           ("gym equipment modern workout",        "personal trainer coaching"),
+    "personal trainer":  ("fitness training gym",               "personal trainer athlete"),
+    "wellness":          ("spa wellness relaxing retreat",       "wellness therapist professional"),
+    "spa":               ("luxury spa interior serene",          "spa therapist massage"),
+    "massage":           ("massage therapy room calm",           "massage therapist professional"),
+    "chiropractic":      ("chiropractic clinic office",          "chiropractor patient treatment"),
+    "physical therapy":  ("physical therapy rehabilitation",     "physical therapist patient"),
+    # Medical & dental
+    "dentist":           ("dental office clinic modern",         "dentist patient professional"),
+    "dental":            ("dental office clinic modern",         "dentist professional"),
+    "doctor":            ("medical clinic office modern",        "doctor patient professional"),
+    "optometry":         ("eye care clinic optical",             "optometrist professional"),
+    "veterinary":        ("veterinary clinic pet care",          "veterinarian pet owner"),
+    "vet":               ("veterinary animal clinic",            "veterinarian professional"),
+    # Mental health
+    "therapist":         ("therapy office calm peaceful",        "therapist counselor professional"),
+    "counseling":        ("counseling therapy office serene",    "counselor therapist"),
+    "psychology":        ("psychology office calm neutral",      "psychologist professional"),
+    # Beauty
+    "hair salon":        ("hair salon interior modern",          "hairstylist client beauty"),
+    "salon":             ("beauty salon interior modern",        "hairstylist beautician professional"),
+    "barbershop":        ("barbershop interior classic",         "barber client professional"),
+    "nail":              ("nail salon manicure art",             "nail technician client"),
+    "makeup":            ("makeup artist studio beauty",         "makeup artist professional"),
+    # Food & beverage
+    "restaurant":        ("restaurant interior fine dining",     "chef server professional"),
+    "cafe":              ("coffee shop cafe interior cozy",      "barista coffee professional"),
+    "coffee":            ("coffee shop cafe cozy interior",      "barista professional"),
+    "bakery":            ("bakery fresh bread pastry",           "baker pastry chef"),
+    "bar":               ("cocktail bar lounge interior",        "bartender mixologist"),
+    "catering":          ("catering food event elegant",         "catering chef professional"),
+    # Professional services
+    "law":               ("law office modern professional",      "lawyer attorney professional"),
+    "attorney":          ("law firm office professional",        "attorney professional"),
+    "accounting":        ("accounting office finance modern",    "accountant professional"),
+    "financial":         ("financial planning office",           "financial advisor professional"),
+    "insurance":         ("professional office business",        "insurance agent professional"),
+    "real estate":       ("luxury modern home interior",         "real estate agent professional"),
+    # Tech & creative
+    "tech":              ("technology startup office modern",    "software developer team"),
+    "software":          ("software development modern office",  "developer programmer team"),
+    "saas":              ("modern tech office startup",          "software team professional"),
+    "agency":            ("creative agency studio modern",       "design team professional"),
+    "marketing":         ("marketing creative office",           "marketing team professional"),
+    "web design":        ("design studio creative workspace",    "designer professional"),
+    "photography":       ("photography studio camera equipment", "photographer professional"),
+    # Events & lifestyle
+    "wedding":           ("wedding ceremony elegant venue",      "wedding couple celebration"),
+    "event":             ("event venue elegant setup",           "event planner professional"),
+    # Education & childcare
+    "childcare":         ("daycare children bright classroom",   "childcare teacher professional"),
+    "education":         ("classroom school learning bright",    "teacher student professional"),
+    "tutoring":          ("tutoring study desk learning",        "tutor student"),
+    # Pet services
+    "pet grooming":      ("pet grooming salon dog",              "pet groomer professional"),
+    "dog training":      ("dog training obedience outdoor",      "dog trainer professional"),
+    # Auto
+    "auto repair":       ("auto repair shop garage clean",       "mechanic car professional"),
+    "car wash":          ("car wash clean shiny auto",           "car wash professional"),
 }
 
 
-def get_unsplash_images(industry: str, image_count: int = 8) -> dict[str, str]:
+def _pexels_queries_for_industry(industry: str) -> tuple[str, str]:
+    ind = industry.lower()
+    for key, queries in _PEXELS_QUERIES.items():
+        if key in ind:
+            return queries
+    safe = re.sub(r"[^a-z0-9 ]", " ", ind).strip()
+    return (f"{safe} professional business", f"{safe} professional team")
+
+
+def get_placeholder_images(industry: str, image_count: int = 8) -> dict[str, str]:
+    """Picsum Photos fallback — seed-based, no API key, generic photos."""
+    slug = _slugify(industry)
+    return {
+        "hero":      f"https://picsum.photos/seed/{slug}-hero/1600/900",
+        "service_1": f"https://picsum.photos/seed/{slug}-svc1/800/600",
+        "service_2": f"https://picsum.photos/seed/{slug}-svc2/800/600",
+        "service_3": f"https://picsum.photos/seed/{slug}-svc3/800/600",
+        "team_1":    f"https://picsum.photos/seed/{slug}-team1/600/600",
+        "team_2":    f"https://picsum.photos/seed/{slug}-team2/600/600",
+        "gallery_1": f"https://picsum.photos/seed/{slug}-gal1/800/600",
+        "gallery_2": f"https://picsum.photos/seed/{slug}-gal2/800/600",
+    }
+
+
+def get_pexels_images(industry: str, api_key: str) -> dict[str, str]:
     """
-    Fetch relevant images from Unsplash for a given industry.
-    Returns a dict of {label: url} for different image types.
-
-    Uses Unsplash Source API (no API key needed) for simplicity.
-    Format: https://source.unsplash.com/{WIDTH}x{HEIGHT}/?{KEYWORDS}
-
-    Args:
-        industry: Business industry (plumbing, restaurant, etc.)
-        image_count: Number of images to fetch (default 8)
-
-    Returns:
-        Dictionary with image labels and Unsplash URLs
+    Fetch industry-relevant images from Pexels API.
+    Makes 2 requests: one landscape query for scenes, one portrait for team.
+    Falls back to Picsum per-slot on any individual failure.
     """
-    industry_slug = _slugify(industry)
-    images = {}
+    fallback = get_placeholder_images(industry)
+    main_q, people_q = _pexels_queries_for_industry(industry)
 
-    # Map industry to query categories
-    hero_queries = IMAGE_QUERIES["hero"].get(industry_slug, IMAGE_QUERIES["hero"]["default"])
-    service_queries = IMAGE_QUERIES["service"].get(industry_slug, IMAGE_QUERIES["service"]["default"])
-    team_queries = IMAGE_QUERIES["team"]["default"]
+    def _fetch(query: str, orientation: str, count: int) -> list[str]:
+        params = urllib.parse.urlencode({
+            "query": query,
+            "per_page": max(count + 5, 15),
+            "orientation": orientation,
+        })
+        req = urllib.request.Request(
+            f"https://api.pexels.com/v1/search?{params}",
+            headers={"Authorization": api_key, "User-Agent": "Mozilla/5.0"},
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            data = json.loads(resp.read())
+        urls, seen = [], set()
+        for photo in data.get("photos", []):
+            pid = photo["id"]
+            if pid in seen:
+                continue
+            seen.add(pid)
+            src = photo["src"]
+            urls.append(src.get("large2x") or src.get("large") or src["original"])
+            if len(urls) >= count:
+                break
+        return urls
 
-    # Generate Unsplash URLs (using source.unsplash.com for simplicity)
-    # Note: These are random but themed. For production, could use official API for specific images.
+    images: dict[str, str] = {}
 
-    # Hero image (large, 1600x900)
-    hero_keywords = hero_queries[0].replace(" ", ",")
-    images["hero"] = f"https://source.unsplash.com/1600x900/?{hero_keywords}"
+    try:
+        scene = _fetch(main_q, "landscape", 6)
+        keys = ["hero", "service_1", "service_2", "service_3", "gallery_1", "gallery_2"]
+        for i, key in enumerate(keys):
+            images[key] = scene[i] if i < len(scene) else fallback[key]
+    except Exception as e:
+        print(f"  Pexels scene query failed ({e!r}) — using Picsum fallback for scene slots")
+        for key in ["hero", "service_1", "service_2", "service_3", "gallery_1", "gallery_2"]:
+            images[key] = fallback[key]
 
-    # Service images (medium, 800x600)
-    for i, query in enumerate(service_queries[:3], 1):
-        keywords = query.replace(" ", ",")
-        images[f"service_{i}"] = f"https://source.unsplash.com/800x600/?{keywords}"
-
-    # Team/About images (square, 600x600)
-    team_keywords = team_queries[0].replace(" ", ",")
-    images["team_1"] = f"https://source.unsplash.com/600x600/?{team_keywords}"
-    images["team_2"] = f"https://source.unsplash.com/600x600/?{team_keywords},portrait"
-
-    # Gallery images (if needed, 800x600)
-    if industry_slug in ["restaurant", "cafe", "yoga", "dentist", "real-estate"]:
-        images["gallery_1"] = f"https://source.unsplash.com/800x600/?{hero_keywords},interior"
-        images["gallery_2"] = f"https://source.unsplash.com/800x600/?{hero_keywords},detail"
+    try:
+        people = _fetch(people_q, "portrait", 2)
+        images["team_1"] = people[0] if len(people) > 0 else fallback["team_1"]
+        images["team_2"] = people[1] if len(people) > 1 else fallback["team_2"]
+    except Exception as e:
+        print(f"  Pexels people query failed ({e!r}) — using Picsum fallback for team slots")
+        images["team_1"] = fallback["team_1"]
+        images["team_2"] = fallback["team_2"]
 
     return images
+
+
+# Keep old name as alias so any external callers don't break
+get_unsplash_images = get_placeholder_images
 
 
 # --------------------------------------------------------------------------
@@ -425,6 +517,103 @@ _NS_SKILL    = load_no_slop_skill()
 
 
 # --------------------------------------------------------------------------
+# RESOLVED DESIGN CONTRACT
+# Maps quiz answers → concrete, non-negotiable values before any skill fires.
+# Visual experience is ALWAYS cinematic — it is no longer a user choice.
+# --------------------------------------------------------------------------
+
+_FONT_BY_POSITION = {
+    "premium":      ("Fraunces",         "light/thin weight (300–400) — luxury lives in restraint; wide tracking"),
+    "professional": ("Fraunces",         "semibold (600) — editorial authority; pairs with Inter body"),
+    "accessible":   ("Lora",             "regular/medium — warm humanist serif, approachable and credible"),
+    "budget":       ("Manrope",          "extrabold (800) — direct, confident, no subtlety needed"),
+}
+
+_PALETTE_BY_POSITION = {
+    # (bg, surface, text, dark_default)
+    "premium":      ("#0A0A0A", "#1A1A1A", "#F9FAFB", "Yes"),
+    "professional": ("#FFFFFF", "#F9FAFB", "#111827", "No"),
+    "accessible":   ("#F5EFE6", "#FFFFFF", "#1A1A1A", "No"),
+    "budget":       ("#FFFFFF", "#F9FAFB", "#111827", "No"),
+}
+
+_TONE_BY_BRAND = {
+    "professional_formal":   "Authoritative and specific. Credentials, years, certifications. Declarative sentences. No filler.",
+    "friendly_approachable": "Warm and conversational. Empathy before selling. 'We' language. CTAs are invitations: 'Let\\'s talk' not 'GET STARTED'.",
+    "technical_expert":      "Data-driven and precise. Numbers, specs, methodology. Prove the claim — don't state it.",
+    "creative_confident":    "Bold, opinionated, memorable. Strong verbs. Distinctive voice that sounds like a person, not a template.",
+}
+
+_CTA_BY_POSITION = {
+    "premium":      "'Inquire' / 'Schedule a consultation' / 'Request access'",
+    "professional": "'Book a free consultation' / 'Get a free quote' / 'Call us today'",
+    "accessible":   "'Let\\'s talk' / 'Reach out' / 'Get started'",
+    "budget":       "'Call now' / 'Get a quote' / 'Save today'",
+}
+
+# Visual is always cinematic — easing values hardcoded
+_CINEMATIC = ("expo.out", "0.9s", "0.12s", "scroll-pinned sections allowed (`anticipatePin: 1`, `scrub: 1`)")
+
+# Industries that default to dark background regardless of brand_position
+_DARK_INDUSTRIES = {
+    "luxury", "premium", "yacht", "jewelry", "bar", "nightclub",
+    "photography", "auto detail", "car detail", "detailing", "club",
+    "lounge", "studio", "agency", "tattoo", "cigar",
+}
+# Industries that default to warm-light background
+_WARM_INDUSTRIES = {
+    "yoga", "wellness", "dentist", "therapist", "bakery", "cafe",
+    "spa", "massage", "florist", "counseling", "meditation",
+}
+
+
+def build_resolved_contract(answers: dict) -> str:
+    brand_position = answers.get("brand_position", "professional").strip()
+    brand_tone     = answers.get("brand_tone", "professional_formal").strip()
+    industry       = answers.get("industry", answers.get("business_type", "")).lower()
+
+    heading_font, font_note = _FONT_BY_POSITION.get(brand_position, _FONT_BY_POSITION["professional"])
+    bg, surface, text_col, dark_default = _PALETTE_BY_POSITION.get(brand_position, _PALETTE_BY_POSITION["professional"])
+    copy_tone    = _TONE_BY_BRAND.get(brand_tone, _TONE_BY_BRAND["professional_formal"])
+    cta_examples = _CTA_BY_POSITION.get(brand_position, _CTA_BY_POSITION["professional"])
+    easing, duration, stagger, scroll_pin = _CINEMATIC
+
+    # Industry overrides
+    if any(w in industry for w in _DARK_INDUSTRIES) and dark_default == "No":
+        bg, surface, text_col, dark_default = "#0A0A0A", "#1A1A1A", "#F9FAFB", "Yes"
+    elif any(w in industry for w in _WARM_INDUSTRIES) and dark_default == "No":
+        bg, surface, text_col = "#F5EFE6", "#FFFFFF", "#1A1A1A"
+
+    # Video hero industries
+    video_industries = {
+        "auto detail", "detailing", "restaurant", "cafe", "fitness", "gym",
+        "photography", "events", "wedding", "real estate", "construction",
+        "beauty", "salon", "barbershop",
+    }
+    recommend_video = any(w in industry for w in video_industries)
+    video_note = "Yes — use `<video autoPlay muted loop playsInline>` with Pexels image poster" if recommend_video else "Optional — use if client has footage; otherwise full-bleed image with parallax"
+
+    return f"""| Decision | Resolved Value |
+|---|---|
+| **Heading font** | {heading_font} — {font_note} |
+| **Body font** | Inter (body, UI, data only — never headings) |
+| **Font loading** | Both via `next/font/google` in `layout.tsx`; both CSS variables on `<html>` |
+| **Background** | `{bg}` |
+| **Surface / card** | `{surface}` |
+| **Text color** | `{text_col}` |
+| **Dark mode** | {dark_default} |
+| **Motion** | **Always cinematic** — SplitText headlines, clip-path reveals, scroll-pinned sections, parallax, counting stats |
+| **GSAP easing** | `{easing}` |
+| **Duration** | `{duration}` per element · Stagger: `{stagger}` |
+| **Scroll pinning** | {scroll_pin} |
+| **Video hero** | {video_note} |
+| **Copy tone** | {copy_tone} |
+| **CTA language** | {cta_examples} |
+
+*Brand: `{brand_position}` · Tone: `{brand_tone}` · Visual: always cinematic*"""
+
+
+# --------------------------------------------------------------------------
 # PROMPT TEMPLATE  -- 11-section structure
 # --------------------------------------------------------------------------
 
@@ -432,6 +621,14 @@ PROMPT_TEMPLATE = """\
 # Website Build Brief -- {business_name}
 
 You are building a complete, production-quality website. Read every section of this brief before writing a single line of code. The skills embedded in this brief contain thousands of words of specific, researched direction. Apply all of it.
+
+---
+
+## RESOLVED DESIGN CONTRACT — Read This First
+
+These values were computed from your quiz answers before any skill content was loaded. Skills in sections 3–10 are implementation guides — they do not override these values. When any skill content seems to suggest a different choice, the contract wins. Concrete beats ambiguous.
+
+{resolved_contract}
 
 ---
 
@@ -445,184 +642,319 @@ You are building a complete, production-quality website. Read every section of t
 
 ---
 
-## 2. MANDATORY OUTPUT STRUCTURE
+## 2. MANDATORY OUTPUT STRUCTURE — CINEMATIC BY DEFAULT
 
-**THIS IS NOT OPTIONAL. BUILD ALL OF THE FOLLOWING.**
+Every site built by this engine is cinematic. This is not a setting — it is the standard. No flat card grids. No static heroes. No dead links. No approximations of the code patterns below.
 
-### Required Pages (Separate Routes)
+### Required Pages
 
-You MUST create these pages as separate Next.js routes:
+1. **Homepage** (`app/page.tsx`) — cinematic landing page, all sections below
+2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a card grid
+3. **About** (`app/about/page.tsx`) — editorial story with parallax imagery
+4. **Contact** (`app/contact/page.tsx`) — working form with success state, map embed
 
-1. **Homepage** (`app/page.tsx`)
-   - The main landing page with all sections listed below
+### Homepage — Cinematic Section Structure (Build in Order)
 
-2. **Services Page** (`app/services/page.tsx`)
-   - Detailed breakdown of each service offered
-   - Individual service cards with descriptions, pricing guidance, and CTAs
-   - Service area coverage map or list
-   - FAQ specific to services
+**Section 1: Hero — Full Viewport**
+- `min-h-[100dvh]` always — never `min-h-screen`
+- Full-bleed background: dark overlay on image or video
+- **Video hero** (check Resolved Contract above): `<video autoPlay muted loop playsInline>` — use the hero Pexels URL from Section 8b as `poster` attribute
+- If no video: full-bleed `next/image` with `priority` and a `className="parallax-bg"` wrapper
+- Layout (all elements required, in order):
+  1. `<p className="hero-eyebrow">` — location · industry tagline (small caps, accent color)
+  2. `<h1 className="hero-heading font-display text-7xl md:text-9xl leading-none text-white">` — the main headline. **THIS MUST BE PRESENT AND VISIBLE. No hero without a large headline.**
+  3. `<p className="hero-sub">` — supporting sentence naming the outcome
+  4. `<div className="hero-cta flex gap-4">` — primary + secondary CTA
+  5. `<div className="hero-badge">` — floating trust signal (years · certified · insured)
+- DO NOT: plain color background, centered white-background hero, static text block, hero with only CTA buttons and no headline
 
-3. **About Page** (`app/about/page.tsx`)
-   - Company history and story
-   - Owner/team photos and bios (use Unsplash team images provided in section 8b)
-   - Licenses, certifications, years in business
-   - Why choose us / what makes us different
-   - Service area details
+**Section 2: Trust Bar — Counting Stats**
+- Dark or brand-accent background strip — NOT white
+- 3–4 numbers that count up on scroll: years in business, jobs completed, rating, insured/certified
+- Each number uses `data-target` attribute + GSAP textContent counter (see Code Patterns)
+- Single horizontal row — NOT cards, NOT icons in a grid
 
-4. **Contact Page** (`app/contact/page.tsx`)
-   - Contact form (name, email/phone, message)
-   - Business hours
-   - Service area map or coverage area
-   - Phone number prominent
-   - Email and physical address if applicable
+**Section 3: Services — Horizontal Scroll or Full-Bleed Alternating**
+CHOOSE ONE — a 3-column card grid is forbidden:
 
-### Homepage Sections (Build in This Order)
+*Horizontal Scroll (4+ services):*
+Pin the section. Scrub service panels horizontally via ScrollTrigger. Each panel: full-height, image fills left 55%, content right 45%.
 
-The homepage (`app/page.tsx`) MUST include ALL of these sections:
+*Full-Bleed Alternating (2–3 services):*
+Each service is a full-width section. Image fills one half, text the other. Alternate: image-left/text-right, text-left/image-right. Every image uses clip-path reveal (see Code Patterns).
 
-**1. Hero Section**
-- Full-height section (min-h-[100dvh])
-- Headline from the Business Intelligence skill page structure
-- Subheadline with specific claims (location, years, family-owned, licensed)
-- TWO CTAs: Primary emergency CTA + Secondary booking CTA
-- Use hero image from section 8b (Unsplash images provided)
-- Include service area in eyebrow text above headline
+**Section 4: Social Proof — Dark Editorial**
+- Dark background
+- ONE large quote, 3–4rem font size, centered — not a carousel of small cards
+- Stars above the quote, attribution below (name + specific result: "saved $3,200" / "back in 2 days")
+- If no testimonials: bold credibility statement with a striking number ("Over 1,200 vehicles restored")
 
-**2. Services Overview**
-- Heading: "Complete [Business Type] Services" or similar from BI skill
-- 3-6 service cards in grid layout
-- Each card MUST have:
-  - Service image (use service images from section 8b)
-  - Service name
-  - 2-3 sentence description (specific, not vague)
-  - CTA to services page
-- Use GSAP scroll reveals as specified in Stack skill
-
-**3. Service Area**
-- Heading: "Serving [Location]"
-- Either: Interactive map embed OR city/town list
-- Prominent display of coverage area
-- "Don't see your area? Call us: [BUSINESS PHONE]"
-
-**4. Social Proof**
-- If real testimonials provided: Display 2-3 testimonial cards
-- If NO testimonials: Display trust badges instead:
-  - Licensed & Insured
-  - Years in business
-  - Family owned (if applicable)
-  - BBB rating (if applicable)
-- DO NOT invent fake testimonials
-
-**5. About Preview**
-- Heading: "Who We Are" or "[Business Name] Story"
-- Owner photo (use team image from section 8b)
-- 2-3 paragraphs about the business
+**Section 5: About / Story — Parallax Editorial**
+- Full-bleed parallax background image (see Code Patterns)
+- Owner story: specific, first-person, human — NOT "we are committed to excellence"
+- Credentials woven into narrative — not a badge row
 - Link to full About page
-- Highlight: Years in business, family-owned status, local expertise
 
-**6. FAQ Section (If Applicable)**
-- 4-6 common questions specific to this industry
-- Answers should be helpful and specific
-- Use accordion or simple Q&A format
+**Section 6: FAQ or Feature Callout**
+- FAQ: 4–6 accordion questions, industry-specific, genuinely useful answers
+- Alternative if few questions: a "Why us" section with 2–3 bold differentiating claims
 
-**7. Final CTA Section**
-- Heading: Action-oriented ("Ready to fix that leak?" / "Schedule your appointment")
-- Large CTA button: [BUSINESS PHONE]
-- Secondary CTA: Book Online or Contact Form
-- Background: Can use subtle background image or solid color
+**Section 7: Final CTA — Full Bleed, One Action**
+- Full-width section, brand dark or strong accent color
+- ONE headline + ONE large centered CTA button
+- Phone number as secondary option beneath it
+- NO competing buttons
 
-**8. Footer**
-- Company name and tagline
-- Quick links: Services, About, Contact
-- Service area
-- Phone number (clickable tel: link)
-- Email address placeholder: [EMAIL]
-- Physical address placeholder: [ADDRESS]
-- Hours of operation
-- License number placeholder (if applicable to industry)
-- Social media placeholders
-- Copyright notice
+**Section 8: Footer**
+- tel: links, mailto: links, address, hours, social icons, copyright
 
-### Navigation Requirements
+### Navigation — Animated Header
 
-**Header (Sticky Navigation):**
-- Logo / Business name
-- Links: Services, About, Contact
-- Prominent phone CTA button: [BUSINESS PHONE]
-- Mobile hamburger menu
-- Hide on scroll down, show on scroll up (use GSAP)
-- Background blur or solid color on scroll
+- Fixed position, `className="navbar"` on `<header>` (required for animation below)
+- Logo left · nav links center · phone CTA right
+- Mobile: hamburger → fullscreen overlay with staggered link reveals
+- CTA button: `<a href="tel:[BUSINESS PHONE]">` — never a dead link
 
-### Image Usage (CRITICAL)
+---
 
-Section 8b provides Unsplash image URLs. You MUST use these exact URLs:
+### REQUIRED TECH STACK
 
-```tsx
-// Example - DO THIS:
-<img src="https://source.unsplash.com/1600x900/?professional-plumber-working" alt="..." />
-
-// NOT THIS:
-<img src="/images/hero.jpg" alt="..." />
+```json
+{{
+  "dependencies": {{
+    "next": "^15.0.0",
+    "react": "^19.0.0",
+    "typescript": "^5.0.0",
+    "tailwindcss": "^3.4.0",
+    "gsap": "^3.12.0",
+    "@gsap/react": "^2.1.0",
+    "lenis": "^1.1.0",
+    "framer-motion": "^11.0.0"
+  }}
+}}
 ```
 
-Every image must:
-- Use the Unsplash URL provided in section 8b
-- Have descriptive alt text
-- Be listed in TODO_ASSETS.md for client replacement
+**Performance non-negotiables:**
+- `next/image` for ALL images — never raw `<img>` tags. Use `fill` + `object-cover` for full-bleed, explicit `width`/`height` for fixed-size. `priority` on hero image only.
+- `next/font/google` for both fonts — zero layout shift
+- `gsap.registerPlugin(ScrollTrigger, SplitText)` at module level — never inside useEffect
+- `dynamic()` with `{{ ssr: false }}` for any component using `window` or `document`
+- `will-change: transform` only during active animation — remove after with `gsap.set(el, {{ clearProps: "willChange" }})`
+- `@media (prefers-reduced-motion: reduce) {{ * {{ animation-duration: 0.01ms !important }} }}` in globals.css
 
-### Content Requirements
+---
 
-**DO:**
-- Use [BUSINESS PHONE], [EMAIL], [ADDRESS] placeholders
-- Write specific, concrete copy based on Business Intelligence skill
-- Follow industry-specific page structure from BI skill
-- Apply emotional direction and visual experience settings
-- Use real Unsplash image URLs from section 8b
+### CINEMATIC CODE PATTERNS — Implement Verbatim
 
-**DO NOT:**
-- Invent phone numbers (especially 555 numbers)
-- Create fake testimonials
-- Use vague copy ("world-class", "unrivaled", "where X meets Y")
-- Use local file paths for images (/images/...) - use Unsplash URLs
-- Skip any required sections listed above
+#### 1. Hero Entrance with SplitText
+
+```tsx
+"use client"
+import {{ useGSAP }} from "@gsap/react"
+import gsap from "gsap"
+import {{ SplitText }} from "gsap/SplitText"
+
+gsap.registerPlugin(SplitText)
+
+useGSAP(() => {{
+  const heading = document.querySelector<HTMLElement>(".hero-heading")
+  const split = heading ? new SplitText(heading, {{ type: "words" }}) : null
+
+  const tl = gsap.timeline({{ delay: 0.1, defaults: {{ ease: "expo.out" }} }})
+  tl.from(".hero-eyebrow", {{ opacity: 0, y: 16, duration: 0.6 }})
+
+  if (split) {{
+    tl.from(split.words, {{ opacity: 0, y: 52, stagger: 0.06, duration: 0.85 }}, "-=0.3")
+  }} else {{
+    tl.from(".hero-heading", {{ opacity: 0, y: 48, duration: 0.9 }}, "-=0.3")
+  }}
+
+  tl.from(".hero-sub",   {{ opacity: 0, y: 20, duration: 0.7 }}, "-=0.5")
+    .from(".hero-cta",   {{ opacity: 0, y: 20, stagger: 0.1, duration: 0.6 }}, "-=0.4")
+    .from(".hero-badge", {{ opacity: 0, scale: 0.9, duration: 0.5 }}, "-=0.3")
+
+  return () => split?.revert()
+}})
+```
+
+Apply: `className="hero-eyebrow"`, `"hero-heading"`, `"hero-sub"`, `"hero-cta"` (on each CTA), `"hero-badge"`.
+
+#### 2. Navbar — Hide/Show + Background Fill
+
+```tsx
+useGSAP(() => {{
+  let lastY = 0
+  const darkSite = document.body.dataset.theme === "dark"
+
+  ScrollTrigger.create({{
+    onUpdate: () => {{
+      const y = ScrollTrigger.positionInViewport(document.body, "top") * -1 || window.scrollY
+      const scrollingDown = y > lastY && y > 80
+
+      gsap.to(".navbar", {{
+        yPercent: scrollingDown ? -100 : 0,
+        duration: 0.35,
+        ease: "power2.out",
+        overwrite: "auto",
+      }})
+
+      const bg = darkSite ? "rgba(10,10,10,0.92)" : "rgba(255,255,255,0.92)"
+      gsap.to(".navbar", {{
+        backgroundColor: y > 60 ? bg : "transparent",
+        backdropFilter: y > 60 ? "blur(14px)" : "blur(0px)",
+        boxShadow: y > 60 ? "0 1px 0 rgba(0,0,0,0.08)" : "none",
+        duration: 0.3,
+        overwrite: "auto",
+      }})
+
+      lastY = y
+    }},
+  }})
+}})
+```
+
+#### 3. Clip-Path Image Reveal
+
+```tsx
+useGSAP(() => {{
+  gsap.utils.toArray<HTMLElement>(".reveal-image").forEach((img) => {{
+    gsap.fromTo(img,
+      {{ clipPath: "inset(0 100% 0 0)" }},
+      {{
+        clipPath: "inset(0 0% 0 0)",
+        duration: 1.1,
+        ease: "expo.out",
+        scrollTrigger: {{ trigger: img, start: "top 78%" }},
+      }}
+    )
+  }})
+}})
+```
+
+Add `className="reveal-image"` to every `<Image>` that should reveal on scroll.
+
+#### 4. Counting Stats
+
+```tsx
+useGSAP(() => {{
+  gsap.utils.toArray<HTMLElement>(".stat-number").forEach((el) => {{
+    const target = parseInt(el.dataset.target ?? "0", 10)
+    gsap.fromTo(el,
+      {{ textContent: 0 }},
+      {{
+        textContent: target,
+        duration: 2,
+        ease: "power2.out",
+        snap: {{ textContent: 1 }},
+        scrollTrigger: {{ trigger: el, start: "top 85%" }},
+      }}
+    )
+  }})
+}})
+```
+
+JSX: `<span className="stat-number" data-target={{500}}>0</span>`
+
+#### 5. Parallax Background
+
+```tsx
+useGSAP(() => {{
+  gsap.utils.toArray<HTMLElement>(".parallax-bg").forEach((bg) => {{
+    gsap.to(bg, {{
+      yPercent: -25,
+      ease: "none",
+      scrollTrigger: {{
+        trigger: bg.closest("section"),
+        start: "top top",
+        end: "bottom top",
+        scrub: 1,
+      }},
+    }})
+  }})
+}})
+```
+
+Wrap in `overflow-hidden` container. Apply `className="parallax-bg"` to image/video element.
+
+#### 6. Horizontal Scroll Services
+
+```tsx
+useGSAP(() => {{
+  const cards = gsap.utils.toArray<HTMLElement>(".service-card")
+  if (cards.length < 2) return
+
+  gsap.to(".services-track", {{
+    xPercent: -100 * (cards.length - 1),
+    ease: "none",
+    scrollTrigger: {{
+      trigger: ".services-scroll",
+      start: "top top",
+      end: `+=${{cards.length * 100}}%`,
+      scrub: 1,
+      pin: true,
+      anticipatePin: 1,
+    }},
+  }})
+}})
+```
+
+Structure: `<section className="services-scroll h-screen overflow-hidden"><div className="services-track flex h-full">{{cards}}</div></section>`
+
+---
+
+### Working CTAs — Zero Dead Links
+
+| CTA | Implementation |
+|---|---|
+| Phone | `<a href="tel:[BUSINESS PHONE]">` |
+| Email | `<a href="mailto:[EMAIL]">` |
+| Book | External booking URL or `onClick` scroll to `#contact` |
+| Form submit | `onSubmit` with `e.preventDefault()` + success state — never just `href="#"` |
+| Page nav | `<Link href="/services">` — real Next.js routes only |
+
+---
+
+### Image Usage
+
+Section 8b provides Pexels photo URLs. Use `next/image` — never raw `<img>`:
+
+```tsx
+import Image from "next/image"
+
+<div className="relative overflow-hidden">
+  <Image
+    src="https://images.pexels.com/photos/..."
+    alt="descriptive alt text"
+    fill
+    className="object-cover reveal-image"
+    priority={{false}}
+  />
+</div>
+```
+
+Hero image only: add `priority` prop. All others: lazy load (default).
 
 ### Delivery Checklist
 
-Before you finish, verify you built:
+- [ ] Hero: video OR full-bleed image with overlay — no flat backgrounds
+- [ ] Hero headline: `<h1 className="hero-heading">` present, visible, and large (min text-6xl) — a hero with only CTA buttons is incomplete
+- [ ] Hero entrance: SplitText word-by-word headline on mount
+- [ ] Navbar: hides scroll-down, returns scroll-up, fills blur at 60px
+- [ ] Trust bar: counting stats with `data-target` + GSAP textContent
+- [ ] Services: horizontal scroll OR full-bleed alternating — NEVER 3-column card grid
+- [ ] Social proof: dark section, one large quote
+- [ ] All section images: `next/image` + clip-path reveal on scroll
+- [ ] All phone CTAs: `href="tel:..."` — zero `href="#"` links
+- [ ] Contact form: `onSubmit` + success state
+- [ ] `prefers-reduced-motion` in globals.css
 - [ ] 4 pages: Homepage, Services, About, Contact
-- [ ] All 8 homepage sections
-- [ ] Sticky navigation with hide/show scroll behavior
-- [ ] All images use Unsplash URLs from section 8b
-- [ ] [BUSINESS PHONE] placeholder in header, hero, and footer
-- [ ] Mobile responsive (Tailwind responsive classes)
-- [ ] GSAP animations on scroll (from Stack skill)
-- [ ] All documentation files (README, HANDOFF, TODO_ASSETS, etc.)
+- [ ] All docs: README, HANDOFF, TODO_ASSETS, STYLE_GUIDE
 
 ---
 
 ## 3. Visual Reference & Inspiration
 
 {reference_block}
-
----
-
-## 3. Visitor Experience Direction
-
-**How visitors should feel:** {emotional_direction}
-**Visual experience level:** {visual_experience}
-
-{visitor_experience_block}
-
-Apply the matching interpretations from the Visitor Experience Skill above to EVERY decision:
-- Typography weight, rhythm, and size
-- Motion speed, easing, and intensity
-- Copy tone and vocabulary
-- Color saturation and warmth -- light vs dark background
-- Layout density and whitespace
-- Which animation libraries are appropriate
-- Whether Three.js is warranted
-
-These two settings override all generic defaults.
 
 ---
 
@@ -658,7 +990,7 @@ These two settings override all generic defaults.
 
 ---
 
-## 8b. Placeholder Images (Unsplash)
+## 8b. Placeholder Images (Pexels / Picsum)
 
 {images_block}
 
@@ -671,22 +1003,28 @@ These two settings override all generic defaults.
 
 | Check | Required |
 |---|---|
-| Phone number | `[BUSINESS PHONE]` placeholder -- NEVER a 555 number or invented number |
-| Primary heading font | NOT Inter/Geist/Poppins/Space Grotesk/DM Sans -- named distinct face |
-| Subtext | No "Where X meets Y" -- contains specific claim, number, or place name |
-| Headline | No "Unrivaled/World-class/Unleash your inner" -- specific and arguable |
-| Hero visual | Has photo, video, 3D, or animated CSS element -- NOT flat background behind text |
-| Background | Dark for premium/tech -- Light for local service/wellness/food |
-| Booking tool | Matches business category -- Booksy is ONLY for beauty/wellness |
-| Page structure | NOT Hero + 3 cards + testimonials + pricing + footer |
-| Testimonials | Real only, or omitted -- never fabricated |
-| SplitText headings | `word-break: keep-all` on heading wrapper |
-| Hero height | `min-h-[100dvh]` not `min-h-screen` |
-| Scroll animations | Match visual experience level |
-| Navbar | Scroll-aware hide/show + mobile hamburger |
-| Input font size | Minimum `font-size: 16px` |
+| Phone number | `[BUSINESS PHONE]` — NEVER a 555 number or invented number |
+| Heading font | NOT Inter / Geist / Poppins / DM Sans / Space Grotesk — named distinctive face from Contract |
+| Subtext | No "Where X meets Y" — specific claim, number, or location |
+| Headline | No "Unrivaled / World-class / Unleash" — specific and arguable |
+| Hero | Full-bleed image or video with overlay — NEVER flat color behind text |
+| Hero headline | `<h1 className="hero-heading">` PRESENT and LARGE (min text-6xl) — CTAs alone are not a hero |
+| Hero height | `min-h-[100dvh]` — never `min-h-screen` |
+| Hero animation | SplitText word-by-word + 5-element staggered timeline on mount |
+| Navbar | Hides scroll-down, returns scroll-up, blur fill at 60px |
+| Images | `next/image` everywhere — never raw `<img>` |
+| Services layout | Horizontal scroll OR full-bleed alternating — NEVER 3-column card grid |
+| Stats | GSAP counting numbers — never static text |
+| Social proof | Dark section, large single quote — never a carousel of small cards |
+| Section images | Clip-path reveal on scroll |
+| Video | `autoPlay muted loop playsInline` — always all four attributes |
+| CTAs | `href="tel:..."` for phone — zero dead `href="#"` links |
+| Form | `onSubmit` handler with success state |
+| Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
-| Video | `autoPlay muted loop playsInline` |
+| reduced-motion | `prefers-reduced-motion` media query in globals.css |
+| Booking tool | Matches industry — Booksy ONLY for beauty/wellness |
+| Testimonials | Real only or omitted — never fabricated |
 
 ---
 
@@ -737,42 +1075,59 @@ def build_prompt(answers: dict, ds_text: str, notes: list[tuple[str, str]], rese
     booking_str = " . ".join(systems_parts) if systems_parts else "None yet -- recommend the best option for this business type."
 
     extra = answers.get("extra_context", "").strip()
-    extra_block = extra if extra else "*(No extra context -- use the business intelligence skill to fill in industry best practices.)*"
+    extra_block = extra if extra else "*(No extra context provided — use the Business Intelligence skill to fill in industry best practices.)*"
 
-    # Emotional direction and visual experience
-    emotional = answers.get("emotional_direction", "").strip()
-    visual = answers.get("visual_experience", "").strip()
-    emotional_direction = emotional if emotional else "Trusting and confident (default -- apply calm, credibility-focused direction)"
-    visual_experience = visual if visual else "Smooth and professional -- subtle animations (default)"
+    # Reference URLs / inspiration sites (up to 3)
+    _skip = {"", "none", "n/a", "no", "skip"}
+    ref_urls = [
+        answers.get("reference_url",   "").strip(),
+        answers.get("reference_url_2", "").strip(),
+        answers.get("reference_url_3", "").strip(),
+    ]
+    ref_urls = [u for u in ref_urls if u.lower() not in _skip]
 
-    # Reference URL / inspiration site
-    ref_url = answers.get("reference_url", "").strip()
-    if ref_url and ref_url.lower() not in {"", "none", "n/a", "no", "skip"}:
-        reference_block = f"""A reference site has been provided: **{ref_url}**
+    if len(ref_urls) == 1:
+        reference_block = f"""A reference site has been provided: **{ref_urls[0]}**
 
 Browse this URL before writing any code. Extract and apply:
 - Dominant colors and color temperature (warm vs cool, light vs dark)
 - Typography weight, rhythm, and personality
-- Spacing philosophy -- how tight or generous the layout feels
+- Spacing philosophy — how tight or generous the layout feels
 - Animation style and intensity
-- Layout approach -- grid, asymmetric, editorial, etc.
+- Layout approach — grid, asymmetric, editorial, etc.
 - Overall brand feeling
 
 **Important:** Abstract the FEELING, not the layout. Do not copy structure or content from this site. Use it to calibrate the aesthetic direction only. If this is a Dribbble link, extract the visual composition and color mood."""
+    elif len(ref_urls) >= 2:
+        url_list = "\n".join(f"- **{u}**" for u in ref_urls)
+        reference_block = f"""Multiple reference sites have been provided:
+
+{url_list}
+
+Browse all of them before writing any code. Your job is synthesis, not imitation:
+1. Identify what they share — color temperature, spacing density, typography weight, animation pace
+2. Note where they differ — these are stylistic choices, not requirements
+3. Extract the overlap as the aesthetic baseline; apply it to this business's specific context
+
+Extract and synthesize across all references:
+- Dominant color temperature (warm vs cool, saturated vs muted)
+- Typography personality (formal vs casual, heavy vs refined)
+- Spacing rhythm — how generous or dense
+- Animation energy — subtle or expressive
+- Layout philosophy — structured grid vs editorial vs asymmetric
+
+**Important:** Abstract the FEELING, not any single layout. Do not copy structure or content from these sites. The goal is a site that feels consistent with this aesthetic family — not a clone of any one reference."""
     else:
-        reference_block = "*(No reference site provided. Infer aesthetic direction from the emotional direction and visual experience settings above, and from the business category in the Business Intelligence skill.)*"
+        reference_block = "*(No reference sites provided — infer aesthetic direction from the Resolved Design Contract and the Business Intelligence skill.)*"
+
+    # Resolved design contract (pre-computed before any skill fires)
+    resolved_contract = build_resolved_contract(answers)
 
     # No-slop skill
     if _NS_SKILL:
         no_slop_block = f"\n\n{_NS_SKILL.strip()}\n"
     else:
-        no_slop_block = "\n*(No-slop skill not loaded -- apply general quality rules: no 555 phone numbers, no 'Where X meets Y' subtext, no vague superlatives, hero must have visual element.)*\n"
-
-    # Visitor experience skill
-    if _VX_SKILL:
-        vx_block = f"\n\n{_VX_SKILL.strip()}\n"
-    else:
-        vx_block = "\n*(Visitor experience skill not loaded -- infer motion and tone from the emotional direction and visual experience answers above.)*\n"
+        no_slop_block = "\n*(No-slop skill not loaded — apply general quality rules: no 555 phone numbers, no 'Where X meets Y' subtext, no vague superlatives, hero must have visual element.)*\n"
 
     # iOS skill
     if _IOS_SKILL:
@@ -795,11 +1150,53 @@ Browse this URL before writing any code. Extract and apply:
     if ds_text:
         ds_block = (
             "\nThe ui-ux-pro-max engine generated this recommendation. "
-            "Use it as a starting point; override anything that conflicts with the emotional direction or business type.\n\n"
+            "Use it as supporting detail — it enriches the Resolved Design Contract above. "
+            "If any value here contradicts the Contract, the Contract wins.\n\n"
             f"```\n{ds_text.strip()}\n```\n"
         )
     else:
-        ds_block = "\n*(ui-ux-pro-max engine unavailable -- derive design system from the visitor experience direction and business category.)*\n"
+        # Derive a concrete direction from the quiz answers so the LLM has real guidance
+        industry_lower = industry.lower()
+        is_dark = any(w in industry_lower for w in [
+            "luxury", "premium", "yacht", "jewelry", "tech", "saas", "software",
+            "agency", "studio", "bar", "nightclub", "photography",
+        ])
+        is_warm_light = any(w in industry_lower for w in [
+            "yoga", "wellness", "dentist", "therapist", "bakery", "cafe", "spa",
+        ])
+        if is_dark:
+            color_dir = (
+                "dominant #0A0A0A, secondary #1A1A1A, accent a precise single color "
+                "(gold #C8A96E, electric blue #3B82F6, or brand-specific), text #F9FAFB"
+            )
+            bg_dir = "dark background"
+        elif is_warm_light:
+            color_dir = (
+                "dominant warm white #F5EFE6 or pale sage, secondary #FFFFFF, "
+                "accent soft earth tone (dusty rose #D4899A, warm amber #D97706, muted teal #5EAAA8), "
+                "text dark charcoal #1A1A1A"
+            )
+            bg_dir = "warm light background"
+        else:
+            # Home services, professional services, real estate, food, retail — default light
+            color_dir = (
+                "dominant #FFFFFF, secondary #F9FAFB, "
+                "accent one clean color (trust blue #2563EB, reliability green #059669, or urgency amber #D97706), "
+                "text #111827"
+            )
+            bg_dir = "clean light background"
+
+        ds_block = (
+            f"\n**Design system engine unavailable. Apply this direction derived from the brief:**\n\n"
+            f"- **Background:** {bg_dir} — confirmed by the Business Intelligence skill for this industry\n"
+            f"- **Colors:** {color_dir}\n"
+            f"- **Heading font:** choose a DISTINCTIVE face from the No-Slop acceptable list "
+            f"(Oswald, Syne, Fraunces, Playfair Display, Instrument Serif, Manrope, Bebas Neue) "
+            f"— match to emotional direction. NOT Inter, Roboto, Poppins, or any convergence font.\n"
+            f"- **Body font:** Inter (body only, never headings)\n"
+            f"- **Load both fonts in layout.tsx** via next/font/google and pass both variables to <html>\n"
+            f"- **Override anything generic** — the goal is a site that looks hand-designed, not generated\n"
+        )
 
     if notes:
         lines = ["\nAnti-slop warnings fired. Resolve in favor of the audit:\n"]
@@ -823,16 +1220,20 @@ Browse this URL before writing any code. Extract and apply:
 
     # Images block
     if images:
-        image_lines = ["**Use these Unsplash placeholder images in your build:**\n"]
+        uses_pexels = any("pexels.com" in url for url in images.values())
+        source_label = "Pexels industry-relevant photos" if uses_pexels else "Picsum Photos"
+        image_lines = [f"**Use these {source_label} as placeholder images in your build:**\n"]
         for label, url in images.items():
             clean_label = label.replace("_", " ").title()
             image_lines.append(f"- **{clean_label}:** `{url}`")
         image_lines.append("\n**Important:**")
-        image_lines.append("- Use these exact URLs in your `<img src=\"...\">` tags")
+        image_lines.append("- Use these exact URLs in `next/image` `src` props — never raw `<img>` tags")
         image_lines.append("- Do NOT use local paths like `/images/hero.jpg`")
-        image_lines.append("- These are high-quality placeholders that make the site look real")
+        image_lines.append("- Add `priority` only to the hero image; all others lazy-load by default")
         image_lines.append("- Document all images in TODO_ASSETS.md so client knows to replace with real photos")
         image_lines.append("- Add descriptive alt text for each image")
+        if uses_pexels:
+            image_lines.append("- **next.config.ts**: `images.pexels.com` MUST be in `remotePatterns` or `next/image` will throw — see Stack skill for the complete config")
         images_block = "\n".join(image_lines)
     else:
         images_block = "\n*(No placeholder images available -- use descriptive alt text with empty src, or use Unsplash source URLs.)*\n"
@@ -843,10 +1244,8 @@ Browse this URL before writing any code. Extract and apply:
         location=answers.get("location", ""),
         visitor_action=visitor_action,
         booking_system=booking_str,
+        resolved_contract=resolved_contract,
         reference_block=reference_block,
-        emotional_direction=emotional_direction,
-        visual_experience=visual_experience,
-        visitor_experience_block=vx_block,
         extra_context=extra_block,
         no_slop_block=no_slop_block,
         ios_skill_block=ios_skill_block,
@@ -925,7 +1324,7 @@ class AnthropicClient:
 
 # ---------- Provider selector -----------------------------------------------
 
-_GEMINI_DEFAULT_MODEL    = "gemini-3.1-pro-preview"
+_GEMINI_DEFAULT_MODEL    = "gemini-2.0-flash"
 _ANTHROPIC_DEFAULT_MODEL = "claude-opus-4-6"
 
 
@@ -1113,7 +1512,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
                         "slug": d.name,
                         "business_name": b.get("business_name", "?"),
                         "industry": b.get("industry", ""),
-                        "aesthetic_direction": b.get("aesthetic_direction", ""),
+                        "aesthetic_direction": b.get("visual_aesthetic", b.get("emotional_direction", "")),
                         "created_at": b.get("_created_at", ""),
                         "has_site": (d / "site").exists(),
                     })
@@ -1227,7 +1626,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if generate_design_system:
             try:
                 query = build_ui_query(answers)
-                ds_text = generate_design_system(query, answers["business_name"], format="markdown")
+                ds_text = generate_design_system(query, answers["business_name"], output_format="markdown")
             except Exception as e:
                 ds_text = f"*(Design system generation failed: {e})*"
 
@@ -1241,14 +1640,19 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 print(f"Industry research failed: {e}")
                 research_text = ""  # Continue without research
 
-        # Fetch placeholder images from Unsplash
+        # Fetch placeholder images (Pexels if key present, else Picsum)
         images = {}
         if business_type:
             try:
-                images = get_unsplash_images(business_type)
+                _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+                if _pexels_key:
+                    print("  Fetching industry photos from Pexels...")
+                    images = get_pexels_images(business_type, _pexels_key)
+                else:
+                    images = get_placeholder_images(business_type)
             except Exception as e:
                 print(f"Image fetching failed: {e}")
-                images = {}  # Continue without images
+                images = get_placeholder_images(business_type)
 
         notes = audit_design_system(ds_text) if ds_text else []
         prompt = build_prompt(answers, ds_text, notes, research_text, images)

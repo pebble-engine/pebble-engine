@@ -58,7 +58,7 @@ Pebble Engine is built around this loop:
 
 1. Open the `pebble-engine/` folder as a workspace in Antigravity. The `skills/` directory becomes available to Gemini automatically.
 2. Open Antigravity's terminal and run `python3 pebble_engine.py`. The quiz opens in your browser.
-3. Answer fourteen questions. `Enter` advances, `Esc` goes back, `Cmd/Ctrl+Enter` advances inside a textarea.
+3. Answer the quiz questions. `Enter` advances, `Esc` goes back, `Cmd/Ctrl+Enter` advances inside a textarea.
 4. Pick your path:
    - **Mode A:** Click "Just give me the prompt" → copy or download → paste into Antigravity's agent.
    - **Mode B:** Click "Build the site now" → wait ~30–90 seconds → click "Preview the site."
@@ -179,10 +179,9 @@ The quiz itself is a single HTML file with embedded CSS and JS. No build step, n
 
 ## What's next (when you're ready)
 
-Three obvious extensions, in order of leverage:
+Two obvious extensions, in order of leverage:
 
 1. **Iteration mode** — once a site exists, a "refine" button on the built screen that lets you send a focused diff prompt: "change the hero to X." Pebble parses the LLM's response, replaces just the affected files. Keeps the token cost of changes proportional to the change.
 2. **Auto-run post-build skills** — when a site finishes building, automatically trigger the `code-reviewer` skill on the output, surface findings in the built screen. Same for `readme-generator` to write the site's own README into `output/<slug>/site/README.md`.
-3. **Gemini swap** — drop a `GeminiClient` class alongside `AnthropicClient` (same `generate(system, user, max_tokens) -> str` contract), add a `PEBBLE_PROVIDER=gemini` env var. The wiring point is `get_llm_client()` in `pebble_engine.py`. ~30 lines.
 
 When you've run it on a real client and want to add any of these, send the change you have in mind and I'll wire it up.

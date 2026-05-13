@@ -197,7 +197,7 @@ Each profile includes:
 **Visual aesthetic:** Minimal & Refined
 - **Background:** Light (soft white, warm cream, or pale sage)
 - **Accent color:** Soft green (healing), warm terracotta (earthy), or calm blue (serenity)
-- **Typography:** Soft rounded sans (Poppins OK here) or organic serif (Fraunces)
+- **Typography:** Warm organic serif (Fraunces, Lora) for headings; Inter or DM Sans for body only
 - **Explanation:** Health and wellness need to feel calming and safe. Soft, warm backgrounds with generous whitespace create the peaceful, uncluttered aesthetic patients expect. Dark backgrounds feel heavy; bright colors feel clinical.
 
 **Motion intensity:** Minimal to Smooth (subtle animations)
@@ -290,7 +290,7 @@ Each profile includes:
 **Visual aesthetic:** Technical & Professional OR Premium & Editorial (for high-end B2B SaaS)
 - **Background:** Can use dark (#0A0A0A) for technical/developer tools, or light for B2B SaaS
 - **Accent color:** Bright accent (electric blue, green, purple) or monochrome
-- **Typography:** Geometric sans (Inter, Söhne, ABC Monument)
+- **Typography:** Distinctive geometric sans for headings — Syne, Manrope (heavy), or Space Mono; Söhne or ABC Monument if available; Inter is acceptable for body and data only, never for headings
 - **Explanation:** Tech companies can use dark mode successfully because their audience expects it. Dark backgrounds signal sophistication and technical capability. BUT: keep text readable (high contrast required).
 
 **Motion intensity:** Smooth to Cinematic (for high-end SaaS)
@@ -431,7 +431,7 @@ Each profile includes:
 **Visual aesthetic:** Clean & Modern
 - **Background:** Light (white or soft gray)
 - **Accent color:** Blue (trust) or earth tones
-- **Typography:** Professional sans (Inter OK for listings/data)
+- **Typography:** Professional serif (Fraunces, Playfair Display) or authority sans (Oswald, Syne) for headings; Inter is acceptable for listing data and body text only
 - **Explanation:** Real estate is about the properties, not the agent's website. Clean, searchable layouts with excellent property photos. NOT dark luxury aesthetics unless serving ultra-high-end market.
 
 **Motion intensity:** Minimal to Smooth
