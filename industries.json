@@ -11,9 +11,26 @@
       "background": "#0A0A0A"
     },
     "tone": "urgent, reassuring, local",
-    "key_sections": ["trust_bar", "services", "guarantee", "local_area", "faq"],
-    "trust_signals": ["licensed", "insured", "years in business", "guarantee", "EPA certified"],
-    "avoid": ["horizontal_scroll", "pastel_colors", "playful_fonts", "cute_bug_illustrations"]
+    "key_sections": [
+      "trust_bar",
+      "services",
+      "guarantee",
+      "local_area",
+      "faq"
+    ],
+    "trust_signals": [
+      "licensed",
+      "insured",
+      "years in business",
+      "guarantee",
+      "EPA certified"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "pastel_colors",
+      "playful_fonts",
+      "cute_bug_illustrations"
+    ]
   },
   "real_estate": {
     "emotion": "aspirational, trust, prestige",
@@ -27,9 +44,27 @@
       "background": "#FAF8F3"
     },
     "tone": "confident, refined, local expertise",
-    "key_sections": ["hero", "featured_listings", "agent_bio", "neighborhood_guides", "testimonials", "contact"],
-    "trust_signals": ["years experience", "homes sold", "average days on market", "license number", "MLS access"],
-    "avoid": ["horizontal_scroll", "neon_colors", "cluttered_grids", "stock_keys_imagery"]
+    "key_sections": [
+      "hero",
+      "featured_listings",
+      "agent_bio",
+      "neighborhood_guides",
+      "testimonials",
+      "contact"
+    ],
+    "trust_signals": [
+      "years experience",
+      "homes sold",
+      "average days on market",
+      "license number",
+      "MLS access"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "cluttered_grids",
+      "stock_keys_imagery"
+    ]
   },
   "auto_dealership": {
     "emotion": "confidence, freedom, status",
@@ -43,9 +78,27 @@
       "background": "#111111"
     },
     "tone": "bold, direct, performance-focused",
-    "key_sections": ["hero", "inventory", "financing", "trade_in", "service_dept", "reviews"],
-    "trust_signals": ["years in business", "manufacturer awards", "BBB rating", "financing partners", "customer reviews"],
-    "avoid": ["horizontal_scroll", "pastel_colors", "playful_fonts", "tiny_inventory_thumbnails"]
+    "key_sections": [
+      "hero",
+      "inventory",
+      "financing",
+      "trade_in",
+      "service_dept",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "manufacturer awards",
+      "BBB rating",
+      "financing partners",
+      "customer reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "pastel_colors",
+      "playful_fonts",
+      "tiny_inventory_thumbnails"
+    ]
   },
   "barbershop": {
     "emotion": "masculine, craft, community",
@@ -59,9 +112,26 @@
       "background": "#2A1F1A"
     },
     "tone": "confident, neighborhood, no-nonsense",
-    "key_sections": ["hero", "services_prices", "barbers", "gallery", "booking", "location"],
-    "trust_signals": ["years cutting", "instagram following", "walk-ins welcome", "appointment booking"],
-    "avoid": ["horizontal_scroll", "feminine_pastels", "playful_fonts", "corporate_stock_photos"]
+    "key_sections": [
+      "hero",
+      "services_prices",
+      "barbers",
+      "gallery",
+      "booking",
+      "location"
+    ],
+    "trust_signals": [
+      "years cutting",
+      "instagram following",
+      "walk-ins welcome",
+      "appointment booking"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "feminine_pastels",
+      "playful_fonts",
+      "corporate_stock_photos"
+    ]
   },
   "restaurant": {
     "emotion": "appetite, warmth, occasion",
@@ -75,9 +145,27 @@
       "background": "#F5EFE6"
     },
     "tone": "evocative, sensory, hospitable",
-    "key_sections": ["hero", "menu", "reservations", "story", "private_events", "location_hours"],
-    "trust_signals": ["years open", "press mentions", "chef credentials", "yelp/google rating", "awards"],
-    "avoid": ["horizontal_scroll", "stock_food_photos", "tiny_menu_text", "fake_5_star_carousels"]
+    "key_sections": [
+      "hero",
+      "menu",
+      "reservations",
+      "story",
+      "private_events",
+      "location_hours"
+    ],
+    "trust_signals": [
+      "years open",
+      "press mentions",
+      "chef credentials",
+      "yelp/google rating",
+      "awards"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "stock_food_photos",
+      "tiny_menu_text",
+      "fake_5_star_carousels"
+    ]
   },
   "law_firm": {
     "emotion": "authority, trust, gravity",
@@ -91,9 +179,27 @@
       "background": "#FFFFFF"
     },
     "tone": "authoritative, specific, plainspoken",
-    "key_sections": ["hero", "practice_areas", "attorneys", "results_cases", "testimonials", "consultation"],
-    "trust_signals": ["bar admissions", "years practicing", "case results", "settlements won", "peer ratings"],
-    "avoid": ["horizontal_scroll", "playful_animations", "gavels_and_scales_cliches", "stock_handshake_photos"]
+    "key_sections": [
+      "hero",
+      "practice_areas",
+      "attorneys",
+      "results_cases",
+      "testimonials",
+      "consultation"
+    ],
+    "trust_signals": [
+      "bar admissions",
+      "years practicing",
+      "case results",
+      "settlements won",
+      "peer ratings"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_animations",
+      "gavels_and_scales_cliches",
+      "stock_handshake_photos"
+    ]
   },
   "dental": {
     "emotion": "calm, trust, anxiety-relief",
@@ -107,9 +213,27 @@
       "background": "#FFFFFF"
     },
     "tone": "reassuring, friendly, patient-first",
-    "key_sections": ["hero", "services", "team", "insurance_accepted", "new_patient", "booking"],
-    "trust_signals": ["years practicing", "patients served", "insurance accepted", "technology used", "reviews"],
-    "avoid": ["horizontal_scroll", "scary_dental_imagery", "dark_backgrounds", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "services",
+      "team",
+      "insurance_accepted",
+      "new_patient",
+      "booking"
+    ],
+    "trust_signals": [
+      "years practicing",
+      "patients served",
+      "insurance accepted",
+      "technology used",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "scary_dental_imagery",
+      "dark_backgrounds",
+      "playful_fonts"
+    ]
   },
   "medical_spa": {
     "emotion": "transformation, self-care, indulgence",
@@ -123,9 +247,26 @@
       "background": "#FAF8F3"
     },
     "tone": "elevated, expert, results-focused",
-    "key_sections": ["hero", "treatments", "before_after", "providers", "membership", "booking"],
-    "trust_signals": ["board certified", "treatments performed", "before/after gallery", "credentials"],
-    "avoid": ["horizontal_scroll", "neon_colors", "cheap_stock_photos", "fake_results_claims"]
+    "key_sections": [
+      "hero",
+      "treatments",
+      "before_after",
+      "providers",
+      "membership",
+      "booking"
+    ],
+    "trust_signals": [
+      "board certified",
+      "treatments performed",
+      "before/after gallery",
+      "credentials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "cheap_stock_photos",
+      "fake_results_claims"
+    ]
   },
   "roofing": {
     "emotion": "trust, protection, urgency",
@@ -139,9 +280,27 @@
       "background": "#FFFFFF"
     },
     "tone": "direct, local, reassuring",
-    "key_sections": ["hero", "services", "free_inspection", "service_area", "warranty", "reviews"],
-    "trust_signals": ["licensed", "insured", "warranty length", "manufacturer certifications", "BBB rating"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "abstract_design", "stock_house_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "free_inspection",
+      "service_area",
+      "warranty",
+      "reviews"
+    ],
+    "trust_signals": [
+      "licensed",
+      "insured",
+      "warranty length",
+      "manufacturer certifications",
+      "BBB rating"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "abstract_design",
+      "stock_house_photos"
+    ]
   },
   "landscaping": {
     "emotion": "pride, beauty, transformation",
@@ -155,9 +314,27 @@
       "background": "#F5EFE6"
     },
     "tone": "passionate, local, craft-focused",
-    "key_sections": ["hero", "services", "portfolio", "design_process", "free_estimate", "reviews"],
-    "trust_signals": ["years in business", "projects completed", "licensed", "insured", "design awards"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "tech_aesthetics", "tiny_portfolio_thumbnails"]
+    "key_sections": [
+      "hero",
+      "services",
+      "portfolio",
+      "design_process",
+      "free_estimate",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "projects completed",
+      "licensed",
+      "insured",
+      "design awards"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "tech_aesthetics",
+      "tiny_portfolio_thumbnails"
+    ]
   },
   "plumbing": {
     "emotion": "urgency, relief, trust",
@@ -171,9 +348,27 @@
       "background": "#FFFFFF"
     },
     "tone": "urgent, reassuring, local",
-    "key_sections": ["hero", "emergency_call", "services", "service_area", "transparent_pricing", "reviews"],
-    "trust_signals": ["24/7 emergency", "licensed", "insured", "years in business", "upfront pricing"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "abstract_imagery"]
+    "key_sections": [
+      "hero",
+      "emergency_call",
+      "services",
+      "service_area",
+      "transparent_pricing",
+      "reviews"
+    ],
+    "trust_signals": [
+      "24/7 emergency",
+      "licensed",
+      "insured",
+      "years in business",
+      "upfront pricing"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "abstract_imagery"
+    ]
   },
   "hvac": {
     "emotion": "comfort, urgency, trust",
@@ -187,9 +382,27 @@
       "background": "#FFFFFF"
     },
     "tone": "urgent, reassuring, expert",
-    "key_sections": ["hero", "emergency_service", "services", "financing", "maintenance_plans", "reviews"],
-    "trust_signals": ["24/7 emergency", "NATE certified", "EPA certified", "warranty", "BBB rating"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "luxury_aesthetics", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "emergency_service",
+      "services",
+      "financing",
+      "maintenance_plans",
+      "reviews"
+    ],
+    "trust_signals": [
+      "24/7 emergency",
+      "NATE certified",
+      "EPA certified",
+      "warranty",
+      "BBB rating"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "luxury_aesthetics",
+      "playful_fonts"
+    ]
   },
   "electrician": {
     "emotion": "safety, expertise, urgency",
@@ -203,9 +416,27 @@
       "background": "#FFFFFF"
     },
     "tone": "expert, safety-first, local",
-    "key_sections": ["hero", "emergency_call", "services", "service_area", "safety_inspections", "reviews"],
-    "trust_signals": ["master electrician", "licensed", "insured", "bonded", "years in business"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "luxury_aesthetics", "abstract_lightning_clipart"]
+    "key_sections": [
+      "hero",
+      "emergency_call",
+      "services",
+      "service_area",
+      "safety_inspections",
+      "reviews"
+    ],
+    "trust_signals": [
+      "master electrician",
+      "licensed",
+      "insured",
+      "bonded",
+      "years in business"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "luxury_aesthetics",
+      "abstract_lightning_clipart"
+    ]
   },
   "gym_fitness": {
     "emotion": "energy, transformation, community",
@@ -219,9 +450,26 @@
       "background": "#0A0A0A"
     },
     "tone": "motivational, direct, accountable",
-    "key_sections": ["hero", "membership", "classes", "trainers", "transformation_stories", "free_trial"],
-    "trust_signals": ["members served", "trainer certifications", "transformation results", "class schedule"],
-    "avoid": ["horizontal_scroll", "pastel_colors", "delicate_typography", "stock_smiling_fitness_models"]
+    "key_sections": [
+      "hero",
+      "membership",
+      "classes",
+      "trainers",
+      "transformation_stories",
+      "free_trial"
+    ],
+    "trust_signals": [
+      "members served",
+      "trainer certifications",
+      "transformation results",
+      "class schedule"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "pastel_colors",
+      "delicate_typography",
+      "stock_smiling_fitness_models"
+    ]
   },
   "salon_beauty": {
     "emotion": "indulgence, transformation, confidence",
@@ -235,9 +483,26 @@
       "background": "#FAF8F3"
     },
     "tone": "elevated, expert, personal",
-    "key_sections": ["hero", "services_pricing", "stylists", "gallery", "booking", "products"],
-    "trust_signals": ["years experience", "specialty certifications", "instagram following", "client reviews"],
-    "avoid": ["horizontal_scroll", "neon_colors", "cluttered_layouts", "tiny_service_lists"]
+    "key_sections": [
+      "hero",
+      "services_pricing",
+      "stylists",
+      "gallery",
+      "booking",
+      "products"
+    ],
+    "trust_signals": [
+      "years experience",
+      "specialty certifications",
+      "instagram following",
+      "client reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "cluttered_layouts",
+      "tiny_service_lists"
+    ]
   },
   "photography": {
     "emotion": "memory, beauty, artistry",
@@ -251,9 +516,26 @@
       "background": "#FFFFFF"
     },
     "tone": "artistic, personal, story-driven",
-    "key_sections": ["hero", "portfolio", "packages", "about_artist", "process", "booking"],
-    "trust_signals": ["years shooting", "weddings/sessions completed", "publications featured", "awards"],
-    "avoid": ["horizontal_scroll", "small_portfolio_thumbnails", "watermark_overlays", "stock_imagery"]
+    "key_sections": [
+      "hero",
+      "portfolio",
+      "packages",
+      "about_artist",
+      "process",
+      "booking"
+    ],
+    "trust_signals": [
+      "years shooting",
+      "weddings/sessions completed",
+      "publications featured",
+      "awards"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "small_portfolio_thumbnails",
+      "watermark_overlays",
+      "stock_imagery"
+    ]
   },
   "accounting": {
     "emotion": "trust, precision, relief",
@@ -267,9 +549,27 @@
       "background": "#FFFFFF"
     },
     "tone": "trustworthy, specific, plainspoken",
-    "key_sections": ["hero", "services", "industries_served", "team", "free_consultation", "client_portal"],
-    "trust_signals": ["CPA credentials", "years practicing", "clients served", "specializations", "professional memberships"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "abstract_imagery", "stock_calculator_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "industries_served",
+      "team",
+      "free_consultation",
+      "client_portal"
+    ],
+    "trust_signals": [
+      "CPA credentials",
+      "years practicing",
+      "clients served",
+      "specializations",
+      "professional memberships"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "abstract_imagery",
+      "stock_calculator_photos"
+    ]
   },
   "insurance": {
     "emotion": "protection, trust, peace-of-mind",
@@ -283,9 +583,27 @@
       "background": "#FFFFFF"
     },
     "tone": "reassuring, specific, advisor-not-salesperson",
-    "key_sections": ["hero", "products", "free_quote", "claims_process", "about_agent", "reviews"],
-    "trust_signals": ["years in business", "carriers represented", "license number", "BBB rating", "client testimonials"],
-    "avoid": ["horizontal_scroll", "scary_imagery", "fine_print_dense_layouts", "stock_family_photos"]
+    "key_sections": [
+      "hero",
+      "products",
+      "free_quote",
+      "claims_process",
+      "about_agent",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "carriers represented",
+      "license number",
+      "BBB rating",
+      "client testimonials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "scary_imagery",
+      "fine_print_dense_layouts",
+      "stock_family_photos"
+    ]
   },
   "veterinary": {
     "emotion": "compassion, trust, family-pet-love",
@@ -299,9 +617,27 @@
       "background": "#FAF8F3"
     },
     "tone": "compassionate, expert, family-focused",
-    "key_sections": ["hero", "services", "team", "emergency_info", "new_patient", "booking"],
-    "trust_signals": ["DVM credentials", "years practicing", "AAHA accredited", "emergency hours", "reviews"],
-    "avoid": ["horizontal_scroll", "cold_clinical_imagery", "scary_medical_photos", "playful_overload"]
+    "key_sections": [
+      "hero",
+      "services",
+      "team",
+      "emergency_info",
+      "new_patient",
+      "booking"
+    ],
+    "trust_signals": [
+      "DVM credentials",
+      "years practicing",
+      "AAHA accredited",
+      "emergency hours",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "cold_clinical_imagery",
+      "scary_medical_photos",
+      "playful_overload"
+    ]
   },
   "moving_company": {
     "emotion": "trust, relief, smooth-transition",
@@ -315,9 +651,27 @@
       "background": "#FFFFFF"
     },
     "tone": "trustworthy, organized, local",
-    "key_sections": ["hero", "services", "free_quote", "service_area", "process", "reviews"],
-    "trust_signals": ["years in business", "moves completed", "licensed DOT number", "insured", "BBB rating"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "stock_box_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "free_quote",
+      "service_area",
+      "process",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "moves completed",
+      "licensed DOT number",
+      "insured",
+      "BBB rating"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "stock_box_photos"
+    ]
   },
   "cleaning_service": {
     "emotion": "freshness, relief, trust",
@@ -331,9 +685,27 @@
       "background": "#FFFFFF"
     },
     "tone": "friendly, reliable, thorough",
-    "key_sections": ["hero", "services", "pricing", "service_area", "booking", "reviews"],
-    "trust_signals": ["bonded", "insured", "background-checked staff", "satisfaction guarantee", "reviews"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "playful_fonts", "stock_cleaning_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "pricing",
+      "service_area",
+      "booking",
+      "reviews"
+    ],
+    "trust_signals": [
+      "bonded",
+      "insured",
+      "background-checked staff",
+      "satisfaction guarantee",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "playful_fonts",
+      "stock_cleaning_photos"
+    ]
   },
   "tattoo_studio": {
     "emotion": "self-expression, artistry, ritual",
@@ -347,9 +719,27 @@
       "background": "#0A0A0A"
     },
     "tone": "artistic, confident, no-pretense",
-    "key_sections": ["hero", "artists", "portfolio_by_artist", "booking", "aftercare", "shop_info"],
-    "trust_signals": ["years tattooing", "instagram following", "conventions/awards", "shop minimums", "health certifications"],
-    "avoid": ["horizontal_scroll", "corporate_aesthetics", "stock_imagery", "tiny_portfolio_thumbnails"]
+    "key_sections": [
+      "hero",
+      "artists",
+      "portfolio_by_artist",
+      "booking",
+      "aftercare",
+      "shop_info"
+    ],
+    "trust_signals": [
+      "years tattooing",
+      "instagram following",
+      "conventions/awards",
+      "shop minimums",
+      "health certifications"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "corporate_aesthetics",
+      "stock_imagery",
+      "tiny_portfolio_thumbnails"
+    ]
   },
   "flooring": {
     "emotion": "transformation, craftsmanship, investment",
@@ -363,9 +753,26 @@
       "background": "#FAF8F3"
     },
     "tone": "expert, craft-focused, consultative",
-    "key_sections": ["hero", "products", "installation_process", "portfolio", "free_estimate", "reviews"],
-    "trust_signals": ["years in business", "manufacturer certifications", "warranty", "installations completed"],
-    "avoid": ["horizontal_scroll", "tech_aesthetics", "playful_fonts", "tiny_product_thumbnails"]
+    "key_sections": [
+      "hero",
+      "products",
+      "installation_process",
+      "portfolio",
+      "free_estimate",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "manufacturer certifications",
+      "warranty",
+      "installations completed"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "tech_aesthetics",
+      "playful_fonts",
+      "tiny_product_thumbnails"
+    ]
   },
   "painting_contractor": {
     "emotion": "transformation, pride, craftsmanship",
@@ -379,9 +786,27 @@
       "background": "#FFFFFF"
     },
     "tone": "craft-focused, local, transparent",
-    "key_sections": ["hero", "services", "before_after_gallery", "process", "free_estimate", "reviews"],
-    "trust_signals": ["years in business", "licensed", "insured", "projects completed", "warranty"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "luxury_aesthetics", "stock_paint_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "before_after_gallery",
+      "process",
+      "free_estimate",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "licensed",
+      "insured",
+      "projects completed",
+      "warranty"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "luxury_aesthetics",
+      "stock_paint_photos"
+    ]
   },
   "pool_service": {
     "emotion": "leisure, transformation, peace",
@@ -395,9 +820,27 @@
       "background": "#F0F9FF"
     },
     "tone": "expert, reliable, premium-but-local",
-    "key_sections": ["hero", "services", "maintenance_plans", "service_area", "free_quote", "reviews"],
-    "trust_signals": ["years in business", "CPO certified", "insured", "pools serviced", "reviews"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "playful_fonts", "stock_pool_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "maintenance_plans",
+      "service_area",
+      "free_quote",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "CPO certified",
+      "insured",
+      "pools serviced",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "playful_fonts",
+      "stock_pool_photos"
+    ]
   },
   "wedding_planning": {
     "emotion": "romance, dream, once-in-a-lifetime",
@@ -411,9 +854,26 @@
       "background": "#FAF8F3"
     },
     "tone": "warm, expert, personal",
-    "key_sections": ["hero", "services_packages", "portfolio_real_weddings", "process", "about_planner", "inquiry"],
-    "trust_signals": ["weddings planned", "years in business", "publications featured", "vendor relationships"],
-    "avoid": ["horizontal_scroll", "neon_colors", "stock_wedding_photos", "cluttered_layouts"]
+    "key_sections": [
+      "hero",
+      "services_packages",
+      "portfolio_real_weddings",
+      "process",
+      "about_planner",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "weddings planned",
+      "years in business",
+      "publications featured",
+      "vendor relationships"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "stock_wedding_photos",
+      "cluttered_layouts"
+    ]
   },
   "childcare": {
     "emotion": "trust, warmth, safety",
@@ -427,9 +887,28 @@
       "background": "#FFFBEB"
     },
     "tone": "warm, expert, parent-first",
-    "key_sections": ["hero", "programs", "curriculum", "staff", "safety_protocols", "enrollment", "tour"],
-    "trust_signals": ["years operating", "state licensed", "accreditations", "staff credentials", "safety record"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "stock_child_photos", "corporate_aesthetics"]
+    "key_sections": [
+      "hero",
+      "programs",
+      "curriculum",
+      "staff",
+      "safety_protocols",
+      "enrollment",
+      "tour"
+    ],
+    "trust_signals": [
+      "years operating",
+      "state licensed",
+      "accreditations",
+      "staff credentials",
+      "safety record"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "stock_child_photos",
+      "corporate_aesthetics"
+    ]
   },
   "tutoring": {
     "emotion": "confidence, growth, success",
@@ -443,9 +922,26 @@
       "background": "#FFFFFF"
     },
     "tone": "encouraging, expert, results-focused",
-    "key_sections": ["hero", "subjects_grades", "tutors", "results_testimonials", "pricing", "free_consultation"],
-    "trust_signals": ["years tutoring", "students helped", "score improvements", "tutor credentials"],
-    "avoid": ["horizontal_scroll", "dark_backgrounds", "luxury_aesthetics", "stock_classroom_photos"]
+    "key_sections": [
+      "hero",
+      "subjects_grades",
+      "tutors",
+      "results_testimonials",
+      "pricing",
+      "free_consultation"
+    ],
+    "trust_signals": [
+      "years tutoring",
+      "students helped",
+      "score improvements",
+      "tutor credentials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_backgrounds",
+      "luxury_aesthetics",
+      "stock_classroom_photos"
+    ]
   },
   "personal_trainer": {
     "emotion": "transformation, accountability, energy",
@@ -459,9 +955,26 @@
       "background": "#0A0A0A"
     },
     "tone": "motivational, direct, results-focused",
-    "key_sections": ["hero", "training_programs", "transformation_stories", "about_trainer", "pricing", "free_consult"],
-    "trust_signals": ["certifications", "years training", "transformations completed", "specializations"],
-    "avoid": ["horizontal_scroll", "pastel_colors", "delicate_typography", "stock_fitness_photos"]
+    "key_sections": [
+      "hero",
+      "training_programs",
+      "transformation_stories",
+      "about_trainer",
+      "pricing",
+      "free_consult"
+    ],
+    "trust_signals": [
+      "certifications",
+      "years training",
+      "transformations completed",
+      "specializations"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "pastel_colors",
+      "delicate_typography",
+      "stock_fitness_photos"
+    ]
   },
   "mortgage_broker": {
     "emotion": "trust, achievement, peace-of-mind",
@@ -475,9 +988,28 @@
       "background": "#FFFFFF"
     },
     "tone": "advisor, specific, plainspoken",
-    "key_sections": ["hero", "loan_programs", "calculators", "process", "about_broker", "apply", "reviews"],
-    "trust_signals": ["NMLS license", "years in business", "loans closed", "lender partners", "client testimonials"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "stock_house_keys_photos"]
+    "key_sections": [
+      "hero",
+      "loan_programs",
+      "calculators",
+      "process",
+      "about_broker",
+      "apply",
+      "reviews"
+    ],
+    "trust_signals": [
+      "NMLS license",
+      "years in business",
+      "loans closed",
+      "lender partners",
+      "client testimonials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "stock_house_keys_photos"
+    ]
   },
   "chiropractor": {
     "emotion": "relief, wellness, expertise",
@@ -491,9 +1023,27 @@
       "background": "#FAF8F3"
     },
     "tone": "expert, compassionate, evidence-based",
-    "key_sections": ["hero", "conditions_treated", "techniques", "team", "new_patient", "booking"],
-    "trust_signals": ["DC credentials", "years practicing", "techniques certified", "patients treated", "reviews"],
-    "avoid": ["horizontal_scroll", "scary_medical_imagery", "dark_backgrounds", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "conditions_treated",
+      "techniques",
+      "team",
+      "new_patient",
+      "booking"
+    ],
+    "trust_signals": [
+      "DC credentials",
+      "years practicing",
+      "techniques certified",
+      "patients treated",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "scary_medical_imagery",
+      "dark_backgrounds",
+      "playful_fonts"
+    ]
   },
   "physical_therapy": {
     "emotion": "recovery, progress, expertise",
@@ -507,9 +1057,26 @@
       "background": "#FFFFFF"
     },
     "tone": "expert, encouraging, evidence-based",
-    "key_sections": ["hero", "conditions", "specialties", "team", "insurance_accepted", "booking"],
-    "trust_signals": ["DPT credentials", "years practicing", "specialty certifications", "outcomes data"],
-    "avoid": ["horizontal_scroll", "scary_medical_imagery", "dark_backgrounds", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "conditions",
+      "specialties",
+      "team",
+      "insurance_accepted",
+      "booking"
+    ],
+    "trust_signals": [
+      "DPT credentials",
+      "years practicing",
+      "specialty certifications",
+      "outcomes data"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "scary_medical_imagery",
+      "dark_backgrounds",
+      "playful_fonts"
+    ]
   },
   "optometry": {
     "emotion": "clarity, care, modern-style",
@@ -523,9 +1090,27 @@
       "background": "#FFFFFF"
     },
     "tone": "expert, modern, style-aware",
-    "key_sections": ["hero", "services", "eyewear_brands", "team", "insurance_accepted", "booking"],
-    "trust_signals": ["OD credentials", "years practicing", "brands carried", "insurance accepted", "reviews"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "stock_eye_chart_imagery", "dark_backgrounds"]
+    "key_sections": [
+      "hero",
+      "services",
+      "eyewear_brands",
+      "team",
+      "insurance_accepted",
+      "booking"
+    ],
+    "trust_signals": [
+      "OD credentials",
+      "years practicing",
+      "brands carried",
+      "insurance accepted",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "stock_eye_chart_imagery",
+      "dark_backgrounds"
+    ]
   },
   "urgent_care": {
     "emotion": "urgency, relief, accessibility",
@@ -539,9 +1124,26 @@
       "background": "#FFFFFF"
     },
     "tone": "direct, reassuring, accessible",
-    "key_sections": ["hero", "current_wait_time", "services_treated", "locations", "insurance_accepted", "check_in"],
-    "trust_signals": ["board certified", "average wait time", "insurance accepted", "patient reviews"],
-    "avoid": ["horizontal_scroll", "scary_medical_imagery", "luxury_aesthetics", "slow_animations"]
+    "key_sections": [
+      "hero",
+      "current_wait_time",
+      "services_treated",
+      "locations",
+      "insurance_accepted",
+      "check_in"
+    ],
+    "trust_signals": [
+      "board certified",
+      "average wait time",
+      "insurance accepted",
+      "patient reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "scary_medical_imagery",
+      "luxury_aesthetics",
+      "slow_animations"
+    ]
   },
   "food_truck": {
     "emotion": "appetite, community, fun",
@@ -555,9 +1157,26 @@
       "background": "#FAF8F3"
     },
     "tone": "playful, direct, neighborhood",
-    "key_sections": ["hero", "menu", "where_we_are_today", "catering", "story", "instagram_feed"],
-    "trust_signals": ["years operating", "instagram following", "press mentions", "permits"],
-    "avoid": ["horizontal_scroll", "corporate_aesthetics", "stock_food_photos", "tiny_menu_text"]
+    "key_sections": [
+      "hero",
+      "menu",
+      "where_we_are_today",
+      "catering",
+      "story",
+      "instagram_feed"
+    ],
+    "trust_signals": [
+      "years operating",
+      "instagram following",
+      "press mentions",
+      "permits"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "corporate_aesthetics",
+      "stock_food_photos",
+      "tiny_menu_text"
+    ]
   },
   "catering": {
     "emotion": "occasion, abundance, trust",
@@ -571,9 +1190,27 @@
       "background": "#FAF8F3"
     },
     "tone": "warm, expert, occasion-focused",
-    "key_sections": ["hero", "services", "menus", "portfolio_events", "process", "inquiry"],
-    "trust_signals": ["years catering", "events served", "publications", "venues partnered", "reviews"],
-    "avoid": ["horizontal_scroll", "stock_food_photos", "tiny_thumbnail_galleries", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "services",
+      "menus",
+      "portfolio_events",
+      "process",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "years catering",
+      "events served",
+      "publications",
+      "venues partnered",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "stock_food_photos",
+      "tiny_thumbnail_galleries",
+      "playful_fonts"
+    ]
   },
   "event_venue": {
     "emotion": "occasion, beauty, possibility",
@@ -587,9 +1224,27 @@
       "background": "#FAF8F3"
     },
     "tone": "elevated, hospitable, occasion-focused",
-    "key_sections": ["hero", "the_space_gallery", "events_hosted", "pricing_packages", "site_visit_booking", "vendor_partners"],
-    "trust_signals": ["events hosted", "years open", "publications", "vendor partnerships", "reviews"],
-    "avoid": ["horizontal_scroll", "neon_colors", "tiny_gallery_thumbnails", "cluttered_layouts"]
+    "key_sections": [
+      "hero",
+      "the_space_gallery",
+      "events_hosted",
+      "pricing_packages",
+      "site_visit_booking",
+      "vendor_partners"
+    ],
+    "trust_signals": [
+      "events hosted",
+      "years open",
+      "publications",
+      "vendor partnerships",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "tiny_gallery_thumbnails",
+      "cluttered_layouts"
+    ]
   },
   "nightclub_bar": {
     "emotion": "energy, escape, social-status",
@@ -603,9 +1258,26 @@
       "background": "#0A0A0A"
     },
     "tone": "bold, in-the-know, energetic",
-    "key_sections": ["hero", "this_weeks_lineup", "table_reservations", "menu", "gallery_past_nights", "location_hours"],
-    "trust_signals": ["years open", "instagram following", "events hosted", "press mentions"],
-    "avoid": ["horizontal_scroll", "pastel_colors", "delicate_typography", "stock_party_photos"]
+    "key_sections": [
+      "hero",
+      "this_weeks_lineup",
+      "table_reservations",
+      "menu",
+      "gallery_past_nights",
+      "location_hours"
+    ],
+    "trust_signals": [
+      "years open",
+      "instagram following",
+      "events hosted",
+      "press mentions"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "pastel_colors",
+      "delicate_typography",
+      "stock_party_photos"
+    ]
   },
   "hotel_bnb": {
     "emotion": "escape, comfort, discovery",
@@ -619,9 +1291,26 @@
       "background": "#FAF8F3"
     },
     "tone": "evocative, hospitable, place-specific",
-    "key_sections": ["hero", "rooms_suites", "amenities", "local_area_guide", "gallery", "booking"],
-    "trust_signals": ["years operating", "TripAdvisor/Booking rating", "publications", "awards"],
-    "avoid": ["horizontal_scroll", "neon_colors", "tiny_room_thumbnails", "stock_hotel_photos"]
+    "key_sections": [
+      "hero",
+      "rooms_suites",
+      "amenities",
+      "local_area_guide",
+      "gallery",
+      "booking"
+    ],
+    "trust_signals": [
+      "years operating",
+      "TripAdvisor/Booking rating",
+      "publications",
+      "awards"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "neon_colors",
+      "tiny_room_thumbnails",
+      "stock_hotel_photos"
+    ]
   },
   "travel_agency": {
     "emotion": "wanderlust, expertise, discovery",
@@ -635,9 +1324,26 @@
       "background": "#FAF8F3"
     },
     "tone": "expert, evocative, personal",
-    "key_sections": ["hero", "destinations", "trip_types", "about_agent", "testimonials", "inquiry"],
-    "trust_signals": ["years in business", "trips planned", "supplier partnerships", "agent credentials"],
-    "avoid": ["horizontal_scroll", "stock_travel_photos", "cluttered_layouts", "tiny_destination_thumbnails"]
+    "key_sections": [
+      "hero",
+      "destinations",
+      "trip_types",
+      "about_agent",
+      "testimonials",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "years in business",
+      "trips planned",
+      "supplier partnerships",
+      "agent credentials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "stock_travel_photos",
+      "cluttered_layouts",
+      "tiny_destination_thumbnails"
+    ]
   },
   "interior_design": {
     "emotion": "transformation, beauty, vision",
@@ -651,9 +1357,27 @@
       "background": "#FAF8F3"
     },
     "tone": "artistic, expert, personal",
-    "key_sections": ["hero", "portfolio", "services", "process", "about_designer", "inquiry", "press"],
-    "trust_signals": ["years designing", "publications featured", "awards", "projects completed"],
-    "avoid": ["horizontal_scroll", "tiny_portfolio_thumbnails", "stock_imagery", "playful_fonts"]
+    "key_sections": [
+      "hero",
+      "portfolio",
+      "services",
+      "process",
+      "about_designer",
+      "inquiry",
+      "press"
+    ],
+    "trust_signals": [
+      "years designing",
+      "publications featured",
+      "awards",
+      "projects completed"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "tiny_portfolio_thumbnails",
+      "stock_imagery",
+      "playful_fonts"
+    ]
   },
   "architecture": {
     "emotion": "vision, structure, craftsmanship",
@@ -667,9 +1391,27 @@
       "background": "#FFFFFF"
     },
     "tone": "considered, expert, philosophy-driven",
-    "key_sections": ["hero", "projects", "studio_philosophy", "team", "publications_press", "inquiry"],
-    "trust_signals": ["AIA credentials", "years practicing", "projects completed", "publications", "awards"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "stock_imagery", "small_project_thumbnails"]
+    "key_sections": [
+      "hero",
+      "projects",
+      "studio_philosophy",
+      "team",
+      "publications_press",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "AIA credentials",
+      "years practicing",
+      "projects completed",
+      "publications",
+      "awards"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "stock_imagery",
+      "small_project_thumbnails"
+    ]
   },
   "construction": {
     "emotion": "trust, capability, scale",
@@ -683,9 +1425,28 @@
       "background": "#FFFFFF"
     },
     "tone": "direct, capable, project-proof",
-    "key_sections": ["hero", "services", "projects_portfolio", "about_company", "safety_credentials", "inquiry"],
-    "trust_signals": ["years in business", "projects completed", "licensed", "bonded", "insured", "safety record"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "tiny_project_thumbnails"]
+    "key_sections": [
+      "hero",
+      "services",
+      "projects_portfolio",
+      "about_company",
+      "safety_credentials",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "years in business",
+      "projects completed",
+      "licensed",
+      "bonded",
+      "insured",
+      "safety record"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "tiny_project_thumbnails"
+    ]
   },
   "security_company": {
     "emotion": "protection, trust, vigilance",
@@ -699,9 +1460,27 @@
       "background": "#0A0A0A"
     },
     "tone": "authoritative, capable, 24/7",
-    "key_sections": ["hero", "services", "industries_served", "credentials", "free_assessment", "contact_24_7"],
-    "trust_signals": ["licensed", "insured", "years in business", "clients served", "guard certifications"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "luxury_aesthetics", "scary_stock_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "industries_served",
+      "credentials",
+      "free_assessment",
+      "contact_24_7"
+    ],
+    "trust_signals": [
+      "licensed",
+      "insured",
+      "years in business",
+      "clients served",
+      "guard certifications"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "luxury_aesthetics",
+      "scary_stock_photos"
+    ]
   },
   "it_tech_support": {
     "emotion": "relief, expertise, modernization",
@@ -715,9 +1494,27 @@
       "background": "#0A0A0A"
     },
     "tone": "expert, accessible, plain-english",
-    "key_sections": ["hero", "services", "industries_served", "managed_services_plans", "about_team", "inquiry"],
-    "trust_signals": ["years in business", "certifications", "clients served", "uptime stats", "response time"],
-    "avoid": ["horizontal_scroll", "playful_fonts", "stock_computer_imagery", "jargon_overload"]
+    "key_sections": [
+      "hero",
+      "services",
+      "industries_served",
+      "managed_services_plans",
+      "about_team",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "years in business",
+      "certifications",
+      "clients served",
+      "uptime stats",
+      "response time"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "playful_fonts",
+      "stock_computer_imagery",
+      "jargon_overload"
+    ]
   },
   "marketing_agency": {
     "emotion": "growth, expertise, creativity",
@@ -731,9 +1528,27 @@
       "background": "#FFFFFF"
     },
     "tone": "bold, results-focused, distinctive",
-    "key_sections": ["hero", "services", "case_studies", "team", "approach", "inquiry"],
-    "trust_signals": ["years in business", "clients served", "case study results", "awards", "publications"],
-    "avoid": ["horizontal_scroll", "generic_corporate_aesthetics", "stock_imagery", "buzzword_overload"]
+    "key_sections": [
+      "hero",
+      "services",
+      "case_studies",
+      "team",
+      "approach",
+      "inquiry"
+    ],
+    "trust_signals": [
+      "years in business",
+      "clients served",
+      "case study results",
+      "awards",
+      "publications"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "generic_corporate_aesthetics",
+      "stock_imagery",
+      "buzzword_overload"
+    ]
   },
   "ecommerce": {
     "emotion": "discovery, quality, desire",
@@ -747,9 +1562,26 @@
       "background": "#FFFFFF"
     },
     "tone": "brand-distinctive, product-focused, accessible",
-    "key_sections": ["hero", "featured_products", "categories", "brand_story", "reviews", "press"],
-    "trust_signals": ["reviews count and rating", "press mentions", "shipping/returns policy", "social following"],
-    "avoid": ["horizontal_scroll", "tiny_product_thumbnails", "cluttered_grids", "stock_product_photos"]
+    "key_sections": [
+      "hero",
+      "featured_products",
+      "categories",
+      "brand_story",
+      "reviews",
+      "press"
+    ],
+    "trust_signals": [
+      "reviews count and rating",
+      "press mentions",
+      "shipping/returns policy",
+      "social following"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "tiny_product_thumbnails",
+      "cluttered_grids",
+      "stock_product_photos"
+    ]
   },
   "nonprofit": {
     "emotion": "mission, urgency, hope",
@@ -763,9 +1595,28 @@
       "background": "#FAF8F3"
     },
     "tone": "mission-driven, specific, human",
-    "key_sections": ["hero", "mission_impact", "programs", "stories", "donate", "volunteer", "events"],
-    "trust_signals": ["501(c)(3) status", "years operating", "people served", "financial transparency", "partners"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "stock_diversity_photos", "guilt_imagery"]
+    "key_sections": [
+      "hero",
+      "mission_impact",
+      "programs",
+      "stories",
+      "donate",
+      "volunteer",
+      "events"
+    ],
+    "trust_signals": [
+      "501(c)(3) status",
+      "years operating",
+      "people served",
+      "financial transparency",
+      "partners"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "stock_diversity_photos",
+      "guilt_imagery"
+    ]
   },
   "church": {
     "emotion": "belonging, welcome, faith",
@@ -779,9 +1630,27 @@
       "background": "#FAF8F3"
     },
     "tone": "warm, welcoming, mission-clear",
-    "key_sections": ["hero", "service_times", "what_to_expect", "ministries", "sermons", "give", "contact"],
-    "trust_signals": ["years established", "denomination", "leadership credentials", "community involvement"],
-    "avoid": ["horizontal_scroll", "stock_church_photos", "judgmental_tone", "cluttered_layouts"]
+    "key_sections": [
+      "hero",
+      "service_times",
+      "what_to_expect",
+      "ministries",
+      "sermons",
+      "give",
+      "contact"
+    ],
+    "trust_signals": [
+      "years established",
+      "denomination",
+      "leadership credentials",
+      "community involvement"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "stock_church_photos",
+      "judgmental_tone",
+      "cluttered_layouts"
+    ]
   },
   "funeral_home": {
     "emotion": "compassion, dignity, peace",
@@ -795,9 +1664,26 @@
       "background": "#FAF8F3"
     },
     "tone": "compassionate, considered, family-first",
-    "key_sections": ["hero", "services", "planning_resources", "obituaries", "our_family_story", "contact"],
-    "trust_signals": ["years serving community", "family-owned", "credentials", "memberships"],
-    "avoid": ["horizontal_scroll", "dark_imagery", "playful_animations", "stock_grief_photos"]
+    "key_sections": [
+      "hero",
+      "services",
+      "planning_resources",
+      "obituaries",
+      "our_family_story",
+      "contact"
+    ],
+    "trust_signals": [
+      "years serving community",
+      "family-owned",
+      "credentials",
+      "memberships"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_imagery",
+      "playful_animations",
+      "stock_grief_photos"
+    ]
   },
   "car_wash": {
     "emotion": "pride, refresh, ease",
@@ -811,9 +1697,26 @@
       "background": "#FFFFFF"
     },
     "tone": "direct, modern, quick",
-    "key_sections": ["hero", "wash_packages", "monthly_membership", "locations", "fleet_services", "reviews"],
-    "trust_signals": ["years in business", "locations", "members", "eco-friendly certifications"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "stock_car_photos"]
+    "key_sections": [
+      "hero",
+      "wash_packages",
+      "monthly_membership",
+      "locations",
+      "fleet_services",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "locations",
+      "members",
+      "eco-friendly certifications"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "stock_car_photos"
+    ]
   },
   "storage_facility": {
     "emotion": "security, accessibility, peace-of-mind",
@@ -827,8 +1730,410 @@
       "background": "#FFFFFF"
     },
     "tone": "direct, transparent, accessible",
-    "key_sections": ["hero", "unit_sizes_pricing", "features_security", "reserve_online", "facility_info", "reviews"],
-    "trust_signals": ["years in business", "security features", "climate control", "access hours", "reviews"],
-    "avoid": ["horizontal_scroll", "luxury_aesthetics", "playful_fonts", "stock_storage_photos"]
+    "key_sections": [
+      "hero",
+      "unit_sizes_pricing",
+      "features_security",
+      "reserve_online",
+      "facility_info",
+      "reviews"
+    ],
+    "trust_signals": [
+      "years in business",
+      "security features",
+      "climate control",
+      "access hours",
+      "reviews"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "luxury_aesthetics",
+      "playful_fonts",
+      "stock_storage_photos"
+    ]
+  },
+  "specialty_coffee_roaster": {
+    "emotion": "craftsmanship, anticipation, warmth, authenticity",
+    "visual_style": "earthy artisanal, texture-rich, typography-forward",
+    "hero_type": "video",
+    "video_keyword": "coffee roasting beans slow motion",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#2C1E16",
+      "accent": "#D96A2B",
+      "background": "#F4F1EA"
+    },
+    "tone": "artisanal, passionate, inviting, ethical",
+    "key_sections": [
+      "hero_shop",
+      "featured_roasts",
+      "sourcing_story",
+      "subscription_upsell",
+      "brewing_guides"
+    ],
+    "trust_signals": [
+      "Roast-to-order guarantee",
+      "Single-origin farm transparency",
+      "SCA cup scores",
+      "Fair Trade / Organic certifications",
+      "Customer reviews with brewing methods"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "generic cafe stock photos",
+      "neon or artificial colors",
+      "corporate typography",
+      "hidden roast dates"
+    ]
+  },
+  "pet_grooming": {
+    "emotion": "warmth, care, joy",
+    "visual_style": "soft, friendly, warm",
+    "hero_type": "video",
+    "video_keyword": "dog grooming salon happy puppy professional",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#3A7D6A",
+      "accent": "#E8A87C",
+      "background": "#FFF8F0"
+    },
+    "tone": "warm, friendly, reassuring",
+    "key_sections": [
+      "services_pricing",
+      "before_after_gallery",
+      "trust_bar",
+      "team_groomers",
+      "booking",
+      "faq"
+    ],
+    "trust_signals": [
+      "certified groomers",
+      "years grooming",
+      "happy pet photos",
+      "insured and bonded",
+      "gentle handling techniques",
+      "cage-free / low-stress environment"
+    ],
+    "avoid": [
+      "scary clinical white-glove sterile aesthetic",
+      "anxious-pet imagery",
+      "stiff corporate fonts",
+      "discount-store framing"
+    ]
+  },
+  "bakery": {
+    "emotion": "warmth, comfort, indulgence",
+    "visual_style": "rustic, warm, handcrafted",
+    "hero_type": "video",
+    "video_keyword": "artisan bakery fresh bread baking oven",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#5C3D24",
+      "accent": "#D4A574",
+      "background": "#FAF3E7"
+    },
+    "tone": "warm, inviting, neighborhood feel",
+    "key_sections": [
+      "todays_offerings",
+      "story_origin",
+      "ingredients_sourcing",
+      "location_hours",
+      "instagram_feed",
+      "custom_orders"
+    ],
+    "trust_signals": [
+      "years baking",
+      "local sourcing",
+      "family recipes",
+      "neighborhood favorite",
+      "fresh daily",
+      "from-scratch"
+    ],
+    "avoid": [
+      "sterile minimalism",
+      "corporate chain aesthetic",
+      "generic stock food photos",
+      "discount-bakery framing"
+    ]
+  },
+  "yoga_studio": {
+    "emotion": "calm, grounded, renewal",
+    "visual_style": "serene, natural, spacious",
+    "hero_type": "video",
+    "video_keyword": "yoga studio sunrise practice mat candle",
+    "threejs_type": "aurora_mesh",
+    "colors": {
+      "primary": "#5E7A6E",
+      "accent": "#C57E5A",
+      "background": "#FAF8F3"
+    },
+    "tone": "calming, welcoming, grounded, never pushy",
+    "key_sections": [
+      "class_schedule",
+      "instructors_bios",
+      "philosophy",
+      "first_class_offer",
+      "location_amenities",
+      "faq"
+    ],
+    "trust_signals": [
+      "certified instructors (RYT-200 / RYT-500)",
+      "years teaching",
+      "community testimonials",
+      "first class free",
+      "intro pack pricing"
+    ],
+    "avoid": [
+      "aggressive sales copy",
+      "before/after body-transformation hype",
+      "neon colors and high-intensity imagery",
+      "exclusive elite-only framing"
+    ]
+  },
+  "coffee_shop": {
+    "emotion": "warmth, comfort, community",
+    "visual_style": "cozy, warm, neighborhood, lived-in",
+    "hero_type": "video",
+    "video_keyword": "coffee shop morning espresso pour cozy neighborhood",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#3D2817",
+      "accent": "#D4A574",
+      "background": "#F7F0E5"
+    },
+    "tone": "friendly, neighborhood, conversational, never pretentious",
+    "key_sections": [
+      "todays_menu",
+      "story",
+      "todays_brew_origin",
+      "location_hours",
+      "events_schedule",
+      "regulars_wall"
+    ],
+    "trust_signals": [
+      "years brewing",
+      "local roasters featured",
+      "regulars love it",
+      "community events hosted",
+      "ethically-sourced beans"
+    ],
+    "avoid": [
+      "corporate chain aesthetic (Starbucks-like)",
+      "sterile minimalist white",
+      "pretentious third-wave coffee snob framing",
+      "discount-shop messaging"
+    ]
+  },
+  "massage_therapy": {
+    "emotion": "relief, restoration, calm",
+    "visual_style": "serene, clean, soft warmth",
+    "hero_type": "image",
+    "video_keyword": "calm massage therapy room peaceful warm light",
+    "threejs_type": "ripple_plane",
+    "colors": {
+      "primary": "#6B8A82",
+      "accent": "#E8D5C4",
+      "background": "#F5F0EB"
+    },
+    "tone": "calming, professional, healing, never clinical",
+    "key_sections": [
+      "services_modalities",
+      "credentials_certifications",
+      "booking",
+      "first_session_what_to_expect",
+      "location_directions",
+      "insurance_pricing"
+    ],
+    "trust_signals": [
+      "licensed massage therapist (LMT)",
+      "years practicing",
+      "specialty certifications (deep tissue, prenatal, etc.)",
+      "client testimonials",
+      "HSA/FSA accepted"
+    ],
+    "avoid": [
+      "clinical sterile medical aesthetic",
+      "intimidating spa-day stock imagery",
+      "before/after weight loss framing",
+      "aggressive promotional copy"
+    ]
+  },
+  "handyman": {
+    "emotion": "reliability, helpfulness, neighborly trust",
+    "visual_style": "practical, friendly, trustworthy",
+    "hero_type": "video",
+    "video_keyword": "handyman home repair tool belt friendly professional",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#1F4068",
+      "accent": "#E8A23F",
+      "background": "#FAF6EE"
+    },
+    "tone": "friendly, capable, neighborly, no jargon",
+    "key_sections": [
+      "services_list",
+      "trust_bar",
+      "before_after_gallery",
+      "service_area_map",
+      "transparent_rates",
+      "booking"
+    ],
+    "trust_signals": [
+      "licensed",
+      "insured",
+      "years experience",
+      "satisfaction warranty",
+      "background-checked",
+      "transparent flat-rate pricing"
+    ],
+    "avoid": [
+      "corporate stiff aesthetic",
+      "intimidating big-corporate visuals",
+      "discount-only framing that signals low quality",
+      "complex jargon-heavy service descriptions"
+    ]
+  },
+  "dance_studio": {
+    "emotion": "joy, growth, expression, confidence",
+    "visual_style": "playful, dynamic, bright but refined",
+    "hero_type": "video",
+    "video_keyword": "dance studio kids ballet joyful practice mirror",
+    "threejs_type": "particles",
+    "colors": {
+      "primary": "#5B2A6F",
+      "accent": "#E8A23F",
+      "background": "#FAF6EE"
+    },
+    "tone": "joyful, encouraging, inclusive, never elite-only",
+    "key_sections": [
+      "classes_by_level",
+      "instructors_bios",
+      "schedule",
+      "performance_highlights",
+      "trial_class_offer",
+      "faq",
+      "youth_programs"
+    ],
+    "trust_signals": [
+      "certified instructors (NDEO / Cecchetti / etc.)",
+      "years teaching",
+      "performance highlights",
+      "annual recital history",
+      "competition success",
+      "alumni placements"
+    ],
+    "avoid": [
+      "elite-only / 'only for serious dancers' framing",
+      "intimidating competition-track aesthetics",
+      "stock dancer imagery that feels exclusionary"
+    ]
+  },
+  "martial_arts_dojo": {
+    "emotion": "discipline, confidence, respect, focus",
+    "visual_style": "strong, focused, traditional, grounded",
+    "hero_type": "video",
+    "video_keyword": "martial arts dojo karate jiujitsu students training",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#1A1F36",
+      "accent": "#C1272D",
+      "background": "#0F0F0F"
+    },
+    "tone": "confident, disciplined, encouraging, family-friendly",
+    "key_sections": [
+      "programs_by_age",
+      "instructors_lineage",
+      "philosophy",
+      "schedule",
+      "trial_class_offer",
+      "youth_programs",
+      "belt_progression"
+    ],
+    "trust_signals": [
+      "black belt instructors",
+      "years teaching",
+      "instructor lineage / certifications",
+      "student rank progression",
+      "competition results",
+      "youth program testimonials"
+    ],
+    "avoid": [
+      "aggressive macho cage-fight framing",
+      "intimidating-only combat imagery",
+      "young-male-only audience signals",
+      "violent / fear-based marketing"
+    ]
+  },
+  "jeweler": {
+    "emotion": "luxury, intimacy, milestones, craftsmanship",
+    "visual_style": "refined, intimate, premium, editorial",
+    "hero_type": "video",
+    "video_keyword": "jeweler crafting fine jewelry hands close detail",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#1A1A1A",
+      "accent": "#C8A96E",
+      "background": "#FAF8F3"
+    },
+    "tone": "refined, intimate, respectful of milestones",
+    "key_sections": [
+      "signature_collections",
+      "custom_design_process",
+      "founder_story",
+      "appointments_private_viewing",
+      "engagement_consultations",
+      "repair_services",
+      "lifetime_warranty"
+    ],
+    "trust_signals": [
+      "years designing",
+      "GIA certified gemologists",
+      "in-house custom work",
+      "lifetime warranty",
+      "ethical sourcing",
+      "private appointments"
+    ],
+    "avoid": [
+      "mass-retail discount aesthetic",
+      "mall-jewelry-store framing",
+      "loud promotional copy",
+      "pure-white sterile lab imagery"
+    ]
+  },
+  "psychotherapist": {
+    "emotion": "safety, hope, non-judgment, warmth",
+    "visual_style": "calm, warm, professional, never cold",
+    "hero_type": "image",
+    "video_keyword": "quiet therapy office warm light comfortable chair window",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#6B8A82",
+      "accent": "#D4A574",
+      "background": "#FAF8F3"
+    },
+    "tone": "warm, professional, non-judgmental, gentle, never clinical",
+    "key_sections": [
+      "approach_modalities",
+      "credentials_specialties",
+      "first_session_what_to_expect",
+      "fees_insurance",
+      "specialties_areas_of_focus",
+      "scheduling",
+      "approach_philosophy"
+    ],
+    "trust_signals": [
+      "licensed (LCSW / LMFT / PhD / PsyD / etc.)",
+      "years practicing",
+      "areas of specialty",
+      "insurance accepted / sliding scale available",
+      "trauma-informed / culturally-competent training"
+    ],
+    "avoid": [
+      "clinical sterile medical-office imagery",
+      "smiling-on-couch stock photography",
+      "aggressive marketing or before/after framing",
+      "promises of specific outcomes",
+      "diagnostic labels in marketing copy"
+    ]
   }
 }
