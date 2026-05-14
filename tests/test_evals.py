@@ -331,6 +331,66 @@ def test_no_invented_phone_passes_with_placeholder_when_no_brief_phone(good_buil
     assert checks.no_invented_phone(ctx).status == "pass"
 
 
+def test_no_invented_phone_passes_when_fake_brief_phone_downgraded(good_build):
+    """When the brief contains a fake 555-marker phone (e.g. a tester pasted
+    "(718) 555-0143"), the LLM is RIGHT to downgrade to [BUSINESS PHONE].
+    The check should pass in that case, not fail.
+
+    This was the false-positive that bit Bridgewater + Heron builds in May 2026:
+    Gemini 3.1 Pro correctly recognized 555-XXXX as a test marker and emitted
+    the placeholder, but the check counted that as a failure because the
+    brief's literal phone wasn't in the output."""
+    brief = json.loads((good_build / "brief.json").read_text())
+    brief["phone"] = "(718) 555-0143"  # real area code, 555 exchange → fake
+    (good_build / "brief.json").write_text(json.dumps(brief))
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <h1>Call [BUSINESS PHONE]</h1>; }'
+    )
+    # Also wipe the Hero.tsx that has the real (212) phone so it doesn't
+    # confuse the test
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() { return <section><h1>Hero</h1></section>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.no_invented_phone(ctx)
+    assert r.status == "pass", r.message
+    assert "fake" in r.message.lower() or "placeholder" in r.message.lower()
+
+
+def test_no_invented_phone_fails_when_fake_brief_phone_NOT_downgraded(good_build):
+    """If the brief's fake phone passes through to the site verbatim
+    (LLM didn't recognize the 555 marker), that's NOT invented (it's
+    the brief's phone), so the check passes — but it's worth being
+    explicit about this case for future reference."""
+    brief = json.loads((good_build / "brief.json").read_text())
+    brief["phone"] = "(718) 555-0143"
+    (good_build / "brief.json").write_text(json.dumps(brief))
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <h1>Call (718) 555-0143</h1>; }'
+    )
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() { return <section><h1>Hero</h1></section>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    # The brief's literal phone IS in the site → found_brief_phone=true → pass.
+    # Even though the brief phone is fake, the check's job is to flag
+    # INVENTED numbers (LLM-fabricated), not to second-guess the brief.
+    assert checks.no_invented_phone(ctx).status == "pass"
+
+
+def test_no_invented_phone_detects_exchange_555_in_site(good_build):
+    """Catch the LLM if it invents a phone with the 555 EXCHANGE pattern
+    (real area code, fake middle 3 digits), not just the 555 AREA CODE
+    pattern. Previously _INVENTED_555 only caught area-code-555."""
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <h1>Call (212) 555-0123</h1>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.no_invented_phone(ctx)
+    assert r.status == "fail"
+    assert "invented" in r.message.lower() or "555" in r.message
+
+
 def test_dna_display_font_honored_passes_when_present(good_build):
     ctx = BuildContext.load(good_build)
     # The good_build fixture sets DNA to swiss_magazine; the real card's

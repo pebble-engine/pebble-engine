@@ -311,23 +311,46 @@ def images_use_next_image(ctx: BuildContext) -> CheckResult:
 # 6. no_invented_phone
 # ---------------------------------------------------------------------------
 
-_INVENTED_555 = re.compile(r"\b555[-.\s]\d{3}[-.\s]\d{4}\b")
+# Fake-phone detection — two patterns the LLM should recognize and downgrade.
+#
+# (1) Area code 555:  "555-123-4567" — Hollywood fake style.
+# (2) 555 exchange:   "(718) 555-0143" — real area code, but the middle
+#                      three digits "555" mark the number as fake.
+#                      The North American Numbering Plan reserves the
+#                      555 exchange for fictional / test numbers; the
+#                      LLM (correctly) recognizes these and downgrades
+#                      to the [BUSINESS PHONE] placeholder.
+_FAKE_AS_AREA_CODE = re.compile(r"\b555[-.\s]+\d{3}[-.\s]+\d{4}\b")
+_FAKE_AS_EXCHANGE  = re.compile(r"\(?\d{3}\)?[-.\s]+555[-.\s]+\d{4}\b")
+
+
+def _is_fake_phone(s: str) -> bool:
+    """True if `s` contains a 555-marker fake phone in either common form."""
+    if not s:
+        return False
+    return bool(_FAKE_AS_AREA_CODE.search(s) or _FAKE_AS_EXCHANGE.search(s))
 
 
 @check_metadata(details_file_key="files")
 def no_invented_phone(ctx: BuildContext) -> CheckResult:
     """Phone numbers in the output must be either the brief's phone or the
-    ``[BUSINESS PHONE]`` placeholder — never a fabricated 555-XXX-XXXX.
+    ``[BUSINESS PHONE]`` placeholder — never a fabricated 555-style number.
 
     Anti-slop signal: a fabricated phone number is the canonical sign that
     the LLM filled placeholders by inventing instead of carrying through.
     Real businesses have real phones; missing data should stay missing
     (with a clear placeholder) until the owner fills it in.
+
+    Edge case (fixed 2026-05-14): when the brief ITSELF contains a fake
+    555-style phone (e.g. a tester pasted in "(718) 555-0143"), the LLM
+    correctly recognizes the marker and downgrades to ``[BUSINESS PHONE]``.
+    That's the right behavior — and now the check agrees.
     """
     if not ctx.site_dir.exists():
         return CheckResult("no_invented_phone", "skip", "no site directory")
 
     brief_phone = (ctx.brief.get("phone") or "").strip()
+    brief_phone_is_fake = _is_fake_phone(brief_phone)
     found_brief_phone = False
     found_placeholder = False
     invented_files: list[str] = []
@@ -341,13 +364,17 @@ def no_invented_phone(ctx: BuildContext) -> CheckResult:
                 found_brief_phone = True
             if "[BUSINESS PHONE]" in text:
                 found_placeholder = True
-            if _INVENTED_555.search(text):
+            # A 555-marker phone in the site is invented UNLESS it's literally
+            # the brief's own (fake) phone passing through verbatim.
+            if _is_fake_phone(text):
+                if brief_phone and brief_phone in text:
+                    continue  # brief's own fake phone passing through, not invented
                 invented_files.append(str(f.relative_to(ctx.site_dir)))
 
     if invented_files:
         return CheckResult(
             "no_invented_phone", "fail",
-            f"invented 555-XXX-XXXX number in {len(invented_files)} file(s)",
+            f"invented 555-style number in {len(invented_files)} file(s)",
             details={"files": invented_files[:10]},
         )
 
@@ -356,6 +383,15 @@ def no_invented_phone(ctx: BuildContext) -> CheckResult:
             return CheckResult(
                 "no_invented_phone", "pass",
                 f"brief phone '{brief_phone}' present in site",
+            )
+        # Fix for the false-positive that bit Bridgewater + Heron builds:
+        # if the brief phone is itself fake (555 marker), the LLM is right
+        # to downgrade to the placeholder.
+        if brief_phone_is_fake and found_placeholder:
+            return CheckResult(
+                "no_invented_phone", "pass",
+                f"brief phone '{brief_phone}' was fake (555 marker); "
+                f"LLM correctly used [BUSINESS PHONE] placeholder",
             )
         return CheckResult(
             "no_invented_phone", "fail",
