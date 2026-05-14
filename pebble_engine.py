@@ -1837,7 +1837,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 Output every file the project needs. Follow the Stack Skill project structure.
 
 Required files (paths are PROJECT-ROOT relative — match the Stack Skill's tsconfig
-`"paths": { "@/*": ["./*"] }`. DO NOT prefix with `src/` — imports written as
+`"paths": {{ "@/*": ["./*"] }}`. DO NOT prefix with `src/` — imports written as
 `@/components/...` would not resolve if files lived under `src/`, and the build
 would fail at compile time):
 
@@ -1849,9 +1849,9 @@ would fail at compile time):
 - `tailwind.config.ts`, `postcss.config.js`, `tsconfig.json`, `package.json`, `.gitignore`
 
 Every import statement uses the `@/` alias rooted at the project. Examples:
-`import { Reveal } from "@/components/motion/Reveal"`,
-`import { SITE_TITLE } from "@/content/site"`,
-`import { cn } from "@/lib/utils"`.
+`import {{ Reveal }} from "@/components/motion/Reveal"`,
+`import {{ SITE_TITLE }} from "@/content/site"`,
+`import {{ cn }} from "@/lib/utils"`.
 
 Where contact info is missing: use `[BUSINESS PHONE]`, `[EMAIL]`, `[ADDRESS]`. Never invent.
 """
