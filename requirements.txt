@@ -13,3 +13,8 @@ google-genai>=1.0.0
 # --- Anthropic Claude (premium / second-opinion option) ---
 # Switch via: PEBBLE_PROVIDER=anthropic in your .env file
 anthropic>=0.40.0
+
+# --- Post-build automation (optional) ---
+# Enables `next dev` + Playwright screenshots after a full build.
+# After install, also run: playwright install chromium
+playwright>=1.40.0
