@@ -801,10 +801,9 @@ from pebble.industry import (
 # BUSINESS INTELLIGENCE SKILL LOADER
 # --------------------------------------------------------------------------
 
-# Skill files loaded into the prompt at import time. The visitor-experience
-# skill was loaded but never referenced — removed in this audit. If we want
-# it back in the future, add it to the prompt template AND to this list in
-# the same commit so there are no dead loads.
+# Skill files loaded into the prompt at import time. If we want a new skill
+# in the future, add it to the prompt template AND to this list in the same
+# commit so there are no dead loads.
 BI_SKILL_PATH    = PROJECT_ROOT / "skills" / "business-intelligence" / "SKILL.md"
 STACK_SKILL_PATH = PROJECT_ROOT / "skills" / "stack" / "SKILL.md"
 IOS_SKILL_PATH   = PROJECT_ROOT / "skills" / "ios" / "SKILL.md"

@@ -4,6 +4,9 @@
 # generated output (client sites)
 output/
 
+# runtime logs (engine + dev servers)
+*.log
+
 # Python
 __pycache__/
 *.pyc

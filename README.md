@@ -150,12 +150,7 @@ pebble-engine/
 │   ├── ui-ux-pro-max/           ← BM25 design system search
 │   ├── stack/                   ← Next.js + motion stack rules
 │   ├── ios/                     ← iOS Safari constraints
-│   ├── business-intelligence/   ← industry-aware copy direction
-│   ├── visitor-experience/      ← UX patterns
-│   ├── code-reviewer/           ← post-build review (still manual)
-│   ├── readme-generator/        ← project README writer
-│   ├── git-commit-writer/       ← clean commits
-│   └── software-architect/      ← architecture artifacts
+│   └── business-intelligence/   ← industry-aware copy direction
 ├── ui/
 │   ├── index.html               ← single-file quiz (no build step)
 │   ├── input.css                ← Tailwind source
