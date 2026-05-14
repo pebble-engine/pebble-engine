@@ -1,0 +1,4 @@
+{
+  "failing_checks": ["required_files_present", "hero_has_h1"],
+  "comment": "app/page.tsx is missing entirely; required_files_present catches the missing file, hero_has_h1 catches the missing <h1>."
+}

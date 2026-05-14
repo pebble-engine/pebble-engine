@@ -116,18 +116,19 @@ def test_files_for_failure_uses_details_for_no_invented_phone():
     assert "components/Footer.tsx" in files
 
 
-def test_files_for_failure_parses_tsc_error_paths():
+def test_files_for_failure_reads_site_compiles_files_detail():
+    """site_compiles now populates details["files"] directly (path extraction
+    moved into the check itself per the metadata-driven refactor). repair just
+    reads the list — uniform with the other checks that expose details["files"]."""
     r = CheckResult(
         name="site_compiles", status="fail",
         message="...",
-        details={"first_errors": [
-            "components/Hero.tsx(12,5): error TS2322: x is not y",
-            "app/page.tsx(3,1): error TS2304: cannot find name 'Foo'",
-            "components/Hero.tsx(40,2): error TS2345: again",  # duplicate path
-        ]},
+        details={
+            "first_errors": ["components/Hero.tsx(12,5): error TS2322: x"],
+            "files": ["components/Hero.tsx", "app/page.tsx"],
+        },
     )
-    files = files_for_failure(r, Path("/fake"))
-    assert files == ["components/Hero.tsx", "app/page.tsx"]  # dedup, ordered
+    assert files_for_failure(r, Path("/fake")) == ["components/Hero.tsx", "app/page.tsx"]
 
 
 def test_files_for_failure_dna_font_lists_canonical_locations():
@@ -301,9 +302,11 @@ body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }
 
 
 def test_repair_does_not_commit_when_score_worsens(broken_build):
-    """LLM emits garbage that lowers the score → canonical site untouched."""
-    # Replace globals.css with content that drops the existing 100dvh, while
-    # NOT fixing the missing page.tsx. New score will be lower.
+    """LLM emits garbage that lowers the score → canonical site untouched.
+
+    Disables provider fallback so a single attempt is exercised; the retry
+    path has its own dedicated test below.
+    """
     canned = """<pebble-file path="app/globals.css">
 body { font-family: 'Helvetica'; height: 100vh; }
 </pebble-file>
@@ -315,14 +318,169 @@ body { font-family: 'Helvetica'; height: 100vh; }
         max_rounds=2,
         client=client,
         output_dir=broken_build.parent,
+        allow_provider_fallback=False,
     )
 
     assert report.rounds[0].kept is False
-    # Canonical globals.css preserved (Inter font still there, 100dvh still there)
     css_after = (broken_build / "site" / "app" / "globals.css").read_text()
     assert css_after == css_before
-    # The non-improvement breaks the loop after round 1
     assert len(report.rounds) == 1
+
+
+class SequenceClient:
+    """FakeClient variant that returns DIFFERENT responses on successive
+    .generate() calls — for exercising the retry-once path."""
+    def __init__(self, responses: list[str]):
+        self.responses = list(responses)
+        self.calls: list[dict] = []
+        self.model = "fake-seq-client"
+        self.provider = "fake"
+
+    def generate(self, system: str, user: str, max_tokens: int = 16000, **_):
+        self.calls.append({"system": system, "user": user})
+        if not self.responses:
+            return ""
+        return self.responses.pop(0)
+
+
+def test_retry_path_kicks_in_when_primary_does_not_improve(broken_build, monkeypatch):
+    """Primary attempt returns garbage; retry returns a real fix. Both attempts
+    should appear in rounds, and the retry's kept=True.
+
+    Monkeypatches `_get_alt_client` to return None so the retry exercises the
+    same-client path (LLM temperature non-determinism). The alt-provider path
+    is exercised by a separate live integration test, not here.
+    """
+    import pebble.repair as repair_mod
+    monkeypatch.setattr(repair_mod, "_get_alt_client", lambda _c: None)
+
+    bad_attempt = """<pebble-file path="app/globals.css">
+body { font-family: 'Helvetica'; }
+</pebble-file>
+"""
+    good_attempt = """<pebble-file path="app/page.tsx">
+export default function P() { return <main><h1>Hi</h1><p>(212) 234-9876</p></main>; }
+</pebble-file>
+
+<pebble-file path="app/globals.css">
+body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }
+</pebble-file>
+"""
+    client = SequenceClient([bad_attempt, good_attempt])
+    report = repair_build(
+        slug=broken_build.name,
+        max_rounds=1,  # primary + retry happen WITHIN one round
+        client=client,
+        output_dir=broken_build.parent,
+    )
+    assert len(report.rounds) == 2, "expected primary + retry"
+    assert report.rounds[0].kept is False and report.rounds[0].is_retry is False
+    assert report.rounds[1].kept is True and report.rounds[1].is_retry is True
+    assert "Cormorant Garamond" in (broken_build / "site" / "app" / "globals.css").read_text()
+
+
+def test_get_alt_client_called_on_non_improvement(broken_build, monkeypatch):
+    """_get_alt_client is consulted exactly once per non-improving round.
+    Records what client gets passed and what the retry uses."""
+    import pebble.repair as repair_mod
+
+    sentinel = FakeClient(response="""<pebble-file path="app/page.tsx">
+export default function P() { return <main><h1>Hi</h1><p>(212) 234-9876</p></main>; }
+</pebble-file>
+""")
+    sentinel.model = "alt-provider"
+    sentinel.provider = "alt-fake"
+
+    calls: list = []
+    def fake_alt(current_client):
+        calls.append(getattr(current_client, "provider", None))
+        return sentinel
+
+    monkeypatch.setattr(repair_mod, "_get_alt_client", fake_alt)
+
+    bad = """<pebble-file path="app/globals.css">
+body { /* no improvement */ }
+</pebble-file>
+"""
+    primary = FakeClient(response=bad)
+    report = repair_build(
+        slug=broken_build.name,
+        max_rounds=1,
+        client=primary,
+        output_dir=broken_build.parent,
+    )
+
+    assert calls == ["fake"], "alt-client lookup should pass the primary client"
+    # The retry round should record the alt provider
+    assert report.rounds[-1].provider == "alt-fake"
+    assert report.rounds[-1].is_retry is True
+
+
+def test_pebble_delete_tag_removes_files(broken_build):
+    """LLM emits <pebble-delete/> alongside <pebble-file>; the file is removed
+    from the canonical site when the round is kept."""
+    # Seed a stray file that the LLM will request to delete.
+    stray = broken_build / "site" / "app" / "stray.tsx"
+    stray.write_text("// stale\n")
+    assert stray.exists()
+
+    canned = """<pebble-file path="app/page.tsx">
+export default function P() { return <main><h1>Hi</h1><p>(212) 234-9876</p></main>; }
+</pebble-file>
+<pebble-delete path="app/stray.tsx"/>
+"""
+    client = FakeClient(response=canned)
+    report = repair_build(
+        slug=broken_build.name,
+        max_rounds=1,
+        client=client,
+        output_dir=broken_build.parent,
+        allow_provider_fallback=False,
+    )
+    assert report.rounds[0].kept is True
+    assert "app/stray.tsx" in report.rounds[0].deletions_applied
+    assert not stray.exists(), "stray.tsx should have been deleted"
+
+
+def test_pebble_delete_path_traversal_rejected(broken_build):
+    """A <pebble-delete> with ../ should be silently ignored, not executed."""
+    canned = """<pebble-file path="app/page.tsx">
+export default function P() { return <main><h1>X</h1><p>(212) 234-9876</p></main>; }
+</pebble-file>
+<pebble-delete path="../../../etc/passwd"/>
+<pebble-delete path="/absolute/path"/>
+"""
+    client = FakeClient(response=canned)
+    report = repair_build(
+        slug=broken_build.name,
+        max_rounds=1,
+        client=client,
+        output_dir=broken_build.parent,
+        allow_provider_fallback=False,
+    )
+    # Neither malicious path should appear in deletions_applied
+    assert report.rounds[0].deletions_applied == []
+
+
+def test_round_records_token_telemetry(broken_build):
+    """prompt_chars + response_chars + provider land in the RoundReport."""
+    canned = """<pebble-file path="app/page.tsx">
+export default function P() { return <main><h1>Hi</h1><p>(212) 234-9876</p></main>; }
+</pebble-file>
+"""
+    client = FakeClient(response=canned)
+    report = repair_build(
+        slug=broken_build.name,
+        max_rounds=1,
+        client=client,
+        output_dir=broken_build.parent,
+        allow_provider_fallback=False,
+    )
+    r = report.rounds[0]
+    assert r.prompt_chars > 0
+    assert r.response_chars > 0
+    assert r.response_chars == len(canned)
+    assert r.provider == "fake"
 
 
 def test_repair_dry_run_does_not_call_llm(broken_build, capsys):

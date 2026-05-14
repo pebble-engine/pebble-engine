@@ -27,9 +27,45 @@ from pebble.evals.runner import BuildContext, CheckResult
 
 
 # ---------------------------------------------------------------------------
+# @check_metadata decorator
+# ---------------------------------------------------------------------------
+
+def check_metadata(static_files: tuple[str, ...] = (), details_file_key: str | None = None):
+    """Attach repair-time file-hint metadata to a check function.
+
+    A check declares HOW its failures map to source files, right next to the
+    check itself. The repair loop reads these attributes via
+    :func:`pebble.evals.check_file_hints` — eliminates the mapping-drift bug
+    where a new check works in evals but silently degrades repair.
+
+    Parameters
+    ----------
+    static_files:
+        Paths the check inspects regardless of context — written into the
+        repair prompt verbatim as "likely-responsible files". Use this when
+        the failing file is always at the same location (e.g. ``app/layout.tsx``
+        for ``html_lang_attr``).
+    details_file_key:
+        Name of the key in ``CheckResult.details`` that holds offender paths
+        (e.g. ``"files"`` or ``"missing"``). If set, the repair loop reads
+        ``details[details_file_key]`` at runtime — for checks where the
+        offending paths are discovered during the check itself.
+
+    A check with neither set is "structural" (e.g. ``no_src_directory``);
+    repair falls back to a prose-only ACTION clause for those.
+    """
+    def wrap(fn):
+        fn.static_files = tuple(static_files)
+        fn.details_file_key = details_file_key
+        return fn
+    return wrap
+
+
+# ---------------------------------------------------------------------------
 # 1. site_compiles
 # ---------------------------------------------------------------------------
 
+@check_metadata(details_file_key="files")
 def site_compiles(ctx: BuildContext) -> CheckResult:
     """``npx tsc --noEmit`` on the generated site.
 
@@ -68,13 +104,20 @@ def site_compiles(ctx: BuildContext) -> CheckResult:
 
     # tsc writes errors to stdout. Count the "error TS" lines so the
     # message stays human-readable; stash the first few in details.
+    # Also extract just the file paths into details["files"] so repair
+    # treats site_compiles uniformly with the other path-flagged checks.
     out = result.stdout + result.stderr
     err_lines = [l for l in out.splitlines() if "error TS" in l]
+    files: list[str] = []
+    for line in err_lines:
+        head = line.split("(", 1)[0].strip()
+        if head and head not in files:
+            files.append(head)
     return CheckResult(
         "site_compiles",
         "fail",
         f"{len(err_lines)} TypeScript error(s)",
-        details={"first_errors": err_lines[:5]},
+        details={"first_errors": err_lines[:5], "files": files[:10]},
     )
 
 
@@ -82,6 +125,7 @@ def site_compiles(ctx: BuildContext) -> CheckResult:
 # 2. no_src_directory
 # ---------------------------------------------------------------------------
 
+@check_metadata()  # structural — repair handles via prose
 def no_src_directory(ctx: BuildContext) -> CheckResult:
     """Section 11 of the prompt template forbids ``site/src/``.
 
@@ -105,6 +149,7 @@ def no_src_directory(ctx: BuildContext) -> CheckResult:
 # 3. hero_has_h1
 # ---------------------------------------------------------------------------
 
+@check_metadata(static_files=("app/page.tsx",))
 def hero_has_h1(ctx: BuildContext) -> CheckResult:
     """The home page must render an ``<h1>``.
 
@@ -158,6 +203,7 @@ def hero_has_h1(ctx: BuildContext) -> CheckResult:
 # 4. dna_display_font_honored
 # ---------------------------------------------------------------------------
 
+@check_metadata(static_files=("app/globals.css", "tailwind.config.ts", "app/layout.tsx"))
 def dna_display_font_honored(ctx: BuildContext) -> CheckResult:
     """The DNA card's ``display_font`` must appear in the generated CSS/config.
 
@@ -233,6 +279,7 @@ def dna_display_font_honored(ctx: BuildContext) -> CheckResult:
 _RAW_IMG_RE = re.compile(r"<img\s")
 
 
+@check_metadata(details_file_key="files")
 def images_use_next_image(ctx: BuildContext) -> CheckResult:
     """Every image must go through ``next/image``, never raw ``<img>``.
 
@@ -267,6 +314,7 @@ def images_use_next_image(ctx: BuildContext) -> CheckResult:
 _INVENTED_555 = re.compile(r"\b555[-.\s]\d{3}[-.\s]\d{4}\b")
 
 
+@check_metadata(details_file_key="files")
 def no_invented_phone(ctx: BuildContext) -> CheckResult:
     """Phone numbers in the output must be either the brief's phone or the
     ``[BUSINESS PHONE]`` placeholder — never a fabricated 555-XXX-XXXX.
@@ -334,6 +382,7 @@ def no_invented_phone(ctx: BuildContext) -> CheckResult:
 _JSONC_COMMENT_RE = re.compile(r"//.*?$", re.MULTILINE)
 
 
+@check_metadata(static_files=("tsconfig.json",))
 def tsconfig_paths_alias(ctx: BuildContext) -> CheckResult:
     """``compilerOptions.paths`` must be exactly ``{ "@/*": ["./*"] }``.
 
@@ -371,6 +420,7 @@ def tsconfig_paths_alias(ctx: BuildContext) -> CheckResult:
 # 8. next_config_is_mjs
 # ---------------------------------------------------------------------------
 
+@check_metadata(static_files=("next.config.mjs",))
 def next_config_is_mjs(ctx: BuildContext) -> CheckResult:
     """``next.config`` must be ``.mjs``, not ``.ts`` or ``.js``.
 
@@ -407,6 +457,7 @@ def next_config_is_mjs(ctx: BuildContext) -> CheckResult:
 _VH_RE = re.compile(r"\b100vh\b")
 
 
+@check_metadata(details_file_key="files")
 def uses_100dvh_not_100vh(ctx: BuildContext) -> CheckResult:
     """No ``100vh`` anywhere — must be ``100dvh``.
 
@@ -453,6 +504,7 @@ REQUIRED_FILES = (
 )
 
 
+@check_metadata(details_file_key="missing")
 def required_files_present(ctx: BuildContext) -> CheckResult:
     """The minimum set of files a Next 14 + Tailwind project needs to run.
 
@@ -484,6 +536,7 @@ def required_files_present(ctx: BuildContext) -> CheckResult:
 _HTML_LANG_RE = re.compile(r"<html[^>]*\blang\s*=", re.IGNORECASE)
 
 
+@check_metadata(static_files=("app/layout.tsx",))
 def html_lang_attr(ctx: BuildContext) -> CheckResult:
     """``<html lang="...">`` must be present in ``app/layout.tsx``.
 
@@ -517,6 +570,7 @@ _IMAGE_BLOCK_RE = re.compile(r"<Image\b[^>]*?/?>", re.DOTALL)
 _ALT_ATTR_RE = re.compile(r"\balt\s*=")
 
 
+@check_metadata(details_file_key="files")
 def images_have_alt(ctx: BuildContext) -> CheckResult:
     """Every ``<Image .../>`` must include an ``alt=`` attribute.
 
@@ -563,6 +617,7 @@ def images_have_alt(ctx: BuildContext) -> CheckResult:
 _SSR_DANGEROUS_RE = re.compile(r"ScrollTrigger\.(?:normalizeScroll|config)\s*\(")
 
 
+@check_metadata(details_file_key="files")
 def scroll_trigger_ssr_safe(ctx: BuildContext) -> CheckResult:
     """``ScrollTrigger.normalizeScroll(...)`` and ``ScrollTrigger.config(...)``
     must be inside a ``useEffect`` block, never at module level.
@@ -628,6 +683,7 @@ _BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
 _LINE_COMMENT_RE = re.compile(r"//[^\n]*")
 
 
+@check_metadata(details_file_key="files")
 def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
     """No actual ``scroll-behavior: smooth`` declaration — Lenis handles smooth scroll.
 
@@ -683,3 +739,24 @@ ALL_CHECKS = [
     no_css_smooth_scroll,
     site_compiles,
 ]
+
+
+# Quick lookup by name — used by pebble.repair to read a check's file hints.
+CHECK_BY_NAME = {c.__name__: c for c in ALL_CHECKS}
+
+
+def check_file_hints(check_name: str, details: dict | None = None) -> list[str]:
+    """Resolve a check's file hints into a concrete list of paths.
+
+    Used by :mod:`pebble.repair` to figure out which files to embed in the
+    repair prompt for a failing check. Reads the metadata attached by
+    :func:`check_metadata` — no separate mapping table to drift.
+
+    Returns an empty list for "structural" checks (no metadata declared).
+    """
+    fn = CHECK_BY_NAME.get(check_name)
+    if fn is None:
+        return []
+    if fn.details_file_key:
+        return list((details or {}).get(fn.details_file_key) or [])
+    return list(fn.static_files)

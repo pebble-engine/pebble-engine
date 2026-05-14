@@ -24,7 +24,7 @@ from pebble.evals.runner import (
     OUTPUT_DIR,
     run_checks,
 )
-from pebble.evals.checks import ALL_CHECKS
+from pebble.evals.checks import ALL_CHECKS, CHECK_BY_NAME, check_file_hints, check_metadata
 
 __all__ = [
     "BuildContext",
@@ -32,5 +32,8 @@ __all__ = [
     "run_checks",
     "list_build_dirs",
     "ALL_CHECKS",
+    "CHECK_BY_NAME",
+    "check_file_hints",
+    "check_metadata",
     "OUTPUT_DIR",
 ]

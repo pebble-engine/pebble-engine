@@ -206,6 +206,31 @@ def test_parse_files_tolerates_typo_in_closing_tag():
     assert "services" not in sections_body
 
 
+def test_parse_files_ends_block_at_pebble_delete_tag():
+    """A <pebble-delete/> tag right after a <pebble-file> block must NOT
+    end up inside the file's body — the boundary detector treats it as the
+    end-of-file marker. This was a real bug after the delete tag was first
+    introduced."""
+    fake = (
+        '<pebble-file path="app/page.tsx">\n'
+        'content line\n'
+        '</pebble-file>\n'
+        '<pebble-delete path="src/old.tsx"/>\n'
+    )
+    files = pebble_engine.parse_files(fake)
+    assert files == [("app/page.tsx", "content line")]
+    deletes = pebble_engine.parse_deletions(fake)
+    assert deletes == ["src/old.tsx"]
+
+
+def test_parse_deletions_handles_both_self_close_forms():
+    fake = (
+        '<pebble-delete path="a.tsx"/>\n'
+        '<pebble-delete path="b.tsx"></pebble-delete>\n'
+    )
+    assert pebble_engine.parse_deletions(fake) == ["a.tsx", "b.tsx"]
+
+
 # ---------------------------------------------------------------------------
 # 7. Module import sanity — no missing deps, no syntax errors
 # ---------------------------------------------------------------------------

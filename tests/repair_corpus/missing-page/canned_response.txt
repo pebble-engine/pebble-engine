@@ -1,0 +1,10 @@
+<pebble-file path="app/page.tsx">
+export default function P() {
+  return (
+    <main>
+      <h1>Corpus HVAC</h1>
+      <p>Call us at (212) 234-9876.</p>
+    </main>
+  );
+}
+</pebble-file>

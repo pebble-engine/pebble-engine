@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shutil
 import sys
 import tempfile
@@ -33,73 +34,21 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from pebble.evals import ALL_CHECKS, BuildContext, OUTPUT_DIR
+from pebble.evals import ALL_CHECKS, BuildContext, OUTPUT_DIR, check_file_hints
 from pebble.evals.checks import site_compiles
 from pebble.evals.runner import CheckResult
 from pebble.llm import LLMError, get_llm_client
 from pebble.log import log
 
 
-# ---------------------------------------------------------------------------
-# Check → likely-responsible-files mapping
-# ---------------------------------------------------------------------------
-
-# Some checks point at the exact failing files via their ``details`` payload
-# (required_files_present, images_use_next_image, etc.) — we read those at
-# runtime. Others always live in the same place in a Next 14 project; those
-# hints are hard-coded here.
-_STATIC_FILE_HINTS: dict[str, tuple[str, ...]] = {
-    "tsconfig_paths_alias":     ("tsconfig.json",),
-    "next_config_is_mjs":       ("next.config.mjs",),
-    "dna_display_font_honored": (
-        "app/globals.css",
-        "tailwind.config.ts",
-        "app/layout.tsx",
-    ),
-    "hero_has_h1":              ("app/page.tsx",),
-    "html_lang_attr":           ("app/layout.tsx",),
-    # no_src_directory is structural — no specific file to embed; prose only.
-}
-
-# Checks that surface offending paths via ``details["files"]``. Keep this in
-# sync with the checks themselves; a missing entry here means repair falls
-# back to the no-mapping prose default, which still works but ignores the
-# specific files the check already pinpointed.
-_CHECKS_WITH_FILES_DETAIL = frozenset({
-    "images_use_next_image",
-    "images_have_alt",
-    "no_invented_phone",
-    "uses_100dvh_not_100vh",
-    "scroll_trigger_ssr_safe",
-    "no_css_smooth_scroll",
-})
-
-
 def files_for_failure(result: CheckResult, site_dir: Path) -> list[str]:
     """Relative paths inside ``site_dir`` likely responsible for ``result``.
 
-    Empty list means "no specific file" — the prompt will fall back to prose.
+    Delegates to :func:`pebble.evals.check_file_hints` so the mapping lives
+    on the check itself via the ``@check_metadata`` decorator. An empty list
+    means "no specific file" — the prompt falls back to a prose ACTION clause.
     """
-    name = result.name
-    details = result.details or {}
-
-    if name == "required_files_present":
-        return list(details.get("missing") or [])
-
-    if name in _CHECKS_WITH_FILES_DETAIL:
-        return list(details.get("files") or [])
-
-    if name == "site_compiles":
-        # tsc errors look like "components/Foo.tsx(12,5): error TS2322: ..."
-        # Take everything before the first "(" on each line.
-        out: list[str] = []
-        for line in details.get("first_errors", []):
-            head = line.split("(", 1)[0].strip()
-            if head and head not in out:
-                out.append(head)
-        return out
-
-    return list(_STATIC_FILE_HINTS.get(name, ()))
+    return check_file_hints(result.name, result.details)
 
 
 # ---------------------------------------------------------------------------
@@ -113,8 +62,16 @@ REPAIR_SYSTEM = (
     "message — do not regenerate unrelated files. Files you don't emit will "
     "be left as-is.\n\n"
 
+    "OUTPUT TAGS (the only two valid emissions):\n"
+    "  <pebble-file path=\"relative/path.tsx\">…contents…</pebble-file>\n"
+    "  <pebble-delete path=\"relative/path.tsx\"/>\n"
+    "Use <pebble-delete> to request file removal — needed when fixing "
+    "structural failures like files placed under site/src/. The path is "
+    "validated against the site root; traversal attempts are dropped.\n\n"
+
     "RULES:\n"
-    "1. Output ONLY <pebble-file> blocks. No preamble. No plan. First char is `<`.\n"
+    "1. Output ONLY <pebble-file> blocks and/or <pebble-delete/> tags. No "
+    "preamble. No plan. First char is `<`.\n"
     "2. Every emitted file must be complete. Zero TODOs. Zero stubs.\n"
     "3. Honor the existing Design DNA — fonts, hero structure, motion language. "
     "Do not substitute defaults like Inter/Fraunces.\n"
@@ -173,12 +130,28 @@ def build_repair_prompt(ctx: BuildContext, failed: list[CheckResult]) -> str:
         parts.append(f"### {i}. `{r.name}`\n**Failure:** {r.message}\n")
 
         if r.name == "no_src_directory":
+            # List the actual files under src/ so the LLM has concrete paths
+            # to emit `<pebble-delete>` for AND to recreate at the project root.
+            src_dir = ctx.site_dir / "src"
+            existing: list[str] = []
+            if src_dir.exists():
+                for p in src_dir.rglob("*"):
+                    if p.is_file():
+                        existing.append(str(p.relative_to(ctx.site_dir)).replace("\\", "/"))
             parts.append(
-                "**ACTION:** Do NOT place any files under `site/src/`. Every file "
-                "lives at the project root — `app/`, `components/`, `lib/`, `config/`, "
-                "`public/` are direct children. The tsconfig path alias `@/*` resolves "
-                "to `./*` from the project root.\n"
+                "**ACTION:** Every file under `site/src/` is mis-placed. The `@/*` "
+                "tsconfig alias resolves to `./*` from the project root, so files "
+                "must live directly under `app/`, `components/`, `lib/`, `config/`, "
+                "`public/`. For each file under `src/`:\n"
+                "  1. Re-emit it at the correct project-root path via `<pebble-file>`.\n"
+                "  2. Emit a `<pebble-delete path=\"src/...\"/>` for the old location.\n"
             )
+            if existing:
+                parts.append("\n**Current files under `site/src/` (delete these):**\n")
+                for path in existing[:50]:  # cap the list
+                    parts.append(f"- `{path}`\n")
+                if len(existing) > 50:
+                    parts.append(f"- ...and {len(existing) - 50} more\n")
             continue
 
         files = files_for_failure(r, ctx.site_dir)
@@ -226,6 +199,18 @@ class RoundReport:
     files_written: list[str]
     kept: bool
     note: str = ""
+    # Cost telemetry. The clients don't currently expose token usage on the
+    # `.generate()` interface; chars/4 is the standard rough conversion.
+    prompt_chars: int = 0
+    response_chars: int = 0
+    # Which provider produced this round's output ("gemini" / "anthropic" / "fake").
+    # Surfaces when the multi-provider fallback kicks in.
+    provider: str = ""
+    # Files removed via <pebble-delete> tags in the LLM response. Audited so
+    # the repair history makes deletions visible at a glance.
+    deletions_applied: list[str] = field(default_factory=list)
+    # True if this round was a retry attempt after a non-improving round.
+    is_retry: bool = False
 
 
 @dataclass
@@ -280,27 +265,154 @@ def _run_checks_on(ctx: BuildContext, checks) -> list[CheckResult]:
     return out
 
 
-def _parse_files(response: str) -> list[tuple[str, str]]:
-    """Parse <pebble-file> blocks. Delegates to pebble_engine.parse_files so
-    the repair loop never drifts from the engine's tolerant parser."""
+def _engine():
     pe = sys.modules.get("pebble_engine")
     if pe is None:
         import pebble_engine as pe  # type: ignore
-    return pe.parse_files(response)
+    return pe
+
+
+def _parse_files(response: str) -> list[tuple[str, str]]:
+    """Parse <pebble-file> blocks. Delegates to pebble_engine.parse_files so
+    the repair loop never drifts from the engine's tolerant parser."""
+    return _engine().parse_files(response)
+
+
+def _parse_deletions(response: str) -> list[str]:
+    """Parse <pebble-delete path="..."/> tags. Delegates to pebble_engine."""
+    return _engine().parse_deletions(response)
+
+
+def _is_safe_relative(path: str) -> bool:
+    """Reject path-traversal and absolute paths. Used for both writes and deletes."""
+    safe = path.lstrip("/\\")
+    return not (safe.startswith("/") or ".." in Path(safe).parts)
 
 
 def _write_files(target_site: Path, files: list[tuple[str, str]]) -> list[str]:
     """Write parsed files under ``target_site``. Path-traversal guarded."""
     written: list[str] = []
     for path, content in files:
-        safe = path.lstrip("/\\")
-        if ".." in Path(safe).parts or safe.startswith("/"):
+        if not _is_safe_relative(path):
             continue
+        safe = path.lstrip("/\\")
         full = target_site / safe
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
         written.append(safe)
     return written
+
+
+def _apply_deletions(target_site: Path, paths: list[str]) -> list[str]:
+    """Delete each path under ``target_site``. Path-traversal guarded; missing
+    files are silently skipped. Empty directories left after deletion are
+    pruned bottom-up so structural checks like ``no_src_directory`` clear."""
+    deleted: list[str] = []
+    for path in paths:
+        if not _is_safe_relative(path):
+            continue
+        safe = path.lstrip("/\\")
+        full = target_site / safe
+        if not full.exists() or not full.is_file():
+            continue
+        full.unlink()
+        deleted.append(safe)
+    # Prune now-empty parent directories under target_site.
+    for path in deleted:
+        parent = (target_site / path).parent
+        while parent != target_site and parent.exists():
+            try:
+                parent.rmdir()  # only succeeds if empty
+            except OSError:
+                break
+            parent = parent.parent
+    return deleted
+
+
+def _get_alt_client(current_client):
+    """Try to instantiate the alternate LLM provider.
+
+    If primary is gemini and ANTHROPIC_API_KEY is set, returns an Anthropic
+    client. If primary is anthropic and GOOGLE_API_KEY is set, returns a
+    Gemini client. Otherwise None. Lets the repair loop attempt a recovery
+    pass with a different model when the primary's output is non-improving.
+    """
+    current_provider = getattr(current_client, "provider", None)
+    saved = os.environ.get("PEBBLE_PROVIDER", "")
+    try:
+        target = "anthropic" if current_provider == "gemini" else "gemini"
+        os.environ["PEBBLE_PROVIDER"] = target
+        alt, reason = get_llm_client()
+        if alt is not None and getattr(alt, "provider", None) != current_provider:
+            return alt
+        log.info("[repair] alt provider unavailable: %s", reason)
+        return None
+    finally:
+        if saved:
+            os.environ["PEBBLE_PROVIDER"] = saved
+        else:
+            os.environ.pop("PEBBLE_PROVIDER", None)
+
+
+def _attempt_round(
+    ctx: BuildContext,
+    failed_now: list[CheckResult],
+    client,
+    build_dir: Path,
+    checks_list: list,
+    best_pass: int,
+):
+    """One repair attempt: build prompt, call LLM, stage output, eval, decide
+    keep-or-revert. Returns a tuple of (RoundReport-friendly fields, improved,
+    new_pass, new_label, new_ctx). The canonical site is only mutated when
+    improved is True. Returned ctx is refreshed iff improved.
+
+    Used both for the primary round and the retry attempt — keeps the loop
+    body small and ensures retry logic exactly mirrors primary logic.
+    """
+    prompt = build_repair_prompt(ctx, failed_now)
+    files_targeted = sorted({
+        f for r in failed_now for f in files_for_failure(r, ctx.site_dir)
+    })
+
+    t0 = time.time()
+    response = client.generate(system=REPAIR_SYSTEM, user=prompt, max_tokens=16000)
+    elapsed = time.time() - t0
+
+    new_files = _parse_files(response)
+    deletions_requested = _parse_deletions(response)
+
+    with tempfile.TemporaryDirectory(prefix=f"pebble-repair-{ctx.slug}-") as td:
+        tmp_site = Path(td) / "site"
+        shutil.copytree(ctx.site_dir, tmp_site)
+        written_tmp = _write_files(tmp_site, new_files)
+        deleted_tmp = _apply_deletions(tmp_site, deletions_requested)
+
+        tmp_ctx = BuildContext(
+            slug=ctx.slug, build_dir=build_dir,
+            site_dir=tmp_site, brief=ctx.brief, meta=ctx.meta,
+        )
+        new_results = _run_checks_on(tmp_ctx, checks_list)
+        new_label, new_pass = _score(new_results)
+
+        improved = new_pass > best_pass
+        if improved:
+            _write_files(ctx.site_dir, new_files)
+            _apply_deletions(ctx.site_dir, deletions_requested)
+
+    payload = {
+        "elapsed_seconds": round(elapsed, 1),
+        "files_targeted": files_targeted,
+        "new_files": new_files,
+        "written_tmp": written_tmp,
+        "deleted_tmp": deleted_tmp,
+        "new_label": new_label,
+        "new_pass": new_pass,
+        "prompt_chars": len(prompt),
+        "response_chars": len(response),
+        "provider": getattr(client, "provider", "unknown"),
+    }
+    return payload, improved
 
 
 def repair_build(
@@ -310,6 +422,7 @@ def repair_build(
     skip_compile: bool = True,
     client=None,
     output_dir: Optional[Path] = None,
+    allow_provider_fallback: bool = True,
 ) -> RepairReport:
     """Run the critique-and-fix loop on a build.
 
@@ -319,18 +432,22 @@ def repair_build(
 
     ``output_dir`` overrides the project's ``output/`` root — used in tests.
     ``skip_compile`` (default True) skips ``npx tsc`` in eval rounds; the
-    LLM-driven repair pass works on static checks, and tsc takes 10-30s per
-    round which makes the loop sluggish for little benefit.
+    LLM-driven repair pass works on static checks.
+
+    ``allow_provider_fallback`` (default True): on a non-improving round,
+    attempt one retry — preferring the alternate provider if configured
+    (handles non-determinism + cross-provider quality variance). Set False
+    to halt immediately on any non-improvement (the old behavior).
     """
     out_root = output_dir or OUTPUT_DIR
     build_dir = out_root / slug
     if not build_dir.exists() or not (build_dir / "brief.json").exists():
         raise FileNotFoundError(f"build not found: {build_dir}")
 
-    checks = [c for c in ALL_CHECKS if c is not site_compiles] if skip_compile else list(ALL_CHECKS)
+    checks_list = [c for c in ALL_CHECKS if c is not site_compiles] if skip_compile else list(ALL_CHECKS)
 
     ctx = BuildContext.load(build_dir)
-    baseline_results = _run_checks_on(ctx, checks)
+    baseline_results = _run_checks_on(ctx, checks_list)
     baseline_label, baseline_pass = _score(baseline_results)
     failed_now = _failed(baseline_results)
 
@@ -361,14 +478,14 @@ def repair_build(
         if not failed_now:
             break
 
-        prompt = build_repair_prompt(ctx, failed_now)
+        prompt_preview = build_repair_prompt(ctx, failed_now)
         files_targeted = sorted({
             f for r in failed_now for f in files_for_failure(r, ctx.site_dir)
         })
 
         if dry_run:
-            log.info("[repair] dry-run round %d prompt (%d chars):", round_no, len(prompt))
-            print(prompt)
+            log.info("[repair] dry-run round %d prompt (%d chars):", round_no, len(prompt_preview))
+            print(prompt_preview)
             report.rounds.append(RoundReport(
                 round=round_no,
                 failed_checks=[r.name for r in failed_now],
@@ -381,12 +498,15 @@ def repair_build(
                 files_written=[],
                 kept=False,
                 note="dry-run; LLM not called",
+                prompt_chars=len(prompt_preview),
             ))
             break
 
-        # Pre-step: a <pebble-file> block can't express "delete this file".
-        # For next_config_is_mjs we need to drop any .ts/.js siblings before
-        # the LLM emits the .mjs replacement, otherwise both end up coexisting.
+        # Pre-step: a <pebble-file> block can't express "delete this file"
+        # WHEN the LLM doesn't know the file exists. For next_config_is_mjs
+        # we drop .ts/.js siblings ourselves — deterministic, doesn't rely
+        # on the LLM emitting <pebble-delete>. For no_src_directory, the
+        # prompt lists existing src/ files so the LLM CAN emit deletes.
         pre_actions: list[str] = []
         if any(r.name == "next_config_is_mjs" for r in failed_now):
             for sibling in ("next.config.ts", "next.config.js"):
@@ -395,12 +515,10 @@ def repair_build(
                     p.unlink()
                     pre_actions.append(f"deleted {sibling}")
 
-        t0 = time.time()
+        # Primary attempt.
         try:
-            response = client.generate(
-                system=REPAIR_SYSTEM,
-                user=prompt,
-                max_tokens=16000,
+            payload, improved = _attempt_round(
+                ctx, failed_now, client, build_dir, checks_list, best_pass,
             )
         except LLMError as e:
             log.warning("[repair] round %d: LLM call failed: %s", round_no, e)
@@ -408,7 +526,7 @@ def repair_build(
                 round=round_no,
                 failed_checks=[r.name for r in failed_now],
                 files_requested=files_targeted,
-                elapsed_seconds=round(time.time() - t0, 1),
+                elapsed_seconds=0.0,
                 score_before=best_label,
                 score_after=best_label,
                 pass_before=best_pass,
@@ -416,62 +534,105 @@ def repair_build(
                 files_written=[],
                 kept=False,
                 note=f"LLM error: {e}",
+                provider=getattr(client, "provider", "unknown"),
             ))
             break
-        elapsed = time.time() - t0
 
-        new_files = _parse_files(response)
-
-        # Stage in a temp site copy. If the score doesn't improve, the canonical
-        # site is untouched — no rollback needed.
-        with tempfile.TemporaryDirectory(prefix=f"pebble-repair-{slug}-") as td:
-            tmp_site = Path(td) / "site"
-            shutil.copytree(ctx.site_dir, tmp_site)
-            written_tmp = _write_files(tmp_site, new_files)
-
-            tmp_ctx = BuildContext(
-                slug=ctx.slug,
-                build_dir=build_dir,
-                site_dir=tmp_site,
-                brief=ctx.brief,
-                meta=ctx.meta,
-            )
-            new_results = _run_checks_on(tmp_ctx, checks)
-            new_label, new_pass = _score(new_results)
-
-            improved = new_pass > best_pass
-            if improved:
-                _write_files(ctx.site_dir, new_files)
-
-        note_bits = []
-        if pre_actions:
-            note_bits.append("; ".join(pre_actions))
-        if not new_files:
-            note_bits.append("LLM returned 0 <pebble-file> blocks")
+        note_bits = list(pre_actions)
+        if not payload["new_files"] and not payload["deleted_tmp"]:
+            note_bits.append("LLM returned 0 <pebble-file>/<pebble-delete> tags")
 
         report.rounds.append(RoundReport(
             round=round_no,
             failed_checks=[r.name for r in failed_now],
             files_requested=files_targeted,
-            elapsed_seconds=round(elapsed, 1),
+            elapsed_seconds=payload["elapsed_seconds"],
             score_before=best_label,
-            score_after=new_label,
+            score_after=payload["new_label"],
             pass_before=best_pass,
-            pass_after=new_pass,
-            files_written=written_tmp if improved else [],
+            pass_after=payload["new_pass"],
+            files_written=payload["written_tmp"] if improved else [],
             kept=improved,
-            note=" | ".join(note_bits),
+            note="; ".join(note_bits),
+            prompt_chars=payload["prompt_chars"],
+            response_chars=payload["response_chars"],
+            provider=payload["provider"],
+            deletions_applied=payload["deleted_tmp"] if improved else [],
         ))
 
         if improved:
-            best_pass = new_pass
-            best_label = new_label
+            best_pass = payload["new_pass"]
+            best_label = payload["new_label"]
             ctx = BuildContext.load(build_dir)
-            failed_now = _failed(_run_checks_on(ctx, checks))
-        else:
-            log.info("[repair] round %d did not improve (%s -> %s); stopping",
-                     round_no, best_label, new_label)
+            failed_now = _failed(_run_checks_on(ctx, checks_list))
+            continue
+
+        # Primary attempt didn't improve. One retry — prefer alt provider
+        # if available (handles cross-provider quality variance); else use
+        # the same client (handles LLM temperature non-determinism).
+        if not allow_provider_fallback:
+            log.info("[repair] round %d did not improve; halting (fallback disabled)",
+                     round_no)
             break
+
+        retry_client = _get_alt_client(client) or client
+        retry_provider = getattr(retry_client, "provider", "unknown")
+        log.info("[repair] round %d retrying with provider=%s", round_no, retry_provider)
+        try:
+            payload, improved = _attempt_round(
+                ctx, failed_now, retry_client, build_dir, checks_list, best_pass,
+            )
+        except LLMError as e:
+            log.warning("[repair] round %d retry: LLM call failed: %s", round_no, e)
+            report.rounds.append(RoundReport(
+                round=round_no,
+                failed_checks=[r.name for r in failed_now],
+                files_requested=files_targeted,
+                elapsed_seconds=0.0,
+                score_before=best_label,
+                score_after=best_label,
+                pass_before=best_pass,
+                pass_after=best_pass,
+                files_written=[],
+                kept=False,
+                note=f"retry LLM error: {e}",
+                provider=retry_provider,
+                is_retry=True,
+            ))
+            break
+
+        retry_note_bits: list[str] = []
+        if not payload["new_files"] and not payload["deleted_tmp"]:
+            retry_note_bits.append("LLM returned 0 <pebble-file>/<pebble-delete> tags")
+
+        report.rounds.append(RoundReport(
+            round=round_no,
+            failed_checks=[r.name for r in failed_now],
+            files_requested=files_targeted,
+            elapsed_seconds=payload["elapsed_seconds"],
+            score_before=best_label,
+            score_after=payload["new_label"],
+            pass_before=best_pass,
+            pass_after=payload["new_pass"],
+            files_written=payload["written_tmp"] if improved else [],
+            kept=improved,
+            note="; ".join(retry_note_bits),
+            prompt_chars=payload["prompt_chars"],
+            response_chars=payload["response_chars"],
+            provider=payload["provider"],
+            deletions_applied=payload["deleted_tmp"] if improved else [],
+            is_retry=True,
+        ))
+
+        if improved:
+            best_pass = payload["new_pass"]
+            best_label = payload["new_label"]
+            ctx = BuildContext.load(build_dir)
+            failed_now = _failed(_run_checks_on(ctx, checks_list))
+            continue
+
+        log.info("[repair] round %d retry also did not improve; halting", round_no)
+        break
 
     report.final_score = best_label
     _write_history(build_dir, report)

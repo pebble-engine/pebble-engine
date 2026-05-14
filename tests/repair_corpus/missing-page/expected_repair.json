@@ -1,0 +1,6 @@
+{
+  "files_written": ["app/page.tsx"],
+  "checks_fixed": ["required_files_present", "hero_has_h1"],
+  "kept": true,
+  "comment": "Writing a single app/page.tsx with an <h1> and the brief phone fixes both failing checks in one round."
+}
