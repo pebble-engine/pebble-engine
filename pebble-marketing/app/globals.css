@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─────────────────────────────────────────────────────────────────
+   Pebble brand foundation
+   See BRAND_BOOK.md for design system + decisions.
+   ───────────────────────────────────────────────────────────────── */
+
+body {
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  background-color: #FAF8F3;  /* Pebble Sand */
+  color: #2C2C2A;             /* Pebble Stone */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Subtle, never aggressive — per brand book pattern #5 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Editorial pull-quote styling — Pebble Spark accent on Fraunces */
+.editorial-accent {
+  font-family: var(--font-fraunces), Fraunces, Georgia, serif;
+  font-style: italic;
+  color: #C8A96E;
+}
+
+/* Mono tag used for "POWERED BY PEBBLE" badges, version strings */
+.brand-mono {
+  font-family: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5E7A6E;
+}
+
+/* Hairline divider — brand book pattern #2 */
+.hairline {
+  border-color: #E8E2D5;
+}
