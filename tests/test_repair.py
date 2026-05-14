@@ -144,6 +144,35 @@ def test_files_for_failure_no_src_directory_returns_empty():
     assert files_for_failure(r, Path("/fake")) == []
 
 
+def test_files_for_failure_html_lang_attr_points_at_layout():
+    r = CheckResult(name="html_lang_attr", status="fail", message="...")
+    assert files_for_failure(r, Path("/fake")) == ["app/layout.tsx"]
+
+
+def test_files_for_failure_no_css_smooth_scroll_uses_details_files():
+    r = CheckResult(
+        name="no_css_smooth_scroll", status="fail",
+        message="...", details={"files": ["app/globals.css"]},
+    )
+    assert files_for_failure(r, Path("/fake")) == ["app/globals.css"]
+
+
+def test_files_for_failure_scroll_trigger_ssr_safe_uses_details_files():
+    r = CheckResult(
+        name="scroll_trigger_ssr_safe", status="fail",
+        message="...", details={"files": ["components/Motion.tsx"]},
+    )
+    assert files_for_failure(r, Path("/fake")) == ["components/Motion.tsx"]
+
+
+def test_files_for_failure_images_have_alt_uses_details_files():
+    r = CheckResult(
+        name="images_have_alt", status="fail",
+        message="...", details={"files": ["app/page.tsx"]},
+    )
+    assert files_for_failure(r, Path("/fake")) == ["app/page.tsx"]
+
+
 # ---------------------------------------------------------------------------
 # build_repair_prompt — content assertions
 # ---------------------------------------------------------------------------

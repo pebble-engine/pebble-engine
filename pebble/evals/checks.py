@@ -619,15 +619,26 @@ def scroll_trigger_ssr_safe(ctx: BuildContext) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 _SMOOTH_SCROLL_RE = re.compile(r"scroll-behavior\s*:\s*smooth", re.IGNORECASE)
+# Strip comments BEFORE checking the body: LLMs commonly leave a comment in
+# globals.css explaining the rule (e.g. "/* Never set scroll-behavior: smooth
+# — Lenis handles scroll */"), and matching the comment text would be a
+# self-defeating false positive. /* */ covers CSS and JSDoc; // covers JS line
+# comments (harmless to strip from CSS since it's not valid CSS syntax).
+_BLOCK_COMMENT_RE = re.compile(r"/\*.*?\*/", re.DOTALL)
+_LINE_COMMENT_RE = re.compile(r"//[^\n]*")
 
 
 def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
-    """No ``scroll-behavior: smooth`` in any CSS — Lenis handles smooth scroll.
+    """No actual ``scroll-behavior: smooth`` declaration — Lenis handles smooth scroll.
 
     Per Stack Skill: native CSS smooth scroll conflicts with Lenis and other
     JS scroll managers, produces janky double-easing on momentum scroll, and
     interacts badly with ScrollTrigger's scrub mode. Lenis is in the standard
     build; mixing native and JS smooth scroll is a regression.
+
+    Comments are stripped before matching — see _BLOCK_COMMENT_RE rationale.
+    Skips ``.next/`` build artifacts (next.js compiles globals.css there;
+    if the source is clean the artifact will be too).
     """
     if not ctx.site_dir.exists():
         return CheckResult("no_css_smooth_scroll", "skip", "no site directory")
@@ -635,14 +646,16 @@ def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
     offenders: list[str] = []
     for ext in ("*.css", "*.tsx", "*.ts"):
         for f in ctx.site_dir.rglob(ext):
-            if "node_modules" in f.parts:
+            if "node_modules" in f.parts or ".next" in f.parts:
                 continue
             text = f.read_text(encoding="utf-8", errors="ignore")
-            if _SMOOTH_SCROLL_RE.search(text):
+            stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+            if _SMOOTH_SCROLL_RE.search(stripped):
                 offenders.append(str(f.relative_to(ctx.site_dir)))
 
     if not offenders:
-        return CheckResult("no_css_smooth_scroll", "pass", "no scroll-behavior: smooth found")
+        return CheckResult("no_css_smooth_scroll", "pass",
+                           "no scroll-behavior: smooth declarations (comments ignored)")
     return CheckResult(
         "no_css_smooth_scroll", "fail",
         f"{len(offenders)} file(s) declare scroll-behavior: smooth",

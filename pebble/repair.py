@@ -57,8 +57,22 @@ _STATIC_FILE_HINTS: dict[str, tuple[str, ...]] = {
         "app/layout.tsx",
     ),
     "hero_has_h1":              ("app/page.tsx",),
+    "html_lang_attr":           ("app/layout.tsx",),
     # no_src_directory is structural — no specific file to embed; prose only.
 }
+
+# Checks that surface offending paths via ``details["files"]``. Keep this in
+# sync with the checks themselves; a missing entry here means repair falls
+# back to the no-mapping prose default, which still works but ignores the
+# specific files the check already pinpointed.
+_CHECKS_WITH_FILES_DETAIL = frozenset({
+    "images_use_next_image",
+    "images_have_alt",
+    "no_invented_phone",
+    "uses_100dvh_not_100vh",
+    "scroll_trigger_ssr_safe",
+    "no_css_smooth_scroll",
+})
 
 
 def files_for_failure(result: CheckResult, site_dir: Path) -> list[str]:
@@ -72,7 +86,7 @@ def files_for_failure(result: CheckResult, site_dir: Path) -> list[str]:
     if name == "required_files_present":
         return list(details.get("missing") or [])
 
-    if name in {"images_use_next_image", "no_invented_phone", "uses_100dvh_not_100vh"}:
+    if name in _CHECKS_WITH_FILES_DETAIL:
         return list(details.get("files") or [])
 
     if name == "site_compiles":

@@ -390,6 +390,38 @@ def test_no_css_smooth_scroll_fails_when_present(good_build):
     assert any("globals.css" in f for f in r.details["files"])
 
 
+def test_no_css_smooth_scroll_ignores_block_comment(good_build):
+    """The LLM commonly leaves a /* */ comment explaining the rule; matching
+    that text would defeat the check on builds that are doing it RIGHT."""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "/* Never set scroll-behavior: smooth - Lenis handles scroll */\n"
+        "html { scroll-behavior: auto !important; }\n"
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_css_smooth_scroll(ctx).status == "pass"
+
+
+def test_no_css_smooth_scroll_ignores_line_comment(good_build):
+    """// comments shouldn't be matched either (uncommon in CSS but possible
+    in JS files we also scan)."""
+    (good_build / "site" / "components" / "sections" / "Note.tsx").write_text(
+        "// reminder: do not use scroll-behavior: smooth here\n"
+        "export const Note = () => null;\n"
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_css_smooth_scroll(ctx).status == "pass"
+
+
+def test_no_css_smooth_scroll_skips_next_build_artifacts(good_build):
+    """``.next/`` is next.js's build output; if the source is clean, scanning
+    the compiled artifact only ever produces noise."""
+    next_css = good_build / "site" / ".next" / "static" / "css" / "app"
+    next_css.mkdir(parents=True)
+    (next_css / "layout.css").write_text("html { scroll-behavior: smooth; }")
+    ctx = BuildContext.load(good_build)
+    assert checks.no_css_smooth_scroll(ctx).status == "pass"
+
+
 # ---------------------------------------------------------------------------
 # 3. Report formatters
 # ---------------------------------------------------------------------------
