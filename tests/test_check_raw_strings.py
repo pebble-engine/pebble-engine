@@ -553,3 +553,124 @@ def test_deploy_to_vercel_scaffold_reports_specific_missing(tmp_path):
     assert r.status == "fail"
     assert "vercel.json" in str(r.details["missing"])
     assert "README.md" in str(r.details["missing"])
+
+
+# ---------------------------------------------------------------------------
+# imports_resolve_to_dependencies — general regression guard
+# ---------------------------------------------------------------------------
+
+def _site_with_deps(tmp_path, deps: list[str], imports_in_file: str) -> "Path":
+    """Build a minisite with the given declared deps + a tsx file using
+    the given imports. Returns the root dir for BuildContext."""
+    import json
+    pkg = {"name": "x", "dependencies": {d: "^1.0.0" for d in deps}}
+    return _make_minisite(tmp_path, {
+        "package.json": json.dumps(pkg),
+        "app/page.tsx": imports_in_file + "\nexport default () => null;",
+    })
+
+
+@pytest.mark.parametrize("case,deps,imports,expected", [
+    ("declared_import_passes",
+     ["resend"],
+     'import { Resend } from "resend";', "pass"),
+
+    ("undeclared_import_fails",
+     ["next"],
+     'import Foo from "react-icons/fa6";', "fail"),
+
+    ("react_is_builtin_no_decl_needed",
+     [],
+     'import { useState } from "react";', "pass"),
+
+    ("next_subpath_is_builtin",
+     [],
+     'import Image from "next/image";', "pass"),
+
+    ("next_font_subpath_is_builtin",
+     [],
+     'import { Inter } from "next/font/google";', "pass"),
+
+    ("path_alias_skipped",
+     [],
+     'import { Hero } from "@/components/sections/Hero";', "pass"),
+
+    ("relative_import_skipped",
+     [],
+     'import { Foo } from "./foo";', "pass"),
+
+    ("parent_relative_skipped",
+     [],
+     'import { Bar } from "../bar";', "pass"),
+
+    ("scoped_package_declared",
+     ["@radix-ui/react-dialog"],
+     'import { Dialog } from "@radix-ui/react-dialog";', "pass"),
+
+    ("scoped_package_undeclared",
+     [],
+     'import { Dialog } from "@radix-ui/react-dialog";', "fail"),
+
+    ("subpath_resolves_to_root_package",
+     ["react-icons"],
+     'import { FaCoffee } from "react-icons/fa6";', "pass"),
+
+    ("server_only_is_builtin",
+     [],
+     'import "server-only";', "pass"),
+
+    ("client_only_is_builtin",
+     [],
+     'import "client-only";', "pass"),
+
+    ("multiple_imports_one_undeclared",
+     ["react", "next"],
+     'import { useState } from "react";\nimport zod from "zod";', "fail"),
+
+    ("multiple_imports_all_declared",
+     ["react", "next", "zod", "resend"],
+     'import { useState } from "react";\nimport zod from "zod";\nimport { Resend } from "resend";', "pass"),
+
+    ("devDependencies_count_too",
+     [],  # we'll set devDependencies in the test override below
+     'import { describe } from "vitest";', "skip-uses-deps-only"),
+])
+def test_imports_resolve_to_dependencies_raw(tmp_path, case, deps, imports, expected):
+    if expected == "skip-uses-deps-only":
+        # special: build manually with devDependencies
+        import json
+        pkg = {"name": "x", "devDependencies": {"vitest": "^1.0.0"}}
+        d = _make_minisite(tmp_path, {
+            "package.json": json.dumps(pkg),
+            "app/page.tsx": imports + "\nexport default () => null;",
+        })
+        ctx = BuildContext.load(d)
+        assert checks.imports_resolve_to_dependencies(ctx).status == "pass"
+        return
+
+    d = _site_with_deps(tmp_path, deps, imports)
+    ctx = BuildContext.load(d)
+    r = checks.imports_resolve_to_dependencies(ctx)
+    assert r.status == expected, f"{case}: got {r.status} ({r.message})"
+
+
+def test_imports_resolve_to_dependencies_reports_offender(tmp_path):
+    """The check should name which packages are undeclared in details."""
+    d = _site_with_deps(
+        tmp_path,
+        deps=["next", "react"],
+        imports_in_file='import { Foo } from "react-icons/fa6";\nimport { Bar } from "lucide-react";',
+    )
+    ctx = BuildContext.load(d)
+    r = checks.imports_resolve_to_dependencies(ctx)
+    assert r.status == "fail"
+    assert "react-icons" in r.details["undeclared"]
+    assert "lucide-react" in r.details["undeclared"]
+
+
+def test_imports_resolve_to_dependencies_fails_when_package_json_missing(tmp_path):
+    d = _make_minisite(tmp_path, {"app/page.tsx": 'import x from "foo";'})
+    ctx = BuildContext.load(d)
+    r = checks.imports_resolve_to_dependencies(ctx)
+    assert r.status == "fail"
+    assert "package.json" in r.message.lower()

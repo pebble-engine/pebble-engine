@@ -1334,7 +1334,131 @@ def resend_in_dependencies(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 27. deploy_to_vercel_scaffold — FOUNDATION
+# 27. imports_resolve_to_dependencies — FOUNDATION (general regression guard)
+# ---------------------------------------------------------------------------
+
+# Match `from "..."` and `from '...'` import specifiers.
+_IMPORT_FROM_RE = re.compile(r"""from\s+['"]([^'"]+)['"]""")
+
+# Packages provided by the framework that don't need to be in package.json.
+# Next.js bundles these; "server-only" / "client-only" are zero-runtime
+# markers Next includes by default.
+_FRAMEWORK_BUILTINS = {
+    "react",
+    "react-dom",
+    "react/jsx-runtime",
+    "react/jsx-dev-runtime",
+    "next",
+    "server-only",
+    "client-only",
+}
+
+
+def _import_root(spec: str) -> str | None:
+    """Return the package root from an import specifier, or None if it's
+    a path / alias that shouldn't be checked against package.json.
+
+    Examples:
+        "react"                 -> "react"
+        "react-dom/client"      -> "react-dom"
+        "@radix-ui/react-dialog"-> "@radix-ui/react-dialog"
+        "@scope/pkg/sub/path"   -> "@scope/pkg"
+        "./foo"                 -> None   (relative)
+        "../bar"                -> None   (relative)
+        "@/components/x"        -> None   (project path alias)
+    """
+    if spec.startswith(".") or spec.startswith("/") or spec.startswith("@/"):
+        return None
+    parts = spec.split("/")
+    if spec.startswith("@"):
+        if len(parts) < 2:
+            return None
+        return "/".join(parts[:2])
+    return parts[0]
+
+
+@check_metadata(static_files=("package.json",), details_file_key="files")
+def imports_resolve_to_dependencies(ctx: BuildContext) -> CheckResult:
+    """Every `from "package-name"` import must resolve to a declared
+    dependency in package.json.
+
+    Catches the regression class that bit Ironwood Coffee Roasters in
+    May 2026: the LLM imported `react-icons/fa6` without adding
+    `react-icons` to dependencies, so `npm install` succeeded but
+    `next dev` died at the first runtime import.
+
+    Built-in framework packages (react, next/*, server-only, client-only)
+    are exempt. Relative imports (`./foo`) and `@/` alias imports are
+    skipped — those are project-local and resolved by tsconfig paths.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("imports_resolve_to_dependencies", "skip", "no site directory")
+
+    pkg_path = ctx.site_dir / "package.json"
+    if not pkg_path.exists():
+        return CheckResult("imports_resolve_to_dependencies", "fail", "package.json missing")
+
+    try:
+        text = pkg_path.read_text(encoding="utf-8", errors="ignore")
+        pkg = json.loads(_JSONC_COMMENT_RE.sub("", text))
+    except json.JSONDecodeError as e:
+        return CheckResult(
+            "imports_resolve_to_dependencies", "fail",
+            f"package.json invalid JSON: {e}",
+        )
+
+    declared: set[str] = set()
+    declared.update((pkg.get("dependencies") or {}).keys())
+    declared.update((pkg.get("devDependencies") or {}).keys())
+    declared.update((pkg.get("peerDependencies") or {}).keys())
+
+    # Walk every tsx/ts file, collect undeclared imports.
+    undeclared: dict[str, list[str]] = {}  # pkg-name -> [files using it]
+    for ext in ("*.tsx", "*.ts"):
+        for f in ctx.site_dir.rglob(ext):
+            if "node_modules" in f.parts or ".next" in f.parts:
+                continue
+            file_text = f.read_text(encoding="utf-8", errors="ignore")
+            for m in _IMPORT_FROM_RE.finditer(file_text):
+                spec = m.group(1)
+                # next/* sub-paths (next/font/google, next/image, etc.) are
+                # always bundled with `next` itself.
+                if spec == "next" or spec.startswith("next/"):
+                    continue
+                root = _import_root(spec)
+                if root is None:
+                    continue  # relative or path alias — fine
+                if root in _FRAMEWORK_BUILTINS:
+                    continue
+                if root not in declared:
+                    undeclared.setdefault(root, []).append(
+                        str(f.relative_to(ctx.site_dir))
+                    )
+
+    if not undeclared:
+        return CheckResult(
+            "imports_resolve_to_dependencies", "pass",
+            f"all imports resolve to declared dependencies "
+            f"({len(declared)} package(s) declared)",
+        )
+
+    offending: list[str] = []
+    for pkg_name, files in undeclared.items():
+        offending.append(f"{pkg_name} (used in {files[0]})")
+
+    return CheckResult(
+        "imports_resolve_to_dependencies", "fail",
+        f"{len(undeclared)} import(s) not declared in package.json: "
+        f"{', '.join(undeclared.keys())}",
+        details={
+            "undeclared": list(undeclared.keys()),
+            "files": offending[:10],
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# 28. deploy_to_vercel_scaffold — FOUNDATION
 # ---------------------------------------------------------------------------
 
 _DEPLOY_HEADING_RE = re.compile(r"^#{1,3}\s*Deploy\b", re.IGNORECASE | re.MULTILINE)
@@ -1419,6 +1543,7 @@ ALL_CHECKS = [
     # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
     contact_form_uses_server_action,
     resend_in_dependencies,
+    imports_resolve_to_dependencies,
     deploy_to_vercel_scaffold,
     site_compiles,
 ]
