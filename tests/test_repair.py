@@ -26,6 +26,30 @@ from pebble.repair import (
 # FakeClient — mocks the LLM client interface used by repair_build
 # ---------------------------------------------------------------------------
 
+def _write_foundation_files(site: Path) -> None:
+    """Write the May 2026 foundation files (Inter, AnimatedHeading, FadeIn,
+    liquid-glass, reduced-motion, video hero) into a synthetic site dir so
+    inline fixtures pass the new FOUNDATION eval checks without duplicating
+    50 lines of boilerplate each."""
+    (site / "components" / "sections").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "ui").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] bg-black">\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
+        '"use client";\nexport function AnimatedHeading({text}:{text:string}){return <h1>{text}</h1>;}'
+    )
+    (site / "components" / "ui" / "FadeIn.tsx").write_text(
+        '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
+    )
+
+
 class FakeClient:
     """Returns canned text from ``.generate()``. Tracks calls for assertions."""
 
@@ -60,6 +84,8 @@ def broken_build(tmp_path: Path) -> Path:
     d = tmp_path / "broken-build"
     site = d / "site"
     (site / "app").mkdir(parents=True)
+    (site / "components" / "sections").mkdir(parents=True)
+    (site / "components" / "ui").mkdir(parents=True)
 
     (d / "brief.json").write_text(json.dumps({
         "business_name": "Broken Co",
@@ -74,21 +100,43 @@ def broken_build(tmp_path: Path) -> Path:
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
     (site / "tailwind.config.ts").write_text(
-        "export default { theme: { fontFamily: { display: ['Inter'] } } }"
+        "export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter'] } } } }"
     )
     (site / "postcss.config.js").write_text("module.exports = {}")
-    (site / "next.config.mjs").write_text("export default {}")
-    # Layout includes the brief phone so no_invented_phone passes.
+    (site / "next.config.mjs").write_text("/** @type {import('next').NextConfig} */\nexport default {};\n")
+    # Layout includes Inter + brief phone (foundation Inter + no_invented_phone pass).
+    # Intentionally lacks Cormorant Garamond so dna_display_font_honored fails.
     (site / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import { Hero } from "@/components/sections/Hero";\n'
         'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'export default function L({children}: any) {\n'
-        '  return <html><body>{children}<footer>(212) 234-9876</footer></body></html>;\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}><Hero /><footer>(212) 234-9876</footer>{children}</body></html>;\n'
         '}'
     )
     # Intentionally NO app/page.tsx → required_files_present + hero_has_h1 fail.
-    # Inter (not Cormorant Garamond) → dna_display_font_honored fails.
     (site / "app" / "globals.css").write_text(
-        "body { font-family: 'Inter', sans-serif; height: 100dvh; }"
+        "body { font-family: var(--font-inter), Inter, sans-serif; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+    )
+    # Foundation hero (background video, no overlay).
+    (site / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] bg-black">\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    # Foundation animation components.
+    (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
+        '"use client";\nexport function AnimatedHeading({text}:{text:string}){return <h1>{text}</h1>;}'
+    )
+    (site / "components" / "ui" / "FadeIn.tsx").write_text(
+        '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
     return d
@@ -243,18 +291,26 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
     (site / "tailwind.config.ts").write_text(
-        "export default { theme: { fontFamily: { display: ['Cormorant Garamond'] } } }"
+        "export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter'], display: ['Cormorant Garamond'] } } } }"
     )
     (site / "postcss.config.js").write_text("module.exports = {}")
-    (site / "next.config.mjs").write_text("export default {}")
+    (site / "next.config.mjs").write_text("/** @type {import('next').NextConfig} */\nexport default {};\n")
     (site / "app" / "layout.tsx").write_text(
-        'export default function L({children}: any) { return <html lang="en"><body>{children}</body></html>; }'
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
-        'export default function P() { return <main><h1>(212) 234-9876</h1></main>; }'
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /><h1>(212) 234-9876 Cormorant Garamond</h1></main>; }'
     )
-    (site / "app" / "globals.css").write_text("body { font-family: 'Cormorant Garamond'; height: 100dvh; }")
+    (site / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, 'Cormorant Garamond', sans-serif; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+    )
     (site / ".gitignore").write_text("node_modules/\n")
+    _write_foundation_files(site)
 
     client = FakeClient(response="should not be called")
     report = repair_build(slug=d.name, client=client, output_dir=tmp_path)
@@ -578,13 +634,25 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
     }))
     (site / "package.json").write_text('{"name":"x"}')
     (site / "tsconfig.json").write_text(json.dumps({"compilerOptions": {"paths": {"@/*": ["./*"]}}}))
-    (site / "tailwind.config.ts").write_text("export default { theme: { fontFamily: { display: ['Cormorant Garamond'] } } }")
+    (site / "tailwind.config.ts").write_text("export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter'], display: ['Cormorant Garamond'] } } } }")
     (site / "postcss.config.js").write_text("module.exports = {}")
-    (site / "next.config.mjs").write_text("export default {}")
-    (site / "app" / "layout.tsx").write_text('export default function L({children}: any) { return <html lang="en"><body>{children}</body></html>; }')
-    (site / "app" / "page.tsx").write_text('export default function P() { return <main><h1>(212) 234-9876</h1></main>; }')
-    (site / "app" / "globals.css").write_text("body { font-family: 'Cormorant Garamond'; height: 100dvh; }")
+    (site / "next.config.mjs").write_text("/** @type {import('next').NextConfig} */\nexport default {};\n")
+    (site / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>; }'
+    )
+    (site / "app" / "page.tsx").write_text(
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /><h1>(212) 234-9876 Cormorant Garamond</h1></main>; }'
+    )
+    (site / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, 'Cormorant Garamond', sans-serif; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+    )
     (site / ".gitignore").write_text("")
+    _write_foundation_files(site)
 
     client = FakeClient()
     repair_build(slug=d.name, client=client, output_dir=tmp_path)

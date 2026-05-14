@@ -64,19 +64,49 @@ The Design DNA block at the top of this prompt names this build's aesthetic iden
 
 ### Homepage — Default Section Structure (override per DNA)
 
-**Section 1: Hero — Full Viewport** (default; DNA may redefine the hero entirely)
-- `min-h-[100dvh]` always — never `min-h-screen`
-- The Design DNA's `Hero structure` section is authoritative. The defaults below apply only if the DNA's hero is silent on a detail.
-- **Default video hero** (when DNA permits and Resolved Contract says video): `<video autoPlay muted loop playsInline>` — use the hero Pexels URL as `poster` attribute
-- **Default image hero** (when DNA permits and no video): full-bleed `next/image` with `priority` and a `className="parallax-bg"` wrapper
-- **Default content layout** (DNA may rearrange or replace):
-  1. `<p className="hero-eyebrow">` — location · industry tagline
-  2. `<h1 className="hero-heading">` — the main headline, set in the DNA's display font at the size the DNA specifies. **THIS MUST BE PRESENT AND VISIBLE. No hero without a large headline.**
-  3. `<p className="hero-sub">` — supporting sentence naming the outcome
-  4. `<div className="hero-cta flex gap-4">` — primary + secondary CTA
-  5. `<div className="hero-badge">` — floating trust signal (years · certified · insured)
-- DO NOT (regardless of DNA): plain white centered hero with only CTA buttons and no headline, dead links, placeholder Lorem ipsum
-- The DNA may legitimately call for: a typographic-only hero (no image/video), a split-screen asymmetric hero, a centered editorial hero, a boot-sequence terminal hero, a layered chaotic hero. Follow the DNA.
+**Section 1: Hero — FOUNDATION (MANDATORY — overrides all DNA hero variants)**
+
+This hero is the engine's universal foundation. Every build uses this exact structure. The Design DNA layers accent color, copy voice, and signature decorative moves on TOP of this structure but does not redefine the structure itself. When a DNA card's hero_structure description conflicts with what follows, the foundation wins.
+
+**Visual layout:**
+- `<section>` is `relative min-h-[100dvh] overflow-hidden bg-black` (always a dark base — text is always light over the video)
+- Full-bleed `<video>` is `absolute inset-0 w-full h-full object-cover`, with attributes `autoPlay muted loop playsInline` (all four, always)
+- **CRITICAL: NO dark overlay on the video.** No `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent layer above the video. The video plays raw. The chosen Pexels video must already have inherent darkness/contrast where text sits.
+- Video `src` is `/videos/hero.mp4` when the post-build chain has localized the Pexels video (preferred); otherwise the Pexels CDN URL is the fallback.
+- Content container sits at the BOTTOM of the viewport: `relative flex flex-col h-full justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white`
+- On large screens, content uses a 2-column grid: `lg:grid lg:grid-cols-2 lg:items-end gap-8`
+
+**Left column — primary content (vertical order):**
+1. `<AnimatedHeading text="line one\nline two" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4" />` — the h1 with per-character entrance animation. Two lines separated by `\n`. Use the brand's value prop in two beats — example: `"Shaping tomorrow\nwith vision and action."` for a VC firm, `"Roasted slow.\nServed fresh."` for a coffee roaster. **THE HEADING IS THE H1 — never a styled div.**
+2. `<FadeIn delay={{800}} duration={{1000}}>` wrapping `<p className="text-base md:text-lg text-gray-300 mb-5">…subhead sentence…</p>` — one sentence naming the outcome the visitor gets
+3. `<FadeIn delay={{1200}} duration={{1000}}>` wrapping `<div className="flex flex-wrap gap-4">` containing two CTAs:
+   - Primary: white pill — `bg-white text-black px-8 py-3 rounded-lg font-medium` — links to `tel:[BUSINESS PHONE]` (or `#contact` if the brief lacks a phone)
+   - Secondary: glass — `liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors` — links to `/services` or another primary route
+
+**Right column — optional brand tag (`hidden lg:flex items-end justify-start lg:justify-end`):**
+- `<FadeIn delay={{1400}} duration={{1000}}>` wrapping a `liquid-glass border border-white/20 px-6 py-3 rounded-xl` card
+- Inside: `<p className="text-lg md:text-xl lg:text-2xl font-light">Three. Short. Words.</p>` — three or four short phrases summarizing the business posture. Example: "Roasted. Direct. Local." or "Plumbing · HVAC · Electrical"
+
+**Navbar — liquid-glass chip floating at the top:**
+- Outer wrapper: `absolute top-0 inset-x-0 z-50 px-6 md:px-12 lg:px-16 pt-6`
+- Inner navbar element: `<nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between text-white">`
+- Left: logo wordmark in `<Link href="/" className="text-2xl font-semibold tracking-tight">…business name…</Link>`
+- Center (`hidden md:flex gap-8 text-sm`): nav links — hover transitions to `text-gray-300`
+- Right: primary CTA — `<a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">Call Us</a>`
+
+**Accessibility (mandatory):**
+- `app/globals.css` includes `@media (prefers-reduced-motion: reduce)` that disables transitions globally
+- The `AnimatedHeading` component checks `prefers-reduced-motion` at mount and renders all characters at final state immediately when set
+- Video has `muted` (iOS Safari blocks unmuted autoplay) and no `controls`
+- Hero h1 is a real `<h1>` tag (not a styled `<div>`)
+
+DO NOT do any of the following, regardless of DNA:
+- A plain white centered hero with only CTA buttons and no headline
+- A flat-color hero with no background video
+- A dark overlay on top of the video (no `bg-black/...`, no gradients, nothing dimming the video)
+- The video set up as `<source>` without `autoPlay muted loop playsInline` on the `<video>` itself
+- Skipping the `AnimatedHeading` and `FadeIn` components in favor of inline GSAP timelines on the hero
+- Using a `display_font` from the DNA as the h1 typeface — the h1 is always Inter (the DNA's display_font is reserved for accent / decorative uses elsewhere on the page)
 
 **Section 2: Trust Bar — Counting Stats**
 - Dark or brand-accent background strip — NOT white
@@ -140,109 +170,299 @@ Stack services as full-width vertical sections — a 3-column card grid is forbi
 
 **Performance non-negotiables:**
 - `next/image` for ALL images — never raw `<img>` tags. Use `fill` + `object-cover` for full-bleed, explicit `width`/`height` for fixed-size. `priority` on hero image only.
-- `next/font/google` for both fonts — zero layout shift
-- `gsap.registerPlugin(ScrollTrigger, SplitText)` at module level — never inside useEffect
+- `next/font/google` for fonts — zero layout shift
+- `gsap.registerPlugin(ScrollTrigger)` at module level — never inside useEffect (SplitText is forbidden — paid Club plugin)
 - `dynamic()` with `{{ ssr: false }}` for any component using `window` or `document`
 - `will-change: transform` only during active animation — remove after with `gsap.set(el, {{ clearProps: "willChange" }})`
-- `@media (prefers-reduced-motion: reduce) {{ * {{ animation-duration: 0.01ms !important }} }}` in globals.css
+- `@media (prefers-reduced-motion: reduce) {{ * {{ animation-duration: 0.01ms !important; transition-duration: 0.01ms !important }} }}` in globals.css
+
+**Typography — MANDATORY GLOBAL FOUNDATION:**
+
+Inter is the engine's universal sans-serif. Every build loads it via `next/font/google` with weights 300, 400, 500, 600. Apply it globally via Tailwind's `font-sans` so every element picks it up automatically. The DNA's `display_font` (Cormorant Garamond, Tektur, etc.) is reserved for ACCENT/decorative use — pull-quotes, drop caps, stat numbers, the optional right-column hero tag — NEVER the hero h1 or body copy.
+
+In `app/layout.tsx`:
+
+```tsx
+import {{ Inter }} from "next/font/google";
+import "./globals.css";
+
+const inter = Inter({{
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600"],
+  variable: "--font-inter",
+  display: "swap",
+}});
+
+export default function RootLayout({{ children }}: {{ children: React.ReactNode }}) {{
+  return (
+    <html lang="en" className={{inter.variable}}>
+      <body className={{`${{inter.className}} antialiased`}}>
+        {{children}}
+      </body>
+    </html>
+  );
+}}
+```
+
+In `tailwind.config.ts`:
+
+```ts
+import type {{ Config }} from "tailwindcss";
+
+const config: Config = {{
+  content: ["./app/**/*.{{ts,tsx}}", "./components/**/*.{{ts,tsx}}"],
+  theme: {{
+    extend: {{
+      fontFamily: {{
+        sans: ["var(--font-inter)", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
+      }},
+    }},
+  }},
+  plugins: [],
+}};
+export default config;
+```
+
+In `app/globals.css` (above the Tailwind directives):
+
+```css
+body {{
+  font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}}
+```
+
+This is non-negotiable. Every Tailwind `font-sans` usage picks up Inter automatically. The DNA's display_font, when used, is loaded as a SECOND font via `next/font/google` (or `<link>` in head for non-Google fonts) and applied via its own utility class — never replacing Inter as the default.
 
 ---
 
 ### CINEMATIC CODE PATTERNS — Implement Verbatim
 
-#### 1. Hero Entrance — Vanilla Word Splitter (NO SplitText)
+#### 1. Hero Entrance — AnimatedHeading + FadeIn Components (FOUNDATION)
 
-**DO NOT import `gsap/SplitText`.** SplitText is a paid Club GSAP plugin — importing it crashes with `Module not found: gsap/SplitText` on any project without a Club license. Use this vanilla splitter instead. It's free, lightweight, and produces the same staggered word reveal.
+**Two reusable client components that compose every hero.** Both go in `components/ui/`. Both are required artifacts — the eval suite verifies their presence. The hero h1 uses `AnimatedHeading`; the subhead, CTA row, and right-column tag each wrap in `FadeIn` with cascading delays (800ms → 1200ms → 1400ms).
 
-```tsx
-"use client"
-import {{ useGSAP }} from "@gsap/react"
-import gsap from "gsap"
+These are NOT optional. Do NOT replace them with a GSAP timeline or framer-motion equivalent. The components must exist at the exact paths below.
 
-// Vanilla word splitter — wraps each word in nested spans so we can clip + translate
-function splitWords(el: HTMLElement): HTMLElement[] {{
-  const text = (el.textContent ?? "").trim()
-  el.innerHTML = text
-    .split(/\s+/)
-    .filter(Boolean)
-    .map(w => `<span class="word" style="display:inline-block;overflow:hidden"><span class="word-inner" style="display:inline-block">${{w}}</span></span>`)
-    .join(" ")
-  return Array.from(el.querySelectorAll<HTMLElement>(".word-inner"))
-}}
+##### `components/ui/AnimatedHeading.tsx`
 
-useGSAP(() => {{
-  const heading = document.querySelector<HTMLElement>(".hero-heading")
-  const words = heading ? splitWords(heading) : []
-
-  const tl = gsap.timeline({{ delay: 0.1, defaults: {{ ease: "expo.out" }} }})
-  tl.from(".hero-eyebrow", {{ opacity: 0, y: 16, duration: 0.6 }})
-    .from(words,           {{ opacity: 0, y: 52, stagger: 0.06, duration: 0.85 }}, "-=0.3")
-    .from(".hero-sub",     {{ opacity: 0, y: 20, duration: 0.7 }}, "-=0.5")
-    .from(".hero-cta",     {{ opacity: 0, y: 20, stagger: 0.1, duration: 0.6 }}, "-=0.4")
-    .from(".hero-badge",   {{ opacity: 0, scale: 0.9, duration: 0.5 }}, "-=0.3")
-}})
-```
-
-Apply: `className="hero-eyebrow"`, `"hero-heading"`, `"hero-sub"`, `"hero-cta"` (on each CTA), `"hero-badge"`.
-
-#### 2. Navbar — Hide/Show + Background Fill (No Flicker On Load)
-
-**Initialize the navbar with an opaque background on first paint** — never transparent. A transparent navbar above a dark hero looks fine, but the moment the loading screen dismisses you get an ugly flicker because GSAP hasn't read scroll position yet. The fix: read `window.scrollY` synchronously on mount and apply the right state before the first paint.
+Per-character entrance: each char starts at `opacity:0, translateX(-18px)` and transitions to `opacity:1, translateX(0)` with a staggered delay calculated from char index. Lines split on `\n`. Spaces render as non-breaking. Respects `prefers-reduced-motion` — when the user has it set, all chars render at final state immediately.
 
 ```tsx
-"use client"
-import {{ useEffect, useRef }} from "react"
-import {{ useGSAP }} from "@gsap/react"
-import gsap from "gsap"
-import {{ ScrollTrigger }} from "gsap/ScrollTrigger"
+"use client";
+import {{ useEffect, useState }} from "react";
 
-export function Header() {{
-  const ref = useRef<HTMLElement>(null)
+type Props = {{
+  text: string;          // use \n for explicit line breaks
+  charDelay?: number;    // ms between chars; default 30
+  initialDelay?: number; // ms before first char animates; default 200
+  duration?: number;     // ms per char transition; default 500
+  className?: string;
+}};
 
-  // Set the initial bg state synchronously after mount so the navbar
-  // never appears unstyled — even for one frame.
+export function AnimatedHeading({{ text, charDelay = 30, initialDelay = 200, duration = 500, className }}: Props) {{
+  const [ready, setReady] = useState(false);
+  const [reduce, setReduce] = useState(false);
+
   useEffect(() => {{
-    const el = ref.current
-    if (!el) return
-    const darkSite = document.body.dataset.theme === "dark"
-    const atTop = window.scrollY <= 60
-    el.style.backgroundColor = atTop ? "transparent" : (darkSite ? "rgba(10,10,10,0.92)" : "rgba(255,255,255,0.92)")
-    el.style.backdropFilter  = atTop ? "blur(0px)" : "blur(14px)"
-    el.style.boxShadow       = atTop ? "none"      : "0 1px 0 rgba(0,0,0,0.08)"
-  }}, [])
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const t = setTimeout(() => setReady(true), initialDelay);
+    return () => clearTimeout(t);
+  }}, [initialDelay]);
 
-  useGSAP(() => {{
-    let lastY = 0
-    const darkSite = document.body.dataset.theme === "dark"
-
-    ScrollTrigger.create({{
-      onUpdate: () => {{
-        const y = window.scrollY
-        const scrollingDown = y > lastY && y > 80
-        gsap.to(ref.current, {{
-          yPercent: scrollingDown ? -100 : 0,
-          duration: 0.35,
-          ease: "power2.out",
-          overwrite: "auto",
-        }})
-
-        const bg = darkSite ? "rgba(10,10,10,0.92)" : "rgba(255,255,255,0.92)"
-        gsap.to(ref.current, {{
-          backgroundColor: y > 60 ? bg : "transparent",
-          backdropFilter:  y > 60 ? "blur(14px)" : "blur(0px)",
-          boxShadow:       y > 60 ? "0 1px 0 rgba(0,0,0,0.08)" : "none",
-          duration: 0.3,
-          overwrite: "auto",
-        }})
-        lastY = y
-      }},
-    }})
-  }})
-
-  // Header must NOT be a child of any `overflow:hidden` container — iOS will break the fixed positioning.
-  return <header ref={{ref}} className="navbar fixed top-0 inset-x-0 z-50">{{/* ... */}}</header>
+  const lines = text.split("\n");
+  return (
+    <h1 className={{className}} style={{{{ letterSpacing: "-0.04em" }}}}>
+      {{lines.map((line, lineIndex) => {{
+        const lineOffset = lineIndex * line.length * charDelay;
+        return (
+          <span key={{lineIndex}} style={{{{ display: "block" }}}}>
+            {{Array.from(line).map((ch, charIndex) => {{
+              const delay = reduce ? 0 : lineOffset + charIndex * charDelay;
+              return (
+                <span
+                  key={{charIndex}}
+                  style={{{{
+                    display: "inline-block",
+                    opacity: ready || reduce ? 1 : 0,
+                    transform: ready || reduce ? "translateX(0)" : "translateX(-18px)",
+                    transition: `opacity ${{duration}}ms ease, transform ${{duration}}ms ease`,
+                    transitionDelay: `${{delay}}ms`,
+                  }}}}
+                >
+                  {{ch === " " ? " " : ch}}
+                </span>
+              );
+            }})}}
+          </span>
+        );
+      }})}}
+    </h1>
+  );
 }}
 ```
+
+##### `components/ui/FadeIn.tsx`
+
+Wraps children, starts at `opacity:0`, transitions to `opacity:1` after `delay` ms. Configurable duration. Respects `prefers-reduced-motion`.
+
+```tsx
+"use client";
+import {{ ReactNode, useEffect, useState }} from "react";
+
+type Props = {{
+  children: ReactNode;
+  delay?: number;     // ms before fade starts; default 0
+  duration?: number;  // ms transition; default 1000
+  className?: string;
+}};
+
+export function FadeIn({{ children, delay = 0, duration = 1000, className }}: Props) {{
+  const [visible, setVisible] = useState(false);
+  const [reduce, setReduce] = useState(false);
+
+  useEffect(() => {{
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const t = setTimeout(() => setVisible(true), delay);
+    return () => clearTimeout(t);
+  }}, [delay]);
+
+  return (
+    <div
+      className={{className}}
+      style={{{{
+        opacity: visible || reduce ? 1 : 0,
+        transition: `opacity ${{duration}}ms ease`,
+      }}}}
+    >
+      {{children}}
+    </div>
+  );
+}}
+```
+
+##### Usage in `components/sections/Hero.tsx` and `app/page.tsx`
+
+```tsx
+import {{ AnimatedHeading }} from "@/components/ui/AnimatedHeading";
+import {{ FadeIn }} from "@/components/ui/FadeIn";
+
+export function Hero() {{
+  return (
+    <section className="relative min-h-[100dvh] overflow-hidden bg-black">
+      <video
+        autoPlay muted loop playsInline
+        className="absolute inset-0 w-full h-full object-cover"
+        src="/videos/hero.mp4"
+      />
+      {{/* NO overlay. The video plays raw. */}}
+
+      <div className="relative flex flex-col h-full justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white">
+        <div className="lg:grid lg:grid-cols-2 lg:items-end gap-8">
+          <div>
+            <AnimatedHeading
+              text={{"Shaping tomorrow\nwith vision and action."}}
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4"
+            />
+            <FadeIn delay={{800}} duration={{1000}}>
+              <p className="text-base md:text-lg text-gray-300 mb-5">
+                We back visionaries and craft ventures that define what comes next.
+              </p>
+            </FadeIn>
+            <FadeIn delay={{1200}} duration={{1000}}>
+              <div className="flex flex-wrap gap-4">
+                <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-8 py-3 rounded-lg font-medium">Start a Chat</a>
+                <a href="/services" className="liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors">Explore Now</a>
+              </div>
+            </FadeIn>
+          </div>
+          <FadeIn delay={{1400}} duration={{1000}} className="hidden lg:flex items-end justify-start lg:justify-end">
+            <div className="liquid-glass border border-white/20 px-6 py-3 rounded-xl">
+              <p className="text-lg md:text-xl lg:text-2xl font-light">Investing. Building. Advisory.</p>
+            </div>
+          </FadeIn>
+        </div>
+      </div>
+    </section>
+  );
+}}
+```
+
+The h1 and the FadeIn cascades replace the legacy `splitWords()` helper entirely. The `gsap/SplitText` import remains forbidden — it's a paid Club plugin and the eval suite will reject any import of it.
+
+#### 2. Liquid-Glass Navbar — Rounded Chip Pattern (FOUNDATION)
+
+Not a page-wide blur bar. The navbar is a centered rounded chip floating at the top of the viewport, with horizontal page padding around it and the `.liquid-glass` utility class for the backdrop blur + gradient stroke border.
+
+```tsx
+"use client";
+import Link from "next/link";
+
+export function Navbar({{ businessName }}: {{ businessName: string }}) {{
+  return (
+    <div className="absolute top-0 inset-x-0 z-50 px-6 md:px-12 lg:px-16 pt-6">
+      <nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between text-white">
+        <Link href="/" className="text-2xl font-semibold tracking-tight">
+          {{businessName}}
+        </Link>
+        <div className="hidden md:flex gap-8 text-sm">
+          <Link href="/services" className="hover:text-gray-300 transition-colors">Services</Link>
+          <Link href="/about" className="hover:text-gray-300 transition-colors">About</Link>
+          <Link href="/contact" className="hover:text-gray-300 transition-colors">Contact</Link>
+        </div>
+        <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+          Call Us
+        </a>
+      </nav>
+    </div>
+  );
+}}
+```
+
+The navbar is `absolute` (not `fixed`) so it sits over the hero video without floating during scroll. For pages without a hero video (services, about, contact), wrap the navbar's outer div with `relative bg-black` and switch its position to `fixed top-0 inset-x-0` so it persists during scroll there. Either way the `.liquid-glass` chip stays the visual signature.
+
+The mobile menu (links < md breakpoint) collapses to a hamburger → fullscreen overlay with staggered link reveals. Use the same `<FadeIn>` component from Code Pattern 1 to fade each menu link in with `delay` proportional to its index.
+
+#### 2b. Liquid-Glass Utility — globals.css (FOUNDATION)
+
+The `.liquid-glass` class produces an iOS 26 / visionOS-style frosted panel: dark translucent background, backdrop blur, and a gradient stroke border via `mask-composite`. Apply to navbar chip, hero right-column tag, secondary CTAs, modal cards — anywhere that should feel premium-glass.
+
+In `app/globals.css`:
+
+```css
+.liquid-glass {{
+  background: rgba(0, 0, 0, 0.4);
+  background-blend-mode: luminosity;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: none;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}}
+.liquid-glass::before {{
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.4px;
+  background: linear-gradient(180deg,
+    rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 20%,
+    rgba(255,255,255,0) 40%, rgba(255,255,255,0) 60%,
+    rgba(255,255,255,0.1) 80%, rgba(255,255,255,0.3) 100%);
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}}
+```
+
+Both `-webkit-mask-composite: xor` and `mask-composite: exclude` are required — first for Safari, second for spec-compliant browsers. The `border-radius: inherit` line means the gradient border follows whatever `rounded-*` class the parent has (rounded-xl on the navbar, rounded-xl on the hero tag, etc.).
 
 #### 3. Clip-Path Image Reveal
 
@@ -442,19 +662,37 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 ### Delivery Checklist
 
-- [ ] Hero: video OR full-bleed image with overlay — no flat backgrounds
-- [ ] Hero headline: `<h1 className="hero-heading">` present, visible, and large (min text-6xl) — a hero with only CTA buttons is incomplete
-- [ ] Hero entrance: SplitText word-by-word headline on mount
-- [ ] Navbar: hides scroll-down, returns scroll-up, fills blur at 60px
+**FOUNDATION (every item required — eval suite enforces):**
+- [ ] `Inter` loaded via `next/font/google` (weights 300/400/500/600) in `app/layout.tsx`
+- [ ] `tailwind.config.ts` `fontFamily.sans` extended with `var(--font-inter)` + `Inter`
+- [ ] `app/globals.css` `body` rule sets `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` + `-webkit-font-smoothing: antialiased`
+- [ ] `components/ui/AnimatedHeading.tsx` present, verbatim from Code Pattern 1
+- [ ] `components/ui/FadeIn.tsx` present, verbatim from Code Pattern 1
+- [ ] `.liquid-glass` class in `app/globals.css` with `::before` mask-composite gradient border
+- [ ] `components/layout/Navbar.tsx` uses `liquid-glass rounded-xl` chip pattern from Code Pattern 2
+- [ ] `components/sections/Hero.tsx` composes AnimatedHeading + FadeIn + full-bleed `<video autoPlay muted loop playsInline>` with NO overlay
+- [ ] Hero section is `min-h-[100dvh]`, `bg-black`, content `flex justify-end` at bottom
+- [ ] Hero h1 uses `AnimatedHeading` with `\n` line break and `letterSpacing: '-0.04em'`
+- [ ] Subhead in `FadeIn delay={{800}}`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
+- [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
+
+**SECTIONS BELOW HERO:**
 - [ ] Trust bar: counting stats with `data-target` + GSAP textContent
 - [ ] Services: full-bleed vertical alternating sections — NEVER 3-column card grid, NEVER horizontal scroll
 - [ ] Social proof: dark section, one large quote
 - [ ] All section images: `next/image` + clip-path reveal on scroll
+
+**LINKS, FORMS, COPY:**
 - [ ] All phone CTAs: `href="tel:..."` — zero `href="#"` links
 - [ ] Contact form: `onSubmit` + success state
-- [ ] `prefers-reduced-motion` in globals.css
+- [ ] All copy is industry-specific — no Lorem ipsum, no "Where X meets Y", no invented testimonials
+- [ ] All `@/` imports resolve to files emitted in the same build (no orphan imports)
+- [ ] Every npm package imported is declared in `package.json` dependencies (do NOT import `react-icons` or `lucide-react` without adding them — prefer inline SVG)
+
+**STRUCTURE + DELIVERABLES:**
 - [ ] 4 pages: Homepage, Services, About, Contact
 - [ ] All docs: README, HANDOFF, TODO_ASSETS, STYLE_GUIDE
+- [ ] `next.config.mjs` is plain JS (JSDoc, not `import type` — that's TS and crashes Node's ESM loader)
 
 ---
 
@@ -517,28 +755,60 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 ### Self-audit before delivering
 
+**FOUNDATION CHECKS (hero + typography — all MANDATORY):**
+
+| Check | Required |
+|---|---|
+| Inter global | `Inter` loaded via `next/font/google` with weights 300/400/500/600 in `app/layout.tsx`; Tailwind `fontFamily.sans` extends to use it |
+| `body` font-family | `var(--font-inter)` (or `Inter`) in `app/globals.css` `body` rule; `-webkit-font-smoothing: antialiased` + `-moz-osx-font-smoothing: grayscale` |
+| AnimatedHeading component | `components/ui/AnimatedHeading.tsx` exists with the exact per-char animation logic from Code Pattern 1, used as the hero h1 |
+| FadeIn component | `components/ui/FadeIn.tsx` exists, used for the hero subhead (delay 800), CTA row (delay 1200), and right-column tag (delay 1400) |
+| Liquid-glass utility | `.liquid-glass` class in `app/globals.css` with `backdrop-filter: blur(4px)` + `::before` gradient stroke via `mask-composite` |
+| Navbar | Liquid-glass rounded chip at top with `px-6 md:px-12 lg:px-16 pt-6` outer wrapper — NOT a full-width blur bar |
+| Hero structure | `min-h-[100dvh]` section, `bg-black`, full-bleed `<video autoPlay muted loop playsInline>` with `object-cover`, content `flex justify-end` at bottom |
+| Hero video overlay | **ZERO dark overlay** — no `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent div above the video. The video plays raw. |
+| Hero h1 | Real `<h1>` tag, set via `AnimatedHeading`, sized `text-4xl md:text-5xl lg:text-6xl xl:text-7xl`, `font-normal`, `letterSpacing: '-0.04em'` |
+| Hero CTAs | Primary white pill + secondary liquid-glass pill, both wrapped in a FadeIn at 1200ms |
+| Right column tag | Optional liquid-glass card with three short words; FadeIn at 1400ms; `hidden lg:flex` |
+| DNA display_font scope | If used at all, ONLY in accent decorations (pull-quotes, drop caps, stat numbers, optional hero tag) — NEVER the hero h1, NEVER `body` default |
+
+**MOTION + ACCESSIBILITY:**
+
+| Check | Required |
+|---|---|
+| reduced-motion | `@media (prefers-reduced-motion: reduce)` in globals.css disabling animation-duration AND transition-duration to 0.01ms |
+| AnimatedHeading respects reduced-motion | Component reads `window.matchMedia("(prefers-reduced-motion: reduce)")` on mount and skips per-char delays when set |
+| FadeIn respects reduced-motion | Same — renders at final opacity immediately when user has reduced-motion set |
+
+**ANTI-SLOP + CONTENT:**
+
 | Check | Required |
 |---|---|
 | Phone number | `[BUSINESS PHONE]` — NEVER a 555 number or invented number |
-| Heading font | NOT Inter / Geist / Poppins / DM Sans / Space Grotesk — named distinctive face from Contract |
 | Subtext | No "Where X meets Y" — specific claim, number, or location |
 | Headline | No "Unrivaled / World-class / Unleash" — specific and arguable |
-| Hero | Full-bleed image or video with overlay — NEVER flat color behind text |
-| Hero headline | `<h1 className="hero-heading">` PRESENT and LARGE (min text-6xl) — CTAs alone are not a hero |
-| Hero height | `min-h-[100dvh]` — never `min-h-screen` |
-| Hero animation | Vanilla word-splitter (NOT `gsap/SplitText`) + 5-element staggered timeline on mount |
-| **GSAP SplitText** | **NEVER import `gsap/SplitText`** — it's a paid Club plugin and crashes on free GSAP. Use the `splitWords()` helper in Code Pattern 1. |
-| **`next/image` refs** | **NEVER attach a `ref` directly to `<Image>`** — Next's Image component does not forward refs. Always wrap in a `<div ref={{...}}>` and animate the wrapper. |
-| Navbar | Hides scroll-down, returns scroll-up, blur fill at 60px |
-| Navbar initial paint | Synchronously set background in `useEffect` based on `window.scrollY` — never start transparent and let GSAP fill it later (flicker on load) |
-| Images | `next/image` everywhere — never raw `<img>` |
+| Booking tool | Matches industry — Booksy ONLY for beauty/wellness |
+| Testimonials | Real only or omitted — never fabricated |
+
+**SECTIONS BELOW THE HERO:**
+
+| Check | Required |
+|---|---|
 | Services layout | Full-bleed vertical alternating sections — NEVER 3-column card grid, NEVER horizontal scroll |
 | Stats | GSAP counting numbers — never static text |
 | Social proof | Dark section, large single quote — never a carousel of small cards |
 | Section images | Clip-path reveal on scroll (wrapper div, not on `<Image>`) |
+| Services CTA | Phone (`href="tel:[BUSINESS PHONE]"`) and contact route — zero `href="#"` |
+
+**TOOLING + SAFETY:**
+
+| Check | Required |
+|---|---|
+| **GSAP SplitText** | **NEVER import `gsap/SplitText`** — paid Club plugin, crashes on free GSAP. The hero uses `AnimatedHeading` instead (Code Pattern 1). |
+| **`next/image` refs** | **NEVER attach a `ref` directly to `<Image>`** — Next's Image component does not forward refs. Always wrap in a `<div ref={{...}}>` and animate the wrapper. |
+| Images | `next/image` everywhere — never raw `<img>` |
 | Video | `autoPlay muted loop playsInline` — always all four attributes |
-| Hero video src | Use `/videos/hero.mp4` (local) when provided — Pexels CDN URLs only as fallback |
-| CTAs | `href="tel:..."` for phone — zero dead `href="#"` links |
+| Hero video src | Use `/videos/hero.mp4` (local) when provided — Pexels CDN URL only as fallback |
 | Form | `onSubmit` handler with success state |
 | Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
@@ -546,10 +816,10 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | FAQ accordion | `ScrollTrigger.refresh()` triggered by `transitionend` — NEVER a bare `setTimeout` |
 | **Lenis config** | Only Lenis 1.1.x options: `duration`, `easing`, `smoothWheel`, `syncTouch`, `touchMultiplier`, `infinite`. `smoothTouch` and `overscroll` are REMOVED in 1.1.x. |
 | Overscroll | Use CSS `overscroll-behavior-y: none` on `html, body` — not the Lenis option |
-| reduced-motion | `prefers-reduced-motion` media query in globals.css |
 | `.gitignore` | Present at project root with `node_modules/`, `.next/`, `.env*.local`, `.DS_Store`, `*.log` |
-| Booking tool | Matches industry — Booksy ONLY for beauty/wellness |
-| Testimonials | Real only or omitted — never fabricated |
+| `next.config.mjs` | PLAIN JavaScript — NO `import type {{ NextConfig }}` (that's TS syntax in an .mjs file and Node's ESM loader will crash). Use `/** @type {{import('next').NextConfig}} */` JSDoc instead. |
+| Package imports | Every npm import must be declared in `package.json` dependencies. Do NOT import `react-icons`, `lucide-react`, etc. without adding them. Prefer inline SVG. |
+| `@/` aliases | Every `@/...` import must resolve to a file you also emit. No orphan imports. |
 
 ---
 
@@ -571,10 +841,18 @@ would fail at compile time):
 
 - `README.md`, `HANDOFF.md`, `TODO_ASSETS.md`, `STYLE_GUIDE.md`, `CLIENT_ANSWERS.md`
 - `content/site.ts`, `content/sections.ts`, `content/services.ts`, `content/faqs.ts`, `content/testimonials.ts`
-- `lib/motion.ts`, `components/motion/Reveal.tsx`, `components/motion/Parallax.tsx`, `components/motion/SplitText.tsx`, `components/motion/SmoothScroll.tsx`
+- **FOUNDATION COMPONENTS (mandatory — eval suite verifies presence):**
+  - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1
+  - `components/ui/FadeIn.tsx` — opacity transition wrapper, verbatim from Code Pattern 1
+  - `components/layout/Navbar.tsx` — liquid-glass chip from Code Pattern 2
+  - `components/sections/Hero.tsx` — composes AnimatedHeading + FadeIn + video bg, imported by `app/page.tsx`
+- `lib/motion.ts`, `components/motion/Reveal.tsx`, `components/motion/Parallax.tsx`, `components/motion/SmoothScroll.tsx`
+  - Note: `components/motion/SplitText.tsx` is REMOVED — the hero h1 uses `AnimatedHeading`, not a SplitText wrapper. Do not emit a SplitText component.
 - `config/brand.config.ts`, `config/motion.config.ts`
-- `next.config.mjs` (NOT `.ts` — Next 14 does not support TypeScript config files)
-- `tailwind.config.ts`, `postcss.config.js`, `tsconfig.json`, `package.json`, `.gitignore`
+- `next.config.mjs` (NOT `.ts` — and the file body must be PLAIN JS, not TypeScript: `/** @type {{import('next').NextConfig}} */` JSDoc, no `import type`, no `: NextConfig` annotation)
+- `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
+- `app/globals.css` — must contain the `.liquid-glass` class (Code Pattern 2b) AND a `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif`
+- `postcss.config.js`, `tsconfig.json`, `package.json`, `.gitignore`
 
 Every import statement uses the `@/` alias rooted at the project. Examples:
 `import {{ Reveal }} from "@/components/motion/Reveal"`,

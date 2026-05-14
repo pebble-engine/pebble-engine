@@ -46,7 +46,7 @@ DNA_CARDS: list[dict] = [
             "Pull-quotes set in Cormorant italic 4XL, no quote marks, hairline rules above and below",
             "Page numbers in the footer like a magazine: '03 / 07'",
         ],
-        "forbidden": ["Three.js", "video hero", "rounded corners > 4px", "glow shadows", "card grids with shadows", "any use of Fraunces or Inter (use the DNA fonts only)"],
+        "forbidden": ["Three.js", "rounded corners > 4px", "glow shadows", "card grids with shadows", "any use of Fraunces or Inter (use the DNA fonts only)"],
     },
     {
         "id": "brutalist_editorial",
@@ -138,7 +138,7 @@ DNA_CARDS: list[dict] = [
             "Section labels formatted like blueprint sheets: '01.00 — IDENTITY · SHT 1 OF 4'",
             "Toggle button labeled 'GRID' in the footer that shows/hides the underlying 12-column grid",
         ],
-        "forbidden": ["Fraunces", "video hero", "drop shadows", "gradient anything", "rounded corners > 0px", "color photography (monochrome only)"],
+        "forbidden": ["Fraunces", "drop shadows", "gradient anything", "rounded corners > 0px", "color photography (monochrome only)"],
     },
     {
         "id": "tactile_y2k",
@@ -184,7 +184,7 @@ DNA_CARDS: list[dict] = [
             "All buttons are simple text links with red underline — no boxed CTAs anywhere",
             "Massive negative space — sections often only 30% filled vertically",
         ],
-        "forbidden": ["multiple accent colors", "video hero", "gradients", "rounded corners > 2px", "drop shadows", "Fraunces", "any decorative element"],
+        "forbidden": ["multiple accent colors", "gradients", "rounded corners > 2px", "drop shadows", "Fraunces", "any decorative element"],
     },
     {
         "id": "postmodern_max",
@@ -230,7 +230,7 @@ DNA_CARDS: list[dict] = [
             "Footnotes — actual superscript footnote markers in body text that scroll to a footnotes section at the bottom",
             "Page numbers in the footer as roman numerals (iii / x)",
         ],
-        "forbidden": ["sans-serif headlines", "video hero", "Three.js", "card grids", "drop shadows", "neon or saturated accents", "centered headlines that aren't italic"],
+        "forbidden": ["sans-serif headlines", "Three.js", "card grids", "drop shadows", "neon or saturated accents", "centered headlines that aren't italic"],
     },
     {
         "id": "industrial_freight",
@@ -275,56 +275,85 @@ def pick_dna_by_id(dna_id: str) -> Optional[dict]:
 def build_dna_block(dna: dict) -> str:
     """Return the markdown block to prepend at the TOP of PROMPT.md.
 
-    The block uses uppercase OVERRIDE framing because the rest of the prompt
-    (skill files, resolved contract) contains older Fraunces/Inter defaults
-    that we need the LLM to ignore in favor of the DNA's chosen fonts.
+    The DNA block describes ACCENT decorations layered over the engine's
+    mandatory foundation (Inter typography, video hero, AnimatedHeading +
+    FadeIn components, liquid-glass utility). The DNA does NOT redefine the
+    hero, override the body font, or skip the foundation components.
     """
     signatures = "\n".join(f"- {m}" for m in dna["signature_moves"])
     forbidden = ", ".join(dna["forbidden"])
     return f"""# ============================================================
-# DESIGN DNA — TOP-PRIORITY DIRECTIVE
+# DESIGN DNA — ACCENT LAYER OVER THE FOUNDATION
 # ============================================================
 
-**This build's aesthetic identity is `{dna['label'].upper()}` ({dna['id']}).**
+**This build's accent identity is `{dna['label'].upper()}` ({dna['id']}).**
 
 > **{dna['feel']}**
 
-The choices in this block OVERRIDE any conflicting recommendations elsewhere in
-this prompt — including the Resolved Design Contract's font suggestions, the
-Code Patterns section's hero structure, and any "always cinematic" language
-deeper in the spec. The skill files (iOS, Stack, No-Slop, Business Intelligence)
-still apply for code correctness; this block governs the *visual surface*.
+**Read this carefully — the hierarchy is non-obvious:**
 
-## Fonts — use these EXACT faces, loaded via `next/font/google` in `layout.tsx`
+The engine's MANDATORY FOUNDATION (defined later in Section 2: AnimatedHeading
+hero, FadeIn cascade, liquid-glass navbar chip, Inter typography globally,
+background-video hero with NO overlay) is the universal floor every build
+matches. The DNA below adds personality ON TOP of that foundation. It does NOT
+replace the hero. It does NOT override Inter as the global body/h1 typeface.
 
-| Role | Face | Weight |
-|---|---|---|
-| Display (headings, hero) | **{dna['display_font']}** | {dna['display_font_weight']} |
-| Body (paragraphs, UI) | **{dna['body_font']}** | {dna['body_font_weight']} |
-| Mono (labels, captions, code) | **{dna['mono_font']}** | 400 |
+When this DNA's `Hero structure` description (below) names elements that
+contradict the foundation (a "boot-sequence terminal hero," "no image in hero,"
+"NO video"), treat those as accent decorations to layer where compatible — NOT
+as a replacement for the foundation. The foundation video + AnimatedHeading +
+FadeIn cascade stays in place.
 
-Set them as CSS variables (`--font-display`, `--font-body`, `--font-mono`) on
-`<html>` and reference them via Tailwind's `font-display` / `font-body` /
-`font-mono` utilities or direct CSS variables.
+When this DNA's accent display font is named (Cormorant Garamond, Tektur, EB
+Garamond, etc.), use it for ACCENT/decorative elements ONLY: pull-quotes, drop
+caps in body sections, stat numbers, the optional right-column hero tag, big
+sectional numerals. The hero h1 and body copy ALWAYS use Inter. Load the
+accent font via `next/font/google` as a second face, attach to a Tailwind
+utility (e.g. `font-display`), and apply only on the decorative elements named
+in Signature Moves.
+
+The skill files (iOS, Stack, No-Slop, Business Intelligence) still apply for
+code correctness. The Foundation governs the universal visual structure. The
+DNA governs accent + voice + signature decorations layered on top.
+
+## Accent fonts — DECORATIVE only (NOT the hero h1, NOT body text)
+
+| Role | Face | Weight | Where to apply |
+|---|---|---|---|
+| Accent display | **{dna['display_font']}** | {dna['display_font_weight']} | Pull-quotes, drop caps, stat numbers, optional right-column hero tag, big sectional numerals |
+| Accent body | **{dna['body_font']}** | {dna['body_font_weight']} | Section eyebrows, decorative captions (Inter handles the bulk of body copy) |
+| Mono | **{dna['mono_font']}** | 400 | Code-style labels, technical numbering, signature corner marks |
 
 ## Palette posture
 
 {dna['palette_posture']}
 
-The Resolved Industry Intelligence palette (below) is a *starting point* — adapt
-its hex values to fit this posture. If the industry says `#1B3A6B primary` but
-this DNA calls for "pure black + one neon accent," push the industry primary
-toward `#0A0A0A` and lift the accent to the DNA-recommended saturation.
+The Resolved Industry Intelligence palette is a starting point — adapt its hex
+values to fit this posture. Apply the accent colors to: section backgrounds
+(alternating dark/accent below the hero), CTA fills (the secondary glass CTA
+stays glass), pull-quote rules, stat number color, signature decorations. The
+HERO section background stays `bg-black` regardless of palette — the video
+provides the visual.
 
-## Hero structure (THIS build's hero, overriding the generic spec)
+## Decorative hero accents (layer on the foundation video hero)
 
 {dna['hero_structure']}
+
+If the description above says "no video" or "no image in hero," IGNORE that
+clause — the foundation video hero is mandatory. Take the OTHER elements
+(typographic treatment of the headline, optional right-column meta, custom CTA
+shapes, signature corner marks) and layer them on the foundation. The
+right-column tag in the hero is a perfect home for DNA-flavored accent
+typography.
 
 ## Motion
 
 **Intensity:** {dna['motion_intensity']}
 
 {dna['motion_rules']}
+
+The hero's AnimatedHeading + FadeIn cascade runs regardless of DNA motion
+intensity. The DNA's motion rules apply to sections BELOW the hero.
 
 ## Layout grid
 
@@ -339,15 +368,17 @@ toward `#0A0A0A` and lift the accent to the DNA-recommended saturation.
 {signatures}
 
 These signature moves are what makes a `{dna['label']}` build feel like a
-`{dna['label']}` build. Without them, you have a generic site with new fonts —
-that's not enough.
+`{dna['label']}` build. Apply them in sections BELOW the hero — the hero
+itself stays the foundation pattern.
 
 ## Forbidden in this build
 
 {forbidden}
 
-If any of the above appear elsewhere in this prompt as suggestions, **ignore
-those suggestions for this build**. The DNA is the highest visual authority.
+If any of the above appear elsewhere in this prompt as suggestions for sections
+BELOW the hero, ignore those suggestions. The hero foundation is exempt — its
+required elements (background video, AnimatedHeading, FadeIn, Inter h1, no
+overlay) override the DNA's forbiddens for the hero only.
 
 # ============================================================
 # (end Design DNA block — continue to the standard brief below)

@@ -27,14 +27,19 @@ from pebble.evals.report import format_summary, format_text, to_json
 
 @pytest.fixture
 def good_build(tmp_path: Path) -> Path:
-    """A synthetic build directory passing every check except site_compiles."""
+    """Synthetic build matching the May 2026 foundation (VEX-style hero).
+
+    Passes every static check including the new FOUNDATION checks:
+    Inter via next/font/google, AnimatedHeading + FadeIn components,
+    liquid-glass class, video hero with no overlay, prefers-reduced-motion.
+    """
     d = tmp_path / "good-build"
     site = d / "site"
     (site / "app").mkdir(parents=True)
     (site / "components" / "sections").mkdir(parents=True)
+    (site / "components" / "ui").mkdir(parents=True)
     (site / "config").mkdir()
 
-    # Brief: phone NOT starting with 555 (would trigger invented-detector).
     (d / "brief.json").write_text(json.dumps({
         "business_name": "Good Co",
         "business_type": "plumbing",
@@ -48,24 +53,56 @@ def good_build(tmp_path: Path) -> Path:
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
     (site / "tailwind.config.ts").write_text(
-        "export default { theme: { fontFamily: { display: ['Cormorant Garamond', 'serif'] } } }"
+        "export default { theme: { extend: { fontFamily: { "
+        "sans: ['var(--font-inter)', 'Inter', 'sans-serif'], "
+        "display: ['Cormorant Garamond', 'serif'] } } } }"
     )
     (site / "postcss.config.js").write_text("module.exports = {}")
-    (site / "next.config.mjs").write_text("export default {}")
+    (site / "next.config.mjs").write_text("/** @type {import('next').NextConfig} */\nexport default {};\n")
     (site / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
         'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'export default function L({children}: any) {\n'
-        '  return <html lang="en"><body>{children}</body></html>;\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>;\n'
         '}'
     )
     (site / "app" / "page.tsx").write_text(
+        'import { Hero } from "@/components/sections/Hero";\n'
         'export default function P() {\n'
-        '  return <main><h1>Welcome to Good Co</h1>'
-        '<p>Call (212) 234-9876</p></main>;\n'
+        '  return <main><Hero /><p>Call (212) 234-9876</p></main>;\n'
         '}'
     )
     (site / "app" / "globals.css").write_text(
-        "body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }"
+        "body { font-family: var(--font-inter), Inter, sans-serif; "
+        "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+    )
+    (site / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'import { FadeIn } from "@/components/ui/FadeIn";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '      <AnimatedHeading text={"Hello\\nworld."} className="text-7xl text-white" />\n'
+        '      <FadeIn delay={800}><p>(212) 234-9876</p></FadeIn>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
+        '"use client";\n'
+        'export function AnimatedHeading({ text, className }: { text: string; className?: string }) {\n'
+        '  return <h1 className={className} style={{ letterSpacing: "-0.04em" }}>{text}</h1>;\n'
+        '}'
+    )
+    (site / "components" / "ui" / "FadeIn.tsx").write_text(
+        '"use client";\n'
+        'export function FadeIn({ children, delay = 0 }: { children: any; delay?: number }) {\n'
+        '  return <div style={{ opacity: 1, transitionDelay: `${delay}ms` }}>{children}</div>;\n'
+        '}'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
     return d
@@ -200,8 +237,19 @@ def test_hero_has_h1_passes_when_in_hero_component(good_build):
 
 
 def test_hero_has_h1_fails_when_missing_everywhere(good_build):
+    """A build with NO h1 anywhere should fail. Since the foundation's
+    AnimatedHeading component itself renders an `<h1>`, we must strip its
+    body AND the Hero.tsx to make a build that genuinely has no h1."""
     (good_build / "site" / "app" / "page.tsx").write_text(
         'export default function P() { return <div>no heading</div>; }'
+    )
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() { return <section>no heading</section>; }'
+    )
+    # AnimatedHeading.tsx renders an h1 in the foundation; strip it so the
+    # check walks all components and finds none.
+    (good_build / "site" / "components" / "ui" / "AnimatedHeading.tsx").write_text(
+        '"use client";\nexport function AnimatedHeading({text}:{text:string}){return <span>{text}</span>;}'
     )
     ctx = BuildContext.load(good_build)
     assert checks.hero_has_h1(ctx).status == "fail"

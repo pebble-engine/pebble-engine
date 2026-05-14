@@ -186,3 +186,106 @@ def test_every_check_has_metadata():
     for fn in checks.ALL_CHECKS:
         assert hasattr(fn, "static_files"), f"{fn.__name__} missing @check_metadata"
         assert hasattr(fn, "details_file_key"), f"{fn.__name__} missing @check_metadata"
+
+
+# ---------------------------------------------------------------------------
+# FOUNDATION CHECKS (May 2026 overhaul — VEX-spec hero pattern)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("case,files,expected", [
+    ("video_in_hero_component",
+     {"components/sections/Hero.tsx": '<video autoPlay muted loop playsInline src="/x.mp4" />'}, "pass"),
+    ("video_in_page",
+     {"app/page.tsx": 'export default () => <video autoPlay muted loop src="/x.mp4" />'}, "pass"),
+    ("video_with_react_style_autoPlay",
+     {"components/sections/Hero.tsx": '<video autoPlay={true} src="/x.mp4" />'}, "pass"),
+    ("no_video_anywhere",
+     {"app/page.tsx": 'export default () => <div>just text</div>'}, "fail"),
+    ("video_without_autoplay",
+     {"app/page.tsx": '<video controls src="/x.mp4" />'}, "fail"),
+])
+def test_hero_uses_background_video_raw(tmp_path, case, files, expected):
+    d = _make_minisite(tmp_path, files)
+    ctx = BuildContext.load(d)
+    assert checks.hero_uses_background_video(ctx).status == expected, case
+
+
+@pytest.mark.parametrize("case,hero_content,expected", [
+    ("no_overlay_clean",
+     '<section><video autoPlay src="/x.mp4" /><h1>Hi</h1></section>', "pass"),
+    ("bg_black_40_overlay",
+     '<section><video autoPlay src="/x.mp4" /><div className="absolute inset-0 bg-black/40" /></section>', "fail"),
+    ("gradient_from_black_overlay",
+     '<section><video autoPlay src="/x.mp4" /><div className="bg-gradient-to-b from-black/60 to-transparent" /></section>', "fail"),
+    ("rgba_overlay",
+     '<section><video autoPlay src="/x.mp4" /><div className="bg-[rgba(0,0,0,0.5)]" /></section>', "fail"),
+    ("mix_blend_multiply",
+     '<section><video autoPlay src="/x.mp4" /><div className="mix-blend-multiply" /></section>', "fail"),
+    ("overlay_only_in_comment",
+     '<section><video autoPlay src="/x.mp4" />{/* never bg-black/40 */}<h1>Hi</h1></section>', "pass"),
+])
+def test_no_dark_overlay_on_hero_video_raw(tmp_path, case, hero_content, expected):
+    d = _make_minisite(tmp_path, {"components/sections/Hero.tsx": hero_content})
+    ctx = BuildContext.load(d)
+    assert checks.no_dark_overlay_on_hero_video(ctx).status == expected, case
+
+
+@pytest.mark.parametrize("case,layout_content,expected", [
+    ("clean_inter_import_with_classname",
+     'import { Inter } from "next/font/google"; const inter = Inter({}); export default (p:any) => <html className={inter.variable} />;', "pass"),
+    ("no_inter_import",
+     'export default (p:any) => <html />;', "fail"),
+    ("inter_imported_but_not_applied",
+     'import { Inter } from "next/font/google"; export default (p:any) => <html />;', "fail"),
+    ("wrong_font_imported",
+     'import { Roboto } from "next/font/google"; const roboto = Roboto({}); export default (p:any) => <html className={roboto.variable} />;', "fail"),
+])
+def test_inter_font_global_raw(tmp_path, case, layout_content, expected):
+    d = _make_minisite(tmp_path, {"app/layout.tsx": layout_content})
+    ctx = BuildContext.load(d)
+    assert checks.inter_font_global(ctx).status == expected, case
+
+
+@pytest.mark.parametrize("case,css,expected", [
+    ("with_backdrop_filter",
+     ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }", "pass"),
+    ("without_backdrop_filter",
+     ".liquid-glass { background: rgba(0,0,0,0.4); }", "fail"),
+    ("missing_class_entirely",
+     ".something-else { color: red; }", "fail"),
+])
+def test_liquid_glass_class_present_raw(tmp_path, case, css, expected):
+    d = _make_minisite(tmp_path, {"app/globals.css": css})
+    ctx = BuildContext.load(d)
+    assert checks.liquid_glass_class_present(ctx).status == expected, case
+
+
+def test_animation_components_present_pass(tmp_path):
+    d = _make_minisite(tmp_path, {
+        "components/ui/AnimatedHeading.tsx": "export function AnimatedHeading(){return null;}",
+        "components/ui/FadeIn.tsx": "export function FadeIn(){return null;}",
+    })
+    ctx = BuildContext.load(d)
+    assert checks.animation_components_present(ctx).status == "pass"
+
+
+def test_animation_components_present_fail_missing_one(tmp_path):
+    d = _make_minisite(tmp_path, {
+        "components/ui/AnimatedHeading.tsx": "export function AnimatedHeading(){return null;}",
+    })
+    ctx = BuildContext.load(d)
+    r = checks.animation_components_present(ctx)
+    assert r.status == "fail"
+    assert "FadeIn.tsx" in str(r.details["missing"])
+
+
+@pytest.mark.parametrize("case,css,expected", [
+    ("clean_rule",
+     "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms; } }", "pass"),
+    ("no_rule",
+     "body { margin: 0; }", "fail"),
+])
+def test_prefers_reduced_motion_respected_raw(tmp_path, case, css, expected):
+    d = _make_minisite(tmp_path, {"app/globals.css": css})
+    ctx = BuildContext.load(d)
+    assert checks.prefers_reduced_motion_respected(ctx).status == expected, case

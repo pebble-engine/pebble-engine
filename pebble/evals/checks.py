@@ -720,6 +720,227 @@ def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 15. hero_uses_background_video — FOUNDATION (May 2026 overhaul)
+# ---------------------------------------------------------------------------
+
+_VIDEO_TAG_RE = re.compile(
+    r"<video\b[^>]*\bautoplay\b", re.IGNORECASE | re.DOTALL
+)
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx", "app/page.tsx"))
+def hero_uses_background_video(ctx: BuildContext) -> CheckResult:
+    """The foundation hero MUST use a background `<video>` with autoplay.
+
+    Every build matches the universal hero foundation — full-bleed video
+    background, no overlay. A static-image hero is no longer accepted. The
+    check looks for any `<video … autoPlay …>` in either app/page.tsx or
+    components/sections/Hero.tsx.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_uses_background_video", "skip", "no site directory")
+
+    candidates = [
+        ctx.site_dir / "app" / "page.tsx",
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if _VIDEO_TAG_RE.search(text):
+            return CheckResult(
+                "hero_uses_background_video", "pass",
+                f"<video> with autoplay found in {path.relative_to(ctx.site_dir)}",
+            )
+    return CheckResult(
+        "hero_uses_background_video", "fail",
+        "no <video autoPlay> in app/page.tsx or components/sections/Hero.tsx",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 16. no_dark_overlay_on_hero_video — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_DARK_OVERLAY_RE = re.compile(
+    r"bg-black/\d|bg-gradient-to-\w+\s+from-black|mix-blend-(?:multiply|darken)|"
+    r"bg-\[rgba\(0,?\s*0,?\s*0,?\s*0?\.[0-9]+\)\]",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx", "app/page.tsx"))
+def no_dark_overlay_on_hero_video(ctx: BuildContext) -> CheckResult:
+    """The hero `<video>` must play raw — NO dark overlay layer above it.
+
+    The foundation explicitly forbids `bg-black/40`, `bg-gradient-to-b from-black/...`,
+    `mix-blend-multiply`, or `bg-[rgba(0,0,0,0.5)]` over the hero video. The
+    Pexels video is expected to have inherent darkness/contrast where text sits.
+    Comments stripped before matching — the LLM may explain the rule in prose.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_dark_overlay_on_hero_video", "skip", "no site directory")
+
+    candidates = [
+        ctx.site_dir / "app" / "page.tsx",
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+    ]
+    hero_text = ""
+    found_in: Path | None = None
+    for path in candidates:
+        if path.exists() and _VIDEO_TAG_RE.search(path.read_text(encoding="utf-8", errors="ignore")):
+            hero_text = path.read_text(encoding="utf-8", errors="ignore")
+            found_in = path
+            break
+
+    if not hero_text:
+        return CheckResult("no_dark_overlay_on_hero_video", "skip", "no hero video to inspect")
+
+    stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", hero_text))
+    m = _DARK_OVERLAY_RE.search(stripped)
+    if m:
+        return CheckResult(
+            "no_dark_overlay_on_hero_video", "fail",
+            f"dark overlay pattern '{m.group(0)}' in {found_in.relative_to(ctx.site_dir)}",
+            details={"files": [str(found_in.relative_to(ctx.site_dir))]},
+        )
+    return CheckResult(
+        "no_dark_overlay_on_hero_video", "pass",
+        "no dark overlay patterns over the hero video",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 17. inter_font_global — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_INTER_FROM_NEXT_FONT_RE = re.compile(
+    r"import\s*\{[^}]*\bInter\b[^}]*\}\s*from\s*['\"]next/font/google['\"]"
+)
+
+
+@check_metadata(static_files=("app/layout.tsx",))
+def inter_font_global(ctx: BuildContext) -> CheckResult:
+    """`Inter` must be imported from `next/font/google` in app/layout.tsx.
+
+    The foundation mandates Inter as the universal sans-serif. The DNA's
+    display_font is reserved for ACCENT/decorative use — never the hero h1.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("inter_font_global", "skip", "no site directory")
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult("inter_font_global", "fail", "app/layout.tsx missing")
+
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if not _INTER_FROM_NEXT_FONT_RE.search(text):
+        return CheckResult(
+            "inter_font_global", "fail",
+            "Inter not imported from next/font/google in app/layout.tsx",
+        )
+    if "inter" not in text.lower() or ("classname" not in text.lower() and "variable" not in text.lower()):
+        return CheckResult(
+            "inter_font_global", "fail",
+            "Inter imported but not applied via className/variable in app/layout.tsx",
+        )
+    return CheckResult("inter_font_global", "pass",
+                       "Inter imported and applied in app/layout.tsx")
+
+
+# ---------------------------------------------------------------------------
+# 18. liquid_glass_class_present — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_LIQUID_GLASS_CLASS_RE = re.compile(
+    r"\.liquid-glass\s*\{[^}]*backdrop-filter\s*:\s*blur",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+@check_metadata(static_files=("app/globals.css",))
+def liquid_glass_class_present(ctx: BuildContext) -> CheckResult:
+    """`.liquid-glass` class with `backdrop-filter: blur(...)` must exist in
+    `app/globals.css`. The class is used by the navbar chip, the hero's
+    right-column tag, the secondary CTA, and other premium-glass surfaces.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("liquid_glass_class_present", "skip", "no site directory")
+    css_path = ctx.site_dir / "app" / "globals.css"
+    if not css_path.exists():
+        return CheckResult("liquid_glass_class_present", "fail", "app/globals.css missing")
+
+    text = css_path.read_text(encoding="utf-8", errors="ignore")
+    if _LIQUID_GLASS_CLASS_RE.search(text):
+        return CheckResult("liquid_glass_class_present", "pass",
+                           ".liquid-glass with backdrop-filter found in globals.css")
+    return CheckResult(
+        "liquid_glass_class_present", "fail",
+        ".liquid-glass with backdrop-filter blur(...) not found in app/globals.css",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 19. animation_components_present — FOUNDATION
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("components/ui/AnimatedHeading.tsx", "components/ui/FadeIn.tsx"))
+def animation_components_present(ctx: BuildContext) -> CheckResult:
+    """Both `components/ui/AnimatedHeading.tsx` and `components/ui/FadeIn.tsx`
+    must exist. They're the foundation's hero entrance primitives — the
+    hero h1 uses AnimatedHeading; the subhead/CTAs/right-tag each wrap in FadeIn.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("animation_components_present", "skip", "no site directory")
+
+    expected = (
+        "components/ui/AnimatedHeading.tsx",
+        "components/ui/FadeIn.tsx",
+    )
+    missing = [p for p in expected if not (ctx.site_dir / p).exists()]
+    if not missing:
+        return CheckResult("animation_components_present", "pass",
+                           "AnimatedHeading + FadeIn components present")
+    return CheckResult(
+        "animation_components_present", "fail",
+        f"missing foundation component(s): {', '.join(missing)}",
+        details={"missing": list(missing)},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 20. prefers_reduced_motion_respected — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_PREFERS_REDUCED_MOTION_RE = re.compile(
+    r"@media\s*\([^)]*prefers-reduced-motion\s*:\s*reduce", re.IGNORECASE
+)
+
+
+@check_metadata(static_files=("app/globals.css",))
+def prefers_reduced_motion_respected(ctx: BuildContext) -> CheckResult:
+    """`app/globals.css` must contain a `@media (prefers-reduced-motion: reduce)`
+    rule that disables transitions/animations. Accessibility baseline — the
+    foundation's AnimatedHeading + FadeIn handle reduced-motion in JS too,
+    but the CSS rule is the catch-all for all other animated elements.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("prefers_reduced_motion_respected", "skip", "no site directory")
+    css_path = ctx.site_dir / "app" / "globals.css"
+    if not css_path.exists():
+        return CheckResult("prefers_reduced_motion_respected", "fail", "app/globals.css missing")
+
+    text = css_path.read_text(encoding="utf-8", errors="ignore")
+    if _PREFERS_REDUCED_MOTION_RE.search(text):
+        return CheckResult("prefers_reduced_motion_respected", "pass",
+                           "prefers-reduced-motion media query found in globals.css")
+    return CheckResult(
+        "prefers_reduced_motion_respected", "fail",
+        "no @media (prefers-reduced-motion: reduce) rule in app/globals.css",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -737,6 +958,13 @@ ALL_CHECKS = [
     html_lang_attr,
     scroll_trigger_ssr_safe,
     no_css_smooth_scroll,
+    # FOUNDATION checks (May 2026 overhaul — VEX-spec hero pattern)
+    hero_uses_background_video,
+    no_dark_overlay_on_hero_video,
+    inter_font_global,
+    liquid_glass_class_present,
+    animation_components_present,
+    prefers_reduced_motion_respected,
     site_compiles,
 ]
 

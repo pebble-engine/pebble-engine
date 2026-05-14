@@ -1,1 +1,3 @@
-body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }
+body { font-family: var(--font-inter), Inter, 'Cormorant Garamond', sans-serif; height: 100dvh; -webkit-font-smoothing: antialiased; }
+.liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
+@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; } }
