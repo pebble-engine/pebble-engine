@@ -144,7 +144,11 @@ def good_build(tmp_path: Path) -> Path:
         "## Deploy\n\n"
         "1. Push this directory to a new GitHub repo.\n"
         "2. Import the repo at https://vercel.com/new.\n"
-        "3. Add `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` in the Vercel dashboard.\n"
+        "3. Add `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` in the Vercel dashboard.\n\n"
+        "## What This Site Does NOT Include\n\n"
+        "- Real-time technician dispatch (recommended: Jobber or Housecall Pro).\n"
+        "- Payment processing beyond contact-form lead capture (recommended: Stripe Payment Links).\n"
+        "- Customer accounts or saved estimates (recommended: out of scope for v1).\n"
     )
     # Industry-aware pages (May 2026 expansion). For brief["_industry_intel_key"]
     # = "plumbing", industries.json declares pages = ["service_area", "guarantee"].

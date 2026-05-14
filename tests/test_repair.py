@@ -76,7 +76,12 @@ def _write_foundation_files(site: Path) -> None:
     )
     # Deploy-to-Vercel scaffold (vercel.json + README Deploy section).
     (site / "vercel.json").write_text('{"framework":"nextjs"}')
-    (site / "README.md").write_text("# Site\n\n## Deploy\n\nPush to GitHub + import at vercel.com/new.\n")
+    (site / "README.md").write_text(
+        "# Site\n\n## Deploy\n\nPush to GitHub + import at vercel.com/new.\n\n"
+        "## What This Site Does NOT Include\n\n"
+        "- Custom auth (recommended: Clerk or NextAuth).\n"
+        "- Payment processing (recommended: Stripe Payment Links).\n"
+    )
     # Pebble Plan — every build emits plan.json alongside brief.json.
     # Synthesised from the brief inline (assumes the caller wrote brief.json
     # to site.parent BEFORE calling this helper).
@@ -219,7 +224,11 @@ def broken_build(tmp_path: Path) -> Path:
     # Deploy-to-Vercel scaffold so broken_build's only intentional failures
     # stay scoped to required_files_present + hero_has_h1 + dna_display_font_honored.
     (site / "vercel.json").write_text('{"framework":"nextjs"}')
-    (site / "README.md").write_text("# Broken Co\n\n## Deploy\n\nPush to GitHub + Vercel import.\n")
+    (site / "README.md").write_text(
+        "# Broken Co\n\n## Deploy\n\nPush to GitHub + Vercel import.\n\n"
+        "## What This Site Does NOT Include\n\n"
+        "- Real-time dispatch (recommended: Jobber).\n"
+    )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
     return d
 

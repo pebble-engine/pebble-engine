@@ -1598,7 +1598,116 @@ def plan_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 30. deploy_to_vercel_scaffold — FOUNDATION
+# 30. no_duplicate_inline_forms — FOUNDATION (May 2026 competitor-fix batch)
+# ---------------------------------------------------------------------------
+
+# Matches an HTML/JSX <form ...> opening tag. Excludes self-closing.
+_FORM_OPEN_RE = re.compile(r"<form\b[^>]*>", re.IGNORECASE)
+
+
+@check_metadata(details_file_key="files")
+def no_duplicate_inline_forms(ctx: BuildContext) -> CheckResult:
+    """Shared UI primitives must live in ``components/`` and be imported,
+    never duplicated inline across pages.
+
+    The specific smell this catches: a brand-new form defined directly in
+    ``app/contact/page.tsx`` or another page file, rather than importing
+    ``ContactForm`` from ``components/forms/``. When a competing tool (and
+    a junior LLM) does this, the same form ends up with two implementations
+    that drift out of sync as the user iterates. The build looks correct
+    today and breaks tomorrow.
+
+    Heuristic: the literal ``<form>`` opening tag may appear in at most
+    ONE file under ``app/`` or ``components/``. Other surfaces import the
+    canonical form component instead. ``components/forms/ContactForm.tsx``
+    is the expected home; anything else is treated as a duplication smell.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_duplicate_inline_forms", "skip", "no site directory")
+
+    offenders: list[str] = []
+    for tsx in list(ctx.site_dir.glob("app/**/*.tsx")) + list(ctx.site_dir.glob("components/**/*.tsx")):
+        try:
+            text = tsx.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        if _FORM_OPEN_RE.search(text):
+            offenders.append(str(tsx.relative_to(ctx.site_dir)).replace("\\", "/"))
+
+    # Exactly one canonical form file is the healthy state.
+    if len(offenders) <= 1:
+        loc = offenders[0] if offenders else "(no inline <form> anywhere)"
+        return CheckResult(
+            "no_duplicate_inline_forms", "pass",
+            f"forms centralized: <form> appears in {loc}",
+        )
+
+    return CheckResult(
+        "no_duplicate_inline_forms", "fail",
+        f"<form> tag appears in {len(offenders)} files: {', '.join(offenders)}. "
+        "Move the canonical form into components/forms/ and import it from each page.",
+        details={"files": offenders},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 31. limitations_disclosed_in_readme — FOUNDATION (May 2026 competitor-fix batch)
+# ---------------------------------------------------------------------------
+
+_LIMITS_HEADING_RE = re.compile(
+    r"^#{1,3}\s*(What This Site Does NOT Include|Limitations|What Pebble Did Not Build|Out of Scope)\b",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+@check_metadata(static_files=("README.md",))
+def limitations_disclosed_in_readme(ctx: BuildContext) -> CheckResult:
+    """Every README must own what the build does NOT include.
+
+    Honesty as a feature. Industries like therapy, healthcare, finance, and
+    real estate carry expectations the build cannot legally or technically
+    meet (HIPAA forms, regulated disclosures, payment processing). Surfacing
+    those gaps in the README — with recommended third-party workarounds —
+    keeps the user from learning the hard way later that the contact form
+    is not the same thing as a HIPAA-compliant intake.
+
+    Accepted heading variants: "What This Site Does NOT Include",
+    "Limitations", "What Pebble Did Not Build", "Out of Scope".
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("limitations_disclosed_in_readme", "skip", "no site directory")
+
+    readme = ctx.site_dir / "README.md"
+    if not readme.exists():
+        return CheckResult(
+            "limitations_disclosed_in_readme", "fail",
+            "README.md missing — can't verify limitations disclosure",
+        )
+
+    try:
+        text = readme.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        return CheckResult(
+            "limitations_disclosed_in_readme", "fail",
+            f"README.md unreadable: {e}",
+        )
+
+    if not _LIMITS_HEADING_RE.search(text):
+        return CheckResult(
+            "limitations_disclosed_in_readme", "fail",
+            "README.md has no honesty heading "
+            "(expected one of: 'What This Site Does NOT Include', 'Limitations', "
+            "'What Pebble Did Not Build', 'Out of Scope')",
+        )
+
+    return CheckResult(
+        "limitations_disclosed_in_readme", "pass",
+        "README discloses what the build does NOT include",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 32. deploy_to_vercel_scaffold — FOUNDATION
 # ---------------------------------------------------------------------------
 
 _DEPLOY_HEADING_RE = re.compile(r"^#{1,3}\s*Deploy\b", re.IGNORECASE | re.MULTILINE)
@@ -1687,6 +1796,8 @@ ALL_CHECKS = [
     deploy_to_vercel_scaffold,
     industry_pages_present,
     plan_present,
+    no_duplicate_inline_forms,
+    limitations_disclosed_in_readme,
     site_compiles,
 ]
 

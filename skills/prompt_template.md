@@ -856,9 +856,14 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] All `@/` imports resolve to files emitted in the same build (no orphan imports)
 - [ ] Every npm package imported is declared in `package.json` dependencies (do NOT import `react-icons` or `lucide-react` without adding them — prefer inline SVG)
 
+**COMPONENT REUSE — no duplicated UI primitives:**
+- [ ] Any UI primitive that appears on more than one page MUST live in `components/` and be imported, never duplicated inline. Specifically: the literal `<form>` opening tag MUST appear in `components/forms/ContactForm.tsx` and nowhere else — `app/contact/page.tsx` imports `ContactForm`, it does NOT redefine the form inline. Same rule for testimonials, pricing tables, FAQ accordions, and CTA sections. — eval `no_duplicate_inline_forms`
+- [ ] Industry-specific page-content sections (service-area maps, booking widgets, menu blocks) live in `components/sections/<Name>.tsx` and are imported by the page that uses them. A page file is composition only; no inline section definitions longer than a few lines of JSX.
+
 **STRUCTURE + DELIVERABLES:**
 - [ ] 4 pages: Homepage, Services, About, Contact
 - [ ] All docs: README, HANDOFF, TODO_ASSETS, STYLE_GUIDE
+- [ ] README MUST include a `## What This Site Does NOT Include` section listing 2-5 concrete capabilities the build did NOT cover (e.g. for a therapist site: HIPAA-compliant patient intake; for an HVAC site: real-time technician dispatch; for an ecommerce site: payment-processing certification). Each gap names a recommended third-party tool or workaround. This is honesty, not failure — surface it so the user knows where Pebble stops. — eval `limitations_disclosed_in_readme`
 - [ ] `next.config.mjs` is plain JS (JSDoc, not `import type` — that's TS and crashes Node's ESM loader)
 
 ---

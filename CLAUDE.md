@@ -54,7 +54,7 @@ Environment flags that change behavior (see `.env`):
 - `pebble.plan` — pure-function Pebble Plan generator. `build_pebble_plan(brief, industry_intel, dna) → dict`. Emitted as `plan.json` for every build; powers the upcoming `/api/plan` preview endpoint.
 - `pebble.postbuild` — Imagen image generation, npm install, `next dev`, Playwright screenshots
 - `pebble.repair` — critique-and-fix loop wired in via `PEBBLE_AUTO_REPAIR`
-- `pebble.evals` — 30 FOUNDATION checks + repair-corpus harness
+- `pebble.evals` — 32 FOUNDATION checks + repair-corpus harness
 - `pebble.server.build` — the actual `/api/generate` and `/api/plan` request bodies
 
 `/api/generate` runs this sequence for each build:
