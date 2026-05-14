@@ -1,15 +1,17 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ---------------------------------------------------------------------------
-   Pebble brand tokens — light theme by default.
+   Pebble brand tokens.
 
-   The shadcn semantic tokens (primary, secondary, muted, etc.) are mapped
-   onto our brand palette so 21st.dev components — which were built against
-   the shadcn naming — render in Pebble colors with zero modification.
+   The brand palette is the same in light + dark mode — we just rotate which
+   tones are "background" vs "surface" vs "text". The shadcn semantic tokens
+   (primary, secondary, muted, etc.) are mapped on top so 21st.dev components
+   work without modification.
 --------------------------------------------------------------------------- */
 
 @theme {
-  /* Brand palette */
+  /* Brand palette — always the same hex values */
   --color-sand:     #f7f3ec;
   --color-stone:    #ece6dc;
   --color-mist:     #efeae1;
@@ -21,38 +23,61 @@
   --color-charcoal: #1f1d1a;
   --color-graphite: #5a554e;
 
-  /* shadcn semantic tokens (light) */
-  --color-background: var(--color-sand);
-  --color-foreground: var(--color-charcoal);
-  --color-card: var(--color-stone);
-  --color-card-foreground: var(--color-charcoal);
-  --color-popover: var(--color-stone);
-  --color-popover-foreground: var(--color-charcoal);
-  --color-primary: var(--color-river);
-  --color-primary-foreground: var(--color-sand);
+  /* shadcn semantic tokens — driven by CSS vars below so they swap on theme */
+  --color-background: var(--surface-0);
+  --color-foreground: var(--text-1);
+  --color-card: var(--surface-1);
+  --color-card-foreground: var(--text-1);
+  --color-popover: var(--surface-1);
+  --color-popover-foreground: var(--text-1);
+  --color-primary: var(--accent-1);
+  --color-primary-foreground: var(--surface-0);
   --color-secondary: var(--color-sage);
   --color-secondary-foreground: #ffffff;
-  --color-muted: var(--color-stone);
-  --color-muted-foreground: var(--color-graphite);
-  --color-accent: var(--color-mist);
-  --color-accent-foreground: var(--color-charcoal);
+  --color-muted: var(--surface-1);
+  --color-muted-foreground: var(--text-2);
+  --color-accent: var(--surface-2);
+  --color-accent-foreground: var(--text-1);
   --color-destructive: #ba1a1a;
   --color-destructive-foreground: #ffffff;
-  --color-border: var(--color-pebble);
-  --color-input: var(--color-pebble);
-  --color-ring: var(--color-river);
+  --color-border: var(--border-1);
+  --color-input: var(--border-1);
+  --color-ring: var(--accent-1);
 
-  /* Typography — loaded via next/font/google in layout.tsx */
+  /* Typography */
   --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-literata), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
-  /* Border radius */
+  /* Radius */
   --radius: 0.75rem;
 }
 
-/* Base — keep body legible, mobile-first 18px minimum body size, respect
-   user motion preferences. */
+/* Light theme — applied on <html> by default. */
+:root {
+  --surface-0: var(--color-sand);     /* page background */
+  --surface-1: var(--color-stone);    /* cards, panels */
+  --surface-2: var(--color-mist);     /* hovers, accent fills */
+  --text-1:    var(--color-charcoal); /* primary text */
+  --text-2:    var(--color-graphite); /* secondary text */
+  --border-1:  var(--color-pebble);
+  --accent-1:  var(--color-river);
+  --shadow-1:  0 8px 30px rgba(31, 29, 26, 0.08);
+}
+
+/* Dark theme — toggled by adding .dark to <html>. */
+.dark {
+  --surface-0: #14110d;            /* almost black, warm undertone */
+  --surface-1: #1f1d1a;            /* charcoal */
+  --surface-2: #2a2722;            /* slightly lifted card surface */
+  --text-1:    var(--color-sand);  /* paper-light primary */
+  --text-2:    #b8b1a4;            /* warm dim text */
+  --border-1:  #3a342c;
+  --accent-1:  #6ea8b6;            /* lifted river — readable on dark */
+  --shadow-1:  0 8px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Base */
 body {
   background: var(--color-background);
   color: var(--color-foreground);
@@ -60,6 +85,7 @@ body {
   font-size: 18px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 280ms ease, color 280ms ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -69,8 +95,23 @@ body {
   }
 }
 
-/* Focus ring — universal, visible, on every interactive element. */
 *:focus-visible {
   outline: 2px solid var(--color-ring);
   outline-offset: 2px;
+}
+
+/* Animation utility: the rippling pebble glyph used on the thinking screen. */
+@keyframes pebble-pulse {
+  0%, 100% { transform: scale(1);    opacity: 0.2;  }
+  50%      { transform: scale(1.18); opacity: 0.4;  }
+}
+.pebble-ripple::before {
+  content: '';
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  background: var(--color-sage);
+  border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+  opacity: 0.2;
+  animation: pebble-pulse 3s ease-in-out infinite;
 }

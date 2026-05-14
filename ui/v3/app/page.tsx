@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
+import { ThemeToggle } from "@/components/theme-toggle";
+import { patchBrief } from "@/lib/state";
 
 const STARTER_CHIPS = [
   { label: "Business website", prompt: "A business website that introduces what I do and lets people reach out." },
@@ -20,13 +22,11 @@ export default function WelcomePage() {
 
   const handleSend = (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
-    const brief: Record<string, unknown> = {
+    patchBrief({
       extra_context: message,
       business_name: "Untitled Project",
-    };
-    sessionStorage.setItem("pebble.brief", JSON.stringify(brief));
+    });
     if (files && files.length > 0) {
-      // Metadata only — base64-encode at /intake to keep this page light.
       sessionStorage.setItem(
         "pebble.pendingFiles",
         JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
@@ -37,18 +37,17 @@ export default function WelcomePage() {
 
   return (
     <InfiniteGrid className="min-h-screen">
-      <header className="absolute top-0 inset-x-0 flex justify-center items-center h-20 z-10">
-        <span className="font-display text-3xl font-bold tracking-tight text-river">
-          Pebble.
-        </span>
+      <header className="absolute top-0 inset-x-0 z-10 flex justify-between items-center h-20 px-8">
+        <span className="font-display text-3xl font-bold tracking-tight text-primary">Pebble.</span>
+        <ThemeToggle />
       </header>
 
       <main className="relative z-10 flex flex-col items-center text-center px-4 max-w-3xl mx-auto space-y-8 pointer-events-none py-32">
         <div className="space-y-3 pointer-events-auto">
-          <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight text-charcoal drop-shadow-sm">
+          <h1 className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-sm">
             What would you like to build today?
           </h1>
-          <p className="text-xl text-graphite max-w-xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-xl mx-auto">
             Tell me in your own words. I&apos;ll handle the technical parts.
           </p>
         </div>
@@ -68,7 +67,7 @@ export default function WelcomePage() {
             <button
               key={chip.label}
               onClick={() => setPrefill(chip.prompt)}
-              className="px-4 py-2 bg-stone hover:bg-mist border border-pebble rounded-full text-sm font-semibold text-charcoal transition-colors"
+              className="px-4 py-2 bg-card hover:bg-accent border border-border rounded-full text-sm font-semibold text-foreground transition-colors"
             >
               {chip.label}
             </button>
@@ -77,7 +76,7 @@ export default function WelcomePage() {
       </main>
 
       <footer className="absolute bottom-0 inset-x-0 py-8 text-center px-4 pointer-events-none z-10">
-        <p className="text-sm text-graphite max-w-lg mx-auto">
+        <p className="text-sm text-muted-foreground max-w-lg mx-auto">
           You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
         </p>
       </footer>
