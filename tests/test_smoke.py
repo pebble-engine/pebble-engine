@@ -183,6 +183,29 @@ def test_parse_files_returns_empty_on_garbage():
     assert pebble_engine.parse_files("just some prose with no tags") == []
 
 
+def test_parse_files_tolerates_typo_in_closing_tag():
+    """Gemini has been observed to typo `</peble-file>`. A strict paired
+    regex would silently merge the next file's body into the typo'd one's;
+    the tolerant boundary-based parser keeps each file separate."""
+    fake = (
+        '<pebble-file path="content/sections.ts">\n'
+        'export const SECTIONS = ["a"];\n'
+        '</peble-file>\n'                 # ← typo, missing 'b'
+        '<pebble-file path="content/services.ts">\n'
+        'export const services = [];\n'
+        '</pebble-file>\n'
+    )
+    files = pebble_engine.parse_files(fake)
+    paths = [f[0] for f in files]
+    assert paths == ["content/sections.ts", "content/services.ts"]
+    # services.ts content survived (would be lost under the strict regex)
+    services_body = dict(files)["content/services.ts"]
+    assert "export const services" in services_body
+    # sections.ts shouldn't have swallowed the next file
+    sections_body = dict(files)["content/sections.ts"]
+    assert "services" not in sections_body
+
+
 # ---------------------------------------------------------------------------
 # 7. Module import sanity — no missing deps, no syntax errors
 # ---------------------------------------------------------------------------

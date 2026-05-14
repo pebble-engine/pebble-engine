@@ -1186,14 +1186,32 @@ from pebble.llm import (
 # FILE OUTPUT PARSER
 # --------------------------------------------------------------------------
 
-FILE_BLOCK_RE = re.compile(
-    r'<pebble-file\s+path="([^"]+)">\s*\n(.*?)\n?\s*</pebble-file>',
-    re.DOTALL,
-)
+FILE_OPEN_RE = re.compile(r'<pebble-file\s+path="([^"]+)">\s*\n')
+# Strip a trailing close tag — match canonical </pebble-file> AND common LLM
+# typos like </peble-file>, </pebblefile>, </pebble file>. Greedy on the inner
+# token because we only ever invoke this on the LAST line of a block.
+_TRAILING_CLOSE_RE = re.compile(r'\n?\s*</p[a-z]*[\s-]?file>\s*$')
 
 
 def parse_files(llm_output: str) -> list[tuple[str, str]]:
-    return FILE_BLOCK_RE.findall(llm_output)
+    """Extract ``<pebble-file path="...">`` blocks from an LLM response.
+
+    Boundary strategy: each block runs from its opening tag until the NEXT
+    opening tag (or end of input). The canonical ``</pebble-file>`` closing
+    tag is stripped off the tail if present, but the parser does not REQUIRE
+    it — Gemini has been observed to typo the close as ``</peble-file>`` and
+    a strict paired regex would silently swallow the next file's body.
+    """
+    out: list[tuple[str, str]] = []
+    matches = list(FILE_OPEN_RE.finditer(llm_output))
+    for i, m in enumerate(matches):
+        path = m.group(1)
+        body_start = m.end()
+        body_end = matches[i + 1].start() if i + 1 < len(matches) else len(llm_output)
+        body = llm_output[body_start:body_end]
+        body = _TRAILING_CLOSE_RE.sub("", body)
+        out.append((path, body))
+    return out
 
 
 FILE_FORMAT_INSTRUCTION = """
