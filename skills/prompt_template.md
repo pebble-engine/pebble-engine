@@ -73,7 +73,8 @@ This hero is the engine's universal foundation. Every build uses this exact stru
 - Full-bleed `<video>` is `absolute inset-0 w-full h-full object-cover`, with attributes `autoPlay muted loop playsInline` (all four, always)
 - **CRITICAL: NO dark overlay on the video.** No `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent layer above the video. The video plays raw. The chosen Pexels video must already have inherent darkness/contrast where text sits.
 - Video `src` is `/videos/hero.mp4` when the post-build chain has localized the Pexels video (preferred); otherwise the Pexels CDN URL is the fallback.
-- Content container sits at the BOTTOM of the viewport: `relative flex flex-col h-full justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white`
+- **The `<section>` itself MUST be `flex flex-col`** in addition to `relative min-h-[100dvh] overflow-hidden bg-black`. Without `flex flex-col` on the section, the inner content's `justify-end` has nothing to push against and the hero text ends up top-aligned. This is the #1 visual regression in foundation builds — copy the exact classlist.
+- **Inner content container** sits at the BOTTOM of the viewport via `flex-1 flex flex-col justify-end` (use `flex-1`, NOT `h-full`): `relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white`. The `flex-1` is required so the container expands to fill the section's flex column space; `justify-end` then pushes the grid to the bottom edge.
 - On large screens, content uses a 2-column grid: `lg:grid lg:grid-cols-2 lg:items-end gap-8`
 
 **Left column — primary content (vertical order):**
@@ -354,7 +355,7 @@ import {{ FadeIn }} from "@/components/ui/FadeIn";
 
 export function Hero() {{
   return (
-    <section className="relative min-h-[100dvh] overflow-hidden bg-black">
+    <section className="relative min-h-[100dvh] overflow-hidden bg-black flex flex-col">
       <video
         autoPlay muted loop playsInline
         className="absolute inset-0 w-full h-full object-cover"
@@ -362,7 +363,7 @@ export function Hero() {{
       />
       {{/* NO overlay. The video plays raw. */}}
 
-      <div className="relative flex flex-col h-full justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white">
+      <div className="relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white">
         <div className="lg:grid lg:grid-cols-2 lg:items-end gap-8">
           <div>
             <AnimatedHeading
