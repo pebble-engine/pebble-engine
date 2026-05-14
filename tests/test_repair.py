@@ -462,6 +462,57 @@ export default function P() { return <main><h1>X</h1><p>(212) 234-9876</p></main
     assert report.rounds[0].deletions_applied == []
 
 
+def test_pebble_delete_does_not_prune_protected_directories(tmp_path):
+    """If the LLM deletes the only file under app/, the prune logic must NOT
+    remove app/ itself — Next.js needs it. Verified directly against the
+    internal helper to keep the assertion tight."""
+    from pebble.repair import _apply_deletions
+
+    site = tmp_path / "site"
+    (site / "app").mkdir(parents=True)
+    (site / "app" / "stale.tsx").write_text("// stale\n")
+    (site / "public").mkdir()
+    (site / "public" / "old.svg").write_text("<svg/>")
+
+    deleted = _apply_deletions(site, ["app/stale.tsx", "public/old.svg"])
+    assert "app/stale.tsx" in deleted
+    assert "public/old.svg" in deleted
+    # Both protected dirs must still exist even though their last file was deleted
+    assert (site / "app").exists(), "app/ was pruned — would brick Next.js"
+    assert (site / "public").exists(), "public/ was pruned — would brick assets"
+
+
+def test_pebble_delete_prunes_nested_subdirectory_of_protected_dir(tmp_path):
+    """Subdirectories OF protected dirs (e.g. app/legacy/) are still prunable
+    when empty — the protection is only at depth 1."""
+    from pebble.repair import _apply_deletions
+
+    site = tmp_path / "site"
+    (site / "app" / "legacy").mkdir(parents=True)
+    (site / "app" / "legacy" / "old.tsx").write_text("// gone\n")
+    (site / "app" / "page.tsx").write_text("// real\n")  # keeps app/ non-empty
+
+    _apply_deletions(site, ["app/legacy/old.tsx"])
+    assert not (site / "app" / "legacy").exists(), "nested empty dir should be pruned"
+    assert (site / "app").exists(), "app/ stays — it has other files"
+
+
+def test_get_alt_client_returns_none_when_no_keys(monkeypatch):
+    """_get_alt_client should return None when the alt provider's API key
+    isn't configured — the retry path falls back to the same client
+    instead of crashing the loop."""
+    import pebble.repair as repair_mod
+
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+
+    primary = FakeClient()
+    primary.provider = "gemini"
+    alt = repair_mod._get_alt_client(primary)
+    assert alt is None, "expected None when alt provider has no key configured"
+
+
 def test_round_records_token_telemetry(broken_build):
     """prompt_chars + response_chars + provider land in the RoundReport."""
     canned = """<pebble-file path="app/page.tsx">

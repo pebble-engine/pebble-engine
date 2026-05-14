@@ -303,10 +303,22 @@ def _write_files(target_site: Path, files: list[tuple[str, str]]) -> list[str]:
     return written
 
 
+# Next.js / Tailwind structural directories that must never be removed even
+# when empty. Removing app/ in particular kills the build (it's the App
+# Router root). The pruning logic exists to clear stale subtrees like
+# src/components/* after a no_src_directory repair, not to nuke top-level
+# project structure.
+_PROTECTED_DIRS = frozenset({
+    "app", "public", "components", "lib", "config", "content", "styles",
+})
+
+
 def _apply_deletions(target_site: Path, paths: list[str]) -> list[str]:
     """Delete each path under ``target_site``. Path-traversal guarded; missing
     files are silently skipped. Empty directories left after deletion are
-    pruned bottom-up so structural checks like ``no_src_directory`` clear."""
+    pruned bottom-up — but ``_PROTECTED_DIRS`` are never removed even when
+    empty. Without that guard, an LLM deleting the last file under ``app/``
+    would prune the directory itself and brick the Next.js build."""
     deleted: list[str] = []
     for path in paths:
         if not _is_safe_relative(path):
@@ -317,10 +329,19 @@ def _apply_deletions(target_site: Path, paths: list[str]) -> list[str]:
             continue
         full.unlink()
         deleted.append(safe)
-    # Prune now-empty parent directories under target_site.
+    # Prune now-empty parent directories. Stop at top-level protected dirs.
     for path in deleted:
         parent = (target_site / path).parent
         while parent != target_site and parent.exists():
+            try:
+                rel_parts = parent.relative_to(target_site).parts
+            except ValueError:
+                break
+            # Refuse to delete a top-level protected directory (depth 1).
+            # Subdirectories of protected dirs (e.g. app/legacy/) are still
+            # prunable — only the top-level structural roots are sacred.
+            if len(rel_parts) == 1 and rel_parts[0] in _PROTECTED_DIRS:
+                break
             try:
                 parent.rmdir()  # only succeeds if empty
             except OSError:
