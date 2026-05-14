@@ -140,13 +140,25 @@
 <!-- Input Section -->
 <div class="w-full flex flex-col gap-lg items-center">
 <div class="w-full relative group">
-<textarea id="pebble-idea" class="w-full h-48 p-lg bg-stone border border-pebble rounded-xl font-body-md text-on-surface placeholder:text-outline focus:ring-2 focus:ring-river focus:border-river transition-all resize-none shadow-sm" placeholder="Example: I run a bakery in Brooklyn and I want a website where customers can see my menu and order online."></textarea>
-<div class="absolute bottom-md right-md flex items-center gap-xs text-outline font-mono-sm">
+<textarea id="pebble-idea" class="w-full h-48 p-lg pr-32 bg-stone border border-pebble rounded-xl font-body-md text-on-surface placeholder:text-outline focus:ring-2 focus:ring-river focus:border-river transition-all resize-none shadow-sm" placeholder="Example: I run a bakery in Brooklyn and I want a website where customers can see my menu and order online."></textarea>
+<!-- Voice + Upload affordances (top-right of textarea) -->
+<div class="absolute top-md right-md flex items-center gap-xs">
+<button id="pebble-voice" type="button" title="Dictate your idea" class="p-xs rounded-full hover:bg-mist text-on-surface-variant transition-colors flex items-center justify-center" aria-label="Voice input">
+<span class="material-symbols-outlined text-[20px]">mic</span>
+</button>
+<label title="Upload a sketch, screenshot, or inspiration image" class="p-xs rounded-full hover:bg-mist text-on-surface-variant transition-colors flex items-center justify-center cursor-pointer">
+<span class="material-symbols-outlined text-[20px]">image</span>
+<input type="file" id="pebble-image" accept="image/*" multiple class="hidden">
+</label>
+</div>
+<div class="absolute bottom-md right-md flex items-center gap-xs text-outline font-mono-sm pointer-events-none">
 <span class="material-symbols-outlined text-[18px]">auto_awesome</span>
 <span>AI Ready</span>
 </div>
+<!-- Attached image previews -->
+<div id="pebble-image-preview" class="absolute bottom-md left-md flex items-center gap-xs"></div>
 </div>
-<!-- Starter Chips -->
+<!-- Starter Chips (6 — match Base44/Lovable breadth) -->
 <div class="flex flex-wrap justify-center gap-sm">
 <button class="starter-chip px-md py-sm bg-stone hover:bg-mist border border-pebble rounded-full font-label-md text-charcoal transition-colors" data-prompt="A business website that introduces what I do and lets people reach out.">
                         Business website
@@ -156,6 +168,15 @@
                     </button>
 <button class="starter-chip px-md py-sm bg-stone hover:bg-mist border border-pebble rounded-full font-label-md text-charcoal transition-colors" data-prompt="A portfolio site that showcases my work and bio.">
                         Portfolio
+                    </button>
+<button class="starter-chip px-md py-sm bg-stone hover:bg-mist border border-pebble rounded-full font-label-md text-charcoal transition-colors" data-prompt="A booking site where clients can schedule appointments with me.">
+                        Booking site
+                    </button>
+<button class="starter-chip px-md py-sm bg-stone hover:bg-mist border border-pebble rounded-full font-label-md text-charcoal transition-colors" data-prompt="A restaurant site with my menu, hours, and a reservation option.">
+                        Restaurant menu
+                    </button>
+<button class="starter-chip px-md py-sm bg-stone hover:bg-mist border border-pebble rounded-full font-label-md text-charcoal transition-colors" data-prompt="A real-estate page that showcases listings and lets buyers contact me.">
+                        Real estate
                     </button>
 </div>
 <!-- Primary CTA -->

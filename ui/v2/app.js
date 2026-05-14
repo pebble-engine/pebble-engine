@@ -70,6 +70,9 @@
     const textarea = document.getElementById("pebble-idea");
     const startBtn = document.getElementById("pebble-start");
     const log = document.getElementById("ai-log");
+    const voiceBtn = document.getElementById("pebble-voice");
+    const imageInput = document.getElementById("pebble-image");
+    const imagePreview = document.getElementById("pebble-image-preview");
     if (!textarea || !startBtn) return;
 
     // Hydrate from saved state
@@ -96,6 +99,103 @@
       }
     });
 
+    // --- Voice input (browser SpeechRecognition API) ---
+    if (voiceBtn) {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR) {
+        voiceBtn.disabled = true;
+        voiceBtn.title = "Voice input not supported in this browser";
+        voiceBtn.classList.add("opacity-40");
+      } else {
+        let recognition = null;
+        let isListening = false;
+        voiceBtn.addEventListener("click", () => {
+          if (isListening) {
+            recognition?.stop();
+            return;
+          }
+          recognition = new SR();
+          recognition.lang = "en-US";
+          recognition.interimResults = true;
+          recognition.continuous = false;
+          const baseText = textarea.value;
+          recognition.onstart = () => {
+            isListening = true;
+            voiceBtn.classList.add("bg-secondary-container", "text-on-secondary-container");
+            if (log) log.innerHTML = '<p class="text-secondary">> Listening...</p>';
+          };
+          recognition.onresult = (event) => {
+            let transcript = "";
+            for (let i = 0; i < event.results.length; i++) {
+              transcript += event.results[i][0].transcript;
+            }
+            textarea.value = (baseText ? baseText + " " : "") + transcript;
+          };
+          recognition.onerror = (e) => {
+            if (log) log.innerHTML = `<p class="text-error">> Voice error: ${e.error}</p>`;
+          };
+          recognition.onend = () => {
+            isListening = false;
+            voiceBtn.classList.remove("bg-secondary-container", "text-on-secondary-container");
+            if (log && textarea.value.trim()) {
+              log.innerHTML = '<p class="text-primary">> Got it. Press Start when ready.</p>';
+            }
+          };
+          recognition.start();
+        });
+      }
+    }
+
+    // --- Image upload (sketch, screenshot, inspiration) ---
+    // Stored as base64 in brief.design_reference_images — engine already
+    // accepts this via validate_build_payload + threads to the LLM as vision.
+    const attached = [];
+    if (imageInput && imagePreview) {
+      imageInput.addEventListener("change", () => {
+        Array.from(imageInput.files || []).forEach((file) => {
+          if (!file.type.startsWith("image/")) return;
+          const reader = new FileReader();
+          reader.onload = () => {
+            const dataUrl = reader.result;
+            const base64 = String(dataUrl).split(",")[1];
+            if (!base64) return;
+            attached.push({
+              media_type: file.type,
+              data: base64,
+              name: file.name,
+            });
+            renderImagePreviews();
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+      function renderImagePreviews() {
+        imagePreview.innerHTML = "";
+        attached.forEach((img, idx) => {
+          const chip = document.createElement("div");
+          chip.className = "flex items-center gap-xs px-sm py-xs bg-mist border border-pebble rounded-full text-[12px] text-on-surface-variant";
+          chip.innerHTML = `
+            <span class="material-symbols-outlined text-[14px]">image</span>
+            <span class="max-w-[120px] truncate">${img.name}</span>
+            <button data-remove="${idx}" class="hover:text-error" aria-label="Remove">
+              <span class="material-symbols-outlined text-[14px]">close</span>
+            </button>
+          `;
+          imagePreview.appendChild(chip);
+        });
+        imagePreview.querySelectorAll("[data-remove]").forEach((btn) => {
+          btn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const i = parseInt(btn.dataset.remove, 10);
+            if (!isNaN(i)) {
+              attached.splice(i, 1);
+              renderImagePreviews();
+            }
+          });
+        });
+      }
+    }
+
     startBtn.addEventListener("click", () => {
       const idea = textarea.value.trim();
       if (!idea) {
@@ -104,10 +204,12 @@
         setTimeout(() => textarea.classList.remove("ring-2", "ring-error"), 600);
         return;
       }
-      patchBrief({
+      const patch = {
         extra_context: idea,
         business_name: brief.business_name || "Untitled Project",
-      });
+      };
+      if (attached.length) patch.design_reference_images = attached;
+      patchBrief(patch);
       sessionStorage.removeItem(STORAGE_KEY_INTAKE_STEP);
       go("intake");
     });
