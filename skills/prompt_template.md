@@ -1003,7 +1003,17 @@ Required files (paths are PROJECT-ROOT relative — match the Stack Skill's tsco
 `@/components/...` would not resolve if files lived under `src/`, and the build
 would fail at compile time):
 
-- `README.md`, `HANDOFF.md`, `TODO_ASSETS.md`, `STYLE_GUIDE.md`, `CLIENT_ANSWERS.md`
+- `README.md` (MUST include a `## Deploy` section explaining: 1) push the project to GitHub, 2) import the repo at https://vercel.com/new, 3) add `RESEND_API_KEY`, `CONTACT_TO_EMAIL`, `CONTACT_FROM_EMAIL` env vars in the Vercel dashboard. Also reference the `vercel.json` already at the project root.), `HANDOFF.md`, `TODO_ASSETS.md`, `STYLE_GUIDE.md`, `CLIENT_ANSWERS.md`
+- `vercel.json` — minimal Vercel platform config so the import flow auto-detects Next.js framework. Verbatim:
+
+```json
+{{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs"
+}}
+```
+
+The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` heading AND the `vercel.json` exists. The user owns the deployed site (their own Vercel project, their own domain, no Pebble lock-in).
 - `content/site.ts`, `content/sections.ts`, `content/services.ts`, `content/faqs.ts`, `content/testimonials.ts`
 - **FOUNDATION COMPONENTS (mandatory — eval suite verifies presence):**
   - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1 (must include sr-only span + aria-hidden wrapper + textShadow)

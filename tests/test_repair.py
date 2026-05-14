@@ -74,6 +74,9 @@ def _write_foundation_files(site: Path) -> None:
         'import { submitContactForm } from "@/app/actions/contact";\n'
         'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
     )
+    # Deploy-to-Vercel scaffold (vercel.json + README Deploy section).
+    (site / "vercel.json").write_text('{"framework":"nextjs"}')
+    (site / "README.md").write_text("# Site\n\n## Deploy\n\nPush to GitHub + import at vercel.com/new.\n")
 
 
 def _write_minimal_package_json(site: Path) -> None:
@@ -198,6 +201,10 @@ def broken_build(tmp_path: Path) -> Path:
         'import { submitContactForm } from "@/app/actions/contact";\n'
         'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
     )
+    # Deploy-to-Vercel scaffold so broken_build's only intentional failures
+    # stay scoped to required_files_present + hero_has_h1 + dna_display_font_honored.
+    (site / "vercel.json").write_text('{"framework":"nextjs"}')
+    (site / "README.md").write_text("# Broken Co\n\n## Deploy\n\nPush to GitHub + Vercel import.\n")
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
     return d
 

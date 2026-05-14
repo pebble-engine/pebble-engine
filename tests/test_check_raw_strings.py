@@ -509,3 +509,47 @@ def test_resend_in_dependencies_fails_when_package_json_missing(tmp_path):
     r = checks.resend_in_dependencies(ctx)
     assert r.status == "fail"
     assert "package.json missing" in r.message
+
+
+# ---------------------------------------------------------------------------
+# deploy_to_vercel_scaffold — vercel.json + README Deploy section
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("case,files,expected", [
+    ("both_present_h2",
+     {"vercel.json": '{"framework":"nextjs"}',
+      "README.md": "# Site\n\n## Deploy\n\npush to GitHub\n"}, "pass"),
+    ("both_present_h1",
+     {"vercel.json": '{"framework":"nextjs"}',
+      "README.md": "# Site\n\n# Deploy\n\n..."}, "pass"),
+    ("both_present_h3",
+     {"vercel.json": '{}',
+      "README.md": "### Deploy\n"}, "pass"),
+    ("vercel_missing",
+     {"README.md": "## Deploy\n"}, "fail"),
+    ("readme_missing",
+     {"vercel.json": '{"framework":"nextjs"}'}, "fail"),
+    ("readme_present_but_no_deploy_heading",
+     {"vercel.json": '{}',
+      "README.md": "# Site\n\nSome other content.\n"}, "fail"),
+    ("deploy_only_in_body_not_heading",
+     {"vercel.json": '{}',
+      "README.md": "# Site\n\nYou can deploy to Vercel.\n"}, "fail"),
+    ("case_insensitive_match",
+     {"vercel.json": '{}',
+      "README.md": "## DEPLOY\n"}, "pass"),
+])
+def test_deploy_to_vercel_scaffold_raw(tmp_path, case, files, expected):
+    d = _make_minisite(tmp_path, files)
+    ctx = BuildContext.load(d)
+    assert checks.deploy_to_vercel_scaffold(ctx).status == expected, case
+
+
+def test_deploy_to_vercel_scaffold_reports_specific_missing(tmp_path):
+    # Site dir must exist for the check to run (it skips when site/ is absent).
+    d = _make_minisite(tmp_path, {"app/page.tsx": "export default () => null;"})
+    ctx = BuildContext.load(d)
+    r = checks.deploy_to_vercel_scaffold(ctx)
+    assert r.status == "fail"
+    assert "vercel.json" in str(r.details["missing"])
+    assert "README.md" in str(r.details["missing"])

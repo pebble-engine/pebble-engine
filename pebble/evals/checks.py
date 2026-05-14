@@ -1298,6 +1298,59 @@ def resend_in_dependencies(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 27. deploy_to_vercel_scaffold — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_DEPLOY_HEADING_RE = re.compile(r"^#{1,3}\s*Deploy\b", re.IGNORECASE | re.MULTILINE)
+
+
+@check_metadata(static_files=("README.md", "vercel.json"))
+def deploy_to_vercel_scaffold(ctx: BuildContext) -> CheckResult:
+    """Every build must ship with a deploy story.
+
+    Two artifacts: `vercel.json` at the project root (so Vercel auto-detects
+    the Next.js framework when the user imports the repo) AND a `Deploy`
+    section in the README explaining the GitHub-push-then-Vercel-import flow.
+    The user owns the deployed site — Pebble produces the bundle, the user
+    pushes to their own GitHub + Vercel.
+
+    Closes the "I built this, how do I ship it?" loop without requiring
+    Pebble to host or manage anything. Lighter-touch than the Base44 /
+    Lovable managed deploy path, but preserves full code ownership.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("deploy_to_vercel_scaffold", "skip", "no site directory")
+
+    missing: list[str] = []
+    vercel = ctx.site_dir / "vercel.json"
+    if not vercel.exists():
+        missing.append("vercel.json")
+
+    readme = ctx.site_dir / "README.md"
+    if not readme.exists():
+        missing.append("README.md")
+    else:
+        text = readme.read_text(encoding="utf-8", errors="ignore")
+        if not _DEPLOY_HEADING_RE.search(text):
+            return CheckResult(
+                "deploy_to_vercel_scaffold", "fail",
+                "README.md has no '## Deploy' / '# Deploy' / '### Deploy' heading",
+            )
+
+    if missing:
+        return CheckResult(
+            "deploy_to_vercel_scaffold", "fail",
+            f"deploy scaffold missing: {', '.join(missing)}",
+            details={"missing": missing},
+        )
+
+    return CheckResult(
+        "deploy_to_vercel_scaffold", "pass",
+        "vercel.json + README Deploy section present",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -1330,6 +1383,7 @@ ALL_CHECKS = [
     # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
     contact_form_uses_server_action,
     resend_in_dependencies,
+    deploy_to_vercel_scaffold,
     site_compiles,
 ]
 
