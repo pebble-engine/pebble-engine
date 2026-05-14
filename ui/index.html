@@ -261,7 +261,15 @@
   }
 
   /* Generating splash — video background + cyan ring + typed status */
-  .splash {
+  /* The loading splash uses .hidden to mean "off" — but Tailwind's
+     .hidden { display: none } lives in /static/style.css which loads
+     BEFORE this inline <style>, so without the :not() guard below
+     these .splash rules would override .hidden and the full-screen
+     splash would cover everything. This was the May 2026 bug that
+     made Marc's quiz card appear invisible (only the splash video
+     showed through). DO NOT remove the :not(.hidden) qualifier
+     unless you also relocate .hidden to load AFTER this block. */
+  .splash:not(.hidden) {
     position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
