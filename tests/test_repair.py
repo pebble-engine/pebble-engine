@@ -30,20 +30,33 @@ def _write_foundation_files(site: Path) -> None:
     """Write the May 2026 foundation files (Inter, AnimatedHeading, FadeIn,
     liquid-glass, reduced-motion, video hero) into a synthetic site dir so
     inline fixtures pass the new FOUNDATION eval checks without duplicating
-    50 lines of boilerplate each."""
+    50 lines of boilerplate each.
+
+    The components are minimal but satisfy all FOUNDATION checks including
+    the May 2026 a11y/legibility addendum: AnimatedHeading wraps decoration
+    in aria-hidden and exposes sr-only semantic text; the hero video has
+    a poster attribute; AnimatedHeading carries textShadow."""
     (site / "components" / "sections").mkdir(parents=True, exist_ok=True)
     (site / "components" / "ui").mkdir(parents=True, exist_ok=True)
     (site / "components" / "sections" / "Hero.tsx").write_text(
         'export function Hero() {\n'
         '  return (\n'
         '    <section className="relative min-h-[100dvh] bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
         '    </section>\n'
         '  );\n'
         '}'
     )
     (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
-        '"use client";\nexport function AnimatedHeading({text}:{text:string}){return <h1>{text}</h1>;}'
+        '"use client";\n'
+        'export function AnimatedHeading({text}:{text:string}){\n'
+        '  return (\n'
+        '    <h1 style={{ textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}>\n'
+        '      <span className="sr-only">{text}</span>\n'
+        '      <span aria-hidden="true">{text}</span>\n'
+        '    </h1>\n'
+        '  );\n'
+        '}'
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
@@ -121,19 +134,28 @@ def broken_build(tmp_path: Path) -> Path:
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
         "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
     )
-    # Foundation hero (background video, no overlay).
+    # Foundation hero (background video, no overlay, with poster).
     (site / "components" / "sections" / "Hero.tsx").write_text(
         'export function Hero() {\n'
         '  return (\n'
         '    <section className="relative min-h-[100dvh] bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
         '    </section>\n'
         '  );\n'
         '}'
     )
-    # Foundation animation components.
+    # Foundation animation components with a11y wrappers + legibility shadow
+    # so the broken_build only fails the three intentional checks.
     (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
-        '"use client";\nexport function AnimatedHeading({text}:{text:string}){return <h1>{text}</h1>;}'
+        '"use client";\n'
+        'export function AnimatedHeading({text}:{text:string}){\n'
+        '  return (\n'
+        '    <h1 style={{ textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}>\n'
+        '      <span className="sr-only">{text}</span>\n'
+        '      <span aria-hidden="true">{text}</span>\n'
+        '    </h1>\n'
+        '  );\n'
+        '}'
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'

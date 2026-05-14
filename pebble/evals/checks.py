@@ -941,6 +941,256 @@ def prefers_reduced_motion_respected(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 21. animated_heading_screen_reader_safe — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_SR_ONLY_RE = re.compile(r'className\s*=\s*["\']sr-only["\']')
+_ARIA_HIDDEN_TRUE_RE = re.compile(r'aria-hidden\s*=\s*(?:\{?\s*["\']?true["\']?\s*\}?|"true"|\'true\')')
+
+
+@check_metadata(static_files=("components/ui/AnimatedHeading.tsx",))
+def animated_heading_screen_reader_safe(ctx: BuildContext) -> CheckResult:
+    """`AnimatedHeading.tsx` must split semantics from decoration.
+
+    The per-character animation pollutes the accessibility tree — without an
+    explicit split, screen readers announce "Design" as "D... e... s... i...
+    g... n", which is the canonical a11y antipattern for headline animations.
+
+    Foundation contract: inside the `<h1>`, render the full text once in a
+    `<span className="sr-only">` (semantic content for assistive technologies)
+    and put the per-character animation in a sibling `<span aria-hidden="true">`
+    so it does not contribute to the AT tree. Both markers must be present
+    in this file.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("animated_heading_screen_reader_safe", "skip", "no site directory")
+    path = ctx.site_dir / "components" / "ui" / "AnimatedHeading.tsx"
+    if not path.exists():
+        return CheckResult(
+            "animated_heading_screen_reader_safe", "fail",
+            "components/ui/AnimatedHeading.tsx is missing",
+        )
+
+    text = path.read_text(encoding="utf-8", errors="ignore")
+    # Strip comments so explanatory prose doesn't false-positive the markers.
+    stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+    has_sr_only = bool(_SR_ONLY_RE.search(stripped))
+    has_aria_hidden = bool(_ARIA_HIDDEN_TRUE_RE.search(stripped))
+
+    if has_sr_only and has_aria_hidden:
+        return CheckResult(
+            "animated_heading_screen_reader_safe", "pass",
+            "AnimatedHeading wraps decoration in aria-hidden + exposes sr-only semantic text",
+        )
+
+    missing = []
+    if not has_sr_only:
+        missing.append("sr-only span for screen-reader text")
+    if not has_aria_hidden:
+        missing.append('aria-hidden="true" wrapper for animated chars')
+    return CheckResult(
+        "animated_heading_screen_reader_safe", "fail",
+        f"AnimatedHeading missing: {'; '.join(missing)}",
+        details={"missing_markers": missing},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 22. interactive_elements_have_focus_visible — FOUNDATION
+# ---------------------------------------------------------------------------
+
+# Open-tag span for <a> and <button>. Skips closing tags (</a>) because the
+# `\b` after `a`/`button` won't match the `/` of `</`. Skips fragments and
+# unrelated tags. DOTALL so multi-line opening tags (className wrapped across
+# lines) are still captured as a single match.
+_INTERACTIVE_OPEN_RE = re.compile(
+    r"<(a|button)\b([^>]*?)>",
+    re.DOTALL | re.IGNORECASE,
+)
+_HAS_CLASSNAME_RE = re.compile(r"\bclassName\s*=")
+_FOCUS_UTIL_RE = re.compile(r"\bfocus(?:-visible)?:")
+
+
+@check_metadata(details_file_key="files")
+def interactive_elements_have_focus_visible(ctx: BuildContext) -> CheckResult:
+    """Hero CTAs, navbar links, and the Call Us pill MUST have a visible
+    keyboard focus ring.
+
+    A `<a className="bg-white text-black ...">` without a `focus-visible:`
+    utility either ships the default browser outline (often invisible against
+    the liquid-glass / video background) or actively suppresses it via
+    `outline-none` elsewhere — either way, keyboard users can't see where
+    they are. Foundation rule for surfaces over the hero video where the
+    contrast is unpredictable.
+
+    Scope: scans the hero (`app/page.tsx`, `components/sections/Hero.tsx`)
+    and navbar files (`components/layout/Nav*.tsx`, `components/ui/Nav*.tsx`).
+    Skips elements with no `className=` at all — those use browser defaults,
+    which are still visible. Only flags elements where `className` is set
+    (the LLM's typical shape) but has no `focus-visible:` / `focus:` utility.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("interactive_elements_have_focus_visible", "skip", "no site directory")
+
+    targets: list[Path] = []
+    for rel in ("app/page.tsx", "components/sections/Hero.tsx"):
+        p = ctx.site_dir / rel
+        if p.exists():
+            targets.append(p)
+    for sub in ("components/layout", "components/ui"):
+        d = ctx.site_dir / sub
+        if d.exists():
+            for nav in d.glob("Nav*.tsx"):
+                targets.append(nav)
+
+    if not targets:
+        return CheckResult(
+            "interactive_elements_have_focus_visible", "skip",
+            "no hero/navbar files to inspect",
+        )
+
+    offenders: list[str] = []
+    for path in targets:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+        file_offended = False
+        for m in _INTERACTIVE_OPEN_RE.finditer(stripped):
+            attrs = m.group(2) or ""
+            if not _HAS_CLASSNAME_RE.search(attrs):
+                continue  # no className → browser default focus → skip
+            if not _FOCUS_UTIL_RE.search(attrs):
+                file_offended = True
+                break
+        if file_offended:
+            offenders.append(str(path.relative_to(ctx.site_dir)))
+
+    if not offenders:
+        return CheckResult(
+            "interactive_elements_have_focus_visible", "pass",
+            "all interactive elements in hero/navbar carry focus-visible utilities",
+        )
+    return CheckResult(
+        "interactive_elements_have_focus_visible", "fail",
+        f"{len(offenders)} hero/navbar file(s) have <a>/<button> with className but no focus-visible: utility",
+        details={"files": offenders[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 23. hero_text_has_legibility_safeguard — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_LEGIBILITY_RE = re.compile(
+    r"(?:textShadow|text-shadow|drop-shadow-(?:none|sm|md|lg|xl|2xl|\[)|drop-shadow\b)",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx", "components/ui/AnimatedHeading.tsx", "app/page.tsx"))
+def hero_text_has_legibility_safeguard(ctx: BuildContext) -> CheckResult:
+    """Hero text must carry its own legibility scaffolding.
+
+    The foundation forbids a dark overlay above the hero video. Without an
+    overlay, hero text relies on a per-element legibility safeguard so it
+    reads against any video frame: an inline `textShadow` style or a Tailwind
+    `drop-shadow-*` utility. The `AnimatedHeading` component bakes the
+    shadow into its `<h1>` so the headline is always covered — but the
+    subhead `<p>` in `Hero.tsx` / `page.tsx` must add its own.
+
+    The check passes if at least ONE of {Hero.tsx, app/page.tsx, AnimatedHeading.tsx}
+    contains a `textShadow` / `text-shadow` / `drop-shadow` reference. It is
+    a coarse safety net — not enforcing per-element shadowing, but ensuring
+    the project hasn't forgotten the pattern entirely. Combined with the
+    foundation `AnimatedHeading.tsx` baked-in shadow, this is sufficient
+    coverage for the common case.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_text_has_legibility_safeguard", "skip", "no site directory")
+
+    candidates = [
+        ctx.site_dir / "components" / "ui" / "AnimatedHeading.tsx",
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+        ctx.site_dir / "app" / "page.tsx",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+        if _LEGIBILITY_RE.search(stripped):
+            return CheckResult(
+                "hero_text_has_legibility_safeguard", "pass",
+                f"legibility safeguard (textShadow / drop-shadow) found in {path.relative_to(ctx.site_dir)}",
+            )
+
+    return CheckResult(
+        "hero_text_has_legibility_safeguard", "fail",
+        "no textShadow / text-shadow / drop-shadow found in AnimatedHeading.tsx, Hero.tsx, or app/page.tsx",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 24. hero_video_has_poster — FOUNDATION
+# ---------------------------------------------------------------------------
+
+# Match a <video ...> opening tag containing both autoplay (case-insensitive)
+# and a poster= attribute. DOTALL so multi-line video tags still match.
+_VIDEO_OPEN_RE = re.compile(r"<video\b([^>]*)>", re.DOTALL | re.IGNORECASE)
+_AUTOPLAY_ATTR_RE = re.compile(r"\bautoplay\b", re.IGNORECASE)
+_POSTER_ATTR_RE = re.compile(r"\bposter\s*=", re.IGNORECASE)
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx", "app/page.tsx"))
+def hero_video_has_poster(ctx: BuildContext) -> CheckResult:
+    """The hero `<video>` MUST declare a `poster=` attribute.
+
+    Without a poster, the browser shows a black rectangle while the video
+    is loading — on slow connections this can be 200-1000ms of visible
+    emptiness during the most-photographed moment of the page. The poster
+    gives the LLM-chosen Pexels still (or Imagen-generated image) a job:
+    paint instantly while the video downloads, then the video takes over.
+
+    Combined with `prefers-reduced-data` (future), the poster is also the
+    fallback for users who opt out of autoplay video entirely. Mandatory
+    foundation rule; check passes when any `<video … autoplay …>` in the
+    hero file (`Hero.tsx` or `app/page.tsx`) has `poster=` in the same tag.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_video_has_poster", "skip", "no site directory")
+
+    candidates = [
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+        ctx.site_dir / "app" / "page.tsx",
+    ]
+    saw_video = False
+    for path in candidates:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for m in _VIDEO_OPEN_RE.finditer(text):
+            attrs = m.group(1) or ""
+            if not _AUTOPLAY_ATTR_RE.search(attrs):
+                continue
+            saw_video = True
+            if _POSTER_ATTR_RE.search(attrs):
+                return CheckResult(
+                    "hero_video_has_poster", "pass",
+                    f"<video autoplay … poster=…> found in {path.relative_to(ctx.site_dir)}",
+                )
+
+    if not saw_video:
+        # `hero_uses_background_video` covers this; don't double-fail.
+        return CheckResult(
+            "hero_video_has_poster", "skip",
+            "no hero <video autoplay> to inspect (see hero_uses_background_video)",
+        )
+    return CheckResult(
+        "hero_video_has_poster", "fail",
+        "hero <video autoplay> exists but has no poster= attribute",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -965,6 +1215,11 @@ ALL_CHECKS = [
     liquid_glass_class_present,
     animation_components_present,
     prefers_reduced_motion_respected,
+    # FOUNDATION a11y / legibility (May 2026 NLM cross-check addendum)
+    animated_heading_screen_reader_safe,
+    interactive_elements_have_focus_visible,
+    hero_text_has_legibility_safeguard,
+    hero_video_has_poster,
     site_compiles,
 ]
 

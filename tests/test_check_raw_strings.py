@@ -289,3 +289,112 @@ def test_prefers_reduced_motion_respected_raw(tmp_path, case, css, expected):
     d = _make_minisite(tmp_path, {"app/globals.css": css})
     ctx = BuildContext.load(d)
     assert checks.prefers_reduced_motion_respected(ctx).status == expected, case
+
+
+# ---------------------------------------------------------------------------
+# FOUNDATION A11Y / LEGIBILITY ADDENDUM (May 2026 NLM cross-check follow-up)
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize("case,content,expected", [
+    ("both_markers_present",
+     '<h1><span className="sr-only">{text}</span><span aria-hidden="true">animated</span></h1>', "pass"),
+    ("missing_sr_only",
+     '<h1><span aria-hidden="true">{text}</span></h1>', "fail"),
+    ("missing_aria_hidden",
+     '<h1><span className="sr-only">{text}</span>{text}</h1>', "fail"),
+    ("missing_both",
+     '<h1>{text}</h1>', "fail"),
+    ("comment_mentioning_markers_doesnt_satisfy",
+     '/* sr-only + aria-hidden are needed here */\n<h1>{text}</h1>', "fail"),
+    ("aria_hidden_as_curly_true",
+     '<h1><span className="sr-only">{text}</span><span aria-hidden={true}>x</span></h1>', "pass"),
+])
+def test_animated_heading_screen_reader_safe_raw(tmp_path, case, content, expected):
+    d = _make_minisite(tmp_path, {"components/ui/AnimatedHeading.tsx": content})
+    ctx = BuildContext.load(d)
+    assert checks.animated_heading_screen_reader_safe(ctx).status == expected, case
+
+
+def test_animated_heading_screen_reader_safe_skips_when_file_absent(tmp_path):
+    """When the AnimatedHeading file doesn't exist at all, the check fails
+    explicitly (not skip) — the file is a foundation contract artifact."""
+    d = _make_minisite(tmp_path, {"app/page.tsx": "export default () => null;"})
+    ctx = BuildContext.load(d)
+    r = checks.animated_heading_screen_reader_safe(ctx)
+    assert r.status == "fail"
+    assert "missing" in r.message.lower()
+
+
+@pytest.mark.parametrize("case,files,expected", [
+    ("hero_link_with_focus_visible",
+     {"components/sections/Hero.tsx": '<a href="/x" className="bg-white focus-visible:ring-2 focus-visible:ring-white/70">Go</a>'}, "pass"),
+    ("hero_link_without_focus_visible",
+     {"components/sections/Hero.tsx": '<a href="/x" className="bg-white text-black px-8 py-3 rounded-lg">Go</a>'}, "fail"),
+    ("button_without_focus_visible",
+     {"components/sections/Hero.tsx": '<button className="bg-blue">Click</button>'}, "fail"),
+    ("link_without_className_is_skipped",
+     {"components/sections/Hero.tsx": '<a href="/x">Go</a>'}, "pass"),
+    ("focus_without_visible_modifier_also_accepted",
+     {"components/sections/Hero.tsx": '<a href="/x" className="bg-white focus:ring-2 focus:ring-white">Go</a>'}, "pass"),
+    ("multiline_link_with_focus_visible",
+     {"components/sections/Hero.tsx": '<a\n  href="/x"\n  className="bg-white\n    focus-visible:ring-2"\n>Go</a>'}, "pass"),
+    ("navbar_link_in_layout_dir",
+     {"components/layout/Navbar.tsx": '<a href="/x" className="text-white focus-visible:ring-2 focus-visible:ring-white">Nav</a>'}, "pass"),
+    ("navbar_link_missing_focus",
+     {"components/layout/Navbar.tsx": '<a href="/x" className="text-white">Nav</a>'}, "fail"),
+    ("offending_element_in_page_tsx_caught",
+     {"app/page.tsx": '<button className="bg-red">Boom</button>'}, "fail"),
+    ("closing_tags_dont_match",
+     {"components/sections/Hero.tsx": 'Some text </a> more </button> end.'}, "pass"),
+])
+def test_interactive_elements_have_focus_visible_raw(tmp_path, case, files, expected):
+    d = _make_minisite(tmp_path, files)
+    ctx = BuildContext.load(d)
+    assert checks.interactive_elements_have_focus_visible(ctx).status == expected, case
+
+
+def test_interactive_elements_have_focus_visible_skips_when_no_targets(tmp_path):
+    """No hero/navbar files at all → skip, not fail."""
+    d = _make_minisite(tmp_path, {"app/layout.tsx": "export default () => null;"})
+    ctx = BuildContext.load(d)
+    assert checks.interactive_elements_have_focus_visible(ctx).status == "skip"
+
+
+@pytest.mark.parametrize("case,files,expected", [
+    ("textshadow_inline_in_animated_heading",
+     {"components/ui/AnimatedHeading.tsx": '<h1 style={{ textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}>{text}</h1>'}, "pass"),
+    ("textshadow_in_hero",
+     {"components/sections/Hero.tsx": '<p style={{ textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}>sub</p>'}, "pass"),
+    ("drop_shadow_tailwind_utility",
+     {"components/sections/Hero.tsx": '<h1 className="drop-shadow-2xl">Title</h1>'}, "pass"),
+    ("drop_shadow_arbitrary_value",
+     {"components/sections/Hero.tsx": '<h1 className="drop-shadow-[0_2px_24px_rgba(0,0,0,0.5)]">Title</h1>'}, "pass"),
+    ("none_anywhere",
+     {"components/sections/Hero.tsx": '<h1>plain title</h1>'}, "fail"),
+    ("only_in_comment",
+     {"components/sections/Hero.tsx": '/* would normally need textShadow here */\n<h1>plain</h1>'}, "fail"),
+    ("found_in_page_tsx",
+     {"app/page.tsx": 'export default () => <h1 style={{ textShadow: "0 1px 2px black" }}>X</h1>'}, "pass"),
+])
+def test_hero_text_has_legibility_safeguard_raw(tmp_path, case, files, expected):
+    d = _make_minisite(tmp_path, files)
+    ctx = BuildContext.load(d)
+    assert checks.hero_text_has_legibility_safeguard(ctx).status == expected, case
+
+
+@pytest.mark.parametrize("case,content,expected", [
+    ("video_with_poster",
+     '<video autoPlay muted loop playsInline src="/x.mp4" poster="/p.jpg" />', "pass"),
+    ("video_without_poster",
+     '<video autoPlay muted loop playsInline src="/x.mp4" />', "fail"),
+    ("multiline_video_with_poster",
+     '<video\n  autoPlay\n  muted\n  loop\n  src="/x.mp4"\n  poster="/p.jpg"\n/>', "pass"),
+    ("multiline_video_no_poster",
+     '<video\n  autoPlay\n  muted\n  loop\n  src="/x.mp4"\n/>', "fail"),
+    ("non_autoplay_video_skipped",
+     '<video controls src="/x.mp4" />', "skip"),
+])
+def test_hero_video_has_poster_raw(tmp_path, case, content, expected):
+    d = _make_minisite(tmp_path, {"components/sections/Hero.tsx": content})
+    ctx = BuildContext.load(d)
+    assert checks.hero_video_has_poster(ctx).status == expected, case

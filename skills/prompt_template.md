@@ -70,19 +70,19 @@ This hero is the engine's universal foundation. Every build uses this exact stru
 
 **Visual layout:**
 - `<section>` is `relative min-h-[100dvh] overflow-hidden bg-black` (always a dark base — text is always light over the video)
-- Full-bleed `<video>` is `absolute inset-0 w-full h-full object-cover`, with attributes `autoPlay muted loop playsInline` (all four, always)
-- **CRITICAL: NO dark overlay on the video.** No `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent layer above the video. The video plays raw. The chosen Pexels video must already have inherent darkness/contrast where text sits.
-- Video `src` is `/videos/hero.mp4` when the post-build chain has localized the Pexels video (preferred); otherwise the Pexels CDN URL is the fallback.
+- Full-bleed `<video>` is `absolute inset-0 w-full h-full object-cover`, with attributes `autoPlay muted loop playsInline` (all four, always) AND a `poster="…"` attribute (MANDATORY — the eval `hero_video_has_poster` enforces this)
+- **CRITICAL: NO dark overlay on the video.** No `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent layer above the video. The video plays raw. The chosen Pexels video must already have inherent darkness/contrast where text sits. Legibility is provided by `textShadow` on the headline and subhead (built into `AnimatedHeading` and mandated on the subhead `<p>`), NOT by a background dimming layer.
+- Video `src` is `/videos/hero.mp4` when the post-build chain has localized the Pexels video (preferred); otherwise the Pexels CDN URL is the fallback. The `poster` attribute should reference a still image — use one of the Pexels image URLs from Section 8b, or a static path like `/images/hero-poster.jpg`. The poster paints instantly while the video is loading, so it MUST visually match the chosen video (same mood, similar darkness profile) — otherwise the first 100-300 ms look like a different page.
 - **The `<section>` itself MUST be `flex flex-col`** in addition to `relative min-h-[100dvh] overflow-hidden bg-black`. Without `flex flex-col` on the section, the inner content's `justify-end` has nothing to push against and the hero text ends up top-aligned. This is the #1 visual regression in foundation builds — copy the exact classlist.
 - **Inner content container** sits at the BOTTOM of the viewport via `flex-1 flex flex-col justify-end` (use `flex-1`, NOT `h-full`): `relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white`. The `flex-1` is required so the container expands to fill the section's flex column space; `justify-end` then pushes the grid to the bottom edge.
 - On large screens, content uses a 2-column grid: `lg:grid lg:grid-cols-2 lg:items-end gap-8`
 
 **Left column — primary content (vertical order):**
 1. `<AnimatedHeading text="line one\nline two" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4" />` — the h1 with per-character entrance animation. Two lines separated by `\n`. Use the brand's value prop in two beats — example: `"Shaping tomorrow\nwith vision and action."` for a VC firm, `"Roasted slow.\nServed fresh."` for a coffee roaster. **THE HEADING IS THE H1 — never a styled div.**
-2. `<FadeIn delay={{800}} duration={{1000}}>` wrapping `<p className="text-base md:text-lg text-gray-300 mb-5">…subhead sentence…</p>` — one sentence naming the outcome the visitor gets
-3. `<FadeIn delay={{1200}} duration={{1000}}>` wrapping `<div className="flex flex-wrap gap-4">` containing two CTAs:
-   - Primary: white pill — `bg-white text-black px-8 py-3 rounded-lg font-medium` — links to `tel:[BUSINESS PHONE]` (or `#contact` if the brief lacks a phone)
-   - Secondary: glass — `liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors` — links to `/services` or another primary route
+2. `<FadeIn delay={{800}} duration={{1000}}>` wrapping `<p className="text-base md:text-lg text-gray-300 mb-5" style={{{{ textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}}}>…subhead sentence…</p>` — one sentence naming the outcome the visitor gets. The inline `textShadow` is MANDATORY; the foundation has no dark overlay above the video, so the subhead carries its own legibility scaffolding. The eval `hero_text_has_legibility_safeguard` enforces this.
+3. `<FadeIn delay={{1200}} duration={{1000}}>` wrapping `<div className="flex flex-wrap gap-4">` containing two CTAs. Both CTAs MUST include the focus-visible utility chain `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` so keyboard users see a visible focus ring against the liquid-glass / video surface. The eval `interactive_elements_have_focus_visible` enforces this on hero CTAs, navbar links, and the Call Us pill.
+   - Primary: white pill — `bg-white text-black px-8 py-3 rounded-lg font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` — links to `tel:[BUSINESS PHONE]` (or `#contact` if the brief lacks a phone)
+   - Secondary: glass — `liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` — links to `/services` or another primary route
 
 **Right column — optional brand tag (`hidden lg:flex items-end justify-start lg:justify-end`):**
 - `<FadeIn delay={{1400}} duration={{1000}}>` wrapping a `liquid-glass border border-white/20 px-6 py-3 rounded-xl` card
@@ -250,6 +250,10 @@ These are NOT optional. Do NOT replace them with a GSAP timeline or framer-motio
 
 Per-character entrance: each char starts at `opacity:0, translateX(-18px)` and transitions to `opacity:1, translateX(0)` with a staggered delay calculated from char index. Lines split on `\n`. Spaces render as non-breaking. Respects `prefers-reduced-motion` — when the user has it set, all chars render at final state immediately.
 
+**Accessibility (mandatory, eval-enforced):** Inside the `<h1>`, the full text is rendered ONCE inside a `<span className="sr-only">` so assistive technologies announce the heading as a coherent phrase. The per-character animation lives in a sibling `<span aria-hidden="true">` and is decoration only. Without this split, a screen reader announces "Design" as "D... e... s... i... g... n" — a P0 a11y regression. The eval `animated_heading_screen_reader_safe` checks for BOTH `sr-only` AND `aria-hidden` in this file.
+
+The `<h1>` also carries a `textShadow` inline style. Because the foundation forbids a dark overlay on the hero video, the heading needs its own legibility scaffolding so it reads against any video frame — the shadow is built into the component so the LLM cannot forget it.
+
 ```tsx
 "use client";
 import {{ useEffect, useState }} from "react";
@@ -276,7 +280,9 @@ export function AnimatedHeading({{ text, charDelay = 30, initialDelay = 200, dur
 
   const lines = text.split("\n");
   return (
-    <h1 className={{className}} style={{{{ letterSpacing: "-0.04em" }}}}>
+    <h1 className={{className}} style={{{{ letterSpacing: "-0.04em", textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}}}>
+      <span className="sr-only">{{text}}</span>
+      <span aria-hidden="true">
       {{lines.map((line, lineIndex) => {{
         const lineOffset = lineIndex * line.length * charDelay;
         return (
@@ -301,6 +307,7 @@ export function AnimatedHeading({{ text, charDelay = 30, initialDelay = 200, dur
           </span>
         );
       }})}}
+      </span>
     </h1>
   );
 }}
@@ -360,6 +367,7 @@ export function Hero() {{
         autoPlay muted loop playsInline
         className="absolute inset-0 w-full h-full object-cover"
         src="/videos/hero.mp4"
+        poster="/images/hero-poster.jpg"
       />
       {{/* NO overlay. The video plays raw. */}}
 
@@ -371,14 +379,14 @@ export function Hero() {{
               className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4"
             />
             <FadeIn delay={{800}} duration={{1000}}>
-              <p className="text-base md:text-lg text-gray-300 mb-5">
+              <p className="text-base md:text-lg text-gray-300 mb-5" style={{{{ textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}}}>
                 We back visionaries and craft ventures that define what comes next.
               </p>
             </FadeIn>
             <FadeIn delay={{1200}} duration={{1000}}>
               <div className="flex flex-wrap gap-4">
-                <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-8 py-3 rounded-lg font-medium">Start a Chat</a>
-                <a href="/services" className="liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors">Explore Now</a>
+                <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-8 py-3 rounded-lg font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">Start a Chat</a>
+                <a href="/services" className="liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">Explore Now</a>
               </div>
             </FadeIn>
           </div>
@@ -408,15 +416,15 @@ export function Navbar({{ businessName }}: {{ businessName: string }}) {{
   return (
     <div className="absolute top-0 inset-x-0 z-50 px-6 md:px-12 lg:px-16 pt-6">
       <nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between text-white">
-        <Link href="/" className="text-2xl font-semibold tracking-tight">
+        <Link href="/" className="text-2xl font-semibold tracking-tight rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40">
           {{businessName}}
         </Link>
         <div className="hidden md:flex gap-8 text-sm">
-          <Link href="/services" className="hover:text-gray-300 transition-colors">Services</Link>
-          <Link href="/about" className="hover:text-gray-300 transition-colors">About</Link>
-          <Link href="/contact" className="hover:text-gray-300 transition-colors">Contact</Link>
+          <Link href="/services" className="hover:text-gray-300 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40">Services</Link>
+          <Link href="/about" className="hover:text-gray-300 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40">About</Link>
+          <Link href="/contact" className="hover:text-gray-300 transition-colors rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black/40">Contact</Link>
         </div>
-        <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+        <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black">
           Call Us
         </a>
       </nav>
@@ -676,6 +684,10 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] Hero h1 uses `AnimatedHeading` with `\n` line break and `letterSpacing: '-0.04em'`
 - [ ] Subhead in `FadeIn delay={{800}}`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
 - [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
+- [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`
+- [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
+- [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
+- [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
 
 **SECTIONS BELOW HERO:**
 - [ ] Trust bar: counting stats with `data-target` + GSAP textContent
@@ -780,6 +792,10 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | reduced-motion | `@media (prefers-reduced-motion: reduce)` in globals.css disabling animation-duration AND transition-duration to 0.01ms |
 | AnimatedHeading respects reduced-motion | Component reads `window.matchMedia("(prefers-reduced-motion: reduce)")` on mount and skips per-char delays when set |
 | FadeIn respects reduced-motion | Same — renders at final opacity immediately when user has reduced-motion set |
+| AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>` |
+| Focus-visible on interactives | Every `<a>` / `<button>` with a `className` (hero CTAs, navbar links, Call Us pill) carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` |
+| Hero text legibility | `textShadow` on hero h1 (built into AnimatedHeading) AND on hero subhead `<p>` (inline `style`). Foundation has no dark overlay, so text carries its own shadow. |
+| Hero video poster | `<video>` element has a `poster="..."` attribute. Painted instantly while the video loads — should visually match the chosen video (mood / darkness). |
 
 **ANTI-SLOP + CONTENT:**
 

@@ -85,7 +85,7 @@ def good_build(tmp_path: Path) -> Path:
         'export function Hero() {\n'
         '  return (\n'
         '    <section className="relative min-h-[100dvh] overflow-hidden bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" />\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
         '      <AnimatedHeading text={"Hello\\nworld."} className="text-7xl text-white" />\n'
         '      <FadeIn delay={800}><p>(212) 234-9876</p></FadeIn>\n'
         '    </section>\n'
@@ -95,7 +95,12 @@ def good_build(tmp_path: Path) -> Path:
     (site / "components" / "ui" / "AnimatedHeading.tsx").write_text(
         '"use client";\n'
         'export function AnimatedHeading({ text, className }: { text: string; className?: string }) {\n'
-        '  return <h1 className={className} style={{ letterSpacing: "-0.04em" }}>{text}</h1>;\n'
+        '  return (\n'
+        '    <h1 className={className} style={{ letterSpacing: "-0.04em", textShadow: "0 2px 24px rgba(0,0,0,0.5)" }}>\n'
+        '      <span className="sr-only">{text}</span>\n'
+        '      <span aria-hidden="true">{text}</span>\n'
+        '    </h1>\n'
+        '  );\n'
         '}'
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
