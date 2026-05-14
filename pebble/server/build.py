@@ -25,6 +25,7 @@ from typing import Optional
 from pebble.log import log
 from pebble.industry import resolve_industry_intel, research_industry
 from pebble.llm import get_llm_client, LLMError
+from pebble.plan import build_pebble_plan
 
 
 def _engine():
@@ -39,6 +40,89 @@ def _engine():
     avoids that and keeps a single source of truth.
     """
     return sys.modules.get("pebble_engine") or sys.modules["__main__"]
+
+
+def _select_dna(answers: dict, pick_random_dna, pick_dna_by_id):
+    """Resolve the build's design DNA.
+
+    If the brief carries a pinned ``_design_dna_id`` (e.g. from the
+    Plan-review UI: "user approved this style, lock it in"), look that
+    card up and use it. Otherwise pick a fresh random DNA. Returns the
+    DNA dict or ``None`` if the DNA module isn't loaded.
+    """
+    if not pick_random_dna:
+        return None
+    pinned_id = (answers.get("_design_dna_id") or "").strip()
+    if pinned_id and pick_dna_by_id:
+        card = pick_dna_by_id(pinned_id)
+        if card:
+            return card
+        log.warning("pinned DNA id %r not found — falling back to random", pinned_id)
+    try:
+        return pick_random_dna()
+    except Exception as e:
+        log.warning("DNA picker failed: %s", e)
+        return None
+
+
+def run_plan(handler) -> None:
+    """Handle ``POST /api/plan``: return a Pebble Plan without running
+    the full build pipeline. Cheap (no LLM call), deterministic given
+    the same brief + pinned DNA id, intended for the UI's pre-build
+    review screen.
+
+    The Plan includes the DNA's id; the UI should pass that id back into
+    ``/api/generate`` as ``_design_dna_id`` to lock the style in for the
+    actual build.
+    """
+    pe = _engine()
+    MAX_REQUEST_BYTES   = pe.MAX_REQUEST_BYTES
+    _slugify            = pe._slugify
+    validate_build_payload = pe.validate_build_payload
+    pick_random_dna     = pe.pick_random_dna
+    pick_dna_by_id      = pe.pick_dna_by_id
+
+    try:
+        length = int(handler.headers.get("Content-Length", "0"))
+    except ValueError:
+        handler._json(400, {"error": "invalid Content-Length header"}); return
+    if length <= 0:
+        handler._json(400, {"error": "empty request body"}); return
+    if length > MAX_REQUEST_BYTES:
+        mb = MAX_REQUEST_BYTES // (1024 * 1024)
+        handler._json(413, {"error": f"request too large (max {mb} MB)"}); return
+
+    try:
+        answers = json.loads(handler.rfile.read(length).decode("utf-8"))
+    except Exception:
+        handler._json(400, {"error": "invalid json"}); return
+
+    answers, err = validate_build_payload(answers)
+    if err:
+        handler._json(400, err); return
+
+    answers["_slug"] = _slugify(answers.get("business_name", "untitled"))
+
+    business_type = answers.get("business_type", answers.get("industry", ""))
+    industry_key, industry_intel = (None, None)
+    if business_type:
+        try:
+            industry_key, industry_intel = resolve_industry_intel(business_type)
+            if industry_intel:
+                answers["_industry_intel_key"] = industry_key
+        except Exception as e:
+            log.warning("industry intel resolution failed: %s", e)
+
+    design_dna = _select_dna(answers, pick_random_dna, pick_dna_by_id)
+    if design_dna:
+        answers["_design_dna"] = design_dna.get("id")
+
+    plan = build_pebble_plan(answers, industry_intel, design_dna)
+    handler._json(200, {
+        "plan":         plan,
+        "industry_key": industry_key,
+        "dna_id":       design_dna.get("id") if design_dna else None,
+    })
 
 
 def run_build(handler, generate: bool) -> None:
@@ -166,14 +250,14 @@ def run_build(handler, generate: bool) -> None:
     # Style DNA — random per-build aesthetic personality. Same business +
     # same industry generates a different-looking site each time because the
     # DNA dictates fonts, hero structure, motion, and layout posture.
+    # Honors `_design_dna_id` in the brief when the Plan-review UI has
+    # already locked in a style.
     design_dna = None
-    if _DNA_OK and pick_random_dna:
-        try:
-            design_dna = pick_random_dna()
+    if _DNA_OK:
+        design_dna = _select_dna(answers, pick_random_dna, pe.pick_dna_by_id)
+        if design_dna:
             answers["_design_dna"] = design_dna["id"]
             log.info("Design DNA: %s (%s)", design_dna['label'], design_dna['id'])
-        except Exception as e:
-            log.warning("DNA picker failed: %s", e)
 
     notes = audit_design_system(ds_text) if ds_text else []
     prompt = build_prompt(
@@ -194,6 +278,14 @@ def run_build(handler, generate: bool) -> None:
             for img in saved_answers["design_reference_images"] if isinstance(img, dict)
         ]
     (out_dir / "brief.json").write_text(json.dumps(saved_answers, indent=2), encoding="utf-8")
+    # Pebble Plan — the user-facing "here's what I'll build" summary the UI
+    # shows before/after generation. Pure derivation of brief + intel + DNA;
+    # safe to regenerate from those three inputs at any point.
+    try:
+        plan = build_pebble_plan(saved_answers, industry_intel, design_dna)
+        (out_dir / "plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
+    except Exception as e:
+        log.warning("Pebble Plan generation failed: %s", e)
     (out_dir / "PROMPT.md").write_text(prompt, encoding="utf-8")
 
     if not generate:

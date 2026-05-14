@@ -19,6 +19,7 @@ import pytest
 from pebble.evals import BuildContext, run_checks
 from pebble.evals import checks
 from pebble.evals.report import format_summary, format_text, to_json
+from pebble.plan import build_pebble_plan
 
 
 # ---------------------------------------------------------------------------
@@ -40,13 +41,18 @@ def good_build(tmp_path: Path) -> Path:
     (site / "components" / "ui").mkdir(parents=True)
     (site / "config").mkdir()
 
-    (d / "brief.json").write_text(json.dumps({
+    fixture_brief = {
         "business_name": "Good Co",
         "business_type": "plumbing",
         "phone": "(212) 234-9876",
         "_design_dna": "swiss_magazine",
         "_industry_intel_key": "plumbing",
-    }))
+    }
+    (d / "brief.json").write_text(json.dumps(fixture_brief))
+    # Pebble Plan emitted by every real build — the plan_present check
+    # validates the schema, not the page count, so a minimal plan from
+    # the brief alone is enough here.
+    (d / "plan.json").write_text(json.dumps(build_pebble_plan(fixture_brief), indent=2))
 
     (site / "package.json").write_text(json.dumps({
         "name": "good",

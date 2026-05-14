@@ -218,6 +218,7 @@ _STRING_LIMITS = {
     "business_name":     200,
     "business_type":     200,
     "industry":          200,
+    "audience":          500,
     "location":          500,
     "services_offered":  5000,
     "phone":             200,
@@ -1255,9 +1256,12 @@ Extract and synthesize across all references:
     address = (answers.get("address") or "[ADDRESS]").strip()       or "[ADDRESS]"
     services_offered = (answers.get("services_offered") or "*(infer from industry — list the standard services for this business type)*").strip()
 
+    audience = (answers.get("audience") or "").strip() or "*(Not specified — infer from the industry's typical customer profile.)*"
+
     rendered = PROMPT_TEMPLATE.format(
         business_name=answers.get("business_name", ""),
         business_type=industry,
+        audience=audience,
         location=answers.get("location", ""),
         services_offered=services_offered,
         phone=phone,
@@ -1514,6 +1518,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_build(generate=False)
             elif self.path == "/api/generate":
                 self._handle_build(generate=True)
+            elif self.path == "/api/plan":
+                self._handle_plan()
             elif self.path == "/api/setup":
                 self._handle_setup()
             else:
@@ -1716,6 +1722,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
         the handler class stays focused on dispatch."""
         from pebble.server.build import run_build
         run_build(self, generate)
+
+    def _handle_plan(self):
+        """Plan-preview route. Returns a Pebble Plan dict for the given
+        brief WITHOUT running the LLM build. Body lives in
+        :mod:`pebble.server.build`.
+        """
+        from pebble.server.build import run_plan
+        run_plan(self)
 
     def _serve_file(self, path: Path, content_type: str):
         if not path.exists():

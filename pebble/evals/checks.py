@@ -1541,7 +1541,64 @@ def industry_pages_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 29. deploy_to_vercel_scaffold — FOUNDATION
+# 29. plan_present — FOUNDATION (May 2026 Codex-spec product vision)
+# ---------------------------------------------------------------------------
+
+# Required top-level fields in plan.json. Keep this aligned with
+# pebble.plan.PLAN_SCHEMA_VERSION 1.0.
+_PLAN_REQUIRED_KEYS = {
+    "schema_version", "audience", "goal", "pages", "features",
+    "style", "setup_needs", "next_steps", "meta",
+}
+
+
+@check_metadata(details_file_key="missing_keys")
+def plan_present(ctx: BuildContext) -> CheckResult:
+    """Every build must emit plan.json alongside brief.json.
+
+    The Pebble Plan is the user-facing "here's what I'll build" summary
+    that the upcoming workspace UI shows before/after generation. The
+    engine writes it deterministically from the brief + industry intel
+    + DNA; failure here means ``run_build`` short-circuited before the
+    plan-write step.
+    """
+    plan_path = ctx.build_dir / "plan.json"
+    if not plan_path.exists():
+        return CheckResult(
+            "plan_present", "fail",
+            "plan.json missing from build directory",
+            details={"expected": "plan.json"},
+        )
+
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return CheckResult(
+            "plan_present", "fail",
+            f"plan.json present but unparseable: {e}",
+        )
+
+    if not isinstance(plan, dict):
+        return CheckResult("plan_present", "fail", "plan.json is not a JSON object")
+
+    missing_keys = sorted(_PLAN_REQUIRED_KEYS - set(plan.keys()))
+    if missing_keys:
+        return CheckResult(
+            "plan_present", "fail",
+            f"plan.json missing required keys: {', '.join(missing_keys)}",
+            details={"missing_keys": missing_keys},
+        )
+
+    return CheckResult(
+        "plan_present", "pass",
+        f"plan.json present (schema {plan.get('schema_version', '?')}, "
+        f"{len(plan.get('pages', []))} pages, "
+        f"{len(plan.get('features', []))} features)",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 30. deploy_to_vercel_scaffold — FOUNDATION
 # ---------------------------------------------------------------------------
 
 _DEPLOY_HEADING_RE = re.compile(r"^#{1,3}\s*Deploy\b", re.IGNORECASE | re.MULTILINE)
@@ -1629,6 +1686,7 @@ ALL_CHECKS = [
     imports_resolve_to_dependencies,
     deploy_to_vercel_scaffold,
     industry_pages_present,
+    plan_present,
     site_compiles,
 ]
 

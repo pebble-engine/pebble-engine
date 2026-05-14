@@ -15,7 +15,7 @@ python pebble_engine.py
 # Override port if 8000 is taken
 python pebble_engine.py --port 8765
 
-# Test suite — 206 passing as of ce909b0
+# Test suite — 255 passing as of 2026-05-14
 python -m pytest -q
 
 # Run a single test file
@@ -50,11 +50,12 @@ Environment flags that change behavior (see `.env`):
 `pebble_engine.py` (~1800 lines) is the HTTP server + build orchestrator. Most of the build pipeline has been carved out into the `pebble/` package:
 
 - `pebble.llm` — Gemini + Anthropic clients with vision support
-- `pebble.industry` — 52-industry lookup with LLM fallback for new industries, fuzzy matching, writes new entries back to `industries.json`
+- `pebble.industry` — 63-industry lookup with LLM fallback for new industries, fuzzy matching, writes new entries back to `industries.json`; also exposes `PAGE_CATALOG` (11 industry-aware page types) + `build_pages_block`
+- `pebble.plan` — pure-function Pebble Plan generator. `build_pebble_plan(brief, industry_intel, dna) → dict`. Emitted as `plan.json` for every build; powers the upcoming `/api/plan` preview endpoint.
 - `pebble.postbuild` — Imagen image generation, npm install, `next dev`, Playwright screenshots
 - `pebble.repair` — critique-and-fix loop wired in via `PEBBLE_AUTO_REPAIR`
-- `pebble.evals` — 27 FOUNDATION checks + repair-corpus harness
-- `pebble.server.build` — the actual `/api/generate` request body
+- `pebble.evals` — 30 FOUNDATION checks + repair-corpus harness
+- `pebble.server.build` — the actual `/api/generate` and `/api/plan` request bodies
 
 `/api/generate` runs this sequence for each build:
 
@@ -66,6 +67,7 @@ quiz → slug + brief
   → Style DNA pick (random one of 10 cards in style_dna.py)
   → anti-slop audit (CONVERGENCE_FONTS, ACCEPTABLE_DISPLAY_PAIRS, WATCH_STYLES)
   → PROMPT.md assembled from skills/prompt_template.md
+  → plan.json emitted alongside brief.json (Pebble Plan = 7-field user-facing summary)
   → LLM call → response parsed → files written to output/<slug>/site/
   → [if PEBBLE_USE_IMAGEN] Imagen 4 swaps Pexels stills
   → [if PEBBLE_AUTO_RUN] npm install → next dev → screenshots
@@ -141,3 +143,13 @@ See `.claude/UNSUPERVISED_SESSION_SUMMARY.md` for the full workflow patterns and
 - `.claude/UNSUPERVISED_SESSION_SUMMARY.md` — most recent hand-off summary
 - `.claude/OVERNIGHT_OVERHAUL_SUMMARY.md` — the May 14 foundation overhaul narrative
 - User memory at `~/.claude/projects/C--Users-marci-pebble-engine/memory/` — persistent across sessions, auto-loaded
+
+## Product direction (May 2026 Codex-assisted spec)
+
+The current engine is the back-end seed for a much larger app experience described in `project_pebble_product_vision.md` (user memory). High-level:
+
+- **Audience:** universal design — anyone building a website or small business app. *Never* framed as "for seniors" or "50+", even though older users benefit. See `feedback_universal_design_not_senior.md`.
+- **Product principle:** "Everything explained. Everything connected. Everything editable later."
+- **Five future modes:** Guided (one Q at a time) · Chat (plain-language edits) · Design (click-to-edit preview) · Setup (domains/hosting/email/payments/SEO) · Learn (jargon explained inline). Today only the Guided questionnaire prototype exists at localhost:8000.
+- **Pebble Plan:** the 7-field user-facing "here's what I'll build" summary now emitted as `plan.json` for every build — see `pebble/plan.py` and the `/api/plan` preview endpoint.
+- **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships.

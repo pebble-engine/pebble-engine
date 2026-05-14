@@ -77,6 +77,16 @@ def _write_foundation_files(site: Path) -> None:
     # Deploy-to-Vercel scaffold (vercel.json + README Deploy section).
     (site / "vercel.json").write_text('{"framework":"nextjs"}')
     (site / "README.md").write_text("# Site\n\n## Deploy\n\nPush to GitHub + import at vercel.com/new.\n")
+    # Pebble Plan — every build emits plan.json alongside brief.json.
+    # Synthesised from the brief inline (assumes the caller wrote brief.json
+    # to site.parent BEFORE calling this helper).
+    build_dir = site.parent
+    try:
+        brief = json.loads((build_dir / "brief.json").read_text())
+    except FileNotFoundError:
+        brief = {"business_name": "X", "business_type": "y"}
+    from pebble.plan import build_pebble_plan as _bpp
+    (build_dir / "plan.json").write_text(json.dumps(_bpp(brief), indent=2))
 
 
 def _write_minimal_package_json(site: Path) -> None:
@@ -126,13 +136,18 @@ def broken_build(tmp_path: Path) -> Path:
     (site / "components" / "sections").mkdir(parents=True)
     (site / "components" / "ui").mkdir(parents=True)
 
-    (d / "brief.json").write_text(json.dumps({
+    broken_brief = {
         "business_name": "Broken Co",
         "business_type": "hvac",
         "phone": "(212) 234-9876",
         "_design_dna": "swiss_magazine",
         "_industry_intel_key": "hvac",
-    }))
+    }
+    (d / "brief.json").write_text(json.dumps(broken_brief))
+    # Pebble Plan — every build emits plan.json; keep the broken_build's
+    # intentional failures scoped to the three this fixture targets.
+    from pebble.plan import build_pebble_plan as _bpp
+    (d / "plan.json").write_text(json.dumps(_bpp(broken_brief), indent=2))
 
     (site / "package.json").write_text(json.dumps({"name":"broken","dependencies":{"resend":"^4.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({

@@ -39,6 +39,7 @@ These values were computed from the Industry Intelligence above + the quiz answe
 
 - **Business name:** {business_name}
 - **Type of business:** {business_type}
+- **Audience:** {audience}
 - **Location / service area:** {location}
 - **Services offered:** {services_offered}
 - **Phone:** {phone}
