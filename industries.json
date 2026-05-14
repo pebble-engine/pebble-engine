@@ -30,6 +30,10 @@
       "pastel_colors",
       "playful_fonts",
       "cute_bug_illustrations"
+    ],
+    "pages": [
+      "service_area",
+      "guarantee"
     ]
   },
   "real_estate": {
@@ -64,6 +68,10 @@
       "neon_colors",
       "cluttered_grids",
       "stock_keys_imagery"
+    ],
+    "pages": [
+      "portfolio",
+      "team"
     ]
   },
   "auto_dealership": {
@@ -98,6 +106,10 @@
       "pastel_colors",
       "playful_fonts",
       "tiny_inventory_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "team"
     ]
   },
   "barbershop": {
@@ -131,6 +143,10 @@
       "feminine_pastels",
       "playful_fonts",
       "corporate_stock_photos"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "restaurant": {
@@ -165,6 +181,10 @@
       "stock_food_photos",
       "tiny_menu_text",
       "fake_5_star_carousels"
+    ],
+    "pages": [
+      "menu",
+      "booking"
     ]
   },
   "law_firm": {
@@ -199,6 +219,10 @@
       "playful_animations",
       "gavels_and_scales_cliches",
       "stock_handshake_photos"
+    ],
+    "pages": [
+      "specialties",
+      "team"
     ]
   },
   "dental": {
@@ -233,6 +257,11 @@
       "scary_dental_imagery",
       "dark_backgrounds",
       "playful_fonts"
+    ],
+    "pages": [
+      "team",
+      "insurance_fees",
+      "booking"
     ]
   },
   "medical_spa": {
@@ -266,6 +295,11 @@
       "neon_colors",
       "cheap_stock_photos",
       "fake_results_claims"
+    ],
+    "pages": [
+      "team",
+      "portfolio",
+      "booking"
     ]
   },
   "roofing": {
@@ -300,6 +334,11 @@
       "luxury_aesthetics",
       "abstract_design",
       "stock_house_photos"
+    ],
+    "pages": [
+      "portfolio",
+      "service_area",
+      "guarantee"
     ]
   },
   "landscaping": {
@@ -334,6 +373,10 @@
       "dark_backgrounds",
       "tech_aesthetics",
       "tiny_portfolio_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "service_area"
     ]
   },
   "plumbing": {
@@ -368,6 +411,10 @@
       "luxury_aesthetics",
       "playful_fonts",
       "abstract_imagery"
+    ],
+    "pages": [
+      "service_area",
+      "guarantee"
     ]
   },
   "hvac": {
@@ -402,6 +449,11 @@
       "dark_backgrounds",
       "luxury_aesthetics",
       "playful_fonts"
+    ],
+    "pages": [
+      "service_area",
+      "guarantee",
+      "pricing"
     ]
   },
   "electrician": {
@@ -436,6 +488,10 @@
       "playful_fonts",
       "luxury_aesthetics",
       "abstract_lightning_clipart"
+    ],
+    "pages": [
+      "service_area",
+      "guarantee"
     ]
   },
   "gym_fitness": {
@@ -469,6 +525,11 @@
       "pastel_colors",
       "delicate_typography",
       "stock_smiling_fitness_models"
+    ],
+    "pages": [
+      "events_schedule",
+      "team",
+      "pricing"
     ]
   },
   "salon_beauty": {
@@ -502,6 +563,11 @@
       "neon_colors",
       "cluttered_layouts",
       "tiny_service_lists"
+    ],
+    "pages": [
+      "team",
+      "booking",
+      "pricing"
     ]
   },
   "photography": {
@@ -535,6 +601,11 @@
       "small_portfolio_thumbnails",
       "watermark_overlays",
       "stock_imagery"
+    ],
+    "pages": [
+      "portfolio",
+      "pricing",
+      "booking"
     ]
   },
   "accounting": {
@@ -569,6 +640,10 @@
       "playful_fonts",
       "abstract_imagery",
       "stock_calculator_photos"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "insurance": {
@@ -603,6 +678,10 @@
       "scary_imagery",
       "fine_print_dense_layouts",
       "stock_family_photos"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "veterinary": {
@@ -637,6 +716,10 @@
       "cold_clinical_imagery",
       "scary_medical_photos",
       "playful_overload"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "moving_company": {
@@ -671,6 +754,10 @@
       "luxury_aesthetics",
       "playful_fonts",
       "stock_box_photos"
+    ],
+    "pages": [
+      "service_area",
+      "booking"
     ]
   },
   "cleaning_service": {
@@ -705,6 +792,10 @@
       "dark_backgrounds",
       "playful_fonts",
       "stock_cleaning_photos"
+    ],
+    "pages": [
+      "service_area",
+      "booking"
     ]
   },
   "tattoo_studio": {
@@ -739,6 +830,11 @@
       "corporate_aesthetics",
       "stock_imagery",
       "tiny_portfolio_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "team",
+      "booking"
     ]
   },
   "flooring": {
@@ -772,6 +868,10 @@
       "tech_aesthetics",
       "playful_fonts",
       "tiny_product_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "service_area"
     ]
   },
   "painting_contractor": {
@@ -806,6 +906,10 @@
       "dark_backgrounds",
       "luxury_aesthetics",
       "stock_paint_photos"
+    ],
+    "pages": [
+      "portfolio",
+      "service_area"
     ]
   },
   "pool_service": {
@@ -840,6 +944,10 @@
       "dark_backgrounds",
       "playful_fonts",
       "stock_pool_photos"
+    ],
+    "pages": [
+      "service_area",
+      "pricing"
     ]
   },
   "wedding_planning": {
@@ -873,6 +981,11 @@
       "neon_colors",
       "stock_wedding_photos",
       "cluttered_layouts"
+    ],
+    "pages": [
+      "portfolio",
+      "team",
+      "booking"
     ]
   },
   "childcare": {
@@ -908,6 +1021,10 @@
       "dark_backgrounds",
       "stock_child_photos",
       "corporate_aesthetics"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "tutoring": {
@@ -941,6 +1058,11 @@
       "dark_backgrounds",
       "luxury_aesthetics",
       "stock_classroom_photos"
+    ],
+    "pages": [
+      "specialties",
+      "team",
+      "pricing"
     ]
   },
   "personal_trainer": {
@@ -974,6 +1096,10 @@
       "pastel_colors",
       "delicate_typography",
       "stock_fitness_photos"
+    ],
+    "pages": [
+      "pricing",
+      "booking"
     ]
   },
   "mortgage_broker": {
@@ -1009,6 +1135,10 @@
       "luxury_aesthetics",
       "playful_fonts",
       "stock_house_keys_photos"
+    ],
+    "pages": [
+      "team",
+      "booking"
     ]
   },
   "chiropractor": {
@@ -1043,6 +1173,11 @@
       "scary_medical_imagery",
       "dark_backgrounds",
       "playful_fonts"
+    ],
+    "pages": [
+      "team",
+      "insurance_fees",
+      "booking"
     ]
   },
   "physical_therapy": {
@@ -1076,6 +1211,11 @@
       "scary_medical_imagery",
       "dark_backgrounds",
       "playful_fonts"
+    ],
+    "pages": [
+      "team",
+      "insurance_fees",
+      "booking"
     ]
   },
   "optometry": {
@@ -1110,6 +1250,11 @@
       "playful_fonts",
       "stock_eye_chart_imagery",
       "dark_backgrounds"
+    ],
+    "pages": [
+      "team",
+      "insurance_fees",
+      "booking"
     ]
   },
   "urgent_care": {
@@ -1143,6 +1288,10 @@
       "scary_medical_imagery",
       "luxury_aesthetics",
       "slow_animations"
+    ],
+    "pages": [
+      "service_area",
+      "insurance_fees"
     ]
   },
   "food_truck": {
@@ -1176,6 +1325,10 @@
       "corporate_aesthetics",
       "stock_food_photos",
       "tiny_menu_text"
+    ],
+    "pages": [
+      "menu",
+      "events_schedule"
     ]
   },
   "catering": {
@@ -1210,6 +1363,11 @@
       "stock_food_photos",
       "tiny_thumbnail_galleries",
       "playful_fonts"
+    ],
+    "pages": [
+      "menu",
+      "portfolio",
+      "booking"
     ]
   },
   "event_venue": {
@@ -1244,6 +1402,11 @@
       "neon_colors",
       "tiny_gallery_thumbnails",
       "cluttered_layouts"
+    ],
+    "pages": [
+      "portfolio",
+      "booking",
+      "pricing"
     ]
   },
   "nightclub_bar": {
@@ -1277,6 +1440,10 @@
       "pastel_colors",
       "delicate_typography",
       "stock_party_photos"
+    ],
+    "pages": [
+      "menu",
+      "events_schedule"
     ]
   },
   "hotel_bnb": {
@@ -1310,6 +1477,10 @@
       "neon_colors",
       "tiny_room_thumbnails",
       "stock_hotel_photos"
+    ],
+    "pages": [
+      "portfolio",
+      "booking"
     ]
   },
   "travel_agency": {
@@ -1343,6 +1514,11 @@
       "stock_travel_photos",
       "cluttered_layouts",
       "tiny_destination_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "team",
+      "booking"
     ]
   },
   "interior_design": {
@@ -1377,6 +1553,11 @@
       "tiny_portfolio_thumbnails",
       "stock_imagery",
       "playful_fonts"
+    ],
+    "pages": [
+      "portfolio",
+      "process",
+      "team"
     ]
   },
   "architecture": {
@@ -1411,6 +1592,11 @@
       "playful_fonts",
       "stock_imagery",
       "small_project_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "process",
+      "team"
     ]
   },
   "construction": {
@@ -1446,6 +1632,10 @@
       "luxury_aesthetics",
       "playful_fonts",
       "tiny_project_thumbnails"
+    ],
+    "pages": [
+      "portfolio",
+      "process"
     ]
   },
   "security_company": {
@@ -1480,6 +1670,9 @@
       "playful_fonts",
       "luxury_aesthetics",
       "scary_stock_photos"
+    ],
+    "pages": [
+      "service_area"
     ]
   },
   "it_tech_support": {
@@ -1514,6 +1707,10 @@
       "playful_fonts",
       "stock_computer_imagery",
       "jargon_overload"
+    ],
+    "pages": [
+      "service_area",
+      "guarantee"
     ]
   },
   "marketing_agency": {
@@ -1548,6 +1745,11 @@
       "generic_corporate_aesthetics",
       "stock_imagery",
       "buzzword_overload"
+    ],
+    "pages": [
+      "portfolio",
+      "process",
+      "team"
     ]
   },
   "ecommerce": {
@@ -1581,6 +1783,10 @@
       "tiny_product_thumbnails",
       "cluttered_grids",
       "stock_product_photos"
+    ],
+    "pages": [
+      "portfolio",
+      "pricing"
     ]
   },
   "nonprofit": {
@@ -1616,6 +1822,10 @@
       "luxury_aesthetics",
       "stock_diversity_photos",
       "guilt_imagery"
+    ],
+    "pages": [
+      "team",
+      "events_schedule"
     ]
   },
   "church": {
@@ -1650,6 +1860,10 @@
       "stock_church_photos",
       "judgmental_tone",
       "cluttered_layouts"
+    ],
+    "pages": [
+      "events_schedule",
+      "team"
     ]
   },
   "funeral_home": {
@@ -1683,6 +1897,10 @@
       "dark_imagery",
       "playful_animations",
       "stock_grief_photos"
+    ],
+    "pages": [
+      "team",
+      "process"
     ]
   },
   "car_wash": {
@@ -1716,6 +1934,9 @@
       "luxury_aesthetics",
       "playful_fonts",
       "stock_car_photos"
+    ],
+    "pages": [
+      "pricing"
     ]
   },
   "storage_facility": {
@@ -1750,6 +1971,9 @@
       "luxury_aesthetics",
       "playful_fonts",
       "stock_storage_photos"
+    ],
+    "pages": [
+      "pricing"
     ]
   },
   "specialty_coffee_roaster": {
@@ -1784,6 +2008,10 @@
       "neon or artificial colors",
       "corporate typography",
       "hidden roast dates"
+    ],
+    "pages": [
+      "menu",
+      "process"
     ]
   },
   "pet_grooming": {
@@ -1819,6 +2047,10 @@
       "anxious-pet imagery",
       "stiff corporate fonts",
       "discount-store framing"
+    ],
+    "pages": [
+      "portfolio",
+      "booking"
     ]
   },
   "bakery": {
@@ -1854,6 +2086,9 @@
       "corporate chain aesthetic",
       "generic stock food photos",
       "discount-bakery framing"
+    ],
+    "pages": [
+      "menu"
     ]
   },
   "yoga_studio": {
@@ -1888,6 +2123,11 @@
       "before/after body-transformation hype",
       "neon colors and high-intensity imagery",
       "exclusive elite-only framing"
+    ],
+    "pages": [
+      "events_schedule",
+      "team",
+      "pricing"
     ]
   },
   "coffee_shop": {
@@ -1922,6 +2162,9 @@
       "sterile minimalist white",
       "pretentious third-wave coffee snob framing",
       "discount-shop messaging"
+    ],
+    "pages": [
+      "menu"
     ]
   },
   "massage_therapy": {
@@ -1956,6 +2199,10 @@
       "intimidating spa-day stock imagery",
       "before/after weight loss framing",
       "aggressive promotional copy"
+    ],
+    "pages": [
+      "booking",
+      "insurance_fees"
     ]
   },
   "handyman": {
@@ -1991,6 +2238,10 @@
       "intimidating big-corporate visuals",
       "discount-only framing that signals low quality",
       "complex jargon-heavy service descriptions"
+    ],
+    "pages": [
+      "service_area",
+      "booking"
     ]
   },
   "dance_studio": {
@@ -2026,6 +2277,11 @@
       "elite-only / 'only for serious dancers' framing",
       "intimidating competition-track aesthetics",
       "stock dancer imagery that feels exclusionary"
+    ],
+    "pages": [
+      "events_schedule",
+      "team",
+      "pricing"
     ]
   },
   "martial_arts_dojo": {
@@ -2062,6 +2318,11 @@
       "intimidating-only combat imagery",
       "young-male-only audience signals",
       "violent / fear-based marketing"
+    ],
+    "pages": [
+      "events_schedule",
+      "team",
+      "pricing"
     ]
   },
   "jeweler": {
@@ -2098,6 +2359,11 @@
       "mall-jewelry-store framing",
       "loud promotional copy",
       "pure-white sterile lab imagery"
+    ],
+    "pages": [
+      "portfolio",
+      "process",
+      "booking"
     ]
   },
   "psychotherapist": {
@@ -2134,6 +2400,10 @@
       "aggressive marketing or before/after framing",
       "promises of specific outcomes",
       "diagnostic labels in marketing copy"
+    ],
+    "pages": [
+      "specialties",
+      "insurance_fees"
     ]
   }
 }

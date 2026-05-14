@@ -57,10 +57,16 @@ The Design DNA block at the top of this prompt names this build's aesthetic iden
 
 ### Required Pages
 
+**FOUNDATION PAGES (every build, always):**
+
 1. **Homepage** (`app/page.tsx`) — landing page, full of life, follows the DNA's posture
 2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a generic card grid
 3. **About** (`app/about/page.tsx`) — editorial story
 4. **Contact** (`app/contact/page.tsx`) — REAL working form (Server Action + Resend SDK — see Code Pattern 8). NOT an `onSubmit` with a hardcoded success state. The form posts to a Next.js Server Action, which calls `resend.emails.send(...)` and returns `{{ ok: true | false, error?: string }}`. When `RESEND_API_KEY` is unset (development without keys), the Server Action returns `{{ ok: true }}` without sending — the eval and the UX still flow cleanly. Map embed below the form.
+
+**INDUSTRY-AWARE PAGES (rendered dynamically per build):**
+
+{pages_block}
 
 ### Homepage — Default Section Structure (override per DNA)
 

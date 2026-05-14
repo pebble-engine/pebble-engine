@@ -1458,7 +1458,90 @@ def imports_resolve_to_dependencies(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 28. deploy_to_vercel_scaffold — FOUNDATION
+# 28. industry_pages_present — FOUNDATION (May 2026 page expansion)
+# ---------------------------------------------------------------------------
+
+# Universal extra pages every build adds (in addition to the 4 foundation
+# pages: home, services, about, contact). Routes are fixed.
+_UNIVERSAL_EXTRA_ROUTES = {
+    "faq":     "app/faq/page.tsx",
+    "privacy": "app/privacy/page.tsx",
+    "terms":   "app/terms/page.tsx",
+}
+
+
+@check_metadata(details_file_key="missing")
+def industry_pages_present(ctx: BuildContext) -> CheckResult:
+    """Industry-aware pages from the build's industry must all be generated.
+
+    Every build must include:
+      - The 4 foundation pages (covered by required_files_present)
+      - The 3 universal extras: FAQ, Privacy, Terms
+      - The N industry-specific pages declared in industries.json under
+        the build's industry key, e.g. yoga_studio → [events_schedule,
+        team, pricing]
+
+    Maps each page ID to its expected file path via PAGE_CATALOG.
+    Reports any missing pages so the repair loop can re-emit them.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("industry_pages_present", "skip", "no site directory")
+
+    industry_key = ctx.brief.get("_industry_intel_key")
+    if not industry_key:
+        return CheckResult(
+            "industry_pages_present", "skip",
+            "no _industry_intel_key in brief — can't determine required pages",
+        )
+
+    # Lazy import to avoid hard dependency on style_dna / industry modules
+    # at eval-suite import time (matches the pattern in dna_display_font_honored).
+    try:
+        from pebble.industry import (
+            PAGE_CATALOG,
+            UNIVERSAL_EXTRA_PAGES,
+            _load_industries_intel,
+        )
+    except Exception as e:
+        return CheckResult(
+            "industry_pages_present", "error",
+            f"pebble.industry not importable: {e}",
+        )
+
+    industries = _load_industries_intel()
+    entry = industries.get(industry_key) or {}
+    industry_pages = entry.get("pages") or []
+
+    # Build the full set of required EXTRA pages (foundation pages are
+    # covered by required_files_present; we only check the additions).
+    expected_paths: list[str] = []
+    for pid in UNIVERSAL_EXTRA_PAGES:
+        if pid in _UNIVERSAL_EXTRA_ROUTES:
+            expected_paths.append(_UNIVERSAL_EXTRA_ROUTES[pid])
+
+    for pid in industry_pages:
+        if pid in PAGE_CATALOG:
+            route = PAGE_CATALOG[pid]["route_segment"]
+            expected_paths.append(f"app/{route}/page.tsx")
+
+    missing = [p for p in expected_paths if not (ctx.site_dir / p).exists()]
+
+    if not missing:
+        return CheckResult(
+            "industry_pages_present", "pass",
+            f"all {len(expected_paths)} industry-aware pages present "
+            f"({len(industry_pages)} industry + {len(UNIVERSAL_EXTRA_PAGES)} universal)",
+        )
+
+    return CheckResult(
+        "industry_pages_present", "fail",
+        f"{len(missing)} industry-aware page(s) missing: {', '.join(missing)}",
+        details={"missing": missing, "industry_key": industry_key},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 29. deploy_to_vercel_scaffold — FOUNDATION
 # ---------------------------------------------------------------------------
 
 _DEPLOY_HEADING_RE = re.compile(r"^#{1,3}\s*Deploy\b", re.IGNORECASE | re.MULTILINE)
@@ -1545,6 +1628,7 @@ ALL_CHECKS = [
     resend_in_dependencies,
     imports_resolve_to_dependencies,
     deploy_to_vercel_scaffold,
+    industry_pages_present,
     site_compiles,
 ]
 

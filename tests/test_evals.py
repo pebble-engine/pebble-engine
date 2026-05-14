@@ -140,6 +140,15 @@ def good_build(tmp_path: Path) -> Path:
         "2. Import the repo at https://vercel.com/new.\n"
         "3. Add `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL` in the Vercel dashboard.\n"
     )
+    # Industry-aware pages (May 2026 expansion). For brief["_industry_intel_key"]
+    # = "plumbing", industries.json declares pages = ["service_area", "guarantee"].
+    # Plus the universal extras: faq, privacy, terms. Five stub pages total.
+    for route in ("faq", "privacy", "terms", "service-area", "guarantee"):
+        page_dir = site / "app" / route
+        page_dir.mkdir(parents=True, exist_ok=True)
+        (page_dir / "page.tsx").write_text(
+            f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
+        )
     return d
 
 

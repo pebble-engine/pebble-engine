@@ -794,6 +794,7 @@ from pebble.industry import (
     resolve_industry_intel,
     research_industry,
     build_industry_intel_block,
+    build_pages_block,
 )
 
 
@@ -1075,6 +1076,12 @@ Extract and synthesize across all references:
     # Industry intelligence prompt block
     industry_intel_block = build_industry_intel_block(industry, industry_intel)
 
+    # Industry-aware pages block — tells the LLM which pages to generate
+    # beyond the 4 foundation pages, based on the industry's `pages` field
+    # in industries.json. See pebble.industry.PAGE_CATALOG for the 11 page
+    # types + 3 universal extras (FAQ, Privacy, Terms).
+    pages_block = build_pages_block(industry_intel)
+
     # Hero video block (Pexels Video API, when industry intel says hero_type=video)
     if hero_video_url:
         hero_video_block = (
@@ -1259,6 +1266,7 @@ Extract and synthesize across all references:
         visitor_action=visitor_action,
         booking_system=booking_str,
         industry_intel_block=industry_intel_block,
+        pages_block=pages_block,
         resolved_contract=resolved_contract,
         reference_block=reference_block,
         design_reference_block=design_reference_block,
