@@ -46,6 +46,7 @@ from pebble.log import log
 PROJECT_ROOT = Path(__file__).parent.resolve()
 UIUX_SCRIPTS = PROJECT_ROOT / "skills" / "ui-ux-pro-max" / "scripts"
 INDEX_HTML = PROJECT_ROOT / "ui" / "index.html"
+UI_V2_DIR = PROJECT_ROOT / "ui" / "v2"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 RESEARCH_CACHE_DIR = OUTPUT_DIR / "research_cache"
 INDUSTRIES_JSON = PROJECT_ROOT / "industries.json"
@@ -1489,6 +1490,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
         try:
             if path_only in ("/", "/index.html"):
                 self._serve_file(INDEX_HTML, "text/html; charset=utf-8")
+            elif path_only.startswith("/v2"):
+                self._handle_v2()
             elif self.path == "/api/health":
                 self._handle_health()
             elif self.path == "/api/industries":
@@ -1660,6 +1663,41 @@ class PebbleHandler(BaseHTTPRequestHandler):
             "provider": getattr(client, "provider", None),
             "model": getattr(client, "model", None),
         })
+
+    def _handle_v2(self):
+        """Serve the v2 UI under `ui/v2/` at the URL `/v2/<relative-path>`.
+
+        Routes:
+        - ``/v2`` or ``/v2/`` → ``welcome.html`` (the entry point)
+        - ``/v2/<screen>.html`` → the matching screen
+        - ``/v2/<asset>`` → static asset (app.js, brand images, etc.)
+        """
+        rel = self.path[len("/v2"):].lstrip("/")
+        if not rel:
+            rel = "welcome.html"
+        if ".." in rel.split("/") or rel.startswith("/"):
+            self.send_response(403); self.end_headers(); return
+        file = UI_V2_DIR / rel
+        if not file.exists() or not file.is_file():
+            self.send_response(404); self.end_headers()
+            self.wfile.write(f"v2 asset not found: {rel}".encode()); return
+        ext = file.suffix.lstrip(".").lower()
+        ct_map = {
+            "html": "text/html; charset=utf-8",
+            "js":   "application/javascript; charset=utf-8",
+            "css":  "text/css; charset=utf-8",
+            "json": "application/json; charset=utf-8",
+            "svg":  "image/svg+xml",
+            "png":  "image/png",
+            "jpg":  "image/jpeg",
+            "jpeg": "image/jpeg",
+            "webp": "image/webp",
+            "ico":  "image/x-icon",
+            "woff": "font/woff",
+            "woff2":"font/woff2",
+        }
+        ct = ct_map.get(ext, "application/octet-stream")
+        self._serve_file(file, ct)
 
     def _handle_static(self):
         """Serve any file under `ui/` at the URL `/static/<relative-path>`.

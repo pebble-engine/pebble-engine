@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Pebble — Building Your Draft</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=Literata:wght@600;700&amp;family=JetBrains+Mono:wght@400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary-fixed-variant": "#344d32", "on-tertiary-fixed-variant": "#663d1e",
+                        "on-primary": "#ffffff", "primary-fixed": "#b7ebf9", "surface-container-highest": "#e2e2e3",
+                        "on-error": "#ffffff", "error-container": "#ffdad6", "secondary-fixed-dim": "#b1ceac",
+                        "surface-tint": "#326571", "inverse-primary": "#9bcfdc", "tertiary-container": "#8b5c3a",
+                        "tertiary": "#6f4525", "on-secondary": "#ffffff", "on-background": "#191c1d",
+                        "secondary-container": "#cdebc6", "surface": "#f9f9fa", "surface-dim": "#d9dadb",
+                        "secondary": "#4b6548", "surface-container-lowest": "#ffffff", "on-primary-fixed-variant": "#154d59",
+                        "on-surface": "#191c1d", "surface-container-high": "#e7e8e9", "on-surface-variant": "#40484a",
+                        "background": "#f9f9fa", "on-tertiary": "#ffffff", "on-tertiary-container": "#ffe0cd",
+                        "primary-fixed-dim": "#9bcfdc", "inverse-on-surface": "#f0f1f1", "error": "#ba1a1a",
+                        "primary": "#205661", "surface-variant": "#e2e2e3", "on-secondary-container": "#516b4e",
+                        "on-secondary-fixed": "#08200a", "surface-container": "#edeeee", "secondary-fixed": "#cdebc6",
+                        "on-error-container": "#93000a", "surface-bright": "#f9f9fa", "on-primary-fixed": "#001f26",
+                        "tertiary-fixed": "#ffdcc6", "outline": "#70787b", "inverse-surface": "#2e3132",
+                        "tertiary-fixed-dim": "#f6ba91", "on-tertiary-fixed": "#301400", "primary-container": "#3b6e7a",
+                        "on-primary-container": "#bbeffc", "surface-container-low": "#f3f4f4", "outline-variant": "#c0c8ca"
+                    },
+                    "borderRadius": {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                    "spacing": {"gutter": "24px", "margin-desktop": "64px", "md": "16px", "xs": "4px", "sm": "8px", "lg": "24px", "xl": "32px", "margin-mobile": "16px"},
+                    "fontFamily": {"body-lg": ["Inter"], "display-lg": ["Literata"], "mono-sm": ["JetBrains Mono"], "headline-lg": ["Literata"], "label-md": ["Inter"], "body-md": ["Inter"], "display-md": ["Literata"]},
+                    "fontSize": {
+                        "body-lg": ["20px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                        "mono-sm": ["14px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                        "headline-lg": ["28px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                        "label-md": ["14px", {"lineHeight": "1.2", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                        "body-md": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                        "display-md": ["36px", {"lineHeight": "1.2", "fontWeight": "600"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #F7F3EC; color: #191c1d; }
+        .stone-surface { background-color: #ECE6DC; border: 1px solid #D8D1C5; }
+        .mist-surface { background-color: #EFEAE1; border: 1px solid #D8D1C5; }
+        .pebble-ripple { position: relative; display: flex; align-items: center; justify-content: center; }
+        .pebble-ripple::before {
+            content: ''; position: absolute; width: 120px; height: 120px;
+            background: #b1ceac; border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
+            opacity: 0.2; animation: pebble-pulse 3s ease-in-out infinite;
+        }
+        @keyframes pebble-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.15); opacity: 0.35; }
+        }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="font-body-md text-body-md min-h-screen flex flex-col">
+<header class="bg-surface border-b border-outline-variant flex justify-between items-center px-margin-desktop w-full h-16 fixed top-0 z-50">
+<div class="font-display-md text-display-md text-primary tracking-tight">Pebble</div>
+<div class="flex items-center gap-md">
+<span class="text-on-surface-variant font-medium">Comfort View</span>
+<span class="material-symbols-outlined text-primary">help</span>
+</div>
+</header>
+<main class="flex-1 flex flex-col items-center pt-32 pb-margin-desktop px-margin-mobile md:px-margin-desktop max-w-4xl mx-auto w-full">
+<section class="mb-xl text-center">
+<div class="pebble-ripple w-32 h-32 mx-auto mb-lg">
+<span class="material-symbols-outlined text-[64px] text-secondary-fixed-dim">blur_on</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface">Pebble is building your draft.</h1>
+</section>
+<!-- Vertical Timeline -->
+<section class="stone-surface w-full max-w-lg rounded-xl p-lg mb-xl">
+<div id="timeline" class="flex flex-col gap-xl relative">
+<div class="absolute left-[19px] top-4 bottom-4 w-0.5 bg-outline-variant"></div>
+<!-- Steps rendered by app.js -->
+</div>
+</section>
+<!-- AI Log -->
+<section class="w-full max-w-lg">
+<details class="mist-surface rounded-lg overflow-hidden group">
+<summary class="flex justify-between items-center p-md cursor-pointer hover:bg-surface-bright transition-all">
+<span class="font-label-md text-label-md text-on-surface-variant">Show me what Pebble is actually doing</span>
+<span class="material-symbols-outlined group-open:rotate-180 transition-transform">expand_more</span>
+</summary>
+<div class="p-md pt-0 font-mono-sm text-mono-sm text-on-surface-variant bg-surface-container-low border-t border-outline-variant">
+<div id="ai-log-detail" class="space-y-sm">
+<p><span class="text-primary">[--:--:--]</span> Awaiting build start...</p>
+</div>
+</div>
+</details>
+</section>
+<section class="mt-xl flex flex-col items-center gap-md">
+<button id="thinking-pause" class="bg-inverse-surface text-inverse-on-surface font-label-md text-label-md px-xl py-md rounded-lg hover:opacity-90 transition-opacity active:scale-95">
+                Pause Building
+            </button>
+<button id="thinking-cancel" class="text-on-surface-variant font-label-md text-label-md hover:text-error transition-colors px-lg py-sm">
+                Cancel Draft
+            </button>
+</section>
+</main>
+<script src="/v2/app.js"></script>
+</body></html>
