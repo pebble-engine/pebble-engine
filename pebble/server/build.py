@@ -1,0 +1,374 @@
+"""POST /api/build (prompt only) and POST /api/generate (full build).
+
+This is the engine's main pipeline: validate the brief, resolve industry intel,
+pick a DNA, fetch images and a hero video, render PROMPT.md, call the LLM,
+parse the response into files, run the optional post-build chain (Imagen +
+`next dev` + Playwright screenshots), then return a JSON summary.
+
+The function is extracted as a free `run_build(handler, generate)` so the
+handler class stays focused on dispatch and the (lengthy) build pipeline lives
+on its own. It reaches back into the `pebble_engine` module for shared
+helpers via :func:`_engine`, which tolerates both ``python pebble_engine.py``
+(module is at ``__main__``) and ``import pebble_engine`` (loaded as a module
+in tests).
+"""
+from __future__ import annotations
+
+import json
+import os
+import sys
+import time
+from datetime import datetime
+from pathlib import Path
+from typing import Optional
+
+from pebble.log import log
+from pebble.industry import resolve_industry_intel, research_industry
+from pebble.llm import get_llm_client, LLMError
+
+
+def _engine():
+    """Resolve the pebble_engine module regardless of how it was launched.
+
+    - ``python pebble_engine.py`` → module is at ``sys.modules['__main__']``.
+    - ``import pebble_engine`` (tests) → module is at ``sys.modules['pebble_engine']``.
+
+    Using ``import pebble_engine`` here would re-execute the file under the
+    ``pebble_engine`` name when run as the main script, producing a second
+    parallel copy of every constant and function. The sys.modules lookup
+    avoids that and keeps a single source of truth.
+    """
+    return sys.modules.get("pebble_engine") or sys.modules["__main__"]
+
+
+def run_build(handler, generate: bool) -> None:
+    """Handle a build request. ``handler`` is a ``PebbleHandler`` instance;
+    the JSON response is written via its ``_json`` helper."""
+    pe = _engine()
+
+    # Hoist module symbols to locals so the body below reads like the original
+    # _handle_build did. These are all defined at the top level of pebble_engine.
+    MAX_REQUEST_BYTES = pe.MAX_REQUEST_BYTES
+    OUTPUT_DIR = pe.OUTPUT_DIR
+    _DNA_OK = pe._DNA_OK
+    FILE_FORMAT_INSTRUCTION = pe.FILE_FORMAT_INSTRUCTION
+    LITE_FILE_FORMAT_INSTRUCTION = pe.LITE_FILE_FORMAT_INSTRUCTION
+    _slugify = pe._slugify
+    validate_build_payload = pe.validate_build_payload
+    build_ui_query = pe.build_ui_query
+    build_prompt = pe.build_prompt
+    audit_design_system = pe.audit_design_system
+    get_pexels_images = pe.get_pexels_images
+    get_placeholder_images = pe.get_placeholder_images
+    get_pexels_hero_video = pe.get_pexels_hero_video
+    localize_pexels_video = pe.localize_pexels_video
+    figma_file_summary = pe.figma_file_summary
+    parse_files = pe.parse_files
+    apply_imagen_to_site = pe.apply_imagen_to_site
+    post_build_run_dev_server = pe.post_build_run_dev_server
+    post_build_screenshots = pe.post_build_screenshots
+    generate_design_system = pe.generate_design_system  # None when degraded
+    pick_random_dna = pe.pick_random_dna                # None when DNA module missing
+
+    try:
+        length = int(handler.headers.get("Content-Length", "0"))
+    except ValueError:
+        handler._json(400, {"error": "invalid Content-Length header"}); return
+    if length <= 0:
+        handler._json(400, {"error": "empty request body"}); return
+    if length > MAX_REQUEST_BYTES:
+        mb = MAX_REQUEST_BYTES // (1024 * 1024)
+        handler._json(413, {"error": f"request too large (max {mb} MB)"}); return
+
+    try:
+        answers = json.loads(handler.rfile.read(length).decode("utf-8"))
+    except Exception:
+        handler._json(400, {"error": "invalid json"}); return
+
+    answers, err = validate_build_payload(answers)
+    if err:
+        handler._json(400, err); return
+
+    slug = _slugify(answers.get("business_name", "untitled"))
+    answers["_slug"] = slug
+    if "_created_at" not in answers:
+        answers["_created_at"] = datetime.now().isoformat()
+
+    ds_text = ""
+    if generate_design_system:
+        try:
+            query = build_ui_query(answers)
+            ds_text = generate_design_system(query, answers["business_name"], output_format="markdown")
+        except Exception as e:
+            ds_text = f"*(Design system generation failed: {e})*"
+
+    # Resolve industry intelligence (industries.json → LLM fallback → cache)
+    business_type = answers.get("business_type", answers.get("industry", ""))
+    industry_key, industry_intel = (None, None)
+    if business_type:
+        try:
+            industry_key, industry_intel = resolve_industry_intel(business_type)
+            if industry_intel:
+                answers["_industry_intel_key"] = industry_key
+        except Exception as e:
+            log.warning("industry intel resolution failed: %s", e)
+
+    # Research industry for data-driven recommendations (the long-form text block)
+    research_text = ""
+    if business_type:
+        try:
+            research_text = research_industry(business_type)
+        except Exception as e:
+            log.warning("Industry research failed: %s", e)
+            research_text = ""
+
+    # Fetch placeholder images (Pexels if key present, else Picsum)
+    images: dict = {}
+    if business_type:
+        try:
+            _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+            if _pexels_key:
+                log.info("Fetching industry photos from Pexels...")
+                images = get_pexels_images(business_type, _pexels_key)
+            else:
+                images = get_placeholder_images(business_type)
+        except Exception as e:
+            log.warning("Image fetching failed: %s", e)
+            images = get_placeholder_images(business_type)
+
+    # Hero video (Pexels Video API) — only when industry intel says hero_type=video
+    hero_video_url: Optional[str] = None
+    if industry_intel and industry_intel.get("hero_type") == "video":
+        _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
+        video_keyword = industry_intel.get("video_keyword", "") or business_type
+        if _pexels_key and video_keyword:
+            try:
+                log.info("Fetching Pexels hero video for '%s'...", video_keyword)
+                hero_video_url = get_pexels_hero_video(video_keyword, _pexels_key)
+                if hero_video_url:
+                    log.info("Pexels video resolved: %s...", hero_video_url[:80])
+            except Exception as e:
+                log.warning("Pexels video fetch failed: %s", e)
+
+    # Design reference (Figma URL — uploaded image attachments come via the payload)
+    design_reference: dict = {}
+    figma_url = (answers.get("figma_url") or "").strip()
+    if figma_url:
+        summary = figma_file_summary(figma_url)
+        if summary:
+            design_reference["figma_url"] = figma_url
+            design_reference["figma_summary"] = summary
+    attachments = answers.get("design_reference_images") or []
+    if attachments:
+        design_reference["image_count"] = len(attachments)
+        design_reference["_raw_attachments"] = attachments
+
+    # Style DNA — random per-build aesthetic personality. Same business +
+    # same industry generates a different-looking site each time because the
+    # DNA dictates fonts, hero structure, motion, and layout posture.
+    design_dna = None
+    if _DNA_OK and pick_random_dna:
+        try:
+            design_dna = pick_random_dna()
+            answers["_design_dna"] = design_dna["id"]
+            log.info("Design DNA: %s (%s)", design_dna['label'], design_dna['id'])
+        except Exception as e:
+            log.warning("DNA picker failed: %s", e)
+
+    notes = audit_design_system(ds_text) if ds_text else []
+    prompt = build_prompt(
+        answers, ds_text, notes, research_text, images,
+        industry_intel=industry_intel,
+        hero_video_url=hero_video_url,
+        design_reference=design_reference or None,
+        design_dna=design_dna,
+    )
+
+    out_dir = OUTPUT_DIR / slug
+    out_dir.mkdir(parents=True, exist_ok=True)
+    # Sanitize: strip base64 image data from saved brief (keep metadata only)
+    saved_answers = dict(answers)
+    if saved_answers.get("design_reference_images"):
+        saved_answers["design_reference_images"] = [
+            {k: v for k, v in img.items() if k != "data"}
+            for img in saved_answers["design_reference_images"] if isinstance(img, dict)
+        ]
+    (out_dir / "brief.json").write_text(json.dumps(saved_answers, indent=2), encoding="utf-8")
+    (out_dir / "PROMPT.md").write_text(prompt, encoding="utf-8")
+
+    if not generate:
+        handler._json(200, {
+            "prompt": prompt,
+            "warning_count": len(notes),
+            "slug": slug,
+            "saved_to": f"output/{slug}/",
+        })
+        return
+
+    client, reason = get_llm_client()
+    if not client:
+        handler._json(503, {
+            "error": f"LLM not configured: {reason}",
+            "prompt": prompt, "warning_count": len(notes),
+            "slug": slug, "saved_to": f"output/{slug}/",
+        })
+        return
+
+    try:
+        is_lite = answers.get("output_mode") == "lite"
+        format_instruction = LITE_FILE_FORMAT_INSTRUCTION if is_lite else FILE_FORMAT_INSTRUCTION
+        full_user = prompt + format_instruction
+
+        if is_lite:
+            system = (
+                "You are a senior frontend engineer building a single self-contained HTML file. "
+                "No framework. No build step. Vanilla HTML, CSS, and JavaScript only — plus CDN libraries.\n\n"
+
+                "NON-NEGOTIABLE RULES:\n"
+                "1. Output ONLY one <pebble-file path=\"index.html\"> block. First character is `<`. No preamble.\n"
+                "2. The file must be complete and run in a browser with no other files. Zero TODOs. Zero stubs.\n"
+                "3. Hero must have a large visible <h1>. No blank hero.\n"
+                "4. All animations use GSAP + ScrollTrigger from CDN. Lenis for smooth scroll.\n"
+                "5. Use splitWords() helper (defined in the brief) instead of SplitText.\n"
+                "6. `gsap.registerPlugin(ScrollTrigger)` at top of <script>.\n"
+                "7. All image src values: use the Pexels/Picsum URLs from the brief — never local paths.\n"
+                "8. All phone CTAs: href=\"tel:...\". All inputs: font-size minimum 16px.\n"
+                "9. No scroll-behavior: smooth in CSS.\n"
+                "10. No fake testimonials. No invented contact info — use [BUSINESS PHONE] etc.\n\n"
+
+                "Build now. The owner reviews the output. You are not the reviewer."
+            )
+        else:
+            system = (
+                "You are a senior web engineer executing a precise build specification. "
+                "You do not have opinions. You do not ask questions. You do not present alternatives. "
+                "You read the brief, you read every skill file, and you build exactly what is specified.\n\n"
+
+                "VISUAL AUTHORITY: The brief begins with a `DESIGN DNA — TOP-PRIORITY DIRECTIVE` block. "
+                "That block is the single highest authority on visual choices (fonts, hero structure, motion, "
+                "color posture, layout grid, image treatment). When the DNA block contradicts anything else "
+                "in the brief — including the Resolved Design Contract's font suggestions or the Code Patterns "
+                "section's hero structure — the DNA block wins. The skill files (iOS, Stack, No-Slop, BI) still "
+                "govern code correctness and conversion patterns; the DNA only governs the visual surface, but "
+                "on the visual surface its word is final. Two builds with different DNAs should look like two "
+                "different studios made them.\n\n"
+
+                "NON-NEGOTIABLE RULES -- violating any of these is a build failure:\n"
+                "1. Output ONLY <pebble-file> blocks. No preamble. No plan. No commentary. First character is `<`.\n"
+                "2. Every file must be complete. Zero TODOs. Zero stubs. Zero placeholder functions.\n"
+                "3. Apply the iOS Skill rules to every animation, scroll effect, and layout. Not optional.\n"
+                "4. `100dvh` not `100vh` or `h-screen` on any full-height element.\n"
+                "5. SSR SAFETY: `ScrollTrigger.normalizeScroll(true)` and `ScrollTrigger.config({ ignoreMobileResize: true })` MUST be inside `useEffect` -- NEVER at module level. They access `window` and crash Next.js SSR if called outside the browser. `gsap.registerPlugin()` is safe at module level; these two calls are not.\n"
+                "6. All autoplay video: `autoPlay muted loop playsInline` -- all four attributes, always.\n"
+                "7. All form inputs: minimum `font-size: 16px` -- without exception.\n"
+                "8. No fake testimonials. No invented phone numbers or addresses. Use `[BUSINESS PHONE]` etc.\n"
+                "9. No `scroll-behavior: smooth` in CSS anywhere.\n"
+                "10. Three.js: dynamic import with `ssr: false`, `dpr={[1, 2]}`, context-lost handler, dispose on unmount.\n"
+                "11. Honor the Design DNA's font list. The fonts listed there are the ONLY fonts allowed for this build. Do not substitute Fraunces, Inter, or any other default unless the DNA explicitly names it.\n"
+                "12. Implement at least 3 of the DNA's `signature moves` — these are what make the build feel like its DNA, not a generic site with new fonts.\n\n"
+
+                "If you are uncertain about any detail not in the brief, make the best decision and build. "
+                "The owner reviews the output. You are not the reviewer."
+            )
+        t0 = time.time()
+        _max_tok = 8000 if answers.get("output_mode") == "lite" else 32000
+        vision_images = (design_reference or {}).get("_raw_attachments") if design_reference else None
+        response = client.generate(
+            system=system,
+            user=full_user,
+            max_tokens=_max_tok,
+            images=vision_images,
+        )
+        elapsed = time.time() - t0
+    except LLMError as e:
+        handler._json(500, {
+            "error": str(e),
+            "prompt": prompt, "warning_count": len(notes),
+            "slug": slug, "saved_to": f"output/{slug}/",
+        })
+        return
+
+    files = parse_files(response)
+    (out_dir / "llm_response_raw.txt").write_text(response, encoding="utf-8")
+
+    if not files:
+        handler._json(500, {
+            "error": "LLM response had no <pebble-file> blocks. Raw response saved to llm_response_raw.txt.",
+            "prompt": prompt, "warning_count": len(notes),
+            "slug": slug, "saved_to": f"output/{slug}/",
+            "raw_preview": response[:1500],
+        })
+        return
+
+    site_dir = out_dir / "site"
+    site_dir.mkdir(exist_ok=True)
+    written: list[str] = []
+    for path, content in files:
+        safe = path.lstrip("/\\")
+        if ".." in Path(safe).parts or safe.startswith("/"):
+            continue
+        full = site_dir / safe
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_text(content, encoding="utf-8")
+        written.append(safe)
+
+    (out_dir / "build_meta.json").write_text(json.dumps({
+        "model": client.model,
+        "elapsed_seconds": round(elapsed, 1),
+        "file_count": len(written),
+        "built_at": datetime.now().isoformat(),
+    }, indent=2))
+
+    # ---- POST-BUILD CHAIN ----
+    # Each step degrades gracefully: failure does not block the response.
+
+    # Pexels video → local /public/videos/hero.mp4
+    # Eliminates CORS/playback issues with cross-origin <video> from videos.pexels.com.
+    pexels_video_results: dict = {"downloaded": False, "files_touched": 0}
+    if hero_video_url and "pexels.com" in hero_video_url:
+        try:
+            pexels_video_results = localize_pexels_video(site_dir, hero_video_url)
+        except Exception as e:
+            pexels_video_results["error"] = f"{type(e).__name__}: {e}"
+
+    imagen_results: dict = {"generated": {}, "files_touched": 0, "enabled": False}
+    try:
+        imagen_enabled = os.environ.get("PEBBLE_USE_IMAGEN", "").strip().lower() in {"1", "true", "yes", "on"}
+        imagen_results["enabled"] = imagen_enabled
+        if imagen_enabled and business_type:
+            generated, touched = apply_imagen_to_site(business_type, site_dir, images or {})
+            imagen_results["generated"] = generated
+            imagen_results["files_touched"] = touched
+    except Exception as e:
+        imagen_results["error"] = str(e)
+
+    # Auto-run (npm install + next dev) gated on PEBBLE_AUTO_RUN=true
+    auto_run_enabled = os.environ.get("PEBBLE_AUTO_RUN", "").strip().lower() in {"1", "true", "yes", "on"}
+    server_info: dict = {"enabled": auto_run_enabled, "port": None, "url": None, "errors": []}
+    screenshot_info: dict = {"screenshots": [], "errors": []}
+    if auto_run_enabled and answers.get("output_mode") != "lite":
+        try:
+            server_info.update(post_build_run_dev_server(site_dir))
+        except Exception as e:
+            server_info["errors"].append(f"dev server crashed: {e}")
+        if server_info.get("url"):
+            try:
+                screenshot_info = post_build_screenshots(server_info["url"], out_dir)
+            except Exception as e:
+                screenshot_info["errors"].append(f"screenshot crashed: {e}")
+
+    handler._json(200, {
+        "prompt": prompt, "warning_count": len(notes),
+        "slug": slug, "saved_to": f"output/{slug}/",
+        "files_written": written, "file_count": len(written),
+        "site_path": f"output/{slug}/site/",
+        "preview_url": f"/preview/{slug}/",
+        "elapsed_seconds": round(elapsed, 1),
+        "model": client.model,
+        "industry_intel_key": industry_key,
+        "hero_video_url": hero_video_url,
+        "pexels_video":  pexels_video_results,
+        "imagen": imagen_results,
+        "dev_server": server_info,
+        "screenshots": screenshot_info,
+    })

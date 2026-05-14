@@ -224,3 +224,165 @@ def test_style_dna_module_imports_cleanly():
     assert hasattr(style_dna, "pick_random_dna")
     assert hasattr(style_dna, "build_dna_block")
     assert len(style_dna.DNA_CARDS) >= 10
+
+
+# ---------------------------------------------------------------------------
+# 8. Request validation — server-side defense for /api/build /api/generate
+# ---------------------------------------------------------------------------
+
+def test_validate_accepts_minimal_valid_payload():
+    payload = {"business_name": "Acme", "business_type": "hvac"}
+    cleaned, err = pebble_engine.validate_build_payload(payload)
+    assert err is None
+    assert cleaned["business_name"] == "Acme"
+
+
+def test_validate_rejects_missing_business_name():
+    cleaned, err = pebble_engine.validate_build_payload({"business_type": "hvac"})
+    assert cleaned is None
+    assert err["field"] == "business_name"
+
+
+def test_validate_rejects_blank_business_name():
+    cleaned, err = pebble_engine.validate_build_payload({"business_name": "   ", "business_type": "hvac"})
+    assert cleaned is None
+    assert err["field"] == "business_name"
+
+
+def test_validate_accepts_industry_in_place_of_business_type():
+    cleaned, err = pebble_engine.validate_build_payload({"business_name": "Acme", "industry": "hvac"})
+    assert err is None
+    assert cleaned is not None
+
+
+def test_validate_rejects_missing_business_type_and_industry():
+    cleaned, err = pebble_engine.validate_build_payload({"business_name": "Acme"})
+    assert cleaned is None
+    assert err["field"] == "business_type"
+
+
+def test_validate_rejects_oversized_field():
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "extra_context": "x" * (pebble_engine._STRING_LIMITS["extra_context"] + 1),
+    })
+    assert cleaned is None
+    assert err["field"] == "extra_context"
+
+
+def test_validate_rejects_non_object_root():
+    cleaned, err = pebble_engine.validate_build_payload(["not", "an", "object"])
+    assert cleaned is None
+    assert err["field"] == "_root"
+
+
+def test_validate_rejects_oversized_image_attachments():
+    big = "A" * (pebble_engine.MAX_ATTACHMENT_BYTES + 1)
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "design_reference_images": [{"media_type": "image/png", "data": big}],
+    })
+    assert cleaned is None
+    assert err["field"] == "design_reference_images"
+
+
+def test_validate_rejects_too_many_image_attachments():
+    img = {"media_type": "image/png", "data": "AAAA"}
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "design_reference_images": [img] * (pebble_engine.MAX_ATTACHMENT_COUNT + 1),
+    })
+    assert cleaned is None
+    assert err["field"] == "design_reference_images"
+
+
+def test_validate_rejects_bad_image_media_type():
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "design_reference_images": [{"media_type": "application/pdf", "data": "AAAA"}],
+    })
+    assert cleaned is None
+    assert err["field"] == "design_reference_images"
+
+
+def test_validate_accepts_well_formed_full_payload():
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme Plumbing",
+        "business_type": "plumbing",
+        "industry": "plumbing",
+        "location": "Brooklyn, NY",
+        "services_offered": "drain cleaning, water heaters",
+        "phone": "(555) 555-0100",
+        "email": "hello@acme.com",
+        "address": "123 Main St",
+        "brand_position": "premium",
+        "brand_tone": "warm_professional",
+        "site_functions": ["contact_form", "service_pages"],
+        "output_mode": "full",
+        "design_reference_images": [{"media_type": "image/png", "data": "AAAA"}],
+    })
+    assert err is None
+    assert cleaned is not None
+    assert cleaned["business_name"] == "Acme Plumbing"
+
+
+def test_validate_coerces_numeric_scalar_to_string():
+    """The quiz sometimes posts numeric phone or zip values — accept and stringify."""
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "phone": 5555550100,
+    })
+    assert err is None
+    assert cleaned["phone"] == "5555550100"
+
+
+# ---------------------------------------------------------------------------
+# 9. Server routes — verify the extracted pebble.server.build module wires up
+# ---------------------------------------------------------------------------
+
+def test_build_route_module_imports_and_hoists_engine_symbols():
+    """Smoke check on the route extraction: importing pebble.server.build
+    must succeed, run_build must exist, and the engine-symbol hoist inside
+    it must find every name it references (typos here surface as
+    ``AttributeError`` the moment a build is invoked in production)."""
+    from pebble.server import build as build_route
+    assert hasattr(build_route, "run_build")
+
+    # The hoist sources symbols off the live pebble_engine module. Every
+    # name listed below must exist there or the extracted handler will
+    # break the first request.
+    expected = [
+        "MAX_REQUEST_BYTES", "OUTPUT_DIR", "_DNA_OK",
+        "FILE_FORMAT_INSTRUCTION", "LITE_FILE_FORMAT_INSTRUCTION",
+        "_slugify", "validate_build_payload", "build_ui_query",
+        "build_prompt", "audit_design_system", "get_pexels_images",
+        "get_placeholder_images", "get_pexels_hero_video",
+        "localize_pexels_video", "figma_file_summary", "parse_files",
+        "apply_imagen_to_site", "post_build_run_dev_server",
+        "post_build_screenshots", "generate_design_system", "pick_random_dna",
+    ]
+    for name in expected:
+        assert hasattr(pebble_engine, name), f"pebble_engine missing required symbol: {name}"
+
+
+def test_build_route_engine_resolver_finds_module():
+    """``pebble.server.build._engine`` must return the pebble_engine module
+    in test contexts (where it's loaded under its real name)."""
+    from pebble.server.build import _engine
+    assert _engine() is pebble_engine
+
+
+def test_handler_delegates_to_extracted_run_build():
+    """PebbleHandler._handle_build must be the thin delegate, not a 300-line method."""
+    import inspect
+    src = inspect.getsource(pebble_engine.PebbleHandler._handle_build)
+    assert "run_build" in src
+    assert "pebble.server.build" in src
+    # The delegate should be very short — if this grows, the body crept
+    # back into the handler.
+    assert src.count("\n") < 12

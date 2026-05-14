@@ -15,6 +15,8 @@ import time
 import urllib.request
 from pathlib import Path
 
+from pebble.log import log
+
 
 def _find_free_port() -> int:
     """Ask the kernel for an unused TCP port. Used for the Next.js dev server
@@ -58,7 +60,7 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
         return result
 
     # 1. npm install — bounded timeout, captured.
-    print(f"  Running `npm install` in {site_dir.name}...")
+    log.info("Running `npm install` in %s...", site_dir.name)
     try:
         subprocess.run(
             [npm, "install", "--no-audit", "--no-fund", "--loglevel=error"],
@@ -79,7 +81,7 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
     # 2. Start dev server on a free port in the background.
     port = _find_free_port()
     url = f"http://127.0.0.1:{port}"
-    print(f"  Starting `next dev` on port {port}...")
+    log.info("Starting `next dev` on port %d...", port)
     try:
         # Windows needs creationflags to detach; POSIX inherits stdin/out fine.
         creationflags = 0

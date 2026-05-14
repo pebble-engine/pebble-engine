@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Optional
 
 from pebble.llm import get_llm_client
+from pebble.log import log
 
 
 # ---- Paths --------------------------------------------------------------
@@ -124,7 +125,7 @@ def _load_industries_intel() -> dict:
     try:
         return json.loads(INDUSTRIES_JSON.read_text(encoding="utf-8"))
     except Exception as e:
-        print(f"  industries.json load failed: {e}")
+        log.warning("industries.json load failed: %s", e)
         return {}
 
 
@@ -183,7 +184,7 @@ def research_new_industry(business_type: str) -> Optional[dict]:
     try:
         raw = client.generate(system=system, user=prompt, max_tokens=1200)
     except Exception as e:
-        print(f"  industry intel research failed: {e}")
+        log.warning("industry intel research failed: %s", e)
         return None
 
     # Strip possible markdown fences
@@ -194,12 +195,12 @@ def research_new_industry(business_type: str) -> Optional[dict]:
     # Take from first { to last } to handle trailing whitespace / commentary
     start, end = raw.find("{"), raw.rfind("}")
     if start == -1 or end == -1 or end <= start:
-        print(f"  industry intel: LLM did not return JSON")
+        log.warning("industry intel: LLM did not return JSON")
         return None
     try:
         entry = json.loads(raw[start : end + 1])
     except Exception as e:
-        print(f"  industry intel: JSON parse failed: {e}")
+        log.warning("industry intel: JSON parse failed: %s", e)
         return None
 
     # Validate minimum shape
@@ -207,7 +208,7 @@ def research_new_industry(business_type: str) -> Optional[dict]:
                 "threejs_type", "colors", "tone", "key_sections",
                 "trust_signals", "avoid"}
     if not required.issubset(entry.keys()):
-        print(f"  industry intel: missing required keys")
+        log.warning("industry intel: missing required keys")
         return None
 
     # Cache back to industries.json
@@ -218,9 +219,9 @@ def research_new_industry(business_type: str) -> Optional[dict]:
             json.dumps(intel, indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
-        print(f"  industry intel: cached new entry for '{business_type}'")
+        log.info("industry intel: cached new entry for '%s'", business_type)
     except Exception as e:
-        print(f"  industry intel: cache write failed: {e}")
+        log.warning("industry intel: cache write failed: %s", e)
 
     return entry
 
@@ -233,7 +234,7 @@ def resolve_industry_intel(business_type: str) -> tuple[Optional[str], Optional[
     if entry:
         return matched_key, entry
     # Fallback: research and cache
-    print(f"  industry intel: '{business_type}' not in JSON, researching...")
+    log.info("industry intel: '%s' not in JSON, researching...", business_type)
     entry = research_new_industry(business_type)
     if entry:
         return _industry_key(business_type), entry
@@ -284,7 +285,7 @@ def research_industry(business_type: str, industry_category: str = "") -> str:
         cache_file.write_text(result, encoding="utf-8")
         return result
     except Exception as e:
-        print(f"Industry research failed: {e}")
+        log.warning("Industry research failed: %s", e)
         return ""
 
 

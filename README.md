@@ -1,167 +1,203 @@
 # Pebble Engine
 
-A local website briefing engine for sites that don't look generated.
+A local website-generation engine for sites that don't look generated. Answer a short business-intake quiz; the engine resolves an industry DNA, picks a per-build aesthetic personality, fetches industry-relevant photos and a hero video, runs an anti-slop audit, calls an LLM, and writes a working Next.js site to disk. Optional post-build steps generate AI hero images, install dependencies, start `next dev`, and capture screenshots.
 
-The brain of Pebble. Answer fourteen questions in a visual, quiz-style interface; the engine pipes them through a BM25 design-system search, runs an anti-slop audit, and either (a) hands you a master prompt to paste into Antigravity, or (b) calls Claude directly and writes a working website to disk for you.
+The engine is a single-process Python HTTP server. No framework, no cloud, no auth — runs entirely on `localhost:8000`.
 
 ---
 
-## Run it
+## Quick start
 
 ```bash
+git clone <repo>
 cd pebble-engine
-python3 pebble_engine.py
-```
-
-Browser opens at `http://localhost:8000`. The basic flow needs zero `pip install` and zero config.
-
-If port 8000 is taken: `python3 pebble_engine.py --port 8765`.
-
----
-
-## Two operating modes
-
-### Mode A — Prompt only (default, no config needed)
-
-Take the quiz, copy or download the generated `PROMPT.md`, paste into Antigravity's agent panel. Gemini reads your `skills/` folder and builds the site. This is the original flow and works out of the box.
-
-### Mode B — Auto-build (Pebble Engine calls Claude for you)
-
-The engine itself calls the Anthropic API with the full brief, parses the response into files, and writes them to `output/<slug>/site/`. You see a preview link the moment it's done — no copy-pasting, no context-switching to a chat panel.
-
-To enable Mode B:
-
-```bash
 pip install -r requirements.txt
-cp .env.example .env
-# edit .env and paste your ANTHROPIC_API_KEY
+cp .env.example .env          # then fill in keys, see "Configuration"
+cd ui && npm install && npm run build && cd ..
+python pebble_engine.py
 ```
 
-Get a key at [console.anthropic.com](https://console.anthropic.com/settings/keys).
+The browser opens at `http://localhost:8000`. If port 8000 is taken: `python pebble_engine.py --port 8765`.
 
-When the server starts, the banner tells you which mode is available:
-
-```
-   Pebble Engine
-   ui-ux-pro-max engine: loaded
-   auto-build mode:      ready
-   model:                claude-sonnet-4-6
-```
-
-If auto-build isn't ready, the quiz still runs in Mode A. The choice between the two appears as a fork after the quiz, and the "build now" card greys out when auto-build is unavailable.
+For quick iteration without auto-build or images, only `GOOGLE_API_KEY` (or `ANTHROPIC_API_KEY`) needs to be set.
 
 ---
 
-## The Antigravity workflow
+## Pipeline
 
-Pebble Engine is built around this loop:
+Each `/api/generate` call runs this sequence:
 
-1. Open the `pebble-engine/` folder as a workspace in Antigravity. The `skills/` directory becomes available to Gemini automatically.
-2. Open Antigravity's terminal and run `python3 pebble_engine.py`. The quiz opens in your browser.
-3. Answer the quiz questions. `Enter` advances, `Esc` goes back, `Cmd/Ctrl+Enter` advances inside a textarea.
-4. Pick your path:
-   - **Mode A:** Click "Just give me the prompt" → copy or download → paste into Antigravity's agent.
-   - **Mode B:** Click "Build the site now" → wait ~30–90 seconds → click "Preview the site."
-5. Once the site exists in `output/<slug>/site/`, use the other skills the way they're meant to be used:
-   - `code-reviewer` for a security/quality pass on the generated files
-   - `readme-generator` for the project's README
-   - `git-commit-writer` for clean commits as you iterate
+```
+intake quiz (ui/index.html)
+     │
+     ▼
+slug + brief
+     │
+     ▼
+design-system search (ui-ux-pro-max BM25 over CSV data)
+     │
+     ▼
+industry intelligence (industries.json → LLM fallback → cache)
+     │
+     ▼
+industry research (long-form text via LLM)
+     │
+     ▼
+hero imagery (Pexels photos + Pexels Video API when hero_type=video)
+     │
+     ▼
+design reference (optional Figma + uploaded screenshots)
+     │
+     ▼
+Style DNA pick (random aesthetic personality from style_dna.py)
+     │
+     ▼
+anti-slop audit (CONVERGENCE_FONTS, ACCEPTABLE_DISPLAY_PAIRS, WATCH_STYLES)
+     │
+     ▼
+PROMPT.md assembled from skills/prompt_template.md
+     │
+     ▼
+LLM call → response parsed → files written to output/<slug>/site/
+     │
+     ▼
+[PEBBLE_USE_IMAGEN=true]  Imagen 4 generates hero/section images,
+                          replaces Pexels URLs in generated .tsx/.ts/.js/.html
+     │
+     ▼
+[PEBBLE_AUTO_RUN=true]    npm install → next dev → Playwright screenshots
+```
 
-Either way, you stay visual. The only "terminal moment" is the one command to start the engine.
+Mode A (prompt only) stops after `PROMPT.md` is written and returns it to the UI. Mode B (full build) runs the rest.
 
 ---
 
-## Folder structure
+## Style DNA
 
-```
-pebble-engine/
-├── pebble_engine.py             ← run this
-├── README.md                    ← you are here
-├── requirements.txt             ← optional: pip install for auto-build
-├── .env.example                 ← copy to .env, add your API key
-├── ui/
-│   └── index.html               ← the quiz (single file, self-contained)
-├── skills/
-│   ├── no-slop-web/             ← anti-slop doctrine
-│   ├── ui-ux-pro-max/           ← BM25 design system search
-│   │   ├── SKILL.md
-│   │   ├── scripts/
-│   │   │   ├── core.py
-│   │   │   ├── search.py
-│   │   │   └── design_system.py  ← drop yours here
-│   │   └── data/
-│   │       ├── colors.csv
-│   │       ├── typography.csv
-│   │       └── ...
-│   ├── code-reviewer/           ← post-build code review
-│   ├── git-commit-writer/       ← clean commits
-│   ├── readme-generator/        ← project documentation
-│   └── software-architect/      ← architecture artifacts
-└── output/                      ← created on first run
-    └── <slug>/
-        ├── brief.json           ← the answers
-        ├── PROMPT.md            ← the master prompt
-        ├── llm_response_raw.txt ← Claude's raw response (Mode B only)
-        ├── build_meta.json      ← model + elapsed time (Mode B only)
-        └── site/                ← Claude's generated website (Mode B only)
-            ├── index.html
-            ├── styles.css
-            └── ...
-```
+`style_dna.py` ships 10 over-specified visual identities (Swiss Magazine, Brutalist Editorial, Terminal Operator, etc.). One is picked at random per build and injected at the top of `PROMPT.md` with override-priority framing so it contradicts the default Fraunces/Inter pairing baked into the template. Same business inputs produce visibly different sites across runs because the DNA dictates display/body/mono fonts, hero structure, motion intensity, layout grid, and a list of signature moves the LLM must include.
+
+The skill files (Stack, iOS, No-Slop, BI) still apply for code correctness and conversion patterns. DNA only governs visual surface.
+
+The chosen DNA id is saved in each build's `brief.json` under `_design_dna`.
+
+---
+
+## Industry intelligence
+
+`industries.json` is a curated database of 52 industries. Each entry drives palette, hero type, Three.js variant, video keyword, copy tone, trust signals, and section order.
+
+Lookup is fuzzy (`exact key → substring → word overlap`). When a business type doesn't match any entry, the engine asks the LLM to fill in a new entry, validates the shape, and writes it back to `industries.json` so the next build for that industry is fast.
+
+Key matched + entry are surfaced to `brief.json` as `_industry_intel_key` and injected into `PROMPT.md` as an `## INDUSTRY INTELLIGENCE` block.
+
+---
+
+## Configuration
+
+`.env` is loaded at startup. Required keys depend on which features are turned on.
+
+| Variable | Purpose |
+|---|---|
+| `PEBBLE_PROVIDER` | `gemini` (default) or `anthropic` |
+| `PEBBLE_MODEL` | Optional override. Defaults: `gemini-2.5-flash`, `claude-opus-4-7`. |
+| `GOOGLE_API_KEY` | Required when provider is gemini. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| `ANTHROPIC_API_KEY` | Required when provider is anthropic. [console.anthropic.com](https://console.anthropic.com/settings/keys) |
+| `PEXELS_API_KEY` | Hero photos + Pexels Video API. Falls back to Picsum if missing. |
+| `FIGMA_ACCESS_TOKEN` | Optional. Pulls metadata when the brief includes a Figma URL. |
+| `PEBBLE_USE_IMAGEN` | `true` to swap Pexels stills with Imagen 4 generations after the LLM call. |
+| `PEBBLE_AUTO_RUN` | `true` to run `npm install`, `next dev`, and Playwright screenshots after build. |
+
+If both `PEBBLE_USE_IMAGEN` and `PEBBLE_AUTO_RUN` are off, a build takes 60–120 s end-to-end. With both on, expect 3–5 minutes (Imagen calls + npm install dominate).
 
 ---
 
 ## Endpoints
 
-The Python server exposes these for the UI (and useful for scripts and Antigravity actions later):
-
-| Method | Path                       | Purpose                                                              |
-|--------|----------------------------|----------------------------------------------------------------------|
-| GET    | `/`                        | The visual quiz                                                      |
-| GET    | `/api/health`              | Engine + LLM readiness, model name                                  |
-| POST   | `/api/build`               | Generate the prompt, save to `output/<slug>/`, return JSON          |
-| POST   | `/api/generate`            | Generate the prompt **and** call Claude, write site files          |
-| GET    | `/api/briefs`              | List all saved briefs (used by the dashboard)                       |
-| GET    | `/api/briefs/<slug>`       | One brief's details: brief, prompt, files                           |
-| GET    | `/preview/<slug>/`         | Serve `index.html` of the generated site                            |
-| GET    | `/preview/<slug>/path`     | Serve any file in the generated site                                |
-
----
-
-## What's in the bundle vs. what you provide
-
-This bundle ships with everything except two things from your existing ui-ux-pro-max setup:
-
-- **`skills/ui-ux-pro-max/scripts/design_system.py`** — your design system generator. Drop your existing copy in.
-- **Some CSVs** — your `core.py` references `styles.csv`, `landing.csv`, `react-performance.csv`, and `web-interface.csv`. Copy them from your existing data directory into `skills/ui-ux-pro-max/data/`.
-
-The engine **degrades gracefully** if these are missing — the quiz still runs, the brief is still built, the prompt still gets generated. The only thing missing is the engine's specific design system recommendation. The anti-slop audit and general rules still apply. When `pebble_engine.py` starts, it tells you whether the engine loaded cleanly or is running degraded.
+| Method | Path | Purpose |
+|---|---|---|
+| GET  | `/`                         | The intake quiz UI |
+| GET  | `/api/health`               | Engine + LLM readiness, provider + model |
+| GET  | `/api/industries`           | Flat list from `industries.json` for the typeahead |
+| GET  | `/api/briefs`               | All saved briefs in `output/` |
+| GET  | `/api/briefs/<slug>`        | One brief: answers, prompt, file tree |
+| POST | `/api/build`                | Generate prompt only, save to `output/<slug>/`, return JSON |
+| POST | `/api/generate`             | Generate prompt **and** call LLM, write site files |
+| POST | `/api/setup`                | Save API key + provider to `.env`, reload, return new health |
+| GET  | `/preview/<slug>/...`       | Serve files from the generated site |
+| GET  | `/static/...`               | Built Tailwind CSS, fonts, demo videos for the quiz UI |
 
 ---
 
-## How the three layers compose
+## Project structure
 
 ```
-   [INTAKE]              the 14-question quiz
-       ↓
-   [DATA + REASONING]    ui-ux-pro-max generates a recommendation
-       ↓
-   [QUALITY FILTER]      no-slop-web audits the recommendation
-       ↓
-   [MASTER PROMPT]       written to output/<slug>/PROMPT.md
-       ↓
-   ┌─── BRANCH ───┐
-   │              │
-[MANUAL]      [AUTO-BUILD]
-paste into    Pebble calls Claude,
-Antigravity   writes files to disk
-       ↓              ↓
-   [GENERATED WEBSITE in output/<slug>/site/]
-       ↓
-   [REVIEW]              code-reviewer + readme-generator + commits
+pebble-engine/
+├── pebble_engine.py             ← HTTP server + build orchestration
+├── pebble/                      ← package extracted from pebble_engine.py
+│   ├── llm.py                   ← Gemini / Anthropic clients + vision support
+│   ├── industry.py              ← lookup_industry_intel, research_new_industry, resolve_industry_intel
+│   └── postbuild.py             ← Imagen, post-build npm + next dev + Playwright
+├── style_dna.py                 ← DNA cards + pick_random_dna + build_dna_block
+├── industries.json              ← 52-industry design DNA database
+├── skills/
+│   ├── prompt_template.md       ← Master prompt template, str.format() rendered
+│   ├── no-slop-web/             ← anti-slop doctrine
+│   ├── ui-ux-pro-max/           ← BM25 design system search
+│   ├── stack/                   ← Next.js + motion stack rules
+│   ├── ios/                     ← iOS Safari constraints
+│   ├── business-intelligence/   ← industry-aware copy direction
+│   ├── visitor-experience/      ← UX patterns
+│   ├── code-reviewer/           ← post-build review (still manual)
+│   ├── readme-generator/        ← project README writer
+│   ├── git-commit-writer/       ← clean commits
+│   └── software-architect/      ← architecture artifacts
+├── ui/
+│   ├── index.html               ← single-file quiz (no build step)
+│   ├── input.css                ← Tailwind source
+│   ├── tailwind.config.js
+│   ├── package.json             ← Tailwind CLI only — `npm run build` → ui/style.css
+│   └── style.css                ← prebuilt Tailwind output (the CDN is gone)
+├── tests/
+│   ├── test_smoke.py            ← 14 smoke tests, ~2.5 s, no network
+│   └── conftest.py
+├── pyproject.toml               ← pytest config
+├── requirements.txt
+├── .env.example
+└── output/
+    └── <slug>/
+        ├── brief.json           ← saved answers + _design_dna + _industry_intel_key
+        ├── PROMPT.md            ← full assembled prompt
+        ├── llm_response_raw.txt ← raw response (full builds only)
+        ├── build_meta.json      ← provider + model + elapsed time
+        └── site/                ← generated Next.js project
 ```
 
-The audit is **nuanced** — it doesn't blindly forbid Inter; it forbids Inter when there's no distinctive display companion. A Fraunces + Inter pair passes the audit. An Inter + Roboto pair doesn't. The same applies to other convergence fonts. This means your existing CSV recommendations mostly survive intact; the audit only fires when the engine drifts toward true slop.
+---
+
+## Tests
+
+```bash
+pytest
+```
+
+14 smoke tests, ~2.5 s, no network. They exercise prompt rendering, DNA card shape, industry-intel resolution, the slugifier, and the audit. Treat them as the floor — anything that touches `build_prompt`, `pick_random_dna`, `resolve_industry_intel`, or `audit_design_system` should leave them green.
+
+The most likely regression they catch: a literal `{` or `}` slipped into `skills/prompt_template.md` without doubling, which silently breaks `str.format()` at build time.
+
+---
+
+## UI build
+
+`ui/style.css` is committed prebuilt — the page loads instantly without a Tailwind CDN. To change classes used in `ui/index.html`:
+
+```bash
+cd ui
+npm install              # first time only
+npm run build            # one-shot
+# or: npm run watch      # rebuild on save while iterating
+```
+
+`tailwind.config.js` scans `index.html` for class names. Nothing else triggers a rebuild.
 
 ---
 
@@ -169,19 +205,23 @@ The audit is **nuanced** — it doesn't blindly forbid Inter; it forbids Inter w
 
 The highest-leverage edit points:
 
-- **`ui/index.html`** — the `QUESTIONS` array near the top of the `<script>` tag is where you add, remove, or reword the questions. The intake quality compounds — every good question you add raises the floor on every future site.
-- **`pebble_engine.py`** — the constants at the top of the audit section (`CONVERGENCE_FONTS`, `ACCEPTABLE_DISPLAY_PAIRS`, `WATCH_STYLES`) are where you tune what the audit flags. Each rule is two or three lines. The `PROMPT_TEMPLATE` constant below it is the full master prompt — edit it and every future site inherits the change.
-- **`.env`** — switch models freely. `claude-opus-4-7` for highest quality, `claude-haiku-4-5-20251001` for fastest/cheapest iteration.
-
-The quiz itself is a single HTML file with embedded CSS and JS. No build step, no framework — just edit and refresh.
+- `ui/index.html` — `QUESTIONS` array at the top of the `<script>` tag controls intake. Intake quality compounds.
+- `skills/prompt_template.md` — the master prompt. Edit and every future site inherits the change. Double literal `{` `}` — `str.format()` renders this file. The smoke tests catch brace regressions.
+- `style_dna.py` — add a new DNA card to widen the visual range. Each card is intentionally over-specified.
+- `industries.json` — add or refine an industry entry. The LLM fallback writes new ones automatically; hand-curating them is just higher quality.
+- `pebble_engine.py` — `CONVERGENCE_FONTS`, `ACCEPTABLE_DISPLAY_PAIRS`, `WATCH_STYLES` at the top tune what the anti-slop audit flags.
 
 ---
 
-## What's next (when you're ready)
+## Antigravity workflow (optional)
 
-Two obvious extensions, in order of leverage:
+The engine works standalone, but if you open `pebble-engine/` as a workspace in Antigravity, the `skills/` directory becomes available to the agent automatically. The original Mode-A flow — take the quiz, download `PROMPT.md`, paste into Antigravity — still works as a fallback when `PEBBLE_PROVIDER` is unconfigured.
 
-1. **Iteration mode** — once a site exists, a "refine" button on the built screen that lets you send a focused diff prompt: "change the hero to X." Pebble parses the LLM's response, replaces just the affected files. Keeps the token cost of changes proportional to the change.
-2. **Auto-run post-build skills** — when a site finishes building, automatically trigger the `code-reviewer` skill on the output, surface findings in the built screen. Same for `readme-generator` to write the site's own README into `output/<slug>/site/README.md`.
+---
 
-When you've run it on a real client and want to add any of these, send the change you have in mind and I'll wire it up.
+## Provider notes
+
+- **Gemini** is the default. `gemini-2.5-flash` is fast and free-tier friendly. Google AI Ultra subscribers get higher rate limits.
+- **Anthropic** is the second-opinion / premium path. `claude-opus-4-7` produces the highest-quality builds; switch with `PEBBLE_PROVIDER=anthropic`. Both clients accept image attachments (Figma screenshots, reference uploads) as vision input.
+
+Imagen 4 (`imagen-4.0-generate-001`) is hard-coded for image generation regardless of provider; it requires a Google key.

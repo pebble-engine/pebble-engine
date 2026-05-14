@@ -35,6 +35,10 @@ from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
 
+# Logger — set up early so any module-level code can use it. Independent of
+# the rest of the pebble/ package (no circular import risk).
+from pebble.log import log
+
 # --------------------------------------------------------------------------
 # PATHS
 # --------------------------------------------------------------------------
@@ -197,6 +201,120 @@ def _slugify(text: str) -> str:
 
 
 # --------------------------------------------------------------------------
+# REQUEST VALIDATION
+# Server-side defense for /api/build and /api/generate. The quiz UI does its
+# own client-side checks, but anyone can POST raw to the engine — bound the
+# payload, require the slug-driving field, and reject obvious garbage before
+# we spend tokens on it.
+# --------------------------------------------------------------------------
+
+MAX_REQUEST_BYTES = 30 * 1024 * 1024       # 30 MB request envelope (5 images + headroom)
+MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024    # 20 MB total base64 across all uploaded design refs
+MAX_ATTACHMENT_COUNT = 5
+
+# Per-field character caps. Generous but bounded. Most fields are short answers
+# from the quiz; long free-form ones (extra_context, services_offered) get a wider cap.
+_STRING_LIMITS = {
+    "business_name":     200,
+    "business_type":     200,
+    "industry":          200,
+    "location":          500,
+    "services_offered":  5000,
+    "phone":             200,
+    "email":             500,
+    "address":           1000,
+    "brand_position":    200,
+    "brand_tone":        200,
+    "booking_system":    200,
+    "payment_system":    200,
+    "figma_url":         1000,
+    "reference_url":     1000,
+    "reference_url_2":   1000,
+    "reference_url_3":   1000,
+    "extra_context":     10000,
+    "visitor_action":    5000,
+    "output_mode":       50,
+}
+
+
+def _validation_error(field: str, message: str) -> dict:
+    return {"error": message, "field": field}
+
+
+def validate_build_payload(answers):
+    """Validate a /api/build or /api/generate JSON payload.
+
+    Returns ``(cleaned_dict, None)`` on success or ``(None, error_dict)`` on
+    failure. Error dicts are JSON-shaped ``{"error": str, "field": str}`` so
+    the UI can highlight the offending input.
+
+    Strict on the two fields that drive everything (business_name +
+    business_type/industry) and on attachment size. Permissive elsewhere —
+    coerces non-string scalars and ignores unknown keys, since the quiz schema
+    changes more often than this validator does.
+    """
+    if not isinstance(answers, dict):
+        return None, _validation_error("_root", "payload must be a JSON object")
+
+    name = answers.get("business_name")
+    if not isinstance(name, str) or not name.strip():
+        return None, _validation_error("business_name", "business_name is required")
+    if len(name) > _STRING_LIMITS["business_name"]:
+        return None, _validation_error("business_name", f"business_name must be ≤ {_STRING_LIMITS['business_name']} chars")
+
+    btype = answers.get("business_type") or answers.get("industry") or ""
+    if not isinstance(btype, str) or not btype.strip():
+        return None, _validation_error("business_type", "business_type (or industry) is required")
+
+    for field, cap in _STRING_LIMITS.items():
+        val = answers.get(field)
+        if val is None or val == "":
+            continue
+        if not isinstance(val, (str, int, float, bool)):
+            return None, _validation_error(field, f"{field} must be a string")
+        if not isinstance(val, str):
+            val = str(val)
+            answers[field] = val
+        if len(val) > cap:
+            return None, _validation_error(field, f"{field} must be ≤ {cap} chars")
+
+    fns = answers.get("site_functions")
+    if fns is not None and fns != "":
+        if not isinstance(fns, list):
+            return None, _validation_error("site_functions", "site_functions must be a list")
+        if len(fns) > 50:
+            return None, _validation_error("site_functions", "site_functions has too many entries (max 50)")
+        for i, item in enumerate(fns):
+            if not isinstance(item, str):
+                return None, _validation_error("site_functions", f"site_functions[{i}] must be a string")
+            if len(item) > 200:
+                return None, _validation_error("site_functions", f"site_functions[{i}] too long (max 200)")
+
+    imgs = answers.get("design_reference_images")
+    if imgs is not None and imgs != "":
+        if not isinstance(imgs, list):
+            return None, _validation_error("design_reference_images", "design_reference_images must be a list")
+        if len(imgs) > MAX_ATTACHMENT_COUNT:
+            return None, _validation_error("design_reference_images", f"too many attachments (max {MAX_ATTACHMENT_COUNT})")
+        total_bytes = 0
+        for i, img in enumerate(imgs):
+            if not isinstance(img, dict):
+                return None, _validation_error("design_reference_images", f"image[{i}] must be an object")
+            mt = img.get("media_type")
+            data = img.get("data")
+            if not isinstance(mt, str) or not mt.startswith("image/"):
+                return None, _validation_error("design_reference_images", f"image[{i}].media_type must be an image/* MIME type")
+            if not isinstance(data, str):
+                return None, _validation_error("design_reference_images", f"image[{i}].data must be a base64 string")
+            total_bytes += len(data)
+            if total_bytes > MAX_ATTACHMENT_BYTES:
+                mb = MAX_ATTACHMENT_BYTES // (1024 * 1024)
+                return None, _validation_error("design_reference_images", f"image attachments exceed {mb} MB total")
+
+    return answers, None
+
+
+# --------------------------------------------------------------------------
 # IMAGE SOURCING SYSTEM
 # Primary:  Pexels API (keyword-relevant, requires PEXELS_API_KEY in .env)
 # Fallback: Picsum Photos (seed-based, no key needed, generic photos)
@@ -349,7 +467,7 @@ def get_pexels_images(industry: str, api_key: str) -> dict[str, str]:
         for i, key in enumerate(keys):
             images[key] = scene[i] if i < len(scene) else fallback[key]
     except Exception as e:
-        print(f"  Pexels scene query failed ({e!r}) — using Picsum fallback for scene slots")
+        log.warning("Pexels scene query failed (%r) — using Picsum fallback for scene slots", e)
         for key in ["hero", "service_1", "service_2", "service_3", "gallery_1", "gallery_2"]:
             images[key] = fallback[key]
 
@@ -358,7 +476,7 @@ def get_pexels_images(industry: str, api_key: str) -> dict[str, str]:
         images["team_1"] = people[0] if len(people) > 0 else fallback["team_1"]
         images["team_2"] = people[1] if len(people) > 1 else fallback["team_2"]
     except Exception as e:
-        print(f"  Pexels people query failed ({e!r}) — using Picsum fallback for team slots")
+        log.warning("Pexels people query failed (%r) — using Picsum fallback for team slots", e)
         images["team_1"] = fallback["team_1"]
         images["team_2"] = fallback["team_2"]
 
@@ -399,7 +517,7 @@ def localize_pexels_video(site_dir: Path, pexels_url: str, max_bytes: int = 40 *
         result["downloaded"] = True
         result["size_bytes"] = len(data)
         size_mb = len(data) / (1024 * 1024)
-        print(f"  Pexels video → {dest.relative_to(site_dir)} ({size_mb:.1f}MB)")
+        log.info("Pexels video → %s (%.1fMB)", dest.relative_to(site_dir), size_mb)
     except Exception as e:
         result["error"] = f"{type(e).__name__}: {e}"
         return result
@@ -435,7 +553,7 @@ def get_pexels_hero_video(video_keyword: str, api_key: str) -> Optional[str]:
         with urllib.request.urlopen(req, timeout=10) as resp:
             data = json.loads(resp.read())
     except Exception as e:
-        print(f"  Pexels video query failed ({e!r})")
+        log.warning("Pexels video query failed (%r)", e)
         return None
 
     videos = data.get("videos", []) or []
@@ -497,11 +615,11 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
     e.g. {"hero": "/images/hero.jpg"}. Slots that fail are simply omitted.
     """
     if not _GOOGLE_OK:
-        print("  Imagen: google-genai not installed, skipping")
+        log.warning("Imagen: google-genai not installed, skipping")
         return {}
     api_key = os.environ.get("GOOGLE_API_KEY", "").strip() or os.environ.get("GEMINI_API_KEY", "").strip()
     if not api_key:
-        print("  Imagen: GOOGLE_API_KEY not set, skipping")
+        log.warning("Imagen: GOOGLE_API_KEY not set, skipping")
         return {}
 
     slots = slots or ["hero", "service_1", "service_2", "service_3",
@@ -512,7 +630,7 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
     try:
         client = _genai.Client(api_key=api_key)
     except Exception as e:
-        print(f"  Imagen client init failed: {e}")
+        log.warning("Imagen client init failed: %s", e)
         return {}
 
     results: dict[str, str] = {}
@@ -535,10 +653,10 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
             slot_filename = f"{slot}.jpg"
             (images_dir / slot_filename).write_bytes(img_bytes)
             results[slot] = f"/images/{slot_filename}"
-            print(f"  Imagen: {slot} → {slot_filename}")
+            log.info("Imagen: %s → %s", slot, slot_filename)
         except Exception as e:
             # Skip the slot but keep going
-            print(f"  Imagen: {slot} failed ({type(e).__name__}: {e})")
+            log.warning("Imagen: %s failed (%s: %s)", slot, type(e).__name__, e)
             continue
 
     return results
@@ -648,7 +766,7 @@ def figma_file_summary(figma_url: str) -> Optional[dict]:
         with urllib.request.urlopen(req, timeout=15) as resp:
             data = json.loads(resp.read())
     except Exception as e:
-        print(f"  Figma fetch failed: {e}")
+        log.warning("Figma fetch failed: %s", e)
         return None
     summary = {
         "file_id": file_id,
@@ -1164,7 +1282,7 @@ Extract and synthesize across all references:
         try:
             return build_dna_block(design_dna) + rendered
         except Exception as e:
-            print(f"  DNA block render failed: {e}")
+            log.warning("DNA block render failed: %s", e)
     return rendered
 
 
@@ -1554,293 +1672,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
         self._serve_file(site_file, ct)
 
     def _handle_build(self, generate: bool):
-        length = int(self.headers.get("Content-Length", "0"))
-        try:
-            answers = json.loads(self.rfile.read(length).decode("utf-8"))
-        except Exception:
-            self._json(400, {"error": "invalid json"}); return
-
-        slug = _slugify(answers.get("business_name", "untitled"))
-        answers["_slug"] = slug
-        if "_created_at" not in answers:
-            answers["_created_at"] = datetime.now().isoformat()
-
-        ds_text = ""
-        if generate_design_system:
-            try:
-                query = build_ui_query(answers)
-                ds_text = generate_design_system(query, answers["business_name"], output_format="markdown")
-            except Exception as e:
-                ds_text = f"*(Design system generation failed: {e})*"
-
-        # Resolve industry intelligence (industries.json → LLM fallback → cache)
-        business_type = answers.get("business_type", answers.get("industry", ""))
-        industry_key, industry_intel = (None, None)
-        if business_type:
-            try:
-                industry_key, industry_intel = resolve_industry_intel(business_type)
-                if industry_intel:
-                    answers["_industry_intel_key"] = industry_key
-            except Exception as e:
-                print(f"  industry intel resolution failed: {e}")
-
-        # Research industry for data-driven recommendations (the long-form text block)
-        research_text = ""
-        if business_type:
-            try:
-                research_text = research_industry(business_type)
-            except Exception as e:
-                print(f"Industry research failed: {e}")
-                research_text = ""  # Continue without research
-
-        # Fetch placeholder images (Pexels if key present, else Picsum)
-        images = {}
-        if business_type:
-            try:
-                _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
-                if _pexels_key:
-                    print("  Fetching industry photos from Pexels...")
-                    images = get_pexels_images(business_type, _pexels_key)
-                else:
-                    images = get_placeholder_images(business_type)
-            except Exception as e:
-                print(f"Image fetching failed: {e}")
-                images = get_placeholder_images(business_type)
-
-        # Hero video (Pexels Video API) — only when industry intel says hero_type=video
-        hero_video_url: Optional[str] = None
-        if industry_intel and industry_intel.get("hero_type") == "video":
-            _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
-            video_keyword = industry_intel.get("video_keyword", "") or business_type
-            if _pexels_key and video_keyword:
-                try:
-                    print(f"  Fetching Pexels hero video for '{video_keyword}'...")
-                    hero_video_url = get_pexels_hero_video(video_keyword, _pexels_key)
-                    if hero_video_url:
-                        print(f"  Pexels video resolved: {hero_video_url[:80]}...")
-                except Exception as e:
-                    print(f"  Pexels video fetch failed: {e}")
-
-        # Design reference (Figma URL — uploaded image attachments come via the API payload)
-        design_reference: dict = {}
-        figma_url = (answers.get("figma_url") or "").strip()
-        if figma_url:
-            summary = figma_file_summary(figma_url)
-            if summary:
-                design_reference["figma_url"] = figma_url
-                design_reference["figma_summary"] = summary
-        # Image attachments (base64 list — added by quiz upload field)
-        attachments = answers.get("design_reference_images") or []
-        if attachments:
-            design_reference["image_count"] = len(attachments)
-            design_reference["_raw_attachments"] = attachments
-
-        # Style DNA — random per-build aesthetic personality. Same business +
-        # same industry generates a different-looking site each time because
-        # the DNA dictates fonts, hero structure, motion, and layout posture.
-        design_dna = None
-        if _DNA_OK and pick_random_dna:
-            try:
-                design_dna = pick_random_dna()
-                answers["_design_dna"] = design_dna["id"]
-                print(f"  Design DNA: {design_dna['label']} ({design_dna['id']})")
-            except Exception as e:
-                print(f"  DNA picker failed: {e}")
-
-        notes = audit_design_system(ds_text) if ds_text else []
-        prompt = build_prompt(
-            answers, ds_text, notes, research_text, images,
-            industry_intel=industry_intel,
-            hero_video_url=hero_video_url,
-            design_reference=design_reference or None,
-            design_dna=design_dna,
-        )
-
-        out_dir = OUTPUT_DIR / slug
-        out_dir.mkdir(parents=True, exist_ok=True)
-        # Sanitize: strip base64 image data from saved brief (keep metadata only)
-        saved_answers = dict(answers)
-        if saved_answers.get("design_reference_images"):
-            saved_answers["design_reference_images"] = [
-                {k: v for k, v in img.items() if k != "data"}
-                for img in saved_answers["design_reference_images"] if isinstance(img, dict)
-            ]
-        (out_dir / "brief.json").write_text(json.dumps(saved_answers, indent=2), encoding="utf-8")
-        (out_dir / "PROMPT.md").write_text(prompt, encoding="utf-8")
-
-        if not generate:
-            self._json(200, {
-                "prompt": prompt,
-                "warning_count": len(notes),
-                "slug": slug,
-                "saved_to": f"output/{slug}/",
-            }); return
-
-        client, reason = get_llm_client()
-        if not client:
-            self._json(503, {
-                "error": f"LLM not configured: {reason}",
-                "prompt": prompt, "warning_count": len(notes),
-                "slug": slug, "saved_to": f"output/{slug}/",
-            }); return
-
-        try:
-            is_lite = answers.get("output_mode") == "lite"
-            format_instruction = LITE_FILE_FORMAT_INSTRUCTION if is_lite else FILE_FORMAT_INSTRUCTION
-            full_user = prompt + format_instruction
-
-            if is_lite:
-                system = (
-                    "You are a senior frontend engineer building a single self-contained HTML file. "
-                    "No framework. No build step. Vanilla HTML, CSS, and JavaScript only — plus CDN libraries.\n\n"
-
-                    "NON-NEGOTIABLE RULES:\n"
-                    "1. Output ONLY one <pebble-file path=\"index.html\"> block. First character is `<`. No preamble.\n"
-                    "2. The file must be complete and run in a browser with no other files. Zero TODOs. Zero stubs.\n"
-                    "3. Hero must have a large visible <h1>. No blank hero.\n"
-                    "4. All animations use GSAP + ScrollTrigger from CDN. Lenis for smooth scroll.\n"
-                    "5. Use splitWords() helper (defined in the brief) instead of SplitText.\n"
-                    "6. `gsap.registerPlugin(ScrollTrigger)` at top of <script>.\n"
-                    "7. All image src values: use the Pexels/Picsum URLs from the brief — never local paths.\n"
-                    "8. All phone CTAs: href=\"tel:...\". All inputs: font-size minimum 16px.\n"
-                    "9. No scroll-behavior: smooth in CSS.\n"
-                    "10. No fake testimonials. No invented contact info — use [BUSINESS PHONE] etc.\n\n"
-
-                    "Build now. The owner reviews the output. You are not the reviewer."
-                )
-            else:
-                system = (
-                    "You are a senior web engineer executing a precise build specification. "
-                    "You do not have opinions. You do not ask questions. You do not present alternatives. "
-                    "You read the brief, you read every skill file, and you build exactly what is specified.\n\n"
-
-                    "VISUAL AUTHORITY: The brief begins with a `DESIGN DNA — TOP-PRIORITY DIRECTIVE` block. "
-                    "That block is the single highest authority on visual choices (fonts, hero structure, motion, "
-                    "color posture, layout grid, image treatment). When the DNA block contradicts anything else "
-                    "in the brief — including the Resolved Design Contract's font suggestions or the Code Patterns "
-                    "section's hero structure — the DNA block wins. The skill files (iOS, Stack, No-Slop, BI) still "
-                    "govern code correctness and conversion patterns; the DNA only governs the visual surface, but "
-                    "on the visual surface its word is final. Two builds with different DNAs should look like two "
-                    "different studios made them.\n\n"
-
-                    "NON-NEGOTIABLE RULES -- violating any of these is a build failure:\n"
-                    "1. Output ONLY <pebble-file> blocks. No preamble. No plan. No commentary. First character is `<`.\n"
-                    "2. Every file must be complete. Zero TODOs. Zero stubs. Zero placeholder functions.\n"
-                    "3. Apply the iOS Skill rules to every animation, scroll effect, and layout. Not optional.\n"
-                    "4. `100dvh` not `100vh` or `h-screen` on any full-height element.\n"
-                    "5. SSR SAFETY: `ScrollTrigger.normalizeScroll(true)` and `ScrollTrigger.config({ ignoreMobileResize: true })` MUST be inside `useEffect` -- NEVER at module level. They access `window` and crash Next.js SSR if called outside the browser. `gsap.registerPlugin()` is safe at module level; these two calls are not.\n"
-                    "6. All autoplay video: `autoPlay muted loop playsInline` -- all four attributes, always.\n"
-                    "7. All form inputs: minimum `font-size: 16px` -- without exception.\n"
-                    "8. No fake testimonials. No invented phone numbers or addresses. Use `[BUSINESS PHONE]` etc.\n"
-                    "9. No `scroll-behavior: smooth` in CSS anywhere.\n"
-                    "10. Three.js: dynamic import with `ssr: false`, `dpr={[1, 2]}`, context-lost handler, dispose on unmount.\n"
-                    "11. Honor the Design DNA's font list. The fonts listed there are the ONLY fonts allowed for this build. Do not substitute Fraunces, Inter, or any other default unless the DNA explicitly names it.\n"
-                    "12. Implement at least 3 of the DNA's `signature moves` — these are what make the build feel like its DNA, not a generic site with new fonts.\n\n"
-
-                    "If you are uncertain about any detail not in the brief, make the best decision and build. "
-                    "The owner reviews the output. You are not the reviewer."
-                )
-            t0 = time.time()
-            _max_tok = 8000 if answers.get("output_mode") == "lite" else 32000
-            # Vision attachments — design reference screenshots uploaded in the quiz
-            vision_images = (design_reference or {}).get("_raw_attachments") if design_reference else None
-            response = client.generate(
-                system=system,
-                user=full_user,
-                max_tokens=_max_tok,
-                images=vision_images,
-            )
-            elapsed = time.time() - t0
-        except LLMError as e:
-            self._json(500, {
-                "error": str(e),
-                "prompt": prompt, "warning_count": len(notes),
-                "slug": slug, "saved_to": f"output/{slug}/",
-            }); return
-
-        files = parse_files(response)
-        (out_dir / "llm_response_raw.txt").write_text(response, encoding="utf-8")
-
-        if not files:
-            self._json(500, {
-                "error": "LLM response had no <pebble-file> blocks. Raw response saved to llm_response_raw.txt.",
-                "prompt": prompt, "warning_count": len(notes),
-                "slug": slug, "saved_to": f"output/{slug}/",
-                "raw_preview": response[:1500],
-            }); return
-
-        site_dir = out_dir / "site"
-        site_dir.mkdir(exist_ok=True)
-        written: list[str] = []
-        for path, content in files:
-            safe = path.lstrip("/\\")
-            if ".." in Path(safe).parts or safe.startswith("/"):
-                continue
-            full = site_dir / safe
-            full.parent.mkdir(parents=True, exist_ok=True)
-            full.write_text(content, encoding="utf-8")
-            written.append(safe)
-
-        (out_dir / "build_meta.json").write_text(json.dumps({
-            "model": client.model,
-            "elapsed_seconds": round(elapsed, 1),
-            "file_count": len(written),
-            "built_at": datetime.now().isoformat(),
-        }, indent=2))
-
-        # ---- POST-BUILD CHAIN ----
-        # Each step degrades gracefully: failure does not block the response.
-
-        # Pexels video → local /public/videos/hero.mp4
-        # Eliminates CORS/playback issues with cross-origin <video> from videos.pexels.com.
-        pexels_video_results: dict = {"downloaded": False, "files_touched": 0}
-        if hero_video_url and "pexels.com" in hero_video_url:
-            try:
-                pexels_video_results = localize_pexels_video(site_dir, hero_video_url)
-            except Exception as e:
-                pexels_video_results["error"] = f"{type(e).__name__}: {e}"
-
-        imagen_results: dict = {"generated": {}, "files_touched": 0, "enabled": False}
-        try:
-            imagen_enabled = os.environ.get("PEBBLE_USE_IMAGEN", "").strip().lower() in {"1", "true", "yes", "on"}
-            imagen_results["enabled"] = imagen_enabled
-            if imagen_enabled and business_type:
-                generated, touched = apply_imagen_to_site(business_type, site_dir, images or {})
-                imagen_results["generated"] = generated
-                imagen_results["files_touched"] = touched
-        except Exception as e:
-            imagen_results["error"] = str(e)
-
-        # Auto-run (npm install + next dev) gated on PEBBLE_AUTO_RUN=true
-        auto_run_enabled = os.environ.get("PEBBLE_AUTO_RUN", "").strip().lower() in {"1", "true", "yes", "on"}
-        server_info: dict = {"enabled": auto_run_enabled, "port": None, "url": None, "errors": []}
-        screenshot_info: dict = {"screenshots": [], "errors": []}
-        if auto_run_enabled and answers.get("output_mode") != "lite":
-            try:
-                server_info.update(post_build_run_dev_server(site_dir))
-            except Exception as e:
-                server_info["errors"].append(f"dev server crashed: {e}")
-            if server_info.get("url"):
-                try:
-                    screenshot_info = post_build_screenshots(server_info["url"], out_dir)
-                except Exception as e:
-                    screenshot_info["errors"].append(f"screenshot crashed: {e}")
-
-        self._json(200, {
-            "prompt": prompt, "warning_count": len(notes),
-            "slug": slug, "saved_to": f"output/{slug}/",
-            "files_written": written, "file_count": len(written),
-            "site_path": f"output/{slug}/site/",
-            "preview_url": f"/preview/{slug}/",
-            "elapsed_seconds": round(elapsed, 1),
-            "model": client.model,
-            "industry_intel_key": industry_key,
-            "hero_video_url": hero_video_url,
-            "pexels_video":  pexels_video_results,
-            "imagen": imagen_results,
-            "dev_server": server_info,
-            "screenshots": screenshot_info,
-        })
+        """Build pipeline route. Body lives in :mod:`pebble.server.build` so
+        the handler class stays focused on dispatch."""
+        from pebble.server.build import run_build
+        run_build(self, generate)
 
     def _serve_file(self, path: Path, content_type: str):
         if not path.exists():
