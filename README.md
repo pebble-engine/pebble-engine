@@ -66,6 +66,10 @@ LLM call → response parsed → files written to output/<slug>/site/
      │
      ▼
 [PEBBLE_AUTO_RUN=true]    npm install → next dev → Playwright screenshots
+     │
+     ▼
+[PEBBLE_AUTO_REPAIR=true] eval suite scores the build; failed checks →
+                          focused repair prompt → LLM → re-eval (up to 2 rounds)
 ```
 
 Mode A (prompt only) stops after `PROMPT.md` is written and returns it to the UI. Mode B (full build) runs the rest.
@@ -106,8 +110,9 @@ Key matched + entry are surfaced to `brief.json` as `_industry_intel_key` and in
 | `FIGMA_ACCESS_TOKEN` | Optional. Pulls metadata when the brief includes a Figma URL. |
 | `PEBBLE_USE_IMAGEN` | `true` to swap Pexels stills with Imagen 4 generations after the LLM call. |
 | `PEBBLE_AUTO_RUN` | `true` to run `npm install`, `next dev`, and Playwright screenshots after build. |
+| `PEBBLE_AUTO_REPAIR` | `true` to run `pebble.evals` after every full build; if any check fails, the engine asks the LLM to fix the named failures and re-evals (up to 2 rounds). Off by default — adds 10-30 s and another LLM round-trip per failing build. |
 
-If both `PEBBLE_USE_IMAGEN` and `PEBBLE_AUTO_RUN` are off, a build takes 60–120 s end-to-end. With both on, expect 3–5 minutes (Imagen calls + npm install dominate).
+If `PEBBLE_USE_IMAGEN`, `PEBBLE_AUTO_RUN`, and `PEBBLE_AUTO_REPAIR` are all off, a build takes 60–120 s end-to-end. With all on, expect 3–6 minutes (Imagen calls + npm install dominate).
 
 ---
 

@@ -357,6 +357,33 @@ def run_build(handler, generate: bool) -> None:
             except Exception as e:
                 screenshot_info["errors"].append(f"screenshot crashed: {e}")
 
+    # Auto-repair (eval + critique-and-fix loop) gated on PEBBLE_AUTO_REPAIR=true.
+    # Off by default — repair costs another LLM round-trip per failed build,
+    # which the engine should not charge for unless the operator opts in.
+    auto_repair_enabled = os.environ.get("PEBBLE_AUTO_REPAIR", "").strip().lower() in {"1", "true", "yes", "on"}
+    repair_info: dict = {"enabled": auto_repair_enabled}
+    if auto_repair_enabled and answers.get("output_mode") != "lite" and written:
+        try:
+            from pebble.repair import repair_build as _repair_build
+            rep = _repair_build(slug=slug, max_rounds=2, client=client, skip_compile=True)
+            repair_info.update({
+                "baseline_score": rep.baseline_score,
+                "final_score": rep.final_score,
+                "rounds": [
+                    {
+                        "round": r.round,
+                        "score_before": r.score_before,
+                        "score_after": r.score_after,
+                        "kept": r.kept,
+                        "failed_checks": r.failed_checks,
+                        "files_written": r.files_written,
+                    }
+                    for r in rep.rounds
+                ],
+            })
+        except Exception as e:
+            repair_info["error"] = f"{type(e).__name__}: {e}"
+
     handler._json(200, {
         "prompt": prompt, "warning_count": len(notes),
         "slug": slug, "saved_to": f"output/{slug}/",
@@ -371,4 +398,5 @@ def run_build(handler, generate: bool) -> None:
         "imagen": imagen_results,
         "dev_server": server_info,
         "screenshots": screenshot_info,
+        "repair": repair_info,
     })
