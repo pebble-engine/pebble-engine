@@ -11,6 +11,10 @@ __pycache__/
 *.pyd
 .Python
 
+# Node — Tailwind toolchain for the quiz UI (run `cd ui && npm install` first time)
+ui/node_modules/
+ui/package-lock.json
+
 # Claude Code internal
 .claude/
 
