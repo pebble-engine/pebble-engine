@@ -61,6 +61,29 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
     )
+    # Contact form Server Action scaffold (Resend wiring).
+    (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
+    (site / "app" / "actions" / "contact.ts").write_text(
+        '"use server";\n'
+        'export async function submitContactForm(_p:any, _f:FormData) { return { ok: true }; }'
+    )
+    (site / "components" / "forms").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "forms" / "ContactForm.tsx").write_text(
+        '"use client";\n'
+        'import { useActionState } from "react";\n'
+        'import { submitContactForm } from "@/app/actions/contact";\n'
+        'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
+    )
+
+
+def _write_minimal_package_json(site: Path) -> None:
+    """Minimal package.json that satisfies resend_in_dependencies. Use this
+    alongside _write_foundation_files in inline fixtures that need the
+    contact-form scaffold to pass evals."""
+    (site / "package.json").write_text(json.dumps({
+        "name": "x",
+        "dependencies": {"next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0"},
+    }))
 
 
 class FakeClient:
@@ -108,7 +131,7 @@ def broken_build(tmp_path: Path) -> Path:
         "_industry_intel_key": "hvac",
     }))
 
-    (site / "package.json").write_text('{"name":"broken"}')
+    (site / "package.json").write_text(json.dumps({"name":"broken","dependencies":{"resend":"^4.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
@@ -159,6 +182,21 @@ def broken_build(tmp_path: Path) -> Path:
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
+    )
+    # Contact form scaffold so the new contact_form_uses_server_action check
+    # passes — broken_build's three intentional failures stay scoped to
+    # required_files_present, hero_has_h1, and dna_display_font_honored.
+    (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
+    (site / "app" / "actions" / "contact.ts").write_text(
+        '"use server";\n'
+        'export async function submitContactForm(_p:any, _f:FormData) { return { ok: true }; }'
+    )
+    (site / "components" / "forms").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "forms" / "ContactForm.tsx").write_text(
+        '"use client";\n'
+        'import { useActionState } from "react";\n'
+        'import { submitContactForm } from "@/app/actions/contact";\n'
+        'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
     return d
@@ -308,7 +346,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         "phone": "(212) 234-9876",
         "_design_dna": "swiss_magazine",
     }))
-    (site / "package.json").write_text('{"name":"x"}')
+    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
@@ -654,7 +692,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         "business_name": "X", "business_type": "y",
         "phone": "(212) 234-9876", "_design_dna": "swiss_magazine",
     }))
-    (site / "package.json").write_text('{"name":"x"}')
+    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({"compilerOptions": {"paths": {"@/*": ["./*"]}}}))
     (site / "tailwind.config.ts").write_text("export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter'], display: ['Cormorant Garamond'] } } } }")
     (site / "postcss.config.js").write_text("module.exports = {}")

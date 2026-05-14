@@ -60,7 +60,7 @@ The Design DNA block at the top of this prompt names this build's aesthetic iden
 1. **Homepage** (`app/page.tsx`) — landing page, full of life, follows the DNA's posture
 2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a generic card grid
 3. **About** (`app/about/page.tsx`) — editorial story
-4. **Contact** (`app/contact/page.tsx`) — working form with success state, map embed
+4. **Contact** (`app/contact/page.tsx`) — REAL working form (Server Action + Resend SDK — see Code Pattern 8). NOT an `onSubmit` with a hardcoded success state. The form posts to a Next.js Server Action, which calls `resend.emails.send(...)` and returns `{{ ok: true | false, error?: string }}`. When `RESEND_API_KEY` is unset (development without keys), the Server Action returns `{{ ok: true }}` without sending — the eval and the UX still flow cleanly. Map embed below the form.
 
 ### Homepage — Default Section Structure (override per DNA)
 
@@ -164,10 +164,13 @@ Stack services as full-width vertical sections — a 3-column card grid is forbi
     "gsap": "^3.12.0",
     "@gsap/react": "^2.1.0",
     "lenis": "^1.1.0",
-    "framer-motion": "^11.0.0"
+    "framer-motion": "^11.0.0",
+    "resend": "^4.0.0"
   }}
 }}
 ```
+
+`resend` is required because the contact form is a real Server Action (Code Pattern 8) that sends email when `RESEND_API_KEY` is set in `.env.local`. The dev-time fallback (no key set → returns `{{ ok: true }}` without sending) means the build still runs cleanly without credentials; the eval `resend_in_dependencies` enforces the package is declared so the import resolves.
 
 **Performance non-negotiables:**
 - `next/image` for ALL images — never raw `<img>` tags. Use `fill` + `object-cover` for full-bleed, explicit `width`/`height` for fixed-size. `priority` on hero image only.
@@ -637,6 +640,148 @@ Mandatory: context-lost handler, dispose geometries/materials on unmount, cap DP
 
 ---
 
+#### 8. Contact Form — Real Server Action + Resend (FOUNDATION-MANDATORY)
+
+The contact form is the only path a visitor has to actually reach the business. Every Pebble build today emits a form, but the form is fake — `onSubmit` calls `e.preventDefault()` then sets a local "Thanks!" state. Real visitors filling that form send nothing, anywhere. This is the engine's most visible functionality gap; the foundation closes it.
+
+The contact form is a real Next.js Server Action that calls `resend.emails.send(...)` and returns `{{ ok: boolean, error?: string }}`. The client renders the success / error state from that return value. When `RESEND_API_KEY` is unset (development without credentials), the Server Action takes a graceful no-send path and returns `{{ ok: true }}` so the UX still completes cleanly. The eval suite enforces both the wiring (`contact_form_uses_server_action`) and the dependency (`resend_in_dependencies`).
+
+Three required artifacts:
+
+##### `lib/email.ts` — Resend client wrapper (server-only)
+
+```ts
+import "server-only";
+import {{ Resend }} from "resend";
+
+// Centralized client so the Resend SDK is only ever instantiated on the server.
+// Returns `null` when the key is unset — callers must handle the no-send path
+// so local dev without an API key still works.
+export function getResendClient(): Resend | null {{
+  const key = process.env.RESEND_API_KEY;
+  if (!key) return null;
+  return new Resend(key);
+}}
+
+export const CONTACT_TO_EMAIL = process.env.CONTACT_TO_EMAIL || process.env.RESEND_TO_EMAIL || "";
+export const CONTACT_FROM_EMAIL = process.env.CONTACT_FROM_EMAIL || "onboarding@resend.dev";
+```
+
+##### `app/actions/contact.ts` — Server Action
+
+```ts
+"use server";
+import {{ getResendClient, CONTACT_TO_EMAIL, CONTACT_FROM_EMAIL }} from "@/lib/email";
+
+export type ContactFormState = {{
+  ok: boolean;
+  message?: string;
+  error?: string;
+}};
+
+export async function submitContactForm(
+  _prevState: ContactFormState | null,
+  formData: FormData,
+): Promise<ContactFormState> {{
+  const name = String(formData.get("name") ?? "").trim();
+  const email = String(formData.get("email") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const message = String(formData.get("message") ?? "").trim();
+
+  if (!name || !email || !message) {{
+    return {{ ok: false, error: "Please provide a name, email, and message." }};
+  }}
+  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {{
+    return {{ ok: false, error: "That email address doesn't look right." }};
+  }}
+
+  const resend = getResendClient();
+  if (!resend || !CONTACT_TO_EMAIL) {{
+    // No-key path: succeed silently so local dev runs without credentials.
+    // Production with no key configured is a hard misconfig — log it.
+    console.warn("[contact] RESEND_API_KEY or CONTACT_TO_EMAIL not set — message not delivered");
+    return {{ ok: true, message: "Thanks — we'll be in touch." }};
+  }}
+
+  try {{
+    await resend.emails.send({{
+      from: CONTACT_FROM_EMAIL,
+      to: [CONTACT_TO_EMAIL],
+      subject: `New contact form: ${{name}}`,
+      replyTo: email,
+      text: `From: ${{name}} <${{email}}>${{phone ? ` (${{phone}})` : ""}}\n\n${{message}}`,
+    }});
+    return {{ ok: true, message: "Thanks — we'll be in touch." }};
+  }} catch (err) {{
+    const reason = err instanceof Error ? err.message : "Unknown error";
+    return {{ ok: false, error: `Could not send right now (${{reason}}). Please call or email directly.` }};
+  }}
+}}
+```
+
+##### `components/forms/ContactForm.tsx` — Client form
+
+```tsx
+"use client";
+import {{ useActionState }} from "react";
+import {{ useFormStatus }} from "react-dom";
+import {{ submitContactForm, type ContactFormState }} from "@/app/actions/contact";
+
+function SubmitButton() {{
+  const {{ pending }} = useFormStatus();
+  return (
+    <button
+      type="submit"
+      disabled={{pending}}
+      className="bg-white text-black px-8 py-3 rounded-lg font-medium disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+    >
+      {{pending ? "Sending…" : "Send Message"}}
+    </button>
+  );
+}}
+
+export function ContactForm() {{
+  const [state, action] = useActionState<ContactFormState | null, FormData>(submitContactForm, null);
+  return (
+    <form action={{action}} className="space-y-4 max-w-xl">
+      <input name="name" placeholder="Your name" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <input type="email" name="email" placeholder="Email" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <input name="phone" placeholder="Phone (optional)" className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <textarea name="message" placeholder="How can we help?" rows={{5}} required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <SubmitButton />
+      {{state?.ok && (
+        <p role="status" className="text-green-300">{{state.message ?? "Sent."}}</p>
+      )}}
+      {{state && state.ok === false && (
+        <p role="alert" className="text-red-300">{{state.error}}</p>
+      )}}
+    </form>
+  );
+}}
+```
+
+##### `.env.example` (mandatory at project root)
+
+```
+# Resend transactional email — Pebble's contact form Server Action delivers
+# submissions through this account. Create a key at https://resend.com/api-keys
+# and a verified domain at https://resend.com/domains, then drop in:
+RESEND_API_KEY=
+CONTACT_FROM_EMAIL=onboarding@resend.dev
+CONTACT_TO_EMAIL=
+```
+
+Why this shape:
+- **`useActionState` + `useFormStatus`** are the React 19 idiomatic primitives. They give us a pending state, a returned state object, and progressive enhancement (the form submits even without JS). No `onSubmit` / `e.preventDefault()` plumbing — the form posts straight to the Server Action.
+- **`Resend` SDK** is the 2026 standard for transactional email from JAMstack apps. Lovable uses it as one of its preferred App Connectors; Base44 uses a proprietary wrapper. Going through Resend keeps Pebble builds portable.
+- **Graceful no-key path** means local development without `RESEND_API_KEY` set still flows cleanly — submissions return `ok: true` and log a warning instead of crashing.
+- **`server-only` import in `lib/email.ts`** is a Next.js guard that throws at build time if a client component accidentally imports the Resend client.
+- **`replyTo`** on the outbound email is the visitor's address so the recipient can hit Reply in their inbox to respond.
+
+The `<a href="mailto:...">` / `<a href="tel:...">` links elsewhere on the site remain as direct contact paths. The Server Action form is the path for visitors who prefer typing a message in.
+
+---
+
 ### Working CTAs — Zero Dead Links
 
 | CTA | Implementation |
@@ -644,7 +789,7 @@ Mandatory: context-lost handler, dispose geometries/materials on unmount, cap DP
 | Phone | `<a href="tel:[BUSINESS PHONE]">` |
 | Email | `<a href="mailto:[EMAIL]">` |
 | Book | External booking URL or `onClick` scroll to `#contact` |
-| Form submit | `onSubmit` with `e.preventDefault()` + success state — never just `href="#"` |
+| Form submit | Next.js Server Action (`"use server"`) wired via `useActionState` — see Code Pattern 8. Never `onSubmit` with a fake success state, never `href="#"`. |
 | Page nav | `<Link href="/services">` — real Next.js routes only |
 
 ---
@@ -697,7 +842,9 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 **LINKS, FORMS, COPY:**
 - [ ] All phone CTAs: `href="tel:..."` — zero `href="#"` links
-- [ ] Contact form: `onSubmit` + success state
+- [ ] Contact form: Next.js Server Action at `app/actions/contact.ts` + Resend SDK in `lib/email.ts` + `components/forms/ContactForm.tsx` using `useActionState` — eval `contact_form_uses_server_action`
+- [ ] `resend` declared in `package.json` dependencies — eval `resend_in_dependencies`
+- [ ] `.env.example` at project root naming `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`
 - [ ] All copy is industry-specific — no Lorem ipsum, no "Where X meets Y", no invented testimonials
 - [ ] All `@/` imports resolve to files emitted in the same build (no orphan imports)
 - [ ] Every npm package imported is declared in `package.json` dependencies (do NOT import `react-icons` or `lucide-react` without adding them — prefer inline SVG)
@@ -826,7 +973,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Images | `next/image` everywhere — never raw `<img>` |
 | Video | `autoPlay muted loop playsInline` — always all four attributes |
 | Hero video src | Use `/videos/hero.mp4` (local) when provided — Pexels CDN URL only as fallback |
-| Form | `onSubmit` handler with success state |
+| Form | Real Next.js Server Action calling Resend (see Code Pattern 8) — `useActionState` on the client, `"use server"` on the action |
 | Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
 | SSR safety | `normalizeScroll` + `ScrollTrigger.config` inside `useEffect` — NEVER at module level |
@@ -859,17 +1006,21 @@ would fail at compile time):
 - `README.md`, `HANDOFF.md`, `TODO_ASSETS.md`, `STYLE_GUIDE.md`, `CLIENT_ANSWERS.md`
 - `content/site.ts`, `content/sections.ts`, `content/services.ts`, `content/faqs.ts`, `content/testimonials.ts`
 - **FOUNDATION COMPONENTS (mandatory — eval suite verifies presence):**
-  - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1
+  - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1 (must include sr-only span + aria-hidden wrapper + textShadow)
   - `components/ui/FadeIn.tsx` — opacity transition wrapper, verbatim from Code Pattern 1
-  - `components/layout/Navbar.tsx` — liquid-glass chip from Code Pattern 2
+  - `components/layout/Navbar.tsx` — liquid-glass chip from Code Pattern 2 (with focus-visible utilities on all links)
   - `components/sections/Hero.tsx` — composes AnimatedHeading + FadeIn + video bg, imported by `app/page.tsx`
+  - `components/forms/ContactForm.tsx` — Server Action + Resend client form, verbatim from Code Pattern 8
+  - `app/actions/contact.ts` — Server Action that calls Resend, verbatim from Code Pattern 8
+  - `lib/email.ts` — Resend client wrapper (server-only), verbatim from Code Pattern 8
+  - `.env.example` — names `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`, `CONTACT_TO_EMAIL`
 - `lib/motion.ts`, `components/motion/Reveal.tsx`, `components/motion/Parallax.tsx`, `components/motion/SmoothScroll.tsx`
   - Note: `components/motion/SplitText.tsx` is REMOVED — the hero h1 uses `AnimatedHeading`, not a SplitText wrapper. Do not emit a SplitText component.
 - `config/brand.config.ts`, `config/motion.config.ts`
 - `next.config.mjs` (NOT `.ts` — and the file body must be PLAIN JS, not TypeScript: `/** @type {{import('next').NextConfig}} */` JSDoc, no `import type`, no `: NextConfig` annotation)
 - `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
 - `app/globals.css` — must contain the `.liquid-glass` class (Code Pattern 2b) AND a `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif`
-- `postcss.config.js`, `tsconfig.json`, `package.json`, `.gitignore`
+- `postcss.config.js`, `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
 
 Every import statement uses the `@/` alias rooted at the project. Examples:
 `import {{ Reveal }} from "@/components/motion/Reveal"`,

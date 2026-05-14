@@ -48,7 +48,10 @@ def good_build(tmp_path: Path) -> Path:
         "_industry_intel_key": "plumbing",
     }))
 
-    (site / "package.json").write_text('{"name":"good"}')
+    (site / "package.json").write_text(json.dumps({
+        "name": "good",
+        "dependencies": {"next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0"},
+    }))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
@@ -110,6 +113,24 @@ def good_build(tmp_path: Path) -> Path:
         '}'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
+    # Foundation contact form scaffold (Server Action + Resend).
+    (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
+    (site / "app" / "actions" / "contact.ts").write_text(
+        '"use server";\n'
+        'export async function submitContactForm(_p:any, f:FormData) {\n'
+        '  return { ok: true, message: "Thanks." };\n'
+        '}'
+    )
+    (site / "components" / "forms").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "forms" / "ContactForm.tsx").write_text(
+        '"use client";\n'
+        'import { useActionState } from "react";\n'
+        'import { submitContactForm } from "@/app/actions/contact";\n'
+        'export function ContactForm() {\n'
+        '  const [state, action] = useActionState(submitContactForm, null);\n'
+        '  return <form action={action} />;\n'
+        '}'
+    )
     return d
 
 

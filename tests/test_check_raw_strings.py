@@ -398,3 +398,114 @@ def test_hero_video_has_poster_raw(tmp_path, case, content, expected):
     d = _make_minisite(tmp_path, {"components/sections/Hero.tsx": content})
     ctx = BuildContext.load(d)
     assert checks.hero_video_has_poster(ctx).status == expected, case
+
+
+# ---------------------------------------------------------------------------
+# FOUNDATION FUNCTIONALITY: contact form Server Action + Resend dep
+# (May 2026 Base44/Lovable competitive addendum)
+# ---------------------------------------------------------------------------
+
+def _contact_form_files(action_body: str | None, form_body: str | None) -> dict[str, str]:
+    """Helper: produce the minimal {action, form} pair given two bodies.
+    Pass None for either to OMIT the file entirely."""
+    out: dict[str, str] = {}
+    if action_body is not None:
+        out["app/actions/contact.ts"] = action_body
+    if form_body is not None:
+        out["components/forms/ContactForm.tsx"] = form_body
+    return out
+
+
+def test_contact_form_uses_server_action_passes_when_both_present(tmp_path):
+    d = _make_minisite(tmp_path, _contact_form_files(
+        '"use server";\nexport async function submitContactForm() { return { ok: true }; }',
+        '"use client";\nimport { submitContactForm } from "@/app/actions/contact";\nexport function ContactForm(){ return <form />; }',
+    ))
+    ctx = BuildContext.load(d)
+    assert checks.contact_form_uses_server_action(ctx).status == "pass"
+
+
+def test_contact_form_uses_server_action_passes_with_useActionState_only(tmp_path):
+    """A form that only mentions useActionState (no explicit import path) is
+    still considered wired — useActionState requires a server-side action."""
+    d = _make_minisite(tmp_path, _contact_form_files(
+        '"use server";\nexport async function submitContactForm() { return { ok: true }; }',
+        '"use client";\nimport { useActionState } from "react";\nexport function ContactForm(){ return null; }',
+    ))
+    ctx = BuildContext.load(d)
+    assert checks.contact_form_uses_server_action(ctx).status == "pass"
+
+
+def test_contact_form_uses_server_action_fails_when_action_file_missing(tmp_path):
+    d = _make_minisite(tmp_path, _contact_form_files(
+        None,
+        '"use client";\nimport { useActionState } from "react";\nexport function ContactForm(){}',
+    ))
+    ctx = BuildContext.load(d)
+    r = checks.contact_form_uses_server_action(ctx)
+    assert r.status == "fail"
+    assert "app/actions/contact.ts" in r.details["missing"]
+
+
+def test_contact_form_uses_server_action_fails_when_form_file_missing(tmp_path):
+    d = _make_minisite(tmp_path, _contact_form_files(
+        '"use server";\nexport async function submitContactForm() { return { ok: true }; }',
+        None,
+    ))
+    ctx = BuildContext.load(d)
+    r = checks.contact_form_uses_server_action(ctx)
+    assert r.status == "fail"
+    assert "components/forms/ContactForm.tsx" in r.details["missing"]
+
+
+def test_contact_form_uses_server_action_fails_without_use_server_directive(tmp_path):
+    d = _make_minisite(tmp_path, _contact_form_files(
+        'export async function submitContactForm() { return { ok: true }; }',
+        '"use client";\nimport { submitContactForm } from "@/app/actions/contact";\nexport function ContactForm(){}',
+    ))
+    ctx = BuildContext.load(d)
+    r = checks.contact_form_uses_server_action(ctx)
+    assert r.status == "fail"
+    assert "use server" in r.message
+
+
+def test_contact_form_uses_server_action_fails_when_form_doesnt_reference_action(tmp_path):
+    """Action file exists with "use server", but the form component is a fake
+    onSubmit handler that never touches the Server Action — the regression
+    this check is built to catch."""
+    d = _make_minisite(tmp_path, _contact_form_files(
+        '"use server";\nexport async function submitContactForm() { return { ok: true }; }',
+        '"use client";\nexport function ContactForm() {\n'
+        '  return <form onSubmit={(e) => { e.preventDefault(); }} />;\n'
+        '}',
+    ))
+    ctx = BuildContext.load(d)
+    r = checks.contact_form_uses_server_action(ctx)
+    assert r.status == "fail"
+    assert "Server Action" in r.message
+
+
+@pytest.mark.parametrize("case,pkg,expected", [
+    ("resend_present",
+     '{"name":"x","dependencies":{"resend":"^4.0.0"}}', "pass"),
+    ("resend_absent",
+     '{"name":"x","dependencies":{"react":"^19.0.0"}}', "fail"),
+    ("no_dependencies_section",
+     '{"name":"x"}', "fail"),
+    ("resend_pinned_version",
+     '{"dependencies":{"resend":"4.5.1"}}', "pass"),
+    ("invalid_json",
+     '{this is not json', "fail"),
+])
+def test_resend_in_dependencies_raw(tmp_path, case, pkg, expected):
+    d = _make_minisite(tmp_path, {"package.json": pkg})
+    ctx = BuildContext.load(d)
+    assert checks.resend_in_dependencies(ctx).status == expected, case
+
+
+def test_resend_in_dependencies_fails_when_package_json_missing(tmp_path):
+    d = _make_minisite(tmp_path, {"app/page.tsx": "export default () => null;"})
+    ctx = BuildContext.load(d)
+    r = checks.resend_in_dependencies(ctx)
+    assert r.status == "fail"
+    assert "package.json missing" in r.message

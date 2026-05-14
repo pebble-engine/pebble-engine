@@ -1191,6 +1191,113 @@ def hero_video_has_poster(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 25. contact_form_uses_server_action — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_USE_SERVER_DIRECTIVE_RE = re.compile(r'["\']use server["\']')
+
+
+@check_metadata(static_files=("app/actions/contact.ts", "components/forms/ContactForm.tsx", "app/contact/page.tsx"))
+def contact_form_uses_server_action(ctx: BuildContext) -> CheckResult:
+    """The contact form must be a real Next.js Server Action.
+
+    Every Pebble build emits a contact page — but historically the form was
+    fake (an `onSubmit` handler with a hardcoded success state). Visitors
+    filling it sent NOTHING, anywhere. That's the most visible functionality
+    gap in the engine, and this check closes it.
+
+    Pass criteria:
+    1. `app/actions/contact.ts` exists AND contains a `"use server"` directive.
+    2. `components/forms/ContactForm.tsx` exists AND references the action
+       (either imports from `@/app/actions/contact` or uses `useActionState`).
+
+    Anything less means the form is decorative. The eval will fail and the
+    repair loop will re-emit the Code Pattern 8 scaffold.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("contact_form_uses_server_action", "skip", "no site directory")
+
+    action_path = ctx.site_dir / "app" / "actions" / "contact.ts"
+    form_path = ctx.site_dir / "components" / "forms" / "ContactForm.tsx"
+    missing: list[str] = []
+    if not action_path.exists():
+        missing.append("app/actions/contact.ts")
+    if not form_path.exists():
+        missing.append("components/forms/ContactForm.tsx")
+    if missing:
+        return CheckResult(
+            "contact_form_uses_server_action", "fail",
+            f"contact form scaffold missing: {', '.join(missing)}",
+            details={"missing": missing},
+        )
+
+    action_text = action_path.read_text(encoding="utf-8", errors="ignore")
+    if not _USE_SERVER_DIRECTIVE_RE.search(action_text):
+        return CheckResult(
+            "contact_form_uses_server_action", "fail",
+            'app/actions/contact.ts has no "use server" directive',
+        )
+
+    form_text = form_path.read_text(encoding="utf-8", errors="ignore")
+    references_action = (
+        "@/app/actions/contact" in form_text
+        or "useActionState" in form_text
+    )
+    if not references_action:
+        return CheckResult(
+            "contact_form_uses_server_action", "fail",
+            "ContactForm.tsx does not reference the Server Action "
+            "(expected import from '@/app/actions/contact' or useActionState)",
+        )
+
+    return CheckResult(
+        "contact_form_uses_server_action", "pass",
+        "contact form wired to Next.js Server Action",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 26. resend_in_dependencies — FOUNDATION
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("package.json",))
+def resend_in_dependencies(ctx: BuildContext) -> CheckResult:
+    """`package.json` must declare `resend` in `dependencies`.
+
+    The contact form's Server Action imports the Resend SDK; if the package
+    isn't declared, `npm install` won't pull it and the build crashes at
+    the first import. This is the same class of regression the Ironwood
+    incident (react-icons not declared) exposed in May 2026.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("resend_in_dependencies", "skip", "no site directory")
+    pkg = ctx.site_dir / "package.json"
+    if not pkg.exists():
+        return CheckResult("resend_in_dependencies", "fail", "package.json missing")
+
+    text = pkg.read_text(encoding="utf-8", errors="ignore")
+    clean = _JSONC_COMMENT_RE.sub("", text)
+    try:
+        data = json.loads(clean)
+    except json.JSONDecodeError as e:
+        return CheckResult(
+            "resend_in_dependencies", "fail",
+            f"package.json is invalid JSON: {e}",
+        )
+
+    deps = data.get("dependencies") or {}
+    if "resend" in deps:
+        return CheckResult(
+            "resend_in_dependencies", "pass",
+            f"resend declared in dependencies ({deps['resend']})",
+        )
+    return CheckResult(
+        "resend_in_dependencies", "fail",
+        "package.json dependencies missing 'resend' (Server Action needs it)",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -1220,6 +1327,9 @@ ALL_CHECKS = [
     interactive_elements_have_focus_visible,
     hero_text_has_legibility_safeguard,
     hero_video_has_poster,
+    # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
+    contact_form_uses_server_action,
+    resend_in_dependencies,
     site_compiles,
 ]
 
