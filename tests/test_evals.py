@@ -53,7 +53,10 @@ def good_build(tmp_path: Path) -> Path:
     (site / "postcss.config.js").write_text("module.exports = {}")
     (site / "next.config.mjs").write_text("export default {}")
     (site / "app" / "layout.tsx").write_text(
-        'import "./globals.css";\nexport default function L({children}: any) { return <html><body>{children}</body></html>; }'
+        'import "./globals.css";\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en"><body>{children}</body></html>;\n'
+        '}'
     )
     (site / "app" / "page.tsx").write_text(
         'export default function P() {\n'
@@ -252,6 +255,29 @@ def test_dna_display_font_honored_passes_when_present(good_build):
     assert checks.dna_display_font_honored(ctx).status == "pass"
 
 
+def test_dna_display_font_honored_passes_for_next_font_google_underscore_form(good_build):
+    """next/font/google exposes fonts as underscore-separated identifiers
+    (Cormorant_Garamond), but the DNA card stores the human-readable form
+    (Cormorant Garamond). The check must accept either."""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: 'Inter', sans-serif; height: 100dvh; }"
+    )
+    (good_build / "site" / "tailwind.config.ts").write_text(
+        "export default { theme: { fontFamily: { display: ['Inter'] } } }"
+    )
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Cormorant_Garamond } from "next/font/google";\n'
+        'const cg = Cormorant_Garamond({ subsets: ["latin"], variable: "--font-display" });\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={cg.variable}><body>{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.dna_display_font_honored(ctx)
+    assert r.status == "pass"
+    assert "layout.tsx" in r.message
+
+
 def test_dna_display_font_honored_fails_when_missing(good_build):
     """LLM dropped the DNA font and fell back to defaults — the silent
     regression the check is built to catch."""
@@ -278,6 +304,90 @@ def test_uses_100dvh_fails_on_100vh_in_css(good_build):
     )
     ctx = BuildContext.load(good_build)
     assert checks.uses_100dvh_not_100vh(ctx).status == "fail"
+
+
+def test_html_lang_attr_passes_when_present(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.html_lang_attr(ctx).status == "pass"
+
+
+def test_html_lang_attr_fails_when_missing(good_build):
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'export default function L({children}: any) { return <html><body>{children}</body></html>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.html_lang_attr(ctx)
+    assert r.status == "fail"
+    assert "lang" in r.message
+
+
+def test_images_have_alt_passes_with_alt_present(good_build):
+    (good_build / "site" / "components" / "sections" / "Photo.tsx").write_text(
+        'import Image from "next/image";\n'
+        'export const Photo = () => <Image src="/x.jpg" alt="x" width={100} height={100} />;'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.images_have_alt(ctx).status == "pass"
+
+
+def test_images_have_alt_fails_when_alt_missing(good_build):
+    (good_build / "site" / "components" / "sections" / "Photo.tsx").write_text(
+        'import Image from "next/image";\n'
+        'export const Photo = () => <Image src="/x.jpg" width={100} height={100} />;'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.images_have_alt(ctx)
+    assert r.status == "fail"
+    assert any("Photo.tsx" in f for f in r.details["files"])
+
+
+def test_images_have_alt_passes_with_no_images(good_build):
+    """A build with no <Image> blocks should pass — there's nothing to fail on."""
+    ctx = BuildContext.load(good_build)
+    assert checks.images_have_alt(ctx).status == "pass"
+
+
+def test_scroll_trigger_ssr_safe_passes_when_inside_useeffect(good_build):
+    (good_build / "site" / "components" / "sections" / "Motion.tsx").write_text(
+        '"use client";\nimport { useEffect } from "react";\n'
+        'import { ScrollTrigger } from "gsap/ScrollTrigger";\n'
+        'export const Motion = () => {\n'
+        '  useEffect(() => {\n'
+        '    ScrollTrigger.normalizeScroll(true);\n'
+        '    ScrollTrigger.config({ ignoreMobileResize: true });\n'
+        '  }, []);\n'
+        '  return null;\n'
+        '};\n'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.scroll_trigger_ssr_safe(ctx).status == "pass"
+
+
+def test_scroll_trigger_ssr_safe_fails_at_module_level(good_build):
+    (good_build / "site" / "components" / "sections" / "BadMotion.tsx").write_text(
+        'import { ScrollTrigger } from "gsap/ScrollTrigger";\n'
+        'ScrollTrigger.normalizeScroll(true);\n'
+        'export const BadMotion = () => null;\n'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.scroll_trigger_ssr_safe(ctx)
+    assert r.status == "fail"
+    assert any("BadMotion.tsx" in f for f in r.details["files"])
+
+
+def test_no_css_smooth_scroll_passes_when_clean(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_css_smooth_scroll(ctx).status == "pass"
+
+
+def test_no_css_smooth_scroll_fails_when_present(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "html { scroll-behavior: smooth; }"
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.no_css_smooth_scroll(ctx)
+    assert r.status == "fail"
+    assert any("globals.css" in f for f in r.details["files"])
 
 
 # ---------------------------------------------------------------------------

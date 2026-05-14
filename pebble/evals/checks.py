@@ -204,15 +204,20 @@ def dna_display_font_honored(ctx: BuildContext) -> CheckResult:
         ctx.site_dir / "app" / "layout.tsx",
         ctx.site_dir / "config" / "brand.config.ts",
     ]
-    needle = expected.lower()
+    # Match BOTH forms — direct CSS / @import / fontFamily strings use the
+    # space-separated name ("Cormorant Garamond"), but `next/font/google`
+    # exposes the same font as an underscore-separated import identifier
+    # (`Cormorant_Garamond`). Either should satisfy the check.
+    needles = {expected.lower(), expected.lower().replace(" ", "_")}
     for path in candidates:
         if path.exists():
             text = path.read_text(encoding="utf-8", errors="ignore").lower()
-            if needle in text:
-                return CheckResult(
-                    "dna_display_font_honored", "pass",
-                    f"display_font '{expected}' present in {path.relative_to(ctx.site_dir)}",
-                )
+            for n in needles:
+                if n in text:
+                    return CheckResult(
+                        "dna_display_font_honored", "pass",
+                        f"display_font '{expected}' present in {path.relative_to(ctx.site_dir)}",
+                    )
 
     return CheckResult(
         "dna_display_font_honored", "fail",
@@ -473,6 +478,179 @@ def required_files_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 11. html_lang_attr
+# ---------------------------------------------------------------------------
+
+_HTML_LANG_RE = re.compile(r"<html[^>]*\blang\s*=", re.IGNORECASE)
+
+
+def html_lang_attr(ctx: BuildContext) -> CheckResult:
+    """``<html lang="...">`` must be present in ``app/layout.tsx``.
+
+    Accessibility baseline: screen readers and translators rely on the lang
+    attribute. Lighthouse flags missing-lang as a critical a11y error.
+    The LLM sometimes emits ``<html>`` bare when transcribing the layout —
+    a one-character regression with real downstream consequences.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("html_lang_attr", "skip", "no site directory")
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult("html_lang_attr", "fail", "app/layout.tsx missing")
+
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if _HTML_LANG_RE.search(text):
+        return CheckResult("html_lang_attr", "pass", '<html lang="..."> in app/layout.tsx')
+    return CheckResult(
+        "html_lang_attr", "fail",
+        "<html> tag in app/layout.tsx has no lang attribute",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 12. images_have_alt
+# ---------------------------------------------------------------------------
+
+# Match an <Image .../> block start through its self-close or `>` so we can
+# inspect just the attribute span. Multiline because Image opens often wrap.
+_IMAGE_BLOCK_RE = re.compile(r"<Image\b[^>]*?/?>", re.DOTALL)
+_ALT_ATTR_RE = re.compile(r"\balt\s*=")
+
+
+def images_have_alt(ctx: BuildContext) -> CheckResult:
+    """Every ``<Image .../>`` must include an ``alt=`` attribute.
+
+    Anti-slop AND a11y signal. The LLM regularly emits next/image blocks
+    with width/height/src but no alt — a missing alt is a Lighthouse-flagged
+    a11y violation. Empty ``alt=""`` is acceptable (decorative images);
+    only blocks with NO alt at all are flagged.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("images_have_alt", "skip", "no site directory")
+
+    offenders: list[str] = []
+    total_images = 0
+    for tsx in ctx.site_dir.rglob("*.tsx"):
+        if "node_modules" in tsx.parts:
+            continue
+        text = tsx.read_text(encoding="utf-8", errors="ignore")
+        for block in _IMAGE_BLOCK_RE.findall(text):
+            total_images += 1
+            if not _ALT_ATTR_RE.search(block):
+                offenders.append(str(tsx.relative_to(ctx.site_dir)))
+                break  # one offender per file is enough for the report
+
+    if total_images == 0:
+        return CheckResult("images_have_alt", "pass", "no <Image> elements to check")
+    if not offenders:
+        return CheckResult("images_have_alt", "pass", f"all {total_images} <Image> blocks have alt=")
+    return CheckResult(
+        "images_have_alt", "fail",
+        f"{len(offenders)} file(s) have <Image> blocks without alt=",
+        details={"files": offenders[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 13. scroll_trigger_ssr_safe
+# ---------------------------------------------------------------------------
+
+# These two ScrollTrigger calls touch `window` and crash Next.js SSR if hit at
+# module level. Per the build system prompt rule #5 they MUST be inside
+# useEffect. We flag any occurrence that isn't preceded by a useEffect on its
+# nearest-enclosing call site. Cheap heuristic: walk lines, track whether
+# we're inside a useEffect block by counting braces after a `useEffect(` line.
+_SSR_DANGEROUS_RE = re.compile(r"ScrollTrigger\.(?:normalizeScroll|config)\s*\(")
+
+
+def scroll_trigger_ssr_safe(ctx: BuildContext) -> CheckResult:
+    """``ScrollTrigger.normalizeScroll(...)`` and ``ScrollTrigger.config(...)``
+    must be inside a ``useEffect`` block, never at module level.
+
+    Both touch ``window`` synchronously. Next.js renders components on the
+    server first; a module-level call crashes the build with
+    ``ReferenceError: window is not defined``. The system prompt explicitly
+    calls this out (rule #5) but LLMs still miss it. Cheap to detect:
+    walk lines, track whether we're inside a useEffect block by brace depth.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("scroll_trigger_ssr_safe", "skip", "no site directory")
+
+    offenders: list[str] = []
+    for tsx in ctx.site_dir.rglob("*.tsx"):
+        if "node_modules" in tsx.parts:
+            continue
+        text = tsx.read_text(encoding="utf-8", errors="ignore")
+        if not _SSR_DANGEROUS_RE.search(text):
+            continue
+
+        # Crude scope tracker: once we see `useEffect(` we count braces until
+        # depth returns to 0. The dangerous call is safe if it's hit while
+        # depth > 0. Misses some edge cases (callbacks not via useEffect) but
+        # the false-positive direction is conservative — we'd rather over-flag
+        # a build-failure-class issue than under-flag.
+        depth = 0
+        in_effect = False
+        for line in text.splitlines():
+            if "useEffect(" in line:
+                in_effect = True
+            if in_effect:
+                depth += line.count("{") - line.count("}")
+                if depth <= 0:
+                    in_effect = False
+                    depth = 0
+                    continue
+            if _SSR_DANGEROUS_RE.search(line) and not in_effect:
+                offenders.append(str(tsx.relative_to(ctx.site_dir)))
+                break
+
+    if not offenders:
+        return CheckResult("scroll_trigger_ssr_safe", "pass",
+                           "ScrollTrigger SSR-dangerous calls are inside useEffect")
+    return CheckResult(
+        "scroll_trigger_ssr_safe", "fail",
+        f"{len(offenders)} file(s) call ScrollTrigger.normalizeScroll/config at module level",
+        details={"files": offenders[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 14. no_css_smooth_scroll
+# ---------------------------------------------------------------------------
+
+_SMOOTH_SCROLL_RE = re.compile(r"scroll-behavior\s*:\s*smooth", re.IGNORECASE)
+
+
+def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
+    """No ``scroll-behavior: smooth`` in any CSS — Lenis handles smooth scroll.
+
+    Per Stack Skill: native CSS smooth scroll conflicts with Lenis and other
+    JS scroll managers, produces janky double-easing on momentum scroll, and
+    interacts badly with ScrollTrigger's scrub mode. Lenis is in the standard
+    build; mixing native and JS smooth scroll is a regression.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_css_smooth_scroll", "skip", "no site directory")
+
+    offenders: list[str] = []
+    for ext in ("*.css", "*.tsx", "*.ts"):
+        for f in ctx.site_dir.rglob(ext):
+            if "node_modules" in f.parts:
+                continue
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            if _SMOOTH_SCROLL_RE.search(text):
+                offenders.append(str(f.relative_to(ctx.site_dir)))
+
+    if not offenders:
+        return CheckResult("no_css_smooth_scroll", "pass", "no scroll-behavior: smooth found")
+    return CheckResult(
+        "no_css_smooth_scroll", "fail",
+        f"{len(offenders)} file(s) declare scroll-behavior: smooth",
+        details={"files": offenders[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -484,7 +662,11 @@ ALL_CHECKS = [
     hero_has_h1,
     dna_display_font_honored,
     images_use_next_image,
+    images_have_alt,
     no_invented_phone,
     uses_100dvh_not_100vh,
+    html_lang_attr,
+    scroll_trigger_ssr_safe,
+    no_css_smooth_scroll,
     site_compiles,
 ]

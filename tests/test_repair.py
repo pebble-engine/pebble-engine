@@ -218,7 +218,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
     (site / "postcss.config.js").write_text("module.exports = {}")
     (site / "next.config.mjs").write_text("export default {}")
     (site / "app" / "layout.tsx").write_text(
-        'export default function L({children}: any) { return <html><body>{children}</body></html>; }'
+        'export default function L({children}: any) { return <html lang="en"><body>{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
         'export default function P() { return <main><h1>(212) 234-9876</h1></main>; }'
@@ -343,7 +343,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
     (site / "tailwind.config.ts").write_text("export default { theme: { fontFamily: { display: ['Cormorant Garamond'] } } }")
     (site / "postcss.config.js").write_text("module.exports = {}")
     (site / "next.config.mjs").write_text("export default {}")
-    (site / "app" / "layout.tsx").write_text('export default function L({children}: any) { return <html><body>{children}</body></html>; }')
+    (site / "app" / "layout.tsx").write_text('export default function L({children}: any) { return <html lang="en"><body>{children}</body></html>; }')
     (site / "app" / "page.tsx").write_text('export default function P() { return <main><h1>(212) 234-9876</h1></main>; }')
     (site / "app" / "globals.css").write_text("body { font-family: 'Cormorant Garamond'; height: 100dvh; }")
     (site / ".gitignore").write_text("")
