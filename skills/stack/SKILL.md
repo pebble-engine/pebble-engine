@@ -375,6 +375,9 @@ This is the single source of truth for brand tokens. Every color goes here as a 
 
 html, body {
   overflow-x: hidden;
+  /* Replaces Lenis 1.0.x `overscroll: false` option (removed in 1.1.x).
+     Suppresses iOS rubber-band bounce that conflicts with GSAP ScrollTrigger. */
+  overscroll-behavior-y: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -450,24 +453,30 @@ import Lenis from "lenis";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
-// Register and configure ScrollTrigger once at the app root.
-// These two lines are iOS requirements — do not move them into individual components.
+// Register the plugin at module level — safe, does not touch window/document.
 gsap.registerPlugin(ScrollTrigger);
-ScrollTrigger.normalizeScroll(true);                   // fixes iOS scroll position misreporting
-ScrollTrigger.config({ ignoreMobileResize: true });    // prevents address-bar resize from jumping animations
 
 export function LenisProvider({ children }: { children: React.ReactNode }) {
   const lenisRef = useRef<Lenis | null>(null);
 
   useEffect(() => {
+    // CRITICAL — normalizeScroll and config MUST be inside useEffect.
+    // Calling them at module level crashes Next.js SSR because they access
+    // window before the browser is available. This is a confirmed build failure.
+    ScrollTrigger.normalizeScroll(true);
+    ScrollTrigger.config({ ignoreMobileResize: true });
+
     lenisRef.current = new Lenis({
+      // Lenis 1.1.x API ONLY. Do NOT pass `smoothTouch` or `overscroll` —
+      // they were removed and will fail TypeScript with "Object literal may only
+      // specify known properties". For rubber-band suppression use the CSS
+      // `overscroll-behavior-y: none` on html/body in globals.css instead.
       duration: 1.2,
       easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       smoothWheel: true,
-      smoothTouch: false,   // use native momentum on touch — enabling this causes lag on iOS
+      syncTouch: false,     // replaces the old `smoothTouch` — leave false on iOS for native momentum
       touchMultiplier: 2,
       infinite: false,
-      overscroll: false,    // prevents rubber-band conflict with GSAP
     });
 
     // Refresh all ScrollTrigger positions after fonts finish loading.

@@ -48,16 +48,24 @@ Let Lenis handle smooth scroll. Remove the property from globals.css entirely. D
 
 iOS Safari misreports scroll position data. These bugs have existed since 2017 and Apple has not fixed them. Without the normalize call, ScrollTrigger animations stutter, jitter, fire at wrong positions, or fail to fire at all on iPhone.
 
-**YOU MUST ADD THESE TWO LINES when registering ScrollTrigger:**
+**YOU MUST ADD THESE TWO LINES — INSIDE `useEffect`, NEVER at module level:**
 
 ```tsx
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+// Module level — safe. registerPlugin does not touch window or document.
 gsap.registerPlugin(ScrollTrigger);
 
-// Required on iOS — add ONCE at the top level (app/layout.tsx or a providers file)
-ScrollTrigger.normalizeScroll(true);
-ScrollTrigger.config({ ignoreMobileResize: true });
+// Inside useEffect ONLY. These access window — calling them at module level
+// crashes Next.js SSR with "Cannot read properties of undefined".
+useEffect(() => {
+  ScrollTrigger.normalizeScroll(true);
+  ScrollTrigger.config({ ignoreMobileResize: true });
+  // ... rest of Lenis/GSAP setup
+}, []);
 ```
+
+**Why module level fails:** Next.js runs your component code on the server during SSR. `ScrollTrigger.normalizeScroll` immediately tries to access `window` and `document`, which don't exist on the server. The page crashes with a 500 before reaching the browser. `gsap.registerPlugin()` is safe at module level because it only registers the plugin internally without touching the DOM.
 
 `normalizeScroll(true)` intercepts native touch scroll events and manages them in JavaScript, working around iOS position misreporting.
 
@@ -539,17 +547,21 @@ Use this exact Lenis config in `app/layout.tsx`:
 
 ```tsx
 lenisRef.current = new Lenis({
+  // Lenis 1.1.x API. Older props `smoothTouch` and `overscroll` were REMOVED.
+  // TypeScript will reject them. Use the new names below.
   duration: 1.2,
   easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
   smoothWheel: true,
-  smoothTouch: false,   // IMPORTANT: false on touch — Lenis uses native momentum on touch
-  touchMultiplier: 2,   // faster touch response
+  syncTouch: false,      // replaces `smoothTouch` — keep false on iOS for native momentum
+  touchMultiplier: 2,    // faster touch response
   infinite: false,
-  overscroll: false,    // prevent rubber-band conflict
 });
+
+// Rubber-band suppression now lives in CSS, not Lenis:
+//   html, body { overscroll-behavior-y: none; }
 ```
 
-`smoothTouch: false` is critical. Enabling smooth touch on Lenis conflicts with iOS's native momentum scroll and causes lag. Let iOS handle touch scroll natively; Lenis enhances mouse wheel only.
+`syncTouch: false` is critical. Enabling sync touch (the 1.1.x replacement for the old `smoothTouch`) conflicts with iOS's native momentum scroll and causes lag. Let iOS handle touch scroll natively; Lenis enhances mouse wheel only. The old `overscroll: false` flag was removed — use the CSS `overscroll-behavior-y: none` declaration in `globals.css` instead.
 
 ---
 

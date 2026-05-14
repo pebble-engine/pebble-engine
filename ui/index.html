@@ -1,1177 +1,1271 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Pebble Engine v3.0</title>
+<link rel="icon" type="image/svg+xml" href='data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect width="32" height="32" rx="6" fill="%23131313"/><circle cx="16" cy="16" r="6" fill="%239cf0ff"/></svg>' />
+
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Geist+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0..1&display=swap" rel="stylesheet" />
+
+<script id="tailwind-config">
+tailwind.config = {
+  darkMode: "class",
+  theme: {
+    extend: {
+      colors: {
+        "primary-fixed":     "#9cf0ff",
+        "primary-fixed-dim": "#00daf3",
+        "primary":           "#c3f5ff",
+        "primary-container": "#00e5ff",
+        "on-primary":        "#00363d",
+        "on-primary-fixed":  "#001f24",
+        "secondary":         "#d8b9ff",
+        "tertiary":          "#ffe9d2",
+        "error":             "#ffb4ab",
+        "background":        "#131313",
+        "surface":           "#131313",
+        "surface-dim":       "#131313",
+        "surface-container-lowest": "#0e0e0e",
+        "surface-container-low":    "#1c1b1b",
+        "surface-container":        "#201f1f",
+        "surface-container-high":   "#2a2a2a",
+        "surface-container-highest":"#353534",
+        "surface-bright":    "#3a3939",
+        "surface-variant":   "#353534",
+        "on-surface":        "#e5e2e1",
+        "on-surface-variant":"#bac9cc",
+        "outline":           "#849396",
+        "outline-variant":   "#3b494c",
+      },
+      borderRadius: { "DEFAULT": "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
+      spacing: {
+        "max-width": "720px",
+        "stack-sm":  "12px",
+        "stack-md":  "24px",
+        "stack-lg":  "48px",
+        "stack-xl":  "80px",
+        "gutter":    "24px",
+      },
+      fontFamily: {
+        "display":    ["Fraunces", "serif"],
+        "body":       ["Inter", "sans-serif"],
+        "mono":       ["Geist Mono", "monospace"],
+      },
+      fontSize: {
+        "display-xl":        ["64px", { lineHeight: "72px", letterSpacing: "-0.02em", fontWeight: "600" }],
+        "display-xl-mobile": ["40px", { lineHeight: "48px", letterSpacing: "-0.01em", fontWeight: "600" }],
+        "headline-lg":       ["32px", { lineHeight: "40px", fontWeight: "600" }],
+        "body-lg":           ["18px", { lineHeight: "28px", fontWeight: "400" }],
+        "body-md":           ["16px", { lineHeight: "24px", fontWeight: "400" }],
+        "label-mono":        ["12px", { lineHeight: "16px", letterSpacing: "0.05em", fontWeight: "500" }],
+      },
+    },
+  },
+};
+</script>
+
 <style>
-/* ========================================
-   PEBBLE ENGINE v3.0 - CLEAN MODERN UI
-======================================== */
+  * { -webkit-tap-highlight-color: transparent; }
 
-:root {
-  --bg: #ffffff;
-  --surface: #f8f9fa;
-  --border: #e5e7eb;
-  --text: #111827;
-  --text-soft: #6b7280;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --accent: #10b981;
-  --warning: #f59e0b;
-  --error: #ef4444;
-  --recommended: #ecfdf5;
-  --recommended-border: #10b981;
-}
-
-* { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ========================================
-   HEADER
-======================================== */
-
-header {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 1rem 1.5rem;
-}
-
-.header-content {
-  max-width: 900px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logo {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.version {
-  font-size: 0.75rem;
-  color: var(--text-soft);
-  font-weight: 500;
-  background: var(--bg);
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
-}
-
-/* ========================================
-   MAIN CONTAINER
-======================================== */
-
-main {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
-}
-
-.step-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 2rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border);
-}
-
-.step {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: var(--surface);
-  border: 2px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text-soft);
-  transition: all 0.2s;
-}
-
-.step.active {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: white;
-}
-
-.step.completed {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: white;
-}
-
-.step-divider {
-  flex: 1;
-  height: 2px;
-  background: var(--border);
-}
-
-/* ========================================
-   QUESTION CARD
-======================================== */
-
-.question-card {
-  background: white;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 2rem;
-}
-
-.question-header {
-  margin-bottom: 1.5rem;
-}
-
-.question-title {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  color: var(--text);
-}
-
-.question-subtitle {
-  font-size: 0.875rem;
-  color: var(--text-soft);
-}
-
-/* ========================================
-   INDUSTRY DETECTION BANNER
-======================================== */
-
-.industry-banner {
-  background: var(--recommended);
-  border: 1px solid var(--recommended-border);
-  border-radius: 6px;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-  display: none;
-}
-
-.industry-banner.show {
-  display: block;
-}
-
-.industry-banner-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--accent);
-  margin-bottom: 0.25rem;
-}
-
-.industry-banner-text {
-  font-size: 0.875rem;
-  color: var(--text);
-}
-
-/* ========================================
-   FORM INPUTS
-======================================== */
-
-.form-group {
-  margin-bottom: 1.5rem;
-}
-
-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.5rem;
-}
-
-input[type="text"],
-textarea {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  font-size: 1rem;
-  font-family: inherit;
-  transition: border-color 0.2s;
-}
-
-input[type="text"]:focus,
-textarea:focus {
-  outline: none;
-  border-color: var(--primary);
-}
-
-textarea {
-  resize: vertical;
-  min-height: 100px;
-}
-
-/* ========================================
-   OPTION CARDS (SINGLE SELECT)
-======================================== */
-
-.options-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .options-grid {
-    grid-template-columns: 1fr 1fr;
+  html, body {
+    background: #131313;
+    color: #e5e2e1;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
   }
-}
+  body { cursor: none; }
+  @media (pointer: coarse) { body { cursor: auto; } }
 
-.option-card {
-  border: 2px solid var(--border);
-  border-radius: 8px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: white;
-}
+  input, textarea, select { font-size: 16px; }
 
-.option-card:hover {
-  border-color: var(--primary);
-  background: var(--surface);
-}
+  .fraunces { font-family: 'Fraunces', serif; }
+  .mono     { font-family: 'Geist Mono', monospace; }
 
-.option-card.selected {
-  border-color: var(--primary);
-  background: #eff6ff;
-}
+  .aurora-mesh {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(0,218,243,0.18) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(216,185,255,0.12) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(0, 98,110,0.06) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: aurora-drift 18s ease-in-out infinite alternate;
+  }
+  @keyframes aurora-drift {
+    0%   { transform: translate3d(0,   0,   0) scale(1.0); }
+    50%  { transform: translate3d(-3%, 2%,  0) scale(1.05); }
+    100% { transform: translate3d(2%,  -2%, 0) scale(1.02); }
+  }
 
-.option-card.recommended {
-  border-color: var(--recommended-border);
-  background: var(--recommended);
-}
+  .glass-surface {
+    background: rgba(255,255,255,0.04);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .glass-surface-active {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(156,240,255,0.4);
+    box-shadow: inset 0 0 12px rgba(0,218,243,0.12), 0 0 24px rgba(0,218,243,0.08);
+  }
 
-.option-card.recommended .option-badge {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--accent);
-  background: white;
-  padding: 0.125rem 0.5rem;
-  border-radius: 4px;
-  margin-bottom: 0.5rem;
-}
+  .custom-cursor {
+    position: fixed; top: 0; left: 0;
+    width: 20px; height: 20px;
+    border: 1px solid rgba(156,240,255,0.6);
+    background: rgba(156,240,255,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 9999;
+    mix-blend-mode: difference;
+    transform: translate(-50%, -50%);
+    transition: width 0.2s ease, height 0.2s ease, background-color 0.2s ease;
+    will-change: transform;
+  }
+  .custom-cursor.expanded {
+    width: 44px; height: 44px;
+    background: rgba(156,240,255,0.18);
+    border-color: rgba(156,240,255,0.9);
+  }
 
-.option-badge {
-  display: none;
-}
+  /* Animated underline input — bottom border draws on focus */
+  .input-underline {
+    position: relative;
+  }
+  .input-underline input,
+  .input-underline textarea {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255,255,255,0.10);
+    outline: none;
+    padding: 16px 0;
+    width: 100%;
+    color: #e5e2e1;
+    font-family: 'Inter', sans-serif;
+    font-size: 18px;
+    line-height: 28px;
+    transition: border-color 0.3s ease;
+  }
+  .input-underline input::placeholder,
+  .input-underline textarea::placeholder { color: rgba(255,255,255,0.25); }
+  .input-underline::after {
+    content: ""; position: absolute; bottom: 0; left: 0;
+    width: 0; height: 1px;
+    background: #00daf3;
+    box-shadow: 0 -2px 12px rgba(0,218,243,0.5);
+    transition: width 0.5s cubic-bezier(0.23,1,0.32,1);
+  }
+  .input-underline:focus-within::after { width: 100%; }
 
-.option-title {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-  color: var(--text);
-}
+  /* Option card with hover slide bar */
+  .option-card {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.25s ease, background 0.25s ease, border-color 0.25s ease;
+  }
+  .option-card:hover { background: rgba(255,255,255,0.07); }
+  .option-card .slide-bar {
+    position: absolute; left: 0; bottom: 0;
+    width: 0; height: 2px;
+    background: #00daf3;
+    box-shadow: 0 0 12px rgba(0,218,243,0.55);
+    transition: width 0.4s cubic-bezier(0.23,1,0.32,1);
+  }
+  .option-card:hover .slide-bar { width: 100%; }
+  .option-card.selected {
+    background: rgba(255,255,255,0.08);
+    border-color: rgba(156,240,255,0.45);
+    box-shadow: inset 0 0 12px rgba(0,218,243,0.12);
+  }
+  .option-card.selected .slide-bar { width: 100%; }
 
-.option-description {
-  font-size: 0.875rem;
-  color: var(--text-soft);
-  line-height: 1.5;
-}
+  /* Magnetic continue button */
+  .magnetic-cta {
+    position: relative;
+    display: inline-flex; align-items: center; gap: 12px;
+    padding: 16px 32px;
+    border-radius: 9999px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(156,240,255,0.45);
+    color: #9cf0ff;
+    font-weight: 700;
+    font-size: 16px;
+    backdrop-filter: blur(24px);
+    cursor: none;
+    transition: transform 0.18s ease, background 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+    will-change: transform;
+  }
+  .magnetic-cta:hover {
+    background: rgba(156,240,255,0.12);
+    border-color: #9cf0ff;
+    box-shadow: 0 0 32px rgba(0,218,243,0.35);
+  }
+  .magnetic-cta:active { transform: scale(0.97); }
+  .magnetic-cta:disabled { opacity: 0.4; cursor: not-allowed; }
+  .magnetic-cta .arrow { transition: transform 0.3s ease; }
+  .magnetic-cta:hover .arrow { transform: translateX(4px); }
 
-.option-explanation {
-  font-size: 0.75rem;
-  color: var(--accent);
-  margin-top: 0.5rem;
-  display: none;
-}
+  .ghost-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    color: rgba(255,255,255,0.55);
+    background: transparent; border: none;
+    cursor: none;
+    font-size: 14px;
+    transition: color 0.25s ease;
+  }
+  .ghost-btn:hover { color: #e5e2e1; }
 
-.option-card.recommended .option-explanation {
-  display: block;
-}
+  /* Step entry animation — fade + slide up, word-by-word for headline */
+  .step-wrap {
+    animation: step-in 0.7s cubic-bezier(0.23,1,0.32,1) both;
+  }
+  @keyframes step-in {
+    from { opacity: 0; transform: translateY(28px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .word-reveal > span {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(60%);
+    animation: word-rise 0.8s cubic-bezier(0.23,1,0.32,1) both;
+  }
+  @keyframes word-rise {
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-/* ========================================
-   MULTI-SELECT CHECKBOXES
-======================================== */
+  /* Step exit — slide up + fade */
+  .step-leave {
+    animation: step-out 0.4s cubic-bezier(0.55,0,0.66,0.55) forwards;
+  }
+  @keyframes step-out {
+    to { opacity: 0; transform: translateY(-24px); }
+  }
 
-.checkbox-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.75rem;
-}
+  /* Generating splash — video background + cyan ring + typed status */
+  .splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: #131313;        /* fallback if video fails to load */
+    overflow: hidden;
+    opacity: 0;
+    animation: splash-fade-in 0.6s ease-out forwards;
+  }
+  @keyframes splash-fade-in { to { opacity: 1; } }
+  .splash-video {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    z-index: 0;
+  }
+  .splash-overlay {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(19,19,19,0.0) 0%, rgba(19,19,19,0.55) 60%, rgba(19,19,19,0.85) 100%),
+      linear-gradient(180deg, rgba(19,19,19,0.35) 0%, rgba(19,19,19,0.65) 100%);
+    z-index: 1;
+  }
+  .splash .ring,
+  .splash h2 { position: relative; z-index: 2; }
+  .splash .ring {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #9cf0ff;
+    box-shadow: 0 0 32px rgba(0,218,243,0.9);
+    animation: splash-expand 2.4s ease-out infinite;
+  }
+  @keyframes splash-expand {
+    0%   { transform: scale(1);  opacity: 1; }
+    100% { transform: scale(22); opacity: 0; }
+  }
+  .splash h2 {
+    margin-top: 80px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.4em;
+    color: #9cf0ff;
+    text-shadow: 0 0 24px rgba(0,218,243,0.6);
+  }
+  .splash h2 span { opacity: 0; animation: type-in 0.06s linear forwards; }
 
-.checkbox-option {
-  border: 2px solid var(--border);
-  border-radius: 6px;
-  padding: 1rem;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: white;
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
+  @keyframes type-in { to { opacity: 1; } }
 
-.checkbox-option:hover {
-  border-color: var(--primary);
-  background: var(--surface);
-}
+  /* Dashed dropzone */
+  .dropzone {
+    border: 1.5px dashed rgba(156,240,255,0.35);
+    transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
+  }
+  .dropzone:hover, .dropzone.drag-over {
+    border-color: #9cf0ff;
+    background: rgba(156,240,255,0.06);
+    transform: translateY(-2px);
+  }
 
-.checkbox-option.selected {
-  border-color: var(--primary);
-  background: #eff6ff;
-}
+  /* Result code panel */
+  .code-panel {
+    max-height: 60vh;
+    overflow: auto;
+    background: rgba(255,255,255,0.025);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 13px;
+    line-height: 1.7;
+  }
+  .code-panel pre {
+    margin: 0; padding: 20px 24px;
+    color: rgba(229,226,225,0.85);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .code-panel pre .h1 { color: #9cf0ff; font-weight: 700; }
+  .code-panel pre .h2 { color: #d8b9ff; }
+  .code-panel pre .em { color: #00daf3; }
 
-.checkbox-option input[type="checkbox"] {
-  margin-top: 0.125rem;
-  width: 20px;
-  height: 20px;
-  cursor: pointer;
-}
+  .material-symbols-outlined {
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    user-select: none;
+  }
 
-.checkbox-content {
-  flex: 1;
-}
+  /* Industry detection banner */
+  .industry-banner {
+    border: 1px solid rgba(156,240,255,0.25);
+    background: rgba(156,240,255,0.04);
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 12px;
+    animation: step-in 0.5s ease both;
+  }
 
-.checkbox-title {
-  font-size: 0.875rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.125rem;
-}
+  /* Rotating ghost placeholder — fades between examples while the input is empty */
+  .ghost-placeholder {
+    position: absolute;
+    top: 16px; left: 0;
+    color: rgba(255,255,255,0.28);
+    pointer-events: none;
+    font-size: 18px;
+    line-height: 28px;
+    font-family: 'Inter', sans-serif;
+    transition: opacity 0.28s ease;
+    will-change: opacity;
+  }
+  .ghost-placeholder.hidden-by-value { opacity: 0 !important; }
 
-.checkbox-description {
-  font-size: 0.75rem;
-  color: var(--text-soft);
-}
+  /* Continue success animation — 4 cyan squares snap together, anchored on the clicked button */
+  .success-burst {
+    position: fixed;
+    /* top/left set inline based on the button's center */
+    transform: translate(-50%, -50%);
+    z-index: 200;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  .success-burst.active { opacity: 1; }
+  .success-burst.exit   { opacity: 0; }
 
-/* ========================================
-   BUTTONS
-======================================== */
+  /* Pulse the button itself when clicked so the user feels the press */
+  @keyframes cta-press {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(0.94); box-shadow: 0 0 32px rgba(0,218,243,0.5); }
+    100% { transform: scale(1); }
+  }
+  .magnetic-cta.pressing {
+    animation: cta-press 0.45s cubic-bezier(0.34,1.56,0.64,1);
+  }
 
-.button-group {
-  display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-}
+  /* Block grid — 4 cyan squares that fly in from corners and snap together */
+  .burst-grid {
+    position: relative;
+    width: 96px;
+    height: 96px;
+  }
+  .burst-block {
+    position: absolute;
+    width: 36px;
+    height: 36px;
+    background: #9cf0ff;
+    border-radius: 6px;
+    box-shadow: 0 0 28px rgba(0,218,243,0.85), inset 0 0 10px rgba(255,255,255,0.35);
+    opacity: 0;
+    will-change: transform, opacity;
+  }
+  .burst-tl { top: 0;    left: 0; }
+  .burst-tr { top: 0;    right: 0; }
+  .burst-bl { bottom: 0; left: 0; }
+  .burst-br { bottom: 0; right: 0; }
 
-button {
-  padding: 0.75rem 1.5rem;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  font-family: inherit;
-}
+  .success-burst.active .burst-tl { animation: burst-fly-tl 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .success-burst.active .burst-tr { animation: burst-fly-tr 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.06s forwards; }
+  .success-burst.active .burst-bl { animation: burst-fly-bl 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.12s forwards; }
+  .success-burst.active .burst-br { animation: burst-fly-br 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.18s forwards; }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
+  @keyframes burst-fly-tl {
+    0%   { transform: translate(-70px, -70px) scale(0.4) rotate(-25deg); opacity: 0; }
+    60%  { opacity: 1; }
+    80%  { transform: translate(4px, 4px)     scale(1.08) rotate(0deg);  opacity: 1; }
+    100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
+  }
+  @keyframes burst-fly-tr {
+    0%   { transform: translate(70px, -70px)  scale(0.4) rotate(25deg);  opacity: 0; }
+    60%  { opacity: 1; }
+    80%  { transform: translate(-4px, 4px)    scale(1.08) rotate(0deg);  opacity: 1; }
+    100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
+  }
+  @keyframes burst-fly-bl {
+    0%   { transform: translate(-70px, 70px)  scale(0.4) rotate(25deg);  opacity: 0; }
+    60%  { opacity: 1; }
+    80%  { transform: translate(4px, -4px)    scale(1.08) rotate(0deg);  opacity: 1; }
+    100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
+  }
+  @keyframes burst-fly-br {
+    0%   { transform: translate(70px, 70px)   scale(0.4) rotate(-25deg); opacity: 0; }
+    60%  { opacity: 1; }
+    80%  { transform: translate(-4px, -4px)   scale(1.08) rotate(0deg);  opacity: 1; }
+    100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
+  }
 
-.btn-primary:hover {
-  background: var(--primary-hover);
-}
+  /* Pulsing ring behind the blocks */
+  .burst-ring {
+    position: absolute;
+    inset: -12px;
+    border: 1px solid #9cf0ff;
+    border-radius: 50%;
+    opacity: 0;
+  }
+  .success-burst.active .burst-ring {
+    animation: burst-ring 0.7s ease-out 0.35s forwards;
+  }
+  @keyframes burst-ring {
+    0%   { transform: scale(0.6); opacity: 0.9; }
+    100% { transform: scale(2.4); opacity: 0; }
+  }
 
-.btn-secondary {
-  background: var(--surface);
-  color: var(--text);
-  border: 1px solid var(--border);
-}
+  .burst-status {
+    font-family: 'Geist Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.45em;
+    color: #9cf0ff;
+    text-transform: uppercase;
+    text-shadow: 0 0 18px rgba(0,218,243,0.7);
+  }
+  .burst-status span { display: inline-block; opacity: 0; transform: translateY(8px); }
+  .success-burst.active .burst-status span {
+    animation: status-letter 0.4s ease forwards;
+  }
+  @keyframes status-letter {
+    to { opacity: 1; transform: translateY(0); }
+  }
 
-.btn-secondary:hover {
-  background: var(--border);
-}
+  /* Click ripple — fires immediately on Continue click for tactile feedback */
+  .click-ripple {
+    position: fixed;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: rgba(156,240,255,0.45);
+    transform: translate(-50%, -50%) scale(0);
+    pointer-events: none;
+    z-index: 199;
+    animation: ripple-expand 0.6s ease-out forwards;
+  }
+  @keyframes ripple-expand {
+    0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.7; }
+    100% { transform: translate(-50%, -50%) scale(8);   opacity: 0;   }
+  }
 
-.btn-ghost {
-  background: transparent;
-  color: var(--text-soft);
-}
-
-.btn-ghost:hover {
-  background: var(--surface);
-}
-
-/* ========================================
-   LOADING & RESULTS
-======================================== */
-
-.loading-screen {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.spinner {
-  width: 48px;
-  height: 48px;
-  border: 4px solid var(--border);
-  border-top-color: var(--primary);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin: 0 auto 1.5rem;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: var(--text);
-  margin-bottom: 0.5rem;
-}
-
-.loading-subtext {
-  font-size: 0.875rem;
-  color: var(--text-soft);
-}
-
-.results-screen {
-  display: none;
-}
-
-.results-screen.show {
-  display: block;
-}
-
-.results-header {
-  background: var(--accent);
-  color: white;
-  padding: 2rem;
-  border-radius: 8px;
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-.results-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-}
-
-.results-subtitle {
-  font-size: 1rem;
-  opacity: 0.9;
-}
-
-.prompt-box {
-  background: #f9fafb;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 1.5rem;
-  font-family: 'Monaco', 'Courier New', monospace;
-  font-size: 0.875rem;
-  line-height: 1.6;
-  max-height: 500px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
-  margin-bottom: 1rem;
-}
-
-.hidden {
-  display: none !important;
-}
+  /* Accessibility */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+    }
+    .aurora-mesh { animation: none; }
+    body { cursor: auto; }
+    .custom-cursor { display: none !important; }
+  }
 </style>
 </head>
-<body>
 
-<header>
-  <div class="header-content">
-    <div class="logo">Pebble Engine</div>
-    <div class="version">v3.0</div>
-  </div>
-</header>
+<body class="bg-background text-on-surface min-h-screen selection:bg-primary-fixed selection:text-on-primary-fixed">
 
-<main>
-  <!-- STEP INDICATOR -->
-  <div class="step-indicator" id="stepIndicator">
-    <!-- Steps will be generated dynamically -->
+<!-- Custom cursor -->
+<div class="custom-cursor hidden md:block" id="cursor"></div>
+
+<!-- Aurora background -->
+<div class="aurora-mesh"></div>
+
+<!-- Top progress hairline -->
+<div class="fixed top-0 left-0 w-full h-[2px] z-[60] bg-white/10">
+  <div id="topProgress" class="h-full bg-primary-fixed-dim transition-all duration-700 ease-out shadow-[0_0_10px_#00daf3]" style="width: 16.66%"></div>
+</div>
+
+<!-- Top nav -->
+<nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter py-stack-sm border-b border-white/5 backdrop-blur-md">
+  <div class="flex items-center gap-2">
+    <div class="w-2 h-2 rounded-full bg-primary-fixed-dim shadow-[0_0_10px_#00daf3]"></div>
+    <span class="text-body-md font-medium text-on-surface">Pebble Engine</span>
+  </div>
+  <span class="mono text-label-mono text-on-surface-variant uppercase tracking-widest">v3.0</span>
+</nav>
+
+<!-- Side progress indicator -->
+<aside class="fixed right-gutter top-1/2 -translate-y-1/2 z-50 hidden md:flex flex-col items-end gap-3">
+  <div class="text-right">
+    <p class="mono text-[10px] uppercase tracking-[0.3em] text-on-surface-variant/60">Progress</p>
+    <p id="stepCounter" class="mono text-label-mono text-primary-fixed font-bold mt-1">01 / 06</p>
+  </div>
+  <div class="w-px h-32 bg-white/10 relative overflow-hidden">
+    <div id="progressFill" class="absolute top-0 left-0 w-full bg-primary-fixed-dim shadow-[0_0_10px_#00daf3] transition-all duration-700 ease-out" style="height: 16.66%;"></div>
+  </div>
+  <span class="material-symbols-outlined text-primary-fixed text-[18px]">analytics</span>
+</aside>
+
+<!-- Main canvas -->
+<main class="relative z-10 max-w-[720px] mx-auto px-gutter pt-32 pb-24 min-h-screen flex flex-col">
+  <div id="questionContainer"></div>
+
+  <div id="loadingScreen" class="hidden splash">
+    <video class="splash-video" autoplay muted loop playsinline preload="auto">
+      <source src="/static/videos/loadingscreen.mp4" type="video/mp4" />
+    </video>
+    <div class="splash-overlay"></div>
+    <div class="ring"></div>
+    <h2 id="splashText"></h2>
   </div>
 
-  <!-- QUESTION CONTAINER -->
-  <div id="questionContainer">
-    <!-- Questions will be rendered here -->
-  </div>
-
-  <!-- LOADING SCREEN -->
-  <div id="loadingScreen" class="hidden">
-    <div class="loading-screen">
-      <div class="spinner"></div>
-      <div class="loading-text">Generating Your Brief...</div>
-      <div class="loading-subtext" id="loadingSubtext">Researching industry best practices...</div>
-    </div>
-  </div>
-
-  <!-- RESULTS SCREEN -->
-  <div id="resultsScreen" class="results-screen">
-    <div class="results-header">
-      <div class="results-title">✓ Brief Generated!</div>
-      <div class="results-subtitle">Your custom website brief is ready</div>
-    </div>
-    <div class="button-group" style="justify-content: center; margin-bottom: 2rem;">
-      <button class="btn-primary" onclick="copyPrompt()">Copy to Clipboard</button>
-      <button class="btn-secondary" onclick="downloadPrompt()">Download</button>
-      <button class="btn-ghost" onclick="location.reload()">Start Over</button>
-    </div>
-    <div class="prompt-box" id="promptBox"></div>
-  </div>
+  <div id="resultsScreen" class="hidden"></div>
 </main>
 
-<script>
-// ========================================
-// PEBBLE ENGINE v3.0 - SMART QUIZ
-// ========================================
+<!-- Footer -->
+<footer class="fixed bottom-0 left-0 w-full z-40 flex justify-between items-center px-gutter py-stack-sm text-on-surface-variant/50 text-[12px] mono">
+  <span>Pebble Engine © 2026</span>
+  <span>industries.json · 52 entries</span>
+</footer>
 
-// INDUSTRY DATABASE
+<script>
+/* ==========================================================================
+   PEBBLE ENGINE v3.0 — STITCH UI
+   Visual layer rewrites only. The state machine + API contract are preserved.
+========================================================================== */
+
+// Lightweight industry hints (banner only — real intel lives server-side).
 const INDUSTRIES = {
-  'plumbing': {
-    category: 'Home Services',
-    recommendations: {
-      target_audience: 'Homeowners',
-      primary_goal: 'Call Now',
-      brand_position: 'Professional & Established',
-      brand_tone: 'Friendly & Approachable',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'Home service businesses convert best with light, approachable designs and prominent emergency CTAs.'
-    }
-  },
-  'hvac': {
-    category: 'Home Services',
-    recommendations: {
-      target_audience: 'Homeowners',
-      primary_goal: 'Call Now',
-      brand_position: 'Professional & Established',
-      brand_tone: 'Friendly & Approachable',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'HVAC businesses need trustworthy, clean designs with clear emergency contact options.'
-    }
-  },
-  'electrical': {
-    category: 'Home Services',
-    recommendations: {
-      target_audience: 'Homeowners',
-      primary_goal: 'Call Now',
-      brand_position: 'Professional & Established',
-      brand_tone: 'Friendly & Approachable',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'Electrical services require trust and immediate contact options for emergencies.'
-    }
-  },
-  'restaurant': {
-    category: 'Food & Hospitality',
-    recommendations: {
-      target_audience: 'Local Diners',
-      primary_goal: 'View Menu',
-      brand_position: 'Accessible & Community',
-      brand_tone: 'Friendly & Inviting',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'Restaurants need appetizing food photography and easy access to menu and hours.'
-    }
-  },
-  'cafe': {
-    category: 'Food & Hospitality',
-    recommendations: {
-      target_audience: 'Local Consumers',
-      primary_goal: 'View Menu',
-      brand_position: 'Accessible & Community',
-      brand_tone: 'Friendly & Inviting',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'Cafes succeed with warm, inviting designs and prominent menu display.'
-    }
-  },
-  'lawyer': {
-    category: 'Professional Services',
-    recommendations: {
-      target_audience: 'Individuals or Businesses',
-      primary_goal: 'Schedule Consultation',
-      brand_position: 'Professional & Established',
-      brand_tone: 'Professional & Formal',
-      visual_aesthetic: 'technical_professional',
-      motion_intensity: 'minimal',
-      explanation: 'Legal services need credible, structured designs with clear credentials.'
-    }
-  },
-  'dentist': {
-    category: 'Health & Wellness',
-    recommendations: {
-      target_audience: 'Local Individuals',
-      primary_goal: 'Book Appointment',
-      brand_position: 'Accessible & Community',
-      brand_tone: 'Friendly & Warm',
-      visual_aesthetic: 'minimal_refined',
-      motion_intensity: 'minimal',
-      explanation: 'Dental practices need calming, clean designs that reduce patient anxiety.'
-    }
-  },
-  'yoga': {
-    category: 'Health & Wellness',
-    recommendations: {
-      target_audience: 'Local Individuals',
-      primary_goal: 'Book Appointment',
-      brand_position: 'Accessible & Community',
-      brand_tone: 'Friendly & Warm',
-      visual_aesthetic: 'minimal_refined',
-      motion_intensity: 'minimal',
-      explanation: 'Wellness spaces need peaceful, uncluttered designs with soft colors.'
-    }
-  },
-  'real-estate': {
-    category: 'Real Estate',
-    recommendations: {
-      target_audience: 'Home Buyers',
-      primary_goal: 'Browse Listings',
-      brand_position: 'Professional & Trustworthy',
-      brand_tone: 'Professional & Friendly',
-      visual_aesthetic: 'clean_modern',
-      motion_intensity: 'smooth',
-      explanation: 'Real estate sites need clean, searchable layouts with excellent property photos.'
-    }
-  }
+  'plumbing':    { category: 'Home Services',        explanation: 'Light, approachable design with prominent emergency CTAs.' },
+  'hvac':        { category: 'Home Services',        explanation: 'Trust-first design with 24/7 contact options.' },
+  'electrical':  { category: 'Home Services',        explanation: 'Trust + urgent emergency contact patterns.' },
+  'pest control':{ category: 'Home Services',        explanation: 'Industry intel locked in industries.json — dark trust palette + Pexels video hero.' },
+  'restaurant':  { category: 'Food & Hospitality',   explanation: 'Appetizing photography and easy menu/hours access.' },
+  'cafe':        { category: 'Food & Hospitality',   explanation: 'Warm, inviting designs with prominent menu display.' },
+  'lawyer':      { category: 'Professional Services',explanation: 'Credible, structured design with credentials surfaced.' },
+  'law firm':    { category: 'Professional Services',explanation: 'Editorial authority — bar admissions, results, gravity.' },
+  'dentist':     { category: 'Health & Wellness',    explanation: 'Calming, clean design that reduces patient anxiety.' },
+  'yoga':        { category: 'Health & Wellness',    explanation: 'Peaceful, uncluttered designs with soft colors.' },
+  'real-estate': { category: 'Real Estate',          explanation: 'Clean searchable layouts with excellent property photos.' },
 };
 
-// QUIZ STATE
 const state = {
   currentStep: 0,
   answers: {},
   detectedIndustry: null,
-  recommendations: null
 };
 
-// QUESTION DEFINITIONS
 const QUESTIONS = [
   {
     id: 'basics',
     type: 'text_multi',
+    eyebrow: 'STEP 01 — IDENTITY',
     title: 'Tell us about your business',
-    subtitle: 'Basic information to get started',
+    subtitle: "We'll use this to calibrate the engine's industry-specific logic.",
     fields: [
-      { name: 'business_name', label: 'Business Name', placeholder: 'Vinny\'s Plumbing' },
-      { name: 'business_type', label: 'Type of Business', placeholder: 'plumbing' },
-      { name: 'location', label: 'Location / Service Area', placeholder: 'Suffolk County, NY' }
+      { name: 'business_name', label: 'Business Name', placeholders: [
+        "Squito Pest Control",
+        "Vinny's Plumbing",
+        "Cedar & Co. Wellness",
+        "Northshore Realty Group",
+        "Acme Roofing Co.",
+        "Baez HVAC Solutions",
+      ]},
+      { name: 'business_type', label: 'Industry', placeholders: [
+        "pest control",
+        "real estate",
+        "dental practice",
+        "barbershop",
+        "law firm",
+        "wedding planning",
+        "veterinary clinic",
+      ]},
     ],
-    onComplete: (answers) => {
-      // Detect industry
-      const businessType = answers.business_type.toLowerCase().trim();
-      const detected = detectIndustry(businessType);
-      if (detected) {
-        state.detectedIndustry = detected.category;
-        state.recommendations = detected.recommendations;
-        showIndustryBanner(detected.category, detected.recommendations.explanation);
-      }
-    }
-  },
-  {
-    id: 'target_audience',
-    type: 'single_select',
-    title: 'Who visits your site?',
-    subtitle: 'Understanding your audience helps us recommend the right tone and complexity',
-    options: [
-      { value: 'homeowners', label: 'Homeowners', description: 'Residential property owners in your service area' },
-      { value: 'businesses', label: 'Business Owners', description: 'Other businesses (B2B services)' },
-      { value: 'consumers', label: 'Consumers', description: 'General public (B2C products/services)' },
-      { value: 'individuals', label: 'Individuals', description: 'People seeking personal services' }
-    ],
-    getRecommended: () => state.recommendations?.target_audience
-  },
-  {
-    id: 'primary_goal',
-    type: 'single_select',
-    title: 'What\'s the #1 action you want visitors to take?',
-    subtitle: 'This determines CTA placement and hierarchy',
-    options: [
-      { value: 'call', label: 'Call Now', description: 'Emergency dispatch or immediate phone contact' },
-      { value: 'book', label: 'Book Appointment', description: 'Schedule service or consultation' },
-      { value: 'quote', label: 'Request Quote', description: 'Get pricing or proposal' },
-      { value: 'browse', label: 'Browse Portfolio/Products', description: 'View work, listings, or products' },
-      { value: 'purchase', label: 'Make Purchase', description: 'Buy products or services online' }
-    ],
-    getRecommended: () => state.recommendations?.primary_goal
-  },
-  {
-    id: 'brand_position',
-    type: 'single_select',
-    title: 'How should your brand be positioned?',
-    subtitle: 'This affects visual weight, pricing display, and overall aesthetic',
-    options: [
-      { value: 'premium', label: 'Premium / Luxury', description: 'High-end, exclusive, sophisticated' },
-      { value: 'professional', label: 'Professional & Established', description: 'Trustworthy, credible, experienced' },
-      { value: 'accessible', label: 'Accessible & Community', description: 'Approachable, welcoming, local' },
-      { value: 'budget', label: 'Budget / Value', description: 'Affordable, no-frills, practical' }
-    ],
-    getRecommended: () => state.recommendations?.brand_position
-  },
-  {
-    id: 'brand_tone',
-    type: 'single_select',
-    title: 'What tone should your copy have?',
-    subtitle: 'This affects all text on the site - headlines, buttons, descriptions',
-    options: [
-      { value: 'professional_formal', label: 'Professional & Formal', description: 'Authoritative, serious, precise' },
-      { value: 'friendly_approachable', label: 'Friendly & Approachable', description: 'Warm, conversational, human' },
-      { value: 'technical_expert', label: 'Technical & Expert', description: 'Data-driven, specific, detailed' },
-      { value: 'creative_confident', label: 'Creative & Confident', description: 'Bold, opinionated, distinctive' }
-    ],
-    getRecommended: () => state.recommendations?.brand_tone
-  },
-  {
-    id: 'site_functions',
-    type: 'multi_select',
-    title: 'What does your site need to do?',
-    subtitle: 'Select all that apply',
-    options: [
-      { value: 'booking', label: 'Online Booking', description: 'Clients schedule appointments' },
-      { value: 'payment', label: 'Collect Payment', description: 'Deposits or full payment online' },
-      { value: 'portfolio', label: 'Show Work / Gallery', description: 'Photos, case studies, projects' },
-      { value: 'leads', label: 'Capture Leads', description: 'Contact form, quote request' },
-      { value: 'ecommerce', label: 'Sell Products', description: 'Online store with checkout' },
-      { value: 'presence', label: 'Just Be Findable', description: 'Hours, location, contact info' }
-    ],
-    getRecommended: () => {
-      // Return array of recommended functions
-      const type = state.answers.business_type?.toLowerCase();
-      if (type?.includes('plumb') || type?.includes('hvac') || type?.includes('electric')) {
-        return ['booking', 'leads', 'presence'];
-      }
-      return null;
-    }
-  },
-  {
-    id: 'integrations',
-    type: 'conditional_text',
-    title: 'Any existing systems to integrate?',
-    subtitle: 'Leave blank if you don\'t have these yet',
-    condition: () => {
-      const fns = state.answers.site_functions || [];
-      return fns.includes('booking') || fns.includes('payment') || fns.includes('ecommerce');
+    onComplete: () => {
+      const type = (state.answers.business_type || '').toLowerCase().trim();
+      const match = detectIndustry(type);
+      if (match) state.detectedIndustry = match;
     },
-    fields: [
-      {
-        name: 'booking_system',
-        label: 'Booking System',
-        placeholder: 'Housecall Pro, Calendly, etc.',
-        show: () => (state.answers.site_functions || []).includes('booking')
-      },
-      {
-        name: 'payment_system',
-        label: 'Payment System',
-        placeholder: 'Stripe, Square, etc.',
-        show: () => (state.answers.site_functions || []).includes('payment') ||
-                    (state.answers.site_functions || []).includes('ecommerce')
-      }
-    ]
   },
   {
-    id: 'reference',
+    id: 'services',
     type: 'text_multi',
-    title: 'Visual inspiration (optional)',
-    subtitle: 'Up to 3 reference sites — the engine synthesizes what they share',
+    eyebrow: 'STEP 02 — OPERATION',
+    title: 'Where do you operate and what do you do?',
+    subtitle: 'Be specific about your core offerings. This maps your expertise to the right architectural patterns.',
     fields: [
-      { name: 'reference_url',   label: 'Reference Website #1', placeholder: 'https://...', required: false },
-      { name: 'reference_url_2', label: 'Reference Website #2', placeholder: 'https://...', required: false },
-      { name: 'reference_url_3', label: 'Reference Website #3', placeholder: 'https://...', required: false },
-      { name: 'extra_context', label: 'Additional Notes', placeholder: 'Any specific requests or context...', type: 'textarea', required: false }
-    ]
-  }
+      { name: 'location', label: 'Service Location', placeholders: [
+        "Suffolk County, NY",
+        "Brooklyn, NY",
+        "Greater Austin, TX",
+        "Bay Area, CA",
+        "South Florida",
+        "Greater Phoenix, AZ",
+      ]},
+      { name: 'services_offered', label: 'Core Offerings', type: 'textarea', placeholders: [
+        "termite treatment, rodent control, mosquito spraying...",
+        "residential listings, commercial leases, property management...",
+        "drain cleaning, water heater repair, sewer line inspection...",
+        "cleanings, whitening, Invisalign, emergency dental...",
+        "haircuts, beard sculpts, hot towel shaves...",
+        "estate planning, business law, civil litigation...",
+      ]},
+    ],
+  },
+  {
+    id: 'contact',
+    type: 'text_multi',
+    eyebrow: 'STEP 03 — CONTACT',
+    title: 'How should customers reach you?',
+    subtitle: "Leave blank if you don't have it yet — we'll use placeholders.",
+    fields: [
+      { name: 'phone', label: 'Phone', required: false, placeholders: [
+        "+1 (631) 555-0123",
+        "+1 (212) 555-0188",
+        "+1 (415) 555-0142",
+        "+1 (305) 555-0167",
+      ]},
+      { name: 'email', label: 'Email', required: false, placeholders: [
+        "hello@yourbrand.com",
+        "team@studio.co",
+        "contact@firm.legal",
+        "book@salon.nyc",
+      ]},
+      { name: 'address', label: 'Address', required: false, placeholders: [
+        "123 Main St, Patchogue, NY",
+        "1010 Market St, San Francisco, CA",
+        "500 Brickell Ave, Miami, FL",
+        "200 W 6th St, Austin, TX",
+      ]},
+    ],
+  },
+  {
+    id: 'tone',
+    type: 'single_select',
+    eyebrow: 'STEP 04 — VOICE',
+    title: "What's the voice of your brand?",
+    subtitle: 'This dictates the rhythm and vocabulary of the generated copy.',
+    options: [
+      { value: 'professional_formal',   label: 'Professional', eyebrow: 'Enterprise Standard', description: 'Polished, authoritative, precise. Ideal for high-stakes business and technical documentation.', icon: 'corporate_fare' },
+      { value: 'friendly_approachable', label: 'Friendly',     eyebrow: 'Human-Centric',       description: 'Conversational, warm, approachable. Bridges the gap between technology and the end user.', icon: 'sentiment_satisfied' },
+      { value: 'creative_confident',    label: 'Urgent · Bold', eyebrow: 'High Impact',        description: 'Direct, energetic, provocative. Designed to command attention and drive immediate action.', icon: 'bolt' },
+    ],
+  },
+  {
+    id: 'design_reference',
+    type: 'design_upload',
+    eyebrow: 'STEP 05 — REFERENCE',
+    title: 'Show us what you love',
+    subtitle: 'Optional. Link a Figma file or upload a moodboard. Engine extracts colors, type rhythm, and layout.',
+    fields: [
+      { name: 'figma_url', label: 'Figma URL', required: false, placeholders: [
+        "https://figma.com/design/...",
+        "https://figma.com/file/abcd1234/Brand-System",
+        "https://figma.com/design/xyz/Linear-Inspired",
+        "https://figma.com/design/9k2/Stitch-v2",
+      ]},
+      { name: 'design_reference_images', label: 'Drag & drop assets', type: 'file', required: false },
+    ],
+  },
+  {
+    id: 'output_mode',
+    type: 'single_select',
+    eyebrow: 'STEP 06 — DELIVERY',
+    title: 'How should it be delivered?',
+    subtitle: 'Choose the technical stack. Our engine compiles your brief into the selected format.',
+    options: [
+      { value: 'full', label: 'Full Next.js site',  eyebrow: 'Recommended',  description: 'Production-ready React framework with SSR, optimized routing, and SEO. Vercel-ready.', icon: 'terminal' },
+      { value: 'lite', label: 'Lite single HTML',   eyebrow: 'Zero Config',  description: 'Zero dependencies. A single portable file with all styles, scripts, assets inline.', icon: 'html' },
+    ],
+  },
 ];
 
-// UTILITY FUNCTIONS
-function detectIndustry(businessType) {
-  const type = businessType.toLowerCase().trim();
-
-  // Direct matches
-  if (INDUSTRIES[type]) {
-    return INDUSTRIES[type];
+/* ---------- helpers ---------- */
+function detectIndustry(type) {
+  if (!type) return null;
+  if (INDUSTRIES[type]) return INDUSTRIES[type];
+  for (const [k, v] of Object.entries(INDUSTRIES)) {
+    if (type.includes(k) || k.includes(type)) return v;
   }
-
-  // Fuzzy matches
-  for (const [key, data] of Object.entries(INDUSTRIES)) {
-    if (type.includes(key) || key.includes(type)) {
-      return data;
-    }
-  }
-
-  // Category matches
-  const homeServices = ['pest', 'clean', 'landscape', 'roof', 'paint', 'locksmith', 'handyman'];
-  if (homeServices.some(s => type.includes(s))) {
-    return INDUSTRIES['plumbing']; // Use plumbing as template for home services
-  }
-
   return null;
 }
 
-function showIndustryBanner(category, explanation) {
-  const banner = document.createElement('div');
-  banner.className = 'industry-banner show';
-  banner.innerHTML = `
-    <div class="industry-banner-title">✓ Detected: ${category}</div>
-    <div class="industry-banner-text">${explanation}</div>
-  `;
-
-  // Insert after question header in next question
-  setTimeout(() => {
-    const questionCard = document.querySelector('.question-card');
-    if (questionCard) {
-      const header = questionCard.querySelector('.question-header');
-      if (header) {
-        header.after(banner);
-      }
-    }
-  }, 100);
+function setProgress(stepIdx) {
+  const total = QUESTIONS.length;
+  const pct = ((stepIdx + 1) / total) * 100;
+  document.getElementById('topProgress').style.width = `${pct}%`;
+  document.getElementById('progressFill').style.height = `${pct}%`;
+  document.getElementById('stepCounter').textContent = `${String(stepIdx + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
 }
 
-// RENDER FUNCTIONS
-function renderStepIndicator() {
-  const container = document.getElementById('stepIndicator');
-  const totalSteps = QUESTIONS.length;
-
-  let html = '';
-  for (let i = 0; i < totalSteps; i++) {
-    const status = i < state.currentStep ? 'completed' :
-                   i === state.currentStep ? 'active' : '';
-    html += `<div class="step ${status}">${i + 1}</div>`;
-    if (i < totalSteps - 1) {
-      html += '<div class="step-divider"></div>';
-    }
-  }
-
-  container.innerHTML = html;
+function wordRevealHTML(text) {
+  return text.split(/(\s+)/).map((word, i) => {
+    if (/^\s+$/.test(word)) return word;
+    const delay = (i * 0.06).toFixed(2);
+    return `<span style="animation-delay: ${delay}s">${word}</span>`;
+  }).join('');
 }
 
+/* ---------- renderers ---------- */
 function renderQuestion(question) {
   const container = document.getElementById('questionContainer');
 
-  let html = `
-    <div class="question-card">
-      <div class="question-header">
-        <h2 class="question-title">${question.title}</h2>
-        <p class="question-subtitle">${question.subtitle}</p>
+  // Industry detection banner (only after basics step submits)
+  const showBanner = state.detectedIndustry && question.id !== 'basics';
+  const bannerHTML = showBanner ? `
+    <div class="industry-banner mb-stack-md">
+      <span class="material-symbols-outlined text-primary-fixed text-[20px]">check_circle</span>
+      <div>
+        <p class="mono text-[10px] uppercase tracking-[0.2em] text-primary-fixed">Industry locked · ${state.detectedIndustry.category}</p>
+        <p class="text-body-md text-on-surface-variant mt-0.5">${state.detectedIndustry.explanation}</p>
       </div>
-  `;
+    </div>` : '';
 
-  // Render based on type
+  const eyebrowHTML = `
+    <div class="inline-flex items-center gap-2 mb-stack-md">
+      <div class="w-1 h-1 rounded-full bg-primary-fixed-dim"></div>
+      <span class="mono text-label-mono text-primary-fixed uppercase tracking-[0.3em]">${question.eyebrow}</span>
+    </div>`;
+
+  let bodyHTML = '';
+
   if (question.type === 'text_multi') {
-    question.fields.forEach(field => {
-      if (field.show && !field.show()) return;
-
+    bodyHTML = question.fields.map(field => {
       const value = state.answers[field.name] || '';
-      const inputType = field.type === 'textarea' ?
-        `<textarea name="${field.name}" placeholder="${field.placeholder}">${value}</textarea>` :
-        `<input type="text" name="${field.name}" placeholder="${field.placeholder}" value="${value}">`;
-
-      html += `
-        <div class="form-group">
-          <label>${field.label}</label>
-          ${inputType}
-        </div>
-      `;
-    });
+      const usesRotation = Array.isArray(field.placeholders) && field.placeholders.length > 1;
+      const firstPlaceholder = usesRotation ? field.placeholders[0] : (field.placeholder || '');
+      const ghostHTML = usesRotation
+        ? `<span class="ghost-placeholder ${value ? 'hidden-by-value' : ''}" data-ghost-for="${field.name}">${firstPlaceholder}</span>`
+        : '';
+      const placeholderAttr = usesRotation ? '' : firstPlaceholder;
+      const inputEl = field.type === 'textarea'
+        ? `<textarea rows="3" name="${field.name}" placeholder="${placeholderAttr}">${value}</textarea>`
+        : `<input type="text" name="${field.name}" placeholder="${placeholderAttr}" value="${value}" autocomplete="off" />`;
+      return `
+        <div class="group">
+          <label class="mono text-label-mono text-on-surface-variant/70 uppercase tracking-[0.2em] block mb-1">${field.label}</label>
+          <div class="input-underline">${inputEl}${ghostHTML}</div>
+        </div>`;
+    }).join('');
   }
 
   else if (question.type === 'single_select') {
-    const recommended = question.getRecommended ? question.getRecommended() : null;
-
-    html += '<div class="options-grid">';
-    question.options.forEach(option => {
-      const isRecommended = recommended &&
-        (option.label === recommended || option.label.includes(recommended) || option.value === recommended.toLowerCase().replace(/ /g, '_'));
-      const isSelected = state.answers[question.id] === option.value;
-
-      html += `
-        <div class="option-card ${isRecommended ? 'recommended' : ''} ${isSelected ? 'selected' : ''}"
-             onclick="selectOption('${question.id}', '${option.value}')">
-          ${isRecommended ? '<div class="option-badge">✓ Recommended</div>' : ''}
-          <div class="option-title">${option.label}</div>
-          <div class="option-description">${option.description}</div>
-          ${isRecommended ? `<div class="option-explanation">Best for ${state.detectedIndustry}</div>` : ''}
-        </div>
-      `;
-    });
-    html += '</div>';
-  }
-
-  else if (question.type === 'multi_select') {
-    const recommended = question.getRecommended ? question.getRecommended() : null;
-    const selected = state.answers[question.id] || [];
-
-    html += '<div class="checkbox-grid">';
-    question.options.forEach(option => {
-      const isRecommended = recommended && Array.isArray(recommended) && recommended.includes(option.value);
-      const isSelected = selected.includes(option.value);
-
-      html += `
-        <label class="checkbox-option ${isSelected ? 'selected' : ''}">
-          <input type="checkbox" value="${option.value}"
-                 ${isSelected ? 'checked' : ''}
-                 onchange="toggleCheckbox('${question.id}', '${option.value}')">
-          <div class="checkbox-content">
-            <div class="checkbox-title">${option.label} ${isRecommended ? '✓' : ''}</div>
-            <div class="checkbox-description">${option.description}</div>
+    bodyHTML = `<div class="grid grid-cols-1 gap-stack-md" data-options-for="${question.id}">` + question.options.map(opt => {
+      const selected = state.answers[question.id] === opt.value;
+      return `
+        <button type="button"
+                data-q="${question.id}" data-value="${opt.value}"
+                onclick="selectOption('${question.id}', '${opt.value}')"
+                class="glass-surface option-card ${selected ? 'selected' : ''} rounded-xl p-6 text-left">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              ${opt.eyebrow ? `<span class="mono text-label-mono text-primary-fixed uppercase tracking-[0.2em] block mb-2">${opt.eyebrow}</span>` : ''}
+              <h3 class="fraunces text-headline-lg text-on-surface mb-2">${opt.label}</h3>
+              <p class="text-body-md text-on-surface-variant max-w-[480px]">${opt.description}</p>
+            </div>
+            <span class="material-symbols-outlined text-primary-fixed/60 text-[28px]">${opt.icon || 'arrow_outward'}</span>
           </div>
-        </label>
-      `;
-    });
-    html += '</div>';
+          <div class="slide-bar"></div>
+        </button>`;
+    }).join('') + `</div>`;
   }
 
-  else if (question.type === 'conditional_text') {
-    let hasVisibleFields = false;
-    question.fields.forEach(field => {
-      if (field.show && !field.show()) return;
-      hasVisibleFields = true;
-
-      const value = state.answers[field.name] || '';
-      html += `
-        <div class="form-group">
-          <label>${field.label}</label>
-          <input type="text" name="${field.name}" placeholder="${field.placeholder}" value="${value}">
+  else if (question.type === 'design_upload') {
+    const figmaValue = state.answers.figma_url || '';
+    const imgCount = (state.answers.design_reference_images || []).length;
+    const figmaField = question.fields.find(f => f.name === 'figma_url');
+    const figmaRotates = figmaField && Array.isArray(figmaField.placeholders) && figmaField.placeholders.length > 1;
+    const figmaFirst = figmaRotates ? figmaField.placeholders[0] : "https://figma.com/design/...";
+    const figmaGhost = figmaRotates
+      ? `<span class="ghost-placeholder ${figmaValue ? 'hidden-by-value' : ''}" data-ghost-for="figma_url">${figmaFirst}</span>`
+      : '';
+    bodyHTML = `
+      <div class="space-y-stack-md">
+        <div>
+          <label class="mono text-label-mono text-on-surface-variant/70 uppercase tracking-[0.2em] block mb-1">Figma URL</label>
+          <div class="input-underline">
+            <input type="text" name="figma_url" placeholder="${figmaRotates ? '' : figmaFirst}" value="${figmaValue}" autocomplete="off" />
+            ${figmaGhost}
+          </div>
         </div>
-      `;
-    });
-
-    if (!hasVisibleFields) {
-      // Skip this question
-      nextStep();
-      return;
-    }
+        <div id="dropzone" class="dropzone glass-surface rounded-xl p-8 flex flex-col items-center text-center cursor-pointer">
+          <div class="w-12 h-12 rounded-full bg-primary-fixed/10 flex items-center justify-center mb-3 transition-transform group-hover:scale-110">
+            <span class="material-symbols-outlined text-primary-fixed text-[24px]">cloud_upload</span>
+          </div>
+          <p class="text-body-md font-medium text-on-surface">Drag and drop screenshots or sketches</p>
+          <p class="mono text-label-mono text-on-surface-variant/60 mt-1">PNG, JPG or PDF up to 20MB</p>
+          <p id="uploadStatus" class="mono text-label-mono text-primary-fixed mt-3 ${imgCount ? '' : 'opacity-0'}">${imgCount} image${imgCount === 1 ? '' : 's'} attached</p>
+          <input id="fileInput" type="file" accept="image/*" multiple class="hidden" onchange="handleDesignUpload(event)" />
+        </div>
+      </div>`;
   }
 
-  // Buttons
-  html += `
-    <div class="button-group">
-      ${state.currentStep > 0 ? '<button class="btn-secondary" onclick="prevStep()">Back</button>' : ''}
-      <button class="btn-primary" onclick="nextStep()">
-        ${state.currentStep === QUESTIONS.length - 1 ? 'Generate Brief' : 'Continue'}
-      </button>
-    </div>
-  </div>
-  `;
+  const isLast = state.currentStep === QUESTIONS.length - 1;
+  const backHTML = state.currentStep > 0
+    ? `<button type="button" class="ghost-btn" onclick="prevStep()"><span class="material-symbols-outlined text-[18px]">arrow_back</span>Back</button>`
+    : `<span></span>`;
 
-  container.innerHTML = html;
+  const continueHTML = `
+    <button type="button" class="magnetic-cta" id="continueBtn" onclick="nextStep(event)">
+      ${isLast ? 'Generate Brief' : 'Continue'}
+      <span class="material-symbols-outlined arrow">arrow_forward</span>
+    </button>`;
+
+  container.innerHTML = `
+    <article class="step-wrap">
+      ${bannerHTML}
+      ${eyebrowHTML}
+      <h1 class="fraunces text-display-xl-mobile md:text-display-xl text-on-surface mb-stack-sm word-reveal">${wordRevealHTML(question.title)}</h1>
+      <p class="text-body-lg text-on-surface-variant max-w-[540px] mb-stack-lg">${question.subtitle}</p>
+      <section class="space-y-stack-lg">
+        ${bodyHTML}
+        <div class="flex items-center justify-between pt-stack-md">
+          ${backHTML}
+          ${continueHTML}
+        </div>
+      </section>
+    </article>`;
+
+  // Wire the dropzone click → hidden file input
+  const dz = document.getElementById('dropzone');
+  if (dz) {
+    const fileInput = document.getElementById('fileInput');
+    dz.addEventListener('click', () => fileInput && fileInput.click());
+    ['dragover', 'dragenter'].forEach(ev => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag-over'); }));
+    ['dragleave', 'drop'].forEach(ev => dz.addEventListener(ev, () => dz.classList.remove('drag-over')));
+    dz.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer && e.dataTransfer.files.length) {
+        const fakeEvent = { target: { files: e.dataTransfer.files } };
+        handleDesignUpload(fakeEvent);
+      }
+    });
+  }
+
+  attachCursorListeners();
+  startPlaceholderRotations(question);
 }
 
-// USER INTERACTION
+/* ---------- rotating placeholders ---------- */
+const ROTATION_INTERVAL_MS = 2400;
+const ROTATION_FADE_MS = 280;
+let activeRotations = [];
+
+function stopAllPlaceholderRotations() {
+  activeRotations.forEach(id => clearInterval(id));
+  activeRotations = [];
+}
+
+function startPlaceholderRotations(question) {
+  stopAllPlaceholderRotations();
+  const fields = question.fields || [];
+  fields.forEach(field => {
+    if (!Array.isArray(field.placeholders) || field.placeholders.length < 2) return;
+    const ghost = document.querySelector(`[data-ghost-for="${field.name}"]`);
+    const input = document.querySelector(`#questionContainer [name="${field.name}"]`);
+    if (!ghost || !input) return;
+
+    // Hide ghost the moment user types or focuses
+    const syncGhostVisibility = () => {
+      if (input.value || document.activeElement === input) {
+        ghost.classList.add('hidden-by-value');
+      } else {
+        ghost.classList.remove('hidden-by-value');
+      }
+    };
+    input.addEventListener('input', syncGhostVisibility);
+    input.addEventListener('focus', syncGhostVisibility);
+    input.addEventListener('blur',  syncGhostVisibility);
+
+    let idx = 0;
+    const tick = () => {
+      // Pause rotation when the user is engaged with the field
+      if (input.value || document.activeElement === input) return;
+      ghost.style.opacity = '0';
+      setTimeout(() => {
+        idx = (idx + 1) % field.placeholders.length;
+        ghost.textContent = field.placeholders[idx];
+        ghost.style.opacity = '';
+      }, ROTATION_FADE_MS);
+    };
+    const id = setInterval(tick, ROTATION_INTERVAL_MS);
+    activeRotations.push(id);
+  });
+}
+
+/* ---------- success burst ("200 OK" animation on Continue) ---------- */
+function spawnClickRipple(x, y) {
+  const r = document.createElement('div');
+  r.className = 'click-ripple';
+  r.style.left = x + 'px';
+  r.style.top  = y + 'px';
+  document.body.appendChild(r);
+  setTimeout(() => r.remove(), 650);
+}
+
+function playSuccessBurst(done, btn) {
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (reduced) { done(); return; }
+
+  // Anchor the burst on the clicked button — feels like the button popped
+  let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
+  if (btn && btn.getBoundingClientRect) {
+    const r = btn.getBoundingClientRect();
+    cx = r.left + r.width / 2;
+    cy = r.top  + r.height / 2;
+    btn.classList.add('pressing');
+    setTimeout(() => btn.classList.remove('pressing'), 460);
+  }
+  // Immediate click ripple at button center so the feedback is instant
+  spawnClickRipple(cx, cy);
+
+  const overlay = document.createElement('div');
+  overlay.className = 'success-burst';
+  overlay.style.left = cx + 'px';
+  overlay.style.top  = (cy - 80) + 'px'; // float slightly above the button
+  overlay.innerHTML = `
+    <div class="burst-grid">
+      <div class="burst-ring"></div>
+      <div class="burst-block burst-tl"></div>
+      <div class="burst-block burst-tr"></div>
+      <div class="burst-block burst-bl"></div>
+      <div class="burst-block burst-br"></div>
+    </div>
+    <div class="burst-status">
+      <span style="animation-delay: 0.55s">2</span><span style="animation-delay: 0.62s">0</span><span style="animation-delay: 0.69s">0</span><span style="animation-delay: 0.80s">&nbsp;&nbsp;</span><span style="animation-delay: 0.87s">O</span><span style="animation-delay: 0.94s">K</span>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  // Use requestAnimationFrame so the initial opacity:0 paints before .active fires
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('active')));
+
+  setTimeout(() => {
+    overlay.classList.add('exit');
+    setTimeout(() => overlay.remove(), 220);
+    done();
+  }, 760);
+}
+
+/* ---------- interactions ---------- */
 function selectOption(questionId, value) {
   state.answers[questionId] = value;
-  renderQuestion(QUESTIONS[state.currentStep]);
+  // Toggle .selected class on the right card — DO NOT re-render the whole question.
+  // Re-rendering re-fires the headline word-reveal and feels like a page refresh.
+  const cards = document.querySelectorAll(`.option-card[data-q="${questionId}"]`);
+  cards.forEach(el => {
+    el.classList.toggle('selected', el.dataset.value === value);
+  });
 }
 
-function toggleCheckbox(questionId, value) {
-  if (!state.answers[questionId]) {
-    state.answers[questionId] = [];
-  }
-
-  const index = state.answers[questionId].indexOf(value);
-  if (index > -1) {
-    state.answers[questionId].splice(index, 1);
-  } else {
-    state.answers[questionId].push(value);
-  }
+async function handleDesignUpload(event) {
+  const files = Array.from(event.target.files || []);
+  if (files.length === 0) return;
+  const status = document.getElementById('uploadStatus');
+  if (status) { status.classList.remove('opacity-0'); status.textContent = `Encoding ${files.length} image${files.length === 1 ? '' : 's'}...`; }
+  const encoded = await Promise.all(files.map(file => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      const commaIdx = result.indexOf(',');
+      resolve({
+        media_type: file.type || 'image/png',
+        data: commaIdx > -1 ? result.slice(commaIdx + 1) : result,
+        filename: file.name,
+        size: file.size,
+      });
+    };
+    reader.onerror = () => reject(new Error('read failed'));
+    reader.readAsDataURL(file);
+  })));
+  state.answers.design_reference_images = encoded;
+  if (status) status.textContent = `${encoded.length} image${encoded.length === 1 ? '' : 's'} attached`;
 }
 
-function nextStep() {
-  const question = QUESTIONS[state.currentStep];
+function collectStepInputs() {
+  const inputs = document.querySelectorAll('#questionContainer input[type="text"], #questionContainer input[type="tel"], #questionContainer input[type="email"], #questionContainer textarea');
+  inputs.forEach(input => { state.answers[input.name] = input.value; });
+}
 
-  // Collect answers from form fields
-  const form = document.querySelector('.question-card');
-  if (form) {
-    const inputs = form.querySelectorAll('input[type="text"], textarea');
-    inputs.forEach(input => {
-      state.answers[input.name] = input.value;
-    });
-  }
+function transitionOut(then) {
+  const wrap = document.querySelector('.step-wrap');
+  if (!wrap) return then();
+  wrap.classList.add('step-leave');
+  setTimeout(then, 380);
+}
 
-  // Validate
-  if (question.type === 'text_multi') {
-    const requiredFields = question.fields.filter(f => f.required !== false && (!f.show || f.show()));
-    const missing = requiredFields.find(f => !state.answers[f.name] || !state.answers[f.name].trim());
+function nextStep(evt) {
+  collectStepInputs();
+  const q = QUESTIONS[state.currentStep];
+  if (q.type === 'text_multi') {
+    const required = q.fields.filter(f => f.required !== false);
+    const missing = required.find(f => !(state.answers[f.name] || '').trim());
     if (missing) {
-      alert(`Please fill in: ${missing.label}`);
+      const inputEl = document.querySelector(`#questionContainer [name="${missing.name}"]`);
+      if (inputEl) inputEl.focus();
+      flashFieldError(missing.label);
       return;
     }
   }
+  if (q.onComplete) q.onComplete();
 
-  // Run onComplete callback
-  if (question.onComplete) {
-    question.onComplete(state.answers);
-  }
+  stopAllPlaceholderRotations();
 
-  // Move to next step
-  state.currentStep++;
+  // Anchor the burst on the actual Continue button (mouse OR keyboard)
+  const btn = (evt && evt.currentTarget && evt.currentTarget.classList?.contains('magnetic-cta'))
+    ? evt.currentTarget
+    : document.getElementById('continueBtn');
 
-  // Check if we're done
-  if (state.currentStep >= QUESTIONS.length) {
-    submitQuiz();
-    return;
-  }
-
-  // Skip conditional questions that don't meet condition
-  const nextQ = QUESTIONS[state.currentStep];
-  if (nextQ.type === 'conditional_text' && nextQ.condition && !nextQ.condition()) {
-    nextStep();
-    return;
-  }
-
-  renderStepIndicator();
-  renderQuestion(QUESTIONS[state.currentStep]);
-  window.scrollTo(0, 0);
+  playSuccessBurst(() => {
+    transitionOut(() => {
+      state.currentStep++;
+      if (state.currentStep >= QUESTIONS.length) {
+        submitQuiz();
+        return;
+      }
+      setProgress(state.currentStep);
+      renderQuestion(QUESTIONS[state.currentStep]);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }, btn);
 }
+
+/* ---------- keyboard: Enter advances to next step ---------- */
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter') return;
+  // Allow Enter inside textarea (new line) and during loading/results
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (tag === 'textarea') return;
+  if (document.getElementById('loadingScreen').classList.contains('hidden') === false) return;
+  if (document.getElementById('resultsScreen').classList.contains('hidden') === false) return;
+  // Prevent the default form-submit (we're not in a form, but be safe)
+  e.preventDefault();
+  nextStep();
+});
 
 function prevStep() {
-  if (state.currentStep > 0) {
+  if (state.currentStep === 0) return;
+  collectStepInputs();
+  transitionOut(() => {
     state.currentStep--;
-
-    // Skip conditional questions going backwards too
-    const prevQ = QUESTIONS[state.currentStep];
-    if (prevQ.type === 'conditional_text' && prevQ.condition && !prevQ.condition()) {
-      prevStep();
-      return;
-    }
-
-    renderStepIndicator();
+    setProgress(state.currentStep);
     renderQuestion(QUESTIONS[state.currentStep]);
-    window.scrollTo(0, 0);
-  }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
 }
 
-// SUBMIT
+function flashFieldError(label) {
+  // Lightweight inline alert — replaces blocking alert()
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-[120] mono text-label-mono uppercase tracking-widest bg-error/20 text-error border border-error/40 rounded-full px-4 py-2';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = `Required · ${label}`;
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; }, 1800);
+}
+
+/* ---------- submission + splash + results ---------- */
 async function submitQuiz() {
-  // Show loading
-  document.getElementById('questionContainer').classList.add('hidden');
-  document.getElementById('stepIndicator').classList.add('hidden');
-  document.getElementById('loadingScreen').classList.remove('hidden');
-
-  // Map answers to API format
+  showSplash();
   const payload = {
-    business_name: state.answers.business_name,
-    business_type: state.answers.business_type,
-    industry: state.answers.business_type,
-    location: state.answers.location,
-    brand_position: state.answers.brand_position || 'professional',
-    brand_tone: state.answers.brand_tone || 'professional_formal',
-    site_functions: state.answers.site_functions || [],
-    booking_system: state.answers.booking_system || '',
-    payment_system: state.answers.payment_system || '',
-    reference_url: state.answers.reference_url || '',
-    reference_url_2: state.answers.reference_url_2 || '',
-    reference_url_3: state.answers.reference_url_3 || '',
-    extra_context: state.answers.extra_context || '',
-    visitor_action: (state.answers.site_functions || []).join('; ')
+    business_name:           state.answers.business_name || '',
+    business_type:           state.answers.business_type || '',
+    industry:                state.answers.business_type || '',
+    location:                state.answers.location || '',
+    services_offered:        state.answers.services_offered || '',
+    phone:                   state.answers.phone || '',
+    email:                   state.answers.email || '',
+    address:                 state.answers.address || '',
+    brand_position:          'professional',
+    brand_tone:              state.answers.tone || 'professional_formal',
+    site_functions:          [],
+    booking_system:          '',
+    payment_system:          '',
+    figma_url:               state.answers.figma_url || '',
+    design_reference_images: state.answers.design_reference_images || [],
+    reference_url:   '',
+    reference_url_2: '',
+    reference_url_3: '',
+    extra_context:           state.answers.services_offered || '',
+    visitor_action:          'general business presence',
+    output_mode:             state.answers.output_mode || 'full',
   };
-
   try {
-    // Update loading text
-    document.getElementById('loadingSubtext').textContent = 'Researching industry best practices...';
-
     const response = await fetch('/api/build', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
     });
-
     const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to generate brief');
-    }
-
-    // Show results
-    document.getElementById('loadingScreen').classList.add('hidden');
-    document.getElementById('resultsScreen').classList.add('show');
-    document.getElementById('promptBox').textContent = data.prompt;
-
-    // Store for copy/download
-    window.generatedPrompt = data.prompt;
-
-  } catch (error) {
-    alert('Error generating brief: ' + error.message);
-    document.getElementById('loadingScreen').classList.add('hidden');
-    document.getElementById('questionContainer').classList.remove('hidden');
-    document.getElementById('stepIndicator').classList.remove('hidden');
+    if (!response.ok) throw new Error(data.error || 'Failed to generate brief');
+    hideSplash();
+    showResults(data);
+  } catch (err) {
+    hideSplash();
+    flashFieldError(err.message || 'Build failed');
+    state.currentStep = QUESTIONS.length - 1;
+    setProgress(state.currentStep);
+    renderQuestion(QUESTIONS[state.currentStep]);
   }
 }
 
-function mapToLegacyFormat(field) {
-  // Map new quiz answers to old format expected by backend
-  const mappings = {
-    emotional_direction: {
-      'professional_formal': 'Trusting and confident',
-      'friendly_approachable': 'Calm and comfortable',
-      'technical_expert': 'Trusting and confident',
-      'creative_confident': 'Excited and inspired'
-    },
-    visual_experience: {
-      'minimal': 'Smooth and professional',
-      'smooth': 'Smooth and professional',
-      'cinematic': 'Cinematic scrolling',
-      'interactive': 'Interactive and playful'
-    }
-  };
+function showSplash() {
+  document.getElementById('questionContainer').classList.add('hidden');
+  const splash = document.getElementById('loadingScreen');
+  splash.classList.remove('hidden');
 
-  // Use motion_intensity for visual_experience
-  if (field === 'visual_experience') {
-    const motion = state.answers.motion_intensity;
-    return mappings.visual_experience[motion] || 'Smooth and professional';
+  // Kick the video — Chrome pauses autoplay while the parent is display:none,
+  // and some browsers need an explicit play() after the element becomes visible.
+  const vid = splash.querySelector('.splash-video');
+  if (vid) {
+    vid.currentTime = 0;
+    const p = vid.play();
+    if (p && typeof p.catch === 'function') p.catch(() => { /* autoplay blocked — silent */ });
   }
 
-  // Use brand_tone for emotional_direction
-  if (field === 'emotional_direction') {
-    const tone = state.answers.brand_tone;
-    return mappings.emotional_direction[tone] || 'Trusting and confident';
-  }
-
-  return '';
+  const text = 'GENERATING BRIEF';
+  const splashText = document.getElementById('splashText');
+  splashText.innerHTML = text.split('').map((c, i) => `<span style="animation-delay: ${(i * 0.05).toFixed(2)}s">${c === ' ' ? '&nbsp;' : c}</span>`).join('');
 }
 
-// RESULTS ACTIONS
+function hideSplash() {
+  document.getElementById('loadingScreen').classList.add('hidden');
+}
+
+function highlightMarkdown(md) {
+  return md
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^(# .+)$/gm,  '<span class="h1">$1</span>')
+    .replace(/^(## .+)$/gm, '<span class="h2">$1</span>')
+    .replace(/`([^`]+)`/g,  '<span class="em">`$1`</span>');
+}
+
+function showResults(data) {
+  window.generatedPrompt = data.prompt;
+  document.getElementById('questionContainer').classList.add('hidden');
+  const screen = document.getElementById('resultsScreen');
+  screen.classList.remove('hidden');
+  const meta = [];
+  meta.push(`<span><span class="text-on-surface-variant/60">PROMPT:</span> <span class="text-primary-fixed">${(data.prompt || '').length.toLocaleString()} chars</span></span>`);
+  if (data.industry_intel_key) meta.push(`<span><span class="text-on-surface-variant/60">INDUSTRY:</span> <span class="text-primary-fixed">${data.industry_intel_key}</span></span>`);
+  meta.push(`<span><span class="text-on-surface-variant/60">SAVED:</span> <span class="text-primary-fixed">${data.saved_to}</span></span>`);
+  if (typeof data.warning_count === 'number') meta.push(`<span><span class="text-on-surface-variant/60">WARNINGS:</span> <span class="text-primary-fixed">${data.warning_count}</span></span>`);
+
+  screen.innerHTML = `
+    <article class="step-wrap">
+      <div class="flex items-center gap-4 mb-stack-md">
+        <div class="w-12 h-12 rounded-full border border-primary-fixed/40 flex items-center justify-center bg-primary-fixed/5 shadow-[0_0_24px_rgba(0,218,243,0.2)]">
+          <span class="material-symbols-outlined text-primary-fixed text-[28px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+        </div>
+        <h1 class="fraunces text-display-xl-mobile md:text-display-xl text-on-surface leading-tight">Prompt Generated</h1>
+      </div>
+      <div class="flex flex-wrap gap-x-6 gap-y-2 py-4 border-y border-white/5 mb-stack-md mono text-label-mono uppercase tracking-widest">
+        ${meta.join('')}
+      </div>
+      <div class="code-panel mb-stack-md">
+        <pre id="promptPre"></pre>
+      </div>
+      <div class="flex flex-wrap gap-stack-sm">
+        <button class="magnetic-cta" onclick="copyPrompt()"><span class="material-symbols-outlined">content_copy</span>Copy to Clipboard</button>
+        <button class="magnetic-cta" onclick="downloadPrompt()"><span class="material-symbols-outlined">download</span>Download .md</button>
+        <button class="ghost-btn" onclick="location.reload()"><span class="material-symbols-outlined text-[18px]">refresh</span>Start Over</button>
+      </div>
+    </article>`;
+
+  document.getElementById('promptPre').innerHTML = highlightMarkdown(data.prompt || '');
+  attachCursorListeners();
+}
+
 function copyPrompt() {
   if (!window.generatedPrompt) return;
-
-  navigator.clipboard.writeText(window.generatedPrompt)
-    .then(() => {
-      alert('Prompt copied to clipboard!');
-    })
-    .catch(() => {
-      // Clipboard API unavailable (e.g. non-HTTPS context) — surface the prompt box so the user can select-all and copy manually
-      const box = document.getElementById('promptBox');
-      if (box) {
-        box.focus();
-        window.getSelection()?.selectAllChildren(box);
-      }
-      alert('Could not copy automatically. Press Ctrl+A / Cmd+A in the prompt box to select all, then copy.');
-    });
+  navigator.clipboard.writeText(window.generatedPrompt).then(() => {
+    flashFieldError('Copied to clipboard');
+  }).catch(() => {
+    const pre = document.getElementById('promptPre');
+    if (pre) { pre.focus(); window.getSelection()?.selectAllChildren(pre); }
+    flashFieldError('Press Ctrl+C to copy manually');
+  });
 }
 
 function downloadPrompt() {
   if (!window.generatedPrompt) return;
-
   const filename = (state.answers.business_name || 'brief').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-PROMPT.md';
   const blob = new Blob([window.generatedPrompt], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
+  a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
-// INIT
-renderStepIndicator();
+/* ---------- custom cursor + magnetic effect ---------- */
+const cursor = document.getElementById('cursor');
+let mouseX = 0, mouseY = 0, cursorX = 0, cursorY = 0;
+
+document.addEventListener('mousemove', (e) => {
+  mouseX = e.clientX; mouseY = e.clientY;
+});
+
+function cursorRAF() {
+  // Subtle lag for the dot (80ms-ish)
+  cursorX += (mouseX - cursorX) * 0.22;
+  cursorY += (mouseY - cursorY) * 0.22;
+  if (cursor) cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
+  requestAnimationFrame(cursorRAF);
+}
+cursorRAF();
+
+function attachCursorListeners() {
+  document.querySelectorAll('button, a, input, textarea, .option-card, .dropzone').forEach(el => {
+    if (el._cursorBound) return;
+    el._cursorBound = true;
+    el.addEventListener('mouseenter', () => cursor && cursor.classList.add('expanded'));
+    el.addEventListener('mouseleave', () => cursor && cursor.classList.remove('expanded'));
+  });
+
+  // Magnetic effect for CTA buttons
+  document.querySelectorAll('.magnetic-cta').forEach(btn => {
+    if (btn._magBound) return;
+    btn._magBound = true;
+    btn.addEventListener('mousemove', (e) => {
+      const rect = btn.getBoundingClientRect();
+      const x = e.clientX - rect.left - rect.width / 2;
+      const y = e.clientY - rect.top - rect.height / 2;
+      btn.style.transform = `translate(${x * 0.18}px, ${y * 0.18}px)`;
+    });
+    btn.addEventListener('mouseleave', () => { btn.style.transform = 'translate(0,0)'; });
+  });
+}
+
+/* ---------- init ---------- */
+setProgress(0);
 renderQuestion(QUESTIONS[0]);
 </script>
+
 </body>
 </html>
