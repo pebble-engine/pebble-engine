@@ -31,7 +31,7 @@ import urllib.parse
 import urllib.request
 import webbrowser
 from datetime import datetime
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, HTTPServer, ThreadingHTTPServer
 from pathlib import Path
 from typing import Optional
 
@@ -61,7 +61,9 @@ def load_env_file(path: Path) -> None:
             continue
         key, _, val = line.partition("=")
         key, val = key.strip(), val.strip().strip('"').strip("'")
-        if key and key not in os.environ:
+        # Override empty-string env vars too — Windows / PowerShell often leaks
+        # `KEY=""` into child processes, which would otherwise mask the .env value.
+        if key and (key not in os.environ or not os.environ[key].strip()):
             os.environ[key] = val
 
 load_env_file(PROJECT_ROOT / ".env")
@@ -77,6 +79,16 @@ try:
 except Exception:
     generate_design_system = None
     _ENGINE_OK = False
+
+# Style DNA — per-build aesthetic personality picker. Lives at project root.
+try:
+    from style_dna import pick_random_dna, pick_dna_by_id, build_dna_block  # type: ignore
+    _DNA_OK = True
+except Exception:
+    pick_random_dna = None
+    pick_dna_by_id = None
+    build_dna_block = None
+    _DNA_OK = False
 
 try:
     from anthropic import Anthropic  # type: ignore
@@ -361,7 +373,7 @@ get_unsplash_images = get_placeholder_images
 # PEXELS VIDEO API — hero looping video backgrounds
 # --------------------------------------------------------------------------
 
-def localize_pexels_video(site_dir: Path, pexels_url: str, max_bytes: int = 15 * 1024 * 1024) -> dict:
+def localize_pexels_video(site_dir: Path, pexels_url: str, max_bytes: int = 40 * 1024 * 1024) -> dict:
     """Download a Pexels CDN video to `site_dir/public/videos/hero.mp4`, then
     replace every occurrence of the original URL with `/videos/hero.mp4` across
     all generated files. Eliminates the CORS/playback issue that hits some
@@ -508,8 +520,9 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
         prompt = _imagen_prompt(industry, slot)
         try:
             # Imagen 3 — Gemini API
+            # Imagen 4 (imagen-3 was retired). Falls back gracefully if quota hits.
             response = client.models.generate_images(
-                model="imagen-3.0-generate-002",
+                model="imagen-4.0-generate-001",
                 prompt=prompt,
                 config=_genai_types.GenerateImagesConfig(
                     number_of_images=1,
@@ -676,8 +689,9 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
         return result
 
     # 3. Poll until server responds
-    if not _poll_server(url, timeout_seconds=90):
-        result["errors"].append("dev server did not respond within 90s")
+    # 240s — first build does npm install + initial Next compile, often 2-3 min.
+    if not _poll_server(url, timeout_seconds=240):
+        result["errors"].append("dev server did not respond within 240s")
         try:
             proc.terminate()
         except Exception:
@@ -1247,14 +1261,14 @@ def build_resolved_contract(answers: dict, industry_intel: Optional[dict] = None
 
     return f"""| Decision | Resolved Value |
 |---|---|
-| **Heading font** | {heading_font} — {font_note} |
-| **Body font** | Inter (body, UI, data only — never headings) |
+| **Heading font** | Defer to the Design DNA block at the top of this prompt. (Legacy hint: {heading_font} — {font_note}. IGNORE this hint if it conflicts with the DNA.) |
+| **Body font** | Defer to the Design DNA block. (Legacy default: Inter. IGNORE if DNA names a different body font.) |
 | **Font loading** | Both via `next/font/google` in `layout.tsx`; both CSS variables on `<html>` |
 | **Background** | `{bg}` |
 | **Surface / card** | `{surface}` |
 | **Text color** | `{text_col}` |
 {primary_row}{accent_row}| **Dark mode** | {dark_default} |
-| **Motion** | **Always cinematic** — SplitText headlines, clip-path reveals, parallax, counting stats |
+| **Motion** | Defer to the Design DNA block's motion intensity. (Legacy default: cinematic — SplitText, clip-path, parallax. The DNA may downgrade this to subtle or upgrade to aggressive.) |
 | **GSAP easing** | `{easing}` |
 | **Duration** | `{duration}` per element · Stagger: `{stagger}` |
 | **Scroll pinning** | {scroll_pin} |
@@ -1309,31 +1323,32 @@ These values were computed from the Industry Intelligence above + the quiz answe
 
 ---
 
-## 2. MANDATORY OUTPUT STRUCTURE — CINEMATIC BY DEFAULT
+## 2. MANDATORY OUTPUT STRUCTURE
 
-Every site built by this engine is cinematic. This is not a setting — it is the standard. No flat card grids. No static heroes. No dead links. No approximations of the code patterns below.
+The Design DNA block at the top of this prompt names this build's aesthetic identity (Swiss Magazine, Brutalist Editorial, Terminal Operator, Cinematic IMAX, etc.). The structure below is a **fallback default** — when the DNA describes a different hero structure, motion intensity, or section pattern, the DNA wins. The constants below (page list, full pages, no card grids, headline presence) still apply.
 
 ### Required Pages
 
-1. **Homepage** (`app/page.tsx`) — cinematic landing page, all sections below
-2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a card grid
-3. **About** (`app/about/page.tsx`) — editorial story with parallax imagery
+1. **Homepage** (`app/page.tsx`) — landing page, full of life, follows the DNA's posture
+2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a generic card grid
+3. **About** (`app/about/page.tsx`) — editorial story
 4. **Contact** (`app/contact/page.tsx`) — working form with success state, map embed
 
-### Homepage — Cinematic Section Structure (Build in Order)
+### Homepage — Default Section Structure (override per DNA)
 
-**Section 1: Hero — Full Viewport**
+**Section 1: Hero — Full Viewport** (default; DNA may redefine the hero entirely)
 - `min-h-[100dvh]` always — never `min-h-screen`
-- Full-bleed background: dark overlay on image or video
-- **Video hero** (check Resolved Contract above): `<video autoPlay muted loop playsInline>` — use the hero Pexels URL from Section 8b as `poster` attribute
-- If no video: full-bleed `next/image` with `priority` and a `className="parallax-bg"` wrapper
-- Layout (all elements required, in order):
-  1. `<p className="hero-eyebrow">` — location · industry tagline (small caps, accent color)
-  2. `<h1 className="hero-heading font-display text-7xl md:text-9xl leading-none text-white">` — the main headline. **THIS MUST BE PRESENT AND VISIBLE. No hero without a large headline.**
+- The Design DNA's `Hero structure` section is authoritative. The defaults below apply only if the DNA's hero is silent on a detail.
+- **Default video hero** (when DNA permits and Resolved Contract says video): `<video autoPlay muted loop playsInline>` — use the hero Pexels URL as `poster` attribute
+- **Default image hero** (when DNA permits and no video): full-bleed `next/image` with `priority` and a `className="parallax-bg"` wrapper
+- **Default content layout** (DNA may rearrange or replace):
+  1. `<p className="hero-eyebrow">` — location · industry tagline
+  2. `<h1 className="hero-heading">` — the main headline, set in the DNA's display font at the size the DNA specifies. **THIS MUST BE PRESENT AND VISIBLE. No hero without a large headline.**
   3. `<p className="hero-sub">` — supporting sentence naming the outcome
   4. `<div className="hero-cta flex gap-4">` — primary + secondary CTA
   5. `<div className="hero-badge">` — floating trust signal (years · certified · insured)
-- DO NOT: plain color background, centered white-background hero, static text block, hero with only CTA buttons and no headline
+- DO NOT (regardless of DNA): plain white centered hero with only CTA buttons and no headline, dead links, placeholder Lorem ipsum
+- The DNA may legitimately call for: a typographic-only hero (no image/video), a split-screen asymmetric hero, a centered editorial hero, a boot-sequence terminal hero, a layered chaotic hero. Follow the DNA.
 
 **Section 2: Trust Bar — Counting Stats**
 - Dark or brand-accent background strip — NOT white
@@ -1821,11 +1836,22 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 Output every file the project needs. Follow the Stack Skill project structure.
 
-Required files:
+Required files (paths are PROJECT-ROOT relative — match the Stack Skill's tsconfig
+`"paths": { "@/*": ["./*"] }`. DO NOT prefix with `src/` — imports written as
+`@/components/...` would not resolve if files lived under `src/`, and the build
+would fail at compile time):
+
 - `README.md`, `HANDOFF.md`, `TODO_ASSETS.md`, `STYLE_GUIDE.md`, `CLIENT_ANSWERS.md`
-- `src/content/site.ts`, `src/content/sections.ts`, `src/content/services.ts`, `src/content/faqs.ts`, `src/content/testimonials.ts`
-- `src/lib/motion.ts`, `src/components/motion/Reveal.tsx`, `src/components/motion/Parallax.tsx`, `src/components/motion/SplitText.tsx`, `src/components/motion/SmoothScroll.tsx`
-- `src/config/brand.config.ts`, `src/config/motion.config.ts`
+- `content/site.ts`, `content/sections.ts`, `content/services.ts`, `content/faqs.ts`, `content/testimonials.ts`
+- `lib/motion.ts`, `components/motion/Reveal.tsx`, `components/motion/Parallax.tsx`, `components/motion/SplitText.tsx`, `components/motion/SmoothScroll.tsx`
+- `config/brand.config.ts`, `config/motion.config.ts`
+- `next.config.mjs` (NOT `.ts` — Next 14 does not support TypeScript config files)
+- `tailwind.config.ts`, `postcss.config.js`, `tsconfig.json`, `package.json`, `.gitignore`
+
+Every import statement uses the `@/` alias rooted at the project. Examples:
+`import { Reveal } from "@/components/motion/Reveal"`,
+`import { SITE_TITLE } from "@/content/site"`,
+`import { cn } from "@/lib/utils"`.
 
 Where contact info is missing: use `[BUSINESS PHONE]`, `[EMAIL]`, `[ADDRESS]`. Never invent.
 """
@@ -1842,6 +1868,7 @@ def build_prompt(
     industry_intel: Optional[dict] = None,
     hero_video_url: Optional[str] = None,
     design_reference: Optional[dict] = None,
+    design_dna: Optional[dict] = None,
 ) -> str:
     # Map quiz fields -> template variables
     industry = answers.get("industry", answers.get("business_type", ""))
@@ -1944,7 +1971,12 @@ Extract and synthesize across all references:
 
     # No-slop skill
     if _NS_SKILL:
-        no_slop_block = f"\n\n{_NS_SKILL.strip()}\n"
+        # The no-slop skill lists "acceptable display fonts" (Fraunces, Syne, etc.)
+        # The Design DNA at the top of this prompt overrides that list — use the DNA's fonts
+        # even if they're not on the no-slop list, and DO NOT use no-slop fonts if they
+        # aren't named by the DNA. The rest of the no-slop rules (no fake testimonials,
+        # no convergence Inter/Poppins as display, no "Where X meets Y" copy) still apply.
+        no_slop_block = "\n\n*(NOTE: The Design DNA block at the top of this prompt overrides the font list below. Use the DNA's display/body/mono fonts. All other no-slop rules apply.)*\n\n" + _NS_SKILL.strip() + "\n"
     else:
         no_slop_block = "\n*(No-slop skill not loaded — apply general quality rules: no 555 phone numbers, no 'Where X meets Y' subtext, no vague superlatives, hero must have visual element.)*\n"
 
@@ -1967,12 +1999,34 @@ Extract and synthesize across all references:
         bi_block = "\n*(Business intelligence skill not loaded -- apply general conversion best practices.)*\n"
 
     if ds_text:
-        ds_block = (
-            "\nThe ui-ux-pro-max engine generated this recommendation. "
-            "Use it as supporting detail — it enriches the Resolved Design Contract above. "
-            "If any value here contradicts the Contract, the Contract wins.\n\n"
-            f"```\n{ds_text.strip()}\n```\n"
-        )
+        # The ui-ux-pro-max engine is deterministic: same query -> same Satoshi/
+        # General Sans/glassmorphism/blue+orange output every time. That competes
+        # with the Design DNA, which is the authoritative visual source for THIS
+        # build. The block below explicitly demotes the style guide to a reference
+        # so the LLM doesn't pull Satoshi when the DNA says Cormorant Garamond.
+        if design_dna:
+            dna_label = design_dna.get("label", "the chosen DNA")
+            dna_display = design_dna.get("display_font", "")
+            dna_body = design_dna.get("body_font", "")
+            ds_override_notice = (
+                f"\n> **OVERRIDE NOTICE — the style guide below is REFERENCE ONLY.**  \n"
+                f"> The Design DNA at the top of this prompt (**{dna_label}**) is the "
+                f"authoritative source for fonts, colors, motion, and layout. The style "
+                f"guide below was generated by a deterministic helper that returns the "
+                f"same output for every {industry or 'industry'} build — that's why "
+                f"recent builds converged on Satoshi/General Sans/glassmorphism. "
+                f"For THIS build, use **{dna_display}** for headings and **{dna_body}** "
+                f"for body, NOT what the style guide names. Use the style guide only for "
+                f"the *Pre-Delivery Checklist* and the *Avoid (Anti-patterns)* list — "
+                f"the rest is overridden by the DNA.\n\n"
+            )
+        else:
+            ds_override_notice = (
+                "\nThe ui-ux-pro-max engine generated this recommendation. "
+                "Use it as supporting detail — it enriches the Resolved Design Contract above. "
+                "If any value here contradicts the Contract, the Contract wins.\n\n"
+            )
+        ds_block = ds_override_notice + f"```\n{ds_text.strip()}\n```\n"
     else:
         # Derive a concrete direction from the quiz answers so the LLM has real guidance
         industry_lower = industry.lower()
@@ -2063,7 +2117,7 @@ Extract and synthesize across all references:
     address = (answers.get("address") or "[ADDRESS]").strip()       or "[ADDRESS]"
     services_offered = (answers.get("services_offered") or "*(infer from industry — list the standard services for this business type)*").strip()
 
-    return PROMPT_TEMPLATE.format(
+    rendered = PROMPT_TEMPLATE.format(
         business_name=answers.get("business_name", ""),
         business_type=industry,
         location=answers.get("location", ""),
@@ -2088,6 +2142,16 @@ Extract and synthesize across all references:
         hero_video_block=hero_video_block,
         anti_slop_block=anti_slop_block,
     )
+
+    # Prepend the Design DNA block (if any) so it sits at the very top of the
+    # prompt with override priority. The LLM reads top-down; an OVERRIDE-framed
+    # block at line 1 beats Fraunces/Inter mentions buried 1000 lines deeper.
+    if design_dna and build_dna_block:
+        try:
+            return build_dna_block(design_dna) + rendered
+        except Exception as e:
+            print(f"  DNA block render failed: {e}")
+    return rendered
 
 
 # --------------------------------------------------------------------------
@@ -2183,20 +2247,26 @@ class AnthropicClient:
                 messages = [{"role": "user", "content": content_blocks}]
             else:
                 messages = [{"role": "user", "content": user}]
-            response = self.client.messages.create(
+            # Streaming required for any request that could exceed 10 minutes —
+            # our prompt + 32k max_tokens triggers Anthropic's safety check, so
+            # we collect the stream into a single string and return as before.
+            parts: list[str] = []
+            with self.client.messages.stream(
                 model=self.model,
                 max_tokens=max_tokens,
                 system=system,
                 messages=messages,
-            )
-            return response.content[0].text
+            ) as stream:
+                for chunk in stream.text_stream:
+                    parts.append(chunk)
+            return "".join(parts)
         except Exception as e:
             raise LLMError(f"Anthropic API call failed: {e}")
 
 
 # ---------- Provider selector -----------------------------------------------
 
-_GEMINI_DEFAULT_MODEL    = "gemini-2.0-flash"
+_GEMINI_DEFAULT_MODEL    = "gemini-2.5-flash"
 _ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"
 
 
@@ -2380,6 +2450,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._serve_file(INDEX_HTML, "text/html; charset=utf-8")
             elif self.path == "/api/health":
                 self._handle_health()
+            elif self.path == "/api/industries":
+                self._handle_list_industries()
             elif self.path == "/api/briefs":
                 self._handle_list_briefs()
             elif self.path.startswith("/api/briefs/"):
@@ -2433,6 +2505,34 @@ class PebbleHandler(BaseHTTPRequestHandler):
             "provider": provider,
             "model": model,
         })
+
+    def _handle_list_industries(self):
+        """Expose the curated industries.json as a flat list for UI autocomplete.
+
+        Returns key + display name + category-ish hint derived from
+        visual_style/emotion so the typeahead can show a subtitle.
+        """
+        try:
+            raw = json.loads(INDUSTRIES_JSON.read_text(encoding="utf-8")) if INDUSTRIES_JSON.exists() else {}
+        except Exception:
+            raw = {}
+        items = []
+        for key, entry in raw.items():
+            if not isinstance(entry, dict):
+                continue
+            label = key.replace("_", " ")
+            # Derive a short category line — prefer visual_style words, fall back to emotion
+            hint = (entry.get("visual_style") or entry.get("emotion") or "").strip()
+            if hint:
+                hint = hint.split(",")[0].strip()
+            items.append({
+                "key": key,
+                "label": label,
+                "hint": hint,
+                "hero_type": entry.get("hero_type", ""),
+            })
+        items.sort(key=lambda x: x["label"])
+        self._json(200, {"industries": items, "count": len(items)})
 
     def _handle_list_briefs(self):
         briefs = []
@@ -2656,12 +2756,25 @@ class PebbleHandler(BaseHTTPRequestHandler):
             design_reference["image_count"] = len(attachments)
             design_reference["_raw_attachments"] = attachments
 
+        # Style DNA — random per-build aesthetic personality. Same business +
+        # same industry generates a different-looking site each time because
+        # the DNA dictates fonts, hero structure, motion, and layout posture.
+        design_dna = None
+        if _DNA_OK and pick_random_dna:
+            try:
+                design_dna = pick_random_dna()
+                answers["_design_dna"] = design_dna["id"]
+                print(f"  Design DNA: {design_dna['label']} ({design_dna['id']})")
+            except Exception as e:
+                print(f"  DNA picker failed: {e}")
+
         notes = audit_design_system(ds_text) if ds_text else []
         prompt = build_prompt(
             answers, ds_text, notes, research_text, images,
             industry_intel=industry_intel,
             hero_video_url=hero_video_url,
             design_reference=design_reference or None,
+            design_dna=design_dna,
         )
 
         out_dir = OUTPUT_DIR / slug
@@ -2722,6 +2835,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
                     "You do not have opinions. You do not ask questions. You do not present alternatives. "
                     "You read the brief, you read every skill file, and you build exactly what is specified.\n\n"
 
+                    "VISUAL AUTHORITY: The brief begins with a `DESIGN DNA — TOP-PRIORITY DIRECTIVE` block. "
+                    "That block is the single highest authority on visual choices (fonts, hero structure, motion, "
+                    "color posture, layout grid, image treatment). When the DNA block contradicts anything else "
+                    "in the brief — including the Resolved Design Contract's font suggestions or the Code Patterns "
+                    "section's hero structure — the DNA block wins. The skill files (iOS, Stack, No-Slop, BI) still "
+                    "govern code correctness and conversion patterns; the DNA only governs the visual surface, but "
+                    "on the visual surface its word is final. Two builds with different DNAs should look like two "
+                    "different studios made them.\n\n"
+
                     "NON-NEGOTIABLE RULES -- violating any of these is a build failure:\n"
                     "1. Output ONLY <pebble-file> blocks. No preamble. No plan. No commentary. First character is `<`.\n"
                     "2. Every file must be complete. Zero TODOs. Zero stubs. Zero placeholder functions.\n"
@@ -2732,7 +2854,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
                     "7. All form inputs: minimum `font-size: 16px` -- without exception.\n"
                     "8. No fake testimonials. No invented phone numbers or addresses. Use `[BUSINESS PHONE]` etc.\n"
                     "9. No `scroll-behavior: smooth` in CSS anywhere.\n"
-                    "10. Three.js: dynamic import with `ssr: false`, `dpr={[1, 2]}`, context-lost handler, dispose on unmount.\n\n"
+                    "10. Three.js: dynamic import with `ssr: false`, `dpr={[1, 2]}`, context-lost handler, dispose on unmount.\n"
+                    "11. Honor the Design DNA's font list. The fonts listed there are the ONLY fonts allowed for this build. Do not substitute Fraunces, Inter, or any other default unless the DNA explicitly names it.\n"
+                    "12. Implement at least 3 of the DNA's `signature moves` — these are what make the build feel like its DNA, not a generic site with new fonts.\n\n"
 
                     "If you are uncertain about any detail not in the brief, make the best decision and build. "
                     "The owner reviews the output. You are not the reviewer."
@@ -2894,7 +3018,10 @@ def serve(port: int = 8000, open_browser: bool = True) -> None:
     _banner()
     url = f"http://localhost:{port}"
     print(f"   running at {url}\n")
-    server = HTTPServer(("127.0.0.1", port), PebbleHandler)
+    # ThreadingHTTPServer so a slow LLM build doesn't block other requests
+    # (e.g. the browser's keep-alive socket, /api/health, /api/industries).
+    server = ThreadingHTTPServer(("127.0.0.1", port), PebbleHandler)
+    server.daemon_threads = True
     if open_browser:
         try: webbrowser.open(url)
         except Exception: pass

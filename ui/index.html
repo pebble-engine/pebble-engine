@@ -9,7 +9,7 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Geist+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0..1&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;500;600;700;900&family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;700&family=Material+Symbols+Outlined:opsz,wght,FILL@24,400,0..1&display=swap" rel="stylesheet" />
 
 <script id="tailwind-config">
 tailwind.config = {
@@ -17,29 +17,29 @@ tailwind.config = {
   theme: {
     extend: {
       colors: {
-        "primary-fixed":     "#9cf0ff",
-        "primary-fixed-dim": "#00daf3",
-        "primary":           "#c3f5ff",
-        "primary-container": "#00e5ff",
-        "on-primary":        "#00363d",
-        "on-primary-fixed":  "#001f24",
-        "secondary":         "#d8b9ff",
-        "tertiary":          "#ffe9d2",
-        "error":             "#ffb4ab",
-        "background":        "#131313",
-        "surface":           "#131313",
-        "surface-dim":       "#131313",
-        "surface-container-lowest": "#0e0e0e",
-        "surface-container-low":    "#1c1b1b",
-        "surface-container":        "#201f1f",
-        "surface-container-high":   "#2a2a2a",
-        "surface-container-highest":"#353534",
-        "surface-bright":    "#3a3939",
-        "surface-variant":   "#353534",
-        "on-surface":        "#e5e2e1",
-        "on-surface-variant":"#bac9cc",
-        "outline":           "#849396",
-        "outline-variant":   "#3b494c",
+        "primary-fixed":     "#E5E5E5",
+        "primary-fixed-dim": "#A3A3A3",
+        "primary":           "#F5F5F5",
+        "primary-container": "#737373",
+        "on-primary":        "#0A0A0A",
+        "on-primary-fixed":  "#0A0A0A",
+        "secondary":         "#D4D4D4",
+        "tertiary":          "#BFBFBF",
+        "error":             "#ff6b6b",
+        "background":        "#080808",
+        "surface":           "#080808",
+        "surface-dim":       "#080808",
+        "surface-container-lowest": "#050505",
+        "surface-container-low":    "#121212",
+        "surface-container":        "#1A1A1A",
+        "surface-container-high":   "#222222",
+        "surface-container-highest":"#2A2A2A",
+        "surface-bright":    "#333333",
+        "surface-variant":   "#2A2A2A",
+        "on-surface":        "#EDEDED",
+        "on-surface-variant":"#A3A3A3",
+        "outline":           "#6B6B6B",
+        "outline-variant":   "#2E2E2E",
       },
       borderRadius: { "DEFAULT": "0.25rem", lg: "0.5rem", xl: "0.75rem", full: "9999px" },
       spacing: {
@@ -51,9 +51,9 @@ tailwind.config = {
         "gutter":    "24px",
       },
       fontFamily: {
-        "display":    ["Fraunces", "serif"],
-        "body":       ["Inter", "sans-serif"],
-        "mono":       ["Geist Mono", "monospace"],
+        "display":    ["Unbounded", "sans-serif"],
+        "body":       ["Geist", "ui-sans-serif", "system-ui", "sans-serif"],
+        "mono":       ["Geist Mono", "ui-monospace", "monospace"],
       },
       fontSize: {
         "display-xl":        ["64px", { lineHeight: "72px", letterSpacing: "-0.02em", fontWeight: "600" }],
@@ -72,9 +72,9 @@ tailwind.config = {
   * { -webkit-tap-highlight-color: transparent; }
 
   html, body {
-    background: #131313;
-    color: #e5e2e1;
-    font-family: 'Inter', sans-serif;
+    background: #080808;
+    color: #EDEDED;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
     overflow-x: hidden;
   }
   body { cursor: none; }
@@ -82,16 +82,16 @@ tailwind.config = {
 
   input, textarea, select { font-size: 16px; }
 
-  .fraunces { font-family: 'Fraunces', serif; }
+  .fraunces { font-family: 'Unbounded', ui-sans-serif, sans-serif; letter-spacing: -0.02em; }
   .mono     { font-family: 'Geist Mono', monospace; }
 
   .aurora-mesh {
     position: fixed; inset: 0; z-index: 0;
     pointer-events: none;
     background:
-      radial-gradient(circle at 20% 30%, rgba(0,218,243,0.18) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(216,185,255,0.12) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(0, 98,110,0.06) 0%, transparent 70%);
+      radial-gradient(circle at 20% 30%, rgba(255,255,255,0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(200,200,200,0.05) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(80, 80, 80,0.10) 0%, transparent 70%);
     filter: blur(80px);
     animation: aurora-drift 18s ease-in-out infinite alternate;
   }
@@ -109,15 +109,15 @@ tailwind.config = {
   }
   .glass-surface-active {
     background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(156,240,255,0.4);
-    box-shadow: inset 0 0 12px rgba(0,218,243,0.12), 0 0 24px rgba(0,218,243,0.08);
+    border: 1px solid rgba(229,229,229,0.4);
+    box-shadow: inset 0 0 12px rgba(255,255,255,0.12), 0 0 24px rgba(255,255,255,0.08);
   }
 
   .custom-cursor {
     position: fixed; top: 0; left: 0;
     width: 20px; height: 20px;
-    border: 1px solid rgba(156,240,255,0.6);
-    background: rgba(156,240,255,0.08);
+    border: 1px solid rgba(229,229,229,0.6);
+    background: rgba(229,229,229,0.08);
     border-radius: 50%;
     pointer-events: none;
     z-index: 9999;
@@ -128,8 +128,8 @@ tailwind.config = {
   }
   .custom-cursor.expanded {
     width: 44px; height: 44px;
-    background: rgba(156,240,255,0.18);
-    border-color: rgba(156,240,255,0.9);
+    background: rgba(229,229,229,0.18);
+    border-color: rgba(229,229,229,0.9);
   }
 
   /* Animated underline input — bottom border draws on focus */
@@ -144,8 +144,8 @@ tailwind.config = {
     outline: none;
     padding: 16px 0;
     width: 100%;
-    color: #e5e2e1;
-    font-family: 'Inter', sans-serif;
+    color: #EDEDED;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
     font-size: 18px;
     line-height: 28px;
     transition: border-color 0.3s ease;
@@ -155,11 +155,70 @@ tailwind.config = {
   .input-underline::after {
     content: ""; position: absolute; bottom: 0; left: 0;
     width: 0; height: 1px;
-    background: #00daf3;
-    box-shadow: 0 -2px 12px rgba(0,218,243,0.5);
+    background: #A3A3A3;
+    box-shadow: 0 -2px 12px rgba(255,255,255,0.5);
     transition: width 0.5s cubic-bezier(0.23,1,0.32,1);
   }
   .input-underline:focus-within::after { width: 100%; }
+  .input-underline.error input,
+  .input-underline.error textarea { border-bottom-color: #ff6b6b; }
+  .input-underline.error::after { background: #ff6b6b; box-shadow: 0 -2px 12px rgba(255,107,107,0.5); width: 100%; }
+  .field-error {
+    display: block;
+    margin-top: 6px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #ff6b6b;
+    opacity: 0;
+    transform: translateY(-2px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    pointer-events: none;
+  }
+  .field-error.show { opacity: 1; transform: translateY(0); }
+
+  /* Industry typeahead dropdown */
+  .ac-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    z-index: 70;
+    max-height: 260px;
+    overflow-y: auto;
+    background: rgba(20,20,22,0.94);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(229,229,229,0.18);
+    border-radius: 10px;
+    box-shadow: 0 14px 40px rgba(0,0,0,0.55);
+    opacity: 0; transform: translateY(-6px);
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    pointer-events: none;
+  }
+  .ac-dropdown.show { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .ac-item {
+    display: flex; align-items: baseline; gap: 10px;
+    padding: 10px 14px;
+    cursor: none;
+    color: #EDEDED;
+    transition: background 0.15s ease, color 0.15s ease;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+  }
+  .ac-item:last-child { border-bottom: none; }
+  .ac-item:hover,
+  .ac-item.active {
+    background: rgba(229,229,229,0.10);
+    color: #E5E5E5;
+  }
+  .ac-item .ac-label { font-size: 15px; font-weight: 500; text-transform: capitalize; }
+  .ac-item .ac-hint {
+    font-family: 'Geist Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.4);
+    margin-left: auto;
+  }
 
   /* Option card with hover slide bar */
   .option-card {
@@ -172,15 +231,15 @@ tailwind.config = {
   .option-card .slide-bar {
     position: absolute; left: 0; bottom: 0;
     width: 0; height: 2px;
-    background: #00daf3;
-    box-shadow: 0 0 12px rgba(0,218,243,0.55);
+    background: #A3A3A3;
+    box-shadow: 0 0 12px rgba(255,255,255,0.55);
     transition: width 0.4s cubic-bezier(0.23,1,0.32,1);
   }
   .option-card:hover .slide-bar { width: 100%; }
   .option-card.selected {
     background: rgba(255,255,255,0.08);
-    border-color: rgba(156,240,255,0.45);
-    box-shadow: inset 0 0 12px rgba(0,218,243,0.12);
+    border-color: rgba(229,229,229,0.45);
+    box-shadow: inset 0 0 12px rgba(255,255,255,0.12);
   }
   .option-card.selected .slide-bar { width: 100%; }
 
@@ -191,8 +250,8 @@ tailwind.config = {
     padding: 16px 32px;
     border-radius: 9999px;
     background: rgba(255,255,255,0.04);
-    border: 1px solid rgba(156,240,255,0.45);
-    color: #9cf0ff;
+    border: 1px solid rgba(229,229,229,0.45);
+    color: #E5E5E5;
     font-weight: 700;
     font-size: 16px;
     backdrop-filter: blur(24px);
@@ -201,9 +260,9 @@ tailwind.config = {
     will-change: transform;
   }
   .magnetic-cta:hover {
-    background: rgba(156,240,255,0.12);
-    border-color: #9cf0ff;
-    box-shadow: 0 0 32px rgba(0,218,243,0.35);
+    background: rgba(229,229,229,0.12);
+    border-color: #E5E5E5;
+    box-shadow: 0 0 32px rgba(255,255,255,0.35);
   }
   .magnetic-cta:active { transform: scale(0.97); }
   .magnetic-cta:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -218,7 +277,7 @@ tailwind.config = {
     font-size: 14px;
     transition: color 0.25s ease;
   }
-  .ghost-btn:hover { color: #e5e2e1; }
+  .ghost-btn:hover { color: #FFFFFF; }
 
   /* Step entry animation — fade + slide up, word-by-word for headline */
   .step-wrap {
@@ -228,15 +287,22 @@ tailwind.config = {
     from { opacity: 0; transform: translateY(28px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .word-reveal > span {
+  /* Decrypt-char reveal — each char cycles through random glyphs before locking
+     to its real value. Fires on page-load + each step's headline render. */
+  .decrypt-char {
     display: inline-block;
-    opacity: 0;
-    transform: translateY(60%);
-    animation: word-rise 0.8s cubic-bezier(0.23,1,0.32,1) both;
+    color: rgba(237,237,237,0.35);
+    font-feature-settings: "tnum" 1, "ss01" 1;
+    transition: color 0.3s ease;
+    text-shadow: 0 0 6px rgba(255,255,255,0);
   }
-  @keyframes word-rise {
-    to { opacity: 1; transform: translateY(0); }
+  .decrypt-char.locked {
+    color: #FFFFFF;
+    text-shadow: 0 0 12px rgba(255,255,255,0.18);
   }
+  .decrypt-space { display: inline-block; width: 0.32em; }
+  /* Fallback for any legacy .word-reveal usage — keep them visible */
+  .word-reveal > span { display: inline-block; }
 
   /* Step exit — slide up + fade */
   .step-leave {
@@ -251,7 +317,7 @@ tailwind.config = {
     position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
-    background: #131313;        /* fallback if video fails to load */
+    background: #080808;        /* fallback if video fails to load */
     overflow: hidden;
     opacity: 0;
     animation: splash-fade-in 0.6s ease-out forwards;
@@ -266,8 +332,8 @@ tailwind.config = {
   .splash-overlay {
     position: absolute; inset: 0;
     background:
-      radial-gradient(circle at 50% 50%, rgba(19,19,19,0.0) 0%, rgba(19,19,19,0.55) 60%, rgba(19,19,19,0.85) 100%),
-      linear-gradient(180deg, rgba(19,19,19,0.35) 0%, rgba(19,19,19,0.65) 100%);
+      radial-gradient(circle at 50% 50%, rgba(8,8,8,0.0) 0%, rgba(8,8,8,0.55) 60%, rgba(8,8,8,0.85) 100%),
+      linear-gradient(180deg, rgba(8,8,8,0.35) 0%, rgba(8,8,8,0.65) 100%);
     z-index: 1;
   }
   .splash .ring,
@@ -275,8 +341,8 @@ tailwind.config = {
   .splash .ring {
     width: 10px; height: 10px;
     border-radius: 50%;
-    background: #9cf0ff;
-    box-shadow: 0 0 32px rgba(0,218,243,0.9);
+    background: #E5E5E5;
+    box-shadow: 0 0 32px rgba(255,255,255,0.9);
     animation: splash-expand 2.4s ease-out infinite;
   }
   @keyframes splash-expand {
@@ -288,8 +354,8 @@ tailwind.config = {
     font-family: 'Geist Mono', monospace;
     font-size: 14px;
     letter-spacing: 0.4em;
-    color: #9cf0ff;
-    text-shadow: 0 0 24px rgba(0,218,243,0.6);
+    color: #E5E5E5;
+    text-shadow: 0 0 24px rgba(255,255,255,0.6);
   }
   .splash h2 span { opacity: 0; animation: type-in 0.06s linear forwards; }
 
@@ -297,12 +363,12 @@ tailwind.config = {
 
   /* Dashed dropzone */
   .dropzone {
-    border: 1.5px dashed rgba(156,240,255,0.35);
+    border: 1.5px dashed rgba(229,229,229,0.35);
     transition: border-color 0.25s ease, background 0.25s ease, transform 0.25s ease;
   }
   .dropzone:hover, .dropzone.drag-over {
-    border-color: #9cf0ff;
-    background: rgba(156,240,255,0.06);
+    border-color: #E5E5E5;
+    background: rgba(229,229,229,0.06);
     transform: translateY(-2px);
   }
 
@@ -322,9 +388,9 @@ tailwind.config = {
     color: rgba(229,226,225,0.85);
     white-space: pre-wrap; word-break: break-word;
   }
-  .code-panel pre .h1 { color: #9cf0ff; font-weight: 700; }
+  .code-panel pre .h1 { color: #E5E5E5; font-weight: 700; }
   .code-panel pre .h2 { color: #d8b9ff; }
-  .code-panel pre .em { color: #00daf3; }
+  .code-panel pre .em { color: #A3A3A3; }
 
   .material-symbols-outlined {
     font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -333,13 +399,39 @@ tailwind.config = {
 
   /* Industry detection banner */
   .industry-banner {
-    border: 1px solid rgba(156,240,255,0.25);
-    background: rgba(156,240,255,0.04);
+    border: 1px solid rgba(229,229,229,0.25);
+    background: rgba(229,229,229,0.04);
     border-radius: 8px;
     padding: 12px 16px;
     display: flex; align-items: center; gap: 12px;
     animation: step-in 0.5s ease both;
   }
+
+  /* Pipeline status pills on the result screen */
+  .status-pill {
+    display: inline-flex; align-items: center;
+    padding: 6px 12px;
+    border-radius: 9999px;
+    font-family: 'Geist Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.03);
+    color: rgba(255,255,255,0.55);
+    text-decoration: none;
+    transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  }
+  .status-pill.on {
+    border-color: rgba(229,229,229,0.45);
+    background: rgba(229,229,229,0.08);
+    color: #FFFFFF;
+  }
+  .status-pill.off {
+    border-color: rgba(255,107,107,0.35);
+    color: rgba(255,107,107,0.85);
+  }
+  a.status-pill.on:hover { background: rgba(229,229,229,0.16); border-color: rgba(255,255,255,0.7); }
 
   /* Rotating ghost placeholder — fades between examples while the input is empty */
   .ghost-placeholder {
@@ -349,7 +441,7 @@ tailwind.config = {
     pointer-events: none;
     font-size: 18px;
     line-height: 28px;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
     transition: opacity 0.28s ease;
     will-change: opacity;
   }
@@ -363,7 +455,7 @@ tailwind.config = {
     z-index: 200;
     display: flex; align-items: center; justify-content: center;
     flex-direction: column;
-    gap: 12px;
+    gap: 6px;
     pointer-events: none;
     opacity: 0;
     transition: opacity 0.18s ease;
@@ -374,7 +466,7 @@ tailwind.config = {
   /* Pulse the button itself when clicked so the user feels the press */
   @keyframes cta-press {
     0%   { transform: scale(1); }
-    35%  { transform: scale(0.94); box-shadow: 0 0 32px rgba(0,218,243,0.5); }
+    35%  { transform: scale(0.94); box-shadow: 0 0 32px rgba(255,255,255,0.5); }
     100% { transform: scale(1); }
   }
   .magnetic-cta.pressing {
@@ -384,16 +476,16 @@ tailwind.config = {
   /* Block grid — 4 cyan squares that fly in from corners and snap together */
   .burst-grid {
     position: relative;
-    width: 96px;
-    height: 96px;
+    width: 48px;
+    height: 48px;
   }
   .burst-block {
     position: absolute;
-    width: 36px;
-    height: 36px;
-    background: #9cf0ff;
-    border-radius: 6px;
-    box-shadow: 0 0 28px rgba(0,218,243,0.85), inset 0 0 10px rgba(255,255,255,0.35);
+    width: 18px;
+    height: 18px;
+    background: #E5E5E5;
+    border-radius: 4px;
+    box-shadow: 0 0 14px rgba(255,255,255,0.85), inset 0 0 6px rgba(255,255,255,0.35);
     opacity: 0;
     will-change: transform, opacity;
   }
@@ -402,63 +494,63 @@ tailwind.config = {
   .burst-bl { bottom: 0; left: 0; }
   .burst-br { bottom: 0; right: 0; }
 
-  .success-burst.active .burst-tl { animation: burst-fly-tl 0.65s cubic-bezier(0.34,1.56,0.64,1) forwards; }
-  .success-burst.active .burst-tr { animation: burst-fly-tr 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.06s forwards; }
-  .success-burst.active .burst-bl { animation: burst-fly-bl 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.12s forwards; }
-  .success-burst.active .burst-br { animation: burst-fly-br 0.65s cubic-bezier(0.34,1.56,0.64,1) 0.18s forwards; }
+  .success-burst.active .burst-tl { animation: burst-fly-tl 0.55s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+  .success-burst.active .burst-tr { animation: burst-fly-tr 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.05s forwards; }
+  .success-burst.active .burst-bl { animation: burst-fly-bl 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.10s forwards; }
+  .success-burst.active .burst-br { animation: burst-fly-br 0.55s cubic-bezier(0.34,1.56,0.64,1) 0.15s forwards; }
 
   @keyframes burst-fly-tl {
-    0%   { transform: translate(-70px, -70px) scale(0.4) rotate(-25deg); opacity: 0; }
+    0%   { transform: translate(-36px, -36px) scale(0.4) rotate(-25deg); opacity: 0; }
     60%  { opacity: 1; }
-    80%  { transform: translate(4px, 4px)     scale(1.08) rotate(0deg);  opacity: 1; }
+    80%  { transform: translate(2px, 2px)     scale(1.08) rotate(0deg);  opacity: 1; }
     100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
   }
   @keyframes burst-fly-tr {
-    0%   { transform: translate(70px, -70px)  scale(0.4) rotate(25deg);  opacity: 0; }
+    0%   { transform: translate(36px, -36px)  scale(0.4) rotate(25deg);  opacity: 0; }
     60%  { opacity: 1; }
-    80%  { transform: translate(-4px, 4px)    scale(1.08) rotate(0deg);  opacity: 1; }
+    80%  { transform: translate(-2px, 2px)    scale(1.08) rotate(0deg);  opacity: 1; }
     100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
   }
   @keyframes burst-fly-bl {
-    0%   { transform: translate(-70px, 70px)  scale(0.4) rotate(25deg);  opacity: 0; }
+    0%   { transform: translate(-36px, 36px)  scale(0.4) rotate(25deg);  opacity: 0; }
     60%  { opacity: 1; }
-    80%  { transform: translate(4px, -4px)    scale(1.08) rotate(0deg);  opacity: 1; }
+    80%  { transform: translate(2px, -2px)    scale(1.08) rotate(0deg);  opacity: 1; }
     100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
   }
   @keyframes burst-fly-br {
-    0%   { transform: translate(70px, 70px)   scale(0.4) rotate(-25deg); opacity: 0; }
+    0%   { transform: translate(36px, 36px)   scale(0.4) rotate(-25deg); opacity: 0; }
     60%  { opacity: 1; }
-    80%  { transform: translate(-4px, -4px)   scale(1.08) rotate(0deg);  opacity: 1; }
+    80%  { transform: translate(-2px, -2px)   scale(1.08) rotate(0deg);  opacity: 1; }
     100% { transform: translate(0, 0)         scale(1)    rotate(0deg);  opacity: 1; }
   }
 
   /* Pulsing ring behind the blocks */
   .burst-ring {
     position: absolute;
-    inset: -12px;
-    border: 1px solid #9cf0ff;
+    inset: -6px;
+    border: 1px solid #E5E5E5;
     border-radius: 50%;
     opacity: 0;
   }
   .success-burst.active .burst-ring {
-    animation: burst-ring 0.7s ease-out 0.35s forwards;
+    animation: burst-ring 0.6s ease-out 0.28s forwards;
   }
   @keyframes burst-ring {
     0%   { transform: scale(0.6); opacity: 0.9; }
-    100% { transform: scale(2.4); opacity: 0; }
+    100% { transform: scale(2.0); opacity: 0; }
   }
 
   .burst-status {
     font-family: 'Geist Mono', monospace;
-    font-size: 12px;
-    letter-spacing: 0.45em;
-    color: #9cf0ff;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: #E5E5E5;
     text-transform: uppercase;
-    text-shadow: 0 0 18px rgba(0,218,243,0.7);
+    text-shadow: 0 0 10px rgba(255,255,255,0.7);
   }
-  .burst-status span { display: inline-block; opacity: 0; transform: translateY(8px); }
+  .burst-status span { display: inline-block; opacity: 0; transform: translateY(6px); }
   .success-burst.active .burst-status span {
-    animation: status-letter 0.4s ease forwards;
+    animation: status-letter 0.32s ease forwards;
   }
   @keyframes status-letter {
     to { opacity: 1; transform: translateY(0); }
@@ -467,26 +559,34 @@ tailwind.config = {
   /* Click ripple — fires immediately on Continue click for tactile feedback */
   .click-ripple {
     position: fixed;
-    width: 24px; height: 24px;
+    width: 14px; height: 14px;
     border-radius: 50%;
-    background: rgba(156,240,255,0.45);
+    background: rgba(229,229,229,0.45);
     transform: translate(-50%, -50%) scale(0);
     pointer-events: none;
     z-index: 199;
-    animation: ripple-expand 0.6s ease-out forwards;
+    animation: ripple-expand 0.5s ease-out forwards;
   }
   @keyframes ripple-expand {
     0%   { transform: translate(-50%, -50%) scale(0);   opacity: 0.7; }
-    100% { transform: translate(-50%, -50%) scale(8);   opacity: 0;   }
+    100% { transform: translate(-50%, -50%) scale(5);   opacity: 0;   }
   }
 
-  /* Accessibility */
+  /* Accessibility — quiet ambient motion, but keep click-feedback animations.
+     The burst/ripple/press are direct action confirmations (not decorative),
+     so we restore their original animation durations. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
       transition-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
     }
+    .success-burst { transition-duration: 0.18s !important; }
+    .success-burst .burst-block { animation-duration: 0.55s !important; }
+    .success-burst .burst-ring  { animation-duration: 0.6s  !important; }
+    .success-burst .burst-status span { animation-duration: 0.32s !important; }
+    .click-ripple { animation-duration: 0.5s !important; }
+    .magnetic-cta.pressing { animation-duration: 0.45s !important; }
     .aurora-mesh { animation: none; }
     body { cursor: auto; }
     .custom-cursor { display: none !important; }
@@ -504,13 +604,13 @@ tailwind.config = {
 
 <!-- Top progress hairline -->
 <div class="fixed top-0 left-0 w-full h-[2px] z-[60] bg-white/10">
-  <div id="topProgress" class="h-full bg-primary-fixed-dim transition-all duration-700 ease-out shadow-[0_0_10px_#00daf3]" style="width: 16.66%"></div>
+  <div id="topProgress" class="h-full bg-primary-fixed-dim transition-all duration-700 ease-out shadow-[0_0_10px_#A3A3A3]" style="width: 16.66%"></div>
 </div>
 
 <!-- Top nav -->
 <nav class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-gutter py-stack-sm border-b border-white/5 backdrop-blur-md">
   <div class="flex items-center gap-2">
-    <div class="w-2 h-2 rounded-full bg-primary-fixed-dim shadow-[0_0_10px_#00daf3]"></div>
+    <div class="w-2 h-2 rounded-full bg-primary-fixed-dim shadow-[0_0_10px_#A3A3A3]"></div>
     <span class="text-body-md font-medium text-on-surface">Pebble Engine</span>
   </div>
   <span class="mono text-label-mono text-on-surface-variant uppercase tracking-widest">v3.0</span>
@@ -523,7 +623,7 @@ tailwind.config = {
     <p id="stepCounter" class="mono text-label-mono text-primary-fixed font-bold mt-1">01 / 06</p>
   </div>
   <div class="w-px h-32 bg-white/10 relative overflow-hidden">
-    <div id="progressFill" class="absolute top-0 left-0 w-full bg-primary-fixed-dim shadow-[0_0_10px_#00daf3] transition-all duration-700 ease-out" style="height: 16.66%;"></div>
+    <div id="progressFill" class="absolute top-0 left-0 w-full bg-primary-fixed-dim shadow-[0_0_10px_#A3A3A3] transition-all duration-700 ease-out" style="height: 16.66%;"></div>
   </div>
   <span class="material-symbols-outlined text-primary-fixed text-[18px]">analytics</span>
 </aside>
@@ -557,18 +657,21 @@ tailwind.config = {
 ========================================================================== */
 
 // Lightweight industry hints (banner only — real intel lives server-side).
+// Copy is intentionally neutral about visual treatment — the Design DNA picks
+// fonts, layout, motion, and structure per build. Industry only drives the
+// Pexels keyword pool and the trust-signal vocabulary.
 const INDUSTRIES = {
-  'plumbing':    { category: 'Home Services',        explanation: 'Light, approachable design with prominent emergency CTAs.' },
-  'hvac':        { category: 'Home Services',        explanation: 'Trust-first design with 24/7 contact options.' },
-  'electrical':  { category: 'Home Services',        explanation: 'Trust + urgent emergency contact patterns.' },
-  'pest control':{ category: 'Home Services',        explanation: 'Industry intel locked in industries.json — dark trust palette + Pexels video hero.' },
-  'restaurant':  { category: 'Food & Hospitality',   explanation: 'Appetizing photography and easy menu/hours access.' },
-  'cafe':        { category: 'Food & Hospitality',   explanation: 'Warm, inviting designs with prominent menu display.' },
-  'lawyer':      { category: 'Professional Services',explanation: 'Credible, structured design with credentials surfaced.' },
-  'law firm':    { category: 'Professional Services',explanation: 'Editorial authority — bar admissions, results, gravity.' },
-  'dentist':     { category: 'Health & Wellness',    explanation: 'Calming, clean design that reduces patient anxiety.' },
-  'yoga':        { category: 'Health & Wellness',    explanation: 'Peaceful, uncluttered designs with soft colors.' },
-  'real-estate': { category: 'Real Estate',          explanation: 'Clean searchable layouts with excellent property photos.' },
+  'plumbing':    { category: 'Home Services',        explanation: 'Pexels imagery + emergency-CTA copy patterns for this trade.' },
+  'hvac':        { category: 'Home Services',        explanation: 'HVAC-specific imagery + 24/7 trust signals.' },
+  'electrical':  { category: 'Home Services',        explanation: 'Electrical trade imagery + emergency-contact copy patterns.' },
+  'pest control':{ category: 'Home Services',        explanation: 'Pest-control imagery pool + technician/treatment trust signals.' },
+  'restaurant':  { category: 'Food & Hospitality',   explanation: 'Food + interior imagery, menu/hours copy patterns.' },
+  'cafe':        { category: 'Food & Hospitality',   explanation: 'Cafe imagery + menu/hours copy patterns.' },
+  'lawyer':      { category: 'Professional Services',explanation: 'Practice imagery + credentials/results copy patterns.' },
+  'law firm':    { category: 'Professional Services',explanation: 'Firm imagery + bar-admissions/results copy patterns.' },
+  'dentist':     { category: 'Health & Wellness',    explanation: 'Clinical imagery + patient-anxiety-reducing copy.' },
+  'yoga':        { category: 'Health & Wellness',    explanation: 'Studio imagery + wellness copy patterns.' },
+  'real-estate': { category: 'Real Estate',          explanation: 'Property imagery + agent/listing copy patterns.' },
 };
 
 const state = {
@@ -662,21 +765,9 @@ const QUESTIONS = [
     ],
   },
   {
-    id: 'tone',
-    type: 'single_select',
-    eyebrow: 'STEP 04 — VOICE',
-    title: "What's the voice of your brand?",
-    subtitle: 'This dictates the rhythm and vocabulary of the generated copy.',
-    options: [
-      { value: 'professional_formal',   label: 'Professional', eyebrow: 'Enterprise Standard', description: 'Polished, authoritative, precise. Ideal for high-stakes business and technical documentation.', icon: 'corporate_fare' },
-      { value: 'friendly_approachable', label: 'Friendly',     eyebrow: 'Human-Centric',       description: 'Conversational, warm, approachable. Bridges the gap between technology and the end user.', icon: 'sentiment_satisfied' },
-      { value: 'creative_confident',    label: 'Urgent · Bold', eyebrow: 'High Impact',        description: 'Direct, energetic, provocative. Designed to command attention and drive immediate action.', icon: 'bolt' },
-    ],
-  },
-  {
     id: 'design_reference',
     type: 'design_upload',
-    eyebrow: 'STEP 05 — REFERENCE',
+    eyebrow: 'STEP 04 — REFERENCE',
     title: 'Show us what you love',
     subtitle: 'Optional. Link a Figma file or upload a moodboard. Engine extracts colors, type rhythm, and layout.',
     fields: [
@@ -692,7 +783,7 @@ const QUESTIONS = [
   {
     id: 'output_mode',
     type: 'single_select',
-    eyebrow: 'STEP 06 — DELIVERY',
+    eyebrow: 'STEP 05 — DELIVERY',
     title: 'How should it be delivered?',
     subtitle: 'Choose the technical stack. Our engine compiles your brief into the selected format.',
     options: [
@@ -720,12 +811,44 @@ function setProgress(stepIdx) {
   document.getElementById('stepCounter').textContent = `${String(stepIdx + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}`;
 }
 
+// Build HTML for a decrypt reveal — one span per character, with the
+// final glyph cached on data-target. runDecryptReveal() drives the scramble.
+const DECRYPT_GLYPHS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
 function wordRevealHTML(text) {
-  return text.split(/(\s+)/).map((word, i) => {
-    if (/^\s+$/.test(word)) return word;
-    const delay = (i * 0.06).toFixed(2);
-    return `<span style="animation-delay: ${delay}s">${word}</span>`;
+  const chars = [...text];
+  return chars.map(ch => {
+    if (ch === ' ') return '<span class="decrypt-space"> </span>';
+    const safe = ch === '"' ? '&quot;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '&' ? '&amp;' : ch;
+    // Seed each char with a random glyph so the first paint already looks like noise
+    const seed = DECRYPT_GLYPHS[Math.floor(Math.random() * DECRYPT_GLYPHS.length)];
+    return `<span class="decrypt-char" data-target="${safe}">${seed}</span>`;
   }).join('');
+}
+
+function runDecryptReveal(rootEl, opts) {
+  if (!rootEl) return;
+  const stagger    = (opts && opts.stagger)    || 22;   // ms between char starts
+  const frameMs    = (opts && opts.frameMs)    || 38;   // ms per scramble frame
+  const minFrames  = (opts && opts.minFrames)  || 5;
+  const maxFrames  = (opts && opts.maxFrames)  || 10;
+  rootEl.querySelectorAll('.decrypt-char').forEach((span, i) => {
+    const target = span.dataset.target;
+    if (target === undefined) return;
+    const frames = Math.floor(minFrames + Math.random() * (maxFrames - minFrames));
+    let f = 0;
+    setTimeout(() => {
+      const id = setInterval(() => {
+        if (f >= frames) {
+          span.textContent = target;
+          span.classList.add('locked');
+          clearInterval(id);
+          return;
+        }
+        span.textContent = DECRYPT_GLYPHS[Math.floor(Math.random() * DECRYPT_GLYPHS.length)];
+        f++;
+      }, frameMs);
+    }, i * stagger);
+  });
 }
 
 /* ---------- renderers ---------- */
@@ -738,7 +861,7 @@ function renderQuestion(question) {
     <div class="industry-banner mb-stack-md">
       <span class="material-symbols-outlined text-primary-fixed text-[20px]">check_circle</span>
       <div>
-        <p class="mono text-[10px] uppercase tracking-[0.2em] text-primary-fixed">Industry locked · ${state.detectedIndustry.category}</p>
+        <p class="mono text-[10px] uppercase tracking-[0.2em] text-primary-fixed">Industry detected · ${state.detectedIndustry.category}</p>
         <p class="text-body-md text-on-surface-variant mt-0.5">${state.detectedIndustry.explanation}</p>
       </div>
     </div>` : '';
@@ -866,6 +989,19 @@ function renderQuestion(question) {
 
   attachCursorListeners();
   startPlaceholderRotations(question);
+
+  // Kick off the decrypt-char scramble on the freshly rendered headline
+  const headline = container.querySelector('.word-reveal');
+  if (headline) runDecryptReveal(headline);
+
+  // Per-field upgrades: autocomplete on industry, mask on phone, live error-clear on all.
+  (question.fields || []).forEach(field => {
+    const input = document.querySelector(`#questionContainer [name="${field.name}"]`);
+    if (!input) return;
+    clearFieldErrorOnInput(input);
+    if (field.name === 'business_type') attachIndustryAutocomplete(input);
+    if (field.name === 'phone')         attachPhoneMask(input);
+  });
 }
 
 /* ---------- rotating placeholders ---------- */
@@ -926,8 +1062,9 @@ function spawnClickRipple(x, y) {
 }
 
 function playSuccessBurst(done, btn) {
-  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (reduced) { done(); return; }
+  // Click-feedback is direct user-action confirmation, not ambient motion.
+  // We intentionally do NOT gate this on prefers-reduced-motion — without it
+  // the page sits silent for 760ms after click and feels broken.
 
   // Anchor the burst on the clicked button — feels like the button popped
   let cx = window.innerWidth / 2, cy = window.innerHeight / 2;
@@ -935,6 +1072,9 @@ function playSuccessBurst(done, btn) {
     const r = btn.getBoundingClientRect();
     cx = r.left + r.width / 2;
     cy = r.top  + r.height / 2;
+    // Magnetic effect sets inline transform on hover/mousemove — clear it so
+    // the cta-press keyframe (scale animation) actually wins.
+    btn.style.transform = '';
     btn.classList.add('pressing');
     setTimeout(() => btn.classList.remove('pressing'), 460);
   }
@@ -944,7 +1084,7 @@ function playSuccessBurst(done, btn) {
   const overlay = document.createElement('div');
   overlay.className = 'success-burst';
   overlay.style.left = cx + 'px';
-  overlay.style.top  = (cy - 80) + 'px'; // float slightly above the button
+  overlay.style.top  = (cy - 50) + 'px'; // float slightly above the button
   overlay.innerHTML = `
     <div class="burst-grid">
       <div class="burst-ring"></div>
@@ -1018,13 +1158,31 @@ function transitionOut(then) {
 function nextStep(evt) {
   collectStepInputs();
   const q = QUESTIONS[state.currentStep];
-  if (q.type === 'text_multi') {
-    const required = q.fields.filter(f => f.required !== false);
-    const missing = required.find(f => !(state.answers[f.name] || '').trim());
-    if (missing) {
-      const inputEl = document.querySelector(`#questionContainer [name="${missing.name}"]`);
+  if (q.type === 'text_multi' || q.type === 'design_upload') {
+    // Run required-check + per-field validator on every field. Stop at the
+    // first failure and focus that input — feels like a form, not a maze.
+    const fields = q.fields || [];
+    let failed = null;
+    for (const field of fields) {
+      const raw = state.answers[field.name];
+      const value = (typeof raw === 'string' ? raw : '');
+      const isRequired = field.required !== false && field.type !== 'file';
+      const trimmed = value.trim();
+      if (isRequired && !trimmed) {
+        failed = { field, msg: `${field.label} is required` };
+        break;
+      }
+      const validator = FIELD_VALIDATORS[field.name];
+      if (validator && trimmed) {
+        const msg = validator(trimmed);
+        if (msg) { failed = { field, msg }; break; }
+      }
+    }
+    if (failed) {
+      const inputEl = document.querySelector(`#questionContainer [name="${failed.field.name}"]`);
       if (inputEl) inputEl.focus();
-      flashFieldError(missing.label);
+      setFieldError(failed.field.name, failed.msg);
+      flashFieldError(failed.msg);
       return;
     }
   }
@@ -1075,7 +1233,185 @@ function prevStep() {
   });
 }
 
-function flashFieldError(label) {
+/* ---------- field validation + formatting ---------- */
+// Each validator returns null when ok, or a short user-facing error string.
+// Validators only fire on non-empty values; required-ness is handled separately.
+const FIELD_VALIDATORS = {
+  business_name(v) {
+    const t = v.trim();
+    if (t.length < 2) return 'Use at least 2 characters';
+    if (!/[a-zA-Z]/.test(t)) return 'Business name needs letters';
+    if (/^(.)\1+$/.test(t)) return 'That looks like a typo';
+    return null;
+  },
+  business_type(v) {
+    const t = v.trim();
+    if (t.length < 3) return 'Tell us the industry (e.g. "plumbing")';
+    if (!/[a-zA-Z]/.test(t)) return 'Industry needs letters';
+    return null;
+  },
+  location(v) {
+    const t = v.trim();
+    if (t.length < 3) return 'Where do you operate? e.g. "Brooklyn, NY"';
+    if (!/[a-zA-Z]/.test(t)) return 'Location needs letters';
+    return null;
+  },
+  services_offered(v) {
+    const t = v.trim();
+    if (t.length < 4) return 'List at least one offering';
+    return null;
+  },
+  phone(v) {
+    const t = v.trim();
+    if (!t) return null;
+    const digits = t.replace(/\D/g, '');
+    if (digits.length < 10) return 'Phone needs at least 10 digits';
+    if (digits.length > 15) return 'That phone looks too long';
+    return null;
+  },
+  email(v) {
+    const t = v.trim();
+    if (!t) return null;
+    if (!/^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(t)) return 'Enter a valid email';
+    return null;
+  },
+  figma_url(v) {
+    const t = v.trim();
+    if (!t) return null;
+    if (!/^https?:\/\/(www\.)?figma\.com\//i.test(t)) return 'Use a figma.com URL';
+    return null;
+  },
+};
+
+function setFieldError(name, msg) {
+  const input = document.querySelector(`#questionContainer [name="${name}"]`);
+  if (!input) return;
+  const wrap = input.closest('.input-underline');
+  let errEl = wrap?.parentElement?.querySelector(`.field-error[data-err-for="${name}"]`);
+  if (msg) {
+    wrap?.classList.add('error');
+    if (!errEl) {
+      errEl = document.createElement('span');
+      errEl.className = 'field-error';
+      errEl.dataset.errFor = name;
+      wrap.parentElement.appendChild(errEl);
+    }
+    errEl.textContent = msg;
+    requestAnimationFrame(() => errEl.classList.add('show'));
+  } else {
+    wrap?.classList.remove('error');
+    if (errEl) { errEl.classList.remove('show'); errEl.textContent = ''; }
+  }
+}
+
+function clearFieldErrorOnInput(input) {
+  if (input._errClearBound) return;
+  input._errClearBound = true;
+  input.addEventListener('input', () => setFieldError(input.name, null));
+}
+
+// Format phone as the user types. Leave international (`+`) numbers alone
+// so engineers can paste E.164 strings without us mangling them.
+function attachPhoneMask(input) {
+  if (!input || input._phoneBound) return;
+  input._phoneBound = true;
+  const reformat = () => {
+    const v = input.value;
+    if (v.trim().startsWith('+')) return;
+    const digits = v.replace(/\D/g, '').slice(0, 10);
+    let f = '';
+    if (digits.length === 0)       f = '';
+    else if (digits.length <= 3)   f = `(${digits}`;
+    else if (digits.length <= 6)   f = `(${digits.slice(0,3)}) ${digits.slice(3)}`;
+    else                           f = `(${digits.slice(0,3)}) ${digits.slice(3,6)}-${digits.slice(6)}`;
+    if (f !== v) input.value = f;
+  };
+  input.addEventListener('input', reformat);
+  input.addEventListener('blur', reformat);
+}
+
+// Industry typeahead — populated from /api/industries on load.
+let INDUSTRY_LIST = [];
+async function loadIndustryList(attempt = 1) {
+  try {
+    const r = await fetch('/api/industries', { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const j = await r.json();
+    INDUSTRY_LIST = Array.isArray(j.industries) ? j.industries : [];
+    console.log(`[pebble] industries loaded: ${INDUSTRY_LIST.length} entries`);
+    // If a business_type input is already on-screen, refresh its dropdown
+    const active = document.querySelector('#questionContainer [name="business_type"]');
+    if (active) active.dispatchEvent(new Event('input', { bubbles: true }));
+  } catch (e) {
+    console.warn(`[pebble] industries fetch failed (attempt ${attempt}):`, e.message || e);
+    // Auto-retry up to 3x with backoff — first request can race the engine boot
+    if (attempt < 3) setTimeout(() => loadIndustryList(attempt + 1), attempt * 500);
+  }
+}
+
+function attachIndustryAutocomplete(input) {
+  if (!input || input._acBound) return;
+  input._acBound = true;
+  const wrap = input.closest('.input-underline');
+  if (!wrap) return;
+  wrap.style.position = 'relative';
+
+  const dd = document.createElement('div');
+  dd.className = 'ac-dropdown';
+  wrap.appendChild(dd);
+
+  let activeIdx = -1;
+  let matches = [];
+
+  const render = () => {
+    if (matches.length === 0) { dd.classList.remove('show'); dd.innerHTML = ''; return; }
+    dd.innerHTML = matches.slice(0, 8).map((m, i) => `
+      <div class="ac-item ${i === activeIdx ? 'active' : ''}" data-key="${m.key}" data-label="${m.label}">
+        <span class="ac-label">${m.label}</span>
+        <span class="ac-hint">${m.hint || ''}</span>
+      </div>
+    `).join('');
+    dd.classList.add('show');
+    dd.querySelectorAll('.ac-item').forEach((el, i) => {
+      el.addEventListener('mousedown', (e) => { e.preventDefault(); pick(matches[i]); });
+    });
+  };
+
+  const pick = (m) => {
+    input.value = m.label;
+    state.answers[input.name] = m.label;
+    state.answers._industry_key = m.key;
+    matches = []; activeIdx = -1;
+    dd.classList.remove('show'); dd.innerHTML = '';
+    // Trigger ghost hide
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+  };
+
+  const recompute = () => {
+    const q = (input.value || '').trim().toLowerCase();
+    if (q.length < 1 || INDUSTRY_LIST.length === 0) { matches = []; activeIdx = -1; render(); return; }
+    matches = INDUSTRY_LIST.filter(m =>
+      m.label.toLowerCase().includes(q) ||
+      m.key.toLowerCase().includes(q)
+    ).slice(0, 8);
+    activeIdx = matches.length ? 0 : -1;
+    render();
+  };
+
+  input.addEventListener('input', recompute);
+  input.addEventListener('focus', recompute);
+  input.addEventListener('blur', () => setTimeout(() => dd.classList.remove('show'), 120));
+  input.addEventListener('keydown', (e) => {
+    if (!dd.classList.contains('show')) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = Math.min(activeIdx + 1, matches.length - 1); render(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = Math.max(activeIdx - 1, 0); render(); }
+    else if (e.key === 'Enter') {
+      if (activeIdx >= 0 && matches[activeIdx]) { e.preventDefault(); e.stopPropagation(); pick(matches[activeIdx]); }
+    } else if (e.key === 'Escape') { dd.classList.remove('show'); }
+  });
+}
+
+function flashFieldError(msg) {
   // Lightweight inline alert — replaces blocking alert()
   let toast = document.getElementById('toast');
   if (!toast) {
@@ -1084,7 +1420,7 @@ function flashFieldError(label) {
     toast.className = 'fixed top-20 left-1/2 -translate-x-1/2 z-[120] mono text-label-mono uppercase tracking-widest bg-error/20 text-error border border-error/40 rounded-full px-4 py-2';
     document.body.appendChild(toast);
   }
-  toast.textContent = `Required · ${label}`;
+  toast.textContent = msg;
   toast.style.opacity = '1';
   clearTimeout(toast._t);
   toast._t = setTimeout(() => { toast.style.transition = 'opacity 0.4s'; toast.style.opacity = '0'; }, 1800);
@@ -1117,7 +1453,9 @@ async function submitQuiz() {
     output_mode:             state.answers.output_mode || 'full',
   };
   try {
-    const response = await fetch('/api/build', {
+    // /api/generate runs the full pipeline (LLM → Pexels → Imagen → next dev → Playwright).
+    // Takes 2-5 minutes. The splash screen plays the loading video meanwhile.
+    const response = await fetch('/api/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -1174,32 +1512,70 @@ function showResults(data) {
   const meta = [];
   meta.push(`<span><span class="text-on-surface-variant/60">PROMPT:</span> <span class="text-primary-fixed">${(data.prompt || '').length.toLocaleString()} chars</span></span>`);
   if (data.industry_intel_key) meta.push(`<span><span class="text-on-surface-variant/60">INDUSTRY:</span> <span class="text-primary-fixed">${data.industry_intel_key}</span></span>`);
+  if (data.model)              meta.push(`<span><span class="text-on-surface-variant/60">MODEL:</span> <span class="text-primary-fixed">${data.model}</span></span>`);
+  if (data.elapsed_seconds)    meta.push(`<span><span class="text-on-surface-variant/60">ELAPSED:</span> <span class="text-primary-fixed">${data.elapsed_seconds}s</span></span>`);
+  if (data.file_count)         meta.push(`<span><span class="text-on-surface-variant/60">FILES:</span> <span class="text-primary-fixed">${data.file_count}</span></span>`);
   meta.push(`<span><span class="text-on-surface-variant/60">SAVED:</span> <span class="text-primary-fixed">${data.saved_to}</span></span>`);
   if (typeof data.warning_count === 'number') meta.push(`<span><span class="text-on-surface-variant/60">WARNINGS:</span> <span class="text-primary-fixed">${data.warning_count}</span></span>`);
+
+  // Build pipeline-status pills so the user can see Imagen + dev server + screenshots fired
+  const pills = [];
+  const imagen = data.imagen || {};
+  const imagenCount = imagen.generated ? Object.keys(imagen.generated).length : 0;
+  if (imagen.enabled) {
+    pills.push(`<span class="status-pill ${imagenCount ? 'on' : 'off'}">IMAGEN · ${imagenCount}/8 images${imagen.error ? ' · ' + imagen.error : ''}</span>`);
+  }
+  const pv = data.pexels_video || {};
+  if (pv.downloaded) {
+    pills.push(`<span class="status-pill on">HERO VIDEO · localized · ${pv.files_touched || 0} files</span>`);
+  } else if (data.hero_video_url) {
+    pills.push(`<span class="status-pill off">HERO VIDEO · fetched but not localized</span>`);
+  }
+  const ds = data.dev_server || {};
+  if (ds.url) {
+    pills.push(`<a class="status-pill on" href="${ds.url}" target="_blank">LIVE PREVIEW · ${ds.url}</a>`);
+  } else if (ds.enabled === false) {
+    pills.push(`<span class="status-pill off">AUTO-RUN OFF · flip PEBBLE_AUTO_RUN=true</span>`);
+  } else if ((ds.errors || []).length) {
+    pills.push(`<span class="status-pill off">DEV SERVER · ${ds.errors[0]}</span>`);
+  }
+  const ss = data.screenshots || {};
+  if ((ss.screenshots || []).length) {
+    pills.push(`<span class="status-pill on">SCREENSHOTS · ${ss.screenshots.length} captured</span>`);
+  }
+  const dnaId = (data.brief && data.brief._design_dna) || state.answers._design_dna || '';
+  // dna is in the brief.json on disk; surface it if returned
+  const pillsHTML = pills.length
+    ? `<div class="flex flex-wrap gap-2 mb-stack-md">${pills.join('')}</div>`
+    : '';
 
   screen.innerHTML = `
     <article class="step-wrap">
       <div class="flex items-center gap-4 mb-stack-md">
-        <div class="w-12 h-12 rounded-full border border-primary-fixed/40 flex items-center justify-center bg-primary-fixed/5 shadow-[0_0_24px_rgba(0,218,243,0.2)]">
+        <div class="w-12 h-12 rounded-full border border-primary-fixed/40 flex items-center justify-center bg-primary-fixed/5 shadow-[0_0_24px_rgba(255,255,255,0.2)]">
           <span class="material-symbols-outlined text-primary-fixed text-[28px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
         </div>
-        <h1 class="fraunces text-display-xl-mobile md:text-display-xl text-on-surface leading-tight">Prompt Generated</h1>
+        <h1 class="fraunces text-display-xl-mobile md:text-display-xl text-on-surface leading-tight word-reveal">${wordRevealHTML(ds.url ? 'Site Built' : 'Prompt Generated')}</h1>
       </div>
       <div class="flex flex-wrap gap-x-6 gap-y-2 py-4 border-y border-white/5 mb-stack-md mono text-label-mono uppercase tracking-widest">
         ${meta.join('')}
       </div>
+      ${pillsHTML}
       <div class="code-panel mb-stack-md">
         <pre id="promptPre"></pre>
       </div>
       <div class="flex flex-wrap gap-stack-sm">
-        <button class="magnetic-cta" onclick="copyPrompt()"><span class="material-symbols-outlined">content_copy</span>Copy to Clipboard</button>
+        ${ds.url ? `<a class="magnetic-cta" href="${ds.url}" target="_blank"><span class="material-symbols-outlined">open_in_new</span>Open Live Site</a>` : ''}
+        <button class="magnetic-cta" onclick="copyPrompt()"><span class="material-symbols-outlined">content_copy</span>Copy Prompt</button>
         <button class="magnetic-cta" onclick="downloadPrompt()"><span class="material-symbols-outlined">download</span>Download .md</button>
-        <button class="ghost-btn" onclick="location.reload()"><span class="material-symbols-outlined text-[18px]">refresh</span>Start Over</button>
+        <button class="ghost-btn" onclick="location.reload()"><span class="material-symbols-outlined text-[18px]">refresh</span>New Build</button>
       </div>
     </article>`;
 
   document.getElementById('promptPre').innerHTML = highlightMarkdown(data.prompt || '');
   attachCursorListeners();
+  const resHeadline = screen.querySelector('.word-reveal');
+  if (resHeadline) runDecryptReveal(resHeadline);
 }
 
 function copyPrompt() {
@@ -1265,6 +1641,9 @@ function attachCursorListeners() {
 /* ---------- init ---------- */
 setProgress(0);
 renderQuestion(QUESTIONS[0]);
+// Kick off industry list fetch in parallel — when it lands, the autocomplete
+// dropdown on the basics step becomes populated.
+loadIndustryList();
 </script>
 
 </body>
