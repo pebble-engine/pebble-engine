@@ -10,11 +10,11 @@ function SubmitButton() {
       type="submit"
       disabled={pending}
       className="
-        bg-river text-sand
+        bg-spark text-stone
         px-6 py-3 rounded-button font-medium
-        hover:bg-stone transition-colors
+        hover:bg-earth hover:text-sand transition-colors
         focus-visible:outline-none focus-visible:ring-2
-        focus-visible:ring-river/40 focus-visible:ring-offset-2
+        focus-visible:ring-stone/60 focus-visible:ring-offset-2
         focus-visible:ring-offset-sand
         disabled:opacity-60 disabled:cursor-not-allowed
         whitespace-nowrap
@@ -44,7 +44,7 @@ export function WaitlistForm() {
             flex-1 bg-white border border-mist
             rounded-input px-4 py-3 text-stone placeholder-stone/40
             focus-visible:outline-none focus-visible:ring-2
-            focus-visible:ring-river/40 focus-visible:border-river
+            focus-visible:ring-spark/60 focus-visible:border-spark
           "
         />
         <SubmitButton />

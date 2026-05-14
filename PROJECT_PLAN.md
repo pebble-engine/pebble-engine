@@ -87,23 +87,29 @@ Where we are now. Each chapter ships something visible to customers.
 
 ## Chapter 5 — The Landing Page (Week 1, ~3 days)
 
-**Goal:** One public page at pebble.app that explains Pebble + captures emails.
-
-This is the FIRST thing potential customers see. Must be exceptional.
+**Goal:** One public page at getpebble.net that explains Pebble + captures emails.
 
 ```
-[ ] 5.1  Use Pebble itself to generate the base (eat our own dog food)
-[ ] 5.2  Customize the prompt for B2B SaaS framing (not local-business)
-[ ] 5.3  Sections in order:
-            • Hero: the story (50+ small business owner who's nervous about AI)
-            • The problem (Squarespace is bland, Wix is dated, Lovable is too technical)
-            • The promise (8 questions, world-class site, full ownership)
-            • How it works (3-step visual: quiz → preview → deploy)
-            • Pricing teaser (Free trial → $29 → $59 + setup call)
-            • Trust signals (DNA examples, generated-site gallery)
-[ ] 5.4  "Join the waitlist" email-capture (Resend Server Action — we built this)
-[ ] 5.5  Deploy to Vercel under pebble.app (Marc registers domain)
-[ ] 5.6  Set up Google Analytics + Plausible (privacy-friendly traffic measurement)
+[x] 5.1  Built manually instead of via Pebble engine
+         (engine is tuned for local-business sites, not SaaS marketing —
+          revisit when engine adds SaaS-landing-page personality)
+[x] 5.2  Customized for B2B SaaS framing (inclusive 50+ angle)
+[x] 5.3  Six sections shipped:
+            • Hero with animated headline, brand-mono tag, waitlist form,
+              editorial accent line, AND the soul-line "If you can dream
+              it, you can hold it"
+            • Problem (three competitors and why each fails this audience)
+            • Promise (three differentiators)
+            • HowItWorks (3 steps in ~10 minutes)
+            • Pricing (Free trial / $29 / $59 + $99 setup call)
+            • Footer
+[x] 5.4  Waitlist email-capture via Resend Server Action
+[x] 5.5  Brand-tuned: amber primary CTAs, 18px+ body, WCAG AAA contrast,
+         "no thin font weights" mandate. Soul-line in hero.
+[ ] 5.6  Deploy to Vercel under getpebble.net   ← MARC's next move
+[ ] 5.7  Plausible analytics                    ← next session
+[ ] 5.8  Verify existing dark/cinematic getpebble.net vs new
+         warm/inclusive direction — Marc's brand call            ← OPEN
 ```
 
 ## Chapter 6 — Visual Editor MVP (Weeks 2-7, hardest piece)

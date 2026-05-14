@@ -68,7 +68,7 @@ export function Pricing() {
               <article
                 className={
                   tier.accent
-                    ? "rounded-card border-2 border-river p-8 bg-sand"
+                    ? "rounded-card border-2 border-spark p-8 bg-sand"
                     : "rounded-card border border-mist p-8 bg-sand"
                 }
               >

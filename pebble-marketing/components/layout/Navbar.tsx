@@ -33,7 +33,7 @@ export function Navbar() {
               text-stone/70 hover:text-stone transition-colors
               rounded-sm
               focus-visible:outline-none focus-visible:ring-2
-              focus-visible:ring-river/40 focus-visible:ring-offset-2
+              focus-visible:ring-stone/40 focus-visible:ring-offset-2
               focus-visible:ring-offset-sand
             "
           >
@@ -46,7 +46,7 @@ export function Navbar() {
               text-stone/70 hover:text-stone transition-colors
               rounded-sm
               focus-visible:outline-none focus-visible:ring-2
-              focus-visible:ring-river/40 focus-visible:ring-offset-2
+              focus-visible:ring-stone/40 focus-visible:ring-offset-2
               focus-visible:ring-offset-sand
             "
           >
@@ -55,11 +55,11 @@ export function Navbar() {
           <Link
             href="#waitlist"
             className="
-              bg-river text-sand
+              bg-spark text-stone
               px-4 py-2 rounded-button text-sm font-medium
-              hover:bg-stone transition-colors
+              hover:bg-earth hover:text-sand transition-colors
               focus-visible:outline-none focus-visible:ring-2
-              focus-visible:ring-river/40 focus-visible:ring-offset-2
+              focus-visible:ring-stone/60 focus-visible:ring-offset-2
               focus-visible:ring-offset-sand
             "
           >

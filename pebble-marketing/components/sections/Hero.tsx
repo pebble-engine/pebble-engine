@@ -67,6 +67,16 @@ export function Hero() {
             you fully own.
           </p>
         </FadeIn>
+
+        {/* Brand soul-line — from the brand book.
+            "If you can dream it, you can hold it." */}
+        <FadeIn delay={2100} duration={1200}>
+          <p className="mt-16 max-w-xl">
+            <span className="editorial-accent text-2xl md:text-3xl">
+              If you can dream it, you can hold it.
+            </span>
+          </p>
+        </FadeIn>
       </div>
     </section>
   );

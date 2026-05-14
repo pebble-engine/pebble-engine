@@ -34,10 +34,12 @@ body {
   color: #C8A96E;
 }
 
-/* Mono tag used for "POWERED BY PEBBLE" badges, version strings */
+/* Mono tag used for "POWERED BY PEBBLE" badges, section labels.
+   Bumped from 11px to 13px per brand book minimum-size rules
+   (older readers need bigger small-text too, not just bigger body). */
 .brand-mono {
   font-family: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #5E7A6E;
