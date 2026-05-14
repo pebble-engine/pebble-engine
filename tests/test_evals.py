@@ -1,0 +1,334 @@
+"""Tests for the pebble.evals harness.
+
+The strategy: build a synthetic site directory in tmp_path that satisfies
+every check, then for each check write a "passes when correct" test and a
+"fails when broken" test by mutating exactly one thing. This way each
+test isolates a single assertion of the check's logic.
+
+The heavy ``site_compiles`` check shells out to ``npx tsc`` and is not
+exercised here — it's covered indirectly by the run against the real
+sentinel builds.
+"""
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+import pytest
+
+from pebble.evals import BuildContext, run_checks
+from pebble.evals import checks
+from pebble.evals.report import format_summary, format_text, to_json
+
+
+# ---------------------------------------------------------------------------
+# Fixture — a minimal "good" build that should pass every static check
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def good_build(tmp_path: Path) -> Path:
+    """A synthetic build directory passing every check except site_compiles."""
+    d = tmp_path / "good-build"
+    site = d / "site"
+    (site / "app").mkdir(parents=True)
+    (site / "components" / "sections").mkdir(parents=True)
+    (site / "config").mkdir()
+
+    # Brief: phone NOT starting with 555 (would trigger invented-detector).
+    (d / "brief.json").write_text(json.dumps({
+        "business_name": "Good Co",
+        "business_type": "plumbing",
+        "phone": "(212) 234-9876",
+        "_design_dna": "swiss_magazine",
+        "_industry_intel_key": "plumbing",
+    }))
+
+    (site / "package.json").write_text('{"name":"good"}')
+    (site / "tsconfig.json").write_text(json.dumps({
+        "compilerOptions": {"paths": {"@/*": ["./*"]}}
+    }))
+    (site / "tailwind.config.ts").write_text(
+        "export default { theme: { fontFamily: { display: ['Cormorant Garamond', 'serif'] } } }"
+    )
+    (site / "postcss.config.js").write_text("module.exports = {}")
+    (site / "next.config.mjs").write_text("export default {}")
+    (site / "app" / "layout.tsx").write_text(
+        'import "./globals.css";\nexport default function L({children}: any) { return <html><body>{children}</body></html>; }'
+    )
+    (site / "app" / "page.tsx").write_text(
+        'export default function P() {\n'
+        '  return <main><h1>Welcome to Good Co</h1>'
+        '<p>Call (212) 234-9876</p></main>;\n'
+        '}'
+    )
+    (site / "app" / "globals.css").write_text(
+        "body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }"
+    )
+    (site / ".gitignore").write_text("node_modules/\n.next/\n")
+    return d
+
+
+# ---------------------------------------------------------------------------
+# 1. Runner
+# ---------------------------------------------------------------------------
+
+def test_runner_loads_brief_and_meta(good_build):
+    ctx = BuildContext.load(good_build)
+    assert ctx.slug == "good-build"
+    assert ctx.brief["business_name"] == "Good Co"
+    assert ctx.meta == {}  # no build_meta.json in the fixture
+
+
+def test_runner_handles_missing_brief_gracefully(tmp_path):
+    d = tmp_path / "no-brief"
+    d.mkdir()
+    ctx = BuildContext.load(d)
+    assert ctx.brief == {}
+    assert ctx.meta == {}
+
+
+def test_runner_catches_crashing_check(good_build):
+    """A check that raises is reported as 'error', not propagated."""
+    def crashing(ctx):
+        raise RuntimeError("boom")
+    results = run_checks(good_build, checks=[crashing])
+    assert len(results) == 1
+    assert results[0].status == "error"
+    assert "boom" in results[0].message
+
+
+# ---------------------------------------------------------------------------
+# 2. Individual checks — pass/fail pairs (excluding site_compiles)
+# ---------------------------------------------------------------------------
+
+def test_no_src_directory_passes_when_absent(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_src_directory(ctx).status == "pass"
+
+
+def test_no_src_directory_fails_when_present(good_build):
+    (good_build / "site" / "src").mkdir()
+    ctx = BuildContext.load(good_build)
+    assert checks.no_src_directory(ctx).status == "fail"
+
+
+def test_no_src_directory_skips_when_no_site(tmp_path):
+    d = tmp_path / "prompt-only"
+    d.mkdir()
+    (d / "brief.json").write_text("{}")
+    ctx = BuildContext.load(d)
+    assert checks.no_src_directory(ctx).status == "skip"
+
+
+def test_required_files_present_passes_for_minimal_site(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.required_files_present(ctx).status == "pass"
+
+
+def test_required_files_present_fails_when_page_missing(good_build):
+    (good_build / "site" / "app" / "page.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    r = checks.required_files_present(ctx)
+    assert r.status == "fail"
+    assert "app/page.tsx" in r.details["missing"]
+
+
+def test_tsconfig_paths_alias_passes_for_canonical(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.tsconfig_paths_alias(ctx).status == "pass"
+
+
+def test_tsconfig_paths_alias_fails_for_src_prefix(good_build):
+    (good_build / "site" / "tsconfig.json").write_text(json.dumps({
+        "compilerOptions": {"paths": {"@/*": ["./src/*"]}}
+    }))
+    ctx = BuildContext.load(good_build)
+    r = checks.tsconfig_paths_alias(ctx)
+    assert r.status == "fail"
+    assert r.details["got"] == ["./src/*"]
+
+
+def test_tsconfig_paths_alias_tolerates_jsonc_comments(good_build):
+    """Some Next.js scaffolding produces JSONC. The check must strip
+    // comments before parsing."""
+    (good_build / "site" / "tsconfig.json").write_text(
+        '// comment\n{ "compilerOptions": { "paths": { "@/*": ["./*"] } } }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.tsconfig_paths_alias(ctx).status == "pass"
+
+
+def test_next_config_is_mjs_passes(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.next_config_is_mjs(ctx).status == "pass"
+
+
+def test_next_config_is_mjs_fails_for_ts(good_build):
+    (good_build / "site" / "next.config.ts").write_text("export default {}")
+    ctx = BuildContext.load(good_build)
+    assert checks.next_config_is_mjs(ctx).status == "fail"
+
+
+def test_hero_has_h1_passes_when_in_page(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_has_h1(ctx).status == "pass"
+
+
+def test_hero_has_h1_passes_when_in_hero_component(good_build):
+    """Hero h1 in a Hero component, not in page.tsx — should still pass
+    and report the actual file, not a stray h1 in a motion utility."""
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <Hero />; }'
+    )
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'export const Hero = () => <h1>Big Headline</h1>;'
+    )
+    # Add a motion utility that ALSO has h1, to make sure the check prefers Hero
+    (good_build / "site" / "components" / "motion").mkdir()
+    (good_build / "site" / "components" / "motion" / "SplitText.tsx").write_text(
+        'export const SplitText = () => <h1>tokens</h1>;'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.hero_has_h1(ctx)
+    assert r.status == "pass"
+    # The hero file should be the one reported, not the motion utility.
+    assert "Hero.tsx" in r.message
+
+
+def test_hero_has_h1_fails_when_missing_everywhere(good_build):
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <div>no heading</div>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_has_h1(ctx).status == "fail"
+
+
+def test_images_use_next_image_passes_when_no_raw_img(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.images_use_next_image(ctx).status == "pass"
+
+
+def test_images_use_next_image_fails_on_raw_img(good_build):
+    (good_build / "site" / "components" / "sections" / "Logo.tsx").write_text(
+        'export const Logo = () => <img src="/logo.png" />;'
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.images_use_next_image(ctx)
+    assert r.status == "fail"
+    assert any("Logo.tsx" in f for f in r.details["files"])
+
+
+def test_no_invented_phone_passes_when_brief_phone_present(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_invented_phone(ctx).status == "pass"
+
+
+def test_no_invented_phone_fails_on_555(good_build):
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <h1>Call 555-123-4567</h1>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_invented_phone(ctx).status == "fail"
+
+
+def test_no_invented_phone_passes_with_placeholder_when_no_brief_phone(good_build):
+    """When the brief lacks a phone, the [BUSINESS PHONE] placeholder
+    is the correct artifact — not an invented number."""
+    brief = json.loads((good_build / "brief.json").read_text())
+    del brief["phone"]
+    (good_build / "brief.json").write_text(json.dumps(brief))
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'export default function P() { return <h1>Call [BUSINESS PHONE]</h1>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_invented_phone(ctx).status == "pass"
+
+
+def test_dna_display_font_honored_passes_when_present(good_build):
+    ctx = BuildContext.load(good_build)
+    # The good_build fixture sets DNA to swiss_magazine; the real card's
+    # display_font is 'Cormorant Garamond' which IS in globals.css.
+    assert checks.dna_display_font_honored(ctx).status == "pass"
+
+
+def test_dna_display_font_honored_fails_when_missing(good_build):
+    """LLM dropped the DNA font and fell back to defaults — the silent
+    regression the check is built to catch."""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: 'Inter', sans-serif; height: 100dvh; }"
+    )
+    (good_build / "site" / "tailwind.config.ts").write_text(
+        "export default { theme: { fontFamily: { display: ['Inter', 'sans-serif'] } } }"
+    )
+    ctx = BuildContext.load(good_build)
+    r = checks.dna_display_font_honored(ctx)
+    assert r.status == "fail"
+    assert "Cormorant Garamond" in r.details["expected_font"]
+
+
+def test_uses_100dvh_passes_when_no_100vh(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.uses_100dvh_not_100vh(ctx).status == "pass"
+
+
+def test_uses_100dvh_fails_on_100vh_in_css(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        ".hero { min-height: 100vh; }"
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.uses_100dvh_not_100vh(ctx).status == "fail"
+
+
+# ---------------------------------------------------------------------------
+# 3. Report formatters
+# ---------------------------------------------------------------------------
+
+def test_format_text_includes_dna_and_industry(good_build):
+    ctx = BuildContext.load(good_build)
+    results = run_checks(good_build, checks=[c for c in checks.ALL_CHECKS if c is not checks.site_compiles])
+    text = format_text(ctx.slug, ctx.brief, results)
+    assert "good-build" in text
+    assert "swiss_magazine" in text
+    assert "plumbing" in text
+    assert "Score:" in text
+
+
+def test_format_summary_table_has_header_and_row(good_build):
+    ctx = BuildContext.load(good_build)
+    rows = [{
+        "slug": ctx.slug,
+        "dna": ctx.brief.get("_design_dna"),
+        "pass": 8, "fail": 1, "skip": 0, "error": 0,
+    }]
+    table = format_summary(rows)
+    assert "Build" in table
+    assert "DNA" in table
+    assert "good-build" in table
+    assert "swiss_magazine" in table
+
+
+def test_to_json_has_stable_shape(good_build):
+    ctx = BuildContext.load(good_build)
+    results = run_checks(good_build, checks=[checks.no_src_directory])
+    blob = to_json(results, ctx.slug, ctx.brief)
+    assert blob["slug"] == "good-build"
+    assert blob["dna"] == "swiss_magazine"
+    assert isinstance(blob["results"], list)
+    assert blob["summary"]["pass"] >= 1
+
+
+# ---------------------------------------------------------------------------
+# 4. End-to-end run_checks
+# ---------------------------------------------------------------------------
+
+def test_run_checks_default_set_runs_all_static_checks(good_build):
+    """All static (non-tsc) checks pass on the synthetic good build."""
+    non_compile = [c for c in checks.ALL_CHECKS if c is not checks.site_compiles]
+    results = run_checks(good_build, checks=non_compile)
+    by_name = {r.name: r for r in results}
+    for c in non_compile:
+        name = c.__name__
+        assert name in by_name, f"missing result for {name}"
+        assert by_name[name].status in {"pass", "skip"}, \
+            f"{name} should pass on good_build, got {by_name[name].status}: {by_name[name].message}"
