@@ -235,7 +235,11 @@
      to its real value. Fires on page-load + each step's headline render. */
   .decrypt-char {
     display: inline-block;
-    color: rgba(237,237,237,0.35);
+    /* Default to fully visible so text reads even if the decrypt animation
+       doesn't run (e.g. tab throttled, paused, low-perf device). The
+       animation adds the .locked class for the bright "settled" state;
+       this initial state is now legible instead of 35% opacity. */
+    color: #EDEDED;
     font-feature-settings: "tnum" 1, "ss01" 1;
     transition: color 0.3s ease;
     text-shadow: 0 0 6px rgba(255,255,255,0);
@@ -591,7 +595,7 @@
 <!-- Footer -->
 <footer class="fixed bottom-0 left-0 w-full z-40 flex justify-between items-center px-gutter py-stack-sm text-on-surface-variant/50 text-[12px] mono">
   <span>Pebble Engine © 2026</span>
-  <span>industries.json · 52 entries</span>
+  <span id="industriesCountLabel">industries.json · …</span>
 </footer>
 
 <script>
@@ -763,9 +767,12 @@ function wordRevealHTML(text) {
   return chars.map(ch => {
     if (ch === ' ') return '<span class="decrypt-space"> </span>';
     const safe = ch === '"' ? '&quot;' : ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : ch === '&' ? '&amp;' : ch;
-    // Seed each char with a random glyph so the first paint already looks like noise
-    const seed = DECRYPT_GLYPHS[Math.floor(Math.random() * DECRYPT_GLYPHS.length)];
-    return `<span class="decrypt-char" data-target="${safe}">${seed}</span>`;
+    // Seed each char with its target so first paint is the readable headline.
+    // The scramble animation in runDecryptReveal() will still play and swap
+    // letters back and forth a few times before settling — but if the
+    // animation doesn't run for any reason (perf throttle, tab paused,
+    // hung script), the headline is still legible.
+    return `<span class="decrypt-char" data-target="${safe}">${safe}</span>`;
   }).join('');
 }
 
@@ -1283,6 +1290,11 @@ async function loadIndustryList(attempt = 1) {
     const j = await r.json();
     INDUSTRY_LIST = Array.isArray(j.industries) ? j.industries : [];
     console.log(`[pebble] industries loaded: ${INDUSTRY_LIST.length} entries`);
+    // Footer label — dynamic, always reflects the actual data the engine
+    // has loaded. Was hardcoded to "52 entries" previously; that lied
+    // whenever industries.json was edited without a HTML update.
+    const label = document.getElementById('industriesCountLabel');
+    if (label) label.textContent = `industries.json · ${INDUSTRY_LIST.length} entries`;
     // If a business_type input is already on-screen, refresh its dropdown
     const active = document.querySelector('#questionContainer [name="business_type"]');
     if (active) active.dispatchEvent(new Event('input', { bubbles: true }));
@@ -1290,6 +1302,9 @@ async function loadIndustryList(attempt = 1) {
     console.warn(`[pebble] industries fetch failed (attempt ${attempt}):`, e.message || e);
     // Auto-retry up to 3x with backoff — first request can race the engine boot
     if (attempt < 3) setTimeout(() => loadIndustryList(attempt + 1), attempt * 500);
+    // Show "—" instead of "…" so the user can tell loading failed
+    const label = document.getElementById('industriesCountLabel');
+    if (label && attempt >= 3) label.textContent = 'industries.json · — entries';
   }
 }
 
