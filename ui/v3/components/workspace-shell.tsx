@@ -27,6 +27,7 @@ import {
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseEnter, phaseExit, chipDeck, fadeUp } from "@/lib/motion";
+import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
 import { PlanPhase } from "@/components/phases/plan-phase";
@@ -103,7 +104,13 @@ export function WorkspaceShell() {
     // browser bar reflects the new context. From any other route, we're
     // already inside the workspace shell; just update the phase.
     if (pathname === "/") {
-      router.push("/workspace#phase=idea");
+      // Wrap the router.push in a View Transition so Chrome/Edge/Safari
+      // morph the layout natively instead of cutting between routes.
+      // Firefox + older browsers fall through to a plain router.push and
+      // get the AnimatePresence-based fade.
+      safeStartViewTransition(() => {
+        router.push("/workspace#phase=idea");
+      });
     } else {
       setPhase("idea");
     }
@@ -221,6 +228,7 @@ export function WorkspaceShell() {
         <motion.aside
           aria-hidden={!showLeftRail}
           inert={!showLeftRail}
+          style={{ viewTransitionName: "rail" }}
           animate={{
             width:   showLeftRail ? 240 : 0,
             opacity: showLeftRail ? 1   : 0,

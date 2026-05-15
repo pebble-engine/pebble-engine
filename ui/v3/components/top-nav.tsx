@@ -18,7 +18,10 @@ export function TopNav({
   rightSlot?: React.ReactNode;
 }) {
   return (
-    <header className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur">
+    <header
+      style={{ viewTransitionName: "top-nav" }}
+      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur"
+    >
       <div className="flex items-center gap-6">
         <Link
           href="/"
