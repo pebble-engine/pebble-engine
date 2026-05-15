@@ -3,8 +3,18 @@
  *
  * One module, one set of curves, one source of truth — so future
  * polish becomes "import a constant" instead of "rewrite the curve in
- * 14 places." All variants respect `prefers-reduced-motion` via the
- * `instant` variant override at the end of this file.
+ * 14 places."
+ *
+ * CONTRACT — read before consuming:
+ *   - The exported `Variants` objects (`fadeUp`, `phaseEnter`, etc.) are
+ *     bare framer-motion Variants. They do NOT automatically adapt to the
+ *     OS reduced-motion preference.
+ *   - `prefersReducedMotion()` — call at render time to check the preference.
+ *   - `withReducedMotion(variant)` — wraps any variant so every state
+ *     collapses to an instant transition when the preference is active.
+ *     Consumers must call this themselves, typically inside a `useMemo`:
+ *
+ *       const safeVariant = useMemo(() => withReducedMotion(fadeUp), []);
  *
  * See docs/superpowers/specs/2026-05-15-workspace-motion-polish-design.md
  * for the design rationale.
@@ -87,16 +97,19 @@ export const chipDeck: Variants = {
 };
 
 /** Default hover lift for clickable cards. Pure transform — no layout
- *  shift. */
+ *  shift. Use as `initial='rest' whileHover='hover'`. */
 export const cardHover: Variants = {
   rest:  { y: 0, transition: { duration: SHORT_S, ease: EASE_CINEMATIC } },
   hover: { y: -2, transition: { duration: SHORT_S, ease: EASE_CINEMATIC } },
 };
 
-/** Pebble droplet pulse used on the draft phase. SLOW + infinite. */
+/** Pebble droplet pulse used on the draft phase. SLOW + infinite.
+ *  Use as `animate='rest'`; no hidden/visible states. */
 export const dropletPulse: Variants = {
   rest: {
     scale: [1, 1.06, 1],
     transition: { duration: SLOW_S * 3.4, repeat: Infinity, ease: "easeInOut" },
   },
 };
+
+

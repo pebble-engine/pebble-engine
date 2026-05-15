@@ -2,49 +2,96 @@
 //   node ui/v3/lib/motion.test.mjs
 //
 // We can't import the .ts file without transpilation, so this script
-// inlines the expected shape and asserts the contract by hand against
-// a copy of the exported values. The Python wiring test in tests/
-// test_motion_module_wiring.py pins the structural side from the other
-// direction (file exists, contains expected exports, imported by phase
-// files).
+// reads motion.ts via fs.readFileSync and regex-checks that the canonical
+// values are present in the actual source. A bad edit to motion.ts will
+// surface as a FAIL here rather than silently passing against an inline copy.
 
-// Copy of expected exports — keep in sync with motion.ts.
-const EXPECTED = {
-  durations: { MICRO: 120, SHORT: 200, STANDARD: 480, SLOW: 700 },
-  easings: {
-    EASE_CINEMATIC: [0.22, 1, 0.36, 1],
-    EASE_QUIET:     [0.4, 0, 0.2, 1],
-  },
-  variants: [
-    "fadeUp", "phaseEnter", "phaseExit",
-    "railStep", "chipDeck", "cardHover", "dropletPulse",
-  ],
-};
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const SOURCE = readFileSync(resolve(__dirname, "motion.ts"), "utf-8");
+
+let fail = 0;
 
 function pass(msg) { console.log("PASS  " + msg); }
-function fail(msg) { console.log("FAIL  " + msg); process.exitCode = 1; }
+function failMsg(msg) { console.log("FAIL  " + msg); fail++; }
 
-// Sanity — durations are positive and ordered.
-const d = EXPECTED.durations;
-if (d.MICRO < d.SHORT && d.SHORT < d.STANDARD && d.STANDARD < d.SLOW) {
-  pass("durations are positive and ordered MICRO < SHORT < STANDARD < SLOW");
-} else {
-  fail("durations are not ordered correctly");
-}
-
-// Easings are 4-tuples of numbers in [0, 1.6] (cubic-bezier control points).
-for (const [name, curve] of Object.entries(EXPECTED.easings)) {
-  if (Array.isArray(curve) && curve.length === 4 && curve.every((n) => typeof n === "number")) {
-    pass(`easing ${name} is a 4-tuple of numbers`);
+function assertContains(source, pattern, label) {
+  if (pattern.test(source)) {
+    pass(label);
   } else {
-    fail(`easing ${name} is malformed`);
+    failMsg(label);
   }
 }
 
-// Variants list has the expected names — duplicated from spec.
-const expectedNames = new Set(EXPECTED.variants);
-if (expectedNames.size === EXPECTED.variants.length) {
-  pass(`variant names list (${EXPECTED.variants.length}) is unique`);
+// ---- Duration constants (exact numeric values in source) --------------------
+assertContains(SOURCE, /export const MICRO\s*=\s*120\b/, "MICRO = 120 present in source");
+assertContains(SOURCE, /export const SHORT\s*=\s*200\b/, "SHORT = 200 present in source");
+assertContains(SOURCE, /export const STANDARD\s*=\s*480\b/, "STANDARD = 480 present in source");
+assertContains(SOURCE, /export const SLOW\s*=\s*700\b/, "SLOW = 700 present in source");
+
+// ---- Easing tuples ----------------------------------------------------------
+assertContains(
+  SOURCE,
+  /export const EASE_CINEMATIC[^=]*=\s*\[0\.22,\s*1,\s*0\.36,\s*1\]/,
+  "EASE_CINEMATIC = [0.22, 1, 0.36, 1] present in source"
+);
+assertContains(
+  SOURCE,
+  /export const EASE_QUIET[^=]*=\s*\[0\.4,\s*0,\s*0\.2,\s*1\]/,
+  "EASE_QUIET = [0.4, 0, 0.2, 1] present in source"
+);
+
+// ---- Variant exports --------------------------------------------------------
+const EXPECTED_VARIANTS = [
+  "fadeUp", "phaseEnter", "phaseExit",
+  "railStep", "chipDeck", "cardHover", "dropletPulse",
+];
+
+// Uniqueness check (structural)
+const uniqueNames = new Set(EXPECTED_VARIANTS);
+if (uniqueNames.size === EXPECTED_VARIANTS.length) {
+  pass(`variant names list (${EXPECTED_VARIANTS.length}) is unique`);
 } else {
-  fail("variant names list has duplicates");
+  failMsg("variant names list has duplicates");
 }
+
+// Each variant must appear as an `export const NAME` declaration in source
+for (const name of EXPECTED_VARIANTS) {
+  assertContains(
+    SOURCE,
+    new RegExp(`export const ${name}\\s*:`),
+    `export const ${name} declared in source`
+  );
+}
+
+// ---- Duration ordering (structural, derived from source values) -------------
+// Parse the four values out of source to confirm ordering still holds.
+const durationMatches = {
+  MICRO:    SOURCE.match(/export const MICRO\s*=\s*(\d+)/),
+  SHORT:    SOURCE.match(/export const SHORT\s*=\s*(\d+)/),
+  STANDARD: SOURCE.match(/export const STANDARD\s*=\s*(\d+)/),
+  SLOW:     SOURCE.match(/export const SLOW\s*=\s*(\d+)/),
+};
+const allMatched = Object.values(durationMatches).every(Boolean);
+if (allMatched) {
+  const [micro, short, standard, slow] = [
+    durationMatches.MICRO, durationMatches.SHORT,
+    durationMatches.STANDARD, durationMatches.SLOW,
+  ].map((m) => Number(m[1]));
+  if (micro < short && short < standard && standard < slow) {
+    pass("durations are ordered MICRO < SHORT < STANDARD < SLOW in source");
+  } else {
+    failMsg("durations are not ordered correctly in source");
+  }
+} else {
+  failMsg("could not parse all duration values from source for ordering check");
+}
+
+// ---- Helper functions are exported ------------------------------------------
+assertContains(SOURCE, /export function prefersReducedMotion/, "prefersReducedMotion exported");
+assertContains(SOURCE, /export function withReducedMotion/, "withReducedMotion exported");
+
+process.exit(fail === 0 ? 0 : 1);
