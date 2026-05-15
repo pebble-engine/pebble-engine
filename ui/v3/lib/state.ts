@@ -15,6 +15,7 @@ export type Brief = Record<string, unknown> & {
   _design_dna_id?: string;
   _inspired_by?: string;       // set by /api/inspire: the source URL the user pasted
   _inspire_dna_hint?: string;  // set by /api/inspire: DNA card id we suggest. Consumed once by DnaPreview on /intake.
+  _language?: string;          // BCP 47 code (en, es, fr, ja, ...); set by language picker, else server auto-detects
 };
 
 // Persistent, cross-session profile. Stored in localStorage so it survives
@@ -67,6 +68,12 @@ export type PebblePlan = {
   };
   setup_needs: PebbleSetupItem[];
   next_steps: string[];
+  language?: {
+    code:         string;     // BCP 47 primary (e.g. "es")
+    english_name: string;     // "Spanish"
+    native_name:  string;     // "Español"
+    html_lang:    string;     // value used in <html lang="...">
+  };
   meta: { business_name: string; industry_key: string | null; generated_at: string; engine_version: string };
 };
 

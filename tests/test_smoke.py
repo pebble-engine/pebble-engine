@@ -152,6 +152,57 @@ def test_build_prompt_with_dna_injects_override_block():
     assert dna["display_font"] in prompt
 
 
+def test_build_prompt_omits_language_block_for_english():
+    """English is the dominant case — no language block, no prompt-budget waste."""
+    answers = {"business_name": "Test Co", "business_type": "plumbing", "industry": "plumbing",
+               "output_mode": "full"}
+    prompt = pebble_engine.build_prompt(answers, ds_text="", notes=[], language="en")
+    assert "WRITE EVERY STRING OF COPY" not in prompt
+
+
+def test_build_prompt_injects_language_block_for_non_english():
+    """A non-English target language MUST appear at the top with the canonical
+    BCP 47 lang attribute and the native name."""
+    answers = {"business_name": "Test Co", "business_type": "plumbing", "industry": "plumbing",
+               "output_mode": "full"}
+    prompt = pebble_engine.build_prompt(answers, ds_text="", notes=[], language="es")
+    assert "WRITE EVERY STRING OF COPY" in prompt
+    assert "Español" in prompt
+    assert 'lang="es"' in prompt
+    # The language block lands BEFORE the bulk of the template — it's
+    # override-priority. Find the language section index and confirm it
+    # comes before the Project Overview header from the template.
+    lang_idx = prompt.find("WRITE EVERY STRING")
+    overview_idx = prompt.find("Project Overview")
+    assert lang_idx != -1 and overview_idx != -1
+    assert lang_idx < overview_idx
+
+
+def test_build_prompt_language_block_works_with_dna():
+    """Language and DNA must both prepend — DNA first, then language, then the
+    rendered template."""
+    answers = {"business_name": "Test Co", "business_type": "plumbing", "industry": "plumbing",
+               "output_mode": "full"}
+    dna = style_dna.pick_random_dna(seed=42)
+    prompt = pebble_engine.build_prompt(answers, ds_text="", notes=[], design_dna=dna, language="ja")
+    assert prompt.startswith("# =====")           # DNA block at line 1
+    assert "日本語" in prompt                       # language block
+    # DNA before language; language before main template.
+    dna_idx = prompt.find("DESIGN DNA")
+    lang_idx = prompt.find("WRITE EVERY STRING")
+    overview_idx = prompt.find("Project Overview")
+    assert dna_idx < lang_idx < overview_idx
+
+
+def test_build_prompt_falls_back_to_brief_language_when_arg_omitted():
+    """When ``language=`` isn't passed, build_prompt should read ``_language``
+    off the answers dict — so legacy callers don't need updating."""
+    answers = {"business_name": "Test Co", "business_type": "plumbing", "industry": "plumbing",
+               "output_mode": "full", "_language": "fr"}
+    prompt = pebble_engine.build_prompt(answers, ds_text="", notes=[])
+    assert "Français" in prompt
+
+
 # ---------------------------------------------------------------------------
 # 5. Slug + utility helpers
 # ---------------------------------------------------------------------------

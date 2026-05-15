@@ -272,6 +272,18 @@ def build_pebble_plan(
     Returns:
         A JSON-serializable dict matching ``PLAN_SCHEMA_VERSION`` 1.0.
     """
+    # Resolve the build's target language for the meta block. If the
+    # brief has _language stamped, use it; otherwise detect from the
+    # brief's free text. detect_language always returns a code that's in
+    # the LANGUAGES registry, so language_display() can't fail.
+    try:
+        from pebble.language import detect_language, language_display
+        lang_code = detect_language(answers)
+        lang = language_display(lang_code)
+    except Exception:
+        lang_code = "en"
+        lang = {"english_name": "English", "native_name": "English", "html_lang": "en"}
+
     return {
         "schema_version": PLAN_SCHEMA_VERSION,
         "audience":       _resolve_audience(answers, industry_intel),
@@ -281,6 +293,12 @@ def build_pebble_plan(
         "style":          _resolve_style(design_dna, industry_intel),
         "setup_needs":    _resolve_setup_needs(),
         "next_steps":     _resolve_next_steps(answers),
+        "language": {
+            "code":         lang_code,
+            "english_name": lang["english_name"],
+            "native_name":  lang["native_name"],
+            "html_lang":    lang["html_lang"],
+        },
         "meta": {
             "business_name":  answers.get("business_name", ""),
             "industry_key":   answers.get("_industry_intel_key"),

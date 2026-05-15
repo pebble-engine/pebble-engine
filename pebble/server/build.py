@@ -120,6 +120,16 @@ def run_plan(handler) -> None:
     if design_dna:
         answers["_design_dna"] = design_dna.get("id")
 
+    # Language detection — pinned on the brief so /api/generate sees the
+    # same answer the Plan preview shows. Honors an explicit _language
+    # override; falls back to script/word-based detection.
+    try:
+        from pebble.language import detect_language
+        answers["_language"] = detect_language(answers)
+    except Exception as e:
+        log.warning("language detection failed: %s", e)
+        answers.setdefault("_language", "en")
+
     plan = build_pebble_plan(answers, industry_intel, design_dna)
     handler._json(200, {
         "plan":         plan,
@@ -273,6 +283,18 @@ def run_build(handler, generate: bool) -> None:
             answers["_design_dna"] = design_dna["id"]
             log.info("Design DNA: %s (%s)", design_dna['label'], design_dna['id'])
 
+    # Language — same flow as run_plan. Detected once + persisted so the
+    # generated brief.json carries the canonical code through repairs,
+    # refinements, and visual edits.
+    try:
+        from pebble.language import detect_language
+        answers["_language"] = detect_language(answers)
+        if answers["_language"] != "en":
+            log.info("Build language: %s", answers["_language"])
+    except Exception as e:
+        log.warning("language detection failed: %s", e)
+        answers.setdefault("_language", "en")
+
     notes = audit_design_system(ds_text) if ds_text else []
     prompt = build_prompt(
         answers, ds_text, notes, research_text, images,
@@ -280,6 +302,7 @@ def run_build(handler, generate: bool) -> None:
         hero_video_url=hero_video_url,
         design_reference=design_reference or None,
         design_dna=design_dna,
+        language=answers.get("_language", "en"),
     )
 
     out_dir = OUTPUT_DIR / slug

@@ -29,6 +29,7 @@ import {
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { DnaPreview } from "@/components/dna-preview";
+import { LanguagePicker } from "@/components/language-picker";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
 
 type Step = {
@@ -271,6 +272,13 @@ export default function IntakePage() {
               rows={3}
               className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
+            {/*
+              Site-language picker. Defaults to "auto" — the engine sniffs
+              the language from extra_context / notes / services on the
+              server. The picker is here for the edge case where the user
+              types in one language but wants their site in another.
+            */}
+            <LanguagePicker />
           </div>
         </div>
       </main>

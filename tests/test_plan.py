@@ -57,8 +57,24 @@ def test_schema_version_is_1_0():
 def test_plan_has_all_seven_fields_plus_meta():
     plan = build_pebble_plan(_minimal_brief())
     expected = {"schema_version", "audience", "goal", "pages", "features",
-                "style", "setup_needs", "next_steps", "meta"}
+                "style", "setup_needs", "next_steps", "language", "meta"}
     assert set(plan.keys()) == expected
+
+
+def test_plan_includes_language_block_with_html_lang():
+    """The Plan must expose the target language so the UI can show
+    'Site will be in: Español' before generation."""
+    plan = build_pebble_plan(_minimal_brief())
+    assert plan["language"]["code"] == "en"
+    assert plan["language"]["html_lang"] == "en"
+
+
+def test_plan_picks_up_explicit_language_override():
+    brief = _minimal_brief()
+    brief["_language"] = "es"
+    plan = build_pebble_plan(brief)
+    assert plan["language"]["code"] == "es"
+    assert plan["language"]["native_name"] == "Español"
 
 
 def test_plan_is_json_serializable():

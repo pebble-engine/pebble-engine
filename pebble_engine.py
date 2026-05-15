@@ -1003,6 +1003,7 @@ def build_prompt(
     hero_video_url: Optional[str] = None,
     design_reference: Optional[dict] = None,
     design_dna: Optional[dict] = None,
+    language: Optional[str] = None,
 ) -> str:
     # Map quiz fields -> template variables
     industry = answers.get("industry", answers.get("business_type", ""))
@@ -1287,15 +1288,26 @@ Extract and synthesize across all references:
         anti_slop_block=anti_slop_block,
     )
 
+    # Language block — non-empty only when the build's target language is
+    # non-English. Sits with override priority near the top so the LLM's
+    # boilerplate (aria labels, placeholder strings, meta descriptions)
+    # gets written in the target language instead of drifting to English.
+    try:
+        from pebble.language import language_block as _language_block
+        lang_prefix = _language_block(language or answers.get("_language") or "en")
+    except Exception as e:
+        log.warning("language block render failed: %s", e)
+        lang_prefix = ""
+
     # Prepend the Design DNA block (if any) so it sits at the very top of the
     # prompt with override priority. The LLM reads top-down; an OVERRIDE-framed
     # block at line 1 beats Fraunces/Inter mentions buried 1000 lines deeper.
     if design_dna and build_dna_block:
         try:
-            return build_dna_block(design_dna) + rendered
+            return build_dna_block(design_dna) + lang_prefix + rendered
         except Exception as e:
             log.warning("DNA block render failed: %s", e)
-    return rendered
+    return lang_prefix + rendered
 
 
 # --------------------------------------------------------------------------
