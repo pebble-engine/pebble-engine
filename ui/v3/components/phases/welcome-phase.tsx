@@ -14,6 +14,7 @@ import {
   getLastBuild,
   getBrief,
 } from "@/lib/state";
+import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 
 /**
  * Welcome phase — the "first encounter" screen.
@@ -105,10 +106,10 @@ export function WelcomePhase({ onAdvance }: Props) {
           <AnimatePresence mode="wait">
             <motion.h1
               key={firstName ?? "anon"}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.4 }}
+              variants={fadeUp}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, y: -8, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } }}
               className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-sm"
             >
               {headline}
@@ -124,8 +125,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           <motion.form
             onSubmit={handleNameSubmit}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
+            animate={{ opacity: 1, transition: { delay: 0.5, duration: STANDARD_S, ease: EASE_CINEMATIC } }}
             className="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur rounded-full border border-border"
           >
             <span className="text-sm text-muted-foreground">What should I call you?</span>
@@ -173,8 +173,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         {mounted && resumeName && (
           <motion.button
             initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: SHORT_S, ease: EASE_CINEMATIC } }}
             onClick={handleResume}
             className="pointer-events-auto group flex items-center gap-2 px-5 py-2.5 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-sm font-semibold text-secondary transition-colors"
           >

@@ -26,6 +26,7 @@ import {
 } from "@/lib/state";
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
+import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
 import { PlanPhase } from "@/components/phases/plan-phase";
@@ -209,7 +210,7 @@ export function WorkspaceShell() {
           <motion.aside
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
             className="flex flex-col gap-1 p-4 w-[240px] bg-card border-r border-border"
           >
             <div className="mb-6 px-1">
@@ -224,7 +225,7 @@ export function WorkspaceShell() {
                     key={s.id}
                     initial={{ opacity: 0, x: -8 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.06 * i, duration: 0.3 }}
+                    transition={{ delay: 0.06 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
                     onClick={() => handleJumpPhase(s.id)}
                     className={`flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors text-left ${
                       isActive

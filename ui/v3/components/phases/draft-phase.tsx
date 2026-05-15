@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getBrief } from "@/lib/state";
+import { dropletPulse, STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -192,8 +193,8 @@ export function DraftPhase({ error, done }: Props) {
             blob behind comes from the .pebble-ripple CSS keyframe. */}
         <div className="pebble-ripple relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
           <motion.div
-            animate={{ scale: [1, 1.06, 1] }}
-            transition={{ duration: 2.4, repeat: Infinity, ease: "easeInOut" }}
+            variants={dropletPulse}
+            animate="rest"
             className="text-secondary relative z-10"
             style={{ willChange: "transform" }}
           >
@@ -219,7 +220,7 @@ export function DraftPhase({ error, done }: Props) {
                 key={step.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: state === "pending" ? 0.55 : 1, x: 0 }}
-                transition={{ duration: 0.35 }}
+                transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
                 className="flex gap-3 relative z-10"
               >
                 <motion.div
@@ -232,7 +233,7 @@ export function DraftPhase({ error, done }: Props) {
                           ? "var(--accent-1)"
                           : "var(--surface-1)",
                   }}
-                  transition={{ duration: 0.3 }}
+                  transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
                   className="w-10 h-10 rounded-full flex items-center justify-center border border-border shrink-0"
                 >
                   {state === "done" ? (
@@ -252,7 +253,7 @@ export function DraftPhase({ error, done }: Props) {
                       <motion.span
                         className="w-2 h-2 rounded-full bg-primary"
                         animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: 1.4, repeat: Infinity }}
+                        transition={{ duration: SLOW_S * 2, repeat: Infinity }} // SLOW_S*2 = 1.4s — intentional slow pulse
                       />
                     )}
                   </p>
@@ -306,6 +307,7 @@ export function DraftPhase({ error, done }: Props) {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
             className="mt-6 p-4 bg-destructive/10 border border-destructive/40 rounded-lg text-destructive text-sm max-w-2xl flex items-start gap-3"
           >
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />

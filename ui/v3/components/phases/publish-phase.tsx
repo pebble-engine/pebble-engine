@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { Share2, Eye, Edit3, Droplet, Download, Rocket, Check, Globe, Trash2, Copy } from "lucide-react";
 import {
   publishSite,
@@ -71,7 +72,7 @@ export function PublishPhase({ build, onBack }: Props) {
       <motion.div
         initial={{ scale: 0.4, opacity: 0, rotate: -8 }}
         animate={{ scale: 1, opacity: 1, rotate: 0 }}
-        transition={{ duration: 0.8, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: SLOW_S, ease: EASE_QUIET }}
         className="mb-10 text-primary relative"
       >
         <div className="pebble-ripple absolute -inset-12 flex items-center justify-center" />
@@ -117,14 +118,14 @@ function ReadyPanel({ onPublish, previewUrl }: { onPublish: () => void; previewU
     <>
       <motion.h1
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground"
       >
         Ready to publish?
       </motion.h1>
       <motion.div
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-[var(--shadow-1)] space-y-6"
       >
         <p className="text-muted-foreground">
@@ -159,11 +160,12 @@ function PublishingPanel() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
+      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
       className="bg-card border border-border rounded-2xl p-12 shadow-[var(--shadow-1)] space-y-6"
     >
       <motion.div
         animate={{ rotate: 360 }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }}
+        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }} // linear spinner — no named constant applies
         className="w-12 h-12 mx-auto rounded-full border-4 border-primary border-t-transparent"
       />
       <p className="font-display text-2xl text-foreground">Packaging your site…</p>
@@ -194,14 +196,14 @@ function DonePanel({
     <>
       <motion.h1
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground"
       >
         {isLive ? "Your website is live." : "Your site is packaged."}
       </motion.h1>
       <motion.div
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
-        transition={{ duration: 0.5 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-[var(--shadow-1)] space-y-8"
       >
         <div className="flex flex-col items-center">
@@ -259,6 +261,7 @@ function ErrorPanel({ error, onRetry, onBack }: { error: string; onRetry: () => 
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
       className="bg-card border border-destructive/40 rounded-2xl p-8 space-y-5"
     >
       <p className="font-display text-2xl text-foreground">Publish hit a snag.</p>

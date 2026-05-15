@@ -28,6 +28,7 @@ import {
 import { DnaPreview } from "@/components/dna-preview";
 import { LanguagePicker } from "@/components/language-picker";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
+import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 
 /**
  * Idea phase — the chip-driven clarifying questions that used to live
@@ -175,7 +176,7 @@ export function IdeaPhase({ onAdvance }: Props) {
                       ? "var(--color-river)"
                       : "var(--color-pebble)",
               }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: STANDARD_S, ease: EASE_QUIET }}
             />
           ))}
         </div>
@@ -189,7 +190,7 @@ export function IdeaPhase({ onAdvance }: Props) {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+              transition={{ duration: STANDARD_S, ease: EASE_QUIET }}
               className="space-y-10 text-center"
             >
               <div className="space-y-3">
@@ -219,7 +220,7 @@ export function IdeaPhase({ onAdvance }: Props) {
                       key={chip.id}
                       variants={{
                         hidden: { opacity: 0, y: 16 },
-                        visible: { opacity: 1, y: 0 },
+                        visible: { opacity: 1, y: 0, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } },
                       }}
                       onClick={() => toggleChip(chip.id)}
                       whileTap={{ scale: 0.96 }}
@@ -237,6 +238,7 @@ export function IdeaPhase({ onAdvance }: Props) {
                             initial={{ scale: 0, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
                             exit={{ scale: 0, opacity: 0 }}
+                            transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
                             className="absolute top-2 right-2 w-5 h-5 bg-secondary rounded-full flex items-center justify-center text-xs text-white"
                           >
                             ✓

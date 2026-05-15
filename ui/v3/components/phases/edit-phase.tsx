@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { BlockGallery } from "@/components/block-gallery";
 import { type PebblePlan } from "@/lib/state";
+import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import {
   insertBlock,
   isPebbleSelectMessage,
@@ -326,7 +327,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         <motion.div
           initial={{ opacity: 0, scale: 0.99 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.4 }}
+          transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
           className="flex-1 rounded-2xl border border-border bg-card shadow-[var(--shadow-1)] overflow-hidden flex flex-col"
         >
           <div className="h-10 bg-accent flex items-center px-4 gap-2 border-b border-border">
@@ -386,7 +387,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.15 }}
+          transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
           className="fixed bottom-6 left-[240px] right-[320px] flex flex-col items-center gap-2 pointer-events-none"
         >
           <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto">
@@ -471,6 +472,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
+              transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
               className={`pointer-events-auto rounded-xl border shadow-lg px-4 py-3 max-w-sm ${
                 t.kind === "success"
                   ? "bg-card border-border text-foreground"
@@ -506,7 +508,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
       initial={{ opacity: 0, x: 8 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 8 }}
-      transition={{ duration: 0.4 }}
+      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
       className="flex flex-col gap-3 p-4 w-[320px] bg-card border-l border-border overflow-y-auto"
     >
       <div className="mb-4 px-1">
@@ -521,7 +523,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
             key={s.id}
             initial={{ opacity: 0, x: 8 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.04 * i, duration: 0.3 }}
+            transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
             className="p-3 rounded-lg bg-background border border-border flex flex-col gap-1"
             title={s.notes}
           >
@@ -585,7 +587,7 @@ function VisualEditorPanel({
       initial={{ opacity: 0, x: 16 }}
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 16 }}
-      transition={{ duration: 0.3 }}
+      transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
       className="flex flex-col gap-4 p-5 w-[360px] bg-card border-l border-border overflow-y-auto"
     >
       <div className="flex justify-between items-start">
@@ -695,6 +697,7 @@ function HistoryDrawer({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
         onClick={onClose}
         className="fixed inset-0 bg-charcoal/30 backdrop-blur-sm z-40"
       />
@@ -702,7 +705,7 @@ function HistoryDrawer({
         initial={{ x: "100%" }}
         animate={{ x: 0 }}
         exit={{ x: "100%" }}
-        transition={{ duration: 0.35, ease: [0.4, 0, 0.2, 1] }}
+        transition={{ duration: STANDARD_S, ease: EASE_QUIET }}
         className="fixed top-0 right-0 bottom-0 w-[440px] bg-card border-l border-border z-50 flex flex-col"
       >
         <div className="p-5 border-b border-border flex justify-between items-start">
@@ -731,7 +734,7 @@ function HistoryDrawer({
               key={s.snapshot_id}
               initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.04 * i, duration: 0.25 }}
+              transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
               className="p-4 rounded-xl bg-background border border-border hover:border-primary/50 transition-colors"
             >
               <div className="flex justify-between items-start gap-3">

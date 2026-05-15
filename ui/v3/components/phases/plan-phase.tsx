@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Edit3, Sparkles, Loader2 } from "lucide-react";
 import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan } from "@/lib/state";
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
+import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 
 /**
  * Plan phase — the user-facing "here's what I'll build" review screen.
@@ -37,7 +38,7 @@ function Card({ children, delay = 0, className = "" }: { children: React.ReactNo
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      transition={{ duration: 0.4, delay, ease: [0.4, 0, 0.2, 1] }}
+      transition={{ duration: STANDARD_S, delay, ease: EASE_QUIET }}
       className={`bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[var(--shadow-1)] ${className}`}
     >
       {children}
@@ -100,7 +101,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="text-center space-y-2"
       >
         <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">The Pebble Plan</h1>
@@ -263,6 +264,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
           <motion.div
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
             className="p-4 bg-destructive/10 border border-destructive/40 rounded-lg text-destructive text-sm"
           >
             {error}
