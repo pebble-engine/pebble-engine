@@ -285,6 +285,41 @@ export async function inspireFromUrl(url: string): Promise<InspireResponse> {
   return postJSON("/api/inspire", { url });
 }
 
+// ---------- /api/blocks (DNA-themed drop-in sections) ---------------------
+
+export type BlockCategory = "social-proof" | "conversion" | "explainer" | "monetization" | "growth";
+
+export type BlockListing = {
+  id:          string;
+  label:       string;
+  category:    BlockCategory;
+  description: string;
+  icon:        string;          // lucide-react icon NAME (e.g. "Coins")
+};
+
+export async function listBlocks(): Promise<{ blocks: BlockListing[]; count: number }> {
+  return getJSON("/api/blocks");
+}
+
+export type BlockInsertResponse = {
+  slug:           string;
+  block_id:       string;
+  component_name: string;
+  files_written:  string[];
+  files_modified: string[];
+  snapshot_id:    string | null;
+  position:       string;
+  page_file:      string;
+  billable:       false;          // always free — the whole point of blocks
+  dna_id:         string;
+  dna_label:      string;
+  applied_at:     string;
+};
+
+export async function insertBlock(slug: string, block_id: string): Promise<BlockInsertResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/blocks/insert`, { block_id });
+}
+
 // ---------- /api/usage + DELETE /api/projects/<slug> -----------------------
 
 export type UsageRow = {

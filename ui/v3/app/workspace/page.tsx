@@ -26,8 +26,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { BlockGallery } from "@/components/block-gallery";
 import { getBrief, getLastBuild, getPlan, type PebblePlan } from "@/lib/state";
 import {
+  insertBlock,
   isPebbleSelectMessage,
   type PebbleSelectMessage,
   refine,
@@ -80,6 +82,8 @@ export default function WorkspacePage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [snapshots, setSnapshots] = useState<HistorySnapshot[]>([]);
   const [busyRefinement, setBusyRefinement] = useState<RefinementId | null>(null);
+  const [galleryOpen, setGalleryOpen] = useState(false);
+  const [busyBlockId, setBusyBlockId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const toastIdRef = useRef(0);
 
@@ -232,6 +236,26 @@ export default function WorkspacePage() {
     }
   }
 
+  async function handleInsertBlock(blockId: string) {
+    if (!build?.slug || busyBlockId) return;
+    setBusyBlockId(blockId);
+    try {
+      const result = await insertBlock(build.slug as string, blockId);
+      setIframeBust((n) => n + 1);
+      setGalleryOpen(false);
+      pushToast({
+        kind: "success",
+        message: `Added "${result.component_name}" — themed against ${result.dna_label || "your site"}. Free ✨`,
+        snapshotId: result.snapshot_id || undefined,
+        slug: build.slug as string,
+      });
+    } catch (e) {
+      pushToast({ kind: "error", message: `Add failed: ${e instanceof Error ? e.message : "unknown"}` });
+    } finally {
+      setBusyBlockId(null);
+    }
+  }
+
   async function handleColor(hex: string) {
     if (!selected || !build?.slug) return;
     try {
@@ -264,6 +288,13 @@ export default function WorkspacePage() {
         projectName={projectName}
         rightSlot={
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setGalleryOpen(true)}
+              className="flex items-center gap-1.5 text-sm font-semibold text-foreground bg-card border border-border px-3 h-10 rounded-full hover:bg-accent transition-colors"
+              title="Add a DNA-themed section"
+            >
+              <Plus className="w-4 h-4" /> Add section
+            </button>
             <button
               onClick={openHistory}
               title="Version history"
@@ -411,6 +442,14 @@ export default function WorkspacePage() {
           />
         )}
       </AnimatePresence>
+
+      {/* Block library modal — DNA-themed drop-in sections */}
+      <BlockGallery
+        open={galleryOpen}
+        busyBlockId={busyBlockId}
+        onClose={() => setGalleryOpen(false)}
+        onInsert={handleInsertBlock}
+      />
 
       {/* Toast stack */}
       <div className="fixed top-20 right-6 z-[60] flex flex-col gap-2 pointer-events-none">

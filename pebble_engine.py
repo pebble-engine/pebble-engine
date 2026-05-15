@@ -1501,6 +1501,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/dna/preview":
                 from pebble.server.dna import run_dna_preview
                 run_dna_preview(self)
+            elif self.path == "/api/blocks":
+                from pebble.server.blocks import run_list_blocks
+                run_list_blocks(self)
             elif self.path == "/api/industries":
                 self._handle_list_industries()
             elif self.path == "/api/briefs":
@@ -1609,6 +1612,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
                 slug = self.path[len("/api/projects/"):-len("/domain")]
                 self._handle_set_domain(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/blocks/insert"):
+                slug = self.path[len("/api/projects/"):-len("/blocks/insert")]
+                from pebble.server.blocks import run_insert_block
+                run_insert_block(self, slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
