@@ -1501,6 +1501,11 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/briefs/"):
                 slug = self.path.split("/api/briefs/", 1)[1]
                 self._handle_get_brief(slug)
+            elif self.path == "/api/projects":
+                self._handle_list_projects()
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
+                slug = self.path[len("/api/projects/"):-len("/history")]
+                self._handle_get_history(slug)
             elif self.path.startswith("/preview/"):
                 self._handle_preview()
             elif self.path.startswith("/static/"):
@@ -1525,6 +1530,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_plan()
             elif self.path == "/api/setup":
                 self._handle_setup()
+            elif self.path == "/api/rollback":
+                self._handle_rollback()
+            elif self.path == "/api/refine":
+                self._handle_refine()
+            elif self.path == "/api/visual-edit":
+                self._handle_visual_edit()
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
+                slug = self.path[len("/api/projects/"):-len("/star")]
+                self._handle_toggle_star(slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
@@ -1753,7 +1767,40 @@ class PebbleHandler(BaseHTTPRequestHandler):
         ct = ct_map.get(ext, "text/plain")
         if ct.startswith("text/") or ct in ("application/javascript", "application/json", "image/svg+xml"):
             ct += "; charset=utf-8"
+
+        # Inject the visual-edit bridge into HTML responses ONLY when the
+        # request comes from the engine itself (i.e. the workspace iframe).
+        # The bridge highlights elements on hover and posts a "selected"
+        # message back to the parent window for click-to-edit. Bridge is
+        # safe to ship: it's pure DOM event listeners, no network.
+        if ext in ("html", "htm"):
+            try:
+                from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
+                raw = site_file.read_text(encoding="utf-8")
+                injected = self._inject_bridge(raw, PEBBLE_VISUAL_EDIT_BRIDGE)
+                data = injected.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", ct)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            except Exception:
+                pass  # fall through to plain serve
         self._serve_file(site_file, ct)
+
+    @staticmethod
+    def _inject_bridge(html: str, script_body: str) -> str:
+        """Insert the visual-edit bridge script just before </body>. If
+        </body> is missing, append it at the end."""
+        tag = f'<script id="pebble-bridge">{script_body}</script>'
+        lower = html.lower()
+        idx = lower.rfind("</body>")
+        if idx == -1:
+            return html + tag
+        return html[:idx] + tag + html[idx:]
 
     def _handle_build(self, generate: bool):
         """Build pipeline route. Body lives in :mod:`pebble.server.build` so
@@ -1768,6 +1815,45 @@ class PebbleHandler(BaseHTTPRequestHandler):
         """
         from pebble.server.build import run_plan
         run_plan(self)
+
+    # --------- History / rollback / refine / visual-edit / projects ---------
+
+    def _handle_list_projects(self):
+        """GET /api/projects — list every project in output/ with summary
+        metadata for the dashboard sidebar (Recents + Starred)."""
+        from pebble.server.projects import run_list_projects
+        run_list_projects(self)
+
+    def _handle_get_history(self, slug: str):
+        """GET /api/projects/<slug>/history — list every snapshot for one
+        project, newest first."""
+        from pebble.server.projects import run_get_history
+        run_get_history(self, slug)
+
+    def _handle_rollback(self):
+        """POST /api/rollback — restore a previous snapshot to site/.
+        Body: ``{ slug, snapshot_id }``."""
+        from pebble.server.projects import run_rollback
+        run_rollback(self)
+
+    def _handle_toggle_star(self, slug: str):
+        """POST /api/projects/<slug>/star — toggle starred state."""
+        from pebble.server.projects import run_toggle_star
+        run_toggle_star(self, slug)
+
+    def _handle_refine(self):
+        """POST /api/refine — apply a targeted refinement to an existing
+        build without re-running the full LLM generation. Body lives in
+        :mod:`pebble.server.refine`."""
+        from pebble.server.refine import run_refine
+        run_refine(self)
+
+    def _handle_visual_edit(self):
+        """POST /api/visual-edit — deterministic in-place edit (text,
+        color, font size) from a click on the preview iframe. Body lives
+        in :mod:`pebble.server.visual_edit`."""
+        from pebble.server.visual_edit import run_visual_edit
+        run_visual_edit(self)
 
     def _serve_file(self, path: Path, content_type: str):
         if not path.exists():

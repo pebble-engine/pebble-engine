@@ -26,6 +26,7 @@ from pebble.log import log
 from pebble.industry import resolve_industry_intel, research_industry
 from pebble.llm import get_llm_client, LLMError
 from pebble.plan import build_pebble_plan
+from pebble.history import snapshot_site
 
 
 def _engine():
@@ -393,6 +394,13 @@ def run_build(handler, generate: bool) -> None:
         return
 
     site_dir = out_dir / "site"
+    # Snapshot the previous build BEFORE overwriting — gives the user a
+    # rollback target even on full regenerations. snapshot_site() is a no-op
+    # when site/ doesn't exist or is empty, so first-time builds skip cleanly.
+    try:
+        snapshot_site(slug, reason="generate", source="POST /api/generate (pre-overwrite)")
+    except Exception as e:
+        log.warning("history snapshot failed: %s", e)
     site_dir.mkdir(exist_ok=True)
     written: list[str] = []
     for path, content in files:
