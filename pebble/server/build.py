@@ -27,6 +27,7 @@ from pebble.industry import resolve_industry_intel, research_industry
 from pebble.llm import get_llm_client, LLMError
 from pebble.plan import build_pebble_plan
 from pebble.history import snapshot_site
+from pebble.cost import estimate_cost
 
 
 def _engine():
@@ -412,11 +413,22 @@ def run_build(handler, generate: bool) -> None:
         full.write_text(content, encoding="utf-8")
         written.append(safe)
 
+    # Cost telemetry — honest token + cost estimate so the build leaves
+    # behind an audit trail of how expensive this generation was. The
+    # billable flag is true here (full /api/generate is a paid action);
+    # /api/refine and /api/visual-edit set their own billable flags.
+    cost = estimate_cost(prompt=full_user, response=response, model=client.model)
     (out_dir / "build_meta.json").write_text(json.dumps({
-        "model": client.model,
-        "elapsed_seconds": round(elapsed, 1),
-        "file_count": len(written),
-        "built_at": datetime.now().isoformat(),
+        "model":            client.model,
+        "provider":         getattr(client, "provider", None),
+        "elapsed_seconds":  round(elapsed, 1),
+        "file_count":       len(written),
+        "built_at":         datetime.now().isoformat(),
+        "billable":         True,
+        "tokens_used":      {"input": cost.input_tokens, "output": cost.output_tokens},
+        "estimated_cost_usd": round(cost.estimated_cost_usd, 6),
+        "rate_card_used":   cost.rate_card_used,
+        "retry_count":      0,   # incremented by auto-repair when enabled
     }, indent=2))
 
     # ---- POST-BUILD CHAIN ----

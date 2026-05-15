@@ -15,8 +15,11 @@ python pebble_engine.py
 # Override port if 8000 is taken
 python pebble_engine.py --port 8765
 
-# Test suite — 255 passing as of 2026-05-14
+# Test suite — 310 passing as of 2026-05-14 (incl. 15 e2e HTTP tests)
 python -m pytest -q
+
+# Run only the e2e HTTP integration tests (boots engine in-process)
+python -m pytest tests/test_http_e2e.py -q
 
 # Run a single test file
 python -m pytest tests/test_evals.py -q
@@ -51,11 +54,19 @@ Environment flags that change behavior (see `.env`):
 
 - `pebble.llm` — Gemini + Anthropic clients with vision support
 - `pebble.industry` — 63-industry lookup with LLM fallback for new industries, fuzzy matching, writes new entries back to `industries.json`; also exposes `PAGE_CATALOG` (11 industry-aware page types) + `build_pages_block`
-- `pebble.plan` — pure-function Pebble Plan generator. `build_pebble_plan(brief, industry_intel, dna) → dict`. Emitted as `plan.json` for every build; powers the upcoming `/api/plan` preview endpoint.
+- `pebble.plan` — pure-function Pebble Plan generator. `build_pebble_plan(brief, industry_intel, dna) → dict`. Emitted as `plan.json` for every build; powers the `/api/plan` preview endpoint.
+- `pebble.history` — per-build snapshot store. `snapshot_site(slug, reason, source) → Path`, `list_history(slug) → list[HistoryEntry]`, `restore_snapshot(slug, snapshot_id) → int`. Every `/api/generate`, `/api/refine`, and `/api/visual-edit` snapshots before mutating. Storage: `output/<slug>/history/<YYYYMMDDTHHMMSS-reason>/site/`.
+- `pebble.cost` — token + cost estimation. `estimate_cost(prompt, response, model) → CostEstimate`. Used by `/api/generate` to write `tokens_used`, `estimated_cost_usd`, and `rate_card_used` into `build_meta.json` for every paid build.
 - `pebble.postbuild` — Imagen image generation, npm install, `next dev`, Playwright screenshots
 - `pebble.repair` — critique-and-fix loop wired in via `PEBBLE_AUTO_REPAIR`
-- `pebble.evals` — 32 FOUNDATION checks + repair-corpus harness
-- `pebble.server.build` — the actual `/api/generate` and `/api/plan` request bodies
+- `pebble.evals` — 33 FOUNDATION checks + repair-corpus harness
+- `pebble.server.build` — `/api/generate` and `/api/plan` request bodies. Snapshots site/ before overwriting.
+- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star}` + `/api/rollback`.
+- `pebble.server.refine` — `/api/refine`. Two refinement classes:
+  - **Deterministic** (`billable: false`): `simpler` (regex palette tone-down), `colors` (rotates 5 brand-safe palettes). No LLM call. Milliseconds.
+  - **LLM-backed** (`billable: true`): `friendlier`, `professional`, `booking`. Single focused LLM turn.
+  Every refinement snapshots first.
+- `pebble.server.visual_edit` — `/api/visual-edit` for click-to-edit on the preview iframe. Three deterministic ops: `text`, `color`, `font-size`. **All billable: false** — the whole point is letting users tweak presentation without spending credits. Module also exports `PEBBLE_VISUAL_EDIT_BRIDGE` — a JS payload the preview server injects into every `/preview/<slug>/` HTML response, providing hover-outline + click-select + postMessage of element metadata to the parent workspace.
 
 `/api/generate` runs this sequence for each build:
 
@@ -153,3 +164,28 @@ The current engine is the back-end seed for a much larger app experience describ
 - **Five future modes:** Guided (one Q at a time) · Chat (plain-language edits) · Design (click-to-edit preview) · Setup (domains/hosting/email/payments/SEO) · Learn (jargon explained inline). Today only the Guided questionnaire prototype exists at localhost:8000.
 - **Pebble Plan:** the 7-field user-facing "here's what I'll build" summary now emitted as `plan.json` for every build — see `pebble/plan.py` and the `/api/plan` preview endpoint.
 - **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships.
+
+## HTTP API reference (May 2026)
+
+All routes return JSON unless noted. Errors use `{ "error": "..." }` with appropriate HTTP status.
+
+| Method | Path | Body / Query | Purpose |
+|---|---|---|---|
+| GET | `/api/health` | — | Engine + LLM readiness |
+| GET | `/api/industries` | — | List industries.json entries for the typeahead |
+| GET | `/api/briefs` | — | List saved briefs (legacy) |
+| GET | `/api/briefs/<slug>` | — | Get one brief |
+| GET | `/api/projects` | — | **List every project for the dashboard** — slug, name, type, file_count, starred, built_at |
+| GET | `/api/projects/<slug>/history` | — | **List snapshots, newest-first** — for the workspace history drawer |
+| POST | `/api/plan` | brief JSON | Compute Pebble Plan WITHOUT running LLM (cheap preview) |
+| POST | `/api/build` | brief JSON | Render prompt only; no generation |
+| POST | `/api/generate` | brief JSON | Full build. Snapshots site/ first. Writes `build_meta.json` with `billable:true`, `tokens_used`, `estimated_cost_usd`, `rate_card_used`. |
+| POST | `/api/refine` | `{ slug, refinement_id }` | Apply a refinement to an existing build. `billable: false` for `simpler`/`colors`, `billable: true` for `friendlier`/`professional`/`booking`. Always snapshots first. |
+| POST | `/api/visual-edit` | `{ slug, op, ... }` | Click-to-edit from the preview iframe. Ops: `text` (`original_text` + `new_text`), `color` (`new_color` #RRGGBB + optional `selector_hint`), `font-size` (`delta` ±n). **Always `billable: false`.** |
+| POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. The pre-rollback state is also snapshotted (rollback is undoable). |
+| POST | `/api/projects/<slug>/star` | `{ starred?: bool }` | Toggle (or set) the `.starred` sentinel file. |
+| POST | `/api/setup` | (legacy) | Setup flow |
+| GET | `/preview/<slug>/` | — | Serve generated site files. **HTML responses get the visual-edit bridge auto-injected before `</body>`** so the click-to-edit flow works without the generated site knowing about it. |
+| GET | `/v2/` | — | Static v2 questionnaire UI (deprecated, retained for fallback) |
+
+The v3 Next.js frontend at `ui/v3/` proxies `/api/*` and `/preview/*` to the engine via `next.config.ts` rewrites; in dev, run v3 on port 3001 because port 3000 is Marc's getpebble.net dev server.
