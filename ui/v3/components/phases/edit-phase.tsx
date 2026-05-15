@@ -22,6 +22,8 @@ import {
   Minus,
   Plus,
   Check,
+  Monitor,
+  Smartphone,
   type LucideIcon,
 } from "lucide-react";
 import { BlockGallery } from "@/components/block-gallery";
@@ -97,6 +99,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
   const [galleryOpen, setGalleryOpen] = useState(false);
   const [busyBlockId, setBusyBlockId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
+  const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const toastIdRef = useRef(0);
 
   function pushToast(t: Omit<Toast, "id">) {
@@ -332,15 +335,51 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               <div className="w-3 h-3 rounded-full bg-border opacity-60" />
               <div className="w-3 h-3 rounded-full bg-border opacity-30" />
             </div>
-            <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[60%]">
+            <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
               {slugForUrl}.pebble.site
             </div>
+            {/* Desktop / mobile device toggle. Mobile constrains the iframe
+                wrapper to ~390px so the user can verify the responsive
+                layout without resizing their actual browser window. */}
+            <div className="flex items-center gap-0.5 bg-background border border-border rounded-full p-0.5">
+              <button
+                onClick={() => setDevice("desktop")}
+                aria-label="Desktop preview"
+                aria-pressed={device === "desktop"}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                  device === "desktop"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Monitor className="w-3.5 h-3.5" />
+              </button>
+              <button
+                onClick={() => setDevice("mobile")}
+                aria-label="Mobile preview"
+                aria-pressed={device === "mobile"}
+                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                  device === "mobile"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Smartphone className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
-          <iframe
-            src={previewUrl}
-            className="flex-1 bg-white w-full"
-            title="Site preview"
-          />
+          <div className={`flex-1 bg-background flex justify-center ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
+            <iframe
+              src={previewUrl}
+              className={`bg-white transition-[max-width] duration-300 ease-out ${
+                device === "mobile"
+                  ? "w-full max-w-[390px] rounded-2xl border border-border shadow-[var(--shadow-1)]"
+                  : "w-full max-w-none"
+              }`}
+              style={{ height: "100%" }}
+              title="Site preview"
+            />
+          </div>
         </motion.div>
 
         {/* Refinement chips bar */}

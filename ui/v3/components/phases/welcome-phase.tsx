@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
-import { patchBrief, getUserProfile, setUserProfile } from "@/lib/state";
+import {
+  patchBrief,
+  getUserProfile,
+  setUserProfile,
+  getLastBuild,
+  getBrief,
+} from "@/lib/state";
 
 /**
  * Welcome phase — the "first encounter" screen.
@@ -35,15 +43,31 @@ type Props = {
 };
 
 export function WelcomePhase({ onAdvance }: Props) {
+  const router = useRouter();
   const [prefill, setPrefill] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
+  const [resumeName, setResumeName] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const profile = getUserProfile();
     setFirstName(profile.firstName || null);
+    // Returning user detection: if there's an existing build in
+    // sessionStorage, surface a one-click resume tile so they don't have
+    // to manually navigate to /workspace or /dashboard. Read after mount
+    // to keep the SSR output deterministic (no storage access on server).
+    const build = getLastBuild();
+    if (build?.slug) {
+      const brief = getBrief();
+      const name = (brief.business_name as string) || "your last project";
+      setResumeName(name);
+    }
     setMounted(true);
   }, []);
+
+  const handleResume = () => {
+    router.push("/workspace#phase=design");
+  };
 
   const handleNameSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -141,6 +165,24 @@ export function WelcomePhase({ onAdvance }: Props) {
             </button>
           ))}
         </div>
+
+        {/* Returning user resume — only when there's an existing build in
+            sessionStorage. Sits between the starter chips and the migrate
+            link so it's findable but doesn't compete with the primary
+            "type your idea" CTA for first-visitor attention. */}
+        {mounted && resumeName && (
+          <motion.button
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            onClick={handleResume}
+            className="pointer-events-auto group flex items-center gap-2 px-5 py-2.5 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-sm font-semibold text-secondary transition-colors"
+          >
+            <span>Continue working on</span>
+            <span className="text-foreground">{resumeName}</span>
+            <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
+          </motion.button>
+        )}
 
         {/* Migration entry — alternative to typing a fresh idea. */}
         <Link
