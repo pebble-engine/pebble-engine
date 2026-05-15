@@ -1973,6 +1973,251 @@ def deploy_to_vercel_scaffold(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 33. a11y_static_audit — top axe-core categories without a browser
+# ---------------------------------------------------------------------------
+
+# Catches the categories of axe-core findings that are statically
+# detectable in JSX. Real axe-core needs a headless browser (heavy new
+# dep + 20-60s per page); this check covers the highest-volume rule
+# categories at static-analysis cost. Pebble can claim "every build
+# passes static a11y checks" honestly; for full WCAG 2.1 AA the user
+# still needs to run axe-core in CI against the live site.
+#
+# Rule categories implemented here (each maps to one or more axe rules):
+# - icon_button_missing_label: <button> with only an icon child needs
+#   aria-label or sr-only span (axe: button-name)
+# - icon_link_missing_label:   <Link>/<a> with only an icon child needs
+#   aria-label (axe: link-name)
+# - input_without_label:       <input>/<textarea>/<select> needs an
+#   associated <label> or aria-label (axe: label, label-title-only)
+# - heading_skip:              h1 → h3 with no h2 between violates the
+#   document outline (axe: heading-order)
+#
+# Existing checks already cover other axe rules, so we don't duplicate:
+#   image-alt   → images_have_alt
+#   region      → industry_pages_present (every page has a <main>)
+#   focus-order → interactive_elements_have_focus_visible
+
+# JSX is too irregular for a clean regex (e.g. `onClick={() => x}` has a
+# `>` inside the attribute), so we walk the text with a brace-aware
+# scanner for the open-tag attrs. The child-content between
+# <button>...</button> is checked for the "icon-only" shape (one or
+# more self-closing PascalCase tags + only whitespace).
+
+_HAS_ARIA_LABEL_RE = re.compile(r'\baria-label\s*=\s*["\']', re.IGNORECASE)
+_HAS_TITLE_ATTR_RE = re.compile(r'\btitle\s*=\s*["\']', re.IGNORECASE)
+_INPUT_TAG_RE = re.compile(
+    r'<(?:input|textarea|select)\b([^>]*)/?>',
+    re.IGNORECASE,
+)
+_HAS_ID_ATTR_RE = re.compile(r'\bid\s*=\s*["\']([^"\']+)["\']', re.IGNORECASE)
+_TYPE_HIDDEN_RE = re.compile(r'\btype\s*=\s*["\']hidden["\']', re.IGNORECASE)
+_TYPE_SUBMIT_RE = re.compile(r'\btype\s*=\s*["\'](?:submit|button|reset)["\']', re.IGNORECASE)
+_LABEL_FOR_RE = re.compile(r'<label\b[^>]*\bhtmlFor\s*=\s*["\']([^"\']+)["\']', re.IGNORECASE)
+_HEADING_TAG_RE = re.compile(r"<h([1-6])\b", re.IGNORECASE)
+# An icon-only child is one or more self-closing PascalCase JSX
+# components (e.g. `<X />`, `<Twitter className="..." />`) with only
+# whitespace between them. Plain text or lowercase tags break the match.
+_ICON_ONLY_CHILDREN_RE = re.compile(
+    r"^\s*(?:<[A-Z][A-Za-z0-9]*\b[^>]*/>\s*)+$",
+    re.DOTALL,
+)
+
+
+def _find_close_of_open_tag(text: str, start: int) -> int:
+    """Given an index into a `<tagname...` opening, return the index of
+    the `>` that closes the OPEN tag (not the close tag), respecting
+    JSX `{...}` brace nesting. Returns -1 if unmatched."""
+    depth = 0
+    i = start
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            if depth > 0:
+                depth -= 1
+        elif c == ">" and depth == 0:
+            return i
+        i += 1
+    return -1
+
+
+def _find_matching_close(text: str, after: int, tag: str) -> int:
+    """Locate the closing `</tag>` after index `after`, ignoring nested
+    same-named tags (best-effort — JSX rarely nests `<button>` inside
+    `<button>`, but handle one level just in case)."""
+    open_re  = re.compile(rf"<{re.escape(tag)}\b", re.IGNORECASE)
+    close_re = re.compile(rf"</{re.escape(tag)}\s*>", re.IGNORECASE)
+    depth = 1
+    i = after
+    while i < len(text):
+        m_open = open_re.search(text, i)
+        m_close = close_re.search(text, i)
+        if not m_close:
+            return -1
+        if m_open and m_open.start() < m_close.start():
+            depth += 1
+            i = m_open.end()
+            continue
+        depth -= 1
+        if depth == 0:
+            return m_close.start()
+        i = m_close.end()
+    return -1
+
+
+def _scan_icon_only_violations(text: str, tag: str) -> int:
+    """Count `<tag>` elements whose ONLY children are icon components
+    and whose attrs lack aria-label/title. Brace-aware so JSX
+    expressions in attrs don't break the match."""
+    open_re = re.compile(rf"<{re.escape(tag)}\b", re.IGNORECASE)
+    n = 0
+    pos = 0
+    while True:
+        m = open_re.search(text, pos)
+        if not m:
+            return n
+        attrs_start = m.end()
+        gt = _find_close_of_open_tag(text, attrs_start)
+        if gt == -1:
+            return n
+        attrs = text[attrs_start:gt]
+        # Self-closing tag — no children to check, skip.
+        if attrs.rstrip().endswith("/"):
+            pos = gt + 1
+            continue
+        close_idx = _find_matching_close(text, gt + 1, tag)
+        if close_idx == -1:
+            return n
+        children = text[gt + 1:close_idx]
+        if _ICON_ONLY_CHILDREN_RE.match(children):
+            if not _HAS_ARIA_LABEL_RE.search(attrs) and not _HAS_TITLE_ATTR_RE.search(attrs):
+                n += 1
+        pos = close_idx
+    # unreachable
+
+
+def _icon_button_violations(text: str) -> int:
+    return _scan_icon_only_violations(text, "button")
+
+
+def _icon_link_violations(text: str) -> int:
+    return _scan_icon_only_violations(text, "Link") + _scan_icon_only_violations(text, "a")
+
+
+def _input_label_violations(text: str) -> int:
+    """Count form inputs that lack EITHER aria-label OR an associated
+    <label htmlFor=>. Ignores hidden + submit-style inputs."""
+    label_targets = set(_LABEL_FOR_RE.findall(text))
+    n = 0
+    for m in _INPUT_TAG_RE.finditer(text):
+        attrs = m.group(1) or ""
+        if _TYPE_HIDDEN_RE.search(attrs) or _TYPE_SUBMIT_RE.search(attrs):
+            continue
+        if _HAS_ARIA_LABEL_RE.search(attrs):
+            continue
+        id_match = _HAS_ID_ATTR_RE.search(attrs)
+        if id_match and id_match.group(1) in label_targets:
+            continue
+        n += 1
+    return n
+
+
+def _heading_skip_violations(text: str) -> list[str]:
+    """Return human-readable descriptions of heading-skip violations
+    (e.g. 'h1 → h3 with no h2 between'). Each violation is one entry
+    so the eval message can list them precisely."""
+    levels = [int(m.group(1)) for m in _HEADING_TAG_RE.finditer(text)]
+    out: list[str] = []
+    prev = 0
+    for cur in levels:
+        if prev and cur > prev + 1:
+            out.append(f"h{prev} → h{cur}")
+        prev = cur
+    return out
+
+
+@check_metadata(details_file_key="files")
+def a11y_static_audit(ctx: BuildContext) -> CheckResult:
+    """Static accessibility audit — covers the axe-core rule categories
+    we can detect without launching a browser.
+
+    Rules:
+    - **button-name**: ``<button>`` with only an icon child needs
+      ``aria-label`` (or ``title``) so screen readers can announce it.
+    - **link-name**: ``<Link>`` / ``<a>`` with only an icon child same
+      thing.
+    - **label**: ``<input>`` / ``<textarea>`` / ``<select>`` need either
+      ``aria-label`` or an associated ``<label htmlFor=>``.
+    - **heading-order**: levels skip (``h1`` directly to ``h3``) breaks
+      assistive-tech document outlines.
+
+    Reports the file paths so repair can re-emit them. For full WCAG 2.1
+    AA the user still wants to run actual axe-core in CI — this check
+    is the cheap default-on baseline.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("a11y_static_audit", "skip", "no site directory")
+
+    offenders: dict[str, list[str]] = {}
+    files_to_scan = (
+        list(ctx.site_dir.glob("app/**/*.tsx"))
+        + list(ctx.site_dir.glob("components/**/*.tsx"))
+    )
+
+    for tsx in files_to_scan:
+        try:
+            text = tsx.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+
+        problems: list[str] = []
+
+        ib = _icon_button_violations(text)
+        if ib:
+            problems.append(f"{ib} icon-only button(s) without aria-label/title")
+
+        il = _icon_link_violations(text)
+        if il:
+            problems.append(f"{il} icon-only link(s) without aria-label/title")
+
+        iv = _input_label_violations(text)
+        if iv:
+            problems.append(f"{iv} input(s) without label or aria-label")
+
+        skips = _heading_skip_violations(text)
+        if skips:
+            problems.append(f"heading-order skips: {', '.join(skips)}")
+
+        if problems:
+            rel = tsx.relative_to(ctx.site_dir).as_posix()
+            offenders[rel] = problems
+
+    if not offenders:
+        return CheckResult(
+            "a11y_static_audit", "pass",
+            f"{len(files_to_scan)} file(s) scanned, no static a11y issues",
+        )
+
+    total_files = len(offenders)
+    summary = "; ".join(
+        f"{path} ({', '.join(probs)})"
+        for path, probs in list(offenders.items())[:3]
+    )
+    suffix = f" (+{total_files - 3} more)" if total_files > 3 else ""
+    return CheckResult(
+        "a11y_static_audit", "fail",
+        f"{total_files} file(s) with static a11y issues: {summary}{suffix}",
+        details={
+            "files":      list(offenders.keys()),
+            "violations": offenders,
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -2013,6 +2258,7 @@ ALL_CHECKS = [
     no_duplicate_inline_forms,
     limitations_disclosed_in_readme,
     no_tracking_by_default,
+    a11y_static_audit,
     site_compiles,
 ]
 

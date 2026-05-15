@@ -749,6 +749,195 @@ def test_footer_lists_all_pages_passes_when_only_foundation_pages(good_build):
 
 
 # ---------------------------------------------------------------------------
+# 2c. a11y_static_audit — top axe-core categories statically
+# ---------------------------------------------------------------------------
+
+def _write_tsx(good_build, rel_path: str, content: str) -> Path:
+    p = good_build / "site" / rel_path
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(content, encoding="utf-8")
+    return p
+
+
+def test_a11y_passes_on_good_build(good_build):
+    result = checks.a11y_static_audit(good_build_ctx := BuildContext.load(good_build))
+    assert result.status == "pass", result.message
+
+
+def test_a11y_flags_icon_only_button_without_label(good_build):
+    _write_tsx(good_build, "components/ui/IconBtn.tsx",
+        '"use client";\n'
+        'import { X } from "lucide-react";\n'
+        'export function IconBtn() {\n'
+        '  return <button onClick={() => {}}><X /></button>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    assert result.status == "fail"
+    assert "icon-only button" in result.message
+    assert "components/ui/IconBtn.tsx" in result.details["files"]
+
+
+def test_a11y_passes_icon_button_with_aria_label(good_build):
+    _write_tsx(good_build, "components/ui/IconBtn.tsx",
+        '"use client";\n'
+        'import { X } from "lucide-react";\n'
+        'export function IconBtn() {\n'
+        '  return <button aria-label="Close"><X /></button>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_passes_icon_button_with_title(good_build):
+    """`title` is a softer affordance than aria-label but still readable
+    by every major screen reader. Accept either."""
+    _write_tsx(good_build, "components/ui/IconBtn.tsx",
+        '"use client";\n'
+        'import { X } from "lucide-react";\n'
+        'export function IconBtn() {\n'
+        '  return <button title="Close"><X /></button>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_flags_icon_only_link_without_label(good_build):
+    _write_tsx(good_build, "components/ui/SocialLink.tsx",
+        'import Link from "next/link";\n'
+        'import { Twitter } from "lucide-react";\n'
+        'export function SocialLink() {\n'
+        '  return <Link href="https://x.com/x"><Twitter /></Link>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    assert result.status == "fail"
+    assert "icon-only link" in result.message
+
+
+def test_a11y_passes_link_with_text_inside(good_build):
+    _write_tsx(good_build, "components/ui/SocialLink.tsx",
+        'import Link from "next/link";\n'
+        'import { Twitter } from "lucide-react";\n'
+        'export function SocialLink() {\n'
+        '  return <Link href="https://x.com/x"><Twitter />Follow us</Link>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_flags_input_without_label(good_build):
+    _write_tsx(good_build, "components/forms/Search.tsx",
+        '"use client";\n'
+        'export function Search() {\n'
+        '  return (\n'
+        '    <form>\n'
+        '      <input type="text" placeholder="Search" name="q" />\n'
+        '    </form>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    assert result.status == "fail"
+    assert "input" in result.message.lower()
+
+
+def test_a11y_passes_input_with_associated_label(good_build):
+    _write_tsx(good_build, "components/forms/Search.tsx",
+        '"use client";\n'
+        'export function Search() {\n'
+        '  return (\n'
+        '    <form>\n'
+        '      <label htmlFor="search-q">Search</label>\n'
+        '      <input id="search-q" type="text" name="q" />\n'
+        '    </form>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_passes_input_with_aria_label(good_build):
+    _write_tsx(good_build, "components/forms/Search.tsx",
+        '"use client";\n'
+        'export function Search() {\n'
+        '  return <input type="text" aria-label="Search" name="q" />;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_ignores_hidden_and_submit_inputs(good_build):
+    _write_tsx(good_build, "components/forms/Tokens.tsx",
+        'export function Tokens() {\n'
+        '  return (\n'
+        '    <form>\n'
+        '      <input type="hidden" name="csrf" value="abc" />\n'
+        '      <input type="submit" value="Send" />\n'
+        '      <input type="button" value="Cancel" />\n'
+        '    </form>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_flags_heading_skip_h1_to_h3(good_build):
+    _write_tsx(good_build, "app/about/page.tsx",
+        'export default function P() {\n'
+        '  return <main><h1>Title</h1><h3>Sub</h3></main>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    assert result.status == "fail"
+    assert "heading-order" in result.message or "h1 → h3" in result.message
+
+
+def test_a11y_passes_proper_heading_hierarchy(good_build):
+    _write_tsx(good_build, "app/about/page.tsx",
+        'export default function P() {\n'
+        '  return <main><h1>Title</h1><h2>Sub</h2><h3>Detail</h3></main>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
+def test_a11y_skip_when_no_site(tmp_path):
+    d = tmp_path / "prompt-only"
+    d.mkdir()
+    (d / "brief.json").write_text("{}")
+    ctx = BuildContext.load(d)
+    assert checks.a11y_static_audit(ctx).status == "skip"
+
+
+def test_a11y_violations_payload_carries_file_paths_for_repair(good_build):
+    _write_tsx(good_build, "components/ui/A.tsx",
+        'import { X } from "lucide-react";\n'
+        'export function A(){ return <button><X /></button>; }'
+    )
+    _write_tsx(good_build, "components/ui/B.tsx",
+        'import { Y } from "lucide-react";\n'
+        'export function B(){ return <button><Y /></button>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    assert result.status == "fail"
+    assert "components/ui/A.tsx" in result.details["files"]
+    assert "components/ui/B.tsx" in result.details["files"]
+
+
+# ---------------------------------------------------------------------------
 # 3. Report formatters
 # ---------------------------------------------------------------------------
 
