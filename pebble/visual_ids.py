@@ -43,15 +43,80 @@ TARGET_TAGS = (
 )
 
 
-# JSX/HTML opening tag. Matches the tag name + any attrs up to the closing >.
-# Excludes < and > to avoid running past the tag boundary in malformed JSX,
-# but does not handle > inside attribute values (rare; not worth parsing).
-_TAG_OPEN_RE = re.compile(
-    r"<(?P<tag>" + "|".join(TARGET_TAGS) + r")(?P<attrs>\s[^<>]*?)?(?P<close>/?)>",
+# Finds positions where an opening tag for one of our TARGET_TAGS begins.
+# The lookahead ensures we don't match prefixes (``<buttonless>`` isn't a
+# button). The actual tag-end is found by ``_find_open_tag_end`` below
+# because JSX expression containers ``{...}``, template literals
+# `` `...` ``, and quoted attribute values can legally contain ``>`` and
+# ``<`` characters — a flat regex would close the tag too early at the
+# first ``>`` inside an arrow function or a URL.
+_TAG_NAME_RE = re.compile(
+    r"<(?P<tag>" + "|".join(TARGET_TAGS) + r")(?=[\s/>])",
     re.IGNORECASE,
 )
 
 _HAS_ID_RE = re.compile(r"\sdata-pebble-id\s*=", re.IGNORECASE)
+
+
+def _find_open_tag_end(text: str, start: int) -> Optional[int]:
+    """Scan forward from ``start`` (the position just after the tag name)
+    and return the index of the ``>`` that closes the opening tag.
+    Returns ``None`` if no close is found (e.g. truncated input).
+
+    Tracks three kinds of nesting so that ``>`` characters inside them
+    don't fool us into closing the tag early:
+
+    1. **Quoted strings** ``"..."`` and ``'...'`` — for attribute values
+       like ``href="https://x.com/?q=>foo"``.
+    2. **JSX expression containers** ``{...}`` — for handlers like
+       ``onClick={() => doStuff()}`` and styles like ``style={{x: 1}}``.
+       Brace depth is tracked so nested ``{}`` (e.g. ``style={{}}``)
+       balance correctly.
+    3. **Template literals** `` `...` `` — for ``className={`flex ${cond
+       && 'on'}`}``. Backticks are treated as a quote-like delimiter;
+       ``${...}`` interpolations inside the backtick are skipped along
+       with everything else, because they're balanced within the
+       template's own grammar (they exit when the backtick closes).
+    """
+    i = start
+    n = len(text)
+    brace_depth = 0          # depth inside JSX {...} expressions
+    quote: Optional[str] = None  # current quote char, or None
+    while i < n:
+        ch = text[i]
+        if quote:
+            # Inside a string of some kind. Only the matching close char
+            # exits — and a backslash escape skips the next character.
+            if ch == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+            i += 1
+            continue
+        if brace_depth > 0:
+            # Inside a JSX expression. Track nested braces, and enter
+            # quote / template-literal states as needed.
+            if ch == "{":
+                brace_depth += 1
+            elif ch == "}":
+                brace_depth -= 1
+            elif ch == '"' or ch == "'" or ch == "`":
+                quote = ch
+            i += 1
+            continue
+        # Top-level attrs.
+        if ch == '"' or ch == "'":
+            quote = ch
+        elif ch == "{":
+            brace_depth = 1
+        elif ch == ">":
+            return i
+        elif ch == "<":
+            # Malformed — unexpected new tag start before close.
+            return None
+        i += 1
+    return None
 
 # Snapshot the first ~80 chars of text immediately after the opening tag —
 # kept in the manifest for human/debug use, not used by the edit path.
@@ -82,28 +147,44 @@ def _inject_into_file(file_path: Path, site_dir: Path) -> dict[str, dict]:
     pos = 0
     modified = False
 
-    for m in _TAG_OPEN_RE.finditer(text):
+    for m in _TAG_NAME_RE.finditer(text):
+        # Skip overlapping matches caused by manifest mutations earlier
+        # in the loop (we slice positions from the original ``text``).
+        if m.start() < pos:
+            continue
+
+        tag_close = _find_open_tag_end(text, m.end())
+        if tag_close is None:
+            # Malformed input — leave this region alone.
+            continue
+
         chunks.append(text[pos:m.start()])
         tag = m.group("tag").lower()
-        attrs = m.group("attrs") or ""
-        self_close = m.group("close") == "/"
+        self_close = tag_close > m.end() and text[tag_close - 1] == "/"
+        # ``attrs`` is everything between the tag name and the closing ``>``
+        # (minus the optional self-closing ``/``).
+        attrs_end = tag_close - 1 if self_close else tag_close
+        attrs = text[m.end():attrs_end]
 
         if _HAS_ID_RE.search(attrs):
             # Already tagged — preserve as-is.
-            chunks.append(text[m.start():m.end()])
-            pos = m.end()
+            chunks.append(text[m.start():tag_close + 1])
+            pos = tag_close + 1
             continue
 
         new_id = _new_id()
         while new_id in manifest:
             new_id = _new_id()
 
-        new_attrs = (attrs.rstrip() if attrs else "") + f' data-pebble-id="{new_id}"'
+        # Append `` data-pebble-id="<id>"`` to the existing attrs region.
+        # Strip trailing whitespace from attrs to avoid double-spacing,
+        # then add a single space before the new attribute.
+        new_attrs = attrs.rstrip() + f' data-pebble-id="{new_id}"'
         rebuilt = f"<{m.group('tag')}{new_attrs}{'/' if self_close else ''}>"
         chunks.append(rebuilt)
         modified = True
 
-        snap = _TEXT_AFTER_OPEN_RE.match(text[m.end():])
+        snap = _TEXT_AFTER_OPEN_RE.match(text[tag_close + 1:])
         original_text = (snap.group(1).strip() if snap else "")[:80]
 
         manifest[new_id] = {
@@ -111,7 +192,7 @@ def _inject_into_file(file_path: Path, site_dir: Path) -> dict[str, dict]:
             "tag":           tag,
             "original_text": original_text,
         }
-        pos = m.end()
+        pos = tag_close + 1
 
     if not modified:
         return {}
@@ -149,6 +230,49 @@ def inject_pebble_ids(site_dir: Path) -> dict[str, dict]:
         json.dumps(pruned, indent=2), encoding="utf-8"
     )
     return pruned
+
+
+# Builds before the 2026-05-15 scanner fix can have arrow functions
+# mangled into ``onClick={() = data-pebble-id="pb-xxx"> doStuff()}`` —
+# JSX compile errors. This pattern is unique to the bug (no legitimate
+# JSX has ``= data-pebble-id="..."`` in that position), so the repair
+# is safe to apply unconditionally.
+_MANGLED_ARROW_RE = re.compile(r'=\s+data-pebble-id="(pb-[a-f0-9]+)">')
+
+
+def repair_mangled_files(site_dir: Path) -> int:
+    """Walk ``site_dir`` and undo arrow-function corruption from the old
+    injector. Restores ``=>`` and drops the broken injection (the next
+    ``inject_pebble_ids`` will re-add a proper id at a valid position).
+    Returns the number of files repaired.
+    """
+    if not site_dir.exists() or not site_dir.is_dir():
+        return 0
+    repaired = 0
+    lost_ids: set[str] = set()
+    for f in _iter_files(site_dir):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        matches = list(_MANGLED_ARROW_RE.finditer(text))
+        if not matches:
+            continue
+        lost_ids.update(m.group(1) for m in matches)
+        new_text = _MANGLED_ARROW_RE.sub("=>", text)
+        if new_text != text:
+            f.write_text(new_text, encoding="utf-8")
+            repaired += 1
+    # Drop the now-orphaned manifest entries so the next inject doesn't
+    # see them as "already tagged" (since they aren't, in the source).
+    if lost_ids:
+        manifest = load_manifest(site_dir)
+        for pid in lost_ids:
+            manifest.pop(pid, None)
+        (site_dir / ".pebble-ids.json").write_text(
+            json.dumps(manifest, indent=2), encoding="utf-8"
+        )
+    return repaired
 
 
 def load_manifest(site_dir: Path) -> dict[str, dict]:

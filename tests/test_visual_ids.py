@@ -11,6 +11,7 @@ from pebble.visual_ids import (
     load_manifest,
     find_tag_open,
     find_element_span,
+    repair_mangled_files,
 )
 
 
@@ -129,6 +130,157 @@ def test_inject_preserves_existing_text_in_file(site):
     content = (site / "index.html").read_text(encoding="utf-8")
     assert "<!doctype html>" in content
     assert ">Hello</h1>" in content
+
+
+# ---- JSX expression containers (the > inside =>, {{...}}, etc) ------------
+#
+# Regression for the 2026-05-15 Navbar bug: the old regex matched
+# `\s[^<>]*?` for attrs, which mistakes the `>` inside an arrow function
+# `() =>` for the tag close. The injection then sliced through the arrow,
+# producing `onClick={() = data-pebble-id="pb-..."> doStuff()}` and
+# crashing the next dev compile with "Expected '</', got '='".
+
+
+def test_inject_preserves_arrow_function_in_onclick(site):
+    """The bug: `onClick={() => setOpen(true)}` got mangled to
+    `onClick={() = data-pebble-id="pb-xxx"> setOpen(true)}`."""
+    src = (
+        'export default function X(){\n'
+        '  return <button className="x" onClick={() => setOpen(true)}>Go</button>;\n'
+        '}\n'
+    )
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    # The arrow function must survive untouched.
+    assert "() => setOpen(true)" in out
+    # The data-pebble-id must land OUTSIDE the arrow, before the real tag close.
+    assert 'onClick={() => setOpen(true)}' in out
+    # The tag still gets a pebble-id (just at the right spot).
+    assert "data-pebble-id=" in out
+
+
+def test_inject_preserves_arrow_function_with_param(site):
+    """Variant with a parameter: ``(e) => fn(e)``."""
+    src = '<button onClick={(e) => handle(e)}>X</button>'
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    assert "(e) => handle(e)" in out
+
+
+def test_inject_preserves_nested_braces_in_style_prop(site):
+    """``style={{color: "red"}}`` has nested braces; the scanner must
+    track depth, not bail at the first ``}``."""
+    src = '<p style={{color: "red", fontSize: 14}}>Hi</p>'
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    assert '{{color: "red", fontSize: 14}}' in out
+
+
+def test_inject_handles_gt_inside_quoted_attribute_value(site):
+    """``>`` inside a quoted attr (e.g. URL with a query string) shouldn't
+    close the tag early."""
+    src = '<a href="https://example.com/?q=>foo">link</a>'
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    assert 'href="https://example.com/?q=>foo"' in out
+
+
+def test_inject_handles_template_literal_in_classname(site):
+    """``className={`flex ${cond && 'on'}`}`` uses template literals;
+    backticks must be treated as string delimiters."""
+    src = "<span className={`flex ${active && 'on'}`}>Hi</span>"
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    assert "${active && 'on'}" in out
+
+
+def test_inject_handles_multiline_attrs_with_arrow(site):
+    """The original Navbar case: multi-line attrs, arrow function in
+    onClick, tag close on its own line."""
+    src = (
+        '<button\n'
+        '  className="md:hidden p-2"\n'
+        '  onClick={() => setIsMobileMenuOpen(true)}\n'
+        '  aria-label="Open Menu"\n'
+        '>X</button>\n'
+    )
+    (site / "page.tsx").write_text(src, encoding="utf-8")
+    inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    # Arrow intact
+    assert "onClick={() => setIsMobileMenuOpen(true)}" in out
+    # aria-label still present at the right position
+    assert 'aria-label="Open Menu"' in out
+    # Tag still got a pebble-id
+    assert "data-pebble-id=" in out
+
+
+# ---- repair_mangled_files (recovery for sites built before the fix) -------
+
+def test_repair_restores_arrow_in_corrupted_file(site):
+    """The exact pattern Marc hit in his Navbar.tsx — repair must
+    restore the arrow and the file must then compile."""
+    corrupted = (
+        'export default function Nav(){\n'
+        '  return <button\n'
+        '    className="md:hidden p-2"\n'
+        '    onClick={() = data-pebble-id="pb-613d12"> setIsMobileMenuOpen(true)}\n'
+        '    aria-label="Open Menu"\n'
+        '  >X</button>;\n'
+        '}\n'
+    )
+    (site / "Navbar.tsx").write_text(corrupted, encoding="utf-8")
+    n = repair_mangled_files(site)
+    assert n == 1
+    out = (site / "Navbar.tsx").read_text(encoding="utf-8")
+    assert "onClick={() => setIsMobileMenuOpen(true)}" in out
+    # The broken pebble-id is dropped; the next inject will add a fresh one.
+    assert "pb-613d12" not in out
+
+
+def test_repair_prunes_orphan_manifest_entries(site):
+    """After repair, the orphaned manifest entries are removed so the
+    next inject doesn't think the tag is still tagged."""
+    corrupted = '<button onClick={() = data-pebble-id="pb-aabbcc"> doX()}>X</button>'
+    (site / "page.tsx").write_text(corrupted, encoding="utf-8")
+    # Seed a manifest as if the corrupt inject had run.
+    (site / ".pebble-ids.json").write_text(
+        json.dumps({"pb-aabbcc": {"file": "page.tsx", "tag": "button", "original_text": ""}}),
+        encoding="utf-8",
+    )
+    repair_mangled_files(site)
+    manifest = load_manifest(site)
+    assert "pb-aabbcc" not in manifest
+
+
+def test_repair_is_noop_on_clean_files(site):
+    """No mangled patterns → no rewrites, no orphan pruning."""
+    (site / "page.tsx").write_text(
+        '<button onClick={() => doX()}>X</button>',
+        encoding="utf-8",
+    )
+    assert repair_mangled_files(site) == 0
+
+
+def test_repair_then_reinject_yields_working_pebble_id(site):
+    """End-to-end: corrupt input → repair → inject_pebble_ids = a clean
+    file with a proper data-pebble-id on the button."""
+    corrupted = '<button onClick={() = data-pebble-id="pb-aabbcc"> doX()}>X</button>'
+    (site / "page.tsx").write_text(corrupted, encoding="utf-8")
+    repair_mangled_files(site)
+    manifest = inject_pebble_ids(site)
+    out = (site / "page.tsx").read_text(encoding="utf-8")
+    # Arrow restored, fresh pebble-id at a valid position.
+    assert "onClick={() => doX()}" in out
+    assert "data-pebble-id=" in out
+    # Old id gone, new id present.
+    assert "pb-aabbcc" not in out
+    assert any(pid.startswith("pb-") for pid in manifest)
 
 
 # ---- load_manifest ---------------------------------------------------------
