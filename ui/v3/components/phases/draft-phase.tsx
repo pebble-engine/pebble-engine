@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getBrief } from "@/lib/state";
-import { dropletPulse, STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
+import { dropletPulse, SHORT_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -220,7 +220,7 @@ export function DraftPhase({ error, done }: Props) {
                 key={step.id}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: state === "pending" ? 0.55 : 1, x: 0 }}
-                transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
                 className="flex gap-3 relative z-10"
               >
                 <motion.div

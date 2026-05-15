@@ -108,6 +108,8 @@ export const cardHover: Variants = {
 export const dropletPulse: Variants = {
   rest: {
     scale: [1, 1.06, 1],
+    // SLOW_S * 3.4 ≈ 2.38s, the closest expressible match to the original 2.4s
+    // value before the motion-module refactor. Within the ~50ms tolerance.
     transition: { duration: SLOW_S * 3.4, repeat: Infinity, ease: "easeInOut" },
   },
 };
