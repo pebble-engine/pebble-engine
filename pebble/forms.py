@@ -22,6 +22,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import secrets
 import sys
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
@@ -76,12 +77,16 @@ _SAFE_ID_RE = re.compile(r"[^a-zA-Z0-9-]+")
 
 
 def _new_id() -> str:
-    """Filesystem-safe, sortable id: timestamp + 4-char random."""
-    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S")
-    suffix = hashlib.sha256(ts.encode()).hexdigest()[:4]
-    # Add millisecond entropy in case of bursts at the same second.
-    ms = datetime.now(timezone.utc).strftime("%f")[:3]
-    return f"{ts}-{ms}-{suffix}"
+    """Filesystem-safe, sortable id: microsecond timestamp + 6 hex chars
+    of cryptographic random.
+
+    Earlier version derived the suffix from the second-precision timestamp
+    — bursts in the same millisecond collided and overwrote prior
+    submissions. ``secrets.token_hex`` decouples uniqueness from clock
+    granularity.
+    """
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S%f")  # microsecond
+    return f"{ts}-{secrets.token_hex(3)}"
 
 
 def _hash_ip(ip: Optional[str]) -> Optional[str]:

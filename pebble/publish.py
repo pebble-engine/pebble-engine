@@ -61,7 +61,15 @@ PUBLISH_EXCLUDE_FILES = {
 
 
 class PublishError(Exception):
-    """Raised for any user-visible publish failure (no site, bad config, API error)."""
+    """Raised for any user-visible publish failure (no site, bad config, API error).
+
+    ``status`` is the HTTP code from Cloudflare when the failure was an
+    API response (else None). Lets callers distinguish "404 — needs
+    create" from "401 — auth busted" so we don't paper over real errors.
+    """
+    def __init__(self, message: str, *, status: Optional[int] = None) -> None:
+        super().__init__(message)
+        self.status = status
 
 
 @dataclass
@@ -216,7 +224,8 @@ def _cf_request(
         except Exception:
             err_body = {"raw": raw}
         raise PublishError(
-            f"Cloudflare API {method} {url} failed: HTTP {e.code} — {err_body}"
+            f"Cloudflare API {method} {url} failed: HTTP {e.code} — {err_body}",
+            status=e.code,
         )
     except Exception as e:
         raise PublishError(f"Cloudflare API {method} {url} unreachable: {e}")
@@ -263,15 +272,22 @@ def _enumerate_publish_files(source_dir: Path) -> list[tuple[Path, str]]:
 
 
 def _ensure_cloudflare_project(account_id: str, token: str, project_name: str) -> dict:
-    """Return the project record, creating it if missing."""
+    """Return the project record, creating it if missing.
+
+    Only treats a 404 from the GET as "create"; auth, rate-limit, or
+    network failures bubble up so we don't paper over real errors with
+    a spurious POST.
+    """
     try:
         return _cf_request(
             "GET",
             f"{CF_API_BASE}/accounts/{account_id}/pages/projects/{project_name}",
             token=token,
         )
-    except PublishError:
-        pass
+    except PublishError as e:
+        # Anything other than "not found" is a real error — surface it.
+        if e.status not in (404,):
+            raise
     return _cf_request(
         "POST",
         f"{CF_API_BASE}/accounts/{account_id}/pages/projects",
@@ -324,12 +340,13 @@ def publish_to_cloudflare(
     if not jwt:
         raise PublishError(f"Cloudflare upload-token: {tok_resp}")
 
-    # Hash every file
+    # Hash every file (read once, cache bytes + content-type by hash).
+    # Big sites otherwise paid 2x disk I/O — once to hash, once to upload.
     files = _enumerate_publish_files(source_dir)
     if not files:
         raise PublishError("No files to publish.")
     manifest: dict[str, str] = {}
-    hash_to_file: dict[str, tuple[Path, str]] = {}
+    hash_to_payload: dict[str, tuple[bytes, str]] = {}
     byte_count = 0
     for path, url_path in files:
         data = path.read_bytes()
@@ -338,14 +355,15 @@ def publish_to_cloudflare(
         ct = ct or "application/octet-stream"
         h = _cf_blake3_hash(data, ct)
         manifest[url_path] = h
-        hash_to_file[h] = (path, ct)
+        # First file at a hash wins; later duplicates re-use bytes.
+        hash_to_payload.setdefault(h, (data, ct))
 
     # Check missing
     missing_resp = _cf_request(
         "POST",
         f"{CF_PAGES_API}/assets/check-missing",
         token=jwt,
-        body={"hashes": list(hash_to_file.keys())},
+        body={"hashes": list(hash_to_payload.keys())},
     )
     missing = (missing_resp.get("result") or [])
 
@@ -355,13 +373,13 @@ def publish_to_cloudflare(
         batch = missing[i:i + BATCH]
         payload = []
         for h in batch:
-            entry = hash_to_file.get(h)
+            entry = hash_to_payload.get(h)
             if not entry:
                 continue
-            path, ct = entry
+            data, ct = entry
             payload.append({
                 "key":      h,
-                "value":    base64.b64encode(path.read_bytes()).decode("ascii"),
+                "value":    base64.b64encode(data).decode("ascii"),
                 "metadata": {"contentType": ct},
                 "base64":   True,
             })

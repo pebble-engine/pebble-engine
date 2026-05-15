@@ -30,6 +30,11 @@ from pebble.forms import (
     update_submission,
 )
 from pebble.log import log
+from pebble.security import (
+    client_ip as _client_ip,
+    forms_submit_limiter,
+    require_project_owner,
+)
 
 
 def _engine():
@@ -59,29 +64,24 @@ def _read_body(handler, *, max_bytes: int) -> Optional[dict]:
         handler._json(400, {"error": "invalid json"}); return None
 
 
-def _client_ip(handler) -> Optional[str]:
-    """Best-effort client IP. Honors X-Forwarded-For when present (single
-    hop only; multi-hop chains are not unwrapped — that needs a trust
-    config we don't have yet)."""
-    fwd = handler.headers.get("X-Forwarded-For")
-    if fwd:
-        return fwd.split(",", 1)[0].strip() or None
-    try:
-        return handler.client_address[0]
-    except Exception:
-        return None
-
-
 # --------- POST /api/forms/<slug> (public) -------------------------------
 
 def run_submit(handler, slug: str) -> None:
     """Accept a form submission for ``slug``. Honeypot trips return 200
-    so bots don't learn the trick."""
+    so bots don't learn the trick. Per-IP rate limited (10/min burst,
+    decays back at ~1/6s) to keep one bad caller from filling an inbox.
+    """
     if not _safe_slug(slug):
         handler._json(400, {"error": "invalid slug"}); return
     project_dir = _output_dir() / slug
     if not project_dir.exists():
         handler._json(404, {"error": "project not found"}); return
+
+    ip = _client_ip(handler)
+    if ip and not forms_submit_limiter.allow(f"forms:{ip}"):
+        # 429 instead of 200 so callers see backpressure. Generated sites
+        # can retry; legitimate humans hit the burst limit only under abuse.
+        handler._json(429, {"error": "too many submissions, slow down"}); return
 
     body = _read_body(handler, max_bytes=MAX_PAYLOAD_BYTES)
     if body is None:
@@ -91,7 +91,6 @@ def run_submit(handler, slug: str) -> None:
     if is_honeypot_trip(body):
         handler._json(200, {"ok": True}); return
 
-    ip = _client_ip(handler)
     ua = handler.headers.get("User-Agent")
     ref = handler.headers.get("Referer")
     try:
@@ -112,8 +111,8 @@ def run_submit(handler, slug: str) -> None:
 def run_list_inbox(handler, slug: str) -> None:
     if not _safe_slug(slug):
         handler._json(400, {"error": "invalid slug"}); return
-    if not (_output_dir() / slug).exists():
-        handler._json(404, {"error": "project not found"}); return
+    if require_project_owner(handler, slug) is None:
+        return
     items = list_submissions(slug)
     unread = sum(1 for r in items if not r.get("read"))
     handler._json(200, {
@@ -129,6 +128,8 @@ def run_list_inbox(handler, slug: str) -> None:
 def run_get_inbox_item(handler, slug: str, sub_id: str) -> None:
     if not _safe_slug(slug) or not _safe_slug(sub_id):
         handler._json(400, {"error": "invalid"}); return
+    if require_project_owner(handler, slug) is None:
+        return
     rec = get_submission(slug, sub_id)
     if not rec:
         handler._json(404, {"error": "submission not found"}); return
@@ -141,6 +142,8 @@ def run_mark_read(handler, slug: str, sub_id: str) -> None:
     """Idempotent mark-as-read. Body: `{ read: bool }` (default true)."""
     if not _safe_slug(slug) or not _safe_slug(sub_id):
         handler._json(400, {"error": "invalid"}); return
+    if require_project_owner(handler, slug) is None:
+        return
     body = _read_body(handler, max_bytes=1024) or {}
     requested = body.get("read")
     flag = bool(requested) if isinstance(requested, bool) else True
@@ -155,6 +158,8 @@ def run_mark_read(handler, slug: str, sub_id: str) -> None:
 def run_delete_inbox_item(handler, slug: str, sub_id: str) -> None:
     if not _safe_slug(slug) or not _safe_slug(sub_id):
         handler._json(400, {"error": "invalid"}); return
+    if require_project_owner(handler, slug) is None:
+        return
     if not delete_submission(slug, sub_id):
         handler._json(404, {"error": "submission not found"}); return
     handler._json(200, {"slug": slug, "id": sub_id, "deleted": True})

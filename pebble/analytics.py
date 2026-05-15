@@ -37,6 +37,14 @@ from typing import Optional
 MAX_EVENTS_PER_DAY = 10_000
 MAX_PATH_LEN       = 200
 
+# File-size-based cap, used as a cheap proxy for the event-count cap.
+# Each event is ~150-220 bytes serialized; 320 bytes/event is a safe
+# upper bound that still keeps the daily file under ~3.2 MB at the
+# event cap. O(1) `os.path.getsize` replaces the O(n) line count that
+# was reading the whole file on every record_page_view call.
+_AVG_EVENT_BYTES   = 320
+MAX_DAILY_BYTES    = MAX_EVENTS_PER_DAY * _AVG_EVENT_BYTES
+
 
 def _engine_output_dir() -> Path:
     eng = sys.modules.get("pebble_engine") or sys.modules.get("__main__")
@@ -95,18 +103,18 @@ def record_page_view(
     when: Optional[datetime] = None,
 ) -> bool:
     """Append a page-view event. Returns True if recorded, False if the
-    project's daily cap was already hit."""
+    project's daily cap was already hit.
+
+    Cap check is O(1) ``os.path.getsize`` against ``MAX_DAILY_BYTES`` —
+    the previous O(n) line count was reading the whole file on every
+    write (NotebookLM flagged it as an I/O nightmare under load).
+    """
     file_path = _today_path(slug, when)
-    # Cheap line-count: if it's already at the cap, drop.
-    if file_path.exists():
-        try:
-            with file_path.open("rb") as f:
-                # Quick line count
-                count = sum(1 for _ in f)
-            if count >= MAX_EVENTS_PER_DAY:
-                return False
-        except Exception:
-            pass
+    try:
+        if file_path.exists() and file_path.stat().st_size >= MAX_DAILY_BYTES:
+            return False
+    except Exception:
+        pass
 
     event = {
         "path":          _normalize_path(path),

@@ -57,11 +57,30 @@ def _request(method: str, base: str, path: str, body: dict | None = None, header
         except Exception: return e.code, text
 
 
-def _seed_project(output: Path, slug: str) -> Path:
+def _signup_get_cookie_and_id(base: str, email: str, password: str) -> tuple[str, str]:
+    data = json.dumps({"email": email, "password": password}).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base}/api/auth/signup",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        sc = resp.headers.get("Set-Cookie", "")
+        body = json.loads(resp.read().decode("utf-8"))
+    cookie = sc.split(";", 1)[0].strip() if sc else ""
+    return cookie, body["user"]["id"]
+
+
+def _seed_project(output: Path, slug: str, owner_id: str | None = None) -> Path:
+    """Seed a project. When owner_id is provided, stamp it into brief.json
+    so /api/projects/<slug>/inbox and /analytics owner checks pass."""
     project = output / slug
     project.mkdir()
     (project / "site").mkdir()
     (project / "site" / "page.tsx").write_text("x")
+    if owner_id:
+        (project / "brief.json").write_text(json.dumps({"_user_id": owner_id}))
     return project
 
 
@@ -169,43 +188,70 @@ def test_submit_honeypot_swallowed_silently(engine_server):
 
 def test_list_inbox_returns_submissions(engine_server):
     out = engine_server["output"]
-    _seed_project(out, "good-co")
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
     _request("POST", engine_server["base"], "/api/forms/good-co", {"name": "A"})
     _request("POST", engine_server["base"], "/api/forms/good-co", {"name": "B"})
-    status, body = _request("GET", engine_server["base"], "/api/projects/good-co/inbox")
+    status, body = _request("GET", engine_server["base"], "/api/projects/good-co/inbox", headers={"Cookie": cookie})
     assert status == 200
     assert body["count"] == 2
     assert body["unread"] == 2
 
 
+def test_list_inbox_401_when_signed_out(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
+    status, body = _request("GET", engine_server["base"], "/api/projects/good-co/inbox")
+    assert status == 401
+
+
+def test_list_inbox_403_when_signed_in_as_other_user(engine_server):
+    """Owner-check regression: other users must NOT read someone's inbox."""
+    out = engine_server["output"]
+    _, owner_id = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    other_cookie, _ = _signup_get_cookie_and_id(engine_server["base"], "snoop@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=owner_id)
+    status, body = _request("GET", engine_server["base"],
+                            "/api/projects/good-co/inbox",
+                            headers={"Cookie": other_cookie})
+    assert status == 403
+
+
 def test_get_inbox_item_round_trip(engine_server):
     out = engine_server["output"]
-    _seed_project(out, "good-co")
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
     _, sub = _request("POST", engine_server["base"], "/api/forms/good-co", {"name": "Alice"})
     sub_id = sub["id"]
-    status, body = _request("GET", engine_server["base"], f"/api/projects/good-co/inbox/{sub_id}")
+    status, body = _request("GET", engine_server["base"], f"/api/projects/good-co/inbox/{sub_id}",
+                            headers={"Cookie": cookie})
     assert status == 200
     assert body["fields"]["name"] == "Alice"
 
 
 def test_mark_read_then_list_shows_zero_unread(engine_server):
     out = engine_server["output"]
-    _seed_project(out, "good-co")
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
     _, sub = _request("POST", engine_server["base"], "/api/forms/good-co", {"name": "Alice"})
-    status, body = _request("POST", engine_server["base"], f"/api/projects/good-co/inbox/{sub['id']}/read", {})
+    status, body = _request("POST", engine_server["base"], f"/api/projects/good-co/inbox/{sub['id']}/read", {},
+                            headers={"Cookie": cookie})
     assert status == 200
     assert body["read"] is True
-    _, listing = _request("GET", engine_server["base"], "/api/projects/good-co/inbox")
+    _, listing = _request("GET", engine_server["base"], "/api/projects/good-co/inbox", headers={"Cookie": cookie})
     assert listing["unread"] == 0
 
 
 def test_delete_inbox_item(engine_server):
     out = engine_server["output"]
-    _seed_project(out, "good-co")
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
     _, sub = _request("POST", engine_server["base"], "/api/forms/good-co", {"name": "Alice"})
-    status, _ = _request("DELETE", engine_server["base"], f"/api/projects/good-co/inbox/{sub['id']}")
+    status, _ = _request("DELETE", engine_server["base"], f"/api/projects/good-co/inbox/{sub['id']}",
+                         headers={"Cookie": cookie})
     assert status == 200
-    _, listing = _request("GET", engine_server["base"], "/api/projects/good-co/inbox")
+    _, listing = _request("GET", engine_server["base"], "/api/projects/good-co/inbox", headers={"Cookie": cookie})
     assert listing["count"] == 0
 
 
@@ -215,3 +261,17 @@ def test_submit_rejects_oversized_payload(engine_server):
     big = {"x": "a" * (32 * 1024)}
     status, body = _request("POST", engine_server["base"], "/api/forms/good-co", big)
     assert status == 413
+
+
+def test_submit_rate_limited_after_burst(engine_server, monkeypatch):
+    """Per-IP burst limiter kicks in after ~10 rapid submissions."""
+    # The shared limiter is module-state; reset for test isolation.
+    from pebble.security import forms_submit_limiter
+    forms_submit_limiter._buckets.clear()
+    _seed_project(engine_server["output"], "good-co")
+    statuses = []
+    for i in range(15):
+        s, _ = _request("POST", engine_server["base"], "/api/forms/good-co", {"i": str(i)})
+        statuses.append(s)
+    # Some early ones succeed, eventually we see 429
+    assert 429 in statuses

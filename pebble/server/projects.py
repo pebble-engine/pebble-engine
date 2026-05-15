@@ -183,14 +183,22 @@ def run_activity_feed(handler) -> None:
 
     Each row: ``{slug, business_name, snapshot_id, reason, source,
     written_at, files_count}``. Newest first, capped at 30 entries.
+
+    Auth: signed-in only. Returns 401 when no session is present —
+    the dashboard widget only loads for logged-in users, and we don't
+    want to leak global activity to anonymous callers.
     """
-    # Resolve current user once.
+    # Resolve current user. Signed-out callers get 401 — fall-through
+    # to "all projects" was a leak NotebookLM caught in review.
     current_uid: Optional[str] = None
     try:
         from pebble.server.auth import current_user_id
         current_uid = current_user_id(handler)
     except Exception:
         current_uid = None
+    if not current_uid:
+        handler._json(401, {"error": "sign in required"})
+        return
 
     out = _output_dir()
     if not out.exists():
@@ -213,11 +221,11 @@ def run_activity_feed(handler) -> None:
             except Exception:
                 brief = {}
 
-        # User-scope filter
-        if current_uid:
-            owner = brief.get("_user_id")
-            if owner and owner != current_uid:
-                continue
+        # User-scope filter — owner must match; unclaimed projects are
+        # visible to any signed-in user (consistent with list_projects).
+        owner = brief.get("_user_id")
+        if owner and owner != current_uid:
+            continue
 
         business_name = brief.get("business_name", project_dir.name)
 

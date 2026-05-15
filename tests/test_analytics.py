@@ -58,11 +58,28 @@ def _request(method: str, base: str, path: str, body: dict | None = None, header
         except Exception: return e.code, text
 
 
-def _seed_project(output: Path, slug: str) -> Path:
+def _signup_get_cookie_and_id(base: str, email: str, password: str) -> tuple[str, str]:
+    data = json.dumps({"email": email, "password": password}).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base}/api/auth/signup",
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        sc = resp.headers.get("Set-Cookie", "")
+        body = json.loads(resp.read().decode("utf-8"))
+    cookie = sc.split(";", 1)[0].strip() if sc else ""
+    return cookie, body["user"]["id"]
+
+
+def _seed_project(output: Path, slug: str, owner_id: str | None = None) -> Path:
     project = output / slug
     project.mkdir()
     (project / "site").mkdir()
     (project / "site" / "page.tsx").write_text("x")
+    if owner_id:
+        (project / "brief.json").write_text(json.dumps({"_user_id": owner_id}))
     return project
 
 
@@ -129,16 +146,36 @@ def test_summarize_aggregates(tmp_path, monkeypatch):
 
 def test_track_records_and_summary_returns(engine_server):
     out = engine_server["output"]
-    _seed_project(out, "good-co")
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
     status, body = _request("POST", engine_server["base"], "/api/track/good-co",
                             {"path": "/about", "referrer": "https://x.com/post"})
     assert status == 200
     assert body["recorded"] is True
 
-    status, summary = _request("GET", engine_server["base"], "/api/projects/good-co/analytics")
+    status, summary = _request("GET", engine_server["base"],
+                               "/api/projects/good-co/analytics",
+                               headers={"Cookie": cookie})
     assert status == 200
     assert summary["total_views"] >= 1
     assert summary["top_paths"][0]["path"] == "/about"
+
+
+def test_summary_401_when_signed_out(engine_server):
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    _seed_project(engine_server["output"], "good-co", owner_id=uid)
+    status, body = _request("GET", engine_server["base"], "/api/projects/good-co/analytics")
+    assert status == 401
+
+
+def test_summary_403_when_signed_in_as_other_user(engine_server):
+    _, owner_id = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    other_cookie, _ = _signup_get_cookie_and_id(engine_server["base"], "snoop@example.com", "valid-password")
+    _seed_project(engine_server["output"], "good-co", owner_id=owner_id)
+    status, body = _request("GET", engine_server["base"],
+                            "/api/projects/good-co/analytics",
+                            headers={"Cookie": other_cookie})
+    assert status == 403
 
 
 def test_track_ok_even_for_unknown_project(engine_server):
@@ -149,7 +186,10 @@ def test_track_ok_even_for_unknown_project(engine_server):
 
 
 def test_summary_404_for_unknown_project(engine_server):
-    status, body = _request("GET", engine_server["base"], "/api/projects/ghost/analytics")
+    cookie, _ = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
+    status, body = _request("GET", engine_server["base"],
+                            "/api/projects/ghost/analytics",
+                            headers={"Cookie": cookie})
     assert status == 404
 
 

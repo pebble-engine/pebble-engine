@@ -11,6 +11,11 @@ from pathlib import Path
 from typing import Optional
 
 from pebble.analytics import record_page_view, summarize
+from pebble.security import (
+    client_ip as _client_ip,
+    require_project_owner,
+    track_view_limiter,
+)
 
 
 def _engine():
@@ -40,38 +45,34 @@ def _read_body(handler, max_bytes: int = 2048) -> Optional[dict]:
         handler._json(400, {"error": "invalid json"}); return None
 
 
-def _client_ip(handler) -> Optional[str]:
-    fwd = handler.headers.get("X-Forwarded-For")
-    if fwd:
-        return fwd.split(",", 1)[0].strip() or None
-    try:
-        return handler.client_address[0]
-    except Exception:
-        return None
-
-
 def run_track(handler, slug: str) -> None:
     """Record a page view. Body: ``{ path?: "/about", referrer?: "..." }``.
-    Always returns 200 (even on cap-hit) so analytics never breaks the
-    user's site if Pebble is down or rate-limiting."""
+    Always returns 200 (even on cap-hit or rate-limit) so analytics
+    never breaks the user's site if Pebble is down or rate-limiting.
+    """
     if not _safe_slug(slug):
         handler._json(200, {"ok": True, "recorded": False}); return
     if not (_output_dir() / slug).exists():
+        handler._json(200, {"ok": True, "recorded": False}); return
+
+    ip = _client_ip(handler)
+    if ip and not track_view_limiter.allow(f"track:{ip}:{slug}"):
+        # Rate-limited — still a 200 so the page load stays clean.
         handler._json(200, {"ok": True, "recorded": False}); return
 
     body = _read_body(handler) or {}
     path = body.get("path") or "/"
     referrer = body.get("referrer") or handler.headers.get("Referer")
     ua = handler.headers.get("User-Agent")
-    ip = _client_ip(handler)
     ok = record_page_view(slug, path=path, ip=ip, user_agent=ua, referrer=referrer)
     handler._json(200, {"ok": True, "recorded": bool(ok)})
 
 
 def run_get_summary(handler, slug: str) -> None:
-    """Owner-facing analytics summary for the last 7 days."""
+    """Owner-facing analytics summary for the last 7 days. Requires the
+    caller to own the project."""
     if not _safe_slug(slug):
         handler._json(400, {"error": "invalid slug"}); return
-    if not (_output_dir() / slug).exists():
-        handler._json(404, {"error": "project not found"}); return
+    if require_project_owner(handler, slug) is None:
+        return
     handler._json(200, summarize(slug, days=7))

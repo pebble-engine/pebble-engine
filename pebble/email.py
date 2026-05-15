@@ -21,6 +21,7 @@ import sys
 import urllib.error
 import urllib.request
 import uuid
+from concurrent.futures import Future, ThreadPoolExecutor
 from dataclasses import dataclass, field
 from email.message import EmailMessage as _StdLibEmailMessage
 from pathlib import Path
@@ -292,6 +293,32 @@ def send(message: EmailMessage, sender: Optional[EmailSender] = None) -> dict:
         return {"ok": False, "provider": getattr(s, "name", "?"), "id": "", "error": f"{type(e).__name__}: {e}"}
 
 
+# Shared thread pool for fire-and-forget sends. Two workers is plenty —
+# this isn't a high-volume mail server, just decouples HTTP response
+# timing from network round-trips. NotebookLM flagged constant-time HTTP
+# responses as the right defense against timing-attack account
+# enumeration on /api/auth/forgot.
+_EMAIL_POOL: Optional[ThreadPoolExecutor] = None
+
+
+def _email_pool() -> ThreadPoolExecutor:
+    global _EMAIL_POOL
+    if _EMAIL_POOL is None:
+        _EMAIL_POOL = ThreadPoolExecutor(max_workers=2, thread_name_prefix="pebble-mail")
+    return _EMAIL_POOL
+
+
+def send_async(message: EmailMessage, sender: Optional[EmailSender] = None) -> "Future[dict]":
+    """Queue ``message`` for delivery on a background worker. The HTTP
+    handler returns immediately regardless of how long the actual send
+    takes — closes the timing-attack window on /api/auth/forgot.
+
+    Tests can await the future to make synchronous assertions on what
+    landed in the outbox.
+    """
+    return _email_pool().submit(send, message, sender)
+
+
 # --------- Pebble-specific templates --------------------------------------
 
 def _base_url() -> str:
@@ -364,8 +391,16 @@ def send_welcome(email: str, sender: Optional[EmailSender] = None) -> dict:
     return send(render_welcome(email), sender=sender)
 
 
+def send_welcome_async(email: str, sender: Optional[EmailSender] = None) -> "Future[dict]":
+    return send_async(render_welcome(email), sender=sender)
+
+
 def send_password_reset(email: str, reset_url: str, sender: Optional[EmailSender] = None) -> dict:
     return send(render_password_reset(email, reset_url), sender=sender)
+
+
+def send_password_reset_async(email: str, reset_url: str, sender: Optional[EmailSender] = None) -> "Future[dict]":
+    return send_async(render_password_reset(email, reset_url), sender=sender)
 
 
 __all__ = [
@@ -378,8 +413,11 @@ __all__ = [
     "SendgridSender",
     "get_sender",
     "send",
+    "send_async",
     "send_welcome",
+    "send_welcome_async",
     "send_password_reset",
+    "send_password_reset_async",
     "render_welcome",
     "render_password_reset",
 ]

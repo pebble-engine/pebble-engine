@@ -34,8 +34,14 @@ from pebble.auth import (
     revoke_session,
     update_user_password,
 )
-from pebble.email import send_password_reset, send_welcome
+from pebble.email import (
+    send_password_reset,
+    send_password_reset_async,
+    send_welcome,
+    send_welcome_async,
+)
 from pebble.log import log
+from pebble.security import forgot_email_limiter
 
 
 def _read_body(handler) -> Optional[dict]:
@@ -90,11 +96,12 @@ def run_signup(handler) -> None:
         handler._json(500, {"error": "signup failed"})
         return
     sess = create_session(user.id)
-    # Fire-and-forget welcome email. Never block signup on mail send.
+    # Fire-and-forget welcome email on a background worker so the 201
+    # response doesn't wait on the mail provider.
     try:
-        send_welcome(user.email)
+        send_welcome_async(user.email)
     except Exception as e:
-        log.warning("welcome email failed for %s: %s", user.email, e)
+        log.warning("welcome email enqueue failed for %s: %s", user.email, e)
     handler._json(
         201,
         {"user": user.to_public()},
@@ -167,6 +174,9 @@ def run_forgot(handler) -> None:
     account-enumeration attacks. The body has ``{ok: true, sent: bool}``
     so test code can see what actually happened while production users
     just see a generic "if your email is on file, we sent a link" UX.
+
+    Per-email rate-limited (3 burst, refills at 1 per 5 minutes) so an
+    attacker can't email-bomb a target by hammering /forgot.
     """
     body = _read_body(handler)
     if body is None:
@@ -174,15 +184,23 @@ def run_forgot(handler) -> None:
     email = (body.get("email") or "").strip()
     sent = False
     if email:
-        user = find_user_by_email(email)
-        if user:
-            token = create_password_reset_token(user.id)
-            reset_url = _reset_url_for(token.token)
-            try:
-                send_password_reset(user.email, reset_url)
-                sent = True
-            except Exception as e:
-                log.warning("password reset email failed for %s: %s", user.email, e)
+        # Rate-limit by the *normalized* email so case-tricks don't
+        # bypass it. Still respond 200 to avoid leaking whether the
+        # rate limit even fired (account enumeration defense).
+        if forgot_email_limiter.allow(f"forgot:{email.lower()}"):
+            user = find_user_by_email(email)
+            if user:
+                token = create_password_reset_token(user.id)
+                reset_url = _reset_url_for(token.token)
+                # Async send — the HTTP response time is now independent of
+                # whether we found a user, closing the timing-attack window
+                # NotebookLM flagged. Failures land in the engine log; the
+                # rate limit prevents probing them.
+                try:
+                    send_password_reset_async(user.email, reset_url)
+                    sent = True
+                except Exception as e:
+                    log.warning("password reset email enqueue failed for %s: %s", user.email, e)
     handler._json(200, {"ok": True, "sent": sent})
 
 

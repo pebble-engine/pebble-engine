@@ -386,27 +386,65 @@ def _extract_cookie(set_cookie_header: str | None) -> str:
     return set_cookie_header.split(";", 1)[0].strip()
 
 
-def test_activity_feed_empty_when_no_history(engine_server):
-    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"})
+def _signin(base: str, email: str, password: str) -> str:
+    """Sign up and return the session cookie."""
+    _, _, sc = _post_with_cookie(base, "/api/auth/signup", {"email": email, "password": password})
+    return _extract_cookie(sc)
+
+
+def _get_with_cookie(base: str, path: str, cookie: str | None = None) -> tuple[int, dict | str]:
+    headers = {"Cookie": cookie} if cookie else {}
+    req = urllib.request.Request(f"{base}{path}", headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            body = resp.read().decode("utf-8", errors="replace")
+            try: return resp.status, json.loads(body)
+            except Exception: return resp.status, body
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        try: return e.code, json.loads(body)
+        except Exception: return e.code, body
+
+
+def test_activity_feed_401_when_signed_out(engine_server):
     status, body = _get(engine_server["base"], "/api/activity")
+    assert status == 401
+
+
+def test_activity_feed_empty_when_no_history(engine_server):
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"})
+    status, body = _get_with_cookie(engine_server["base"], "/api/activity", cookie=cookie)
     assert status == 200
     assert body["count"] == 0
 
 
 def test_activity_feed_lists_snapshots_newest_first(engine_server):
     out = engine_server["output"]
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
     _seed_project(out, "good-co", {"app/page.tsx": "ORIGINAL"},
                   brief={"business_name": "Good Co"})
     history_mod.snapshot_site("good-co", reason="generate", source="POST /api/generate")
     time.sleep(1.05)
     history_mod.snapshot_site("good-co", reason="refine-friendlier", source="POST /api/refine")
-    status, body = _get(engine_server["base"], "/api/activity")
+    status, body = _get_with_cookie(engine_server["base"], "/api/activity", cookie=cookie)
     assert status == 200
     assert body["count"] == 2
     # Newest first
     assert body["activity"][0]["reason"] == "refine-friendlier"
     assert body["activity"][1]["reason"] == "generate"
     assert body["activity"][0]["business_name"] == "Good Co"
+
+
+def _wait_for_email(outbox: Path, predicate, *, timeout: float = 3.0) -> list:
+    """Poll outbox until at least one .eml matches predicate, or timeout."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        files = [f for f in outbox.glob("*.eml") if predicate(f)]
+        if files:
+            return files
+        time.sleep(0.05)
+    return []
 
 
 def test_signup_writes_welcome_email_to_outbox(engine_server):
@@ -416,11 +454,10 @@ def test_signup_writes_welcome_email_to_outbox(engine_server):
         "email": "alice@example.com", "password": "valid-password",
     })
     assert status == 201
-    # FileSender wrote an .eml under output/.email_outbox/
+    # Welcome email is sent async — wait for the .eml to land.
     outbox = out / ".email_outbox"
-    assert outbox.exists()
-    files = list(outbox.glob("*.eml"))
-    assert len(files) == 1
+    files = _wait_for_email(outbox, lambda f: "alice" in f.name)
+    assert files, "welcome email never arrived in outbox"
     contents = files[0].read_text(encoding="utf-8", errors="replace")
     assert "alice@example.com" in contents
     assert "Welcome" in contents
@@ -441,10 +478,12 @@ def test_forgot_reset_round_trip(engine_server):
     assert body["sent"] is True
 
     # 3) The reset URL was written to the outbox; pull the token out.
-    # Parse the .eml with the modern email policy so we get the decoded
-    # body instead of quoted-printable-wrapped raw bytes.
+    # Reset email is sent async — wait for it to land, then parse with
+    # the modern email policy so quoted-printable soft-line-breaks don't
+    # corrupt the token.
     import email.policy as _email_policy
     outbox = out / ".email_outbox"
+    _wait_for_email(outbox, lambda f: "reset" in f.read_text(encoding="utf-8", errors="ignore").lower())
     reset_emails: list = []
     for f in outbox.glob("*.eml"):
         msg = _email.message_from_bytes(f.read_bytes(), policy=_email_policy.default)

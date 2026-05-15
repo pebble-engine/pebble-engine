@@ -76,6 +76,40 @@ def _sessions_dir() -> Path:
     return d
 
 
+def _sessions_index_path() -> Path:
+    """Reverse-lookup: user_id → [token, ...]. Lets us revoke every
+    session for a user without iterating every file in the sessions
+    directory (O(active sessions) was hitting the whole server)."""
+    return _sessions_dir() / "_by_user.json"
+
+
+def _sessions_index_lock_path() -> Path:
+    return _sessions_dir() / "_by_user.lock"
+
+
+def _load_sessions_index() -> dict[str, list[str]]:
+    p = _sessions_index_path()
+    if not p.exists():
+        return {}
+    try:
+        data = json.loads(p.read_text(encoding="utf-8"))
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_sessions_index(index: dict[str, list[str]]) -> None:
+    p = _sessions_index_path()
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(index, indent=2), encoding="utf-8")
+    try:
+        os.replace(tmp, p)
+    except Exception:
+        # Best-effort — the index is a perf optimization, not the truth.
+        try: tmp.unlink()
+        except Exception: pass
+
+
 def _password_reset_dir() -> Path:
     d = _engine_output_dir() / ".password_resets"
     d.mkdir(parents=True, exist_ok=True)
@@ -274,6 +308,14 @@ def create_session(user_id: str) -> Session:
     (_sessions_dir() / f"{sess.token}.json").write_text(
         json.dumps(asdict(sess), indent=2), encoding="utf-8"
     )
+    # Maintain the reverse index so revoke_all_sessions_for can do its
+    # work in O(sessions for this user) instead of O(every session file).
+    index = _load_sessions_index()
+    tokens = index.get(user_id, [])
+    if sess.token not in tokens:
+        tokens.append(sess.token)
+        index[user_id] = tokens
+        _save_sessions_index(index)
     return sess
 
 
@@ -301,32 +343,94 @@ def get_session(token: str) -> Optional[Session]:
 def revoke_session(token: str) -> bool:
     """Delete a session. Returns True if it existed."""
     path = _sessions_dir() / f"{token}.json"
+    # Capture user_id (if any) so we can keep the reverse index honest.
+    user_id: Optional[str] = None
     if path.exists():
         try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            user_id = data.get("user_id")
+        except Exception:
+            pass
+        try:
             path.unlink()
-            return True
         except Exception:
             return False
+        if user_id:
+            _drop_token_from_index(user_id, token)
+        return True
     return False
+
+
+def _drop_token_from_index(user_id: str, token: str) -> None:
+    """Remove ``token`` from the reverse index for ``user_id``."""
+    index = _load_sessions_index()
+    tokens = index.get(user_id)
+    if not tokens:
+        return
+    try:
+        tokens.remove(token)
+    except ValueError:
+        return
+    if tokens:
+        index[user_id] = tokens
+    else:
+        index.pop(user_id, None)
+    _save_sessions_index(index)
 
 
 def revoke_all_sessions_for(user_id: str) -> int:
     """Revoke every session belonging to a user. Returns count revoked.
-    Used after a password reset so all logged-in devices are signed out."""
+
+    Reads the reverse index (output/.sessions/_by_user.json) instead of
+    walking the whole sessions directory — O(sessions for this user)
+    not O(every active session). NotebookLM flagged the original walk
+    as a server-wide DoS vector at scale.
+
+    If the index doesn't exist yet (legacy sessions written before this
+    landed) we fall back to the walk so we still revoke correctly. The
+    walk path also rebuilds the index for next time.
+    """
     if not user_id:
         return 0
+    index = _load_sessions_index()
+    tokens = list(index.get(user_id, []))
+    if tokens:
+        count = 0
+        for token in tokens:
+            path = _sessions_dir() / f"{token}.json"
+            try:
+                path.unlink()
+                count += 1
+            except FileNotFoundError:
+                pass
+            except Exception:
+                pass
+        index.pop(user_id, None)
+        _save_sessions_index(index)
+        return count
+
+    # Fallback: walk the directory. Slow but correct for legacy state.
     count = 0
+    rebuilt: dict[str, list[str]] = {}
     for path in _sessions_dir().glob("*.json"):
+        if path.name.startswith("_"):
+            continue
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
         except Exception:
             continue
-        if data.get("user_id") == user_id:
+        owner = data.get("user_id")
+        token = data.get("token") or path.stem
+        if owner == user_id:
             try:
                 path.unlink()
                 count += 1
             except Exception:
                 pass
+        elif owner:
+            rebuilt.setdefault(owner, []).append(token)
+    if rebuilt or count:
+        _save_sessions_index(rebuilt)
     return count
 
 
@@ -383,14 +487,38 @@ def get_password_reset_token(token: str) -> Optional[PasswordResetToken]:
 
 def consume_password_reset_token(token: str) -> Optional[PasswordResetToken]:
     """Look up the token and delete it. Returns the record on hit, None
-    on miss/expired. Use this exactly once per reset to prevent replays."""
-    rec = get_password_reset_token(token)
-    if not rec:
+    on miss/expired/already-consumed.
+
+    Race-safe via atomic rename: we move the token file to a unique
+    consumed-name *before* reading it. ``os.replace`` is atomic on
+    POSIX and Windows, so only one of N concurrent /api/auth/reset
+    callers wins the rename — the others get FileNotFoundError and
+    return None. NotebookLM flagged the prior read-then-unlink as
+    a TOCTOU window allowing double-reset.
+    """
+    if not token or not isinstance(token, str):
+        return None
+    src = _password_reset_dir() / f"{token}.json"
+    # Per-call destination so concurrent callers don't collide.
+    dst = _password_reset_dir() / f".consumed-{secrets.token_hex(8)}-{token}.json"
+    try:
+        os.replace(src, dst)
+    except FileNotFoundError:
+        return None
+    except Exception:
         return None
     try:
-        (_password_reset_dir() / f"{rec.token}.json").unlink()
+        rec = PasswordResetToken(**json.loads(dst.read_text(encoding="utf-8")))
     except Exception:
-        pass
+        # File was moved but unreadable; treat as miss and clean up.
+        try: dst.unlink()
+        except Exception: pass
+        return None
+    # Clean up the consumed copy regardless of expiry.
+    try: dst.unlink()
+    except Exception: pass
+    if rec.is_expired:
+        return None
     return rec
 
 
