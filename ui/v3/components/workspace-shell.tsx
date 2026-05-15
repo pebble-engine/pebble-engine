@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Lightbulb,
   Map,
@@ -26,7 +26,7 @@ import {
 } from "@/lib/state";
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
-import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { STANDARD_S, EASE_CINEMATIC, phaseEnter, phaseExit } from "@/lib/motion";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
 import { PlanPhase } from "@/components/phases/plan-phase";
@@ -202,75 +202,79 @@ export function WorkspaceShell() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* TopNav persists across all phase changes. */}
       <TopNav projectName={projectName} rightSlot={topNavRightSlot} />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Left rail — Build Plan */}
-        {showLeftRail && (
-          <motion.aside
-            initial={{ opacity: 0, x: -8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-            className="flex flex-col gap-1 p-4 w-[240px] bg-card border-r border-border"
+        {/* Rail is persistent — visible state animates instead of mounting/unmounting.
+            On welcome the rail's width and opacity collapse to 0 so it visually
+            disappears but stays in the DOM, preserving its layoutId children for
+            cross-phase morphs. */}
+        <motion.aside
+          animate={{
+            width:   showLeftRail ? 240 : 0,
+            opacity: showLeftRail ? 1   : 0,
+          }}
+          transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+          className="flex flex-col gap-1 p-4 bg-card border-r border-border overflow-hidden shrink-0"
+        >
+          <div className="mb-6 px-1">
+            <h2 className="font-display text-xl font-semibold text-primary leading-tight">Your Build Plan</h2>
+            <p className="text-xs text-muted-foreground opacity-70">AI-Guided Strategy</p>
+          </div>
+          <nav className="flex flex-col gap-1">
+            {BUILD_PLAN.map((s) => {
+              const isActive = s.id === railStage;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => handleJumpPhase(s.id)}
+                  className={`relative flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors text-left ${
+                    isActive ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  }`}
+                >
+                  {isActive && (
+                    <motion.div
+                      layoutId="rail-active"
+                      className="absolute inset-0 bg-primary/15 rounded-lg -z-10"
+                      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                    />
+                  )}
+                  <s.Icon className="w-5 h-5 shrink-0" />
+                  <span>{s.label}</span>
+                </button>
+              );
+            })}
+          </nav>
+        </motion.aside>
+
+        {/* Center column — only this swaps between phases. AnimatePresence with
+            mode="wait" ensures the outgoing phase finishes its exit before the
+            incoming one mounts. */}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={phase}
+            variants={phaseEnter}
+            initial="hidden"
+            animate="visible"
+            exit={phaseExit.exit}
+            className="flex-1 flex flex-col overflow-hidden"
           >
-            <div className="mb-6 px-1">
-              <h2 className="font-display text-xl font-semibold text-primary leading-tight">Your Build Plan</h2>
-              <p className="text-xs text-muted-foreground opacity-70">AI-Guided Strategy</p>
-            </div>
-            <nav className="flex flex-col gap-1">
-              {BUILD_PLAN.map((s, i) => {
-                const isActive = s.id === railStage;
-                return (
-                  <motion.button
-                    key={s.id}
-                    initial={{ opacity: 0, x: -8 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.06 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
-                    onClick={() => handleJumpPhase(s.id)}
-                    className={`flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors text-left ${
-                      isActive
-                        ? "bg-primary/15 text-primary"
-                        : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                    }`}
-                  >
-                    <s.Icon className="w-5 h-5 shrink-0" />
-                    <span>{s.label}</span>
-                  </motion.button>
-                );
-              })}
-            </nav>
-          </motion.aside>
-        )}
-
-        {/* Center + (sometimes) right — phase-specific */}
-        {phase === "welcome" && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <WelcomePhase onAdvance={handleAdvanceFromWelcome} />
-          </div>
-        )}
-
-        {phase === "design" && (
-          <EditPhase
-            ref={editPhaseRef}
-            build={build}
-            plan={plan}
-            onPublish={() => setPhase("publish")}
-          />
-        )}
-
-        {phase === "publish" && (
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <PublishPhase build={build} onBack={() => setPhase("design")} />
-          </div>
-        )}
-
-        {(phase === "idea" || phase === "plan" || phase === "draft") && (
-          <div className="flex-1 flex flex-col overflow-y-auto">
-            {phase === "idea"  && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
-            {phase === "plan"  && <PlanPhase  onBack={handleBackToIdea} onGenerate={handleGenerate} />}
-            {phase === "draft" && <DraftPhase done={generateDone} error={generateError} />}
-          </div>
-        )}
+            {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
+            {phase === "design"  && (
+              <EditPhase
+                ref={editPhaseRef}
+                build={build}
+                plan={plan}
+                onPublish={() => setPhase("publish")}
+              />
+            )}
+            {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
+            {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
+            {phase === "plan"    && <PlanPhase  onBack={handleBackToIdea} onGenerate={handleGenerate} />}
+            {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
