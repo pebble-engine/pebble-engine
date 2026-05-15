@@ -13,6 +13,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import pytest
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MOTION_TS = REPO_ROOT / "ui" / "v3" / "lib" / "motion.ts"
 
@@ -53,3 +55,23 @@ def test_motion_exports_reduced_motion_helper():
     src = MOTION_TS.read_text(encoding="utf-8")
     assert "export function prefersReducedMotion" in src
     assert "export function withReducedMotion" in src
+
+
+PHASE_FILES = [
+    REPO_ROOT / "ui" / "v3" / "components" / "workspace-shell.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "welcome-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "idea-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "plan-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "draft-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "edit-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "publish-phase.tsx",
+]
+
+
+@pytest.mark.parametrize("phase_file", PHASE_FILES, ids=lambda p: p.name)
+def test_phase_file_imports_from_motion_module(phase_file):
+    src = phase_file.read_text(encoding="utf-8")
+    assert re.search(
+        r"from\s+['\"]@/lib/motion['\"]",
+        src,
+    ), f"{phase_file.name} should import from @/lib/motion"
