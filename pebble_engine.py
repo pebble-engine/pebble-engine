@@ -1505,16 +1505,85 @@ class PebbleHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    # ---- CORS helpers ----
+    def _allowed_origins(self) -> list[str]:
+        """Parse ``PEBBLE_ALLOWED_ORIGINS`` (comma-separated list).
+        Empty/unset = "no allowlist configured", and the engine falls
+        back to ``*`` for backwards-compat with dev flows that hit it
+        from arbitrary localhost ports."""
+        raw = os.environ.get("PEBBLE_ALLOWED_ORIGINS", "") or ""
+        return [s.strip() for s in raw.split(",") if s.strip()]
+
+    def _cors_decision(self) -> tuple[Optional[str], bool]:
+        """Resolve the right ``Access-Control-Allow-Origin`` value for
+        the incoming request, and whether ``Allow-Credentials: true`` is
+        spec-valid to emit alongside it.
+
+        - Allowlist set + request Origin matches: echo that origin and
+          allow credentials. (Caches need ``Vary: Origin`` too.)
+        - Allowlist set + Origin doesn't match: return ``(None, False)``
+          so the caller emits no CORS headers — the browser blocks the
+          response, which is exactly what we want for off-list origins.
+        - Allowlist unset (default): wildcard, no credentials. Drops the
+          ``* + Allow-Credentials`` footgun the 2026-05-16 NLM pass
+          flagged: today it's silently ignored by browsers, but if
+          anyone refactors ``*`` into origin reflection the credentialed
+          CORS would light up for every origin.
+        """
+        allow = self._allowed_origins()
+        try:
+            request_origin = self.headers.get("Origin")
+        except Exception:
+            request_origin = None
+        if allow:
+            if request_origin and request_origin in allow:
+                return request_origin, True
+            return None, False
+        return "*", False
+
+    def _write_cors_headers(self) -> None:
+        """Emit Access-Control-* headers consistent with ``_cors_decision``.
+        Safe to call from any handler that has already called
+        ``send_response`` but not yet ``end_headers``."""
+        origin, allow_credentials = self._cors_decision()
+        if origin is None:
+            return
+        self.send_header("Access-Control-Allow-Origin", origin)
+        if origin != "*":
+            self.send_header("Vary", "Origin")
+        if allow_credentials:
+            self.send_header("Access-Control-Allow-Credentials", "true")
+
     # ---- OPTIONS (CORS preflight) ----
     def do_OPTIONS(self):
-        # The browser fires a preflight OPTIONS request before any cross-
-        # origin POST with Content-Type: application/json. Without this
-        # handler the engine 501s the preflight and the browser blocks
-        # the real request — which is exactly what broke /api/generate
-        # when the v3 client started calling the engine directly via CORS
-        # instead of through the Next.js dev proxy.
+        """Browser preflight handler.
+
+        ``/api/internal/*`` paths are intentionally excluded — they're
+        server-to-server (e.g. the Supabase webhook) and have no reason
+        to participate in browser CORS. Refusing to bless those flows
+        is defense-in-depth atop the existing bearer-secret gate.
+        """
+        if self.path.startswith("/api/internal/"):
+            # 405 makes the rejection visible to operators in access
+            # logs; the browser will refuse the subsequent POST.
+            self.send_response(405)
+            self.send_header("Allow", "POST")
+            self.end_headers()
+            return
+
+        origin, allow_credentials = self._cors_decision()
+        if origin is None:
+            # Allowlist configured + Origin not on it → no CORS approval.
+            self.send_response(204)
+            self.end_headers()
+            return
+
         self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Origin", origin)
+        if origin != "*":
+            self.send_header("Vary", "Origin")
+        if allow_credentials:
+            self.send_header("Access-Control-Allow-Credentials", "true")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Access-Control-Max-Age", "86400")
@@ -1593,17 +1662,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self.send_response(404); self.end_headers()
                 self.wfile.write(b"Not found")
         except Exception as exc:
-            # Log the traceback before the 500 response so post-mortem
-            # debugging has something to work with. The client only sees
-            # the str(exc) summary; the engine log gets the full stack.
-            try:
-                log.exception("handler raised on %s %s", self.command, self.path)
-            except Exception:
-                pass
-            try:
-                self._json(500, {"error": f"Server error: {exc}"})
-            except Exception:
-                pass
+            self._handle_500(exc)
 
     # ---- POST ----
     def do_POST(self):
@@ -1668,17 +1727,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
-            # Log the traceback before the 500 response so post-mortem
-            # debugging has something to work with. The client only sees
-            # the str(exc) summary; the engine log gets the full stack.
-            try:
-                log.exception("handler raised on %s %s", self.command, self.path)
-            except Exception:
-                pass
-            try:
-                self._json(500, {"error": f"Server error: {exc}"})
-            except Exception:
-                pass
+            self._handle_500(exc)
 
     # ---- DELETE ----
     def do_DELETE(self):
@@ -1701,17 +1750,25 @@ class PebbleHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
-            # Log the traceback before the 500 response so post-mortem
-            # debugging has something to work with. The client only sees
-            # the str(exc) summary; the engine log gets the full stack.
-            try:
-                log.exception("handler raised on %s %s", self.command, self.path)
-            except Exception:
-                pass
-            try:
-                self._json(500, {"error": f"Server error: {exc}"})
-            except Exception:
-                pass
+            self._handle_500(exc)
+
+    def _handle_500(self, exc: BaseException) -> None:
+        """Common 500 path. Logs the full traceback under a short
+        correlation id and returns a generic JSON body so the client
+        never receives ``str(exc)`` (which can embed paths, env keys,
+        or library traceback fragments). Operators grep engine.log for
+        ``error_id=...`` to find the original failure."""
+        import secrets
+        error_id = secrets.token_hex(4)  # 8 hex chars
+        try:
+            log.exception("handler raised on %s %s (error_id=%s): %r",
+                          self.command, self.path, error_id, exc)
+        except Exception:
+            pass
+        try:
+            self._json(500, {"error": "Internal server error", "error_id": error_id})
+        except Exception:
+            pass
 
     def _handle_health(self):
         client, reason = get_llm_client()
@@ -2156,9 +2213,11 @@ class PebbleHandler(BaseHTTPRequestHandler):
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
-        self.send_header("Access-Control-Allow-Origin", "*")
+        # Resolve CORS based on PEBBLE_ALLOWED_ORIGINS — wildcard mode
+        # drops the spec-invalid `* + Allow-Credentials: true` combo
+        # the 2026-05-16 NLM pass flagged.
+        self._write_cors_headers()
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.send_header("Access-Control-Allow-Credentials", "true")
         for name, value in (extra_headers or []):
             self.send_header(name, value)
         self.end_headers()
