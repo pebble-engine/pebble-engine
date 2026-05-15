@@ -1511,6 +1511,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
                 slug = self.path[len("/api/projects/"):-len("/history")]
                 self._handle_get_history(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/publish"):
+                slug = self.path[len("/api/projects/"):-len("/publish")]
+                self._handle_get_publish_state(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
+                slug = self.path[len("/api/projects/"):-len("/domain")]
+                self._handle_get_domain(slug)
+            elif self.path.startswith("/dist/"):
+                self._handle_serve_dist()
             elif self.path.startswith("/preview/"):
                 self._handle_preview()
             elif self.path.startswith("/static/"):
@@ -1543,6 +1551,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_visual_edit()
             elif self.path == "/api/migrate":
                 self._handle_migrate()
+            elif self.path == "/api/publish":
+                self._handle_publish()
             elif self.path == "/api/auth/signup":
                 from pebble.server.auth import run_signup
                 run_signup(self)
@@ -1555,6 +1565,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
                 slug = self.path[len("/api/projects/"):-len("/star")]
                 self._handle_toggle_star(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
+                slug = self.path[len("/api/projects/"):-len("/domain")]
+                self._handle_set_domain(slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
@@ -1566,9 +1579,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
     # ---- DELETE ----
     def do_DELETE(self):
         """The HTTP DELETE verb. Only one route uses it today —
-        DELETE /api/projects/<slug> for hard project deletion."""
+        DELETE /api/projects/<slug>          → hard delete project
+        DELETE /api/projects/<slug>/domain   → detach custom domain"""
         try:
-            if self.path.startswith("/api/projects/"):
+            if self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
+                slug = self.path[len("/api/projects/"):-len("/domain")]
+                self._handle_delete_domain(slug)
+            elif self.path.startswith("/api/projects/"):
                 slug = self.path[len("/api/projects/"):]
                 # Reject paths with subroutes (e.g. /history, /star) — those
                 # belong to the GET/POST handlers, not DELETE.
@@ -1908,6 +1925,43 @@ class PebbleHandler(BaseHTTPRequestHandler):
         in :mod:`pebble.server.migrate`."""
         from pebble.server.migrate import run_migrate
         run_migrate(self)
+
+    def _handle_publish(self):
+        """POST /api/publish — package a project for hosting (Cloudflare
+        Pages live deploy if configured, else downloadable ZIP)."""
+        from pebble.server.publish import run_publish
+        run_publish(self)
+
+    def _handle_get_publish_state(self, slug: str):
+        """GET /api/projects/<slug>/publish — last publish + history."""
+        from pebble.server.publish import run_get_publish_state
+        run_get_publish_state(self, slug)
+
+    def _handle_serve_dist(self):
+        """GET /dist/<slug>/dist.zip — download the most recent zip."""
+        # Path shape: /dist/<slug>/dist.zip
+        parts = self.path.split("/")
+        # ["", "dist", "<slug>", "dist.zip"]
+        if len(parts) < 4 or parts[1] != "dist" or parts[3] != "dist.zip":
+            self.send_response(404); self.end_headers(); return
+        slug = parts[2]
+        from pebble.server.publish import run_serve_dist
+        run_serve_dist(self, slug)
+
+    def _handle_get_domain(self, slug: str):
+        """GET /api/projects/<slug>/domain — current domain + status."""
+        from pebble.server.domain import run_get_domain
+        run_get_domain(self, slug)
+
+    def _handle_set_domain(self, slug: str):
+        """POST /api/projects/<slug>/domain — attach a custom domain."""
+        from pebble.server.domain import run_set_domain
+        run_set_domain(self, slug)
+
+    def _handle_delete_domain(self, slug: str):
+        """DELETE /api/projects/<slug>/domain — detach the custom domain."""
+        from pebble.server.domain import run_delete_domain
+        run_delete_domain(self, slug)
 
     def _serve_file(self, path: Path, content_type: str):
         if not path.exists():

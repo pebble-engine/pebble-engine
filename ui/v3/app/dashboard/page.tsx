@@ -13,6 +13,8 @@ import {
   ExternalLink,
   Trash2,
   Coins,
+  Globe,
+  Download,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import {
@@ -329,6 +331,44 @@ function ProjectCard({
           <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
             {p.business_type.replace(/_/g, " ")}
           </p>
+        )}
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        {p.publish && (
+          <a
+            href={p.publish.url}
+            target={p.publish.kind === "cloudflare" ? "_blank" : undefined}
+            rel="noopener"
+            download={p.publish.kind === "zip"}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-earth/10 text-earth border border-earth/30 hover:bg-earth/20 transition-colors"
+            title={p.publish.kind === "cloudflare" ? "Live on Cloudflare" : "Download published ZIP"}
+          >
+            {p.publish.kind === "cloudflare" ? <Globe className="w-3 h-3" /> : <Download className="w-3 h-3" />}
+            <span className="font-semibold">
+              {p.publish.kind === "cloudflare" ? "Live" : "Published (ZIP)"}
+            </span>
+          </a>
+        )}
+        {p.domain && (
+          <span
+            onClick={(e) => e.stopPropagation()}
+            className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${
+              p.domain.status === "active"
+                ? "bg-spark/10 text-spark border-spark/30"
+                : p.domain.status === "error"
+                  ? "bg-destructive/10 text-destructive border-destructive/30"
+                  : "bg-muted text-muted-foreground border-border"
+            }`}
+            title={p.domain.host}
+          >
+            <Globe className="w-3 h-3" />
+            <span className="font-semibold truncate max-w-[14ch]">{p.domain.host}</span>
+            <span className="text-[10px] opacity-70 uppercase">
+              {p.domain.status === "active" ? "live" : p.domain.status === "error" ? "error" : "DNS pending"}
+            </span>
+          </span>
         )}
       </div>
 

@@ -68,6 +68,12 @@ export type ProjectSummary = {
   starred: boolean;
   preview_url: string;
   design_dna: string | null;
+  publish?: {
+    kind:        "zip" | "cloudflare";
+    url:         string;
+    deployed_at: string;
+  } | null;
+  domain?: Partial<DomainRecord> & { host: string; status: "pending" | "active" | "error" } | null;
 };
 
 export async function listProjects(): Promise<{ projects: ProjectSummary[]; count: number }> {
@@ -247,6 +253,78 @@ export type UsageSummary = {
 
 export async function fetchUsage(): Promise<UsageSummary> {
   return getJSON("/api/usage");
+}
+
+// ---------- /api/publish (new) ---------------------------------------------
+
+export type PublishKind = "zip" | "cloudflare";
+export type PublishDest = "auto" | "zip" | "cloudflare";
+
+export type PublishResponse = {
+  slug:                 string;
+  kind:                 PublishKind;
+  url:                  string;             // download URL or live URL
+  deployed_at:          string;
+  bytes_published:      number;
+  files_published:      number;
+  snapshot_id?:         string | null;
+  deployment_id?:       string | null;
+  project_name?:        string | null;
+  note?:                string | null;
+  cloudflare_setup_md?: string | null;
+  elapsed_seconds?:     number;
+};
+
+export async function publishSite(slug: string, dest: PublishDest = "auto"): Promise<PublishResponse> {
+  return postJSON("/api/publish", { slug, dest });
+}
+
+export type PublishStateResponse = {
+  slug:    string;
+  current: PublishResponse | null;
+  history: PublishResponse[];
+};
+
+export async function fetchPublishState(slug: string): Promise<PublishStateResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/publish`);
+}
+
+// ---------- /api/projects/<slug>/domain ------------------------------------
+
+export type DomainRecord = {
+  host:         string;
+  status:       "pending" | "active" | "error";
+  set_at:       string;
+  cname_target: string;
+  cname_record: string;
+  error?:       string | null;
+};
+
+export type DomainResponse = {
+  slug:                  string;
+  domain:                DomainRecord | null;
+  cloudflare_configured: boolean;
+  cloudflare_setup_md?:  string | null;
+};
+
+export async function fetchDomain(slug: string): Promise<DomainResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/domain`);
+}
+
+export async function setDomain(slug: string, host: string): Promise<DomainResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/domain`, { host });
+}
+
+export async function removeDomain(slug: string): Promise<{ slug: string; removed: DomainRecord }> {
+  const resp = await fetch(`/api/projects/${encodeURIComponent(slug)}/domain`, { method: "DELETE" });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as { slug: string; removed: DomainRecord };
 }
 
 async function deleteJSON<T>(path: string): Promise<T> {

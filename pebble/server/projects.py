@@ -105,6 +105,31 @@ def run_list_projects(handler) -> None:
         if site_dir.exists():
             file_count = sum(1 for p in site_dir.rglob("*") if p.is_file())
 
+        # Latest publish (zip or cloudflare) — drives the dashboard
+        # "Published" badge. Tiny file, cheap to read per row.
+        publish_summary = None
+        pub_path = project_dir / "publish.json"
+        if pub_path.exists():
+            try:
+                pub = json.loads(pub_path.read_text(encoding="utf-8"))
+                publish_summary = {
+                    "kind":         pub.get("kind"),
+                    "url":          pub.get("url"),
+                    "deployed_at":  pub.get("deployed_at"),
+                }
+            except Exception:
+                pass
+
+        # Custom domain — set when /api/projects/<slug>/domain has been
+        # called and the domain has activated.
+        domain = None
+        domain_path = project_dir / "domain.json"
+        if domain_path.exists():
+            try:
+                domain = json.loads(domain_path.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
         projects.append({
             "slug":          project_dir.name,
             "business_name": brief.get("business_name", project_dir.name),
@@ -114,6 +139,8 @@ def run_list_projects(handler) -> None:
             "starred":       starred,
             "preview_url":   f"/preview/{project_dir.name}/",
             "design_dna":    brief.get("_design_dna"),
+            "publish":       publish_summary,
+            "domain":        domain,
         })
 
     # Newest first

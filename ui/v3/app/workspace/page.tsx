@@ -263,14 +263,22 @@ export default function WorkspacePage() {
       <TopNav
         projectName={projectName}
         rightSlot={
-          <button
-            onClick={openHistory}
-            title="Version history"
-            className="w-10 h-10 rounded-full flex items-center justify-center text-graphite hover:bg-mist hover:text-charcoal dark:text-pebble dark:hover:bg-stone/40 dark:hover:text-sand transition-colors"
-            aria-label="Open version history"
-          >
-            <History className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={openHistory}
+              title="Version history"
+              className="w-10 h-10 rounded-full flex items-center justify-center text-graphite hover:bg-mist hover:text-charcoal dark:text-pebble dark:hover:bg-stone/40 dark:hover:text-sand transition-colors"
+              aria-label="Open version history"
+            >
+              <History className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => router.push("/publish")}
+              className="bg-primary text-primary-foreground px-4 h-10 rounded-full font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+            >
+              <Rocket className="w-4 h-4" /> Publish
+            </button>
+          </div>
         }
       />
 
