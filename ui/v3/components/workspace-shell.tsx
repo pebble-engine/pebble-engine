@@ -211,6 +211,8 @@ export function WorkspaceShell() {
             disappears but stays in the DOM, preserving its layoutId children for
             cross-phase morphs. */}
         <motion.aside
+          aria-hidden={!showLeftRail}
+          inert={!showLeftRail}
           animate={{
             width:   showLeftRail ? 240 : 0,
             opacity: showLeftRail ? 1   : 0,
@@ -236,7 +238,7 @@ export function WorkspaceShell() {
                   {isActive && (
                     <motion.div
                       layoutId="rail-active"
-                      className="absolute inset-0 bg-primary/15 rounded-lg -z-10"
+                      className="absolute inset-0 bg-primary/15 rounded-lg"
                       transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
                     />
                   )}
