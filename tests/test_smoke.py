@@ -194,6 +194,42 @@ def test_build_prompt_language_block_works_with_dna():
     assert dna_idx < lang_idx < overview_idx
 
 
+def test_validate_coerces_audience_array_to_string():
+    """v3's multi-select chips post audience as ``["locals", "professionals"]``.
+    The validator coerces that to a comma-joined string so the prompt
+    template's ``{audience}`` placeholder works."""
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "audience": ["locals", "professionals", "families"],
+    })
+    assert err is None
+    assert cleaned["audience"] == "locals, professionals, families"
+
+
+def test_validate_coerces_audience_empty_array_treated_as_unset():
+    """An empty list should leave audience unset, not error."""
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "audience": [],
+    })
+    assert err is None
+    # The empty list becomes "" then gets stripped to unset.
+    assert not cleaned.get("audience")
+
+
+def test_validate_rejects_audience_with_non_scalar_items():
+    """A list with object/dict items isn't legitimate input."""
+    cleaned, err = pebble_engine.validate_build_payload({
+        "business_name": "Acme",
+        "business_type": "hvac",
+        "audience": [{"object": "in list"}],
+    })
+    assert err is not None
+    assert err["field"] == "audience"
+
+
 def test_build_prompt_falls_back_to_brief_language_when_arg_omitted():
     """When ``language=`` isn't passed, build_prompt should read ``_language``
     off the answers dict — so legacy callers don't need updating."""

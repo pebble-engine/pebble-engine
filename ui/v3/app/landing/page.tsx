@@ -54,7 +54,7 @@ function Hero() {
 
           <div className="flex flex-col md:flex-row items-center gap-3 md:gap-4 pt-2">
             <Link
-              href="/intake"
+              href="/workspace#phase=idea"
               className="group inline-flex items-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-medium text-primary-foreground shadow-[var(--shadow-1)] transition-transform hover:scale-[1.02] active:scale-[0.98]"
             >
               Start building — it's free
@@ -293,7 +293,7 @@ const TIERS = [
     period: "during preview",
     body: "Two sites. Full visual editor. Real undo. No card required.",
     cta: "Start free",
-    href: "/intake",
+    href: "/workspace#phase=idea",
     featured: true,
     coming: false,
   },
@@ -443,7 +443,7 @@ function FinalCta() {
           nothing to install.
         </p>
         <Link
-          href="/intake"
+          href="/workspace#phase=idea"
           className="group inline-flex items-center gap-2 rounded-full bg-primary px-8 py-4 text-lg font-medium text-primary-foreground shadow-[var(--shadow-1)] transition-transform hover:scale-[1.02] active:scale-[0.98]"
         >
           Start building
@@ -464,7 +464,7 @@ function Footer() {
         <span>© {new Date().getFullYear()} Pebble Engine. Built with care.</span>
         <div className="flex items-center gap-5">
           <Link href="/migrate" className="hover:text-foreground transition-colors">Migrate</Link>
-          <Link href="/intake" className="hover:text-foreground transition-colors">Start</Link>
+          <Link href="/workspace#phase=idea" className="hover:text-foreground transition-colors">Start</Link>
           <Link href="/" className="hover:text-foreground transition-colors">App</Link>
         </div>
       </div>

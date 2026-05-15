@@ -83,15 +83,15 @@ export default function MigratePage() {
 
   function continueWithMigrate(data: MigrateResponse) {
     patchBrief(data.brief_partial);
-    router.push("/intake");
+    router.push("/workspace#phase=idea");
   }
 
   function continueWithInspire(data: InspireResponse) {
-    // /intake's DnaPreview reads _inspire_dna_hint on mount and hydrates
-    // to that DNA card. Setting it here is what makes the questionnaire
-    // open already attuned to the user's pasted inspiration.
+    // The idea phase's DnaPreview reads _inspire_dna_hint on mount and
+    // hydrates to that DNA card. Setting it here is what makes the
+    // questionnaire open already attuned to the user's pasted inspiration.
     patchBrief(data.brief_partial);
-    router.push("/intake");
+    router.push("/workspace#phase=idea");
   }
 
   return (

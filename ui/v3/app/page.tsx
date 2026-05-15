@@ -52,7 +52,7 @@ export default function WelcomePage() {
         JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
       );
     }
-    router.push("/intake");
+    router.push("/workspace#phase=idea");
   };
 
   // Headline rotates based on whether we know the user's name.

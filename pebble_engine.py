@@ -272,6 +272,18 @@ def validate_build_payload(answers):
         val = answers.get(field)
         if val is None or val == "":
             continue
+        # The v3 questionnaire collects multi-select chips (audience,
+        # services_offered, etc.) as arrays. The engine + prompt template
+        # both want a single string per field. Coerce here so legacy
+        # callers AND the v3 client work without changing either side.
+        if isinstance(val, list):
+            if not all(isinstance(item, (str, int, float, bool)) for item in val):
+                return None, _validation_error(field, f"{field} list items must be strings or numbers")
+            val = ", ".join(str(item).strip() for item in val if str(item).strip())
+            answers[field] = val
+            if not val:
+                # Empty after coercion — treat the same as unset.
+                continue
         if not isinstance(val, (str, int, float, bool)):
             return None, _validation_error(field, f"{field} must be a string")
         if not isinstance(val, str):
@@ -1566,6 +1578,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self.send_response(404); self.end_headers()
                 self.wfile.write(b"Not found")
         except Exception as exc:
+            # Log the traceback before the 500 response so post-mortem
+            # debugging has something to work with. The client only sees
+            # the str(exc) summary; the engine log gets the full stack.
+            try:
+                log.exception("handler raised on %s %s", self.command, self.path)
+            except Exception:
+                pass
             try:
                 self._json(500, {"error": f"Server error: {exc}"})
             except Exception:
@@ -1631,6 +1650,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
+            # Log the traceback before the 500 response so post-mortem
+            # debugging has something to work with. The client only sees
+            # the str(exc) summary; the engine log gets the full stack.
+            try:
+                log.exception("handler raised on %s %s", self.command, self.path)
+            except Exception:
+                pass
             try:
                 self._json(500, {"error": f"Server error: {exc}"})
             except Exception:
@@ -1657,6 +1683,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
+            # Log the traceback before the 500 response so post-mortem
+            # debugging has something to work with. The client only sees
+            # the str(exc) summary; the engine log gets the full stack.
+            try:
+                log.exception("handler raised on %s %s", self.command, self.path)
+            except Exception:
+                pass
             try:
                 self._json(500, {"error": f"Server error: {exc}"})
             except Exception:
