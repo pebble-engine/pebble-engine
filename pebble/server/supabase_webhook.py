@@ -45,11 +45,48 @@ import hmac
 import json
 import logging
 import os
+import re
 from typing import Any, Optional
 
 from pebble.email import send_welcome_async, EmailError
+from pebble.security import RateLimiter
 
 log = logging.getLogger("pebble.supabase_webhook")
+
+
+# Per-recipient throttle. Even with a valid bearer secret, no single
+# address can receive more than ``burst`` welcomes in any (1/rate) seconds
+# window. Legitimate Supabase signup fires this endpoint once per address;
+# anything beyond that is leaked-secret abuse or a misconfigured webhook.
+#
+# Numbers picked for: a duplicate signup within the hour is generous
+# (sometimes the user re-clicks confirm); 100 in an hour is not.
+webhook_email_limiter = RateLimiter(rate=1/3600.0, burst=2)
+
+
+# Match any C0/C1 control character. Used by `_clean_first_name` to
+# defang values that come from `auth.users.raw_user_meta_data` (fully
+# client-controlled at signup) before they reach the welcome email subject.
+_CONTROL_CHARS_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]+")
+
+
+def _redact_email(addr: str) -> str:
+    """Replace the local-part with ``<first>***`` so engine logs keep the
+    domain (useful for debugging deliverability) without spreading raw
+    addresses across log retention. Returns ``"?"`` for unparseable input."""
+    if not addr or "@" not in addr:
+        return "?"
+    local, _, domain = addr.partition("@")
+    if not local:
+        return f"***@{domain}"
+    return f"{local[0]}***@{domain}"
+
+
+def _reset_rate_limiters_for_tests() -> None:
+    """Test hook — clear the per-email bucket between tests. Production
+    callers never reach this; the module-level limiter naturally decays."""
+    global webhook_email_limiter
+    webhook_email_limiter = RateLimiter(rate=1/3600.0, burst=2)
 
 
 def _read_body(handler) -> Optional[dict]:
@@ -122,6 +159,16 @@ def run_supabase_webhook(handler) -> None:
         return
 
     first_name = _clean_first_name(record.get("first_name"))
+    redacted = _redact_email(email)
+
+    # Per-address throttle. Even with a valid secret, no one address can
+    # receive welcome floods. Return 200 (not 429) so Supabase doesn't
+    # retry — the throttle decision is intentional on our side.
+    if not webhook_email_limiter.allow(email.lower()):
+        log.info("welcome email throttled for %s (per-address limit)", redacted)
+        handler._json(200, {"ok": True, "action": "throttled",
+                            "reason": "per-address rate limit"})
+        return
 
     try:
         # Fire-and-forget — sending blocks on a network call to Resend
@@ -129,25 +176,32 @@ def run_supabase_webhook(handler) -> None:
         # handles retries internally; failures get logged.
         send_welcome_async(email, first_name=first_name)
     except EmailError as e:
-        log.exception("welcome email failed for %s: %s", email, e)
+        log.exception("welcome email failed for %s: %s", redacted, e)
         # Still 200 — the user IS signed up; an email failure shouldn't
         # cause Supabase to retry (which would double-send when the
         # transient issue resolves).
         handler._json(200, {"ok": True, "action": "queued_with_error", "error": str(e)})
         return
 
-    log.info("welcome email queued for %s (first_name=%r)", email, first_name)
+    log.info("welcome email queued for %s (first_name_len=%d)",
+             redacted, len(first_name) if first_name else 0)
     handler._json(200, {"ok": True, "action": "welcome_sent", "email": email})
 
 
 def _clean_first_name(raw: Any) -> Optional[str]:
     """Normalize first_name. Supabase profiles trigger pulls it from
-    `auth.users.raw_user_meta_data->>'first_name'` OR the local-part of
-    the email if neither metadata field is present, so it can be
-    anything from a real name to a username-looking string. Trim, cap
-    at 80 chars, and return None when empty so the email template
-    falls back to "there"."""
+    ``auth.users.raw_user_meta_data->>'first_name'`` OR the local-part
+    of the email if neither metadata field is present, so it can be
+    anything from a real name to a username-looking string.
+
+    Hardening: ``raw_user_meta_data`` is fully client-controlled at signup.
+    A name containing CR/LF could turn the welcome email subject into a
+    header-injection vehicle on email providers that don't normalize
+    subjects themselves. Replace runs of C0/C1 control characters with a
+    single space before the strip + cap, so the cleaned value is always
+    safe to drop into a header or log line."""
     if not isinstance(raw, str):
         return None
-    cleaned = raw.strip()[:80]
+    no_ctrl = _CONTROL_CHARS_RE.sub(" ", raw)
+    cleaned = no_ctrl.strip()[:80]
     return cleaned or None
