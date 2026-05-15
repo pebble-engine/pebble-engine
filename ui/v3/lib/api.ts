@@ -74,6 +74,7 @@ export type ProjectSummary = {
     deployed_at: string;
   } | null;
   domain?: Partial<DomainRecord> & { host: string; status: "pending" | "active" | "error" } | null;
+  inbox?: { total: number; unread: number } | null;
 };
 
 export async function listProjects(): Promise<{ projects: ProjectSummary[]; count: number }> {
@@ -269,6 +270,63 @@ export type ActivityRow = {
 
 export async function fetchActivity(): Promise<{ activity: ActivityRow[]; count: number }> {
   return getJSON("/api/activity");
+}
+
+// ---------- /api/forms/<slug> + /api/projects/<slug>/inbox -----------------
+
+export type Submission = {
+  id:           string;
+  slug:         string;
+  received_at:  string;
+  fields:       Record<string, string>;
+  ip_hash?:     string | null;
+  user_agent?:  string | null;
+  referrer?:    string | null;
+  read?:        boolean;
+};
+
+export async function submitForm(slug: string, fields: Record<string, string>): Promise<{ ok: boolean; id: string }> {
+  return postJSON(`/api/forms/${encodeURIComponent(slug)}`, fields);
+}
+
+export async function fetchInbox(slug: string): Promise<{ slug: string; submissions: Submission[]; count: number; unread: number }> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/inbox`);
+}
+
+export async function markSubmissionRead(slug: string, id: string, read: boolean = true): Promise<Submission> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/inbox/${encodeURIComponent(id)}/read`, { read });
+}
+
+// ---------- /api/track + /api/projects/<slug>/analytics -------------------
+
+export type AnalyticsSummary = {
+  slug:                string;
+  window_days:         number;
+  total_views:         number;
+  approx_visitors:     number;
+  top_paths:           { path: string; views: number }[];
+  top_referrer_hosts:  { host: string; views: number }[];
+  by_day:              { date: string; views: number }[];
+};
+
+export async function fetchAnalytics(slug: string): Promise<AnalyticsSummary> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/analytics`);
+}
+
+export async function trackPageView(slug: string, path: string, referrer?: string): Promise<{ ok: boolean; recorded: boolean }> {
+  return postJSON(`/api/track/${encodeURIComponent(slug)}`, { path, referrer });
+}
+
+export async function deleteSubmission(slug: string, id: string): Promise<{ slug: string; id: string; deleted: boolean }> {
+  const resp = await fetch(`/api/projects/${encodeURIComponent(slug)}/inbox/${encodeURIComponent(id)}`, { method: "DELETE" });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as { slug: string; id: string; deleted: boolean };
 }
 
 // ---------- /api/publish (new) ---------------------------------------------

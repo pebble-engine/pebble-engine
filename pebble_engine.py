@@ -1528,6 +1528,12 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
                 slug = self.path[len("/api/projects/"):-len("/domain")]
                 self._handle_get_domain(slug)
+            elif self.path.startswith("/api/projects/") and "/inbox" in self.path:
+                self._handle_inbox_get()
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/analytics"):
+                slug = self.path[len("/api/projects/"):-len("/analytics")]
+                from pebble.server.analytics import run_get_summary
+                run_get_summary(self, slug)
             elif self.path.startswith("/dist/"):
                 self._handle_serve_dist()
             elif self.path.startswith("/preview/"):
@@ -1564,6 +1570,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_migrate()
             elif self.path == "/api/publish":
                 self._handle_publish()
+            elif self.path.startswith("/api/forms/"):
+                slug = self.path[len("/api/forms/"):]
+                self._handle_form_submit(slug)
+            elif self.path.startswith("/api/track/"):
+                slug = self.path[len("/api/track/"):]
+                from pebble.server.analytics import run_track
+                run_track(self, slug)
+            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path and self.path.endswith("/read"):
+                self._handle_inbox_mark_read()
             elif self.path == "/api/auth/signup":
                 from pebble.server.auth import run_signup
                 run_signup(self)
@@ -1602,6 +1617,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
             if self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
                 slug = self.path[len("/api/projects/"):-len("/domain")]
                 self._handle_delete_domain(slug)
+            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path:
+                self._handle_inbox_delete()
             elif self.path.startswith("/api/projects/"):
                 slug = self.path[len("/api/projects/"):]
                 # Reject paths with subroutes (e.g. /history, /star) — those
@@ -1976,6 +1993,46 @@ class PebbleHandler(BaseHTTPRequestHandler):
         """GET /api/projects/<slug>/domain — current domain + status."""
         from pebble.server.domain import run_get_domain
         run_get_domain(self, slug)
+
+    def _handle_form_submit(self, slug: str):
+        """POST /api/forms/<slug> — accept a form submission."""
+        from pebble.server.forms import run_submit
+        run_submit(self, slug)
+
+    def _handle_inbox_get(self):
+        """GET /api/projects/<slug>/inbox[/<id>] — inbox listing or one item."""
+        rest = self.path[len("/api/projects/"):]
+        # rest is "<slug>/inbox" or "<slug>/inbox/<id>"
+        parts = rest.split("/")
+        if len(parts) == 2 and parts[1] == "inbox":
+            from pebble.server.forms import run_list_inbox
+            run_list_inbox(self, parts[0])
+        elif len(parts) == 3 and parts[1] == "inbox":
+            from pebble.server.forms import run_get_inbox_item
+            run_get_inbox_item(self, parts[0], parts[2])
+        else:
+            self.send_response(404); self.end_headers()
+
+    def _handle_inbox_mark_read(self):
+        """POST /api/projects/<slug>/inbox/<id>/read — toggle read flag."""
+        rest = self.path[len("/api/projects/"):]
+        parts = rest.split("/")
+        # parts: ["<slug>", "inbox", "<id>", "read"]
+        if len(parts) == 4 and parts[1] == "inbox" and parts[3] == "read":
+            from pebble.server.forms import run_mark_read
+            run_mark_read(self, parts[0], parts[2])
+        else:
+            self.send_response(404); self.end_headers()
+
+    def _handle_inbox_delete(self):
+        """DELETE /api/projects/<slug>/inbox/<id>."""
+        rest = self.path[len("/api/projects/"):]
+        parts = rest.split("/")
+        if len(parts) == 3 and parts[1] == "inbox":
+            from pebble.server.forms import run_delete_inbox_item
+            run_delete_inbox_item(self, parts[0], parts[2])
+        else:
+            self.send_response(404); self.end_headers()
 
     def _handle_set_domain(self, slug: str):
         """POST /api/projects/<slug>/domain — attach a custom domain."""

@@ -130,6 +130,24 @@ def run_list_projects(handler) -> None:
             except Exception:
                 pass
 
+        # Inbox counts — small, useful for the dashboard card.
+        inbox = None
+        inbox_dir = project_dir / "inbox"
+        if inbox_dir.exists():
+            try:
+                files = list(inbox_dir.glob("*.json"))
+                unread = 0
+                for p in files:
+                    try:
+                        rec = json.loads(p.read_text(encoding="utf-8"))
+                        if not rec.get("read"):
+                            unread += 1
+                    except Exception:
+                        unread += 1
+                inbox = {"total": len(files), "unread": unread}
+            except Exception:
+                inbox = None
+
         projects.append({
             "slug":          project_dir.name,
             "business_name": brief.get("business_name", project_dir.name),
@@ -141,6 +159,7 @@ def run_list_projects(handler) -> None:
             "design_dna":    brief.get("_design_dna"),
             "publish":       publish_summary,
             "domain":        domain,
+            "inbox":         inbox,
         })
 
     # Newest first

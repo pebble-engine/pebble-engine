@@ -15,6 +15,7 @@ import {
   Coins,
   Globe,
   Download,
+  Mail,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import {
@@ -443,6 +444,19 @@ function ProjectCard({
               {p.domain.status === "active" ? "live" : p.domain.status === "error" ? "error" : "DNS pending"}
             </span>
           </span>
+        )}
+        {p.inbox && p.inbox.total > 0 && (
+          <Link
+            href={`/inbox?slug=${encodeURIComponent(p.slug)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary border border-primary/30 hover:bg-primary/20 transition-colors"
+            title="Open inbox"
+          >
+            <Mail className="w-3 h-3" />
+            <span className="font-semibold">
+              {p.inbox.unread > 0 ? `${p.inbox.unread} new` : `${p.inbox.total} read`}
+            </span>
+          </Link>
         )}
       </div>
 

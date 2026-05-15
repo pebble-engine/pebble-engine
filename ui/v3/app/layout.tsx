@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Literata, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
+import { CommandPalette } from "@/components/command-palette";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -55,7 +56,10 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+          <CommandPalette />
+        </AuthProvider>
       </body>
     </html>
   );
