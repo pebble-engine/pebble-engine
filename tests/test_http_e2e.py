@@ -33,6 +33,27 @@ def _find_free_port() -> int:
         return s.getsockname()[1]
 
 
+@pytest.fixture(autouse=True)
+def _scrub_vendor_env(monkeypatch):
+    """Force every test in this module onto the dev-default email
+    sender + unconfigured Cloudflare. .env now ships with real keys
+    for both Resend and Cloudflare; without this scrub, get_sender()
+    returns ResendSender and the welcome / reset email tests stop
+    seeing files in the outbox because the prod sender raises before
+    the FileSender audit-copy gets written. Same pattern as the
+    Cloudflare autouse scrub commit a9bfd7d added to test_domain.py."""
+    for var in (
+        "PEBBLE_EMAIL_PROVIDER",
+        "PEBBLE_EMAIL_RESEND_KEY",
+        "RESEND_API_KEY",
+        "PEBBLE_EMAIL_POSTMARK_TOKEN",
+        "PEBBLE_EMAIL_SENDGRID_KEY",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN",
+    ):
+        monkeypatch.delenv(var, raising=False)
+
+
 @pytest.fixture
 def engine_server(tmp_path, monkeypatch):
     """Spin up the real PebbleHandler bound to a tmp output dir on a
@@ -702,6 +723,83 @@ def test_migrate_reports_fetch_error_as_200_with_error_field(engine_server, monk
     assert status == 200
     assert body["ok"] is False
     assert body["error"] == "HTTP 503"
+
+
+# ---- /api/inspire -------------------------------------------------------
+
+def test_inspire_validates_url(engine_server):
+    status, body = _post(engine_server["base"], "/api/inspire", {"url": ""})
+    assert status == 400
+
+
+def test_inspire_returns_palette_and_dna_for_simulated_html(engine_server, monkeypatch):
+    """Patch the safe fetcher so the test doesn't need network or
+    SSRF-relevant DNS resolution."""
+    import pebble.inspire as inspire
+    html = (
+        "<!doctype html><html><head>"
+        "<title>Sage Studio — Considered work</title>"
+        "<style>"
+        "body{background:#faf8f3;color:#0e0e10;font-family:'Cormorant Garamond',serif}"
+        "h1{color:#5e7a6e}"
+        "p{font-family:'Inter Tight',sans-serif}"
+        "</style></head><body>"
+        "<h1>Quiet authority for considered work.</h1>"
+        "<p>We design with intent.</p>"
+        "</body></html>"
+    )
+    monkeypatch.setattr(
+        inspire, "_fetch_url_safe",
+        lambda url: ("https://sage.example", html, len(html), None),
+    )
+    status, body = _post(engine_server["base"], "/api/inspire", {"url": "https://sage.example"})
+    assert status == 200
+    assert body["ok"] is True
+    assert body["extract"]["palette"]["background"] == "#faf8f3"
+    assert body["extract"]["palette"]["primary"] == "#0e0e10"
+    assert body["extract"]["suggested_dna"]["id"]
+    assert body["brief_partial"]["_inspire_dna_hint"]
+    # business facts are migrate.py's job — must NOT leak into inspire output
+    assert "business_name" not in body["brief_partial"]
+
+
+def test_inspire_reports_fetch_error_as_200_with_error_field(engine_server, monkeypatch):
+    import pebble.inspire as inspire
+    monkeypatch.setattr(inspire, "_fetch_url_safe",
+                        lambda url: ("", "", 0, "host resolves to a private or blocked address"))
+    status, body = _post(engine_server["base"], "/api/inspire",
+                         {"url": "http://localhost/admin"})
+    assert status == 200
+    assert body["ok"] is False
+    assert "private" in body["error"]
+
+
+def test_inspire_rate_limits_after_burst(engine_server, monkeypatch):
+    """6 burst budget — a fast 7th request from the same IP must 429.
+    Reset the limiter after to avoid leaking state to other tests."""
+    import pebble.inspire as inspire
+    from pebble.security import inspire_fetch_limiter
+    monkeypatch.setattr(
+        inspire, "_fetch_url_safe",
+        lambda url: ("https://x.example", "<html></html>", 13, None),
+    )
+    inspire_fetch_limiter.reset("127.0.0.1")
+    last_status = None
+    for _ in range(7):
+        last_status, last_body = _post(
+            engine_server["base"], "/api/inspire", {"url": "https://x.example"},
+        )
+    assert last_status == 429
+    assert "too many" in last_body["error"]
+    inspire_fetch_limiter.reset("127.0.0.1")
+
+
+def test_inspire_rejects_oversized_body(engine_server):
+    """The /api/inspire body is just { url }; nothing legitimate is over 4 KB.
+    A 50 KB body indicates abuse and should be rejected before we try to parse."""
+    big_payload = {"url": "https://example.com", "junk": "x" * 60_000}
+    status, _ = _post(engine_server["base"], "/api/inspire", big_payload)
+    assert status == 400
 
 
 # ---- /api/usage ---------------------------------------------------------

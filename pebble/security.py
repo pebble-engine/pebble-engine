@@ -191,6 +191,9 @@ class RateLimiter:
 forms_submit_limiter   = RateLimiter(rate=1/6.0,    burst=10)    # 10 / minute, ~600 / hour burst-friendly
 track_view_limiter     = RateLimiter(rate=2.0,      burst=20)    # 120 / minute / IP
 forgot_email_limiter   = RateLimiter(rate=1/300.0,  burst=3)     # 3 then 1 / 5 min / email
+# /api/inspire fetches arbitrary user-supplied URLs (network + 2MB read +
+# parse). Tighter budget than form-submit because each request costs more.
+inspire_fetch_limiter  = RateLimiter(rate=1/60.0,   burst=6)     # 6 burst, then 1 / minute / IP
 
 
 __all__ = [
@@ -200,4 +203,5 @@ __all__ = [
     "forms_submit_limiter",
     "track_view_limiter",
     "forgot_email_limiter",
+    "inspire_fetch_limiter",
 ]

@@ -1568,6 +1568,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_visual_edit()
             elif self.path == "/api/migrate":
                 self._handle_migrate()
+            elif self.path == "/api/inspire":
+                self._handle_inspire()
             elif self.path == "/api/publish":
                 self._handle_publish()
             elif self.path.startswith("/api/forms/"):
@@ -1966,6 +1968,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
         in :mod:`pebble.server.migrate`."""
         from pebble.server.migrate import run_migrate
         run_migrate(self)
+
+    def _handle_inspire(self):
+        """POST /api/inspire — extract design DNA (palette, typography,
+        vibe + suggested DNA card) from a user-pasted URL. Pre-seeds
+        the questionnaire's style direction. Body lives in
+        :mod:`pebble.server.inspire`."""
+        from pebble.server.inspire import run_inspire
+        run_inspire(self)
 
     def _handle_publish(self):
         """POST /api/publish — package a project for hosting (Cloudflare
