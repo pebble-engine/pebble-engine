@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle } from "lucide-react";
-import { patchBrief } from "@/lib/state";
+import { getBrief, patchBrief } from "@/lib/state";
 
 /**
  * Live DNA preview chip strip — sits at the top of the questionnaire so
@@ -21,8 +21,12 @@ import { patchBrief } from "@/lib/state";
  *   feel distinct).
  * - "Try another" rerolls — passes the seen-set as ?exclude= so the
  *   user always sees a different card.
- * - Persists the chosen DNA id into the brief via `_design_dna` so the
- *   engine respects the user's pick at build time.
+ * - Persists the chosen DNA id into the brief via `_design_dna_id` so
+ *   the engine's _select_dna picker honors it instead of rolling a new
+ *   random one at /api/plan + /api/generate time.
+ * - On mount, honors a `_inspire_dna_hint` already in the brief (set
+ *   by /api/inspire on /migrate). Consumes the hint after use so a
+ *   "Try another" reroll doesn't snap back to it.
  */
 
 type DnaCard = {
@@ -69,16 +73,27 @@ export function DnaPreview() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchCard = useCallback(async (excludeIds: string[]) => {
+  const fetchCard = useCallback(async (excludeIds: string[], idHint?: string) => {
     setLoading(true);
     setError(null);
     try {
       const params = new URLSearchParams();
-      if (excludeIds.length) params.set("exclude", excludeIds.join(","));
+      if (idHint) {
+        params.set("id", idHint);
+      } else if (excludeIds.length) {
+        params.set("exclude", excludeIds.join(","));
+      }
       const url = `/api/dna/preview${params.toString() ? `?${params}` : ""}`;
       const res = await fetch(url, { cache: "no-store" });
       const body: DnaPreviewResponse = await res.json();
       if (!res.ok || !body.ok) {
+        // An inspire-supplied id we don't recognise (renamed/removed card) —
+        // silently fall back to a random pick so the chip strip still renders.
+        if (idHint && res.status === 404) {
+          setLoading(false);
+          void fetchCard(excludeIds);
+          return;
+        }
         setError(body.error || `unexpected ${res.status}`);
         return;
       }
@@ -90,7 +105,7 @@ export function DnaPreview() {
         if (next.size >= body.total) next.clear();
         return next;
       });
-      patchBrief({ _design_dna: body.card.id });
+      patchBrief({ _design_dna_id: body.card.id });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
       setError(`couldn't reach the engine: ${msg}`);
@@ -100,7 +115,18 @@ export function DnaPreview() {
   }, []);
 
   useEffect(() => {
-    void fetchCard([]);
+    // If /api/inspire pre-seeded the brief with a DNA suggestion, hydrate
+    // to it on first paint so the user sees "yes, your taste matters."
+    // Consume the hint immediately so a "Try another" reroll doesn't snap
+    // back to the inspiration card — once shown, the user is steering.
+    const brief = getBrief();
+    const hint = (brief._inspire_dna_hint as string) || "";
+    if (hint) {
+      patchBrief({ _inspire_dna_hint: "" });
+      void fetchCard([], hint);
+    } else {
+      void fetchCard([]);
+    }
     // fetchCard is stable (useCallback with empty deps); intentional one-shot mount fetch.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

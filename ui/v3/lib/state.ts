@@ -13,6 +13,8 @@ export type Brief = Record<string, unknown> & {
   design_reference_images?: Array<{ media_type: string; data: string; name?: string }>;
   _industry_intel_key?: string;
   _design_dna_id?: string;
+  _inspired_by?: string;       // set by /api/inspire: the source URL the user pasted
+  _inspire_dna_hint?: string;  // set by /api/inspire: DNA card id we suggest. Consumed once by DnaPreview on /intake.
 };
 
 // Persistent, cross-session profile. Stored in localStorage so it survives

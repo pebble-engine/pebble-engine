@@ -232,6 +232,59 @@ export async function migrateFromUrl(url: string): Promise<MigrateResponse> {
   return postJSON("/api/migrate", { url });
 }
 
+// ---------- /api/inspire (style-direction sibling of /api/migrate) --------
+
+export type InspirationExtract = {
+  url:           string;
+  final_url:     string;
+  error:         string | null;
+  raw_bytes:     number;
+  title:         string;
+  headline:      string;
+  subheading:    string;
+  palette:       {
+    primary:    string;
+    accent:     string;
+    background: string;
+    all:        string[];
+  };
+  typography:    {
+    display:      string;
+    body:         string;
+    all_families: string[];
+  };
+  vibe:          {
+    is_dark:     boolean;
+    is_minimal:  boolean;
+    color_count: number;
+    descriptors: string[];
+  };
+  suggested_dna: {
+    id:     string;
+    label:  string;
+    score:  number;
+    reason: string;
+  };
+};
+
+export type InspireBriefPartial = {
+  extra_context:     string;
+  _inspired_by:      string;
+  _inspire_dna_hint: string;
+};
+
+export type InspireResponse = {
+  url:           string;
+  extract:       InspirationExtract;
+  brief_partial: InspireBriefPartial;
+  ok:            boolean;
+  error:         string | null;
+};
+
+export async function inspireFromUrl(url: string): Promise<InspireResponse> {
+  return postJSON("/api/inspire", { url });
+}
+
 // ---------- /api/usage + DELETE /api/projects/<slug> -----------------------
 
 export type UsageRow = {

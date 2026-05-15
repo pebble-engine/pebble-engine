@@ -157,7 +157,7 @@ export default function IntakePage() {
       {/* Live DNA preview — the differentiator vs. template galleries.
           Shows the user the style direction emerging in real time, with
           a "Try another" reroll. Persists the chosen DNA id into the
-          brief via `_design_dna` so the engine respects it at build. */}
+          brief via `_design_dna_id` so the engine respects it at build. */}
       <DnaPreview />
 
       {/* Progress dots */}
