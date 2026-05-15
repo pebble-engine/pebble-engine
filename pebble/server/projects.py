@@ -11,6 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
+import shutil
 from pebble.history import list_history, restore_snapshot
 from pebble.log import log
 
@@ -183,3 +184,101 @@ def run_toggle_star(handler, slug: str) -> None:
             handler._json(500, {"error": f"could not unstar: {e}"}); return
 
     handler._json(200, {"slug": slug, "starred": new_state})
+
+
+# --------- GET /api/usage ---------
+
+def run_usage_summary(handler) -> None:
+    """Aggregate cost telemetry across every project for a dashboard
+    "this period: $X" indicator.
+
+    Sums tokens_used and estimated_cost_usd from build_meta.json across
+    every project directory. Refinement and visual-edit calls don't
+    yet write their own meta files (they only update billable in their
+    HTTP response), so this is generation-only for now.
+
+    Response::
+
+        {
+          "projects":              N,
+          "total_input_tokens":    int,
+          "total_output_tokens":   int,
+          "total_estimated_cost_usd": float,
+          "by_project": [
+            { slug, built_at, input_tokens, output_tokens, estimated_cost_usd, billable }
+          ]
+        }
+    """
+    out = _output_dir()
+    if not out.exists():
+        handler._json(200, {
+            "projects": 0,
+            "total_input_tokens": 0,
+            "total_output_tokens": 0,
+            "total_estimated_cost_usd": 0.0,
+            "by_project": [],
+        }); return
+
+    total_in = 0
+    total_out = 0
+    total_cost = 0.0
+    rows: list[dict] = []
+    for project_dir in out.iterdir():
+        if not project_dir.is_dir():
+            continue
+        meta_path = project_dir / "build_meta.json"
+        if not meta_path.exists():
+            continue
+        try:
+            meta = json.loads(meta_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        tokens = meta.get("tokens_used") or {}
+        in_tok = int(tokens.get("input", 0) or 0)
+        out_tok = int(tokens.get("output", 0) or 0)
+        cost = float(meta.get("estimated_cost_usd", 0) or 0)
+        billable = bool(meta.get("billable", True))
+        total_in += in_tok
+        total_out += out_tok
+        total_cost += cost
+        rows.append({
+            "slug":               project_dir.name,
+            "built_at":           meta.get("built_at"),
+            "input_tokens":       in_tok,
+            "output_tokens":      out_tok,
+            "estimated_cost_usd": round(cost, 6),
+            "billable":           billable,
+            "model":              meta.get("model"),
+        })
+    rows.sort(key=lambda r: r.get("built_at") or "", reverse=True)
+    handler._json(200, {
+        "projects":                  len(rows),
+        "total_input_tokens":        total_in,
+        "total_output_tokens":       total_out,
+        "total_estimated_cost_usd":  round(total_cost, 6),
+        "by_project":                rows,
+    })
+
+
+# --------- DELETE /api/projects/<slug> ---------
+
+def run_delete_project(handler, slug: str) -> None:
+    """Permanently delete a project directory (and its full history).
+
+    Hard delete — no undo, no trash. Frontend should confirm before
+    calling. If the project doesn't exist, returns 404 so the UI can
+    update its state to match reality.
+    """
+    project_dir = _output_dir() / slug
+    if not project_dir.exists() or not project_dir.is_dir():
+        handler._json(404, {"error": f"project not found: {slug}"}); return
+    # Path safety — the slug came from the URL, defensively reject parent
+    # traversal even though the router should have neutralized it.
+    if ".." in slug or "/" in slug or "\\" in slug:
+        handler._json(400, {"error": "invalid slug"}); return
+    try:
+        shutil.rmtree(project_dir)
+    except Exception as e:
+        log.warning("delete failed: %s", e)
+        handler._json(500, {"error": f"delete failed: {e}"}); return
+    handler._json(200, {"slug": slug, "deleted": True})

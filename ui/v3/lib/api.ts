@@ -207,3 +207,43 @@ export type MigrateResponse = {
 export async function migrateFromUrl(url: string): Promise<MigrateResponse> {
   return postJSON("/api/migrate", { url });
 }
+
+// ---------- /api/usage + DELETE /api/projects/<slug> -----------------------
+
+export type UsageRow = {
+  slug:                string;
+  built_at:            string | null;
+  input_tokens:        number;
+  output_tokens:       number;
+  estimated_cost_usd:  number;
+  billable:            boolean;
+  model:               string | null;
+};
+
+export type UsageSummary = {
+  projects:                  number;
+  total_input_tokens:        number;
+  total_output_tokens:       number;
+  total_estimated_cost_usd:  number;
+  by_project:                UsageRow[];
+};
+
+export async function fetchUsage(): Promise<UsageSummary> {
+  return getJSON("/api/usage");
+}
+
+async function deleteJSON<T>(path: string): Promise<T> {
+  const resp = await fetch(path, { method: "DELETE" });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as T;
+}
+
+export async function deleteProject(slug: string): Promise<{ slug: string; deleted: boolean }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}`);
+}

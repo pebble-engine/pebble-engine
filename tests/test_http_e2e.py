@@ -328,3 +328,88 @@ def test_migrate_reports_fetch_error_as_200_with_error_field(engine_server, monk
     assert status == 200
     assert body["ok"] is False
     assert body["error"] == "HTTP 503"
+
+
+# ---- /api/usage ---------------------------------------------------------
+
+def test_usage_empty_when_no_projects(engine_server):
+    status, body = _get(engine_server["base"], "/api/usage")
+    assert status == 200
+    assert body["projects"] == 0
+    assert body["total_estimated_cost_usd"] == 0
+    assert body["by_project"] == []
+
+
+def test_usage_aggregates_build_meta(engine_server):
+    out = engine_server["output"]
+    _seed_project(out, "p1", {"app/page.tsx": "x"})
+    (out / "p1" / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-14T12:00:00",
+        "model": "gemini-3.1-pro-preview",
+        "billable": True,
+        "tokens_used": {"input": 5000, "output": 3000},
+        "estimated_cost_usd": 0.02125,
+    }), encoding="utf-8")
+    _seed_project(out, "p2", {"app/page.tsx": "x"})
+    (out / "p2" / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-14T13:00:00",
+        "model": "gemini-3.1-pro-preview",
+        "billable": True,
+        "tokens_used": {"input": 8000, "output": 4000},
+        "estimated_cost_usd": 0.030,
+    }), encoding="utf-8")
+
+    status, body = _get(engine_server["base"], "/api/usage")
+    assert status == 200
+    assert body["projects"] == 2
+    assert body["total_input_tokens"] == 13000
+    assert body["total_output_tokens"] == 7000
+    assert body["total_estimated_cost_usd"] == pytest.approx(0.05125, rel=1e-3)
+    # Newer build comes first
+    assert body["by_project"][0]["slug"] == "p2"
+
+
+def test_usage_skips_projects_without_build_meta(engine_server):
+    out = engine_server["output"]
+    _seed_project(out, "still-cooking", {"app/page.tsx": "x"})  # no build_meta.json
+    status, body = _get(engine_server["base"], "/api/usage")
+    assert body["projects"] == 0
+
+
+# ---- DELETE /api/projects/<slug> ----------------------------------------
+
+def _delete(base: str, path: str) -> tuple[int, dict | str]:
+    req = urllib.request.Request(f"{base}{path}", method="DELETE")
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            body_text = resp.read().decode("utf-8", errors="replace")
+            try: return resp.status, json.loads(body_text)
+            except Exception: return resp.status, body_text
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode("utf-8", errors="replace")
+        try: return e.code, json.loads(body_text)
+        except Exception: return e.code, body_text
+
+
+def test_delete_project_removes_directory(engine_server):
+    out = engine_server["output"]
+    _seed_project(out, "to-delete", {"app/page.tsx": "x"})
+    assert (out / "to-delete").exists()
+    status, body = _delete(engine_server["base"], "/api/projects/to-delete")
+    assert status == 200
+    assert body["deleted"] is True
+    assert not (out / "to-delete").exists()
+
+
+def test_delete_project_404_for_unknown(engine_server):
+    status, _ = _delete(engine_server["base"], "/api/projects/never-existed")
+    assert status == 404
+
+
+def test_delete_rejects_subroute_paths(engine_server):
+    """DELETE /api/projects/<slug>/history should NOT delete — it's a GET route."""
+    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"})
+    status, _ = _delete(engine_server["base"], "/api/projects/good-co/history")
+    assert status == 404
+    # Project should still be there
+    assert (engine_server["output"] / "good-co").exists()

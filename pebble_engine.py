@@ -1503,6 +1503,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_get_brief(slug)
             elif self.path == "/api/projects":
                 self._handle_list_projects()
+            elif self.path == "/api/usage":
+                self._handle_usage_summary()
             elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
                 slug = self.path[len("/api/projects/"):-len("/history")]
                 self._handle_get_history(slug)
@@ -1541,6 +1543,26 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
                 slug = self.path[len("/api/projects/"):-len("/star")]
                 self._handle_toggle_star(slug)
+            else:
+                self.send_response(404); self.end_headers()
+        except Exception as exc:
+            try:
+                self._json(500, {"error": f"Server error: {exc}"})
+            except Exception:
+                pass
+
+    # ---- DELETE ----
+    def do_DELETE(self):
+        """The HTTP DELETE verb. Only one route uses it today —
+        DELETE /api/projects/<slug> for hard project deletion."""
+        try:
+            if self.path.startswith("/api/projects/"):
+                slug = self.path[len("/api/projects/"):]
+                # Reject paths with subroutes (e.g. /history, /star) — those
+                # belong to the GET/POST handlers, not DELETE.
+                if "/" in slug:
+                    self.send_response(404); self.end_headers(); return
+                self._handle_delete_project(slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
@@ -1825,6 +1847,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
         metadata for the dashboard sidebar (Recents + Starred)."""
         from pebble.server.projects import run_list_projects
         run_list_projects(self)
+
+    def _handle_usage_summary(self):
+        """GET /api/usage — aggregate cost telemetry across every project."""
+        from pebble.server.projects import run_usage_summary
+        run_usage_summary(self)
+
+    def _handle_delete_project(self, slug: str):
+        """DELETE /api/projects/<slug> — hard delete."""
+        from pebble.server.projects import run_delete_project
+        run_delete_project(self, slug)
 
     def _handle_get_history(self, slug: str):
         """GET /api/projects/<slug>/history — list every snapshot for one

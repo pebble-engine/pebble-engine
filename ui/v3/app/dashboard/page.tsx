@@ -11,9 +11,18 @@ import {
   Search as SearchIcon,
   Plus,
   ExternalLink,
+  Trash2,
+  Coins,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
-import { listProjects, toggleStar, type ProjectSummary } from "@/lib/api";
+import {
+  listProjects,
+  toggleStar,
+  fetchUsage,
+  deleteProject,
+  type ProjectSummary,
+  type UsageSummary,
+} from "@/lib/api";
 import { setLastBuild, getUserProfile } from "@/lib/state";
 
 type Filter = "all" | "starred" | "recents";
@@ -21,10 +30,12 @@ type Filter = "all" | "starred" | "recents";
 export default function DashboardPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
+  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
   const [firstName, setFirstName] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null); // slug pending confirm
 
   useEffect(() => {
     setFirstName(getUserProfile().firstName || null);
@@ -34,10 +45,25 @@ export default function DashboardPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const res = await listProjects();
-      setProjects(res.projects);
+      const [projRes, usageRes] = await Promise.all([listProjects(), fetchUsage().catch(() => null)]);
+      setProjects(projRes.projects);
+      setUsage(usageRes);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleDelete(slug: string) {
+    // Optimistic remove
+    const prev = projects;
+    setProjects((p) => p.filter((x) => x.slug !== slug));
+    setDeleting(null);
+    try {
+      await deleteProject(slug);
+      void refresh();  // refresh usage totals too
+    } catch {
+      // Restore on failure
+      setProjects(prev);
     }
   }
 
@@ -115,7 +141,26 @@ export default function DashboardPage() {
             label="Recents"
           />
 
-          <div className="mt-auto pt-4 border-t border-border">
+          <div className="mt-auto pt-4 border-t border-border space-y-3">
+            {/* Usage indicator — honest cost telemetry. Shows total only when
+                we have at least one paid build to report. */}
+            {usage && usage.projects > 0 && (
+              <div className="px-3 py-2.5 bg-background border border-border rounded-lg">
+                <div className="flex items-center gap-2 mb-1">
+                  <Coins className="w-3.5 h-3.5 text-muted-foreground" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    Estimated cost
+                  </p>
+                </div>
+                <p className="font-display text-lg font-semibold text-foreground">
+                  ${usage.total_estimated_cost_usd.toFixed(4)}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {usage.projects} {usage.projects === 1 ? "build" : "builds"} · {(usage.total_input_tokens + usage.total_output_tokens).toLocaleString()} tokens
+                </p>
+              </div>
+            )}
+
             <Link
               href="/"
               className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
@@ -171,6 +216,10 @@ export default function DashboardPage() {
                     p={p}
                     onOpen={() => openProject(p)}
                     onToggleStar={() => handleToggleStar(p.slug, p.starred)}
+                    onRequestDelete={() => setDeleting(p.slug)}
+                    deletePending={deleting === p.slug}
+                    onConfirmDelete={() => handleDelete(p.slug)}
+                    onCancelDelete={() => setDeleting(null)}
                   />
                 ))}
               </AnimatePresence>
@@ -223,10 +272,18 @@ function ProjectCard({
   p,
   onOpen,
   onToggleStar,
+  onRequestDelete,
+  deletePending,
+  onConfirmDelete,
+  onCancelDelete,
 }: {
   p: ProjectSummary;
   onOpen: () => void;
   onToggleStar: () => void;
+  onRequestDelete: () => void;
+  deletePending: boolean;
+  onConfirmDelete: () => void;
+  onCancelDelete: () => void;
 }) {
   return (
     <motion.div
@@ -237,23 +294,35 @@ function ProjectCard({
       exit={{ opacity: 0, scale: 0.96 }}
       whileHover={{ y: -3 }}
       className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 cursor-pointer relative group"
-      onClick={onOpen}
+      onClick={() => !deletePending && onOpen()}
     >
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggleStar();
-        }}
-        className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center hover:bg-accent transition-colors"
-        aria-label={p.starred ? "Unstar" : "Star"}
-      >
-        <Star
-          className={`w-4 h-4 transition-colors ${p.starred ? "fill-spark text-spark" : "text-muted-foreground"}`}
-        />
-      </button>
+      <div className="absolute top-3 right-3 flex items-center gap-1">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleStar();
+          }}
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-accent transition-colors"
+          aria-label={p.starred ? "Unstar" : "Star"}
+        >
+          <Star
+            className={`w-4 h-4 transition-colors ${p.starred ? "fill-spark text-spark" : "text-muted-foreground"}`}
+          />
+        </button>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onRequestDelete();
+          }}
+          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground"
+          aria-label="Delete project"
+        >
+          <Trash2 className="w-4 h-4" />
+        </button>
+      </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-display text-lg font-semibold text-foreground truncate pr-8">
+        <h3 className="font-display text-lg font-semibold text-foreground truncate pr-16">
           {p.business_name}
         </h3>
         {p.business_type && (
@@ -278,6 +347,37 @@ function ProjectCard({
           Preview <ExternalLink className="w-3 h-3" />
         </a>
       </div>
+
+      {/* Inline delete confirmation — fewer modals = faster to undo your mind */}
+      <AnimatePresence>
+        {deletePending && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={(e) => e.stopPropagation()}
+            className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl border border-destructive/40 flex flex-col items-center justify-center text-center p-5 gap-3"
+          >
+            <Trash2 className="w-6 h-6 text-destructive" />
+            <p className="font-display text-base font-semibold text-foreground">Delete {p.business_name}?</p>
+            <p className="text-xs text-muted-foreground -mt-1">All snapshots and files are removed permanently.</p>
+            <div className="flex gap-2 mt-1">
+              <button
+                onClick={onCancelDelete}
+                className="bg-card border border-border text-foreground px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-accent"
+              >
+                Keep it
+              </button>
+              <button
+                onClick={onConfirmDelete}
+                className="bg-destructive text-destructive-foreground px-4 py-1.5 rounded-lg text-sm font-semibold hover:opacity-90"
+              >
+                Delete
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
