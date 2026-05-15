@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { safeRedirect } from "@/lib/safe-redirect";
 
 export default function LoginPage() {
   // useSearchParams needs a Suspense boundary in Next.js 16. The inner
@@ -30,7 +31,11 @@ function LoginForm() {
   const [oauthBusy, setOauthBusy] = useState<"google" | "github" | null>(null);
 
   // Bounce destination — preserved across the middleware redirect.
-  const redirect = params.get("redirect") || "/workspace";
+  // safeRedirect rejects absolute URLs / protocol-relative variants so
+  // a crafted ?redirect=https://evil.com can't turn a successful sign-in
+  // into an off-site bounce. Without this, `router.push("https://evil.com")`
+  // does a full navigation — the classic post-auth open-redirect phish.
+  const redirect = safeRedirect(params.get("redirect"));
 
   // Surface callback errors that came back from /auth/callback.
   useEffect(() => {
