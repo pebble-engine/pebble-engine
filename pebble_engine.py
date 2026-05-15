@@ -1505,6 +1505,21 @@ class PebbleHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
+    # ---- OPTIONS (CORS preflight) ----
+    def do_OPTIONS(self):
+        # The browser fires a preflight OPTIONS request before any cross-
+        # origin POST with Content-Type: application/json. Without this
+        # handler the engine 501s the preflight and the browser blocks
+        # the real request — which is exactly what broke /api/generate
+        # when the v3 client started calling the engine directly via CORS
+        # instead of through the Next.js dev proxy.
+        self.send_response(204)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Max-Age", "86400")
+        self.end_headers()
+
     # ---- GET ----
     def do_GET(self):
         # Strip query string for route matching (e.g. /?t=12345 should still serve index.html).

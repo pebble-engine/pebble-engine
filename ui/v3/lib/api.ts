@@ -1,10 +1,28 @@
-// Thin client for the Pebble engine. Calls go through Next.js' rewrites
-// (configured in next.config.ts) to localhost:8000 in dev.
+// Thin client for the Pebble engine.
+//
+// Important architecture note: long-running endpoints like /api/generate
+// take 90–180s. Next.js' dev-server rewrite proxy (Turbopack) closes the
+// connection well before that with a "socket hang up" ECONNRESET, which
+// fires a client-side fetch rejection EVEN THOUGH the engine successfully
+// completed the build and wrote files to disk. The user then sees "build
+// failed," retries, gets billed twice, and asks for a refund.
+//
+// Fix: when NEXT_PUBLIC_PEBBLE_ENGINE_URL is set, the client calls the
+// engine directly via CORS (engine already sends Access-Control-Allow-
+// Origin: *). The Next.js rewrites stay configured as a fallback for
+// when the var isn't set (production-by-default, same-origin deploys).
 
 import type { Brief, PebblePlan } from "./state";
 
+const ENGINE_BASE: string = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+
+function engineUrl(path: string): string {
+  // path always starts with /, ENGINE_BASE has no trailing slash, so concat works.
+  return ENGINE_BASE ? `${ENGINE_BASE}${path}` : path;
+}
+
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const resp = await fetch(path, {
+  const resp = await fetch(engineUrl(path), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -20,7 +38,7 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getJSON<T>(path: string): Promise<T> {
-  const resp = await fetch(path);
+  const resp = await fetch(engineUrl(path));
   const text = await resp.text();
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
