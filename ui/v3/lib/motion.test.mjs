@@ -46,7 +46,7 @@ assertContains(
 
 // ---- Variant exports --------------------------------------------------------
 const EXPECTED_VARIANTS = [
-  "fadeUp", "phaseEnter", "phaseExit",
+  "fadeUp", "phaseVariants",
   "railStep", "chipDeck", "cardHover", "dropletPulse",
 ];
 
@@ -65,6 +65,33 @@ for (const name of EXPECTED_VARIANTS) {
     new RegExp(`export const ${name}\\s*:`),
     `export const ${name} declared in source`
   );
+}
+
+// phaseVariants must declare all three lifecycle keys (hidden/visible/exit)
+// so consumers can use string variant names with AnimatePresence.
+const phaseVariantsBlock = SOURCE.match(
+  /export const phaseVariants\s*:[^=]*=\s*\{([\s\S]*?)^\};/m,
+);
+if (phaseVariantsBlock) {
+  const body = phaseVariantsBlock[1];
+  for (const key of ["hidden", "visible", "exit"]) {
+    if (new RegExp(`\\b${key}\\s*:`).test(body)) {
+      pass(`phaseVariants declares '${key}' state`);
+    } else {
+      failMsg(`phaseVariants missing '${key}' state`);
+    }
+  }
+} else {
+  failMsg("could not locate phaseVariants object body for state-key check");
+}
+
+// Legacy exports must be gone (round 2 cleanup).
+for (const legacy of ["phaseEnter", "phaseExit"]) {
+  if (new RegExp(`export const ${legacy}\\s*:`).test(SOURCE)) {
+    failMsg(`legacy export ${legacy} should have been removed`);
+  } else {
+    pass(`legacy export ${legacy} removed`);
+  }
 }
 
 // ---- Duration ordering (structural, derived from source values) -------------

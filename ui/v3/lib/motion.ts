@@ -6,7 +6,7 @@
  * 14 places."
  *
  * CONTRACT — read before consuming:
- *   - The exported `Variants` objects (`fadeUp`, `phaseEnter`, etc.) are
+ *   - The exported `Variants` objects (`fadeUp`, `phaseVariants`, etc.) are
  *     bare framer-motion Variants. They do NOT automatically adapt to the
  *     OS reduced-motion preference.
  *   - `prefersReducedMotion()` — call at render time to check the preference.
@@ -70,15 +70,15 @@ export const fadeUp: Variants = {
   visible: { opacity: 1, y: 0, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } },
 };
 
-/** Phase entry — slightly larger movement than fadeUp because phase
- *  changes are the dominant motion in the app. */
-export const phaseEnter: Variants = {
+/** Phase lifecycle — entry, rest, and exit packed into one variant so the
+ *  shell can use string variant names (`initial="hidden" animate="visible"
+ *  exit="exit"`) instead of hand-extracting `phaseExit.exit`. Movement is
+ *  slightly larger than fadeUp because phase changes are the dominant
+ *  motion in the app; exit is shorter + uses the quieter curve so users
+ *  don't feel like they're waiting between phases. */
+export const phaseVariants: Variants = {
   hidden:  { opacity: 0, y: 12 },
   visible: { opacity: 1, y: 0, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } },
-};
-
-export const phaseExit: Variants = {
-  visible: { opacity: 1, y: 0 },
   exit:    { opacity: 0, y: -8, transition: { duration: SHORT_S, ease: EASE_QUIET } },
 };
 

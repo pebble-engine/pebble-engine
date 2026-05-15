@@ -43,12 +43,39 @@ def test_motion_exports_easings():
 
 def test_motion_exports_variants():
     src = MOTION_TS.read_text(encoding="utf-8")
-    for name in ("fadeUp", "phaseEnter", "phaseExit", "railStep",
+    for name in ("fadeUp", "phaseVariants", "railStep",
                  "chipDeck", "cardHover", "dropletPulse"):
         assert re.search(
             rf"export\s+const\s+{name}\s*:",
             src,
         ), f"motion.ts missing variant export: {name}"
+
+
+def test_motion_phase_variants_has_three_states():
+    """phaseVariants must declare hidden, visible, and exit so consumers
+    can use string variant names (initial="hidden" animate="visible"
+    exit="exit") instead of hand-extracting nested keys."""
+    src = MOTION_TS.read_text(encoding="utf-8")
+    # Match the phaseVariants object body and check all three keys appear.
+    block = re.search(
+        r"export\s+const\s+phaseVariants\s*:[^=]*=\s*\{(.*?)^\};",
+        src,
+        re.DOTALL | re.MULTILINE,
+    )
+    assert block, "phaseVariants object body not found"
+    body = block.group(1)
+    for key in ("hidden", "visible", "exit"):
+        assert re.search(rf"\b{key}\s*:", body), \
+            f"phaseVariants missing '{key}' state key"
+
+
+def test_motion_phase_variants_replaces_old_exports():
+    """Round 2 cleanup: phaseEnter + phaseExit were merged into phaseVariants.
+    Make sure the legacy names are gone so no caller silently picks them up."""
+    src = MOTION_TS.read_text(encoding="utf-8")
+    for legacy in ("phaseEnter", "phaseExit"):
+        assert not re.search(rf"export\s+const\s+{legacy}\s*:", src), \
+            f"legacy export `{legacy}` should have been removed"
 
 
 def test_motion_exports_reduced_motion_helper():

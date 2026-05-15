@@ -26,7 +26,7 @@ import {
 } from "@/lib/state";
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
-import { STANDARD_S, EASE_CINEMATIC, phaseEnter, phaseExit, chipDeck, fadeUp } from "@/lib/motion";
+import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp } from "@/lib/motion";
 import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
@@ -272,10 +272,10 @@ export function WorkspaceShell() {
         <AnimatePresence mode="wait">
           <motion.div
             key={phase}
-            variants={phaseEnter}
+            variants={phaseVariants}
             initial="hidden"
             animate="visible"
-            exit={phaseExit.exit}
+            exit="exit"
             className="flex-1 flex flex-col overflow-hidden"
           >
             {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
