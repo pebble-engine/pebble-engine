@@ -147,8 +147,36 @@ Stack services as full-width vertical sections — a 3-column card grid is forbi
 - Phone number as secondary option beneath it
 - NO competing buttons
 
-**Section 8: Footer**
-- tel: links, mailto: links, address, hours, social icons, copyright
+**Section 8: Footer — MANDATORY 3-column sitemap layout**
+
+File location: `components/layout/Footer.tsx`. Imported into `app/layout.tsx` so it appears on every page (matches the Navbar pattern). The eval looks for the footer at this path; do not inline it into individual pages.
+
+The footer is the user's (and Google's) only complete map of the site. Every page listed in the INDUSTRY-AWARE PAGES section above (FAQ, Privacy, Terms, plus the industry-specific extras like Menu/Team/Booking/etc.) MUST appear as a link in the footer's sitemap column, otherwise the page is effectively invisible after the homepage loads.
+
+Structure: full-width section, dark background (`bg-black` or industry's deep tone), three columns on `md:` breakpoint, stacked single-column on mobile. Render as `<footer className="border-t border-white/10 bg-black text-white/80">` with an inner `max-w-7xl mx-auto px-6 md:px-12 lg:px-16 py-16 grid gap-12 md:grid-cols-3`.
+
+Column 1 — **Contact**:
+- Business name (h3, semibold)
+- One-sentence positioning line
+- `tel:` link (real number from brief, MUST start with `tel:`)
+- `mailto:` link (real email from brief, MUST start with `mailto:`)
+- Street address (one line, no map)
+
+Column 2 — **Sitemap** (THIS IS THE MULTI-PAGE DISCOVERY MOMENT — every page in the build appears here):
+- Heading "Explore" or "Site" (h3, semibold)
+- A `<ul className="space-y-2">` with one `<li><Link href="/...">Title</Link></li>` per generated page
+- Order: Home, Services, About, Contact, then industry-specific pages (in the order they appear above), then FAQ, Privacy, Terms last
+- The Link MUST use Next.js `import Link from "next/link"`, NOT a raw `<a>` (a raw `<a>` triggers a full reload and breaks the SPA navigation experience)
+- No empty href="#" placeholders. Every link points to a route this build generates.
+
+Column 3 — **Hours & social**:
+- Business hours (one line per day, or "Mon-Fri 9-5 · Sat 10-2")
+- Social icons row (only platforms the brief mentions; if none, omit this row entirely — never invent profiles)
+- Copyright line at the bottom of the column: `© {{new Date().getFullYear()}} [Business Name]. All rights reserved.` — the year comes from `new Date().getFullYear()` so it auto-rolls over, and the business name is the one from the brief
+
+Bottom strip below the 3 columns: `border-t border-white/10 mt-12 pt-6 text-xs text-white/50` row with "Built with [Pebble](https://getpebble.net)" attribution on the left and "Privacy · Terms" links on the right.
+
+The eval `footer_lists_all_pages` parses the footer file and FAILS the build if any page declared in `plan.json` is missing from the sitemap column. Don't ship a footer without the sitemap.
 
 ### Navigation — Animated Header
 
@@ -1031,6 +1059,7 @@ The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` hea
   - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1 (must include sr-only span + aria-hidden wrapper + textShadow)
   - `components/ui/FadeIn.tsx` — opacity transition wrapper, verbatim from Code Pattern 1
   - `components/layout/Navbar.tsx` — liquid-glass chip from Code Pattern 2 (with focus-visible utilities on all links)
+  - `components/layout/Footer.tsx` — 3-column sitemap-bearing footer from Section 8 above (every page in this build appears as a Next.js Link in the sitemap column; eval `footer_lists_all_pages` enforces this)
   - `components/sections/Hero.tsx` — composes AnimatedHeading + FadeIn + video bg, imported by `app/page.tsx`
   - `components/forms/ContactForm.tsx` — Server Action + Resend client form, verbatim from Code Pattern 8
   - `app/actions/contact.ts` — Server Action that calls Resend, verbatim from Code Pattern 8

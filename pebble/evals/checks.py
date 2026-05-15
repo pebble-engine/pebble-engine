@@ -1598,7 +1598,139 @@ def plan_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 30. no_duplicate_inline_forms — FOUNDATION (May 2026 competitor-fix batch)
+# 30. footer_lists_all_pages — FOUNDATION (May 2026 multi-page discoverability)
+# ---------------------------------------------------------------------------
+
+# Where the footer can plausibly live. The prompt template requires
+# components/layout/Footer.tsx, but tolerate a couple of fallback locations
+# so a slightly off-template build doesn't fail the check spuriously — what
+# matters is that the routes are linked SOMEWHERE in a layout-level file
+# the user sees on every page.
+_FOOTER_CANDIDATES = (
+    "components/layout/Footer.tsx",
+    "components/Footer.tsx",
+    "app/layout.tsx",
+)
+
+# Routes that are foundation pages (always present, navbar already links
+# them). The eval doesn't care if they're in the footer because the user
+# can already reach them — it only cares about discoverability of the
+# extras the navbar doesn't surface.
+_FOUNDATION_ROUTES = {"/", "/services", "/about", "/contact"}
+
+
+@check_metadata(static_files=("components/layout/Footer.tsx",))
+def footer_lists_all_pages(ctx: BuildContext) -> CheckResult:
+    """Every non-foundation page must be linked from the footer.
+
+    Industry-aware builds emit 9-10 pages, but the navbar only surfaces
+    Services / About / Contact. Without a footer sitemap, the FAQ /
+    Privacy / Terms / Menu / Team / Booking / etc. pages are unreachable
+    by a user (and uncrawlable by a search engine) once they leave the
+    homepage. The footer sitemap is the discoverability mechanism.
+
+    Reads ``plan.json`` to determine the expected route set, finds the
+    footer file, and checks that each non-foundation route appears as a
+    string in that file. The match is intentionally permissive — the
+    LLM may write ``href="/faq"`` or ``Link href={'/faq'}`` or use a
+    ROUTES constant; we just verify the route literal is present.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("footer_lists_all_pages", "skip", "no site directory")
+
+    plan_path = ctx.build_dir / "plan.json"
+    if not plan_path.exists():
+        return CheckResult(
+            "footer_lists_all_pages", "skip",
+            "no plan.json — can't determine expected routes",
+        )
+
+    try:
+        plan = json.loads(plan_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        return CheckResult(
+            "footer_lists_all_pages", "skip",
+            f"plan.json unparseable: {e}",
+        )
+
+    pages = plan.get("pages") or []
+    if not isinstance(pages, list):
+        return CheckResult(
+            "footer_lists_all_pages", "skip",
+            "plan.json 'pages' is not a list",
+        )
+
+    # Routes that should appear in the footer sitemap.
+    expected_routes = []
+    seen = set()
+    for page in pages:
+        if not isinstance(page, dict):
+            continue
+        route = page.get("route")
+        if not isinstance(route, str) or not route.startswith("/"):
+            continue
+        if route in _FOUNDATION_ROUTES:
+            continue
+        if route in seen:
+            continue
+        seen.add(route)
+        expected_routes.append(route)
+
+    if not expected_routes:
+        return CheckResult(
+            "footer_lists_all_pages", "pass",
+            "no non-foundation pages in plan — nothing to link",
+        )
+
+    footer_path = None
+    for candidate in _FOOTER_CANDIDATES:
+        if (ctx.site_dir / candidate).exists():
+            footer_path = ctx.site_dir / candidate
+            break
+
+    if footer_path is None:
+        return CheckResult(
+            "footer_lists_all_pages", "fail",
+            f"no footer file found at any of: {', '.join(_FOOTER_CANDIDATES)}",
+            details={"missing": list(_FOOTER_CANDIDATES)},
+        )
+
+    try:
+        footer_text = footer_path.read_text(encoding="utf-8", errors="ignore")
+    except Exception as e:
+        return CheckResult(
+            "footer_lists_all_pages", "error",
+            f"could not read {footer_path.name}: {e}",
+        )
+
+    # Look for the route as a quoted href value. Both `"/faq"` and
+    # `'/faq'` count; bare `/faq` in a comment doesn't (would be a
+    # false positive for a "see /faq for details" doc string).
+    missing = []
+    for route in expected_routes:
+        if (f'"{route}"' not in footer_text) and (f"'{route}'" not in footer_text):
+            missing.append(route)
+
+    if not missing:
+        return CheckResult(
+            "footer_lists_all_pages", "pass",
+            f"footer at {footer_path.relative_to(ctx.site_dir).as_posix()} "
+            f"links all {len(expected_routes)} non-foundation page(s)",
+        )
+
+    return CheckResult(
+        "footer_lists_all_pages", "fail",
+        f"{len(missing)} page(s) missing from footer sitemap: {', '.join(missing)}",
+        details={
+            "missing_routes": missing,
+            "footer_file":    footer_path.relative_to(ctx.site_dir).as_posix(),
+            "files":          [footer_path.relative_to(ctx.site_dir).as_posix()],
+        },
+    )
+
+
+# ---------------------------------------------------------------------------
+# 31. no_duplicate_inline_forms — FOUNDATION (May 2026 competitor-fix batch)
 # ---------------------------------------------------------------------------
 
 # Matches an HTML/JSX <form ...> opening tag. Excludes self-closing.
@@ -1877,6 +2009,7 @@ ALL_CHECKS = [
     deploy_to_vercel_scaffold,
     industry_pages_present,
     plan_present,
+    footer_lists_all_pages,
     no_duplicate_inline_forms,
     limitations_disclosed_in_readme,
     no_tracking_by_default,

@@ -49,10 +49,19 @@ def good_build(tmp_path: Path) -> Path:
         "_industry_intel_key": "plumbing",
     }
     (d / "brief.json").write_text(json.dumps(fixture_brief))
-    # Pebble Plan emitted by every real build — the plan_present check
-    # validates the schema, not the page count, so a minimal plan from
-    # the brief alone is enough here.
-    (d / "plan.json").write_text(json.dumps(build_pebble_plan(fixture_brief), indent=2))
+    # Pebble Plan emitted by every real build. Hand-constructed here to
+    # include the plumbing industry's two extra pages (service-area,
+    # guarantee) on top of the universal extras (faq, privacy, terms) —
+    # build_pebble_plan() only adds industry pages when industry_intel
+    # is passed, and the fixture stays decoupled from industries.json.
+    plan = build_pebble_plan(fixture_brief)
+    plan["pages"].extend([
+        {"id": "service_area", "title": "Service Area", "route": "/service-area",
+         "purpose": "Where we serve.", "foundation": False},
+        {"id": "guarantee",    "title": "Guarantee",    "route": "/guarantee",
+         "purpose": "Our promise.",   "foundation": False},
+    ])
+    (d / "plan.json").write_text(json.dumps(plan, indent=2))
 
     (site / "package.json").write_text(json.dumps({
         "name": "good",
@@ -159,6 +168,27 @@ def good_build(tmp_path: Path) -> Path:
         (page_dir / "page.tsx").write_text(
             f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
         )
+    # Footer with sitemap links to every non-foundation page (May 2026
+    # multi-page discoverability — eval `footer_lists_all_pages` enforces).
+    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "layout" / "Footer.tsx").write_text(
+        'import Link from "next/link";\n'
+        'export function Footer() {\n'
+        '  return (\n'
+        '    <footer className="border-t border-white/10 bg-black text-white/80">\n'
+        '      <Link href="/">Home</Link>\n'
+        '      <Link href="/services">Services</Link>\n'
+        '      <Link href="/about">About</Link>\n'
+        '      <Link href="/contact">Contact</Link>\n'
+        '      <Link href="/service-area">Service Area</Link>\n'
+        '      <Link href="/guarantee">Guarantee</Link>\n'
+        '      <Link href="/faq">FAQ</Link>\n'
+        '      <Link href="/privacy">Privacy</Link>\n'
+        '      <Link href="/terms">Terms</Link>\n'
+        '    </footer>\n'
+        '  );\n'
+        '}'
+    )
     return d
 
 
@@ -582,6 +612,140 @@ def test_no_css_smooth_scroll_skips_next_build_artifacts(good_build):
     (next_css / "layout.css").write_text("html { scroll-behavior: smooth; }")
     ctx = BuildContext.load(good_build)
     assert checks.no_css_smooth_scroll(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# 2b. footer_lists_all_pages — multi-page discoverability
+# ---------------------------------------------------------------------------
+
+def test_footer_lists_all_pages_passes_when_every_route_linked(good_build):
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "pass", result.message
+    # Plumbing fixture: 2 industry pages (service-area, guarantee) plus
+    # 3 universal extras (faq, privacy, terms) = 5 non-foundation pages.
+    assert "5 non-foundation page(s)" in result.message
+
+
+def test_footer_lists_all_pages_fails_when_industry_route_missing(good_build):
+    """Drop the /guarantee link — the check must call it out specifically."""
+    footer = good_build / "site" / "components" / "layout" / "Footer.tsx"
+    footer.write_text(
+        footer.read_text(encoding="utf-8").replace(
+            '<Link href="/guarantee">Guarantee</Link>\n', ""
+        ),
+        encoding="utf-8",
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "fail"
+    assert "/guarantee" in result.message
+    assert result.details["missing_routes"] == ["/guarantee"]
+
+
+def test_footer_lists_all_pages_fails_when_universal_route_missing(good_build):
+    """Privacy / Terms / FAQ are universal — also enforced."""
+    footer = good_build / "site" / "components" / "layout" / "Footer.tsx"
+    footer.write_text(
+        footer.read_text(encoding="utf-8").replace(
+            '<Link href="/privacy">Privacy</Link>\n', ""
+        ),
+        encoding="utf-8",
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "fail"
+    assert "/privacy" in result.details["missing_routes"]
+
+
+def test_footer_lists_all_pages_fails_when_footer_file_absent_and_layout_silent(good_build):
+    """Footer.tsx is gone AND app/layout.tsx doesn't carry the links — the
+    check falls back to layout.tsx and reports the missing routes."""
+    (good_build / "site" / "components" / "layout" / "Footer.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "fail"
+    assert "missing from footer sitemap" in result.message
+    # The fallback file the check looked at, surfaced in details.
+    assert result.details["footer_file"] == "app/layout.tsx"
+
+
+def test_footer_lists_all_pages_accepts_layout_tsx_fallback(good_build):
+    """If a build inlines the footer in app/layout.tsx instead of a
+    component file, that's still discoverable — check should pass."""
+    (good_build / "site" / "components" / "layout" / "Footer.tsx").unlink()
+    layout = good_build / "site" / "app" / "layout.tsx"
+    layout.write_text(
+        layout.read_text(encoding="utf-8").replace(
+            "</body>",
+            '<footer>'
+            '<a href="/service-area">Service Area</a>'
+            '<a href="/guarantee">Guarantee</a>'
+            '<a href="/faq">FAQ</a>'
+            '<a href="/privacy">Privacy</a>'
+            '<a href="/terms">Terms</a>'
+            '</footer></body>',
+        ),
+        encoding="utf-8",
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.footer_lists_all_pages(ctx).status == "pass"
+
+
+def test_footer_lists_all_pages_accepts_single_quoted_hrefs(good_build):
+    """LLMs sometimes emit `Link href={'/faq'}` — single quotes should match."""
+    footer = good_build / "site" / "components" / "layout" / "Footer.tsx"
+    footer.write_text(
+        'import Link from "next/link";\n'
+        'const ROUTES = {\n'
+        "  faq: '/faq',\n"
+        "  privacy: '/privacy',\n"
+        "  terms: '/terms',\n"
+        "  serviceArea: '/service-area',\n"
+        "  guarantee: '/guarantee',\n"
+        '};\n'
+        'export function Footer() {\n'
+        '  return <footer>{Object.values(ROUTES).map(r => <Link key={r} href={r}>{r}</Link>)}</footer>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.footer_lists_all_pages(ctx).status == "pass"
+
+
+def test_footer_lists_all_pages_skips_when_no_plan(good_build):
+    (good_build / "plan.json").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "skip"
+    assert "no plan.json" in result.message
+
+
+def test_footer_lists_all_pages_skips_when_no_site(tmp_path):
+    d = tmp_path / "prompt-only"
+    d.mkdir()
+    (d / "brief.json").write_text("{}")
+    (d / "plan.json").write_text('{"pages": [{"route": "/faq"}]}')
+    ctx = BuildContext.load(d)
+    assert checks.footer_lists_all_pages(ctx).status == "skip"
+
+
+def test_footer_lists_all_pages_passes_when_only_foundation_pages(good_build):
+    """A plan with only the 4 foundation pages has nothing to surface in
+    the footer beyond what the navbar already shows. Check should pass."""
+    plan = json.loads((good_build / "plan.json").read_text(encoding="utf-8"))
+    plan["pages"] = [
+        {"id": "homepage", "route": "/", "foundation": True},
+        {"id": "services", "route": "/services", "foundation": True},
+        {"id": "about", "route": "/about", "foundation": True},
+        {"id": "contact", "route": "/contact", "foundation": True},
+    ]
+    (good_build / "plan.json").write_text(json.dumps(plan))
+    # Even with no footer file, a foundation-only plan passes.
+    (good_build / "site" / "components" / "layout" / "Footer.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.footer_lists_all_pages(ctx)
+    assert result.status == "pass"
+    assert "nothing to link" in result.message
 
 
 # ---------------------------------------------------------------------------

@@ -61,6 +61,24 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
     )
+    # Footer with sitemap to every universal extra page (May 2026 multi-page
+    # discoverability — eval `footer_lists_all_pages`). The plan emitted
+    # below is built from the brief alone, so only the universal extras
+    # (faq/privacy/terms) need to appear here — industry-specific pages
+    # only show up when industry_intel is supplied to build_pebble_plan.
+    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "layout" / "Footer.tsx").write_text(
+        'import Link from "next/link";\n'
+        'export function Footer() {\n'
+        '  return (\n'
+        '    <footer>\n'
+        '      <Link href="/faq">FAQ</Link>\n'
+        '      <Link href="/privacy">Privacy</Link>\n'
+        '      <Link href="/terms">Terms</Link>\n'
+        '    </footer>\n'
+        '  );\n'
+        '}'
+    )
     # Contact form Server Action scaffold (Resend wiring).
     (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
     (site / "app" / "actions" / "contact.ts").write_text(
@@ -205,6 +223,20 @@ def broken_build(tmp_path: Path) -> Path:
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
+    )
+    # Footer scaffold so footer_lists_all_pages doesn't show up in the
+    # broken_build's failure set — keep this fixture's intentional failures
+    # scoped to required_files_present + hero_has_h1 + dna_display_font_honored.
+    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "layout" / "Footer.tsx").write_text(
+        'import Link from "next/link";\n'
+        'export function Footer() {\n'
+        '  return <footer>'
+        '<Link href="/faq">FAQ</Link>'
+        '<Link href="/privacy">Privacy</Link>'
+        '<Link href="/terms">Terms</Link>'
+        '</footer>;\n'
+        '}'
     )
     # Contact form scaffold so the new contact_form_uses_server_action check
     # passes — broken_build's three intentional failures stay scoped to
