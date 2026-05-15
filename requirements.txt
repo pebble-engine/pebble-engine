@@ -17,4 +17,12 @@ anthropic>=0.40.0
 # --- Post-build automation (optional) ---
 # Enables `next dev` + Playwright screenshots after a full build.
 # After install, also run: playwright install chromium
+# Production hosts (Render) should set PEBBLE_AUTO_RUN=false — there's no
+# browser to take screenshots into, and `next dev` runs locally only.
 playwright>=1.40.0
+
+# --- Cloudflare Pages publishing ---
+# Pebble's /api/publish hashes static assets with BLAKE3 to compute
+# Cloudflare's content-addressed upload manifest. Pure-Rust wheels are
+# published on PyPI for every major OS, so no compile step on Render.
+blake3>=0.4.0
