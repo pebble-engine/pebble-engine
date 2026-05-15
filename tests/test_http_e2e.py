@@ -291,3 +291,40 @@ def test_preview_non_html_files_pass_through(engine_server):
     status, body = _get(engine_server["base"], "/preview/good-co/app/globals.css")
     assert status == 200
     assert "pebble-bridge" not in body
+
+
+# ---- /api/migrate -------------------------------------------------------
+
+def test_migrate_validates_url(engine_server):
+    status, body = _post(engine_server["base"], "/api/migrate", {"url": ""})
+    assert status == 400
+
+
+def test_migrate_returns_partial_brief_for_simulated_html(engine_server, monkeypatch):
+    """Patch the fetcher so the test doesn't depend on the network."""
+    import pebble.migrate as migrate
+    html = (
+        "<!doctype html><html><head>"
+        "<title>Wildflower Bakery — Brooklyn's freshest sourdough</title>"
+        "<meta name='description' content='Hand-kneaded sourdough in Park Slope.'>"
+        "</head><body><h1>Welcome</h1><p>Phone (212) 555-7777</p></body></html>"
+    )
+    monkeypatch.setattr(migrate, "_fetch_url", lambda url: ("https://example.com/", html, len(html), None))
+
+    status, body = _post(engine_server["base"], "/api/migrate", {"url": "https://example.com"})
+    assert status == 200
+    assert body["ok"] is True
+    assert body["brief_partial"]["business_name"] == "Wildflower Bakery"
+    assert body["brief_partial"]["business_type"] == "bakery"
+    assert "Park Slope" in body["brief_partial"]["extra_context"]
+
+
+def test_migrate_reports_fetch_error_as_200_with_error_field(engine_server, monkeypatch):
+    import pebble.migrate as migrate
+    monkeypatch.setattr(migrate, "_fetch_url", lambda url: ("", "", 0, "HTTP 503"))
+    status, body = _post(engine_server["base"], "/api/migrate", {"url": "https://example.com"})
+    # We return 200 with error filled in so the UI can render whatever
+    # partial extract we got (here: nothing) without treating it as a hard fail.
+    assert status == 200
+    assert body["ok"] is False
+    assert body["error"] == "HTTP 503"

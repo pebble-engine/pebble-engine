@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
@@ -131,6 +132,15 @@ export default function WelcomePage() {
             </button>
           ))}
         </div>
+
+        {/* Migration entry — only visible if the user has typed nothing yet. */}
+        <Link
+          href="/migrate"
+          className="pointer-events-auto text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mt-2"
+        >
+          <span className="opacity-80">Already have a site?</span>
+          <span className="font-semibold underline underline-offset-2">Bring it over →</span>
+        </Link>
       </main>
 
       <footer className="absolute bottom-0 inset-x-0 py-8 text-center px-4 pointer-events-none z-10">

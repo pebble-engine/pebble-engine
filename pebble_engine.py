@@ -1536,6 +1536,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_refine()
             elif self.path == "/api/visual-edit":
                 self._handle_visual_edit()
+            elif self.path == "/api/migrate":
+                self._handle_migrate()
             elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
                 slug = self.path[len("/api/projects/"):-len("/star")]
                 self._handle_toggle_star(slug)
@@ -1854,6 +1856,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
         in :mod:`pebble.server.visual_edit`."""
         from pebble.server.visual_edit import run_visual_edit
         run_visual_edit(self)
+
+    def _handle_migrate(self):
+        """POST /api/migrate — pull semantic facts from an existing
+        public URL so users switching from another platform can
+        pre-fill the intake without re-typing everything. Body lives
+        in :mod:`pebble.server.migrate`."""
+        from pebble.server.migrate import run_migrate
+        run_migrate(self)
 
     def _serve_file(self, path: Path, content_type: str):
         if not path.exists():

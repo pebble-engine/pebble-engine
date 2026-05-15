@@ -165,3 +165,45 @@ export function isPebbleSelectMessage(data: unknown): data is PebbleSelectMessag
   const d = data as Record<string, unknown>;
   return d.type === "pebble-select" && typeof d.tag === "string";
 }
+
+// ---------- /api/migrate (new — site migration entry point) ----------------
+
+export type MigrationExtract = {
+  url:                 string;
+  final_url:           string;
+  title:               string;
+  meta_description:    string;
+  og_title:            string;
+  og_description:      string;
+  headings:            string[];
+  nav_links:           string[];
+  phone:               string;
+  emails:              string[];
+  image_count:         number;
+  image_hosts:         string[];
+  color_hints:         string[];
+  text_sample:         string;
+  business_name_guess: string;
+  business_type_guess: string;
+  error:               string | null;
+  raw_bytes:           number;
+};
+
+export type MigrateBriefPartial = {
+  business_name:  string;
+  business_type:  string;
+  extra_context:  string;
+  _migrated_from: string;
+};
+
+export type MigrateResponse = {
+  url:           string;
+  extract:       MigrationExtract;
+  brief_partial: MigrateBriefPartial;
+  ok:            boolean;
+  error:         string | null;
+};
+
+export async function migrateFromUrl(url: string): Promise<MigrateResponse> {
+  return postJSON("/api/migrate", { url });
+}
