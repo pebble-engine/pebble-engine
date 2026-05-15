@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getBrief } from "@/lib/state";
-import { dropletPulse, SHORT_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
+import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -67,6 +67,7 @@ type LogLine = { ts: string; text: string; tone: "info" | "ok" | "step" };
 export function DraftPhase({ error, done }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
+  const [readyPulsing, setReadyPulsing] = useState(false);
   const startedRef = useRef(false);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -74,7 +75,7 @@ export function DraftPhase({ error, done }: Props) {
   // Auto-scroll the build feed when new lines arrive.
   useEffect(() => {
     if (feedRef.current) {
-      feedRef.current.scrollTop = feedRef.current.scrollHeight;
+      feedRef.current.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [logLines]);
 
@@ -167,6 +168,7 @@ export function DraftPhase({ error, done }: Props) {
   useEffect(() => {
     if (done) {
       setActiveIdx(STEPS.length - 1);
+      setReadyPulsing(true);
       setLogLines((prev) => [
         ...prev,
         { ts: new Date().toLocaleTimeString(), text: "✓ all done. opening your draft.", tone: "ok" },
@@ -185,7 +187,16 @@ export function DraftPhase({ error, done }: Props) {
 
   return (
     <main className="flex-1 flex flex-col items-center pt-10 pb-12 px-4 max-w-3xl mx-auto w-full overflow-y-auto">
-      <section className="mb-8 text-center">
+      {/* Cinematic entrance stagger: droplet → headline → subhead. */}
+      <motion.section
+        initial="hidden"
+        animate="visible"
+        variants={{
+          hidden:  {},
+          visible: { transition: { staggerChildren: 0.12, delayChildren: 0 } },
+        }}
+        className="mb-8 text-center"
+      >
         {/* Smooth scale pulse — no rotate. Rotating a small glyph by ±6°
             sub-pixel-jitters the anti-aliasing and reads as "stutter" even
             when Framer is hitting 60fps. A pure scale animation on an SVG
@@ -201,13 +212,19 @@ export function DraftPhase({ error, done }: Props) {
             <Droplet className="w-14 h-14 fill-current" strokeWidth={1.5} />
           </motion.div>
         </div>
-        <h1 className="font-display text-2xl md:text-3xl font-bold text-foreground">
+        <motion.h1
+          variants={fadeUp}
+          className="font-display text-2xl md:text-3xl font-bold text-foreground"
+        >
           Pebble is building your draft.
-        </h1>
-        <p className="text-sm text-muted-foreground mt-2">
+        </motion.h1>
+        <motion.p
+          variants={fadeUp}
+          className="text-sm text-muted-foreground mt-2"
+        >
           Usually 2–3 minutes. Feel free to keep this window open.
-        </p>
-      </section>
+        </motion.p>
+      </motion.section>
 
       {/* Macro checklist — high-level "where are we" */}
       <section className="w-full max-w-lg bg-card border border-border rounded-2xl p-6 mb-6">
@@ -215,6 +232,11 @@ export function DraftPhase({ error, done }: Props) {
           <div className="absolute left-[19px] top-4 bottom-4 w-0.5 bg-border" />
           {STEPS.map((step, i) => {
             const state = i < activeIdx ? "done" : i === activeIdx ? "active" : "pending";
+            // When `done` fires, activeIdx is pinned to STEPS.length-1, making
+            // the last step state === "active". We detect that specific moment
+            // with readyPulsing so we can play the scale pulse instead of the
+            // standard glow.
+            const isFinalDone = readyPulsing && i === STEPS.length - 1;
             return (
               <motion.div
                 key={step.id}
@@ -224,17 +246,27 @@ export function DraftPhase({ error, done }: Props) {
                 className="flex gap-3 relative z-10"
               >
                 <motion.div
-                  animate={{
-                    scale: state === "active" ? 1.05 : 1,
-                    backgroundColor:
-                      state === "done"
-                        ? "var(--color-sage)"
-                        : state === "active"
-                          ? "var(--accent-1)"
-                          : "var(--surface-1)",
-                  }}
-                  transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
-                  className="w-10 h-10 rounded-full flex items-center justify-center border border-border shrink-0"
+                  animate={
+                    isFinalDone
+                      ? { scale: [1, 1.12, 1] }
+                      : {
+                          scale: state === "active" ? 1.05 : 1,
+                          backgroundColor:
+                            state === "done"
+                              ? "var(--color-sage)"
+                              : state === "active"
+                                ? "var(--accent-1)"
+                                : "var(--surface-1)",
+                        }
+                  }
+                  transition={
+                    isFinalDone
+                      ? { duration: SLOW_S * 1.14, ease: EASE_CINEMATIC }
+                      : { duration: STANDARD_S, ease: EASE_CINEMATIC }
+                  }
+                  className={`w-10 h-10 rounded-full flex items-center justify-center border border-border shrink-0 ${
+                    state === "active" ? "pebble-step-active" : ""
+                  }`}
                 >
                   {state === "done" ? (
                     <CheckCircle2 className="w-5 h-5 text-white" />
@@ -266,8 +298,15 @@ export function DraftPhase({ error, done }: Props) {
       </section>
 
       {/* Live build feed — visible by default so the user can SEE the
-          engine working. Eliminates the "is it frozen?" panic. */}
-      <section className="w-full max-w-2xl">
+          engine working. Eliminates the "is it frozen?" panic.
+          Entrance stagger: fades up after the checklist settles (~0.92s delay). */}
+      <motion.section
+        variants={fadeUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 0.92, duration: STANDARD_S, ease: EASE_CINEMATIC }}
+        className="w-full max-w-2xl"
+      >
         <div className="flex items-center justify-between mb-2 px-1">
           <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
             Live build feed
@@ -283,24 +322,32 @@ export function DraftPhase({ error, done }: Props) {
           {logLines.length === 0 && (
             <p className="text-pebble/50">Waiting for the first event...</p>
           )}
-          {logLines.map((line, i) => (
-            <p key={i} className="whitespace-pre-wrap break-all">
-              <span className="text-pebble/40">[{line.ts}]</span>{" "}
-              <span
-                className={
-                  line.tone === "ok"
-                    ? "text-sage"
-                    : line.tone === "step"
-                      ? "text-spark font-semibold"
-                      : "text-pebble"
-                }
+          <AnimatePresence initial={false}>
+            {logLines.map((line, i) => (
+              <motion.p
+                key={i}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: MICRO_S, ease: EASE_CINEMATIC }}
+                className="whitespace-pre-wrap break-all"
               >
-                {line.text}
-              </span>
-            </p>
-          ))}
+                <span className="text-pebble/40">[{line.ts}]</span>{" "}
+                <span
+                  className={
+                    line.tone === "ok"
+                      ? "text-sage"
+                      : line.tone === "step"
+                        ? "text-spark font-semibold"
+                        : "text-pebble"
+                  }
+                >
+                  {line.text}
+                </span>
+              </motion.p>
+            ))}
+          </AnimatePresence>
         </div>
-      </section>
+      </motion.section>
 
       <AnimatePresence>
         {error && (
