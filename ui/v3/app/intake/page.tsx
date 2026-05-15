@@ -1,11 +1,12 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft,
   ArrowRight,
+  HelpCircle,
   Home,
   Plane,
   Briefcase,
@@ -34,6 +35,7 @@ type Step = {
   multi: boolean;
   headline: string;
   subhead: string;
+  tip: string;
   chips: { id: string; label: string; Icon: LucideIcon }[];
 };
 
@@ -43,6 +45,7 @@ const STEPS: Step[] = [
     multi: true,
     headline: "Who walks in your door?",
     subhead: "Don't overthink it — locals, tourists, professionals, whoever you serve.",
+    tip: "We use this to pick who the homepage talks to first. Mixing two audiences is fine; mixing five usually waters down every page. Aim for one or two.",
     chips: [
       { id: "locals",        label: "Locals",        Icon: Home },
       { id: "travelers",     label: "Travelers",     Icon: Plane },
@@ -57,6 +60,7 @@ const STEPS: Step[] = [
     multi: true,
     headline: "What's the main thing visitors should do?",
     subhead: "Pick what matters. Pebble adds the right page for each.",
+    tip: "Each pick adds a corresponding section or page — Book becomes a booking widget, Buy becomes a product grid. You can edit or remove any of them later in the workspace.",
     chips: [
       { id: "presence",  label: "See your story",      Icon: BookOpen },
       { id: "leads",     label: "Get in touch",        Icon: Mail },
@@ -71,6 +75,7 @@ const STEPS: Step[] = [
     multi: false,
     headline: "What feeling should it give off?",
     subhead: "One word that captures the mood.",
+    tip: "Tone steers the design DNA: a bold tone biases toward Brutalist Editorial or Cinematic IMAX; a calm tone toward Swiss Magazine or Whitespace Maximum. You can regenerate to try a different DNA later.",
     chips: [
       { id: "warm",         label: "Warm",         Icon: Sun },
       { id: "professional", label: "Professional", Icon: Award },
@@ -187,8 +192,9 @@ export default function IntakePage() {
                 <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
                   Question {stepIdx + 1} of {STEPS.length}
                 </p>
-                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+                <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground inline-flex items-center gap-2 justify-center">
                   {step.headline}
+                  <Tooltip text={step.tip} />
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-xl mx-auto">{step.subhead}</p>
               </div>
@@ -262,6 +268,7 @@ export default function IntakePage() {
         </div>
       </main>
 
+      {/* Tooltip closes when the user clicks outside; handled inside the component */}
       <footer className="w-full px-8 py-8 flex justify-between items-center">
         <button
           onClick={handleBack}
@@ -280,5 +287,45 @@ export default function IntakePage() {
         </motion.button>
       </footer>
     </div>
+  );
+}
+
+/**
+ * Inline help tooltip. Tap-to-toggle on touch; hover-to-show on desktop
+ * via :focus-within + :hover. The button stays focusable for keyboard
+ * users. Closes when you click elsewhere.
+ */
+function Tooltip({ text }: { text: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    function onClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    window.addEventListener("click", onClick);
+    return () => window.removeEventListener("click", onClick);
+  }, [open]);
+
+  return (
+    <span ref={ref} className="relative inline-flex items-center align-middle">
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
+        className="w-7 h-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent inline-flex items-center justify-center transition-colors"
+        aria-label="What does this question mean?"
+        aria-expanded={open}
+      >
+        <HelpCircle className="w-5 h-5" />
+      </button>
+      {open && (
+        <span
+          role="tooltip"
+          className="absolute z-30 top-full mt-2 left-1/2 -translate-x-1/2 w-72 max-w-[80vw] bg-card border border-border rounded-xl px-4 py-3 text-sm text-muted-foreground shadow-[var(--shadow-1)] text-left leading-snug font-sans"
+        >
+          {text}
+        </span>
+      )}
+    </span>
   );
 }

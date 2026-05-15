@@ -255,6 +255,22 @@ export async function fetchUsage(): Promise<UsageSummary> {
   return getJSON("/api/usage");
 }
 
+// ---------- /api/activity (new) --------------------------------------------
+
+export type ActivityRow = {
+  slug:          string;
+  business_name: string;
+  snapshot_id:   string;
+  reason:        string;
+  source:        string;
+  written_at:    string;
+  files_count:   number;
+};
+
+export async function fetchActivity(): Promise<{ activity: ActivityRow[]; count: number }> {
+  return getJSON("/api/activity");
+}
+
 // ---------- /api/publish (new) ---------------------------------------------
 
 export type PublishKind = "zip" | "cloudflare";

@@ -16,6 +16,7 @@ import { motion, useReducedMotion } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthMenu } from "@/components/auth-menu";
 import { ArrowRight, Check, ChevronDown, History, Image as ImageIcon, MousePointerClick, Shield, Sparkles, Wand2 } from "lucide-react";
+import { PUBLIC_FAQ as FAQ_ITEMS } from "@/lib/faq";
 
 /* ------------------------------------------------------------------ Hero -- */
 
@@ -376,29 +377,6 @@ function Pricing() {
 }
 
 /* --------------------------------------------------------------- FAQ -- */
-
-const FAQ_ITEMS = [
-  {
-    q: "How is this different from a template builder?",
-    a: "Template builders pick from a fixed gallery — you get one of N designs everyone else can also pick. Pebble synthesizes a fresh design DNA per build: fonts, palette, layout posture, signature interactions. Two builds for the same business look like two different studios made them. That's the point.",
-  },
-  {
-    q: "Can I bring my existing site over?",
-    a: "Yes — paste the URL on /migrate. Pebble extracts your business name, industry, contact details, color hints, and a short text sample. You confirm what's right, fix what's wrong, then continue into the build. Nothing is uploaded to a third party.",
-  },
-  {
-    q: "Will my site work on phones?",
-    a: "Yes. Every build targets mobile-first with 16px-minimum input fonts, 100dvh-safe heights for mobile browsers, and tested across phone breakpoints. Mobile correctness is one of the 33 FOUNDATION eval checks every site has to pass.",
-  },
-  {
-    q: "Do you sell my data or run trackers?",
-    a: "No. Pebble ships sites with zero third-party trackers by default — no Google Analytics, no Meta Pixel, no Hotjar, no Mixpanel. The eval suite fails any build that embeds them. If you want analytics later, you'll add it explicitly.",
-  },
-  {
-    q: "What if I don't like what Pebble built?",
-    a: "Try a different DNA — regenerate from the same brief and you'll get a different site. Or click into the visual editor and tweak directly. Every change is undoable. We're also planning a refund window once billing launches.",
-  },
-];
 
 function FAQ() {
   const [open, setOpen] = useState<number | null>(0);

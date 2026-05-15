@@ -21,9 +21,11 @@ import {
   listProjects,
   toggleStar,
   fetchUsage,
+  fetchActivity,
   deleteProject,
   type ProjectSummary,
   type UsageSummary,
+  type ActivityRow,
 } from "@/lib/api";
 import { setLastBuild, getUserProfile } from "@/lib/state";
 
@@ -33,6 +35,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
+  const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
@@ -47,9 +50,14 @@ export default function DashboardPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const [projRes, usageRes] = await Promise.all([listProjects(), fetchUsage().catch(() => null)]);
+      const [projRes, usageRes, activityRes] = await Promise.all([
+        listProjects(),
+        fetchUsage().catch(() => null),
+        fetchActivity().catch(() => ({ activity: [], count: 0 })),
+      ]);
       setProjects(projRes.projects);
       setUsage(usageRes);
+      setActivity(activityRes.activity || []);
     } finally {
       setLoading(false);
     }
@@ -226,11 +234,77 @@ export default function DashboardPage() {
                 ))}
               </AnimatePresence>
             </motion.div>
+
+            {!loading && activity.length > 0 && (
+              <ActivityFeed activity={activity} onOpenProject={(slug) => {
+                const p = projects.find((x) => x.slug === slug);
+                if (p) openProject(p);
+              }} />
+            )}
           </div>
         </main>
       </div>
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+
+function ActivityFeed({
+  activity, onOpenProject,
+}: { activity: ActivityRow[]; onOpenProject: (slug: string) => void }) {
+  return (
+    <section className="pt-4 border-t border-border space-y-4">
+      <div className="flex items-center gap-2">
+        <Clock className="w-4 h-4 text-muted-foreground" />
+        <h2 className="font-display text-lg font-semibold text-foreground">Recently changed</h2>
+        <p className="text-xs text-muted-foreground">— every refinement and edit, undoable from the project workspace.</p>
+      </div>
+      <ul className="space-y-1.5">
+        {activity.slice(0, 10).map((row) => (
+          <li
+            key={`${row.slug}-${row.snapshot_id}`}
+            className="flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border hover:bg-accent transition-colors cursor-pointer"
+            onClick={() => onOpenProject(row.slug)}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-semibold text-foreground truncate">
+                {row.business_name}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {labelForReason(row.reason)} · {formatRelative(row.written_at)}
+              </p>
+            </div>
+            <span className="text-[10px] font-mono uppercase text-muted-foreground shrink-0">
+              {row.files_count} files
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function labelForReason(reason: string): string {
+  if (reason.startsWith("refine")) return `Refinement: ${reason.replace("refine-", "")}`;
+  if (reason.startsWith("visual-edit")) return `Visual edit: ${reason.replace("visual-edit-", "")}`;
+  if (reason === "generate") return "Generated";
+  if (reason === "restore") return "Restored";
+  if (reason === "publish") return "Published";
+  return reason;
+}
+
+function formatRelative(iso: string): string {
+  if (!iso) return "";
+  try {
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return iso;
+    const seconds = Math.floor((Date.now() - t) / 1000);
+    if (seconds < 60)     return "just now";
+    if (seconds < 3600)   return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400)  return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  } catch { return iso; }
 }
 
 // ---------------------------------------------------------------------------

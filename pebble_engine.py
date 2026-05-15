@@ -1508,6 +1508,17 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_list_projects()
             elif self.path == "/api/usage":
                 self._handle_usage_summary()
+            elif self.path == "/api/activity":
+                self._handle_activity_feed()
+            elif self.path == "/api/admin/users":
+                from pebble.server.admin import run_list_users
+                run_list_users(self)
+            elif self.path == "/api/admin/projects":
+                from pebble.server.admin import run_list_all_projects
+                run_list_all_projects(self)
+            elif self.path == "/api/admin/errors":
+                from pebble.server.admin import run_recent_errors
+                run_recent_errors(self)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
                 slug = self.path[len("/api/projects/"):-len("/history")]
                 self._handle_get_history(slug)
@@ -1887,6 +1898,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
         """GET /api/usage — aggregate cost telemetry across every project."""
         from pebble.server.projects import run_usage_summary
         run_usage_summary(self)
+
+    def _handle_activity_feed(self):
+        """GET /api/activity — chronological feed of snapshots across all
+        of the current user's projects (the dashboard "Recently changed"
+        widget)."""
+        from pebble.server.projects import run_activity_feed
+        run_activity_feed(self)
 
     def _handle_delete_project(self, slug: str):
         """DELETE /api/projects/<slug> — hard delete."""

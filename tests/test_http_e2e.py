@@ -386,6 +386,29 @@ def _extract_cookie(set_cookie_header: str | None) -> str:
     return set_cookie_header.split(";", 1)[0].strip()
 
 
+def test_activity_feed_empty_when_no_history(engine_server):
+    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"})
+    status, body = _get(engine_server["base"], "/api/activity")
+    assert status == 200
+    assert body["count"] == 0
+
+
+def test_activity_feed_lists_snapshots_newest_first(engine_server):
+    out = engine_server["output"]
+    _seed_project(out, "good-co", {"app/page.tsx": "ORIGINAL"},
+                  brief={"business_name": "Good Co"})
+    history_mod.snapshot_site("good-co", reason="generate", source="POST /api/generate")
+    time.sleep(1.05)
+    history_mod.snapshot_site("good-co", reason="refine-friendlier", source="POST /api/refine")
+    status, body = _get(engine_server["base"], "/api/activity")
+    assert status == 200
+    assert body["count"] == 2
+    # Newest first
+    assert body["activity"][0]["reason"] == "refine-friendlier"
+    assert body["activity"][1]["reason"] == "generate"
+    assert body["activity"][0]["business_name"] == "Good Co"
+
+
 def test_signup_writes_welcome_email_to_outbox(engine_server):
     base = engine_server["base"]
     out = engine_server["output"]

@@ -156,6 +156,68 @@ def _project_mtime(project_dir: Path) -> str:
         return ""
 
 
+# --------- GET /api/activity ---------
+
+def run_activity_feed(handler) -> None:
+    """Aggregate recent snapshots across every project visible to the
+    current user. Powers the dashboard "Recently changed" widget.
+
+    Each row: ``{slug, business_name, snapshot_id, reason, source,
+    written_at, files_count}``. Newest first, capped at 30 entries.
+    """
+    # Resolve current user once.
+    current_uid: Optional[str] = None
+    try:
+        from pebble.server.auth import current_user_id
+        current_uid = current_user_id(handler)
+    except Exception:
+        current_uid = None
+
+    out = _output_dir()
+    if not out.exists():
+        handler._json(200, {"activity": [], "count": 0})
+        return
+
+    rows: list[dict] = []
+    for project_dir in out.iterdir():
+        if not project_dir.is_dir():
+            continue
+        # Skip non-project directories
+        brief_path = project_dir / "brief.json"
+        if not brief_path.exists() and not (project_dir / "site").exists():
+            continue
+
+        brief = {}
+        if brief_path.exists():
+            try:
+                brief = json.loads(brief_path.read_text(encoding="utf-8"))
+            except Exception:
+                brief = {}
+
+        # User-scope filter
+        if current_uid:
+            owner = brief.get("_user_id")
+            if owner and owner != current_uid:
+                continue
+
+        business_name = brief.get("business_name", project_dir.name)
+
+        for entry in list_history(project_dir.name):
+            rows.append({
+                "slug":          project_dir.name,
+                "business_name": business_name,
+                "snapshot_id":   entry.snapshot_id,
+                "reason":        entry.reason,
+                "source":        entry.source,
+                "written_at":    entry.written_at,
+                "files_count":   entry.files_count,
+            })
+
+    rows.sort(key=lambda r: r.get("written_at") or "", reverse=True)
+    rows = rows[:30]
+    handler._json(200, {"activity": rows, "count": len(rows)})
+
+
 # --------- GET /api/projects/<slug>/history ---------
 
 def run_get_history(handler, slug: str) -> None:
