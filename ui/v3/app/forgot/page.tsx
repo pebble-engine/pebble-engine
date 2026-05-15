@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { createClient } from "@/lib/supabase/client";
 
 export default function ForgotPage() {
+  const supabase = useMemo(() => createClient(), []);
   const [email, setEmail] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [sent, setSent] = useState(false);
@@ -15,10 +17,11 @@ export default function ForgotPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await fetch("/api/auth/forgot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+      // Don't surface "no such email" errors back to the user — they
+      // become an enumeration oracle. Either way we show the "check
+      // your inbox" state. Supabase already de-noises this on its end.
+      await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/reset`,
       });
     } finally {
       setSubmitting(false);

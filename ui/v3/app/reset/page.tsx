@@ -1,22 +1,75 @@
 "use client";
 
-import { useState, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useAuth } from "@/components/auth-provider";
+import { createClient } from "@/lib/supabase/client";
+
+/**
+ * Password reset confirm. The user arrives here by clicking the link
+ * Supabase emailed after `/forgot`. Supabase's URL contains a hash
+ * fragment with the recovery tokens; the browser client auto-detects
+ * it on mount and creates a short-lived session. Once that session
+ * exists, we can call `supabase.auth.updateUser({ password })`.
+ *
+ * If the user lands here without a recovery session (clicked the link
+ * twice, link expired, etc.), we show a clear "request a new link"
+ * fallback instead of leaving them confused.
+ */
+export default function ResetPage() {
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <header className="flex items-center justify-between px-6 py-5">
+        <Link href="/landing" className="font-display text-2xl font-bold tracking-tight text-foreground">
+          Pebble.
+        </Link>
+        <ThemeToggle />
+      </header>
+
+      <main className="flex-1 flex items-center justify-center px-6 py-10">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md space-y-7"
+        >
+          <ResetForm />
+        </motion.div>
+      </main>
+    </div>
+  );
+}
 
 function ResetForm() {
   const router = useRouter();
-  const params = useSearchParams();
-  const { refresh } = useAuth();
-  const token = params.get("token") || "";
+  const supabase = useMemo(() => createClient(), []);
+  const [ready, setReady] = useState<"checking" | "ok" | "no-session">("checking");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Supabase listens for the PASSWORD_RECOVERY event when the recovery
+  // tokens are parsed from the URL hash. If we see a session by the
+  // time the effect runs, we're good; if not, we surface the "request
+  // a new link" fallback.
+  useEffect(() => {
+    let cancelled = false;
+    supabase.auth.getSession().then(({ data }) => {
+      if (cancelled) return;
+      setReady(data.session ? "ok" : "no-session");
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") setReady("ok");
+    });
+    return () => {
+      cancelled = true;
+      sub.subscription.unsubscribe();
+    };
+  }, [supabase]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -31,32 +84,29 @@ function ResetForm() {
     }
     setSubmitting(true);
     try {
-      const resp = await fetch("/api/auth/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, password }),
-      });
-      const data = await resp.json();
-      if (!resp.ok) {
-        setError(data.error || "Reset failed.");
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        setError(error.message);
         setSubmitting(false);
         return;
       }
-      // Server set our cookie — refresh auth state and go home.
-      try { await refresh(); } catch {}
-      router.push("/dashboard");
+      router.push("/workspace");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Reset failed.");
       setSubmitting(false);
     }
   }
 
-  if (!token) {
+  if (ready === "checking") {
+    return <p className="text-muted-foreground text-center">Loading reset link…</p>;
+  }
+
+  if (ready === "no-session") {
     return (
       <div className="text-center space-y-4">
-        <p className="font-display text-2xl text-foreground">No reset token.</p>
+        <p className="font-display text-2xl text-foreground">Reset link expired or already used.</p>
         <p className="text-muted-foreground">
-          Open the link from your reset email, or request a new one.
+          Open the link from your latest reset email, or request a new one.
         </p>
         <Link href="/forgot" className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary">
           Request a new link <ArrowRight className="w-4 h-4" />
@@ -75,7 +125,7 @@ function ResetForm() {
           Pick a new password
         </h1>
         <p className="text-muted-foreground">
-          At least 8 characters. After saving, we&apos;ll sign you back in.
+          At least 8 characters. After saving, we&apos;ll sign you in.
         </p>
       </div>
 
@@ -128,31 +178,5 @@ function ResetForm() {
         </button>
       </form>
     </>
-  );
-}
-
-export default function ResetPage() {
-  return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-5">
-        <Link href="/landing" className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Pebble.
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md space-y-7"
-        >
-          <Suspense fallback={<p className="text-muted-foreground text-center">Loading…</p>}>
-            <ResetForm />
-          </Suspense>
-        </motion.div>
-      </main>
-    </div>
   );
 }
