@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { ThemeToggle } from "./theme-toggle";
+import { AuthMenu } from "./auth-menu";
 
 /**
  * Shared top nav for every screen after welcome. Brand mark left, theme
@@ -33,6 +34,7 @@ export function TopNav({
       </div>
       <div className="flex items-center gap-3">
         {rightSlot}
+        <AuthMenu />
         <ThemeToggle />
       </div>
     </header>

@@ -181,6 +181,17 @@ def run_build(handler, generate: bool) -> None:
     if "_created_at" not in answers:
         answers["_created_at"] = datetime.now().isoformat()
 
+    # Stamp the owner if the request carries a session cookie. Anonymous
+    # generation still works (current MVP behavior); auth-enabled users
+    # get their projects scoped on the dashboard.
+    try:
+        from pebble.server.auth import current_user_id
+        owner = current_user_id(handler)
+        if owner:
+            answers["_user_id"] = owner
+    except Exception as e:
+        log.warning("user id resolution failed: %s", e)
+
     ds_text = ""
     if generate_design_system:
         try:

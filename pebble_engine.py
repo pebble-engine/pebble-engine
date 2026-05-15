@@ -1501,6 +1501,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/briefs/"):
                 slug = self.path.split("/api/briefs/", 1)[1]
                 self._handle_get_brief(slug)
+            elif self.path == "/api/auth/me":
+                from pebble.server.auth import run_me
+                run_me(self)
             elif self.path == "/api/projects":
                 self._handle_list_projects()
             elif self.path == "/api/usage":
@@ -1540,6 +1543,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_visual_edit()
             elif self.path == "/api/migrate":
                 self._handle_migrate()
+            elif self.path == "/api/auth/signup":
+                from pebble.server.auth import run_signup
+                run_signup(self)
+            elif self.path == "/api/auth/login":
+                from pebble.server.auth import run_login
+                run_login(self)
+            elif self.path == "/api/auth/logout":
+                from pebble.server.auth import run_logout
+                run_logout(self)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
                 slug = self.path[len("/api/projects/"):-len("/star")]
                 self._handle_toggle_star(slug)
@@ -1914,13 +1926,19 @@ class PebbleHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(data)
 
-    def _json(self, status: int, payload: dict):
+    def _json(self, status: int, payload: dict, extra_headers: list | None = None):
+        """Write a JSON response. ``extra_headers`` is an optional list of
+        ``(name, value)`` tuples — used by auth handlers to attach a
+        Set-Cookie."""
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(body)))
         self.send_header("Access-Control-Allow-Origin", "*")
         self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Credentials", "true")
+        for name, value in (extra_headers or []):
+            self.send_header(name, value)
         self.end_headers()
         self.wfile.write(body)
 

@@ -14,6 +14,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AuthMenu } from "@/components/auth-menu";
 import { ArrowRight, Check, ChevronDown, History, Image as ImageIcon, MousePointerClick, Shield, Sparkles, Wand2 } from "lucide-react";
 
 /* ------------------------------------------------------------------ Hero -- */
@@ -508,15 +509,9 @@ function MarketingTopBar() {
           <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <AuthMenu />
           <ThemeToggle />
-          <Link
-            href="/intake"
-            className="hidden sm:inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:scale-[1.02] transition-transform"
-          >
-            Start
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
         </div>
       </div>
     </header>

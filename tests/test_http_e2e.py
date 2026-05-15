@@ -357,6 +357,113 @@ def test_visual_edit_font_size_surgical_uses_new_font_size(engine_server):
     assert "font-size: 28px" in content
 
 
+# ---- /api/auth/* end-to-end ---------------------------------------------
+
+def _post_with_cookie(base: str, path: str, body: dict, cookie: str | None = None) -> tuple[int, dict | str, str | None]:
+    """Like _post, but returns the Set-Cookie response header too."""
+    data = json.dumps(body).encode("utf-8")
+    headers = {"Content-Type": "application/json"}
+    if cookie:
+        headers["Cookie"] = cookie
+    req = urllib.request.Request(f"{base}{path}", data=data, headers=headers, method="POST")
+    try:
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            body_text = resp.read().decode("utf-8", errors="replace")
+            try: json_body = json.loads(body_text)
+            except Exception: json_body = body_text
+            return resp.status, json_body, resp.headers.get("Set-Cookie")
+    except urllib.error.HTTPError as e:
+        body_text = e.read().decode("utf-8", errors="replace")
+        try: json_body = json.loads(body_text)
+        except Exception: json_body = body_text
+        return e.code, json_body, e.headers.get("Set-Cookie")
+
+
+def _extract_cookie(set_cookie_header: str | None) -> str:
+    """Pull the name=value pair out of a Set-Cookie so we can re-send it."""
+    if not set_cookie_header:
+        return ""
+    return set_cookie_header.split(";", 1)[0].strip()
+
+
+def test_auth_signup_login_me_logout_flow(engine_server):
+    base = engine_server["base"]
+
+    # Signup
+    status, body, set_cookie = _post_with_cookie(base, "/api/auth/signup", {
+        "email": "qwen@example.com", "password": "valid-password",
+    })
+    assert status == 201
+    assert body["user"]["email"] == "qwen@example.com"
+    assert "pebble_session=" in (set_cookie or "")
+    cookie = _extract_cookie(set_cookie)
+
+    # /me with the cookie returns the user
+    req = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        me = json.loads(resp.read().decode("utf-8"))
+    assert me["user"]["email"] == "qwen@example.com"
+
+    # Logout revokes
+    status, _, _ = _post_with_cookie(base, "/api/auth/logout", {}, cookie=cookie)
+    assert status == 200
+
+    # /me without re-auth returns 401
+    req = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
+    try:
+        urllib.request.urlopen(req, timeout=5)
+        assert False, "expected 401"
+    except urllib.error.HTTPError as e:
+        assert e.code == 401
+
+
+def test_auth_login_wrong_password_returns_401(engine_server):
+    base = engine_server["base"]
+    _post_with_cookie(base, "/api/auth/signup", {"email": "ravi@example.com", "password": "right-password"})
+    status, body, _ = _post_with_cookie(base, "/api/auth/login", {
+        "email": "ravi@example.com", "password": "wrong-password",
+    })
+    assert status == 401
+
+
+def test_projects_list_filters_by_logged_in_user(engine_server):
+    """Anonymous projects show to everyone; user-stamped projects only show
+    to their owner."""
+    base = engine_server["base"]
+    out = engine_server["output"]
+
+    # User A signs up
+    _, _, cookie_a_header = _post_with_cookie(base, "/api/auth/signup", {
+        "email": "owner-a@example.com", "password": "valid-password",
+    })
+    cookie_a = _extract_cookie(cookie_a_header)
+
+    # User B signs up
+    _, _, cookie_b_header = _post_with_cookie(base, "/api/auth/signup", {
+        "email": "owner-b@example.com", "password": "valid-password",
+    })
+    cookie_b = _extract_cookie(cookie_b_header)
+
+    # Resolve A's id via /me
+    req_me = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie_a})
+    with urllib.request.urlopen(req_me, timeout=5) as r:
+        owner_a_id = json.loads(r.read().decode("utf-8"))["user"]["id"]
+
+    # Seed three projects: anonymous, A's, B's
+    _seed_project(out, "anon-site", {"index.html": "x"}, brief={"business_name": "Anon"})
+    _seed_project(out, "a-site", {"index.html": "x"}, brief={"business_name": "A's", "_user_id": owner_a_id})
+    _seed_project(out, "b-site", {"index.html": "x"}, brief={"business_name": "B's", "_user_id": "some-other-id"})
+
+    # User A sees their site + anonymous, not B's
+    req = urllib.request.Request(f"{base}/api/projects", headers={"Cookie": cookie_a})
+    with urllib.request.urlopen(req, timeout=5) as r:
+        listing = json.loads(r.read().decode("utf-8"))
+    slugs = {p["slug"] for p in listing["projects"]}
+    assert "anon-site" in slugs
+    assert "a-site" in slugs
+    assert "b-site" not in slugs
+
+
 def test_visual_edit_falls_back_when_pebble_id_unknown(engine_server):
     """An unknown pebble_id should not error — should fall back to the
     legacy substring/heuristic path so older builds keep working."""

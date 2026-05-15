@@ -40,9 +40,23 @@ def _read_body(handler) -> Optional[dict]:
 # --------- GET /api/projects ---------
 
 def run_list_projects(handler) -> None:
-    """List every project in output/. Returns enough metadata to render
-    the dashboard sidebar's Recents + Starred without further fetches.
+    """List every project in output/ that the current user can see.
+
+    - Logged-in users see their own projects (by ``_user_id``) plus unclaimed
+      projects (no ``_user_id``). Unclaimed = anything built before auth was
+      added; they remain visible so the user doesn't lose access on first
+      login.
+    - Logged-out users see all projects (legacy behavior).
     """
+    # Resolve current user once. Failure to import auth is tolerated so the
+    # endpoint stays usable in environments without the auth module loaded.
+    current_uid: Optional[str] = None
+    try:
+        from pebble.server.auth import current_user_id
+        current_uid = current_user_id(handler)
+    except Exception:
+        current_uid = None
+
     out = _output_dir()
     if not out.exists():
         handler._json(200, {"projects": [], "count": 0})
@@ -65,6 +79,13 @@ def run_list_projects(handler) -> None:
                 brief = json.loads(brief_path.read_text(encoding="utf-8"))
             except Exception:
                 brief = {}
+
+        # User-scope filter: when logged in, drop projects owned by someone
+        # else. Unclaimed (no _user_id) stay visible.
+        if current_uid:
+            owner = brief.get("_user_id")
+            if owner and owner != current_uid:
+                continue
 
         meta_path = project_dir / "build_meta.json"
         built_at = None
