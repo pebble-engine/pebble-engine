@@ -102,3 +102,25 @@ def test_phase_file_imports_from_motion_module(phase_file):
         r"from\s+['\"]@/lib/motion['\"]",
         src,
     ), f"{phase_file.name} should import from @/lib/motion"
+
+
+@pytest.mark.parametrize("phase_file", PHASE_FILES, ids=lambda p: p.name)
+def test_named_variants_pair_with_with_reduced_motion(phase_file):
+    """Round 2 cleanup (b): wherever a phase file uses a named variant
+    (`variants={someConst}`, NOT inline `variants={{ ... }}`), it must
+    also call `withReducedMotion` at least once, so the OS reduce-motion
+    preference is honored consumer-side. The motion module exports
+    bare Variants — consumers opt into the reduced-motion collapse.
+    """
+    src = phase_file.read_text(encoding="utf-8")
+    # `variants={ident}` — single identifier inside the braces.
+    named_uses = re.findall(r"variants=\{(\w+)\}", src)
+    if not named_uses:
+        return  # File only uses inline variants, or none at all.
+    assert "withReducedMotion(" in src, (
+        f"{phase_file.name} uses named variants {sorted(set(named_uses))} "
+        "but never calls withReducedMotion()"
+    )
+    assert re.search(r"\bwithReducedMotion\b", src), (
+        f"{phase_file.name} must import withReducedMotion from @/lib/motion"
+    )

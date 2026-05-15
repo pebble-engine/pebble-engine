@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,7 +14,7 @@ import {
   getLastBuild,
   getBrief,
 } from "@/lib/state";
-import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 
 /**
  * Welcome phase — the "first encounter" screen.
@@ -49,6 +49,8 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [firstName, setFirstName] = useState<string | null>(null);
   const [resumeName, setResumeName] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
+
+  const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
   useEffect(() => {
     const profile = getUserProfile();
@@ -106,7 +108,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           <AnimatePresence mode="wait">
             <motion.h1
               key={firstName ?? "anon"}
-              variants={fadeUp}
+              variants={safeFadeUp}
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0, y: -8, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } }}

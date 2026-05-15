@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -14,7 +14,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { getBrief } from "@/lib/state";
-import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC } from "@/lib/motion";
+import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -71,6 +71,9 @@ export function DraftPhase({ error, done }: Props) {
   const startedRef = useRef(false);
   const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
+
+  const safeDropletPulse = useMemo(() => withReducedMotion(dropletPulse), []);
+  const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
   // Auto-scroll the build feed when new lines arrive.
   useEffect(() => {
@@ -204,7 +207,7 @@ export function DraftPhase({ error, done }: Props) {
             blob behind comes from the .pebble-ripple CSS keyframe. */}
         <div className="pebble-ripple relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
           <motion.div
-            variants={dropletPulse}
+            variants={safeDropletPulse}
             animate="rest"
             className="text-secondary relative z-10"
             style={{ willChange: "transform" }}
@@ -213,13 +216,13 @@ export function DraftPhase({ error, done }: Props) {
           </motion.div>
         </div>
         <motion.h1
-          variants={fadeUp}
+          variants={safeFadeUp}
           className="font-display text-2xl md:text-3xl font-bold text-foreground"
         >
           Pebble is building your draft.
         </motion.h1>
         <motion.p
-          variants={fadeUp}
+          variants={safeFadeUp}
           className="text-sm text-muted-foreground mt-2"
         >
           Usually 2–3 minutes. Feel free to keep this window open.
@@ -301,7 +304,7 @@ export function DraftPhase({ error, done }: Props) {
           engine working. Eliminates the "is it frozen?" panic.
           Entrance stagger: fades up after the checklist settles (~0.92s delay). */}
       <motion.section
-        variants={fadeUp}
+        variants={safeFadeUp}
         initial="hidden"
         animate="visible"
         transition={{ delay: 0.92, duration: STANDARD_S, ease: EASE_CINEMATIC }}

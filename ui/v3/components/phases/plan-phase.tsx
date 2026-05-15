@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Edit3, Sparkles, Loader2 } from "lucide-react";
 import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan } from "@/lib/state";
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
-import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
+import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
 
 /**
  * Plan phase — the user-facing "here's what I'll build" review screen.
@@ -33,9 +33,10 @@ const cardVariants = {
 };
 
 function Card({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
+  const safeCardVariants = useMemo(() => withReducedMotion(cardVariants), []);
   return (
     <motion.article
-      variants={cardVariants}
+      variants={safeCardVariants}
       initial="hidden"
       animate="visible"
       transition={{ duration: STANDARD_S, delay, ease: EASE_QUIET }}

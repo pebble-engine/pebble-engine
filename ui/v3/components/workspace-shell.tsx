@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -26,7 +26,7 @@ import {
 } from "@/lib/state";
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
-import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp } from "@/lib/motion";
+import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
 import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
@@ -80,6 +80,10 @@ export function WorkspaceShell() {
   const [generateDone, setGenerateDone] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const editPhaseRef = useRef<EditPhaseHandle>(null);
+
+  const safePhaseVariants = useMemo(() => withReducedMotion(phaseVariants), []);
+  const safeChipDeck = useMemo(() => withReducedMotion(chipDeck), []);
+  const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
   // Initial hydrate. Snap to a sensible phase based on what state actually
   // exists: no build + asking for design/draft/publish → step back to the
@@ -183,13 +187,13 @@ export function WorkspaceShell() {
   const topNavRightSlot =
     phase === "design" ? (
       <motion.div
-        variants={chipDeck}
+        variants={safeChipDeck}
         initial="hidden"
         animate="visible"
         className="flex items-center gap-2"
       >
         <motion.button
-          variants={fadeUp}
+          variants={safeFadeUp}
           onClick={() => editPhaseRef.current?.openGallery()}
           className="flex items-center gap-1.5 text-sm font-semibold text-foreground bg-card border border-border px-3 h-10 rounded-full hover:bg-accent transition-colors"
           title="Add a DNA-themed section"
@@ -197,7 +201,7 @@ export function WorkspaceShell() {
           <Plus className="w-4 h-4" /> Add section
         </motion.button>
         <motion.button
-          variants={fadeUp}
+          variants={safeFadeUp}
           onClick={() => { editPhaseRef.current?.openHistory(); }}
           title="Version history"
           className="w-10 h-10 rounded-full flex items-center justify-center text-graphite hover:bg-mist hover:text-charcoal dark:text-pebble dark:hover:bg-stone/40 dark:hover:text-sand transition-colors"
@@ -206,7 +210,7 @@ export function WorkspaceShell() {
           <History className="w-5 h-5" />
         </motion.button>
         <motion.button
-          variants={fadeUp}
+          variants={safeFadeUp}
           onClick={() => setPhase("publish")}
           className="bg-primary text-primary-foreground px-4 h-10 rounded-full font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
         >
@@ -272,7 +276,7 @@ export function WorkspaceShell() {
         <AnimatePresence mode="wait">
           <motion.div
             key={phase}
-            variants={phaseVariants}
+            variants={safePhaseVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
