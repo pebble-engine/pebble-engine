@@ -1,6 +1,14 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useState } from "react";
+
+// Hash hydration must happen before paint, otherwise users navigating
+// from / to /workspace#phase=idea see a one-frame flash of the default
+// "design" phase before the hash override snaps in. useLayoutEffect
+// fires synchronously after DOM mutations but before paint. It's a no-op
+// on the server (SSR has no DOM), so swap to useEffect there to silence
+// React's "useLayoutEffect during SSR" warning.
+const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Phase routing inside the unified workspace shell.
@@ -15,9 +23,21 @@ import { useCallback, useEffect, useState } from "react";
  * other hash-bound state later without colliding.
  */
 
-export type Phase = "idea" | "plan" | "draft" | "design" | "publish";
+export type Phase = "welcome" | "idea" | "plan" | "draft" | "design" | "publish";
 
-export const PHASE_ORDER: Phase[] = ["idea", "plan", "draft", "design", "publish"];
+export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "design", "publish"];
+
+/**
+ * Phase → Build-Plan-rail "stage" mapping. The rail has seven steps
+ * (Idea, Plan, Draft, Design, Features, Setup, Publish) but our phase
+ * machinery is finer-grained: "welcome" and "idea" both belong to the
+ * Idea stage, just with different chrome (welcome hides the rail, idea
+ * shows the chip questionnaire).
+ */
+export function phaseToStage(p: Phase): string {
+  if (p === "welcome") return "idea";
+  return p;
+}
 
 const HASH_KEY = "phase";
 
@@ -50,10 +70,12 @@ function writePhaseToHash(phase: Phase): void {
 export function usePhase(initial: Phase = "design"): [Phase, (next: Phase) => void] {
   const [phase, setPhaseState] = useState<Phase>(initial);
 
-  // Hydrate from the hash on mount. SSR-safe because we only run this
-  // in useEffect, after the first paint. The initial value matches what
-  // the server would render so there's no hydration mismatch.
-  useEffect(() => {
+  // Hydrate from the hash before the first paint, so client navigation
+  // (router.push from / to /workspace#phase=idea) doesn't flash the
+  // default "design" view before the hash override snaps in. The initial
+  // useState value matches what the server would render, so hydration
+  // still reconciles cleanly — this just runs immediately after.
+  useIsomorphicLayoutEffect(() => {
     const fromHash = readPhaseFromHash();
     if (fromHash && fromHash !== phase) {
       setPhaseState(fromHash);
