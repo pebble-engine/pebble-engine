@@ -14,6 +14,7 @@ from typing import Optional
 import shutil
 from pebble.history import list_history, restore_snapshot
 from pebble.log import log
+from pebble.security import project_lock, require_project_owner, validate_snapshot_id
 
 
 def _engine():
@@ -249,10 +250,14 @@ def run_activity_feed(handler) -> None:
 
 def run_get_history(handler, slug: str) -> None:
     """List every snapshot for a project, newest first. 404 if the project
-    doesn't exist; empty list (with 200) if it exists but has no snapshots."""
-    project_dir = _output_dir() / slug
-    if not project_dir.exists():
-        handler._json(404, {"error": f"project not found: {slug}"})
+    doesn't exist; empty list (with 200) if it exists but has no snapshots.
+
+    Auth: gated through require_project_owner since the snapshot reasons
+    can leak which refinements / visual-edits another user has run. The
+    2026-05-15 evening NLM pass flagged this alongside refine/visual-edit
+    as cross-user information leaks.
+    """
+    if require_project_owner(handler, slug) is None:
         return
     entries = list_history(slug)
     handler._json(200, {
@@ -266,7 +271,12 @@ def run_get_history(handler, slug: str) -> None:
 
 def run_rollback(handler) -> None:
     """Restore a snapshot. The pre-rollback state is also snapshotted so
-    the rollback itself is undoable. Body: ``{ slug, snapshot_id }``."""
+    the rollback itself is undoable. Body: ``{ slug, snapshot_id }``.
+
+    Auth: gated through require_project_owner. Rolling back another
+    user's project was a Tier-1 finding in the 2026-05-15 evening NLM
+    pass — it lets a malicious peer revert someone's recent edits.
+    """
     body = _read_body(handler)
     if body is None:
         return
@@ -277,13 +287,26 @@ def run_rollback(handler) -> None:
     if not isinstance(snapshot_id, str) or not snapshot_id:
         handler._json(400, {"error": "snapshot_id is required"}); return
 
-    try:
-        files = restore_snapshot(slug, snapshot_id)
-    except FileNotFoundError as e:
-        handler._json(404, {"error": str(e)}); return
-    except Exception as e:
-        log.warning("rollback failed: %s", e)
-        handler._json(500, {"error": f"rollback failed: {e}"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+
+    # snapshot_id reaches the filesystem via restore_snapshot — pin its
+    # shape so it can't contain path-traversal segments either.
+    if not validate_snapshot_id(handler, snapshot_id):
+        return
+
+    with project_lock(slug) as got_lock:
+        if not got_lock:
+            handler._json(409, {"error": "another change is in progress; try again in a moment"})
+            return
+
+        try:
+            files = restore_snapshot(slug, snapshot_id)
+        except FileNotFoundError as e:
+            handler._json(404, {"error": str(e)}); return
+        except Exception as e:
+            log.warning("rollback failed: %s", e)
+            handler._json(500, {"error": f"rollback failed: {e}"}); return
 
     handler._json(200, {
         "slug":        slug,
@@ -296,11 +319,15 @@ def run_rollback(handler) -> None:
 
 def run_toggle_star(handler, slug: str) -> None:
     """Toggle the starred sentinel file for a project. Idempotent on the
-    requested state if the body specifies one."""
+    requested state if the body specifies one.
+
+    Auth: gated through require_project_owner so a user can't star/unstar
+    another user's project to leak ownership signals via timing.
+    """
+    if require_project_owner(handler, slug) is None:
+        return
     body = _read_body(handler) or {}
     project_dir = _output_dir() / slug
-    if not project_dir.exists():
-        handler._json(404, {"error": f"project not found: {slug}"}); return
     star_file = project_dir / ".starred"
 
     # Allow caller to force a state via {"starred": true/false}; if absent, toggle.
@@ -403,14 +430,17 @@ def run_delete_project(handler, slug: str) -> None:
     """Permanently delete a project directory (and its full history).
 
     Hard delete — no undo, no trash. Frontend should confirm before
-    calling. If the project doesn't exist, returns 404 so the UI can
-    update its state to match reality.
+    calling. Auth: gated through require_project_owner so a user can't
+    delete another user's project by guessing the slug.
     """
+    # require_project_owner now validates the slug shape AND checks
+    # ownership; the explicit traversal check below is preserved as a
+    # belt-and-braces defense in case the gate is ever bypassed.
+    if require_project_owner(handler, slug) is None:
+        return
     project_dir = _output_dir() / slug
     if not project_dir.exists() or not project_dir.is_dir():
         handler._json(404, {"error": f"project not found: {slug}"}); return
-    # Path safety — the slug came from the URL, defensively reject parent
-    # traversal even though the router should have neutralized it.
     if ".." in slug or "/" in slug or "\\" in slug:
         handler._json(400, {"error": "invalid slug"}); return
     try:

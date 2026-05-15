@@ -24,6 +24,9 @@ import pytest
 import pebble_engine
 import pebble.history as history_mod
 import pebble.domain as domain_mod
+import pebble.security as security_mod
+import pebble.server.domain as domain_server
+import pebble.server.projects as projects_server
 
 
 @pytest.fixture(autouse=True)
@@ -47,8 +50,23 @@ def engine_server(tmp_path, monkeypatch):
     out.mkdir()
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", out)
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
     monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
     monkeypatch.delenv("CLOUDFLARE_API_TOKEN", raising=False)
+
+    # Auth gate bypass — see test_publish.py / test_http_e2e.py for the
+    # rationale. Existing tests target the JSON contract; the auth gate
+    # itself is covered by test_security.py.
+    def bypass(handler, slug):
+        if not security_mod.is_valid_slug(slug):
+            handler._json(400, {"error": "invalid project slug"})
+            return None
+        if not (out / slug).exists():
+            handler._json(404, {"error": f"project not found: {slug}"})
+            return None
+        return "test-user"
+    monkeypatch.setattr(domain_server,   "require_project_owner", bypass)
+    monkeypatch.setattr(projects_server, "require_project_owner", bypass)
 
     port = _find_free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), pebble_engine.PebbleHandler)

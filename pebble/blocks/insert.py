@@ -75,6 +75,134 @@ def _unique_component_name(site_dir: Path, base_name: str) -> str:
         candidate = f"{base_name}{n}"
 
 
+def _scrubbed_for_search(src: str) -> str:
+    """Return a copy of ``src`` with JSX comments and string literals
+    blanked out (replaced with same-length spaces, so character offsets
+    stay aligned with the original). Used as a sieve before the regex
+    matchers so we don't splice in front of a Footer that lives inside
+    ``{/* ... <Footer /> ... */}`` or inside a JSX string literal.
+
+    Same-length replacement is important: callers use the match index to
+    splice into the *original* string. Shrinking the search text would
+    desync offsets.
+    """
+    out = []
+    i = 0
+    n = len(src)
+    while i < n:
+        ch = src[i]
+        # JSX comment block: {/* ... */}
+        if ch == "{" and src.startswith("{/*", i):
+            end = src.find("*/}", i + 3)
+            if end == -1:
+                out.append(" " * (n - i))
+                break
+            length = end + 3 - i
+            out.append(" " * length)
+            i = end + 3
+            continue
+        # C-style block comment: /* ... */
+        if ch == "/" and i + 1 < n and src[i + 1] == "*":
+            end = src.find("*/", i + 2)
+            if end == -1:
+                out.append(" " * (n - i))
+                break
+            length = end + 2 - i
+            out.append(" " * length)
+            i = end + 2
+            continue
+        # Single-line comment: // until newline
+        if ch == "/" and i + 1 < n and src[i + 1] == "/":
+            end = src.find("\n", i)
+            if end == -1:
+                out.append(" " * (n - i))
+                break
+            length = end - i
+            out.append(" " * length)
+            i = end
+            continue
+        # String literal: ", ', or `
+        if ch in ('"', "'", "`"):
+            quote = ch
+            j = i + 1
+            while j < n:
+                if src[j] == "\\":
+                    j += 2
+                    continue
+                if src[j] == quote:
+                    j += 1
+                    break
+                j += 1
+            out.append(" " * (j - i))
+            i = j
+            continue
+        out.append(ch)
+        i += 1
+    return "".join(out)
+
+
+def _is_inside_jsx_expression(src: str, position: int) -> bool:
+    """Return True if ``position`` looks like it's inside a JSX expression
+    where inserting a sibling element would break the syntax (the classic
+    bad case is ``{showFooter && <Footer />}``).
+
+    Counting all unmatched ``{`` braces in the file would also match
+    ordinary function bodies and object literals — we'd refuse every
+    insert in a normal Next.js page. Instead we use a local-context
+    heuristic: look at the non-whitespace, non-comment chars immediately
+    before ``position``. JSX content always has either ``>`` (close of
+    a previous element) or ``<`` (start of a new element, e.g. our
+    Footer matched at the very start of a tag); a JSX expression context
+    has an operator (``&&``, ``||``, ``?``, ``:``, ``(``, ``,``).
+    """
+    # Walk backwards over whitespace and JSX comment blocks.
+    i = position - 1
+    while i >= 0:
+        ch = src[i]
+        if ch.isspace():
+            i -= 1
+            continue
+        # JSX comment {/* ... */}: skip backwards through it.
+        if ch == "}" and i >= 2 and src[i - 2:i + 1] == "*/}":
+            start = src.rfind("{/*", 0, i)
+            if start == -1:
+                return False
+            i = start - 1
+            continue
+        break
+    if i < 0:
+        return False
+
+    ch = src[i]
+    # Single-char operator-like contexts that indicate "we're in an
+    # expression that yields one node" — inserting a sibling here is
+    # broken JSX.
+    if ch in "?:(,":
+        return True
+    if ch == "&" and i > 0 and src[i - 1] == "&":
+        return True
+    if ch == "|" and i > 0 and src[i - 1] == "|":
+        return True
+    # JSX-content contexts: a preceding `>` closes the previous element,
+    # or the match position is at the very start of a fragment / parent.
+    if ch == ">":
+        return False
+    # `{` immediately before would be the open of an unsafe expression —
+    # but with content between (it's not adjacent here), we already
+    # handled it via the operator chars above.
+    return False
+
+
+def _find_safe_match(matcher: "re.Pattern[str]", scrubbed: str, original: str):
+    """Find a regex match in ``scrubbed`` whose position is NOT inside
+    a JSX expression of ``original``. Walks through all matches and
+    returns the first that's safe; None if none qualifies."""
+    for m in matcher.finditer(scrubbed):
+        if not _is_inside_jsx_expression(original, m.start()):
+            return m
+    return None
+
+
 def _splice_page_tsx(src: str, component_name: str) -> tuple[str, str]:
     """Return ``(new_src, position_kind)`` where position_kind is one of
     ``"before-footer"`` | ``"before-main-close"`` | ``"end-of-jsx"``.
@@ -86,6 +214,13 @@ def _splice_page_tsx(src: str, component_name: str) -> tuple[str, str]:
     2. Drop ``<Component />`` in the JSX. Preferred slot is right before
        ``<Footer .../>``. Falls back to right before ``</main>``, then
        before ``</body>``, then (degenerate) right after ``return (``.
+
+    JSX comments (``{/* */}``), C-style comments (``/* */``), single-line
+    comments (``//``), and string literals are all scrubbed before regex
+    matching so a phantom ``<Footer />`` inside a comment can't fool the
+    splicer. Matches inside ``{...}`` JSX expressions (e.g.
+    ``{showFooter && <Footer />}``) are also skipped — inserting a
+    sibling there breaks the parent expression.
     """
     # ---- import injection ----
     imports = list(_IMPORT_LINE_RE.finditer(src))
@@ -102,12 +237,13 @@ def _splice_page_tsx(src: str, component_name: str) -> tuple[str, str]:
     render_jsx = f"<{component_name} />"
     position_kind = "end-of-jsx"
 
+    scrubbed = _scrubbed_for_search(src)
     for matcher, kind in (
         (_FOOTER_RENDER_RE, "before-footer"),
         (_MAIN_CLOSE_RE,    "before-main-close"),
         (_BODY_CLOSE_RE,    "before-body-close"),
     ):
-        m = matcher.search(src)
+        m = _find_safe_match(matcher, scrubbed, src)
         if m:
             indent = _indent_for_position(src, m.start())
             src = src[:m.start()] + render_jsx + "\n" + indent + src[m.start():]
@@ -115,7 +251,7 @@ def _splice_page_tsx(src: str, component_name: str) -> tuple[str, str]:
 
     # Last resort: drop the render right after `return (` so the block
     # at least renders somewhere visible. Better than silent failure.
-    m = _RETURN_PAREN_RE.search(src)
+    m = _RETURN_PAREN_RE.search(scrubbed)
     if m:
         # Skip past any newline + whitespace immediately after `return (`.
         idx = m.end()
@@ -183,10 +319,20 @@ def insert_block_into_site(
     target.write_text(file_content, encoding="utf-8")
     files_written = [str(target.relative_to(site_dir).as_posix())]
 
-    # 2) Splice page.tsx
-    page_src = page_tsx.read_text(encoding="utf-8")
-    new_src, position_kind = _splice_page_tsx(page_src, final_name)
-    page_tsx.write_text(new_src, encoding="utf-8")
+    # 2) Splice page.tsx — if this fails, roll back the component file
+    # so we don't leave an orphan in components/sections/. The snapshot
+    # is the outer safety net; this cleanup keeps the working tree
+    # consistent for the next attempt.
+    try:
+        page_src = page_tsx.read_text(encoding="utf-8")
+        new_src, position_kind = _splice_page_tsx(page_src, final_name)
+        page_tsx.write_text(new_src, encoding="utf-8")
+    except Exception:
+        try:
+            target.unlink()
+        except Exception:
+            pass
+        raise
 
     return InsertResult(
         block_id=block_id,

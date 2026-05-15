@@ -349,6 +349,137 @@ def test_splice_page_tsx_handles_self_closing_footer():
     assert out.find("<Pricing />") < out.find("<Footer />")
 
 
+def test_splice_skips_footer_inside_jsx_comment():
+    """A `{/* <Footer /> */}` placeholder must NOT confuse the splicer.
+    The actual Footer below it should be the insertion target."""
+    src = (
+        "import { Hero } from '@/components/sections/Hero';\n"
+        "import { Footer } from '@/components/layout/Footer';\n"
+        "export default function Page() {\n"
+        "  return (\n"
+        "    <main>\n"
+        "      <Hero />\n"
+        "      {/* TODO swap out <Footer /> later */}\n"
+        "      <Footer />\n"
+        "    </main>\n"
+        "  );\n"
+        "}\n"
+    )
+    out, pos = _splice_page_tsx(src, "Pricing")
+    assert pos == "before-footer"
+    # The render must land between the comment and the real Footer.
+    comment_idx = out.find("TODO swap out")
+    pricing_idx = out.find("<Pricing />")
+    footer_idx = out.rfind("<Footer />")
+    assert comment_idx < pricing_idx < footer_idx, (
+        "Pricing must land BETWEEN the comment and the real Footer"
+    )
+
+
+def test_splice_skips_footer_inside_block_comment():
+    """C-style `/* <Footer /> */` block comments also shouldn't trip
+    the regex. Same defense as JSX comments."""
+    src = (
+        "import { Footer } from '@/components/layout/Footer';\n"
+        "/* note: don't use <Footer /> directly here */\n"
+        "export default function Page() {\n"
+        "  return (\n"
+        "    <main>\n"
+        "      <Footer />\n"
+        "    </main>\n"
+        "  );\n"
+        "}\n"
+    )
+    out, pos = _splice_page_tsx(src, "Pricing")
+    assert pos == "before-footer"
+    # The Pricing render lands before the REAL Footer (line 6), not
+    # before the commented-out one (line 2).
+    assert out.find("<Pricing />") > out.find("note: don't use")
+
+
+def test_splice_skips_footer_inside_string_literal():
+    """A string literal like `const x = 'use <Footer />'` shouldn't
+    match — strings are scrubbed before regex search."""
+    src = (
+        "import { Footer } from '@/components/layout/Footer';\n"
+        "const help = 'See <Footer /> for examples';\n"
+        "export default function Page() {\n"
+        "  return (\n"
+        "    <main>\n"
+        "      <Footer />\n"
+        "    </main>\n"
+        "  );\n"
+        "}\n"
+    )
+    out, pos = _splice_page_tsx(src, "Pricing")
+    assert pos == "before-footer"
+    # The string literal stays untouched.
+    assert "'See <Footer /> for examples'" in out
+
+
+def test_splice_skips_footer_inside_conditional_expression():
+    """`{showFooter && <Footer />}` — inserting a sibling JSX node before
+    the Footer here breaks the parent expression. The splicer must skip
+    this match and fall through to </main>."""
+    src = (
+        "import { Footer } from '@/components/layout/Footer';\n"
+        "export default function Page() {\n"
+        "  return (\n"
+        "    <main>\n"
+        "      {showFooter && <Footer />}\n"
+        "    </main>\n"
+        "  );\n"
+        "}\n"
+    )
+    out, pos = _splice_page_tsx(src, "Pricing")
+    # Should fall through to </main> rather than break the conditional.
+    assert pos == "before-main-close"
+    # The conditional is untouched
+    assert "showFooter && <Footer />" in out
+
+
+def test_insert_cleans_up_orphan_on_splice_failure(tmp_path, monkeypatch):
+    """If page.tsx splice raises (e.g. permission denied), the new
+    component file must be removed so we don't accumulate orphans."""
+    site = _make_fake_site(tmp_path)
+
+    def _boom(*_a, **_kw):
+        raise PermissionError("simulated write failure")
+
+    # Patch _splice_page_tsx via the module to force a failure AFTER the
+    # component file is written. The cleanup branch should then unlink it.
+    import pebble.blocks.insert as insert_mod
+    monkeypatch.setattr(insert_mod, "_splice_page_tsx", _boom)
+
+    tokens = derive_theme_from_dna(DNA_CARDS[0])
+    tsx = render_block("testimonials_trio", tokens, {})
+    spec = BLOCK_REGISTRY["testimonials_trio"]
+    with pytest.raises(PermissionError):
+        insert_block_into_site(site, "testimonials_trio", spec.component_name, tsx)
+
+    # The orphan file must be gone.
+    assert not (site / "components" / "sections" / "Testimonials.tsx").exists()
+
+
+def test_jsx_safe_escapes_double_quote_for_attribute_context():
+    """A business_name containing `"` would otherwise break out of an
+    attribute value if a future template does aria-label='__VAL__'."""
+    out = _jsx_safe('Acme " onClick={alert(1)} "')
+    assert '"' not in out
+    assert "&quot;" in out
+    # The brace-escape catches the JS expression too.
+    assert "{alert" not in out
+
+
+def test_jsx_safe_escapes_ampersand_first_to_avoid_double_encode():
+    """`&` must be escaped before `<` and `{` so we don't end up with
+    `&amp;lt;` from a literal `<` in input (defensive vs. ordering bugs)."""
+    out = _jsx_safe("Sue's & Co")
+    assert "&amp;" in out
+    # The apostrophe also gets escaped for attribute safety.
+    assert "&#39;" in out
+
+
 # ---- HTTP fixture --------------------------------------------------------
 
 def _find_free_port() -> int:
@@ -599,3 +730,74 @@ def test_insert_block_with_missing_dna_uses_neutral_default(engine_server):
     )
     assert status == 200
     assert body["dna_id"] == ""  # neutral fallback
+
+
+def test_insert_block_rejects_traversal_slug(engine_server):
+    """A slug like ``../config`` must 400 at the auth gate — without this
+    guard, ``_output_dir() / slug`` would resolve to a neighbor dir."""
+    cookie, _ = _signup(engine_server["base"], "rocker@example.com", "rocker1234")
+    # Use a slug shape that the URL router will still parse but require_project_owner rejects.
+    status, body = _request(
+        "POST",
+        engine_server["base"],
+        "/api/projects/..something/blocks/insert",  # contains ".." segment
+        body={"block_id": "testimonials_trio"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+    assert "invalid" in (body.get("error") or "").lower()
+
+
+# ---- HTTP auth coverage for adjacent endpoints --------------------------
+
+def _post_anon(base: str, path: str, body=None):
+    return _request("POST", base, path, body=body)
+
+
+def test_refine_requires_auth(engine_server):
+    out: Path = engine_server["output"]
+    _seed_project(out, "owned-project")
+    status, body = _post_anon(
+        engine_server["base"], "/api/refine",
+        body={"slug": "owned-project", "refinement_id": "simpler"},
+    )
+    assert status == 401
+
+
+def test_visual_edit_requires_auth(engine_server):
+    out: Path = engine_server["output"]
+    _seed_project(out, "owned-project")
+    status, body = _post_anon(
+        engine_server["base"], "/api/visual-edit",
+        body={"slug": "owned-project", "op": "text", "original_text": "x", "new_text": "y"},
+    )
+    assert status == 401
+
+
+def test_rollback_requires_auth(engine_server):
+    out: Path = engine_server["output"]
+    _seed_project(out, "owned-project")
+    status, body = _post_anon(
+        engine_server["base"], "/api/rollback",
+        body={"slug": "owned-project", "snapshot_id": "20260515T123456-generate"},
+    )
+    assert status == 401
+
+
+def test_get_history_requires_auth(engine_server):
+    out: Path = engine_server["output"]
+    _seed_project(out, "owned-project")
+    status, body = _request(
+        "GET", engine_server["base"], "/api/projects/owned-project/history",
+    )
+    assert status == 401
+
+
+def test_publish_requires_auth(engine_server):
+    out: Path = engine_server["output"]
+    _seed_project(out, "owned-project")
+    status, body = _post_anon(
+        engine_server["base"], "/api/publish",
+        body={"slug": "owned-project"},
+    )
+    assert status == 401

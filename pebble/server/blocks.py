@@ -31,7 +31,7 @@ from pebble.blocks import (
 from pebble.blocks.insert import load_brief, load_dna_for_site
 from pebble.history import snapshot_site
 from pebble.log import log
-from pebble.security import require_project_owner
+from pebble.security import project_lock, require_project_owner
 
 
 def _engine():
@@ -119,37 +119,46 @@ def run_insert_block(handler, slug: str) -> None:
     dna_card = load_dna_for_site(brief_path)
     tokens = derive_theme_from_dna(dna_card)
 
-    # Snapshot BEFORE mutating so the user can undo. Reason string maps
-    # onto the dashboard's "Recently changed" feed verbatim.
-    snap = snapshot_site(
-        slug,
-        reason=f"insert-block-{block_id}",
-        source=f"POST /api/projects/{slug}/blocks/insert",
-    )
-    snapshot_id = snap.name if snap else None
+    # Per-slug write lock — without it two concurrent inserts can both
+    # snapshot the same pre-state, both write, and the second snapshot
+    # bakes in the first edit. Same gate the refine/visual-edit handlers
+    # acquired in the 2026-05-15 evening security pass.
+    with project_lock(slug) as got_lock:
+        if not got_lock:
+            handler._json(409, {"error": "another change is already in progress; try again in a moment"})
+            return
 
-    try:
-        rendered = render_block(block_id, tokens, brief)
-    except Exception as e:
-        log.warning("block render failed (%s on %s): %s", block_id, slug, e)
-        handler._json(500, {"error": f"block render failed: {e}"})
-        return
-
-    try:
-        result = insert_block_into_site(
-            site_dir=site_dir,
-            block_id=block_id,
-            component_name=spec.component_name,
-            rendered_tsx=rendered,
-            snapshot_id=snapshot_id,
+        # Snapshot BEFORE mutating so the user can undo. Reason string maps
+        # onto the dashboard's "Recently changed" feed verbatim.
+        snap = snapshot_site(
+            slug,
+            reason=f"insert-block-{block_id}",
+            source=f"POST /api/projects/{slug}/blocks/insert",
         )
-    except FileNotFoundError as e:
-        handler._json(404, {"error": str(e)})
-        return
-    except Exception as e:
-        log.warning("block insert failed (%s on %s): %s", block_id, slug, e)
-        handler._json(500, {"error": f"block insert failed: {e}"})
-        return
+        snapshot_id = snap.name if snap else None
+
+        try:
+            rendered = render_block(block_id, tokens, brief)
+        except Exception as e:
+            log.warning("block render failed (%s on %s): %s", block_id, slug, e)
+            handler._json(500, {"error": f"block render failed: {e}"})
+            return
+
+        try:
+            result = insert_block_into_site(
+                site_dir=site_dir,
+                block_id=block_id,
+                component_name=spec.component_name,
+                rendered_tsx=rendered,
+                snapshot_id=snapshot_id,
+            )
+        except FileNotFoundError as e:
+            handler._json(404, {"error": str(e)})
+            return
+        except Exception as e:
+            log.warning("block insert failed (%s on %s): %s", block_id, slug, e)
+            handler._json(500, {"error": f"block insert failed: {e}"})
+            return
 
     handler._json(200, {
         "slug":            slug,

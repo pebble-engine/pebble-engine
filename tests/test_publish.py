@@ -23,6 +23,9 @@ import pytest
 import pebble_engine
 import pebble.history as history_mod
 import pebble.publish as publish_mod
+import pebble.security as security_mod
+import pebble.server.publish as publish_server
+import pebble.server.projects as projects_server
 
 
 # ---- helpers reused from the e2e style ----------------------------------
@@ -40,6 +43,23 @@ def engine_server(tmp_path, monkeypatch):
     out.mkdir()
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", out)
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    # The 2026-05-15 evening security pass added require_project_owner
+    # to publish + project-mutation endpoints. These pre-existing tests
+    # exercise the JSON contract through the real HTTP server WITHOUT
+    # session cookies; bypass the gate here so they keep working. Auth
+    # behavior is covered separately in test_security.py +
+    # test_http_e2e.py.
+    def bypass(handler, slug):
+        if not security_mod.is_valid_slug(slug):
+            handler._json(400, {"error": "invalid project slug"})
+            return None
+        if not (out / slug).exists():
+            handler._json(404, {"error": f"project not found: {slug}"})
+            return None
+        return "test-user"
+    monkeypatch.setattr(publish_server,  "require_project_owner", bypass)
+    monkeypatch.setattr(projects_server, "require_project_owner", bypass)
     # Belt-and-suspenders: ensure cloudflare envs aren't accidentally
     # set from the developer's actual shell.
     monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)

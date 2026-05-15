@@ -575,13 +575,27 @@ def _jsx_string(value: str) -> str:
 
 
 def _jsx_safe(value: str) -> str:
-    """Sanitise free text headed for raw JSX text — strips control chars
-    and escapes braces. Brief fields like ``business_name`` get this
-    treatment so a malicious or unusual name can't inject JSX."""
+    """Sanitise free text headed for raw JSX text OR a quoted attribute
+    value. Brief fields like ``business_name`` get this treatment so a
+    malicious or unusual name can't inject JSX.
+
+    Defensive coverage:
+    - control chars stripped (whitelist: \\n + \\t)
+    - backslashes doubled (no escape-out)
+    - ``{`` / ``}`` → HTML entities (no JSX-expression breakout)
+    - ``<`` / ``>`` → HTML entities (no tag breakout)
+    - ``"`` / ``'`` → HTML entities (no attribute-quote breakout) —
+      defensive in case a future template embeds the value in
+      ``attr="__VALUE__"`` form. Originally text-node only; the 2026-05-15
+      evening NLM pass flagged the missing quote escape as a latent XSS
+      hole.
+    """
     safe = "".join(c for c in value if ord(c) >= 32 or c in ("\n", "\t"))
     safe = safe.replace("\\", "\\\\")
-    safe = safe.replace("{", "&#123;").replace("}", "&#125;")
-    safe = safe.replace("<", "&lt;").replace(">", "&gt;")
+    safe = safe.replace("&",  "&amp;")  # must precede other entity replacements
+    safe = safe.replace("{",  "&#123;").replace("}", "&#125;")
+    safe = safe.replace("<",  "&lt;").replace(">",  "&gt;")
+    safe = safe.replace('"',  "&quot;").replace("'", "&#39;")
     return safe.strip()
 
 

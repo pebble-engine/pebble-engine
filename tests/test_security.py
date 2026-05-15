@@ -87,6 +87,92 @@ def test_client_ip_robust_to_malformed_xff(monkeypatch):
 
 # ---- require_project_owner ----------------------------------------------
 
+# ---- Slug validation (Tier-1 from 2026-05-15 evening NLM pass) ----------
+
+def test_is_valid_slug_accepts_engine_shapes():
+    assert security_mod.is_valid_slug("wildflower-bakery")
+    assert security_mod.is_valid_slug("test-project")
+    assert security_mod.is_valid_slug("a")
+    assert security_mod.is_valid_slug("project-with_underscore")
+    assert security_mod.is_valid_slug("abc123-def")
+
+
+def test_is_valid_slug_rejects_path_traversal():
+    """Without this gate, a slug like ``../config`` would route through
+    OUTPUT_DIR / slug to anywhere on the filesystem the engine can read."""
+    for evil in ("..", "../", "../etc", "..\\..", "/etc/passwd", "foo/bar",
+                 "foo\\bar", "foo/../bar", ".hidden"):
+        assert not security_mod.is_valid_slug(evil), f"should reject {evil!r}"
+
+
+def test_is_valid_slug_rejects_special_chars():
+    for evil in ("foo bar", "foo;bar", "foo$bar", "foo|bar", "foo`bar",
+                 "foo\nbar", "foo<bar", "foo>bar", "", "FOO"):
+        assert not security_mod.is_valid_slug(evil), f"should reject {evil!r}"
+
+
+def test_is_valid_slug_rejects_overlong():
+    """Cap at 100 chars — engine slugs are always far shorter."""
+    assert not security_mod.is_valid_slug("a" * 101)
+    assert security_mod.is_valid_slug("a" * 100)
+
+
+def test_validate_slug_emits_400_on_failure(tmp_path, monkeypatch):
+    """The HTTP wrapper writes a 400 to the handler when the slug fails."""
+    monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
+    handler = MagicMock()
+    captured = {}
+    def fake_json(status, body):
+        captured["status"] = status
+        captured["body"] = body
+    handler._json = fake_json
+    assert security_mod.validate_slug(handler, "../etc") is False
+    assert captured["status"] == 400
+    assert "invalid" in captured["body"]["error"].lower()
+
+
+def test_require_project_owner_rejects_traversal_slug(tmp_path, monkeypatch):
+    """Critical defense — without this, ``../`` segments resolve through
+    OUTPUT_DIR / slug to a sibling directory the user can probe."""
+    monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
+    handler = MagicMock()
+    captured = {}
+    handler._json = lambda s, b: captured.update({"status": s, "body": b})
+    handler.client_address = ("127.0.0.1", 12345)
+    handler.headers = MagicMock()
+    handler.headers.get = lambda *a, **k: None
+    handler.headers.__contains__ = lambda *a: False
+    # Returns None (callers bail) and emits a 400 — never reaches .exists().
+    assert security_mod.require_project_owner(handler, "../config") is None
+    assert captured["status"] == 400
+
+
+# ---- Per-slug write lock ------------------------------------------------
+
+def test_project_lock_serializes_concurrent_acquires():
+    """First acquirer takes the lock; second times out fast."""
+    with security_mod.project_lock("slug-x", timeout=0.05) as got1:
+        assert got1 is True
+        with security_mod.project_lock("slug-x", timeout=0.05) as got2:
+            assert got2 is False
+
+
+def test_project_lock_distinct_slugs_are_independent():
+    """Acquiring one slug's lock doesn't block another."""
+    with security_mod.project_lock("slug-a", timeout=0.05) as got_a:
+        assert got_a is True
+        with security_mod.project_lock("slug-b", timeout=0.05) as got_b:
+            assert got_b is True
+
+
+def test_project_lock_releases_after_with_block():
+    """Once a with-block exits, the lock must be free again."""
+    with security_mod.project_lock("slug-r", timeout=0.05) as got1:
+        assert got1 is True
+    with security_mod.project_lock("slug-r", timeout=0.05) as got2:
+        assert got2 is True
+
+
 def test_require_project_owner_404_for_missing(tmp_path, monkeypatch):
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
     handler = MagicMock()

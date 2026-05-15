@@ -32,6 +32,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
+from pebble.security import project_lock, require_project_owner
 from pebble.visual_ids import find_element_span, load_manifest
 
 
@@ -357,53 +358,62 @@ def run_visual_edit(handler) -> None:
     if op not in ("text", "color", "font-size"):
         handler._json(400, {"error": "op must be 'text', 'color', or 'font-size'"}); return
 
+    # Auth gate — see refine.py + the 2026-05-15 evening NLM pass.
+    if require_project_owner(handler, slug) is None:
+        return
+
     site_dir = _output_dir() / slug / "site"
     if not site_dir.exists():
         handler._json(404, {"error": f"site not found: {slug}"}); return
 
-    # Always snapshot first — visual edits are undoable.
-    snap = snapshot_site(slug, reason=f"visual-edit-{op}", source=f"POST /api/visual-edit {op}")
-    snapshot_id = snap.name if snap else None
+    with project_lock(slug) as got_lock:
+        if not got_lock:
+            handler._json(409, {"error": "another edit is already in progress; try again in a moment"})
+            return
 
-    manifest = load_manifest(site_dir)
-    pebble_id = body.get("pebble_id") or ""
-    used_manifest = False
+        # Always snapshot first — visual edits are undoable.
+        snap = snapshot_site(slug, reason=f"visual-edit-{op}", source=f"POST /api/visual-edit {op}")
+        snapshot_id = snap.name if snap else None
 
-    try:
-        result: Optional[dict] = None
-        if op == "text":
-            original = body.get("original_text", "")
-            new = body.get("new_text", "")
-            if pebble_id:
-                result = _edit_text_by_id(site_dir, pebble_id, manifest, original, new)
-                used_manifest = result is not None
-            if result is None:
-                result = _edit_text(site_dir, original, new)
-        elif op == "color":
-            new_color = body.get("new_color", "")
-            if not _COLOR_HEX_RE.match(new_color):
-                handler._json(400, {"error": "new_color must be #RRGGBB"}); return
-            if pebble_id:
-                result = _edit_style_by_id(site_dir, pebble_id, manifest, "color", new_color)
-                used_manifest = result is not None
-            if result is None:
-                hint = body.get("selector_hint") or body.get("original_text") or ""
-                result = _edit_color_for_selector(site_dir, hint, new_color)
-        else:  # font-size
-            new_font_size = (body.get("new_font_size") or "").strip()
-            delta = int(body.get("delta", 0))
-            if pebble_id and new_font_size:
-                result = _edit_style_by_id(site_dir, pebble_id, manifest, "font-size", new_font_size)
-                used_manifest = result is not None
-            if result is None:
-                hint = body.get("selector_hint") or body.get("original_text") or ""
-                result = _edit_font_size_for_selector(site_dir, hint, delta)
-    except Exception as e:
-        log.warning("visual-edit failed: %s", e)
-        handler._json(500, {"error": f"edit failed: {e}"}); return
+        manifest = load_manifest(site_dir)
+        pebble_id = body.get("pebble_id") or ""
+        used_manifest = False
 
-    if result.get("error"):
-        handler._json(400, {"error": result["error"]}); return
+        try:
+            result: Optional[dict] = None
+            if op == "text":
+                original = body.get("original_text", "")
+                new = body.get("new_text", "")
+                if pebble_id:
+                    result = _edit_text_by_id(site_dir, pebble_id, manifest, original, new)
+                    used_manifest = result is not None
+                if result is None:
+                    result = _edit_text(site_dir, original, new)
+            elif op == "color":
+                new_color = body.get("new_color", "")
+                if not _COLOR_HEX_RE.match(new_color):
+                    handler._json(400, {"error": "new_color must be #RRGGBB"}); return
+                if pebble_id:
+                    result = _edit_style_by_id(site_dir, pebble_id, manifest, "color", new_color)
+                    used_manifest = result is not None
+                if result is None:
+                    hint = body.get("selector_hint") or body.get("original_text") or ""
+                    result = _edit_color_for_selector(site_dir, hint, new_color)
+            else:  # font-size
+                new_font_size = (body.get("new_font_size") or "").strip()
+                delta = int(body.get("delta", 0))
+                if pebble_id and new_font_size:
+                    result = _edit_style_by_id(site_dir, pebble_id, manifest, "font-size", new_font_size)
+                    used_manifest = result is not None
+                if result is None:
+                    hint = body.get("selector_hint") or body.get("original_text") or ""
+                    result = _edit_font_size_for_selector(site_dir, hint, delta)
+        except Exception as e:
+            log.warning("visual-edit failed: %s", e)
+            handler._json(500, {"error": f"edit failed: {e}"}); return
+
+        if result.get("error"):
+            handler._json(400, {"error": result["error"]}); return
 
     handler._json(200, {
         "slug":          slug,

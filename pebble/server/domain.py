@@ -25,6 +25,7 @@ from pebble.domain import (
 )
 from pebble.log import log
 from pebble.publish import cloudflare_configured, cloudflare_setup_checklist
+from pebble.security import require_project_owner
 
 
 def _engine():
@@ -60,11 +61,14 @@ def _project_exists(slug: str) -> bool:
 
 def run_get_domain(handler, slug: str) -> None:
     """Return the current domain record (or `null`) plus a refreshed
-    status from Cloudflare when configured."""
-    if not _safe_slug(slug):
-        handler._json(400, {"error": "invalid slug"}); return
-    if not _project_exists(slug):
-        handler._json(404, {"error": f"project not found: {slug}"}); return
+    status from Cloudflare when configured.
+
+    Auth: gated through require_project_owner. The 2026-05-15 evening
+    NLM pass flagged this as cross-user leak (custom domains are
+    private business info).
+    """
+    if require_project_owner(handler, slug) is None:
+        return
 
     if cloudflare_configured():
         try:
@@ -86,10 +90,8 @@ def run_get_domain(handler, slug: str) -> None:
 
 def run_set_domain(handler, slug: str) -> None:
     """Attach a custom domain. Body: ``{ host: "example.com" }``."""
-    if not _safe_slug(slug):
-        handler._json(400, {"error": "invalid slug"}); return
-    if not _project_exists(slug):
-        handler._json(404, {"error": f"project not found: {slug}"}); return
+    if require_project_owner(handler, slug) is None:
+        return
 
     body = _read_body(handler)
     if body is None: return
@@ -113,10 +115,8 @@ def run_set_domain(handler, slug: str) -> None:
 
 def run_delete_domain(handler, slug: str) -> None:
     """Detach the custom domain. Idempotent — 404 if nothing attached."""
-    if not _safe_slug(slug):
-        handler._json(400, {"error": "invalid slug"}); return
-    if not _project_exists(slug):
-        handler._json(404, {"error": f"project not found: {slug}"}); return
+    if require_project_owner(handler, slug) is None:
+        return
 
     prev = remove_domain(slug)
     if not prev:

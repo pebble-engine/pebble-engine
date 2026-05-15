@@ -15,6 +15,7 @@ from pathlib import Path
 import pytest
 
 import pebble.history as history_mod
+import pebble.security as security_mod
 import pebble.server.refine as refine_mod
 
 
@@ -41,10 +42,25 @@ class FakeLLMClient:
 
 @pytest.fixture
 def fake_engine(tmp_path, monkeypatch):
-    """Wire pebble.server.refine to a tmp output dir + a fake LLM."""
+    """Wire pebble.server.refine to a tmp output dir + a fake LLM.
+
+    Bypasses ``require_project_owner`` so the existing tests (which don't
+    seed a session cookie) still exercise the JSON contract. The auth gate
+    itself is covered in tests/test_security.py + tests/test_http_e2e.py.
+    """
     out = tmp_path / "output"
     out.mkdir()
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    def bypass(handler, slug):
+        if not security_mod.is_valid_slug(slug):
+            handler._json(400, {"error": "invalid project slug"})
+            return None
+        if not (out / slug).exists():
+            handler._json(404, {"error": f"project not found: {slug}"})
+            return None
+        return "test-user"
+    monkeypatch.setattr(refine_mod, "require_project_owner", bypass)
 
     fake_pe_module = type("FakeModule", (), {
         "OUTPUT_DIR":              out,

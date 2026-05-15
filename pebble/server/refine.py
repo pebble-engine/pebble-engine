@@ -29,6 +29,7 @@ from typing import Callable, Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
+from pebble.security import project_lock, require_project_owner
 
 
 def _engine():
@@ -297,33 +298,47 @@ def run_refine(handler) -> None:
     if not isinstance(refinement_id, str) or not refinement_id:
         handler._json(400, {"error": "refinement_id is required"}); return
 
+    # Auth gate — added in the 2026-05-15 security pass after NLM caught
+    # that refine + visual-edit + rollback + history all predated the
+    # auth system and let any signed-in user mutate any project by slug.
+    if require_project_owner(handler, slug) is None:
+        return
+
     site_dir = _output_dir() / slug / "site"
     if not site_dir.exists():
         handler._json(404, {"error": f"project site not found: {slug}"}); return
 
-    # Snapshot BEFORE applying — guarantees the user can roll back.
-    snap = snapshot_site(slug, reason=f"refine-{refinement_id}", source=f"POST /api/refine {refinement_id}")
-    snapshot_id = snap.name if snap else None
+    # Per-slug write lock — same NLM pass found a race window where two
+    # concurrent refines on one project both snapshot pre-state and both
+    # write, so the second snapshot bakes in the first edit.
+    with project_lock(slug) as got_lock:
+        if not got_lock:
+            handler._json(409, {"error": "another refinement is already in progress; try again in a moment"})
+            return
 
-    t0 = time.time()
-    if refinement_id in DETERMINISTIC_REFINEMENTS:
-        try:
-            result = DETERMINISTIC_REFINEMENTS[refinement_id](site_dir)
-        except Exception as e:
-            log.warning("deterministic refinement failed: %s", e)
-            handler._json(500, {"error": f"refinement failed: {e}"}); return
-        kind = "deterministic"
-        billable = False
-    elif refinement_id in LLM_REFINEMENTS:
-        result = _run_llm_refinement(slug, refinement_id)
-        if result.get("error"):
-            handler._json(502, {"error": result["error"]}); return
-        kind = "llm"
-        billable = True
-    else:
-        handler._json(400, {"error": f"unknown refinement_id: {refinement_id}"}); return
+        # Snapshot BEFORE applying — guarantees the user can roll back.
+        snap = snapshot_site(slug, reason=f"refine-{refinement_id}", source=f"POST /api/refine {refinement_id}")
+        snapshot_id = snap.name if snap else None
 
-    elapsed = time.time() - t0
+        t0 = time.time()
+        if refinement_id in DETERMINISTIC_REFINEMENTS:
+            try:
+                result = DETERMINISTIC_REFINEMENTS[refinement_id](site_dir)
+            except Exception as e:
+                log.warning("deterministic refinement failed: %s", e)
+                handler._json(500, {"error": f"refinement failed: {e}"}); return
+            kind = "deterministic"
+            billable = False
+        elif refinement_id in LLM_REFINEMENTS:
+            result = _run_llm_refinement(slug, refinement_id)
+            if result.get("error"):
+                handler._json(502, {"error": result["error"]}); return
+            kind = "llm"
+            billable = True
+        else:
+            handler._json(400, {"error": f"unknown refinement_id: {refinement_id}"}); return
+
+        elapsed = time.time() - t0
 
     handler._json(200, {
         "slug":             slug,

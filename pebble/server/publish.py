@@ -17,6 +17,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
+from pebble.security import project_lock, require_project_owner
 from pebble.publish import (
     PublishError,
     PublishResult,
@@ -85,6 +86,12 @@ def run_publish(handler) -> None:
     dest = (body or {}).get("dest") or "auto"
     if dest not in ("auto", "cloudflare", "zip"):
         handler._json(400, {"error": f"unknown dest: {dest}"}); return
+
+    # Auth gate — publish is the most consequential mutation (writes to a
+    # public deploy target). The 2026-05-15 evening NLM pass flagged that
+    # any signed-in user could publish another user's project by slug.
+    if require_project_owner(handler, slug) is None:
+        return
 
     project_dir = _output_dir() / slug
     if not project_dir.exists():
@@ -167,12 +174,14 @@ def run_publish(handler) -> None:
 # --------- GET /api/projects/<slug>/publish ---------
 
 def run_get_publish_state(handler, slug: str) -> None:
-    """Return the latest publish state + chronological history."""
-    if not _safe_slug(slug):
-        handler._json(400, {"error": "invalid slug"}); return
-    project_dir = _output_dir() / slug
-    if not project_dir.exists():
-        handler._json(404, {"error": f"project not found: {slug}"}); return
+    """Return the latest publish state + chronological history.
+
+    Auth: gated through require_project_owner — the publish history
+    leaks deploy URLs and timestamps that aren't another user's
+    business.
+    """
+    if require_project_owner(handler, slug) is None:
+        return
     handler._json(200, {
         "slug":    slug,
         "current": read_publish_state(slug),

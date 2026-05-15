@@ -24,6 +24,13 @@ import pytest
 
 import pebble_engine
 import pebble.history as history_mod
+import pebble.security as security_mod
+import pebble.server.projects as projects_server
+import pebble.server.refine as refine_server
+import pebble.server.visual_edit as visual_edit_server
+import pebble.server.publish as publish_server
+import pebble.server.domain as domain_server
+import pebble.server.blocks as blocks_server
 
 
 def _find_free_port() -> int:
@@ -64,6 +71,25 @@ def engine_server(tmp_path, monkeypatch):
     out.mkdir()
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", out)
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+
+    # The 2026-05-15 evening NLM pass added require_project_owner to
+    # publish + refine + visual-edit + rollback + history + star + delete.
+    # Pre-existing tests in this file exercise the JSON contract through
+    # the real HTTP server WITHOUT cookies; bypass the auth check so they
+    # keep working. (Auth coverage lives in test_security.py +
+    # test_blocks.py.)
+    def bypass(handler, slug):
+        if not security_mod.is_valid_slug(slug):
+            handler._json(400, {"error": "invalid project slug"})
+            return None
+        if not (out / slug).exists():
+            handler._json(404, {"error": f"project not found: {slug}"})
+            return None
+        return "test-user"
+    for mod in (projects_server, refine_server, visual_edit_server,
+                publish_server, domain_server, blocks_server):
+        monkeypatch.setattr(mod, "require_project_owner", bypass)
 
     port = _find_free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), pebble_engine.PebbleHandler)

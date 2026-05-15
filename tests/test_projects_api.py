@@ -14,6 +14,7 @@ from pathlib import Path
 import pytest
 
 import pebble.history as history_mod
+import pebble.security as security_mod
 import pebble.server.projects as projects
 import pebble.server.refine as refine
 import pebble.server.visual_edit as visual_edit
@@ -36,10 +37,19 @@ class FakeHandler:
 
 @pytest.fixture
 def fake_output(tmp_path, monkeypatch):
-    """Redirect all OUTPUT_DIR references in the modules under test."""
+    """Redirect all OUTPUT_DIR references in the modules under test.
+
+    Also short-circuits ``require_project_owner`` so legacy FakeHandler
+    tests (no real cookies) keep working. The 2026-05-15 evening security
+    pass added auth gates to refine / visual-edit / rollback / history /
+    star endpoints; the existing tests were written before that. Each
+    test still exercises the JSON contract; auth-specific behavior is
+    covered in tests/test_security.py and the HTTP e2e files.
+    """
     out = tmp_path / "output"
     out.mkdir()
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
     # Patch the _engine() lookups in our server modules so they pick up the
     # tmp output too. Easier than mocking the real engine import.
     class FakeEngine:
@@ -47,6 +57,22 @@ def fake_output(tmp_path, monkeypatch):
     monkeypatch.setattr(projects, "_engine", lambda: FakeEngine)
     monkeypatch.setattr(refine,   "_engine", lambda: FakeEngine)
     monkeypatch.setattr(visual_edit, "_engine", lambda: FakeEngine)
+    # Bypass the auth gate — tests focus on the JSON contract. Auth
+    # behavior is covered separately. Preserves the gate's *non-auth*
+    # responsibilities: bad slug → 400, missing project → 404. The
+    # ownership check itself is what we short-circuit.
+    def bypass(handler, slug):
+        if not security_mod.is_valid_slug(slug):
+            handler._json(400, {"error": "invalid project slug"})
+            return None
+        if not (out / slug).exists():
+            handler._json(404, {"error": f"project not found: {slug}"})
+            return None
+        return "test-user"
+    monkeypatch.setattr(security_mod, "require_project_owner", bypass)
+    monkeypatch.setattr(projects, "require_project_owner", bypass)
+    monkeypatch.setattr(refine, "require_project_owner", bypass)
+    monkeypatch.setattr(visual_edit, "require_project_owner", bypass)
     return out
 
 
