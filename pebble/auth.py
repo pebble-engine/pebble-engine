@@ -39,6 +39,7 @@ from typing import Optional
 # ---------- Config --------------------------------------------------------
 
 SESSION_TTL = timedelta(days=30)
+PASSWORD_RESET_TTL = timedelta(hours=1)
 MIN_PASSWORD_LEN = 8
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -71,6 +72,12 @@ def _users_dir() -> Path:
 
 def _sessions_dir() -> Path:
     d = _engine_output_dir() / ".sessions"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def _password_reset_dir() -> Path:
+    d = _engine_output_dir() / ".password_resets"
     d.mkdir(parents=True, exist_ok=True)
     return d
 
@@ -301,6 +308,105 @@ def revoke_session(token: str) -> bool:
         except Exception:
             return False
     return False
+
+
+def revoke_all_sessions_for(user_id: str) -> int:
+    """Revoke every session belonging to a user. Returns count revoked.
+    Used after a password reset so all logged-in devices are signed out."""
+    if not user_id:
+        return 0
+    count = 0
+    for path in _sessions_dir().glob("*.json"):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if data.get("user_id") == user_id:
+            try:
+                path.unlink()
+                count += 1
+            except Exception:
+                pass
+    return count
+
+
+# ---------- Password reset tokens ----------------------------------------
+
+@dataclass
+class PasswordResetToken:
+    token:      str
+    user_id:    str
+    created_at: str
+    expires_at: str
+
+    @property
+    def is_expired(self) -> bool:
+        try:
+            return datetime.fromisoformat(self.expires_at) <= datetime.now(timezone.utc)
+        except Exception:
+            return True
+
+
+def create_password_reset_token(user_id: str) -> PasswordResetToken:
+    """Generate and persist a one-time reset token for ``user_id``."""
+    now = datetime.now(timezone.utc)
+    tok = PasswordResetToken(
+        token=secrets.token_urlsafe(32),
+        user_id=user_id,
+        created_at=now.isoformat(),
+        expires_at=(now + PASSWORD_RESET_TTL).isoformat(),
+    )
+    (_password_reset_dir() / f"{tok.token}.json").write_text(
+        json.dumps(asdict(tok), indent=2), encoding="utf-8"
+    )
+    return tok
+
+
+def get_password_reset_token(token: str) -> Optional[PasswordResetToken]:
+    """Look up a reset token. Returns None if missing, malformed, or
+    expired. Expired tokens are deleted on read so the store self-cleans."""
+    if not token or not isinstance(token, str):
+        return None
+    path = _password_reset_dir() / f"{token}.json"
+    if not path.exists():
+        return None
+    try:
+        rec = PasswordResetToken(**json.loads(path.read_text(encoding="utf-8")))
+    except Exception:
+        return None
+    if rec.is_expired:
+        try: path.unlink()
+        except Exception: pass
+        return None
+    return rec
+
+
+def consume_password_reset_token(token: str) -> Optional[PasswordResetToken]:
+    """Look up the token and delete it. Returns the record on hit, None
+    on miss/expired. Use this exactly once per reset to prevent replays."""
+    rec = get_password_reset_token(token)
+    if not rec:
+        return None
+    try:
+        (_password_reset_dir() / f"{rec.token}.json").unlink()
+    except Exception:
+        pass
+    return rec
+
+
+def update_user_password(user_id: str, new_password: str) -> Optional[User]:
+    """Re-hash and persist a user's password. Returns the updated User
+    (or None if user_id is unknown). Caller is responsible for revoking
+    sessions and consuming the reset token."""
+    _validate_password(new_password)
+    user = find_user_by_id(user_id)
+    if not user:
+        return None
+    user.password_hash = hash_password(new_password)
+    (_users_dir() / f"{user.id}.json").write_text(
+        json.dumps(asdict(user), indent=2), encoding="utf-8"
+    )
+    return user
 
 
 def session_to_user(token: str) -> Optional[User]:

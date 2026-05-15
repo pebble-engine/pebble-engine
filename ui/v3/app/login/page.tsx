@@ -109,6 +109,12 @@ export default function LoginPage() {
               Create an account
             </Link>
           </p>
+
+          <p className="text-center text-xs text-muted-foreground">
+            <Link href="/forgot" className="hover:text-foreground transition-colors">
+              Forgot your password?
+            </Link>
+          </p>
         </motion.div>
       </main>
     </div>

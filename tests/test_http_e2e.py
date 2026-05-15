@@ -386,6 +386,97 @@ def _extract_cookie(set_cookie_header: str | None) -> str:
     return set_cookie_header.split(";", 1)[0].strip()
 
 
+def test_signup_writes_welcome_email_to_outbox(engine_server):
+    base = engine_server["base"]
+    out = engine_server["output"]
+    status, _body, _ = _post_with_cookie(base, "/api/auth/signup", {
+        "email": "alice@example.com", "password": "valid-password",
+    })
+    assert status == 201
+    # FileSender wrote an .eml under output/.email_outbox/
+    outbox = out / ".email_outbox"
+    assert outbox.exists()
+    files = list(outbox.glob("*.eml"))
+    assert len(files) == 1
+    contents = files[0].read_text(encoding="utf-8", errors="replace")
+    assert "alice@example.com" in contents
+    assert "Welcome" in contents
+
+
+def test_forgot_reset_round_trip(engine_server):
+    """Real e2e: signup → forgot → grab token from .eml → reset → login as new password."""
+    import email as _email
+    import re as _re
+    base = engine_server["base"]
+    out = engine_server["output"]
+    # 1) Signup
+    _post(base, "/api/auth/signup", {"email": "user@example.com", "password": "old-pass-123"})
+
+    # 2) Forgot — generates a reset token + writes the reset email
+    status, body = _post(base, "/api/auth/forgot", {"email": "user@example.com"})
+    assert status == 200
+    assert body["sent"] is True
+
+    # 3) The reset URL was written to the outbox; pull the token out.
+    # Parse the .eml with the modern email policy so we get the decoded
+    # body instead of quoted-printable-wrapped raw bytes.
+    import email.policy as _email_policy
+    outbox = out / ".email_outbox"
+    reset_emails: list = []
+    for f in outbox.glob("*.eml"):
+        msg = _email.message_from_bytes(f.read_bytes(), policy=_email_policy.default)
+        subj = str(msg.get("Subject") or "")
+        if "reset" in subj.lower():
+            reset_emails.append(msg)
+    assert reset_emails, "no reset email landed in outbox"
+
+    # Walk the multipart and pick text/plain (avoids HTML-attribute hits)
+    body_str = ""
+    for part in reset_emails[-1].walk():
+        if part.get_content_type() == "text/plain":
+            try:
+                body_str = part.get_content()
+                break
+            except Exception:
+                pass
+    m = _re.search(r"token=([A-Za-z0-9_-]+)", body_str)
+    assert m, f"no token found in reset email; body was: {body_str!r}"
+    token = m.group(1)
+
+    # 4) Reset
+    status, body = _post(base, "/api/auth/reset", {"token": token, "password": "brand-new-pass-456"})
+    assert status == 200
+    assert body["user"]["email"] == "user@example.com"
+
+    # 5) Old password fails; new password works
+    status, _, _ = _post_with_cookie(base, "/api/auth/login", {
+        "email": "user@example.com", "password": "old-pass-123",
+    })
+    assert status == 401
+    status, _, _ = _post_with_cookie(base, "/api/auth/login", {
+        "email": "user@example.com", "password": "brand-new-pass-456",
+    })
+    assert status == 200
+
+    # 6) Replay of the same token is blocked
+    status, body = _post(base, "/api/auth/reset", {"token": token, "password": "another-pass-789"})
+    assert status == 400
+
+
+def test_forgot_for_unknown_email_returns_200_but_sent_false(engine_server):
+    status, body = _post(engine_server["base"], "/api/auth/forgot", {"email": "ghost@example.com"})
+    assert status == 200
+    # We tell the test sender what happened — production-side it's an honest "ok"
+    assert body["sent"] is False
+
+
+def test_reset_with_bad_token_400(engine_server):
+    status, body = _post(engine_server["base"], "/api/auth/reset", {
+        "token": "not-a-real-token", "password": "valid-pass-123",
+    })
+    assert status == 400
+
+
 def test_auth_signup_login_me_logout_flow(engine_server):
     base = engine_server["base"]
 

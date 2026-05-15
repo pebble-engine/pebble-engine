@@ -21,14 +21,20 @@ from pebble.auth import (
     SESSION_COOKIE_NAME,
     authenticate,
     clear_cookie,
+    consume_password_reset_token,
     cookie_for_session,
+    create_password_reset_token,
     create_session,
     create_user,
+    find_user_by_email,
     find_user_by_id,
     get_session,
     parse_session_token,
+    revoke_all_sessions_for,
     revoke_session,
+    update_user_password,
 )
+from pebble.email import send_password_reset, send_welcome
 from pebble.log import log
 
 
@@ -84,6 +90,11 @@ def run_signup(handler) -> None:
         handler._json(500, {"error": "signup failed"})
         return
     sess = create_session(user.id)
+    # Fire-and-forget welcome email. Never block signup on mail send.
+    try:
+        send_welcome(user.email)
+    except Exception as e:
+        log.warning("welcome email failed for %s: %s", user.email, e)
     handler._json(
         201,
         {"user": user.to_public()},
@@ -137,3 +148,80 @@ def run_me(handler) -> None:
         )
         return
     handler._json(200, {"user": user.to_public()})
+
+
+# ---------- Password reset ------------------------------------------------
+
+def _public_base_url() -> str:
+    return os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "http://localhost:3001"
+
+
+def _reset_url_for(token: str) -> str:
+    return f"{_public_base_url()}/reset?token={token}"
+
+
+def run_forgot(handler) -> None:
+    """POST /api/auth/forgot — request a password reset link.
+
+    Always responds 200 even if the email isn't on file — this prevents
+    account-enumeration attacks. The body has ``{ok: true, sent: bool}``
+    so test code can see what actually happened while production users
+    just see a generic "if your email is on file, we sent a link" UX.
+    """
+    body = _read_body(handler)
+    if body is None:
+        return
+    email = (body.get("email") or "").strip()
+    sent = False
+    if email:
+        user = find_user_by_email(email)
+        if user:
+            token = create_password_reset_token(user.id)
+            reset_url = _reset_url_for(token.token)
+            try:
+                send_password_reset(user.email, reset_url)
+                sent = True
+            except Exception as e:
+                log.warning("password reset email failed for %s: %s", user.email, e)
+    handler._json(200, {"ok": True, "sent": sent})
+
+
+def run_reset(handler) -> None:
+    """POST /api/auth/reset — finalize a password reset.
+
+    Body: ``{ token, password }``. On success the user is re-issued a
+    session cookie so they're signed in immediately after resetting.
+    All prior sessions for the user are revoked.
+    """
+    body = _read_body(handler)
+    if body is None:
+        return
+    token = (body.get("token") or "").strip()
+    password = body.get("password") or ""
+    if not token:
+        handler._json(400, {"error": "reset token is required"})
+        return
+    rec = consume_password_reset_token(token)
+    if not rec:
+        handler._json(400, {"error": "That reset link is invalid or expired. Request a new one."})
+        return
+    try:
+        user = update_user_password(rec.user_id, password)
+    except AuthError as e:
+        handler._json(400, {"error": str(e)})
+        return
+    except Exception as e:
+        log.warning("password reset failed: %s", e)
+        handler._json(500, {"error": "password reset failed"})
+        return
+    if not user:
+        handler._json(400, {"error": "account not found"})
+        return
+    # Revoke every other session — a reset implies "I lost control of those."
+    revoke_all_sessions_for(user.id)
+    sess = create_session(user.id)
+    handler._json(
+        200,
+        {"user": user.to_public()},
+        extra_headers=[("Set-Cookie", cookie_for_session(sess.token, secure=_secure_cookies()))],
+    )

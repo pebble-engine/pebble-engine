@@ -1562,6 +1562,12 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/auth/logout":
                 from pebble.server.auth import run_logout
                 run_logout(self)
+            elif self.path == "/api/auth/forgot":
+                from pebble.server.auth import run_forgot
+                run_forgot(self)
+            elif self.path == "/api/auth/reset":
+                from pebble.server.auth import run_reset
+                run_reset(self)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
                 slug = self.path[len("/api/projects/"):-len("/star")]
                 self._handle_toggle_star(slug)
