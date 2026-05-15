@@ -196,6 +196,12 @@ def slug_to_project_name(slug: str) -> str:
 CF_API_BASE   = "https://api.cloudflare.com/client/v4"
 CF_PAGES_API  = f"{CF_API_BASE}/pages"
 
+# Vendors fronting APIs with Cloudflare WAF (Resend, etc.) reject the
+# default "Python-urllib/3.x" UA. Cloudflare's own api.cloudflare.com
+# currently doesn't, but set a real UA defensively so we don't get
+# surprised if their bot rules change.
+PEBBLE_UA = "PebbleEngine/1.0 (+https://getpebble.net)"
+
 
 def _cf_request(
     method: str,
@@ -210,6 +216,8 @@ def _cf_request(
     req_headers = {
         "Authorization": f"Bearer {token}",
         "Content-Type":  "application/json",
+        "User-Agent":    PEBBLE_UA,
+        "Accept":        "application/json",
     }
     if headers:
         req_headers.update(headers)
@@ -398,17 +406,25 @@ def publish_to_cloudflare(
     )
     result_obj = deploy_resp.get("result") or {}
     deployment_id = result_obj.get("id") or ""
-    live_url = result_obj.get("url") or f"https://{name}.pages.dev"
+    # Prefer the canonical project URL (https://<name>.pages.dev) — that's
+    # what users share and what TLS is reliably provisioned for. Cloudflare
+    # also returns a deployment-prefixed preview URL ("<id>.<name>.pages.dev")
+    # which is useful for previewing a specific build, but the wildcard cert
+    # for *.pages.dev sometimes hasn't propagated for double-subdomain
+    # variants yet. Keep the preview URL too as deployment_preview_url.
+    canonical_url = f"https://{name}.pages.dev"
+    preview_url = result_obj.get("url") or canonical_url
 
     return PublishResult(
         slug=slug,
         kind="cloudflare",
-        url=live_url,
+        url=canonical_url,
         deployed_at=datetime.now(timezone.utc).isoformat(),
         bytes_published=byte_count,
         files_published=len(files),
         deployment_id=deployment_id,
         project_name=name,
+        note=f"Preview this build: {preview_url}" if preview_url != canonical_url else None,
     )
 
 
@@ -442,6 +458,7 @@ def _create_cloudflare_deployment(
         headers={
             "Authorization": f"Bearer {token}",
             "Content-Type":  f"multipart/form-data; boundary={boundary}",
+            "User-Agent":    PEBBLE_UA,
         },
         method="POST",
     )

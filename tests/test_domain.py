@@ -26,6 +26,15 @@ import pebble.history as history_mod
 import pebble.domain as domain_mod
 
 
+@pytest.fixture(autouse=True)
+def _clean_cloudflare_env(monkeypatch):
+    """Every test in this module assumes Cloudflare is NOT configured —
+    the engine_server fixture clears it too, but unit tests that don't
+    use the fixture need their own scrub now that .env has real keys."""
+    monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("CLOUDFLARE_API_TOKEN", raising=False)
+
+
 def _find_free_port() -> int:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))

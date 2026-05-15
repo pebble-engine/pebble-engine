@@ -30,6 +30,11 @@ from typing import Optional, Protocol
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
+# All outbound API calls need a real User-Agent — vendors fronting their
+# APIs with Cloudflare (Resend in particular) block the default
+# "Python-urllib/3.x" UA at the WAF and return HTTP 403 / error 1010.
+PEBBLE_UA = "PebbleEngine/1.0 (+https://getpebble.net)"
+
 
 def _engine_output_dir() -> Path:
     eng = sys.modules.get("pebble_engine") or sys.modules.get("__main__")
@@ -144,6 +149,8 @@ class ResendSender:
             headers={
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type":  "application/json",
+                "User-Agent":    PEBBLE_UA,
+                "Accept":        "application/json",
             },
             method="POST",
         )
@@ -186,6 +193,7 @@ class PostmarkSender:
             headers={
                 "Accept":                  "application/json",
                 "Content-Type":            "application/json",
+                "User-Agent":              PEBBLE_UA,
                 "X-Postmark-Server-Token": self._token,
             },
             method="POST",
@@ -229,6 +237,8 @@ class SendgridSender:
             headers={
                 "Authorization": f"Bearer {self._api_key}",
                 "Content-Type":  "application/json",
+                "User-Agent":    PEBBLE_UA,
+                "Accept":        "application/json",
             },
             method="POST",
         )
