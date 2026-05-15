@@ -28,6 +28,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { DnaPreview } from "@/components/dna-preview";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
 
 type Step = {
@@ -152,6 +153,12 @@ export default function IntakePage() {
           Skip for now
         </button>
       } />
+
+      {/* Live DNA preview — the differentiator vs. template galleries.
+          Shows the user the style direction emerging in real time, with
+          a "Try another" reroll. Persists the chosen DNA id into the
+          brief via `_design_dna` so the engine respects it at build. */}
+      <DnaPreview />
 
       {/* Progress dots */}
       <div className="flex justify-center pt-8">

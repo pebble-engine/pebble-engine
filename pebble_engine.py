@@ -1483,10 +1483,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
 
     # ---- GET ----
     def do_GET(self):
-        # Strip query string for route matching (e.g. /?t=12345 should still serve index.html)
+        # Strip query string for route matching (e.g. /?t=12345 should still serve index.html).
+        # Stash raw_path so handlers that legitimately need the query string (e.g.
+        # /api/dna/preview?id=...) can recover it via self._raw_path. Most handlers
+        # don't care, so the strip stays the default.
         raw_path = self.path
         path_only = raw_path.split("?", 1)[0]
         self.path = path_only
+        self._raw_path = raw_path
         try:
             if path_only in ("/", "/index.html"):
                 self._serve_file(INDEX_HTML, "text/html; charset=utf-8")
@@ -1494,6 +1498,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_v2()
             elif self.path == "/api/health":
                 self._handle_health()
+            elif self.path == "/api/dna/preview":
+                from pebble.server.dna import run_dna_preview
+                run_dna_preview(self)
             elif self.path == "/api/industries":
                 self._handle_list_industries()
             elif self.path == "/api/briefs":
