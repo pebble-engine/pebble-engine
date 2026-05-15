@@ -348,33 +348,126 @@ def _base_url() -> str:
     return os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "http://localhost:3001"
 
 
-def render_welcome(email: str) -> EmailMessage:
+def render_welcome(email: str, first_name: Optional[str] = None) -> EmailMessage:
     """Welcome email after signup. Universal-design framing — never
-    references age or skill level."""
-    text = (
-        f"Welcome to Pebble.\n\n"
-        f"You're signed in as {email}. From here you can:\n\n"
-        f"  • Start a site from scratch — answer 10 questions, we'll build it.\n"
-        f"  • Bring an existing site over — paste the URL on the home page.\n"
-        f"  • Edit anything live — click any element on the preview to change text, colors, or size.\n"
-        f"  • Publish when you're ready — to Cloudflare Pages or a downloadable ZIP.\n\n"
-        f"Everything is editable later. You don't have to be done.\n\n"
-        f"Pebble\n"
-        f"{_base_url()}\n"
+    references age or skill level. ``first_name`` is pulled from
+    ``auth.users.raw_user_meta_data.first_name`` by the Supabase webhook
+    handler; for OAuth signups Google/GitHub populates it automatically.
+    When absent (rare — webhook fires before profile trigger somehow),
+    we fall back to "there" rather than addressing the user as None.
+
+    The HTML uses table layout + inline styles because that's what
+    Gmail / Outlook / Apple Mail will reliably render — modern flex/grid
+    layouts get stripped or break across clients."""
+    name = (first_name or "").strip() or "there"
+    base = _base_url()
+    start_url = f"{base}/workspace"
+    return EmailMessage(
+        to=email,
+        subject=f"Welcome to Pebble, {name}",
+        text=_welcome_text(name, start_url, base),
+        html=_welcome_html(name, start_url, base),
     )
-    html = (
-        f"<p>Welcome to Pebble.</p>"
-        f"<p>You're signed in as <strong>{_escape_html(email)}</strong>. From here you can:</p>"
-        f"<ul>"
-        f"<li>Start a site from scratch — answer 10 questions, we'll build it.</li>"
-        f"<li>Bring an existing site over — paste the URL on the home page.</li>"
-        f"<li>Edit anything live — click any element on the preview to change text, colors, or size.</li>"
-        f"<li>Publish when you're ready — to Cloudflare Pages or a downloadable ZIP.</li>"
-        f"</ul>"
-        f"<p>Everything is editable later. You don't have to be done.</p>"
-        f"<p>— Pebble · <a href=\"{_escape_html(_base_url())}\">{_escape_html(_base_url())}</a></p>"
+
+
+def _welcome_text(name: str, start_url: str, base: str) -> str:
+    return (
+        f"Welcome to Pebble, {name}.\n\n"
+        f"Thank you for signing up. We're excited to help you bring your idea "
+        f"to life and get your website online — without writing a single line of code.\n\n"
+        f"When you're ready, start building here:\n"
+        f"  {start_url}\n\n"
+        f"What you can do next:\n"
+        f"  - Describe your business in plain English — we'll pick the structure\n"
+        f"  - Bring an existing site over by pasting its URL\n"
+        f"  - Refine colors, fonts, and copy by clicking any element on the preview\n"
+        f"  - Publish to a free Pebble URL or your own custom domain\n\n"
+        f"— The Pebble Team\n"
+        f"Building websites should feel like building anything else you're proud of.\n\n"
+        f"You're receiving this because you created a Pebble account.\n"
+        f"Visit Pebble: {base}/landing\n"
     )
-    return EmailMessage(to=email, subject="Welcome to Pebble", text=text, html=html)
+
+
+def _welcome_html(name: str, start_url: str, base: str) -> str:
+    name_e = _escape_html(name)
+    start_e = _escape_html(start_url)
+    base_e = _escape_html(base)
+    # The whole template is one big string to keep this file readable —
+    # email HTML is awful but deterministic. Notes on the rules:
+    #   • Outer table is the centering scaffold (max-width 600px, the
+    #     web-mail "safe" width that doesn't get scaled in Gmail mobile).
+    #   • Every cell uses inline style — Gmail strips <style> blocks.
+    #   • Fonts use system-stack with serif fallback for the wordmark.
+    #   • Colours match the Pebble brand: warm-cream surface, charcoal
+    #     ink, pebble-grey muted. No accent colour in the body so the
+    #     CTA button is the visual anchor.
+    return (
+        '<!doctype html><html><head>'
+        '<meta charset="UTF-8"/>'
+        '<meta name="viewport" content="width=device-width,initial-scale=1"/>'
+        f'<title>Welcome to Pebble, {name_e}</title>'
+        '</head>'
+        '<body style="margin:0;padding:0;background:#F7F3EC;'
+        'font-family:-apple-system,BlinkMacSystemFont,\'Segoe UI\',Helvetica,Arial,sans-serif;'
+        'color:#1F1D1A;-webkit-font-smoothing:antialiased;">'
+        '<table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#F7F3EC;">'
+        '<tr><td align="center" style="padding:40px 16px;">'
+        '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" '
+        'style="max-width:600px;width:100%;background:#FFFFFF;border-radius:16px;'
+        'overflow:hidden;border:1px solid #ECE6DC;">'
+        # Wordmark
+        '<tr><td align="center" style="padding:44px 40px 8px 40px;">'
+        '<span style="font-family:Georgia,\'Times New Roman\',serif;font-size:34px;'
+        'font-weight:700;letter-spacing:-0.02em;color:#1F1D1A;">Pebble.</span>'
+        '</td></tr>'
+        # Headline
+        '<tr><td style="padding:24px 40px 16px 40px;">'
+        f'<h1 style="margin:0;font-family:Georgia,serif;font-size:26px;line-height:1.25;'
+        f'font-weight:700;color:#1F1D1A;">Welcome to Pebble, {name_e}.</h1>'
+        '</td></tr>'
+        # Body
+        '<tr><td style="padding:0 40px 28px 40px;font-size:16px;line-height:1.6;color:#44423E;">'
+        '<p style="margin:0 0 16px 0;">Thank you for signing up. We\'re excited to help you '
+        'bring your idea to life and get your website online — without writing a single line of code.</p>'
+        '<p style="margin:0;">When you\'re ready, click below and we\'ll walk you through your first build.</p>'
+        '</td></tr>'
+        # CTA
+        '<tr><td align="center" style="padding:8px 40px 40px 40px;">'
+        f'<a href="{start_e}" style="display:inline-block;background:#1F1D1A;color:#F7F3EC;'
+        f'font-size:15px;font-weight:600;text-decoration:none;padding:14px 30px;'
+        f'border-radius:999px;letter-spacing:0.01em;">Start building &rarr;</a>'
+        '</td></tr>'
+        # "What you can do next"
+        '<tr><td style="padding:0 40px 0 40px;border-top:1px solid #ECE6DC;">'
+        '<p style="margin:28px 0 14px 0;font-size:11px;font-weight:700;'
+        'text-transform:uppercase;letter-spacing:0.1em;color:#757470;">What you can do next</p>'
+        '<ul style="margin:0 0 28px 0;padding:0 0 0 18px;font-size:14px;line-height:1.7;color:#44423E;">'
+        '<li>Describe your business in plain English &mdash; we\'ll pick the structure</li>'
+        '<li>Bring an existing site over by pasting its URL</li>'
+        '<li>Refine colors, fonts, and copy by clicking any element on the preview</li>'
+        '<li>Publish to a free Pebble URL or your own custom domain</li>'
+        '</ul>'
+        '</td></tr>'
+        # Signature
+        '<tr><td style="padding:8px 40px 32px 40px;text-align:center;border-top:1px solid #ECE6DC;">'
+        '<p style="margin:24px 0 6px 0;font-family:Georgia,serif;font-size:16px;'
+        'font-weight:700;color:#1F1D1A;">The Pebble Team</p>'
+        '<p style="margin:0;font-size:13px;color:#757470;font-style:italic;">'
+        'Building websites should feel like building anything else you\'re proud of.</p>'
+        '</td></tr>'
+        '</table>'
+        # Outer footer (legal-ish, outside the card)
+        '<table role="presentation" width="600" cellspacing="0" cellpadding="0" border="0" '
+        'style="max-width:600px;width:100%;margin-top:16px;">'
+        '<tr><td align="center" style="padding:16px;font-size:11px;line-height:1.6;color:#999895;">'
+        'You\'re receiving this because you created a Pebble account.<br/>'
+        f'<a href="{base_e}/landing" style="color:#999895;text-decoration:underline;">Visit Pebble</a>'
+        '</td></tr>'
+        '</table>'
+        '</td></tr></table>'
+        '</body></html>'
+    )
 
 
 def render_password_reset(email: str, reset_url: str) -> EmailMessage:
@@ -409,12 +502,12 @@ def _escape_html(s: str) -> str:
 
 # --------- Convenience wrappers -------------------------------------------
 
-def send_welcome(email: str, sender: Optional[EmailSender] = None) -> dict:
-    return send(render_welcome(email), sender=sender)
+def send_welcome(email: str, first_name: Optional[str] = None, sender: Optional[EmailSender] = None) -> dict:
+    return send(render_welcome(email, first_name=first_name), sender=sender)
 
 
-def send_welcome_async(email: str, sender: Optional[EmailSender] = None) -> "Future[dict]":
-    return send_async(render_welcome(email), sender=sender)
+def send_welcome_async(email: str, first_name: Optional[str] = None, sender: Optional[EmailSender] = None) -> "Future[dict]":
+    return send_async(render_welcome(email, first_name=first_name), sender=sender)
 
 
 def send_password_reset(email: str, reset_url: str, sender: Optional[EmailSender] = None) -> dict:

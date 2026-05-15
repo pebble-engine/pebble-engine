@@ -225,11 +225,45 @@ def test_send_does_not_double_write_when_filesender_is_primary(tmp_path, monkeyp
 
 # ---- Pebble-specific templates -----------------------------------------
 
-def test_welcome_message_includes_email_and_link():
+def test_welcome_message_subject_and_cta():
+    """Default render (no first_name) — subject greets generically, body
+    has the CTA url and the team signature."""
     msg = email_mod.render_welcome("user@example.com")
-    assert "Welcome" in msg.subject
-    assert "user@example.com" in msg.text
-    assert msg.html and "user@example.com" in msg.html
+    assert "Welcome to Pebble" in msg.subject
+    # No first_name → "there" fallback
+    assert "Welcome to Pebble, there" in msg.text
+    assert msg.html and "Welcome to Pebble, there" in msg.html
+    # CTA url present in both formats
+    assert "/workspace" in msg.text
+    assert msg.html and "/workspace" in msg.html
+    # Signature
+    assert "Pebble Team" in msg.text
+    assert msg.html and "Pebble Team" in msg.html
+
+
+def test_welcome_message_personalised_with_first_name():
+    """When first_name is provided, subject + greeting + plaintext all
+    address the user by name. Used for OAuth signups (Google/GitHub
+    populate user_meta first_name automatically)."""
+    msg = email_mod.render_welcome("user@example.com", first_name="Marc")
+    assert "Welcome to Pebble, Marc" in msg.subject
+    assert "Welcome to Pebble, Marc." in msg.text
+    assert msg.html and "Welcome to Pebble, Marc." in msg.html
+
+
+def test_welcome_message_falls_back_when_first_name_blank():
+    """Empty / whitespace-only first_name should fall back to 'there'
+    rather than rendering 'Welcome, .' or addressing the user as ''."""
+    assert "Welcome to Pebble, there" in email_mod.render_welcome("u@e.com", first_name="").text
+    assert "Welcome to Pebble, there" in email_mod.render_welcome("u@e.com", first_name="   ").text
+
+
+def test_welcome_message_html_escapes_user_name():
+    """A name containing < or > or & must be html-escaped — never
+    injected raw into the HTML body."""
+    msg = email_mod.render_welcome("u@e.com", first_name="<script>alert(1)</script>")
+    assert msg.html and "<script>alert(1)</script>" not in msg.html
+    assert msg.html and "&lt;script&gt;" in msg.html
 
 
 def test_password_reset_message_contains_link():

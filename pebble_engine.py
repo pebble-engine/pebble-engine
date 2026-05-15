@@ -1662,6 +1662,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 slug = self.path[len("/api/projects/"):-len("/blocks/insert")]
                 from pebble.server.blocks import run_insert_block
                 run_insert_block(self, slug)
+            elif self.path == "/api/internal/supabase-webhook":
+                from pebble.server.supabase_webhook import run_supabase_webhook
+                run_supabase_webhook(self)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
