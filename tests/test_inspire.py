@@ -231,11 +231,39 @@ def test_resolve_safely_blocks_when_dns_returns_private(monkeypatch):
 
 
 def test_resolve_safely_returns_ip_for_public_host(monkeypatch):
+    """The 2026-05-15 SSRF hardening pass changed _resolve_safely to
+    return (ip, family) so callers can pin the connection to the
+    validated IP. Was Optional[str] before."""
     monkeypatch.setattr(
         socket, "getaddrinfo",
         lambda host, *_a, **_kw: [(socket.AF_INET, None, None, "", ("93.184.216.34", 0))],
     )
-    assert _resolve_safely("example.com") == "93.184.216.34"
+    result = _resolve_safely("example.com")
+    assert result is not None
+    ip, family = result
+    assert ip == "93.184.216.34"
+    assert family == socket.AF_INET
+
+
+def test_resolve_safely_blocks_when_any_record_is_private(monkeypatch):
+    """SSRF via multi-A: attacker returns benign IP first, private IP
+    second. Old code (infos[0]-only) passed; new code rejects because
+    it inspects every record. (NLM 2026-05-15 finding #3.)"""
+    def multi(*_a, **_kw):
+        return [
+            (socket.AF_INET, None, None, "", ("8.8.8.8", 0)),
+            (socket.AF_INET, None, None, "", ("169.254.169.254", 0)),  # AWS metadata
+        ]
+    monkeypatch.setattr(socket, "getaddrinfo", multi)
+    assert _resolve_safely("multi-a.example") is None
+
+
+def test_resolve_safely_blocks_ipv4_mapped_private_ipv6():
+    """::ffff:10.0.0.1 maps to 10.0.0.1; ipaddress.is_private catches
+    it. Smoke-test the full resolve path."""
+    from pebble.url_fetch import _is_private_or_loopback
+    assert _is_private_or_loopback("::ffff:10.0.0.1") is True
+    assert _is_private_or_loopback("::ffff:169.254.169.254") is True
 
 
 def test_resolve_safely_returns_none_on_resolution_failure(monkeypatch):
@@ -275,34 +303,56 @@ def test_fetch_url_safe_rejects_empty_url():
 
 
 def test_fetch_url_safe_rejects_redirect_to_private(monkeypatch):
-    """A 30x bouncing us to an internal address must still be caught."""
-    class _FakeResp:
-        def __init__(self, final):
-            self._final = final
-            self.headers = {"Content-Type": "text/html"}
-        def geturl(self):
-            return self._final
-        def read(self, n):
-            return b"<html></html>"
-        def __enter__(self): return self
-        def __exit__(self, *a): return False
+    """A 30x bouncing us to an internal address must be caught BEFORE
+    the engine connects. The 2026-05-15 hardening pass now follows
+    redirects manually and re-runs _resolve_safely on each hop, instead
+    of relying on urllib's auto-redirect (which would have already
+    connected to the private target by the time we got the response).
+    """
+    import pebble.url_fetch as uf
 
-    # Pretend the request resolves to a public IP, follows a redirect,
-    # and lands on something internal.
-    monkeypatch.setattr(
-        socket, "getaddrinfo",
-        lambda host, *_a, **_kw: [(socket.AF_INET, None, None, "", (
-            "8.8.8.8" if "evil" not in host else "10.0.0.5", 0,
-        ))],
-    )
-    def fake_urlopen(req, timeout=None):
-        return _FakeResp("http://internal-evil.example/")
-    import urllib.request as _ur
-    monkeypatch.setattr(_ur, "urlopen", fake_urlopen)
+    # First hop: example.com → 8.8.8.8 (passes), responds with 302 to
+    # a host that resolves to a private IP.
+    # Second hop: internal-evil.example → 10.0.0.5 → MUST be rejected
+    # before we open a socket.
+    def fake_resolve(host):
+        if "evil" in host:
+            return None  # internal-evil.example → blocked
+        return ("8.8.8.8", socket.AF_INET)
 
-    final, body, n, err = _fetch_url_safe("https://example.com")
+    sent_calls: list[str] = []
+
+    def fake_send(parsed, ip, family):
+        sent_calls.append(parsed.hostname)
+        # Pretend example.com returned a 302 to the evil host.
+        return (302, {"location": "http://internal-evil.example/"}, b"", "")
+
+    monkeypatch.setattr(uf, "_resolve_safely", fake_resolve)
+    monkeypatch.setattr(uf, "_send_one_request", fake_send)
+
+    final, body, n, err = uf.safe_fetch_html("https://example.com")
     assert err is not None
-    assert "redirected" in err or "private" in err
+    assert "private" in err or "blocked" in err
+    # We must have only opened a socket to example.com, NOT to the
+    # evil redirect target.
+    assert sent_calls == ["example.com"]
+
+
+def test_fetch_url_safe_caps_redirect_chain(monkeypatch):
+    """Endless 30x ping-pong should bail out, not loop forever."""
+    import pebble.url_fetch as uf
+
+    monkeypatch.setattr(uf, "_resolve_safely",
+                        lambda host: ("8.8.8.8", socket.AF_INET))
+    seq = iter([f"https://hop{i}.example/" for i in range(20)])
+
+    def fake_send(parsed, ip, family):
+        return (302, {"location": next(seq)}, b"", "")
+
+    monkeypatch.setattr(uf, "_send_one_request", fake_send)
+    _, _, _, err = uf.safe_fetch_html("https://start.example")
+    assert err is not None
+    assert "redirects" in err.lower() or "loop" in err.lower()
 
 
 # ---- extract_inspiration end-to-end ---------------------------------------

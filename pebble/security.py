@@ -113,21 +113,55 @@ def _is_trusted_proxy(ip: str) -> bool:
     return False
 
 
+_TRUSTED_PROXY_WARNING_LOGGED = False
+
+
+def _maybe_warn_unconfigured_proxy(peer: Optional[str]) -> None:
+    """Log ONCE if a request arrives with X-Forwarded-For but
+    PEBBLE_TRUSTED_PROXIES is empty. The 2026-05-15 NLM pass flagged
+    the deployment failure mode: behind a CDN, every request comes
+    from one IP (the proxy) and our rate limits collapse to a global
+    bucket. Operators need to be told once so they can configure the
+    proxy ranges before deploy. After the first log we go silent to
+    avoid filling the engine.log."""
+    global _TRUSTED_PROXY_WARNING_LOGGED
+    if _TRUSTED_PROXY_WARNING_LOGGED:
+        return
+    _TRUSTED_PROXY_WARNING_LOGGED = True
+    try:
+        from pebble.log import log
+        log.warning(
+            "X-Forwarded-For seen from %s but PEBBLE_TRUSTED_PROXIES is empty — "
+            "rate limiters will treat all CDN traffic as one client. "
+            "Set PEBBLE_TRUSTED_PROXIES=<cidr,cidr> in .env before deploy.",
+            peer,
+        )
+    except Exception:
+        pass
+
+
 def client_ip(handler) -> Optional[str]:
     """Resolve the calling client's IP.
 
     Only honors ``X-Forwarded-For`` when the immediate peer is in
     ``PEBBLE_TRUSTED_PROXIES``. Otherwise returns the raw peer address.
+
+    Logs ONCE when XFF is present but the proxy allow-list is empty —
+    helps operators catch the misconfiguration before deploying behind
+    a CDN.
     """
     try:
         peer = handler.client_address[0]
     except Exception:
         peer = None
     fwd = handler.headers.get("X-Forwarded-For") if hasattr(handler, "headers") else None
-    if fwd and peer and _is_trusted_proxy(peer):
-        # XFF is "client, proxy1, proxy2"; the client is the left-most.
-        first = fwd.split(",", 1)[0].strip()
-        return first or peer
+    if fwd and peer:
+        if _is_trusted_proxy(peer):
+            # XFF is "client, proxy1, proxy2"; the client is the left-most.
+            first = fwd.split(",", 1)[0].strip()
+            return first or peer
+        if not _trusted_proxy_networks():
+            _maybe_warn_unconfigured_proxy(peer)
     return peer
 
 

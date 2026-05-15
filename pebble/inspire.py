@@ -6,15 +6,9 @@ inspire pulls *aesthetic facts* (palette, typography, vibe) so a user
 who likes the look of a site can pre-seed a Pebble build's style
 direction. Different intent, different output shape.
 
-Both endpoints fetch arbitrary user-supplied URLs, so this module also
-hardens the fetch:
-
-- Block ``file://``, ``ftp://``, ``data:``, etc. — http(s) only.
-- Block private IPv4 ranges (RFC 1918), loopback, link-local, and the
-  cloud-metadata IP 169.254.169.254. SSRF defense — without this, a
-  malicious URL could probe the engine's internal network or read
-  AWS/GCP/Azure metadata via the IMDS endpoint.
-- Cap response size, content-type, and timeout.
+URL fetching + SSRF defenses live in :mod:`pebble.url_fetch` so both
+this module and ``pebble.migrate`` share the same hardened path. See
+that module for the rationale.
 
 The output (:class:`InspirationExtract`) maps cleanly onto a partial
 brief the v3 questionnaire can pre-fill, *plus* a suggested DNA card
@@ -23,15 +17,19 @@ the user "your style direction starts here" before generation.
 """
 from __future__ import annotations
 
-import ipaddress
 import re
-import socket
-import urllib.parse
-import urllib.request
 from collections import Counter
 from dataclasses import dataclass, field, asdict
 from html.parser import HTMLParser
 from typing import Optional
+
+from pebble.url_fetch import safe_fetch_html as _fetch_url_safe
+# Re-exports kept for the test suite + back-compat: tests previously
+# monkeypatched these private names directly on this module.
+from pebble.url_fetch import (
+    _is_private_or_loopback,
+    _resolve_safely,
+)
 
 
 # ---- Color and font extraction -------------------------------------------
@@ -387,116 +385,6 @@ def _suggest_dna(palette: dict, fonts: dict, vibe: dict) -> dict:
         "score":  round(best_score, 2),
         "reason": ", ".join(best_why) if best_why else "default match",
     }
-
-
-# ---- Safe URL fetch (SSRF-hardened) --------------------------------------
-
-_USER_AGENT = "PebbleBot/1.0 (+https://getpebble.net; inspiration extractor)"
-_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
-_TIMEOUT = 10.0
-
-# Hosts we refuse to resolve, even if the URL looks public. The cloud
-# metadata IP is the one the cloud-provider IMDS endpoint listens on;
-# without this an attacker could read EC2 instance credentials via SSRF.
-_BLOCKED_HOSTNAMES = {"localhost"}
-
-
-def _is_private_or_loopback(ip_str: str) -> bool:
-    """True for any IP we should refuse to fetch from. Includes RFC 1918
-    private ranges, loopback, link-local, multicast, reserved, and the
-    169.254.169.254 cloud-metadata IP (which is link-local but worth
-    naming explicitly because it's the SSRF target everyone forgets).
-    """
-    try:
-        addr = ipaddress.ip_address(ip_str)
-    except ValueError:
-        return True  # unparseable → treat as suspicious, refuse
-    return (
-        addr.is_private
-        or addr.is_loopback
-        or addr.is_link_local
-        or addr.is_multicast
-        or addr.is_reserved
-        or addr.is_unspecified
-    )
-
-
-def _resolve_safely(host: str) -> Optional[str]:
-    """DNS-resolve ``host`` and return the first IP IF it's a public
-    address; return ``None`` if all resolved IPs are private/loopback,
-    if the hostname is in the blocklist, or if resolution fails. The
-    caller must use the returned IP (or the original host with the IP
-    pinned) to defeat DNS-rebinding — for now we just block on resolve.
-    """
-    if not host or host.lower() in _BLOCKED_HOSTNAMES:
-        return None
-    try:
-        infos = socket.getaddrinfo(host, None, type=socket.SOCK_STREAM)
-    except (socket.gaierror, OSError, UnicodeError):
-        return None
-    for info in infos:
-        ip = info[4][0]
-        if _is_private_or_loopback(ip):
-            return None
-    return infos[0][4][0] if infos else None
-
-
-def _fetch_url_safe(url: str) -> tuple[str, str, int, Optional[str]]:
-    """Same return shape as migrate._fetch_url, plus SSRF blocking.
-    Returns (final_url, body, byte_count, error). Never raises."""
-    if not isinstance(url, str) or not url.strip():
-        return "", "", 0, "url is required"
-    url = url.strip()
-    if not url.lower().startswith(("http://", "https://")):
-        url = "https://" + url
-
-    parsed = urllib.parse.urlparse(url)
-    if parsed.scheme not in ("http", "https"):
-        return url, "", 0, f"unsupported scheme: {parsed.scheme}"
-    if not parsed.hostname:
-        return url, "", 0, "url has no host"
-    if _resolve_safely(parsed.hostname) is None:
-        return url, "", 0, "host resolves to a private or blocked address"
-
-    try:
-        req = urllib.request.Request(url, headers={
-            "User-Agent":      _USER_AGENT,
-            "Accept":          "text/html,application/xhtml+xml,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-        })
-        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
-            # Re-validate the FINAL URL after redirects — a 30x could
-            # have bounced us to an internal address.
-            final_url = resp.geturl()
-            final_parsed = urllib.parse.urlparse(final_url)
-            if final_parsed.hostname and _resolve_safely(final_parsed.hostname) is None:
-                return final_url, "", 0, "redirected to a private or blocked address"
-
-            ct = resp.headers.get("Content-Type", "").lower()
-            if "html" not in ct and "xml" not in ct and ct.strip() != "":
-                return final_url, "", 0, f"non-HTML content type: {ct}"
-            raw = resp.read(_MAX_BYTES + 1)
-            if len(raw) > _MAX_BYTES:
-                return final_url, "", len(raw), f"page exceeds {_MAX_BYTES // (1024*1024)} MB"
-            charset = "utf-8"
-            for part in ct.split(";"):
-                part = part.strip().lower()
-                if part.startswith("charset="):
-                    charset = part.split("=", 1)[1].strip()
-                    break
-            try:
-                text = raw.decode(charset, errors="replace")
-            except LookupError:
-                text = raw.decode("utf-8", errors="replace")
-            return final_url, text, len(raw), None
-    except urllib.error.HTTPError as e:
-        return url, "", 0, f"HTTP {e.code}"
-    except urllib.error.URLError as e:
-        return url, "", 0, f"network error: {e.reason}"
-    except socket.timeout:
-        return url, "", 0, "timeout"
-    except Exception as e:
-        return url, "", 0, f"{type(e).__name__}: {e}"
 
 
 # ---- Public API -----------------------------------------------------------

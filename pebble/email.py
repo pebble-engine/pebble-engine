@@ -287,20 +287,32 @@ def get_sender() -> EmailSender:
 def send(message: EmailMessage, sender: Optional[EmailSender] = None) -> dict:
     """Top-level entry point. Catches sender-level errors so callers
     don't have to. Returns ``{"ok": bool, "provider": "...", "id": "...", "error"?: "..."}``.
+
+    The FileSender audit-copy is written regardless of whether the
+    primary sender succeeded — if Resend rejects the message, we still
+    want the .eml on disk to debug from. The 2026-05-15 NLM pass flagged
+    that the previous "audit-copy lives inside the prod-sender try"
+    layout caused silent audit-trail loss whenever the prod sender
+    raised (which is exactly when the audit trail matters most).
     """
     s = sender or get_sender()
     try:
         result = s.send(message)
-        # Append a copy to the outbox even in prod so we have an audit trail.
+    except EmailError as e:
+        result = {"ok": False, "provider": getattr(s, "name", "?"), "id": "", "error": str(e)}
+    except Exception as e:
+        result = {"ok": False, "provider": getattr(s, "name", "?"), "id": "", "error": f"{type(e).__name__}: {e}"}
+
+    # Audit copy ALWAYS, even when the prod sender errored. Skip when
+    # the primary sender IS FileSender (would write the same file twice
+    # to the same outbox path with the same timestamp prefix — racy and
+    # noisy).
+    if not isinstance(s, FileSender):
         try:
             FileSender().send(message)
         except Exception:
             pass
-        return result
-    except EmailError as e:
-        return {"ok": False, "provider": getattr(s, "name", "?"), "id": "", "error": str(e)}
-    except Exception as e:
-        return {"ok": False, "provider": getattr(s, "name", "?"), "id": "", "error": f"{type(e).__name__}: {e}"}
+    return result
 
 
 # Shared thread pool for fire-and-forget sends. Two workers is plenty —

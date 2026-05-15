@@ -186,6 +186,43 @@ def test_send_writes_audit_copy_when_using_external_sender(tmp_path, monkeypatch
     assert len(list(outbox.glob("*.eml"))) >= 1
 
 
+def test_send_writes_audit_copy_even_when_external_sender_raises(tmp_path, monkeypatch):
+    """NLM 2026-05-15 finding: prior layout had FileSender.send INSIDE
+    the prod-sender try, so a Resend rejection would silently drop the
+    audit trail. The fix moved FileSender into a sibling try/except —
+    audit copy lands regardless of the prod sender's outcome.
+    """
+    monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
+    class Broken:
+        name = "broken-prod"
+        def send(self, m): raise email_mod.EmailError("provider rejected from-address")
+    res = email_mod.send(
+        email_mod.EmailMessage(to="lost@x.co", subject="s", text="t"),
+        sender=Broken(),
+    )
+    assert res["ok"] is False
+    outbox = tmp_path / ".email_outbox"
+    landed = list(outbox.glob("*.eml"))
+    assert len(landed) >= 1, "audit copy must land even when prod sender raises"
+    assert "lost@x.co" in landed[0].read_text(encoding="utf-8")
+
+
+def test_send_does_not_double_write_when_filesender_is_primary(tmp_path, monkeypatch):
+    """If the primary sender IS FileSender, the secondary audit-copy
+    branch must not fire — would write the same .eml twice with the
+    same timestamp prefix, racy + noisy."""
+    monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
+    # Use the default-outbox FileSender so _email_outbox_dir() runs
+    # mkdir(exist_ok=True) for us — it resolves under OUTPUT_DIR which
+    # we just monkeypatched to tmp_path.
+    email_mod.send(
+        email_mod.EmailMessage(to="solo@x.co", subject="s", text="t"),
+        sender=email_mod.FileSender(),
+    )
+    outbox = tmp_path / ".email_outbox"
+    assert len(list(outbox.glob("*.eml"))) == 1
+
+
 # ---- Pebble-specific templates -----------------------------------------
 
 def test_welcome_message_includes_email_and_link():

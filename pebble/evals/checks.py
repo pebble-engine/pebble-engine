@@ -22,6 +22,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
+from typing import Optional
 
 from pebble.evals.runner import BuildContext, CheckResult
 
@@ -2026,19 +2027,68 @@ _ICON_ONLY_CHILDREN_RE = re.compile(
 
 def _find_close_of_open_tag(text: str, start: int) -> int:
     """Given an index into a `<tagname...` opening, return the index of
-    the `>` that closes the OPEN tag (not the close tag), respecting
-    JSX `{...}` brace nesting. Returns -1 if unmatched."""
-    depth = 0
+    the `>` that closes the OPEN tag (not the close tag). Returns -1
+    if unmatched.
+
+    JSX is irregular enough that a single brace counter doesn't work;
+    NLM 2026-05-15 flagged template-literal interpolations (`${...}`)
+    as a case the prior counter mishandled. The scanner now maintains
+    a stack of modes:
+
+    - ``jsx_attrs`` — top of stack at start; ``>`` here closes the tag.
+    - ``expr`` — inside ``{...}`` (JSX expression OR template
+      interpolation). ``{`` pushes another ``expr``; ``}`` pops; ``>``
+      is harmless because we're inside braces.
+    - ``tmpl`` — inside `` `...` `` template literal. Most chars are
+      literal; ``${`` pushes an ``expr`` (and stays in tmpl mode
+      conceptually, recovered when the expr pops); the closing
+      backtick pops the ``tmpl``.
+
+    Quoted strings (``'...'`` and ``"..."``) are tracked separately so
+    a ``data-x="{}"`` attribute doesn't add to the brace depth.
+    """
+    modes: list[str] = ["jsx_attrs"]
+    quote: Optional[str] = None
     i = start
     n = len(text)
     while i < n:
         c = text[i]
-        if c == "{":
-            depth += 1
+        cur = modes[-1]
+        if quote:
+            if c == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if c == quote:
+                quote = None
+            i += 1
+            continue
+        if cur == "tmpl":
+            if c == "\\" and i + 1 < n:
+                i += 2
+                continue
+            if c == "`":
+                modes.pop()
+                i += 1
+                continue
+            if c == "$" and i + 1 < n and text[i + 1] == "{":
+                modes.append("expr")
+                i += 2
+                continue
+            i += 1
+            continue
+        # cur is "jsx_attrs" or "expr"
+        if c in ("'", '"'):
+            quote = c
+        elif c == "`":
+            modes.append("tmpl")
+        elif c == "{":
+            modes.append("expr")
         elif c == "}":
-            if depth > 0:
-                depth -= 1
-        elif c == ">" and depth == 0:
+            if cur == "expr":
+                modes.pop()
+            # spurious } at jsx_attrs level — ignore (malformed JSX
+            # but we don't want to crash on it)
+        elif c == ">" and cur == "jsx_attrs":
             return i
         i += 1
     return -1

@@ -25,14 +25,17 @@ from typing import Optional
 from urllib.parse import parse_qs, urlparse
 
 
-# Fields the v3 UI uses today. Surfacing extras (signature_moves,
-# forbidden) so the chip strip can render a tooltip / "what does this
-# style do?" disclosure without another round-trip.
+# Fields the v3 UI consumes. Deliberately small. Earlier drafts also
+# exposed `signature_moves` and `forbidden` — those are our prompt
+# guardrails, and emitting them on a public unauthenticated endpoint
+# leaks the prompt structure to anyone who scrapes /api/dna/preview
+# enumerating ids. (Flagged by the 2026-05-15 NLM adversarial pass.)
+# Only ship the fields the UI actually renders.
 _PUBLIC_FIELDS = (
     "id", "label", "feel",
     "display_font", "body_font", "mono_font",
-    "palette_posture", "hero_structure",
-    "motion_intensity", "signature_moves", "forbidden",
+    "palette_posture",
+    "motion_intensity",
 )
 
 

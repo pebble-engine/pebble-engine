@@ -3,7 +3,9 @@ the user can switch to Pebble without re-typing everything.
 
 The entry point is :func:`extract_from_url`, which:
 
-1. Fetches the URL (urllib, 10s timeout, follows redirects up to 5 hops).
+1. Fetches the URL via :mod:`pebble.url_fetch`'s SSRF-hardened path
+   (private-IP block, multi-record DNS check, manual redirect following,
+   IP pinning to defeat DNS rebinding).
 2. Parses with the stdlib :mod:`html.parser` — no external deps, no
    selenium, no Playwright.
 3. Walks the DOM tree collecting structured facts: title, meta
@@ -27,12 +29,12 @@ the existing intake.
 from __future__ import annotations
 
 import re
-import socket
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass, field, asdict
 from html.parser import HTMLParser
 from typing import Optional
+
+from pebble.url_fetch import safe_fetch_html as _fetch_url
 
 
 # ---- HTML parsing ---------------------------------------------------------
@@ -255,55 +257,6 @@ class _Extractor(HTMLParser):
             if needle in haystack_lower:
                 self.out.business_type_guess = key
                 break
-
-
-# ---- URL fetch ------------------------------------------------------------
-
-_USER_AGENT = "PebbleBot/1.0 (+https://getpebble.net; site migration assistant)"
-_MAX_BYTES = 2 * 1024 * 1024  # 2 MB cap so we don't OOM on huge pages
-_TIMEOUT = 10.0
-
-
-def _fetch_url(url: str) -> tuple[str, str, int, Optional[str]]:
-    """Return (final_url, body_text, byte_count, error). Never raises."""
-    if not isinstance(url, str) or not url.strip():
-        return "", "", 0, "url is required"
-    url = url.strip()
-    if not url.lower().startswith(("http://", "https://")):
-        url = "https://" + url
-    try:
-        req = urllib.request.Request(url, headers={
-            "User-Agent": _USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,*/*;q=0.8",
-            "Accept-Language": "en-US,en;q=0.5",
-        })
-        with urllib.request.urlopen(req, timeout=_TIMEOUT) as resp:
-            ct = resp.headers.get("Content-Type", "").lower()
-            if "html" not in ct and "xml" not in ct and ct.strip() != "":
-                return resp.geturl(), "", 0, f"non-HTML content type: {ct}"
-            raw = resp.read(_MAX_BYTES + 1)
-            if len(raw) > _MAX_BYTES:
-                return resp.geturl(), "", len(raw), f"page exceeds {_MAX_BYTES // (1024*1024)} MB"
-            # Best-effort decoding: try header charset, else utf-8 with replace
-            charset = "utf-8"
-            for part in ct.split(";"):
-                part = part.strip().lower()
-                if part.startswith("charset="):
-                    charset = part.split("=", 1)[1].strip()
-                    break
-            try:
-                text = raw.decode(charset, errors="replace")
-            except LookupError:
-                text = raw.decode("utf-8", errors="replace")
-            return resp.geturl(), text, len(raw), None
-    except urllib.error.HTTPError as e:
-        return url, "", 0, f"HTTP {e.code}"
-    except urllib.error.URLError as e:
-        return url, "", 0, f"network error: {e.reason}"
-    except socket.timeout:
-        return url, "", 0, "timeout"
-    except Exception as e:
-        return url, "", 0, f"{type(e).__name__}: {e}"
 
 
 # ---- Public API -----------------------------------------------------------

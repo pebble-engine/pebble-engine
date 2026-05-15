@@ -79,21 +79,32 @@ def test_preview_404_when_every_card_excluded():
 
 
 def test_preview_card_carries_ui_relevant_fields():
-    """The chip strip in v3 needs label, palette_posture, fonts, and
-    signature_moves to render. Lock the schema so a future style_dna
-    refactor can't silently drop a field the UI depends on."""
+    """The chip strip in v3 needs label, palette_posture, and fonts to
+    render. Lock the schema so a future style_dna refactor can't
+    silently drop a field the UI depends on."""
     h = FakeHandler("/api/dna/preview?id=swiss_magazine")
     run_dna_preview(h)
     card = h.last_body["card"]
     for required in (
         "id", "label", "feel",
         "display_font", "body_font",
-        "palette_posture", "hero_structure",
-        "motion_intensity", "signature_moves",
+        "palette_posture",
+        "motion_intensity",
     ):
         assert required in card, f"missing {required} in slim card"
-    assert isinstance(card["signature_moves"], list)
-    assert len(card["signature_moves"]) >= 1
+
+
+def test_preview_does_not_leak_prompt_guardrails():
+    """`signature_moves` and `forbidden` are our prompt guardrails — DO
+    NOT emit them on this unauthenticated public endpoint. The 2026-05-15
+    NLM pass flagged that exposing them lets anyone scrape the entire
+    proprietary style matrix by enumerating card ids."""
+    h = FakeHandler("/api/dna/preview?id=swiss_magazine")
+    run_dna_preview(h)
+    card = h.last_body["card"]
+    assert "signature_moves" not in card
+    assert "forbidden" not in card
+    assert "hero_structure" not in card
 
 
 def test_slim_card_omits_unknown_fields():

@@ -921,6 +921,51 @@ def test_a11y_skip_when_no_site(tmp_path):
     assert checks.a11y_static_audit(ctx).status == "skip"
 
 
+def test_a11y_brace_scanner_handles_template_literals(good_build):
+    """NLM 2026-05-15 flagged that the brace scanner naively counted
+    `{`/`}` and would miscount when an attribute used a template
+    literal like `onClick={`prefix-${id}`}`. The scanner now tracks
+    template-literal mode + interpolation depth separately."""
+    _write_tsx(good_build, "components/ui/A.tsx",
+        'import { X } from "lucide-react";\n'
+        'export function A({ id }: { id: string }) {\n'
+        '  return (\n'
+        '    <button onClick={() => console.log(`prefix-${id}-suffix`)}>\n'
+        '      <X />\n'
+        '    </button>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.a11y_static_audit(ctx)
+    # The button is icon-only and has no aria-label — should fail. If
+    # the scanner mishandled the template literal it would either skip
+    # the button entirely (false negative) or flag a different file.
+    assert result.status == "fail"
+    assert "components/ui/A.tsx" in result.details["files"]
+
+
+def test_a11y_brace_scanner_ignores_braces_inside_strings(good_build):
+    """An attribute like `data-x="{}"` (literal braces in a string)
+    must not confuse the brace-balanced scanner."""
+    _write_tsx(good_build, "components/ui/B.tsx",
+        'import { X } from "lucide-react";\n'
+        'export function B() {\n'
+        '  return (\n'
+        '    <button data-meta="{a:1, b:2}" aria-label="Close">\n'
+        '      <X />\n'
+        '    </button>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    # aria-label is present, so this button is fine. If the scanner
+    # mishandled the quoted braces it would either fail to find the
+    # close > (treating button as never closed) or count the braces
+    # toward depth and miss the aria-label.
+    assert checks.a11y_static_audit(ctx).status == "pass"
+
+
 def test_a11y_violations_payload_carries_file_paths_for_repair(good_build):
     _write_tsx(good_build, "components/ui/A.tsx",
         'import { X } from "lucide-react";\n'
