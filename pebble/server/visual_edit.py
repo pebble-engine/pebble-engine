@@ -32,6 +32,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
+from pebble.visual_ids import find_element_span, load_manifest
 
 
 def _engine():
@@ -40,6 +41,139 @@ def _engine():
 
 def _output_dir() -> Path:
     return _engine().OUTPUT_DIR
+
+
+# ---- Inline-style helpers (surgical edits) --------------------------------
+
+def _upsert_jsx_style(tag_text: str, prop: str, value: str) -> str:
+    """Upsert ``style={{prop: 'value', ...}}`` into a JSX opening tag.
+
+    React requires style to be an object literal in JSX, not a string —
+    so for .tsx/.jsx files we always emit the object form. CSS property
+    names are mapped to camelCase (font-size → fontSize, color → color).
+    """
+    is_self_closing = tag_text.endswith("/>")
+    inner = tag_text[1:-1]
+    if is_self_closing:
+        inner = inner.rstrip("/").rstrip()
+
+    camel = re.sub(r"-([a-z])", lambda m: m.group(1).upper(), prop.lower())
+
+    sm = re.search(r"\bstyle\s*=\s*\{\{([^}]*)\}\}", inner)
+    if sm:
+        existing = sm.group(1).strip().rstrip(",").strip()
+        prop_re = re.compile(r"\b" + re.escape(camel) + r"\s*:\s*['\"][^'\"]*['\"]")
+        new_decl = f"{camel}: '{value}'"
+        if prop_re.search(existing):
+            new_obj = prop_re.sub(new_decl, existing)
+        else:
+            new_obj = (existing + ", " if existing else "") + new_decl
+        new_inner = inner[:sm.start()] + f" style={{{{ {new_obj} }}}}" + inner[sm.end():]
+    else:
+        new_inner = inner + f" style={{{{ {camel}: '{value}' }}}}"
+    return "<" + new_inner + (" />" if is_self_closing else ">")
+
+
+def _upsert_html_style(tag_text: str, prop: str, value: str) -> str:
+    """Upsert ``style="prop: value; ..."`` into an HTML opening tag."""
+    is_self_closing = tag_text.endswith("/>")
+    inner = tag_text[1:-1]
+    if is_self_closing:
+        inner = inner.rstrip("/").rstrip()
+
+    sm = re.search(r'\bstyle\s*=\s*"([^"]*)"', inner)
+    if sm:
+        decls: dict[str, str] = {}
+        for d in sm.group(1).split(";"):
+            if ":" in d:
+                k, v = d.split(":", 1)
+                decls[k.strip().lower()] = v.strip()
+        decls[prop.lower()] = value
+        new_style = "; ".join(f"{k}: {v}" for k, v in decls.items() if v) + ";"
+        new_inner = inner[:sm.start()] + f' style="{new_style}"' + inner[sm.end():]
+    else:
+        new_inner = inner + f' style="{prop}: {value};"'
+    return "<" + new_inner + (" />" if is_self_closing else ">")
+
+
+def _upsert_style(file_path: Path, tag_text: str, prop: str, value: str) -> str:
+    """Pick JSX-style or HTML-style upsert based on file extension."""
+    if file_path.suffix.lower() in (".tsx", ".jsx"):
+        return _upsert_jsx_style(tag_text, prop, value)
+    return _upsert_html_style(tag_text, prop, value)
+
+
+# ---- Surgical edits via the pebble-id manifest ----------------------------
+
+def _edit_text_by_id(site_dir: Path, pebble_id: str, manifest: dict,
+                     original_text: str, new_text: str) -> Optional[dict]:
+    """Surgical text edit using the manifest. Returns None to signal the
+    caller should fall back to the substring heuristic."""
+    entry = manifest.get(pebble_id)
+    if not entry:
+        return None
+    file_path = site_dir / entry["file"]
+    if not file_path.exists():
+        return None
+    try:
+        text = file_path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    span = find_element_span(text, pebble_id)
+    if not span:
+        return None
+    _, open_end, close_start, _ = span
+    inner = text[open_end:close_start]
+
+    if "<" in inner:
+        # Has child elements — only replace if original_text appears verbatim.
+        if not original_text or original_text not in inner:
+            return None
+        new_inner = inner.replace(original_text, new_text, 1)
+    else:
+        # Leaf text node — replace entire content.
+        if original_text and original_text.strip() and original_text.strip() not in inner.strip():
+            return None
+        new_inner = new_text
+
+    new_text_file = text[:open_end] + new_inner + text[close_start:]
+    if new_text_file == text:
+        return {"files_changed": [], "ambiguous": False, "replacements": 0}
+    file_path.write_text(new_text_file, encoding="utf-8")
+    return {
+        "files_changed": [entry["file"]],
+        "ambiguous":     False,
+        "replacements":  1,
+    }
+
+
+def _edit_style_by_id(site_dir: Path, pebble_id: str, manifest: dict,
+                      prop: str, value: str) -> Optional[dict]:
+    """Surgical style upsert (color, font-size, etc.) using the manifest."""
+    entry = manifest.get(pebble_id)
+    if not entry:
+        return None
+    file_path = site_dir / entry["file"]
+    if not file_path.exists():
+        return None
+    try:
+        text = file_path.read_text(encoding="utf-8")
+    except Exception:
+        return None
+    span = find_element_span(text, pebble_id)
+    if not span:
+        return None
+    open_start, open_end, _, _ = span
+    tag_text = text[open_start:open_end]
+    new_tag = _upsert_style(file_path, tag_text, prop, value)
+    if new_tag == tag_text:
+        return {"files_changed": [], "ambiguous": False}
+    new = text[:open_start] + new_tag + text[open_end:]
+    file_path.write_text(new, encoding="utf-8")
+    return {
+        "files_changed": [entry["file"]],
+        "ambiguous":     False,
+    }
 
 
 # ---- Edit operations ------------------------------------------------------
@@ -231,19 +365,39 @@ def run_visual_edit(handler) -> None:
     snap = snapshot_site(slug, reason=f"visual-edit-{op}", source=f"POST /api/visual-edit {op}")
     snapshot_id = snap.name if snap else None
 
+    manifest = load_manifest(site_dir)
+    pebble_id = body.get("pebble_id") or ""
+    used_manifest = False
+
     try:
+        result: Optional[dict] = None
         if op == "text":
             original = body.get("original_text", "")
             new = body.get("new_text", "")
-            result = _edit_text(site_dir, original, new)
+            if pebble_id:
+                result = _edit_text_by_id(site_dir, pebble_id, manifest, original, new)
+                used_manifest = result is not None
+            if result is None:
+                result = _edit_text(site_dir, original, new)
         elif op == "color":
-            hint = body.get("selector_hint") or body.get("original_text") or ""
             new_color = body.get("new_color", "")
-            result = _edit_color_for_selector(site_dir, hint, new_color)
+            if not _COLOR_HEX_RE.match(new_color):
+                handler._json(400, {"error": "new_color must be #RRGGBB"}); return
+            if pebble_id:
+                result = _edit_style_by_id(site_dir, pebble_id, manifest, "color", new_color)
+                used_manifest = result is not None
+            if result is None:
+                hint = body.get("selector_hint") or body.get("original_text") or ""
+                result = _edit_color_for_selector(site_dir, hint, new_color)
         else:  # font-size
-            hint = body.get("selector_hint") or body.get("original_text") or ""
+            new_font_size = (body.get("new_font_size") or "").strip()
             delta = int(body.get("delta", 0))
-            result = _edit_font_size_for_selector(site_dir, hint, delta)
+            if pebble_id and new_font_size:
+                result = _edit_style_by_id(site_dir, pebble_id, manifest, "font-size", new_font_size)
+                used_manifest = result is not None
+            if result is None:
+                hint = body.get("selector_hint") or body.get("original_text") or ""
+                result = _edit_font_size_for_selector(site_dir, hint, delta)
     except Exception as e:
         log.warning("visual-edit failed: %s", e)
         handler._json(500, {"error": f"edit failed: {e}"}); return
@@ -258,6 +412,7 @@ def run_visual_edit(handler) -> None:
         "ambiguous":     bool(result.get("ambiguous")),
         "billable":      False,
         "snapshot_id":   snapshot_id,
+        "used_manifest": used_manifest,
         "applied_at":    datetime.now(timezone.utc).isoformat(),
     })
 
@@ -266,11 +421,18 @@ def run_visual_edit(handler) -> None:
 
 PEBBLE_VISUAL_EDIT_BRIDGE = r"""
 /* Pebble visual-edit bridge — injected into every /preview/<slug>/ HTML
-   response by the engine. Listens for clicks, sends an "I clicked this"
-   message to the parent workspace, draws a hover outline. */
+   response by the engine. Listens for clicks, looks up the nearest tagged
+   ancestor (data-pebble-id), and posts a "pebble-select" message to the
+   parent workspace.
+
+   Hydration-safe: uses delegated event listeners on document via capture
+   phase, so React hydration replacing nodes does not detach handlers. New
+   elements added later still trigger the handler. Posts a "pebble-ready"
+   message once installed so the workspace can show "click anywhere to edit"
+   UI without guessing. */
 (function() {
-  if (window.__pebbleBridgeInstalled) return;
-  window.__pebbleBridgeInstalled = true;
+  if (window.__pebbleBridge && window.__pebbleBridge.installed) return;
+  window.__pebbleBridge = { installed: true, ready: false, version: 2 };
 
   var STYLE_ID = "__pebble-bridge-styles";
   var style = document.getElementById(STYLE_ID);
@@ -282,49 +444,69 @@ PEBBLE_VISUAL_EDIT_BRIDGE = r"""
       + "outline-offset:2px!important;cursor:pointer!important;}"
       + ".__pebble-selected{outline:2px solid #205661!important;"
       + "outline-offset:3px!important;}";
-    document.head.appendChild(style);
+    (document.head || document.documentElement).appendChild(style);
   }
 
   var lastSelected = null;
+  var lastHover = null;
+
+  /* Walk up from a target node to the nearest ancestor carrying
+     data-pebble-id. Falls back to the original node if none is tagged
+     (e.g. an older build without injection). */
+  function nearestTagged(node) {
+    var cur = node;
+    while (cur && cur.nodeType === 1) {
+      if (cur.getAttribute && cur.getAttribute("data-pebble-id")) return cur;
+      cur = cur.parentNode;
+    }
+    return node && node.nodeType === 1 ? node : null;
+  }
 
   function describeElement(el) {
     if (!el || el.nodeType !== 1) return null;
     var tag = el.tagName.toLowerCase();
     var cls = (el.className && typeof el.className === "string") ? el.className.trim() : "";
     var id  = el.id || "";
+    var pid = (el.getAttribute && el.getAttribute("data-pebble-id")) || "";
     var text = (el.textContent || "").trim().slice(0, 200);
     var rect = el.getBoundingClientRect();
-    var style = window.getComputedStyle(el);
+    var cs = window.getComputedStyle(el);
     return {
-      type: "pebble-select",
-      tag: tag,
-      id: id,
+      type:      "pebble-select",
+      tag:       tag,
+      id:        id,
+      pebble_id: pid,
       className: cls,
-      text: text,
-      rect: { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+      text:      text,
+      rect:      { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
       style: {
-        color:    style.color,
-        fontSize: style.fontSize,
-        fontFamily: style.fontFamily,
-        background: style.backgroundColor,
+        color:      cs.color,
+        fontSize:   cs.fontSize,
+        fontFamily: cs.fontFamily,
+        background: cs.backgroundColor,
       },
     };
   }
 
   document.addEventListener("mouseover", function(e) {
-    if (e.target && e.target !== lastSelected) {
-      e.target.classList && e.target.classList.add("__pebble-hover");
-    }
+    var el = nearestTagged(e.target);
+    if (!el || el === lastSelected) return;
+    if (lastHover && lastHover !== el) lastHover.classList.remove("__pebble-hover");
+    lastHover = el;
+    el.classList && el.classList.add("__pebble-hover");
   }, true);
+
   document.addEventListener("mouseout", function(e) {
-    if (e.target) e.target.classList && e.target.classList.remove("__pebble-hover");
+    var el = nearestTagged(e.target);
+    if (el && el.classList) el.classList.remove("__pebble-hover");
   }, true);
+
   document.addEventListener("click", function(e) {
-    var el = e.target;
-    if (!el || el === document.body) return;
+    var el = nearestTagged(e.target);
+    if (!el || el === document.body || el === document.documentElement) return;
     e.preventDefault();
     e.stopPropagation();
-    if (lastSelected) lastSelected.classList.remove("__pebble-selected");
+    if (lastSelected && lastSelected !== el) lastSelected.classList.remove("__pebble-selected");
     lastSelected = el;
     el.classList.add("__pebble-selected");
     var msg = describeElement(el);
@@ -332,5 +514,21 @@ PEBBLE_VISUAL_EDIT_BRIDGE = r"""
       window.parent.postMessage(msg, "*");
     }
   }, true);
+
+  /* Ready signal — posted once on install and again after DOMContentLoaded
+     (so workspace UIs that mount after the iframe still get it). React
+     hydration does not run again after this point in our generated sites. */
+  function signalReady() {
+    if (window.__pebbleBridge.ready) return;
+    window.__pebbleBridge.ready = true;
+    if (window.parent !== window) {
+      window.parent.postMessage({ type: "pebble-ready", version: 2 }, "*");
+    }
+  }
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", signalReady, { once: true });
+  } else {
+    signalReady();
+  }
 })();
 """

@@ -177,13 +177,18 @@ export default function WorkspacePage() {
       const result = await visualEdit({
         slug: build.slug as string,
         op: "text",
+        pebble_id: selected.pebble_id || undefined,
         original_text: selected.text,
         new_text: newText,
       });
       setIframeBust((n) => n + 1);
       pushToast({
         kind: "success",
-        message: result.ambiguous ? "Updated — but multiple files matched, double-check." : "Text updated. Free tweak ✨",
+        message: result.used_manifest
+          ? "Text updated (surgical). Free tweak ✨"
+          : result.ambiguous
+            ? "Updated — but multiple files matched, double-check."
+            : "Text updated. Free tweak ✨",
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug as string,
       });
@@ -195,11 +200,24 @@ export default function WorkspacePage() {
 
   async function handleFontSizeStep(delta: number) {
     if (!selected || !build?.slug) return;
+    // With a pebble_id, compute target px so the surgical path can drop an
+    // inline style. Without one, the engine falls back to Tailwind text-*
+    // step rotation using delta alone.
+    let newFontSize: string | undefined;
+    if (selected.pebble_id && selected.style?.fontSize) {
+      const cur = parseFloat(selected.style.fontSize);
+      if (!Number.isNaN(cur) && cur > 0) {
+        const target = Math.max(10, Math.round(cur + delta * 2));
+        newFontSize = `${target}px`;
+      }
+    }
     try {
       const result = await visualEdit({
         slug: build.slug as string,
         op: "font-size",
+        pebble_id: selected.pebble_id || undefined,
         selector_hint: selected.text || selected.className,
+        new_font_size: newFontSize,
         delta,
       });
       setIframeBust((n) => n + 1);
@@ -220,6 +238,7 @@ export default function WorkspacePage() {
       const result = await visualEdit({
         slug: build.slug as string,
         op: "color",
+        pebble_id: selected.pebble_id || undefined,
         selector_hint: selected.text || selected.className,
         new_color: hex,
       });

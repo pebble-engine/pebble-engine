@@ -28,6 +28,7 @@ from pebble.llm import get_llm_client, LLMError
 from pebble.plan import build_pebble_plan
 from pebble.history import snapshot_site
 from pebble.cost import estimate_cost
+from pebble.visual_ids import inject_pebble_ids
 
 
 def _engine():
@@ -412,6 +413,14 @@ def run_build(handler, generate: bool) -> None:
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
         written.append(safe)
+
+    # Inject data-pebble-id on every text-bearing tag so /api/visual-edit can
+    # do surgical lookups via the manifest at <site>/.pebble-ids.json instead
+    # of the old "find original_text across all files" heuristic.
+    try:
+        inject_pebble_ids(site_dir)
+    except Exception as e:
+        log.warning("pebble-id injection failed: %s", e)
 
     # Cost telemetry — honest token + cost estimate so the build leaves
     # behind an audit trail of how expensive this generation was. The

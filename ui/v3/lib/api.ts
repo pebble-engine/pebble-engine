@@ -124,10 +124,14 @@ export async function refine(slug: string, refinement_id: RefinementId): Promise
 
 export type VisualEditOp = "text" | "color" | "font-size";
 
+// pebble_id is the data-pebble-id attribute injected at generate-time. When
+// provided, the engine does a surgical edit scoped to that exact element.
+// When absent (older builds without injection), the engine falls back to
+// the legacy substring/selector-hint heuristics.
 export type VisualEditBody =
-  | { slug: string; op: "text"; original_text: string; new_text: string }
-  | { slug: string; op: "color"; selector_hint?: string; original_text?: string; new_color: string }
-  | { slug: string; op: "font-size"; selector_hint?: string; original_text?: string; delta: number };
+  | { slug: string; op: "text"; pebble_id?: string; original_text: string; new_text: string }
+  | { slug: string; op: "color"; pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
+  | { slug: string; op: "font-size"; pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number };
 
 export type VisualEditResponse = {
   slug: string;
@@ -136,6 +140,7 @@ export type VisualEditResponse = {
   ambiguous: boolean;
   billable: false;
   snapshot_id: string | null;
+  used_manifest: boolean;
   applied_at: string;
 };
 
@@ -149,6 +154,7 @@ export type PebbleSelectMessage = {
   type: "pebble-select";
   tag: string;
   id: string;
+  pebble_id: string;     // empty string when the build pre-dates id injection
   className: string;
   text: string;
   rect: { x: number; y: number; w: number; h: number };
@@ -160,10 +166,21 @@ export type PebbleSelectMessage = {
   };
 };
 
+export type PebbleReadyMessage = {
+  type:    "pebble-ready";
+  version: number;
+};
+
 export function isPebbleSelectMessage(data: unknown): data is PebbleSelectMessage {
   if (!data || typeof data !== "object") return false;
   const d = data as Record<string, unknown>;
   return d.type === "pebble-select" && typeof d.tag === "string";
+}
+
+export function isPebbleReadyMessage(data: unknown): data is PebbleReadyMessage {
+  if (!data || typeof data !== "object") return false;
+  const d = data as Record<string, unknown>;
+  return d.type === "pebble-ready";
 }
 
 // ---------- /api/migrate (new — site migration entry point) ----------------

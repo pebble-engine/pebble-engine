@@ -263,6 +263,120 @@ def test_visual_edit_rejects_bad_op(engine_server):
     assert status == 400
 
 
+# ---- /api/visual-edit — surgical (pebble_id manifest) path --------------
+
+def _seed_with_manifest(out: Path, slug: str, files: dict[str, str], manifest: dict) -> Path:
+    """Seed a project AND drop a .pebble-ids.json so the surgical path
+    activates without running the full /api/generate pipeline."""
+    project = _seed_project(out, slug, files)
+    site = project / "site"
+    (site / ".pebble-ids.json").write_text(json.dumps(manifest), encoding="utf-8")
+    return project
+
+
+def test_visual_edit_text_surgical_uses_manifest(engine_server):
+    out = engine_server["output"]
+    _seed_with_manifest(out, "good-co", {
+        "index.html": '<h1 data-pebble-id="pb-aaa111">Welcome</h1><p>Other</p>',
+    }, {
+        "pb-aaa111": {"file": "index.html", "tag": "h1", "original_text": "Welcome"},
+    })
+    status, body = _post(engine_server["base"], "/api/visual-edit", {
+        "slug":          "good-co",
+        "op":            "text",
+        "pebble_id":     "pb-aaa111",
+        "original_text": "Welcome",
+        "new_text":      "Hello world",
+    })
+    assert status == 200
+    assert body["billable"] is False
+    assert body["used_manifest"] is True
+    content = (out / "good-co" / "site" / "index.html").read_text(encoding="utf-8")
+    assert ">Hello world</h1>" in content
+    assert "<p>Other</p>" in content   # untouched
+
+
+def test_visual_edit_color_surgical_upserts_html_style(engine_server):
+    out = engine_server["output"]
+    _seed_with_manifest(out, "good-co", {
+        "index.html": '<h1 data-pebble-id="pb-bbb222">Title</h1>',
+    }, {
+        "pb-bbb222": {"file": "index.html", "tag": "h1", "original_text": "Title"},
+    })
+    status, body = _post(engine_server["base"], "/api/visual-edit", {
+        "slug":      "good-co",
+        "op":        "color",
+        "pebble_id": "pb-bbb222",
+        "new_color": "#ff0000",
+    })
+    assert status == 200
+    assert body["used_manifest"] is True
+    content = (out / "good-co" / "site" / "index.html").read_text(encoding="utf-8")
+    assert 'style="color: #ff0000' in content
+
+
+def test_visual_edit_color_surgical_upserts_jsx_style(engine_server):
+    out = engine_server["output"]
+    _seed_with_manifest(out, "good-co", {
+        "app/page.tsx": (
+            'export default function P() {\n'
+            '  return <h1 data-pebble-id="pb-ccc333">Hi</h1>;\n'
+            '}'
+        ),
+    }, {
+        "pb-ccc333": {"file": "app/page.tsx", "tag": "h1", "original_text": "Hi"},
+    })
+    status, body = _post(engine_server["base"], "/api/visual-edit", {
+        "slug":      "good-co",
+        "op":        "color",
+        "pebble_id": "pb-ccc333",
+        "new_color": "#00aa55",
+    })
+    assert status == 200
+    content = (out / "good-co" / "site" / "app" / "page.tsx").read_text(encoding="utf-8")
+    assert "color: '#00aa55'" in content
+
+
+def test_visual_edit_font_size_surgical_uses_new_font_size(engine_server):
+    out = engine_server["output"]
+    _seed_with_manifest(out, "good-co", {
+        "index.html": '<h1 data-pebble-id="pb-ddd444">Big</h1>',
+    }, {
+        "pb-ddd444": {"file": "index.html", "tag": "h1", "original_text": "Big"},
+    })
+    status, body = _post(engine_server["base"], "/api/visual-edit", {
+        "slug":          "good-co",
+        "op":            "font-size",
+        "pebble_id":     "pb-ddd444",
+        "new_font_size": "28px",
+        "delta":         0,
+    })
+    assert status == 200
+    assert body["used_manifest"] is True
+    content = (out / "good-co" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "font-size: 28px" in content
+
+
+def test_visual_edit_falls_back_when_pebble_id_unknown(engine_server):
+    """An unknown pebble_id should not error — should fall back to the
+    legacy substring/heuristic path so older builds keep working."""
+    out = engine_server["output"]
+    _seed_with_manifest(out, "good-co", {
+        "index.html": "<h1>Welcome</h1>",
+    }, manifest={})
+    status, body = _post(engine_server["base"], "/api/visual-edit", {
+        "slug":          "good-co",
+        "op":            "text",
+        "pebble_id":     "pb-nonexistent",
+        "original_text": "Welcome",
+        "new_text":      "Hello",
+    })
+    assert status == 200
+    assert body["used_manifest"] is False
+    content = (out / "good-co" / "site" / "index.html").read_text(encoding="utf-8")
+    assert "Hello" in content
+
+
 # ---- /preview/<slug>/ bridge injection ----------------------------------
 
 def test_preview_html_gets_bridge_script_injected(engine_server):
