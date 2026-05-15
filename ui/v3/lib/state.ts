@@ -8,10 +8,30 @@ export type Brief = Record<string, unknown> & {
   audience?: string[] | string;
   site_functions?: string[];
   brand_tone?: string;
+  notes_freeform?: string;        // "anything the questions missed" — Plan-mode free-form input
+  user_first_name?: string;       // captured at first session for personalized greeting
   design_reference_images?: Array<{ media_type: string; data: string; name?: string }>;
   _industry_intel_key?: string;
   _design_dna_id?: string;
 };
+
+// Persistent, cross-session profile. Stored in localStorage so it survives
+// browser restarts — sessionStorage is per-tab and would lose this.
+const USER_PROFILE_KEY = "pebble.userProfile";
+
+export type UserProfile = {
+  firstName?: string;
+};
+
+export function getUserProfile(): UserProfile {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(USER_PROFILE_KEY) || "{}"); } catch { return {}; }
+}
+
+export function setUserProfile(p: UserProfile): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(USER_PROFILE_KEY, JSON.stringify(p));
+}
 
 export type PebblePage = {
   id: string;

@@ -183,6 +183,10 @@ export default function IntakePage() {
               className="space-y-12 text-center"
             >
               <div className="space-y-3">
+                {/* Question N of M — borrowed in concept from Base44's Plan-mode pill */}
+                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                  Question {stepIdx + 1} of {STEPS.length}
+                </p>
                 <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground">
                   {step.headline}
                 </h1>
@@ -235,6 +239,26 @@ export default function IntakePage() {
               </motion.div>
             </motion.div>
           </AnimatePresence>
+
+          {/*
+            Persistent "anything we missed" field — borrowed in concept from
+            Base44's Plan mode. The chip grid above covers common answers; this
+            is the escape hatch where users put nuance the chips can't capture
+            (e.g. "we're a non-profit", "must use brand color #C76E3A").
+          */}
+          <div className="mt-12 max-w-2xl mx-auto">
+            <label htmlFor="notes_freeform" className="block text-sm font-semibold text-muted-foreground mb-2">
+              Anything I should know that the questions missed?
+            </label>
+            <textarea
+              id="notes_freeform"
+              defaultValue={(brief.notes_freeform as string) || ""}
+              onBlur={(e) => patchBrief({ notes_freeform: e.target.value })}
+              placeholder="Optional but powerful. Add anything — constraints, brand colors, examples of sites you love, deal-breakers, whatever the chips couldn't capture."
+              rows={3}
+              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+            />
+          </div>
         </div>
       </main>
 

@@ -120,13 +120,20 @@ export default function WorkspacePage() {
             <iframe src={previewUrl} className="flex-1 bg-white w-full" />
           </motion.div>
 
-          {/* Refinement chips */}
+          {/* Refinement chips + educational nudge.
+              The "Style tweaks are free" hint borrows from Lovable's
+              "Visual Edits — faster than chatting" pattern. It directly
+              counters the credit-slot-machine fear users have about
+              competitors. */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.45, delay: 0.15 }}
-            className="fixed bottom-6 left-[240px] right-[320px] flex justify-center pointer-events-none"
+            className="fixed bottom-6 left-[240px] right-[320px] flex flex-col items-center gap-2 pointer-events-none"
           >
+            <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto">
+              ✨ Style tweaks are free — try them
+            </p>
             <nav className="bg-card border border-border shadow-lg rounded-full px-3 py-2 flex gap-1 pointer-events-auto">
               {REFINE_CHIPS.map((c) => (
                 <motion.button
@@ -140,6 +147,23 @@ export default function WorkspacePage() {
                 </motion.button>
               ))}
             </nav>
+
+            {/* Plan-driven next steps appear as a secondary suggestion strip.
+                Borrowed from Lovable's post-response suggestion chips — keeps
+                the user momentum-forward instead of staring at "what now?". */}
+            {plan && plan.next_steps && plan.next_steps.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-2 max-w-2xl mt-2 pointer-events-auto">
+                {plan.next_steps.slice(0, 3).map((step, i) => (
+                  <button
+                    key={i}
+                    className="text-xs text-foreground bg-card/90 backdrop-blur border border-border rounded-full px-3 py-1.5 hover:bg-accent transition-colors"
+                    title={step}
+                  >
+                    {step.length > 60 ? step.slice(0, 57) + "…" : step}
+                  </button>
+                ))}
+              </div>
+            )}
           </motion.div>
         </main>
 

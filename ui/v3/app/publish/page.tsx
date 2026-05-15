@@ -6,11 +6,13 @@ import { motion } from "framer-motion";
 import { Share2, Eye, Edit3, Droplet } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { getLastBuild } from "@/lib/state";
+import { generateSubdomain } from "@/lib/subdomain";
 
 export default function PublishPage() {
   const router = useRouter();
   const [build, setBuild] = useState<ReturnType<typeof getLastBuild>>(null);
   const [shareLabel, setShareLabel] = useState("Share");
+  const [subdomain, setSubdomain] = useState<string>("");
 
   useEffect(() => {
     const b = getLastBuild();
@@ -19,15 +21,22 @@ export default function PublishPage() {
       return;
     }
     setBuild(b);
+    // Seed the subdomain off the build slug so the same project always gets
+    // the same memorable hostname every time the user re-opens this screen.
+    setSubdomain(generateSubdomain((b.slug as string) || undefined));
   }, [router]);
 
-  const slug = (build?.slug as string) || "your-site";
   const previewUrl = (build?.preview_url as string) || "#";
+  const fullHost = subdomain ? `${subdomain}.pebble.site` : "your-site.pebble.site";
 
   const handleShare = () => {
-    navigator.clipboard?.writeText(`${slug}.pebble.site`);
+    navigator.clipboard?.writeText(fullHost);
     setShareLabel("Copied!");
     setTimeout(() => setShareLabel("Share"), 1500);
+  };
+
+  const handleReroll = () => {
+    setSubdomain(generateSubdomain());
   };
 
   return (
@@ -73,8 +82,16 @@ export default function PublishPage() {
             className="bg-card border border-border rounded-2xl p-8 md:p-10 shadow-[var(--shadow-1)] space-y-8"
           >
             <div className="flex flex-col items-center">
-              <div className="bg-accent border border-border rounded-lg px-6 py-3 mb-3">
-                <span className="font-mono text-xl tracking-tight text-primary">{slug}.pebble.site</span>
+              <div className="bg-accent border border-border rounded-lg px-6 py-3 mb-3 flex items-center gap-3">
+                <span className="font-mono text-xl tracking-tight text-primary">{fullHost}</span>
+                <button
+                  onClick={handleReroll}
+                  className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-card border border-transparent hover:border-border"
+                  title="Try a different name"
+                  type="button"
+                >
+                  Try another
+                </button>
               </div>
               <p className="text-muted-foreground text-xs font-bold uppercase tracking-widest">URL active</p>
             </div>
