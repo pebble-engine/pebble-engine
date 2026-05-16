@@ -81,8 +81,9 @@ def good_build(tmp_path: Path) -> Path:
         'import { Inter } from "next/font/google";\n'
         'import "./globals.css";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
         'export default function L({children}: any) {\n'
-        '  return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>;\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
         '}'
     )
     (site / "app" / "page.tsx").write_text(
@@ -1034,3 +1035,82 @@ def test_run_checks_default_set_runs_all_static_checks(good_build):
         assert name in by_name, f"missing result for {name}"
         assert by_name[name].status in {"pass", "skip"}, \
             f"{name} should pass on good_build, got {by_name[name].status}: {by_name[name].message}"
+
+
+# ---------------------------------------------------------------------------
+# schema_org_jsonld_present (#34) — Schema.org JSON-LD in app/layout.tsx
+# ---------------------------------------------------------------------------
+
+def test_schema_org_passes_with_jsonld_in_layout(good_build):
+    """The good_build fixture already includes a Schema.org JSON-LD
+    script tag — the check should pass on it."""
+    ctx = BuildContext.load(good_build)
+    assert checks.schema_org_jsonld_present(ctx).status == "pass"
+
+
+def test_schema_org_fails_when_layout_has_no_script_tag(good_build):
+    """Strip the JSON-LD script from the layout — the check should
+    fail with a clear "no script tag" message."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.schema_org_jsonld_present(ctx)
+    assert result.status == "fail"
+    assert "ld+json" in result.message
+
+
+def test_schema_org_fails_when_jsonld_lacks_schema_org_context(good_build):
+    """A script tag with the right MIME but no @context: https://schema.org
+    declaration is malformed structured data — the search engine won't
+    interpret it. Check should catch this."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const broken = { "@type": "LocalBusiness", "name": "X" };\n'  # no @context
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(broken)}} />{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.schema_org_jsonld_present(ctx)
+    assert result.status == "fail"
+    assert "@context" in result.message
+
+
+def test_schema_org_skips_when_no_site_dir(tmp_path):
+    """No site dir → skip (consistent with every other check)."""
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    result = checks.schema_org_jsonld_present(ctx)
+    assert result.status == "skip"
+
+
+def test_schema_org_fails_when_layout_missing(good_build):
+    """Layout file missing → fail with a clear message."""
+    (good_build / "site" / "app" / "layout.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.schema_org_jsonld_present(ctx)
+    assert result.status == "fail"
+    assert "layout.tsx" in result.message
+
+
+def test_schema_org_accepts_organization_type(good_build):
+    """Both LocalBusiness and Organization are valid foundation types.
+    The check is type-agnostic (doesn't pin @type) so an online-only
+    SaaS that picks Organization still passes."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "Organization", "name": "SaaSCo" };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.schema_org_jsonld_present(ctx).status == "pass"

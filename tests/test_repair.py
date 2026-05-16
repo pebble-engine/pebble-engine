@@ -421,7 +421,8 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
     (site / "app" / "layout.tsx").write_text(
         'import { Inter } from "next/font/google";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
-        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>; }'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
         'import { Hero } from "@/components/sections/Hero";\n'
@@ -763,7 +764,8 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
     (site / "app" / "layout.tsx").write_text(
         'import { Inter } from "next/font/google";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
-        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}>{children}</body></html>; }'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
         'import { Hero } from "@/components/sections/Hero";\n'

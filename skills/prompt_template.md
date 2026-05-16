@@ -274,6 +274,40 @@ body {{
 
 This is non-negotiable. Every Tailwind `font-sans` usage picks up Inter automatically. The DNA's display_font, when used, is loaded as a SECOND font via `next/font/google` (or `<link>` in head for non-Google fonts) and applied via its own utility class — never replacing Inter as the default.
 
+**Schema.org JSON-LD — MANDATORY GLOBAL FOUNDATION:**
+
+Every site must emit Schema.org structured data so search engines AND modern AI agents (Perplexity, ChatGPT browse, Gemini Search) can identify the business. Emit it from `app/layout.tsx` as a `<script type="application/ld+json">` tag inside the document — the body works fine; the parser doesn't care where in the page the tag lives as long as it's in the served HTML.
+
+For most Pebble builds (local-service businesses: plumbing, real estate, medical, restaurants, etc.), use `LocalBusiness`. For purely online services (SaaS, consultancies with no physical presence), use `Organization`.
+
+```tsx
+// inside app/layout.tsx, somewhere inside the <body>:
+const ld = {{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",   // or "Organization" for online-only
+  "name": "{{business_name}}",
+  "description": "{{one-sentence summary of what the business does}}",
+  // Optional but recommended when available in the brief:
+  // "telephone": "+1-555-555-5555",
+  // "url": "https://example.com",
+  // "address": {{
+  //   "@type": "PostalAddress",
+  //   "streetAddress": "123 Main St",
+  //   "addressLocality": "Austin",
+  //   "addressRegion": "TX",
+  //   "postalCode": "78701",
+  //   "addressCountry": "US"
+  // }},
+}};
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{{{ __html: JSON.stringify(ld) }}}}
+/>
+```
+
+The eval `schema_org_jsonld_present` verifies `app/layout.tsx` contains BOTH `application/ld+json` MIME type AND a `"@context": "https://schema.org"` declaration. Without the `@context`, the structured data is invisible to crawlers.
+
 ---
 
 ### CINEMATIC CODE PATTERNS — Implement Verbatim

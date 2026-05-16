@@ -2268,6 +2268,81 @@ def a11y_static_audit(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 34. schema_org_jsonld_present — FOUNDATION (SEO + AI agent discoverability)
+# ---------------------------------------------------------------------------
+
+# Match a <script type="application/ld+json"> tag — JSX-form. The src
+# may be `dangerouslySetInnerHTML={{ __html: JSON.stringify({...}) }}`
+# (the canonical Next.js way) OR a plain text body. Either is fine for
+# search engines and AI agents that parse the served HTML.
+_LDJSON_SCRIPT_RE = re.compile(
+    r"""<script[^>]*?type=\s*['"]application/ld\+json['"]""",
+    re.IGNORECASE,
+)
+# Schema.org JSON-LD must declare its vocabulary. Both forms accepted —
+# string-key ("@context": "https://schema.org") OR property-shorthand
+# without quotes (rare but legal in JS object literals when key is a
+# valid identifier, which @context is NOT — but we accept both forms
+# to avoid false-negatives on creative future codegen).
+_SCHEMA_ORG_CONTEXT_RE = re.compile(
+    r"""['"]?@context['"]?\s*:\s*['"]https?://schema\.org['"]""",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("app/layout.tsx",))
+def schema_org_jsonld_present(ctx: BuildContext) -> CheckResult:
+    """`app/layout.tsx` must include a `<script type="application/ld+json">`
+    block with a Schema.org context, so every page emits structured data
+    for SEO and AI-agent discoverability.
+
+    The check is shape-only — it does NOT validate the JSON-LD body's
+    @type or property completeness, because the right type varies per
+    industry (LocalBusiness for plumber, Organization for SaaS, etc.).
+    Future tightening can pin @type per industry once industries.json
+    carries the mapping.
+
+    Why layout.tsx specifically: it's the single point that wraps every
+    route, so structured data set there is inherited by every page.
+    Pages that need extra type-specific markup (e.g. /menu using
+    Restaurant + MenuItem) can add their own <script> tag on top — but
+    the foundation Organization/LocalBusiness block belongs in layout.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("schema_org_jsonld_present", "skip", "no site directory")
+
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx is missing",
+        )
+
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if not _LDJSON_SCRIPT_RE.search(text):
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx has no <script type=\"application/ld+json\"> tag — "
+            "add a Schema.org JSON-LD block (LocalBusiness or Organization) "
+            "inside the <head> so search engines and AI agents can identify "
+            "the business",
+        )
+
+    if not _SCHEMA_ORG_CONTEXT_RE.search(text):
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx has a JSON-LD script tag but no `@context: https://schema.org` "
+            "declaration — without the vocabulary, the structured data won't be "
+            "interpreted as Schema.org",
+        )
+
+    return CheckResult(
+        "schema_org_jsonld_present", "pass",
+        "Schema.org JSON-LD present in app/layout.tsx",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -2309,6 +2384,7 @@ ALL_CHECKS = [
     limitations_disclosed_in_readme,
     no_tracking_by_default,
     a11y_static_audit,
+    schema_org_jsonld_present,
     site_compiles,
 ]
 
