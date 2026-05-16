@@ -45,8 +45,6 @@ from pebble.log import log
 
 PROJECT_ROOT = Path(__file__).parent.resolve()
 UIUX_SCRIPTS = PROJECT_ROOT / "skills" / "ui-ux-pro-max" / "scripts"
-INDEX_HTML = PROJECT_ROOT / "ui" / "index.html"
-UI_V2_DIR = PROJECT_ROOT / "ui" / "v2"
 OUTPUT_DIR = PROJECT_ROOT / "output"
 RESEARCH_CACHE_DIR = OUTPUT_DIR / "research_cache"
 INDUSTRIES_JSON = PROJECT_ROOT / "industries.json"
@@ -1601,9 +1599,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
         self._raw_path = raw_path
         try:
             if path_only in ("/", "/index.html"):
-                self._serve_file(INDEX_HTML, "text/html; charset=utf-8")
-            elif path_only.startswith("/v2"):
-                self._handle_v2()
+                self._handle_engine_root()
             elif self.path == "/api/health":
                 self._handle_health()
             elif self.path == "/api/dna/preview":
@@ -1656,8 +1652,6 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_serve_dist()
             elif self.path.startswith("/preview/"):
                 self._handle_preview()
-            elif self.path.startswith("/static/"):
-                self._handle_static()
             else:
                 self.send_response(404); self.end_headers()
                 self.wfile.write(b"Not found")
@@ -1901,69 +1895,20 @@ class PebbleHandler(BaseHTTPRequestHandler):
             "model": getattr(client, "model", None),
         })
 
-    def _handle_v2(self):
-        """Serve the v2 UI under `ui/v2/` at the URL `/v2/<relative-path>`.
+    def _handle_engine_root(self):
+        """GET / and /index.html — backend liveness landing.
 
-        Routes:
-        - ``/v2`` or ``/v2/`` → ``welcome.html`` (the entry point)
-        - ``/v2/<screen>.html`` → the matching screen
-        - ``/v2/<asset>`` → static asset (app.js, brand images, etc.)
+        The engine is API-only; the customer-facing app is the v3 Next.js
+        frontend at http://localhost:3000 (proxies /api/* and /preview/*
+        to this engine). Hitting / in a browser used to render a fancy
+        dark landing page; that surface was unused and has been removed.
         """
-        rel = self.path[len("/v2"):].lstrip("/")
-        if not rel:
-            rel = "welcome.html"
-        if ".." in rel.split("/") or rel.startswith("/"):
-            self.send_response(403); self.end_headers(); return
-        file = UI_V2_DIR / rel
-        if not file.exists() or not file.is_file():
-            self.send_response(404); self.end_headers()
-            self.wfile.write(f"v2 asset not found: {rel}".encode()); return
-        ext = file.suffix.lstrip(".").lower()
-        ct_map = {
-            "html": "text/html; charset=utf-8",
-            "js":   "application/javascript; charset=utf-8",
-            "css":  "text/css; charset=utf-8",
-            "json": "application/json; charset=utf-8",
-            "svg":  "image/svg+xml",
-            "png":  "image/png",
-            "jpg":  "image/jpeg",
-            "jpeg": "image/jpeg",
-            "webp": "image/webp",
-            "ico":  "image/x-icon",
-            "woff": "font/woff",
-            "woff2":"font/woff2",
-        }
-        ct = ct_map.get(ext, "application/octet-stream")
-        self._serve_file(file, ct)
-
-    def _handle_static(self):
-        """Serve any file under `ui/` at the URL `/static/<relative-path>`.
-        Used for the loading-screen video, future image assets, etc."""
-        rel = self.path[len("/static/"):]
-        if not rel or ".." in rel.split("/") or rel.startswith("/"):
-            self.send_response(403); self.end_headers(); return
-        file = PROJECT_ROOT / "ui" / rel
-        if not file.exists() or not file.is_file():
-            self.send_response(404); self.end_headers()
-            self.wfile.write(f"Static asset not found: {rel}".encode()); return
-        ext = file.suffix.lstrip(".").lower()
-        ct_map = {
-            "mp4":  "video/mp4",
-            "webm": "video/webm",
-            "mov":  "video/quicktime",
-            "png":  "image/png",
-            "jpg":  "image/jpeg",
-            "jpeg": "image/jpeg",
-            "gif":  "image/gif",
-            "svg":  "image/svg+xml",
-            "css":  "text/css; charset=utf-8",
-            "js":   "application/javascript; charset=utf-8",
-            "ico":  "image/x-icon",
-            "woff": "font/woff",
-            "woff2":"font/woff2",
-        }
-        ct = ct_map.get(ext, "application/octet-stream")
-        self._serve_file(file, ct)
+        body = b"Pebble Engine - backend only. App runs at http://localhost:3000.\n"
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
     def _handle_preview(self):
         rest = self.path[len("/preview/"):]

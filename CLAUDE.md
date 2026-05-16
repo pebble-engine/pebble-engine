@@ -27,9 +27,6 @@ python -m pytest tests/test_evals.py -q
 # Run a single test by name
 python -m pytest tests/test_evals.py::test_no_src_directory_passes_when_absent -q
 
-# Rebuild the quiz UI Tailwind (only if changing ui/index.html classes)
-cd ui && npm run build
-
 # Run the eval suite manually against a generated build
 python -m pebble.evals output/<slug>
 
@@ -161,7 +158,7 @@ The current engine is the back-end seed for a much larger app experience describ
 
 - **Audience:** universal design — anyone building a website or small business app. *Never* framed as "for seniors" or "50+", even though older users benefit. See `feedback_universal_design_not_senior.md`.
 - **Product principle:** "Everything explained. Everything connected. Everything editable later."
-- **Five future modes:** Guided (one Q at a time) · Chat (plain-language edits) · Design (click-to-edit preview) · Setup (domains/hosting/email/payments/SEO) · Learn (jargon explained inline). Today only the Guided questionnaire prototype exists at localhost:8000.
+- **Five future modes:** Guided (one Q at a time) · Chat (plain-language edits) · Design (click-to-edit preview) · Setup (domains/hosting/email/payments/SEO) · Learn (jargon explained inline). Today only the Guided questionnaire prototype exists, served by the v3 Next.js frontend at localhost:3000 (proxied to the engine at localhost:8000).
 - **Pebble Plan:** the 7-field user-facing "here's what I'll build" summary now emitted as `plan.json` for every build — see `pebble/plan.py` and the `/api/plan` preview endpoint.
 - **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships.
 
@@ -186,6 +183,6 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 | POST | `/api/projects/<slug>/star` | `{ starred?: bool }` | Toggle (or set) the `.starred` sentinel file. |
 | POST | `/api/setup` | (legacy) | Setup flow |
 | GET | `/preview/<slug>/` | — | Serve generated site files. **HTML responses get the visual-edit bridge auto-injected before `</body>`** so the click-to-edit flow works without the generated site knowing about it. |
-| GET | `/v2/` | — | Static v2 questionnaire UI (deprecated, retained for fallback) |
+| GET | `/` | — | Plaintext liveness landing — engine is backend-only, points users to the v3 frontend at port 3000. |
 
 The v3 Next.js frontend at `ui/v3/` proxies `/api/*` and `/preview/*` to the engine via `next.config.ts` rewrites; in dev, run v3 on port 3001 because port 3000 is Marc's getpebble.net dev server.
