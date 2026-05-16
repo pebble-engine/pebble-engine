@@ -711,7 +711,7 @@ function HistoryDrawer({
       >
         <div className="p-5 border-b border-border flex justify-between items-start">
           <div>
-            <h2 className={`${type.heading.l} text-primary`}>Version history</h2>
+            <h2 className={`${type.display.m} text-primary`}>Version history</h2>
             <p className="text-xs text-muted-foreground mt-1">
               Every change creates a snapshot. Roll back any time.
             </p>

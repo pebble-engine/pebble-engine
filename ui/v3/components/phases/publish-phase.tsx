@@ -164,10 +164,16 @@ function PublishingPanel() {
       transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
       className="bg-card border border-border rounded-2xl p-12 shadow-[var(--shadow-1)] space-y-6"
     >
-      <motion.div
-        animate={{ rotate: 360 }}
-        transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }} // linear spinner — no named constant applies
-        className="w-12 h-12 mx-auto rounded-full border-4 border-primary border-t-transparent"
+      {/* CSS-driven spinner (not framer) so it survives MotionConfig
+          reducedMotion="user". Under reduced-motion preference, the
+          rotation halts but the gap fills in (motion-reduce:border-t-primary)
+          so users see a solid ring + the text below — clearly "loading,"
+          not "broken UI." aria-label gives screen readers the loading
+          status without depending on the visual. */}
+      <div
+        role="status"
+        aria-label="Packaging your site"
+        className="w-12 h-12 mx-auto rounded-full border-4 border-primary border-t-transparent animate-spin motion-reduce:animate-none motion-reduce:border-t-primary"
       />
       <p className={`${type.display.m} text-foreground`}>Packaging your site…</p>
       <p className={`${type.body.s} text-muted-foreground`}>Snapshotting, bundling, and verifying. Usually a few seconds.</p>
