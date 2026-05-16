@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Check, ChevronDown } from "lucide-react";
+import { type } from "@/lib/type";
 import { getBrief, patchBrief } from "@/lib/state";
 
 /**
@@ -92,7 +93,7 @@ export function LanguagePicker() {
   }
 
   return (
-    <div ref={ref} className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
+    <div ref={ref} className={`mt-6 flex items-center justify-center gap-2 ${type.caption}`}>
       <Globe className="w-3.5 h-3.5" aria-hidden />
       <span>Site language:</span>
       <div className="relative">

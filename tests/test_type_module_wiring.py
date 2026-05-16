@@ -87,6 +87,15 @@ TYPE_CONSUMER_FILES = [
     REPO_ROOT / "ui" / "v3" / "components" / "phases" / "draft-phase.tsx",
     REPO_ROOT / "ui" / "v3" / "components" / "phases" / "edit-phase.tsx",
     REPO_ROOT / "ui" / "v3" / "components" / "phases" / "publish-phase.tsx",
+    # round 3 commit 1:
+    REPO_ROOT / "ui" / "v3" / "app" / "dashboard" / "page.tsx",
+    REPO_ROOT / "ui" / "v3" / "app" / "admin" / "page.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "command-palette.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "dna-preview.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "language-picker.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "ui" / "ai-prompt-box.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "block-gallery.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "auth-menu.tsx",
 ]
 
 

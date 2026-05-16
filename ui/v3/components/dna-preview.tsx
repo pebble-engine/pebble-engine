@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle } from "lucide-react";
+import { type } from "@/lib/type";
 import { getBrief, patchBrief } from "@/lib/state";
 
 /**
@@ -154,7 +155,7 @@ export function DnaPreview() {
           className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3 backdrop-blur"
         >
           <Sparkles className="w-4 h-4 text-secondary flex-shrink-0" aria-hidden />
-          <span className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground hidden sm:inline">
+          <span className={`${type.mono} text-muted-foreground hidden sm:inline`}>
             Style direction
           </span>
 
@@ -168,7 +169,7 @@ export function DnaPreview() {
                 transition={{ duration: 0.25 }}
                 className="flex items-center gap-3 flex-1 min-w-0"
               >
-                <span className="font-display text-sm md:text-base font-semibold text-foreground truncate">
+                <span className={`${type.heading.s} text-foreground truncate`}>
                   {card.label}
                 </span>
 
@@ -183,7 +184,7 @@ export function DnaPreview() {
                   ))}
                 </div>
 
-                <span className="text-xs text-muted-foreground hidden md:inline truncate">
+                <span className={`${type.caption} hidden md:inline truncate`}>
                   {card.display_font} · {card.body_font}
                 </span>
               </motion.div>

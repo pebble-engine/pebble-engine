@@ -8,6 +8,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, User } from "lucide-react";
+import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 
 export function AuthMenu() {
@@ -35,13 +36,13 @@ export function AuthMenu() {
       <div className="flex items-center gap-2">
         <Link
           href="/login"
-          className="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          className={`${type.label} inline-flex items-center rounded-full px-3 py-2 text-muted-foreground hover:text-foreground transition-colors`}
         >
           Sign in
         </Link>
         <Link
           href="/signup"
-          className="inline-flex items-center rounded-full bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:scale-[1.02] transition-transform"
+          className={`${type.label} inline-flex items-center rounded-full bg-primary px-3 py-2 text-primary-foreground hover:scale-[1.02] transition-transform`}
         >
           Sign up
         </Link>
@@ -56,7 +57,7 @@ export function AuthMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-1 text-sm font-medium text-foreground hover:bg-accent transition-colors"
+        className={`${type.label} inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-2 text-foreground hover:bg-accent transition-colors`}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -72,13 +73,13 @@ export function AuthMenu() {
           role="menu"
           className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-[var(--shadow-1)] overflow-hidden z-50"
         >
-          <div className="px-3 py-2.5 border-b border-border">
-            <p className="text-xs text-muted-foreground">Signed in as</p>
-            <p className="text-sm font-medium text-foreground truncate">{user.email}</p>
+          <div className="px-3 py-2 border-b border-border">
+            <p className={type.caption}>Signed in as</p>
+            <p className={`${type.label} text-foreground truncate`}>{user.email}</p>
           </div>
           <Link
             href="/dashboard"
-            className="flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors"
+            className={`${type.body.s} flex items-center gap-2 px-3 py-2 text-foreground hover:bg-accent transition-colors`}
             onClick={() => setOpen(false)}
           >
             <User className="h-4 w-4 text-muted-foreground" />
@@ -90,7 +91,7 @@ export function AuthMenu() {
               setOpen(false);
               await signOut();
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-accent transition-colors text-left border-t border-border"
+            className={`${type.body.s} w-full flex items-center gap-2 px-3 py-2 text-foreground hover:bg-accent transition-colors text-left border-t border-border`}
           >
             <LogOut className="h-4 w-4 text-muted-foreground" />
             Sign out

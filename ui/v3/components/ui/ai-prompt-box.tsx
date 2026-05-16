@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
+import { type } from "@/lib/type";
 
 /* ---------------------------------------------------------------------------
    AI Prompt Box — recolored for Pebble's light brand.
@@ -59,7 +60,8 @@ const Textarea = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <textarea
     className={cn(
-      "flex w-full rounded-md border-none bg-transparent px-3 py-2.5 text-base text-charcoal placeholder:text-graphite focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none",
+      type.body.m,
+      "flex w-full rounded-md border-none bg-transparent px-3 py-2 text-charcoal placeholder:text-graphite focus-visible:outline-none focus-visible:ring-0 disabled:cursor-not-allowed disabled:opacity-50 min-h-[44px] resize-none",
       className,
     )}
     ref={ref}

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { listProjects, type ProjectSummary } from "@/lib/api";
 import { setLastBuild } from "@/lib/state";
+import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 
 type Action = {
@@ -196,7 +197,7 @@ export function CommandPalette() {
               {(["Navigate", "Projects", "Account"] as const).map((group) => (
                 grouped[group].length > 0 && (
                   <div key={group} className="mb-1">
-                    <p className="px-4 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    <p className={`${type.eyebrow} px-4 py-2`}>
                       {group}
                     </p>
                     {grouped[group].map((a) => {
@@ -212,7 +213,7 @@ export function CommandPalette() {
                           }`}
                         >
                           <a.Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm text-foreground flex-1 truncate">{a.label}</span>
+                          <span className={`${type.body.s} text-foreground flex-1 truncate`}>{a.label}</span>
                           {a.hint && <span className="text-[11px] text-muted-foreground font-mono">{a.hint}</span>}
                         </button>
                       );

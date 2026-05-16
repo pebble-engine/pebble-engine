@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Users, Folder, AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 
 type AdminUser = {
@@ -92,8 +93,8 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className="font-display text-3xl font-bold text-foreground">Support tooling</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h1 className={`${type.display.m} text-foreground`}>Support tooling</h1>
+              <p className={`${type.body.s} text-muted-foreground mt-1`}>
                 Read-only — to grant access add an email to <code className="font-mono text-xs">PEBBLE_ADMIN_EMAIL</code> in <code className="font-mono text-xs">.env</code>.
               </p>
             </div>
@@ -121,7 +122,7 @@ export default function AdminPage() {
           {!error && tab === "projects" && <ProjectsTable rows={projects} />}
           {!error && tab === "errors"   && <ErrorsList    rows={errors} />}
 
-          <p className="pt-6 text-xs text-muted-foreground text-center">
+          <p className={`${type.caption} pt-6 text-center`}>
             <Link href="/dashboard" className="hover:text-foreground">← Back to dashboard</Link>
           </p>
         </div>

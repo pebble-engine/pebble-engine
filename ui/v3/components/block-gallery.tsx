@@ -14,6 +14,7 @@ import {
   Square,
   type LucideIcon,
 } from "lucide-react";
+import { type } from "@/lib/type";
 import { listBlocks, type BlockListing } from "@/lib/api";
 
 /**
@@ -115,10 +116,10 @@ export function BlockGallery({ open, busyBlockId, onClose, onInsert }: Props) {
           >
             <div className="flex items-start justify-between p-6 border-b border-border">
               <div>
-                <h2 id="block-gallery-title" className="font-display text-2xl font-semibold text-foreground">
+                <h2 id="block-gallery-title" className={`${type.display.m} text-foreground`}>
                   Add a section
                 </h2>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className={`${type.body.s} text-muted-foreground mt-1`}>
                   Every block re-themes against your site&apos;s DNA on insert. Free —
                   no credits used.
                 </p>
@@ -145,7 +146,7 @@ export function BlockGallery({ open, busyBlockId, onClose, onInsert }: Props) {
               {grouped &&
                 Object.entries(grouped).map(([category, items]) => (
                   <section key={category} className="mb-8 last:mb-0">
-                    <h3 className="font-mono text-xs uppercase tracking-widest text-muted-foreground mb-3">
+                    <h3 className={`${type.mono} text-muted-foreground mb-3`}>
                       {CATEGORY_LABELS[category] || category}
                     </h3>
                     <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -170,7 +171,7 @@ export function BlockGallery({ open, busyBlockId, onClose, onInsert }: Props) {
                               </span>
                               <span className="font-semibold text-sm text-foreground">{block.label}</span>
                             </div>
-                            <p className="text-xs text-muted-foreground leading-snug">
+                            <p className={type.caption}>
                               {block.description}
                             </p>
                           </button>

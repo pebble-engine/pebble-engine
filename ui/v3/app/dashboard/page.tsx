@@ -18,6 +18,7 @@ import {
   Mail,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { type } from "@/lib/type";
 import {
   listProjects,
   toggleStar,
@@ -126,7 +127,7 @@ export default function DashboardPage() {
         {/* Left sidebar — Pebble's "established company" surface */}
         <aside className="w-[240px] bg-card border-r border-border p-5 flex flex-col gap-1">
           <div className="mb-5 px-1">
-            <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
+            <p className={`${type.mono} text-muted-foreground`}>
               {firstName ? `${firstName}'s` : "Your"} workspace
             </p>
           </div>
@@ -156,17 +157,17 @@ export default function DashboardPage() {
             {/* Usage indicator — honest cost telemetry. Shows total only when
                 we have at least one paid build to report. */}
             {usage && usage.projects > 0 && (
-              <div className="px-3 py-2.5 bg-background border border-border rounded-lg">
+              <div className="px-3 py-2 bg-background border border-border rounded-lg">
                 <div className="flex items-center gap-2 mb-1">
                   <Coins className="w-3.5 h-3.5 text-muted-foreground" />
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                  <p className={`${type.eyebrow}`}>
                     Estimated cost
                   </p>
                 </div>
-                <p className="font-display text-lg font-semibold text-foreground">
+                <p className={`${type.heading.m} text-foreground`}>
                   ${usage.total_estimated_cost_usd.toFixed(4)}
                 </p>
-                <p className="text-[10px] text-muted-foreground mt-0.5">
+                <p className={`${type.caption} mt-1`}>
                   {usage.projects} {usage.projects === 1 ? "build" : "builds"} · {(usage.total_input_tokens + usage.total_output_tokens).toLocaleString()} tokens
                 </p>
               </div>
@@ -174,7 +175,7 @@ export default function DashboardPage() {
 
             <Link
               href="/"
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
             >
               <Plus className="w-4 h-4" />
               Start something new
@@ -187,10 +188,10 @@ export default function DashboardPage() {
           <div className="max-w-5xl mx-auto space-y-6">
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div>
-                <h1 className="font-display text-3xl font-bold text-foreground">
+                <h1 className={`${type.display.m} text-foreground`}>
                   {filter === "starred" ? "Starred projects" : filter === "recents" ? "Recently built" : "All projects"}
                 </h1>
-                <p className="text-sm text-muted-foreground mt-1">
+                <p className={`${type.body.s} text-muted-foreground mt-1`}>
                   {visible.length} {visible.length === 1 ? "project" : "projects"}
                 </p>
               </div>
@@ -258,8 +259,8 @@ function ActivityFeed({
     <section className="pt-4 border-t border-border space-y-4">
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 text-muted-foreground" />
-        <h2 className="font-display text-lg font-semibold text-foreground">Recently changed</h2>
-        <p className="text-xs text-muted-foreground">— every refinement and edit, undoable from the project workspace.</p>
+        <h2 className={`${type.heading.m} text-foreground`}>Recently changed</h2>
+        <p className={type.caption}>— every refinement and edit, undoable from the project workspace.</p>
       </div>
       <ul className="space-y-1.5">
         {activity.slice(0, 10).map((row) => (
@@ -269,14 +270,14 @@ function ActivityFeed({
             onClick={() => onOpenProject(row.slug)}
           >
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground truncate">
+              <p className={`${type.heading.s} text-foreground truncate`}>
                 {row.business_name}
               </p>
-              <p className="text-xs text-muted-foreground truncate">
+              <p className={`${type.caption} truncate`}>
                 {labelForReason(row.reason)} · {formatRelative(row.written_at)}
               </p>
             </div>
-            <span className="text-[10px] font-mono uppercase text-muted-foreground shrink-0">
+            <span className={`${type.mono} text-muted-foreground shrink-0`}>
               {row.files_count} files
             </span>
           </li>
@@ -326,7 +327,7 @@ function SidebarItem({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between gap-2 px-3 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
+      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
         active
           ? "bg-primary/15 text-primary"
           : "text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -399,11 +400,11 @@ function ProjectCard({
       </div>
 
       <div className="flex-1 min-w-0">
-        <h3 className="font-display text-lg font-semibold text-foreground truncate pr-16">
+        <h3 className={`${type.heading.m} text-foreground truncate pr-16`}>
           {p.business_name}
         </h3>
         {p.business_type && (
-          <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mt-0.5">
+          <p className={`${type.caption} mt-1`}>
             {p.business_type.replace(/_/g, " ")}
           </p>
         )}
@@ -461,7 +462,7 @@ function ProjectCard({
       </div>
 
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <p className="text-[11px] text-muted-foreground">
+        <p className={type.caption}>
           {p.file_count} {p.file_count === 1 ? "file" : "files"}
           {p.design_dna && ` · ${p.design_dna.replace(/_/g, " ")}`}
         </p>
@@ -470,7 +471,7 @@ function ProjectCard({
           target="_blank"
           rel="noopener"
           onClick={(e) => e.stopPropagation()}
-          className="text-[11px] text-primary hover:underline flex items-center gap-1"
+          className={`${type.caption} text-primary hover:underline flex items-center gap-1`}
         >
           Preview <ExternalLink className="w-3 h-3" />
         </a>
@@ -487,18 +488,18 @@ function ProjectCard({
             className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl border border-destructive/40 flex flex-col items-center justify-center text-center p-5 gap-3"
           >
             <Trash2 className="w-6 h-6 text-destructive" />
-            <p className="font-display text-base font-semibold text-foreground">Delete {p.business_name}?</p>
-            <p className="text-xs text-muted-foreground -mt-1">All snapshots and files are removed permanently.</p>
+            <p className={`${type.heading.m} text-foreground`}>Delete {p.business_name}?</p>
+            <p className={`${type.caption} -mt-1`}>All snapshots and files are removed permanently.</p>
             <div className="flex gap-2 mt-1">
               <button
                 onClick={onCancelDelete}
-                className="bg-card border border-border text-foreground px-4 py-1.5 rounded-lg text-sm font-semibold hover:bg-accent"
+                className="bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-accent"
               >
                 Keep it
               </button>
               <button
                 onClick={onConfirmDelete}
-                className="bg-destructive text-destructive-foreground px-4 py-1.5 rounded-lg text-sm font-semibold hover:opacity-90"
+                className="bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90"
               >
                 Delete
               </button>
@@ -514,8 +515,8 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
   if (query) {
     return (
       <div className="text-center py-16">
-        <p className="font-display text-2xl text-foreground">No matches for &ldquo;{query}&rdquo;.</p>
-        <p className="text-muted-foreground mt-2">Try a different name or industry.</p>
+        <p className={`${type.display.m} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
+        <p className={`${type.body.s} text-muted-foreground mt-2`}>Try a different name or industry.</p>
       </div>
     );
   }
@@ -523,18 +524,18 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
     return (
       <div className="text-center py-16">
         <Star className="w-10 h-10 mx-auto text-muted-foreground mb-4" />
-        <p className="font-display text-2xl text-foreground">Nothing starred yet.</p>
-        <p className="text-muted-foreground mt-2">Click the star icon on any project to keep it handy.</p>
+        <p className={`${type.display.m} text-foreground`}>Nothing starred yet.</p>
+        <p className={`${type.body.s} text-muted-foreground mt-2`}>Click the star icon on any project to keep it handy.</p>
       </div>
     );
   }
   return (
     <div className="text-center py-20">
-      <p className="font-display text-2xl text-foreground">Nothing here yet.</p>
-      <p className="text-muted-foreground mt-2 mb-6">Let&apos;s build your first site.</p>
+      <p className={`${type.display.m} text-foreground`}>Nothing here yet.</p>
+      <p className={`${type.body.s} text-muted-foreground mt-2 mb-6`}>Let&apos;s build your first site.</p>
       <Link
         href="/"
-        className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2.5 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
+        className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
       >
         <Plus className="w-4 h-4" /> Start something new
       </Link>
