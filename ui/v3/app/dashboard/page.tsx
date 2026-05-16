@@ -270,7 +270,7 @@ function ActivityFeed({
             onClick={() => onOpenProject(row.slug)}
           >
             <div className="min-w-0 flex-1">
-              <p className={`${type.heading.s} text-foreground truncate`}>
+              <p className="text-sm font-semibold text-foreground truncate">
                 {row.business_name}
               </p>
               <p className={`${type.caption} truncate`}>
@@ -404,7 +404,7 @@ function ProjectCard({
           {p.business_name}
         </h3>
         {p.business_type && (
-          <p className={`${type.caption} mt-1`}>
+          <p className={`${type.mono} text-muted-foreground mt-1`}>
             {p.business_type.replace(/_/g, " ")}
           </p>
         )}

@@ -57,7 +57,7 @@ export function AuthMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`${type.label} inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-2 text-foreground hover:bg-accent transition-colors`}
+        className={`${type.label} inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-1 text-foreground hover:bg-accent transition-colors`}
         aria-haspopup="menu"
         aria-expanded={open}
       >
