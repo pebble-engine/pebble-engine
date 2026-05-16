@@ -9,6 +9,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, User } from "lucide-react";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { useAuth } from "@/components/auth-provider";
 
 export function AuthMenu() {
@@ -36,13 +37,13 @@ export function AuthMenu() {
       <div className="flex items-center gap-2">
         <Link
           href="/login"
-          className={`${type.label} inline-flex items-center rounded-full px-3 py-2 text-muted-foreground hover:text-foreground transition-colors`}
+          className={`${interactions.link} ${type.label} inline-flex items-center rounded-full px-3 py-2 text-muted-foreground`}
         >
           Sign in
         </Link>
         <Link
           href="/signup"
-          className={`${type.label} inline-flex items-center rounded-full bg-primary px-3 py-2 text-primary-foreground hover:scale-[1.02] transition-transform`}
+          className={`${interactions.button} ${type.label} inline-flex items-center rounded-full bg-primary px-3 py-2 text-primary-foreground`}
         >
           Sign up
         </Link>
@@ -57,7 +58,7 @@ export function AuthMenu() {
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className={`${type.label} inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-1 text-foreground hover:bg-accent transition-colors`}
+        className={`${interactions.chip} ${type.label} inline-flex items-center gap-2 rounded-full border border-border bg-card pl-1 pr-3 py-1 text-foreground`}
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -79,7 +80,7 @@ export function AuthMenu() {
           </div>
           <Link
             href="/dashboard"
-            className={`${type.body.s} flex items-center gap-2 px-3 py-2 text-foreground hover:bg-accent transition-colors`}
+            className={`${interactions.chip} ${type.body.s} flex items-center gap-2 px-3 py-2 text-foreground`}
             onClick={() => setOpen(false)}
           >
             <User className="h-4 w-4 text-muted-foreground" />
@@ -91,7 +92,7 @@ export function AuthMenu() {
               setOpen(false);
               await signOut();
             }}
-            className={`${type.body.s} w-full flex items-center gap-2 px-3 py-2 text-foreground hover:bg-accent transition-colors text-left border-t border-border`}
+            className={`${interactions.chip} ${type.body.s} w-full flex items-center gap-2 px-3 py-2 text-foreground text-left border-t border-border`}
           >
             <LogOut className="h-4 w-4 text-muted-foreground" />
             Sign out

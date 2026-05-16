@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 
 /* ---------------------------------------------------------------------------
    AI Prompt Box — recolored for Pebble's light brand.
@@ -625,7 +626,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
                   setShowBrand(false);
                 }}
                 className={cn(
-                  "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-9",
+                  `${interactions.chip} rounded-full flex items-center gap-1 px-2 py-1 border h-9`,
                   showPlan
                     ? "bg-secondary/15 border-secondary text-secondary"
                     : "bg-transparent border-transparent text-graphite hover:text-charcoal",
@@ -656,7 +657,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
                   setShowPlan(false);
                 }}
                 className={cn(
-                  "rounded-full transition-all flex items-center gap-1 px-2 py-1 border h-9",
+                  `${interactions.chip} rounded-full flex items-center gap-1 px-2 py-1 border h-9`,
                   showBrand
                     ? "bg-spark/15 border-spark text-spark"
                     : "bg-transparent border-transparent text-graphite hover:text-charcoal",

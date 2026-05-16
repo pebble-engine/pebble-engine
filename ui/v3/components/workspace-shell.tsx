@@ -28,6 +28,7 @@ import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
@@ -196,7 +197,7 @@ export function WorkspaceShell() {
         <motion.button
           variants={safeFadeUp}
           onClick={() => editPhaseRef.current?.openGallery()}
-          className={`flex items-center gap-2 ${type.label} text-foreground bg-card border border-border px-3 h-10 rounded-full hover:bg-accent transition-colors`}
+          className={`${interactions.chip} flex items-center gap-2 ${type.label} text-foreground bg-card border border-border px-3 h-10 rounded-full`}
           title="Add a DNA-themed section"
         >
           <Plus className="w-4 h-4" /> Add section
@@ -205,7 +206,7 @@ export function WorkspaceShell() {
           variants={safeFadeUp}
           onClick={() => { editPhaseRef.current?.openHistory(); }}
           title="Version history"
-          className="w-10 h-10 rounded-full flex items-center justify-center text-graphite hover:bg-mist hover:text-charcoal dark:text-pebble dark:hover:bg-stone/40 dark:hover:text-sand transition-colors"
+          className={`${interactions.iconButton} w-10 h-10 rounded-full flex items-center justify-center text-graphite hover:text-charcoal dark:text-pebble dark:hover:bg-stone/40 dark:hover:text-sand`}
           aria-label="Open version history"
         >
           <History className="w-5 h-5" />
@@ -213,7 +214,7 @@ export function WorkspaceShell() {
         <motion.button
           variants={safeFadeUp}
           onClick={() => setPhase("publish")}
-          className={`bg-primary text-primary-foreground px-4 h-10 rounded-full flex items-center gap-2 hover:opacity-90 transition-opacity ${type.label}`}
+          className={`${interactions.button} bg-primary text-primary-foreground px-4 h-10 rounded-full flex items-center gap-2 ${type.label}`}
         >
           <Rocket className="w-4 h-4" /> Publish
         </motion.button>
@@ -256,8 +257,8 @@ export function WorkspaceShell() {
                 <button
                   key={s.id}
                   onClick={() => handleJumpPhase(s.id)}
-                  className={`relative flex items-center gap-2 p-3 rounded-lg transition-colors text-left ${type.label} ${
-                    isActive ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                  className={`${interactions.chip} relative flex items-center gap-2 p-3 rounded-lg text-left ${type.label} ${
+                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {isActive && (

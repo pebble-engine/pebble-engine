@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { listBlocks, type BlockListing } from "@/lib/api";
 
 /**
@@ -128,7 +129,7 @@ export function BlockGallery({ open, busyBlockId, onClose, onInsert }: Props) {
                 type="button"
                 onClick={onClose}
                 aria-label="Close"
-                className="p-2 rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className={`${interactions.iconButton} p-2 rounded-lg text-muted-foreground hover:text-foreground`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -159,7 +160,7 @@ export function BlockGallery({ open, busyBlockId, onClose, onInsert }: Props) {
                             key={block.id}
                             disabled={isBusy || busyBlockId !== null}
                             onClick={() => onInsert(block.id)}
-                            className="text-left bg-background border border-border rounded-xl p-4 hover:border-secondary hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-wait flex flex-col gap-2 group"
+                            className={`${interactions.card} text-left bg-background border border-border rounded-xl p-4 hover:border-secondary disabled:opacity-50 disabled:cursor-wait flex flex-col gap-2 group`}
                           >
                             <div className="flex items-center gap-2">
                               <span className="w-8 h-8 rounded-lg bg-secondary/15 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">

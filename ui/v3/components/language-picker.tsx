@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Globe, Check, ChevronDown } from "lucide-react";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { getBrief, patchBrief } from "@/lib/state";
 
 /**
@@ -103,7 +104,7 @@ export function LanguagePicker() {
             e.stopPropagation();
             setOpen((v) => !v);
           }}
-          className="inline-flex items-center gap-1 text-foreground font-semibold hover:bg-accent rounded-md px-2 py-1 transition-colors"
+          className={`${interactions.chip} inline-flex items-center gap-1 text-foreground font-semibold rounded-md px-2 py-1`}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
@@ -128,8 +129,8 @@ export function LanguagePicker() {
                     <button
                       type="button"
                       onClick={() => choose(opt.code)}
-                      className={`w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                        isCurrent ? "bg-secondary/10 text-foreground" : "hover:bg-accent text-foreground"
+                      className={`${interactions.chip} w-full flex items-center justify-between gap-2 px-3 py-2 text-left text-sm ${
+                        isCurrent ? "bg-secondary/10 text-foreground" : "text-foreground"
                       }`}
                     >
                       <span className="flex flex-col">

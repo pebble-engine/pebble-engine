@@ -6,6 +6,7 @@ import { LifeBuoy } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthMenu } from "./auth-menu";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 
 /**
  * Shared top nav for every screen after welcome. Brand mark left, theme
@@ -32,7 +33,7 @@ export function TopNav({
       <div className="flex items-center gap-6">
         <Link
           href="/"
-          className={`${type.display.m} text-accent-foreground hover:text-primary transition-colors`}
+          className={`${interactions.link} ${type.display.m} text-accent-foreground hover:text-primary`}
         >
           Pebble.
         </Link>
@@ -55,7 +56,7 @@ export function TopNav({
           href="/help"
           title="Help"
           aria-label="Help"
-          className="w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          className={`${interactions.iconButton} w-10 h-10 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground`}
         >
           <LifeBuoy className="w-5 h-5" />
         </Link>

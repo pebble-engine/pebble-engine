@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Users, Folder, AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { useAuth } from "@/components/auth-provider";
 
 type AdminUser = {
@@ -100,7 +101,7 @@ export default function AdminPage() {
             </div>
             <button
               onClick={refresh}
-              className="bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 hover:bg-accent"
+              className={`${interactions.button} bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2`}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
             </button>
@@ -123,7 +124,7 @@ export default function AdminPage() {
           {!error && tab === "errors"   && <ErrorsList    rows={errors} />}
 
           <p className={`${type.caption} pt-6 text-center`}>
-            <Link href="/dashboard" className="hover:text-foreground">← Back to dashboard</Link>
+            <Link href="/dashboard" className={`${interactions.link}`}>← Back to dashboard</Link>
           </p>
         </div>
       </main>
@@ -135,7 +136,7 @@ function TabButton({ active, onClick, Icon, label }: { active: boolean; onClick:
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 text-sm font-semibold border-b-2 -mb-px transition-colors ${
+      className={`${interactions.chip} flex items-center gap-2 px-4 py-2 text-sm font-semibold border-b-2 -mb-px ${
         active ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"
       }`}
     >

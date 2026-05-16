@@ -30,6 +30,7 @@ import {
   type ActivityRow,
 } from "@/lib/api";
 import { setLastBuild, getUserProfile } from "@/lib/state";
+import { interactions } from "@/lib/interactions";
 
 type Filter = "all" | "starred" | "recents";
 
@@ -175,7 +176,7 @@ export default function DashboardPage() {
 
             <Link
               href="/"
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+              className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold`}
             >
               <Plus className="w-4 h-4" />
               Start something new
@@ -266,8 +267,9 @@ function ActivityFeed({
         {activity.slice(0, 10).map((row) => (
           <li
             key={`${row.slug}-${row.snapshot_id}`}
-            className="flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border hover:bg-accent transition-colors cursor-pointer"
+            className={`${interactions.chip} flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border cursor-pointer`}
             onClick={() => onOpenProject(row.slug)}
+            tabIndex={0}
           >
             <div className="min-w-0 flex-1">
               <p className="text-sm font-semibold text-foreground truncate">
@@ -327,10 +329,10 @@ function SidebarItem({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+      className={`${interactions.chip} flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${
         active
           ? "bg-primary/15 text-primary"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
+          : "text-muted-foreground hover:text-foreground"
       }`}
     >
       <span className="flex items-center gap-2">
@@ -370,9 +372,9 @@ function ProjectCard({
         visible: { opacity: 1, y: 0 },
       }}
       exit={{ opacity: 0, scale: 0.96 }}
-      whileHover={{ y: -3 }}
-      className="bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 cursor-pointer relative group"
+      className={`${interactions.card} bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 cursor-pointer relative group`}
       onClick={() => !deletePending && onOpen()}
+      tabIndex={0}
     >
       <div className="absolute top-3 right-3 flex items-center gap-1">
         <button
@@ -380,7 +382,7 @@ function ProjectCard({
             e.stopPropagation();
             onToggleStar();
           }}
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-accent transition-colors"
+          className={`${interactions.iconButton} w-8 h-8 rounded-full flex items-center justify-center`}
           aria-label={p.starred ? "Unstar" : "Star"}
         >
           <Star
@@ -471,7 +473,7 @@ function ProjectCard({
           target="_blank"
           rel="noopener"
           onClick={(e) => e.stopPropagation()}
-          className={`${type.caption} text-primary hover:underline flex items-center gap-1`}
+          className={`${interactions.link} ${type.caption} text-primary flex items-center gap-1`}
         >
           Preview <ExternalLink className="w-3 h-3" />
         </a>
@@ -493,13 +495,13 @@ function ProjectCard({
             <div className="flex gap-2 mt-1">
               <button
                 onClick={onCancelDelete}
-                className="bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:bg-accent"
+                className={`${interactions.button} bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold`}
               >
                 Keep it
               </button>
               <button
                 onClick={onConfirmDelete}
-                className="bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90"
+                className={`${interactions.button} bg-destructive text-destructive-foreground px-4 py-2 rounded-lg text-sm font-semibold`}
               >
                 Delete
               </button>
@@ -535,7 +537,7 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
       <p className={`${type.body.s} text-muted-foreground mt-2 mb-6`}>Let&apos;s build your first site.</p>
       <Link
         href="/"
-        className="inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold hover:opacity-90 transition-opacity"
+        className={`${interactions.button} inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold`}
       >
         <Plus className="w-4 h-4" /> Start something new
       </Link>

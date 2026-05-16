@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Shuffle } from "lucide-react";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { getBrief, patchBrief } from "@/lib/state";
 
 /**
@@ -195,7 +196,7 @@ export function DnaPreview() {
             type="button"
             onClick={onReroll}
             disabled={loading}
-            className="ml-auto flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1.5 rounded-md hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-wait flex-shrink-0"
+            className={`${interactions.chip} ml-auto flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground px-2 py-1.5 rounded-md disabled:opacity-50 disabled:cursor-wait flex-shrink-0`}
             title="Try a different style direction"
           >
             <Shuffle className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} aria-hidden />

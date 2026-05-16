@@ -11,6 +11,7 @@ import {
 import { listProjects, type ProjectSummary } from "@/lib/api";
 import { setLastBuild } from "@/lib/state";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { useAuth } from "@/components/auth-provider";
 
 type Action = {
@@ -208,8 +209,8 @@ export function CommandPalette() {
                           key={a.id}
                           onMouseEnter={() => setActive(idx)}
                           onClick={() => { close(); setTimeout(() => a.run(), 50); }}
-                          className={`w-full text-left px-4 py-2 flex items-center gap-3 transition-colors ${
-                            isActive ? "bg-accent" : "hover:bg-accent/60"
+                          className={`${interactions.chip} w-full text-left px-4 py-2 flex items-center gap-3 ${
+                            isActive ? "bg-accent" : ""
                           }`}
                         >
                           <a.Icon className="w-4 h-4 text-muted-foreground shrink-0" />

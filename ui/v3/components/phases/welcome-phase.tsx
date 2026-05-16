@@ -16,6 +16,7 @@ import {
 } from "@/lib/state";
 import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 
 /**
  * Welcome phase — the "first encounter" screen.
@@ -154,7 +155,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             />
             <button
               type="submit"
-              className={`${type.label} text-primary hover:underline`}
+              className={`${interactions.link} ${type.label} text-primary`}
             >
               Save
             </button>
@@ -176,7 +177,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             <button
               key={chip.label}
               onClick={() => setPrefill(chip.prompt)}
-              className={`px-4 py-2 bg-card hover:bg-accent border border-border rounded-full text-foreground transition-colors ${type.label}`}
+              className={`${interactions.chip} px-4 py-2 bg-card border border-border rounded-full text-foreground ${type.label}`}
             >
               {chip.label}
             </button>
@@ -192,7 +193,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: SHORT_S, ease: EASE_CINEMATIC } }}
             onClick={handleResume}
-            className={`pointer-events-auto group flex items-center gap-2 px-5 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-secondary transition-colors ${type.label}`}
+            className={`${interactions.chip} pointer-events-auto group flex items-center gap-2 px-5 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-secondary ${type.label}`}
           >
             <span>Continue working on</span>
             <span className="text-foreground">{resumeName}</span>
@@ -203,7 +204,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         {/* Migration entry — alternative to typing a fresh idea. */}
         <Link
           href="/migrate"
-          className="pointer-events-auto text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 mt-2"
+          className={`${interactions.link} pointer-events-auto text-sm text-muted-foreground flex items-center gap-2 mt-2`}
         >
           <span className="opacity-80">Already have a site?</span>
           <span className="font-semibold underline underline-offset-2">Bring it over →</span>

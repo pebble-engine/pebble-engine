@@ -7,6 +7,7 @@ import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan } from "@/lib/s
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 
 /**
  * Plan phase — the user-facing "here's what I'll build" review screen.
@@ -248,14 +249,14 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <button
           onClick={onBack}
-          className={`flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-accent ${type.label}`}
+          className={`${interactions.chip} flex items-center gap-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md ${type.label}`}
         >
           <Edit3 className="w-3.5 h-3.5" /> Edit the questions
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleGenerate}
-          className="w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-semibold py-3.5 px-7 rounded-full shadow-lg hover:translate-y-[-2px] active:translate-y-0 transition-all flex items-center justify-center gap-2"
+          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-semibold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2`}
         >
           <Sparkles className="w-4 h-4" /> Generate my draft
         </motion.button>

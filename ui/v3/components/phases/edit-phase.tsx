@@ -30,6 +30,7 @@ import { BlockGallery } from "@/components/block-gallery";
 import { type PebblePlan } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import {
   insertBlock,
   isPebbleSelectMessage,
@@ -348,7 +349,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                 onClick={() => setDevice("desktop")}
                 aria-label="Desktop preview"
                 aria-pressed={device === "desktop"}
-                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center ${
                   device === "desktop"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -360,7 +361,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                 onClick={() => setDevice("mobile")}
                 aria-label="Mobile preview"
                 aria-pressed={device === "mobile"}
-                className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center ${
                   device === "mobile"
                     ? "bg-primary text-primary-foreground"
                     : "text-muted-foreground hover:text-foreground"
@@ -400,11 +401,10 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               return (
                 <motion.button
                   key={c.id}
-                  whileHover={{ y: -3 }}
                   whileTap={{ scale: 0.95 }}
                   disabled={isBusy || busyRefinement !== null}
                   onClick={() => handleRefine(c.id)}
-                  className={`relative text-muted-foreground px-4 py-2 flex items-center gap-2 hover:bg-accent hover:text-foreground rounded-full transition-colors disabled:opacity-50 ${type.label}`}
+                  className={`${interactions.chip} relative text-muted-foreground px-4 py-2 flex items-center gap-2 hover:text-foreground rounded-full disabled:opacity-50 ${type.label}`}
                 >
                   <c.Icon className="w-4 h-4" />
                   {isBusy ? "Applying…" : c.label}
@@ -485,7 +485,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                 {t.snapshotId && t.slug && (
                   <button
                     onClick={() => handleUndo(t.slug!, t.snapshotId!)}
-                    className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+                    className={`${interactions.link} text-xs font-bold text-primary flex items-center gap-1`}
                   >
                     <Undo2 className="w-3 h-3" /> Undo
                   </button>
@@ -549,7 +549,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onGoLive}
-          className="w-full bg-secondary text-secondary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2 hover:opacity-90 transition-opacity"
+          className={`${interactions.button} w-full bg-secondary text-secondary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2`}
         >
           <Rocket className="w-4 h-4" /> Go Live
         </motion.button>
@@ -600,7 +600,7 @@ function VisualEditorPanel({
         </div>
         <button
           onClick={onClose}
-          className="w-8 h-8 rounded-full hover:bg-mist flex items-center justify-center"
+          className={`${interactions.iconButton} w-8 h-8 rounded-full flex items-center justify-center`}
           aria-label="Close editor"
         >
           <X className="w-4 h-4" />
@@ -622,7 +622,7 @@ function VisualEditorPanel({
           <button
             onClick={() => onText(textDraft)}
             disabled={textDraft === selected.text}
-            className="w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-40 flex items-center justify-center gap-2"
+            className={`${interactions.button} w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2`}
           >
             <Check className="w-4 h-4" /> Save text
           </button>
@@ -637,13 +637,13 @@ function VisualEditorPanel({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onFontSize(-1)}
-            className="flex-1 bg-background border border-border rounded-lg py-2 hover:bg-accent flex items-center justify-center gap-1 text-sm font-semibold"
+            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
           >
             <Minus className="w-4 h-4" /> Smaller
           </button>
           <button
             onClick={() => onFontSize(1)}
-            className="flex-1 bg-background border border-border rounded-lg py-2 hover:bg-accent flex items-center justify-center gap-1 text-sm font-semibold"
+            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
           >
             <Plus className="w-4 h-4" /> Larger
           </button>
@@ -718,7 +718,7 @@ function HistoryDrawer({
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full hover:bg-mist flex items-center justify-center"
+            className={`${interactions.iconButton} w-9 h-9 rounded-full flex items-center justify-center`}
             aria-label="Close history"
           >
             <X className="w-5 h-5" />
@@ -753,7 +753,7 @@ function HistoryDrawer({
                 </div>
                 <button
                   onClick={() => onRollback(s.snapshot_id)}
-                  className={`flex items-center gap-1 bg-card border border-border text-foreground px-3 py-2 rounded-lg hover:bg-accent transition-colors shrink-0 ${type.label}`}
+                  className={`${interactions.chip} flex items-center gap-1 bg-card border border-border text-foreground px-3 py-2 rounded-lg shrink-0 ${type.label}`}
                 >
                   <Undo2 className="w-3 h-3" /> Restore
                 </button>

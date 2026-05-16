@@ -30,6 +30,7 @@ import { LanguagePicker } from "@/components/language-picker";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 
 /**
  * Idea phase — the chip-driven clarifying questions that used to live
@@ -225,10 +226,10 @@ export function IdeaPhase({ onAdvance }: Props) {
                       }}
                       onClick={() => toggleChip(chip.id)}
                       whileTap={{ scale: 0.96 }}
-                      className={`relative flex flex-col items-center justify-center gap-3 p-6 rounded-xl transition-colors ${
+                      className={`${interactions.chip} relative flex flex-col items-center justify-center gap-3 p-6 rounded-xl ${
                         isSelected
                           ? "bg-secondary/15 border border-secondary text-foreground"
-                          : "bg-card border border-border hover:bg-accent text-foreground"
+                          : "bg-card border border-border text-foreground"
                       }`}
                     >
                       <chip.Icon className={`w-6 h-6 ${isSelected ? "text-secondary" : "text-muted-foreground"}`} />
@@ -274,14 +275,14 @@ export function IdeaPhase({ onAdvance }: Props) {
         <button
           onClick={handleBack}
           disabled={stepIdx === 0}
-          className="flex items-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-3 py-2 rounded-md hover:enabled:bg-accent"
+          className={`${interactions.chip} flex items-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed px-3 py-2 rounded-md`}
         >
           <span className={type.label}>Back</span>
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleContinue}
-          className={`flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg shadow-md hover:opacity-90 transition-opacity ${type.label}`}
+          className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg shadow-md ${type.label}`}
         >
           {stepIdx === STEPS.length - 1 ? "Generate plan" : "Continue"}
           <ArrowRight className="w-4 h-4" />
@@ -308,7 +309,7 @@ function Tooltip({ text }: { text: string }) {
       <button
         type="button"
         onClick={(e) => { e.stopPropagation(); setOpen((v) => !v); }}
-        className="w-7 h-7 rounded-full text-muted-foreground hover:text-foreground hover:bg-accent inline-flex items-center justify-center transition-colors"
+        className={`${interactions.iconButton} w-7 h-7 rounded-full text-muted-foreground hover:text-foreground inline-flex items-center justify-center`}
         aria-label="What does this question mean?"
         aria-expanded={open}
       >

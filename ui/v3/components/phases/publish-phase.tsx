@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { interactions } from "@/lib/interactions";
 import { Share2, Eye, Edit3, Droplet, Download, Rocket, Check, Globe, Trash2, Copy } from "lucide-react";
 import {
   publishSite,
@@ -146,7 +147,7 @@ function ReadyPanel({ onPublish, previewUrl }: { onPublish: () => void; previewU
             href={previewUrl}
             target="_blank"
             rel="noopener"
-            className="bg-card border border-border text-foreground px-6 py-3 rounded-full font-semibold flex items-center gap-2 hover:bg-accent"
+            className={`${interactions.chip} bg-card border border-border text-foreground px-6 py-3 rounded-full font-semibold flex items-center gap-2`}
           >
             <Eye className="w-4 h-4" /> Preview first
           </a>
@@ -276,13 +277,13 @@ function ErrorPanel({ error, onRetry, onBack }: { error: string; onRetry: () => 
       <div className="flex gap-3 justify-center">
         <button
           onClick={onRetry}
-          className="bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold hover:opacity-90"
+          className={`${interactions.button} bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold`}
         >
           Try again
         </button>
         <button
           onClick={onBack}
-          className="bg-card border border-border text-foreground px-5 py-3 rounded-full font-semibold hover:bg-accent"
+          className={`${interactions.chip} bg-card border border-border text-foreground px-5 py-3 rounded-full font-semibold`}
         >
           Back to workspace
         </button>
@@ -441,7 +442,7 @@ function DomainPanel({ slug }: { slug: string }) {
                 <code className="font-mono text-xs flex-1 truncate text-foreground">{state.domain.cname_record}</code>
                 <button
                   onClick={copyCname}
-                  className="bg-card border border-border px-2 py-1 rounded text-xs hover:bg-accent flex items-center gap-1"
+                  className={`${interactions.chip} bg-card border border-border px-2 py-1 rounded text-xs flex items-center gap-1`}
                 >
                   {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
                   {copied ? "Copied" : "Copy"}
@@ -474,7 +475,7 @@ function DomainPanel({ slug }: { slug: string }) {
               <button
                 onClick={handleAttach}
                 disabled={busy || !host.trim()}
-                className="bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-40"
+                className={`${interactions.button} bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-40`}
               >
                 {busy ? "Saving…" : "Connect"}
               </button>
