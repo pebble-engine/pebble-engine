@@ -101,7 +101,7 @@ export default function AdminPage() {
             </div>
             <button
               onClick={refresh}
-              className={`${interactions.button} bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2`}
+              className={`${interactions.chip} bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2`}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} /> Refresh
             </button>

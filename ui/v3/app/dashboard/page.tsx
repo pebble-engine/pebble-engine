@@ -267,7 +267,7 @@ function ActivityFeed({
         {activity.slice(0, 10).map((row) => (
           <li
             key={`${row.slug}-${row.snapshot_id}`}
-            className={`${interactions.chip} flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border cursor-pointer`}
+            className={`${interactions.card} flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border cursor-pointer`}
             onClick={() => onOpenProject(row.slug)}
             tabIndex={0}
           >

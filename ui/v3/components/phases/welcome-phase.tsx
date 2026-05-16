@@ -193,7 +193,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: SHORT_S, ease: EASE_CINEMATIC } }}
             onClick={handleResume}
-            className={`${interactions.chip} pointer-events-auto group flex items-center gap-2 px-5 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-secondary ${type.label}`}
+            className={`${interactions.focusRing} pointer-events-auto group flex items-center gap-2 px-5 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-secondary transition-colors duration-100 ease-out active:bg-secondary/30 motion-reduce:active:bg-secondary/20 ${type.label}`}
           >
             <span>Continue working on</span>
             <span className="text-foreground">{resumeName}</span>

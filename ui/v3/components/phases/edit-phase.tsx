@@ -349,10 +349,10 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                 onClick={() => setDevice("desktop")}
                 aria-label="Desktop preview"
                 aria-pressed={device === "desktop"}
-                className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center ${
+                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
                   device === "desktop"
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <Monitor className="w-3.5 h-3.5" />
@@ -361,10 +361,10 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                 onClick={() => setDevice("mobile")}
                 aria-label="Mobile preview"
                 aria-pressed={device === "mobile"}
-                className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center ${
+                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
                   device === "mobile"
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
                 }`}
               >
                 <Smartphone className="w-3.5 h-3.5" />
