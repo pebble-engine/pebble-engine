@@ -142,12 +142,44 @@ def _slugify(text: str) -> str:
     return re.sub(r"[\s_]+", "-", text).strip("-") or "untitled"
 
 
+# Generic words that appear in many industry keys (yoga_studio,
+# tattoo_studio, dance_studio; barbershop, coffee_shop; cleaning_service,
+# pool_service). They MUST NOT be the sole word driving a fuzzy match —
+# otherwise "music studio" matches dance_studio just because both have
+# "studio", which is exactly the bug this set fixes. Curated by walking
+# `industries.json` for suffix words that recur across >1 industry.
+_INDUSTRY_GENERIC_WORDS = frozenset({
+    "studio", "shop", "service", "services",
+    "company", "co", "business", "inc",
+    "store", "center", "centre",
+})
+
+
+def _industry_tokens(text: str) -> set[str]:
+    """Tokenize `text` into a set of distinctive lowercase words.
+
+    Strips punctuation, possessives (`Joe's` → `joe`), and the generic
+    industry suffixes in _INDUSTRY_GENERIC_WORDS. Words shorter than 3
+    characters are dropped — they're rarely meaningful (`an`, `co`,
+    `a`) and cause false positives.
+    """
+    raw = re.findall(r"[a-z]+", text.lower())
+    return {w for w in raw if len(w) > 2 and w not in _INDUSTRY_GENERIC_WORDS}
+
+
 # ---- Lookup + LLM fallback ---------------------------------------------
 
 def lookup_industry_intel(business_type: str) -> tuple[Optional[str], Optional[dict]]:
     """Find a matching industry entry. Returns (matched_key, entry) or (None, None).
 
-    Match priority: exact key → fuzzy substring → partial word overlap.
+    Match priority:
+      1. Exact normalized key (`"yoga studio"` → `"yoga_studio"`).
+      2. Distinctive-word overlap: tokenize input + industry key into
+         non-generic words and return the industry with the highest
+         intersection count (>=1). Generic suffixes like `studio` /
+         `shop` / `service` don't count, so `"music studio"` falls
+         through to (None, None) rather than spuriously matching
+         dance_studio.
     """
     intel = _load_industries_intel()
     if not intel:
@@ -157,16 +189,51 @@ def lookup_industry_intel(business_type: str) -> tuple[Optional[str], Optional[d
     if key in intel:
         return key, intel[key]
 
-    # Fuzzy substring — either direction
-    bt_lower = business_type.lower()
+    bt_tokens = _industry_tokens(business_type)
+    if not bt_tokens:
+        # Input was empty or only generic words. Don't guess.
+        return None, None
+
+    # Score every industry by distinctive-word overlap, then by prefix
+    # match for compound single-token keys (`barbershop` is one token
+    # but the user may type just `barber`). Tie-break by iteration
+    # order (insertion order in industries.json, deterministic).
+    best_key: Optional[str] = None
+    best_entry: Optional[dict] = None
+    best_score = 0
     for industry_key, entry in intel.items():
-        ik_words = industry_key.replace("_", " ")
-        if ik_words in bt_lower or any(w in bt_lower for w in ik_words.split() if len(w) > 3):
-            return industry_key, entry
-        if any(w in ik_words for w in bt_lower.split() if len(w) > 3):
-            return industry_key, entry
+        ik_tokens = _industry_tokens(industry_key)
+        if not ik_tokens:
+            continue
+        score = _industry_match_score(bt_tokens, ik_tokens)
+        if score > best_score:
+            best_score = score
+            best_key = industry_key
+            best_entry = entry
+
+    if best_score >= 1:
+        return best_key, best_entry
 
     return None, None
+
+
+def _industry_match_score(bt_tokens: set[str], ik_tokens: set[str]) -> int:
+    """Score the match between two distinctive-token sets.
+
+    Whole-word overlap is the primary signal (e.g. `plumbing` ∈ both).
+    Falls back to a narrow prefix path so a user-typed `barber` still
+    resolves to `barbershop`. Minimum input length 4 prevents `car`
+    from matching `carpenter` via prefix."""
+    overlap = bt_tokens & ik_tokens
+    if overlap:
+        return len(overlap)
+    for bt in bt_tokens:
+        if len(bt) < 4:
+            continue
+        for ik in ik_tokens:
+            if len(ik) > len(bt) and ik.startswith(bt):
+                return 1
+    return 0
 
 
 def research_new_industry(business_type: str) -> Optional[dict]:
