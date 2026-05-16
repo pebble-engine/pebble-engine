@@ -39,10 +39,22 @@ def test_protected_prefixes_constant_is_declared():
 
 
 def test_protected_prefixes_contains_known_gated_routes():
-    """The four known protected routes — adding a fifth requires this
-    test to be updated, which is the point."""
+    """The current set of protected routes — adding a new one requires
+    this test to be updated, which is the point.
+
+    /thinking, /plan-review, /publish are legacy client-side redirects
+    into /workspace. They were originally listed as "client-redirect-
+    to-gated" relying on JS to forward the visitor. The NLM round-three
+    pass on 2026-05-16 flagged that as a defense-in-depth gap (a JS-
+    disabled or HTML-scraping visitor sees the bare layout shell). The
+    three routes return null today so the practical impact is minimal,
+    but gating them at the middleware removes the ambiguity if rendered
+    content gets added later."""
     src = _src()
-    expected = ["/workspace", "/dashboard", "/admin", "/inbox"]
+    expected = [
+        "/workspace", "/dashboard", "/admin", "/inbox",
+        "/thinking", "/plan-review", "/publish",
+    ]
     for path in expected:
         assert f'"{path}"' in src, (
             f"PROTECTED_PREFIXES is missing {path!r}; new protected "
