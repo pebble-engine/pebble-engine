@@ -29,6 +29,7 @@ import { DnaPreview } from "@/components/dna-preview";
 import { LanguagePicker } from "@/components/language-picker";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
+import { type } from "@/lib/type";
 
 /**
  * Idea phase — the chip-driven clarifying questions that used to live
@@ -194,14 +195,14 @@ export function IdeaPhase({ onAdvance }: Props) {
               className="space-y-10 text-center"
             >
               <div className="space-y-3">
-                <p className="font-mono text-xs uppercase tracking-widest text-muted-foreground">
+                <p className={`${type.mono} text-muted-foreground`}>
                   Question {stepIdx + 1} of {STEPS.length}
                 </p>
-                <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-foreground inline-flex items-center gap-2 justify-center">
+                <h1 className={`${type.display.l} text-foreground inline-flex items-center gap-2 justify-center`}>
                   {step.headline}
                   <Tooltip text={step.tip} />
                 </h1>
-                <p className="text-base text-muted-foreground max-w-xl mx-auto">{step.subhead}</p>
+                <p className={`${type.body.m} text-muted-foreground max-w-xl mx-auto`}>{step.subhead}</p>
               </div>
 
               <motion.div
@@ -231,7 +232,7 @@ export function IdeaPhase({ onAdvance }: Props) {
                       }`}
                     >
                       <chip.Icon className={`w-6 h-6 ${isSelected ? "text-secondary" : "text-muted-foreground"}`} />
-                      <span className="text-sm font-semibold">{chip.label}</span>
+                      <span className={type.label}>{chip.label}</span>
                       <AnimatePresence>
                         {isSelected && (
                           <motion.span
@@ -253,7 +254,7 @@ export function IdeaPhase({ onAdvance }: Props) {
           </AnimatePresence>
 
           <div className="mt-10 max-w-2xl mx-auto">
-            <label htmlFor="notes_freeform" className="block text-sm font-semibold text-muted-foreground mb-2">
+            <label htmlFor="notes_freeform" className={`block ${type.label} text-muted-foreground mb-2`}>
               Anything I should know that the questions missed?
             </label>
             <textarea
@@ -275,12 +276,12 @@ export function IdeaPhase({ onAdvance }: Props) {
           disabled={stepIdx === 0}
           className="flex items-center gap-1 text-muted-foreground hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed transition-colors px-3 py-2 rounded-md hover:enabled:bg-accent"
         >
-          <span className="text-sm font-semibold">Back</span>
+          <span className={type.label}>Back</span>
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleContinue}
-          className="flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg text-sm font-semibold shadow-md hover:opacity-90 transition-opacity"
+          className={`flex items-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg shadow-md hover:opacity-90 transition-opacity ${type.label}`}
         >
           {stepIdx === STEPS.length - 1 ? "Generate plan" : "Continue"}
           <ArrowRight className="w-4 h-4" />

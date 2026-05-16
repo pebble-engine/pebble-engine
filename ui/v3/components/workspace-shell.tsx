@@ -27,6 +27,7 @@ import {
 import { generateSite, type GenerateResponse } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
+import { type } from "@/lib/type";
 import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
@@ -195,7 +196,7 @@ export function WorkspaceShell() {
         <motion.button
           variants={safeFadeUp}
           onClick={() => editPhaseRef.current?.openGallery()}
-          className="flex items-center gap-1.5 text-sm font-semibold text-foreground bg-card border border-border px-3 h-10 rounded-full hover:bg-accent transition-colors"
+          className={`flex items-center gap-2 ${type.label} text-foreground bg-card border border-border px-3 h-10 rounded-full hover:bg-accent transition-colors`}
           title="Add a DNA-themed section"
         >
           <Plus className="w-4 h-4" /> Add section
@@ -212,7 +213,7 @@ export function WorkspaceShell() {
         <motion.button
           variants={safeFadeUp}
           onClick={() => setPhase("publish")}
-          className="bg-primary text-primary-foreground px-4 h-10 rounded-full font-semibold text-sm flex items-center gap-2 hover:opacity-90 transition-opacity"
+          className={`bg-primary text-primary-foreground px-4 h-10 rounded-full flex items-center gap-2 hover:opacity-90 transition-opacity ${type.label}`}
         >
           <Rocket className="w-4 h-4" /> Publish
         </motion.button>
@@ -245,8 +246,8 @@ export function WorkspaceShell() {
           className="flex flex-col gap-1 p-4 bg-card border-r border-border overflow-hidden shrink-0"
         >
           <div className="mb-6 px-1">
-            <h2 className="font-display text-xl font-semibold text-primary leading-tight">Your Build Plan</h2>
-            <p className="text-xs text-muted-foreground opacity-70">AI-Guided Strategy</p>
+            <h2 className={`${type.heading.m} text-primary`}>Your Build Plan</h2>
+            <p className={`${type.caption} opacity-70`}>AI-Guided Strategy</p>
           </div>
           <nav className="flex flex-col gap-1">
             {BUILD_PLAN.map((s) => {
@@ -255,7 +256,7 @@ export function WorkspaceShell() {
                 <button
                   key={s.id}
                   onClick={() => handleJumpPhase(s.id)}
-                  className={`relative flex items-center gap-2 p-2.5 rounded-lg text-sm font-semibold transition-colors text-left ${
+                  className={`relative flex items-center gap-2 p-3 rounded-lg transition-colors text-left ${type.label} ${
                     isActive ? "text-primary" : "text-muted-foreground hover:bg-accent hover:text-foreground"
                   }`}
                 >

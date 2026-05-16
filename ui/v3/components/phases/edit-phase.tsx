@@ -29,6 +29,7 @@ import {
 import { BlockGallery } from "@/components/block-gallery";
 import { type PebblePlan } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
+import { type } from "@/lib/type";
 import {
   insertBlock,
   isPebbleSelectMessage,
@@ -390,7 +391,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
           className="fixed bottom-6 left-[240px] right-[320px] flex flex-col items-center gap-2 pointer-events-none"
         >
-          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto">
+          <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto`}>
             ✨ Style tweaks are free — click an element on the preview or pick a chip below
           </p>
           <nav className="bg-card border border-border shadow-lg rounded-full px-3 py-2 flex gap-1 pointer-events-auto">
@@ -403,7 +404,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                   whileTap={{ scale: 0.95 }}
                   disabled={isBusy || busyRefinement !== null}
                   onClick={() => handleRefine(c.id)}
-                  className="relative text-muted-foreground px-4 py-1.5 text-sm font-semibold flex items-center gap-1.5 hover:bg-accent hover:text-foreground rounded-full transition-colors disabled:opacity-50"
+                  className={`relative text-muted-foreground px-4 py-2 flex items-center gap-2 hover:bg-accent hover:text-foreground rounded-full transition-colors disabled:opacity-50 ${type.label}`}
                 >
                   <c.Icon className="w-4 h-4" />
                   {isBusy ? "Applying…" : c.label}
@@ -512,8 +513,8 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
       className="flex flex-col gap-3 p-4 w-[320px] bg-card border-l border-border overflow-y-auto"
     >
       <div className="mb-4 px-1">
-        <h2 className="font-display text-xl font-semibold text-primary">Launch Setup</h2>
-        <p className="text-xs text-muted-foreground opacity-70">
+        <h2 className={`${type.heading.m} text-primary`}>Launch Setup</h2>
+        <p className={`${type.caption} opacity-70`}>
           {plan ? `${plan.setup_needs.filter((s) => s.status !== "auto").length} items remaining` : "Loading..."}
         </p>
       </div>
@@ -528,7 +529,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
             title={s.notes}
           >
             <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold">{s.label}</span>
+              <span className={type.label}>{s.label}</span>
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                   s.status === "auto"
@@ -593,7 +594,7 @@ function VisualEditorPanel({
       <div className="flex justify-between items-start">
         <div>
           <p className="text-[10px] font-mono uppercase tracking-widest text-earth">Free style tweak ✨</p>
-          <h2 className="font-display text-lg font-semibold text-primary mt-1">
+          <h2 className={`${type.heading.m} text-primary mt-1`}>
             Editing {selected.tag.toUpperCase()}
           </h2>
         </div>
@@ -609,7 +610,7 @@ function VisualEditorPanel({
       {/* Text editor — only show when the element actually has text content */}
       {selected.text && selected.text.trim() && (
         <div className="space-y-2">
-          <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+          <label className={`${type.eyebrow} flex items-center gap-1`}>
             <Edit3 className="w-3 h-3" /> Text
           </label>
           <textarea
@@ -710,7 +711,7 @@ function HistoryDrawer({
       >
         <div className="p-5 border-b border-border flex justify-between items-start">
           <div>
-            <h2 className="font-display text-2xl font-semibold text-primary">Version history</h2>
+            <h2 className={`${type.heading.l} text-primary`}>Version history</h2>
             <p className="text-xs text-muted-foreground mt-1">
               Every change creates a snapshot. Roll back any time.
             </p>
@@ -752,7 +753,7 @@ function HistoryDrawer({
                 </div>
                 <button
                   onClick={() => onRollback(s.snapshot_id)}
-                  className="flex items-center gap-1 bg-card border border-border text-foreground px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-accent transition-colors shrink-0"
+                  className={`flex items-center gap-1 bg-card border border-border text-foreground px-3 py-2 rounded-lg hover:bg-accent transition-colors shrink-0 ${type.label}`}
                 >
                   <Undo2 className="w-3 h-3" /> Restore
                 </button>

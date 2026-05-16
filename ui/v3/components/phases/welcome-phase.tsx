@@ -15,6 +15,7 @@ import {
   getBrief,
 } from "@/lib/state";
 import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
+import { type } from "@/lib/type";
 
 /**
  * Welcome phase — the "first encounter" screen.
@@ -115,7 +116,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             layoutId="project-name"
             aria-hidden="true"
             style={{ viewTransitionName: "project-name" }}
-            className="block text-base font-semibold text-foreground/55 tracking-wide"
+            className={`block ${type.heading.s} text-foreground/55`}
           >
             Untitled Project
           </motion.span>
@@ -126,12 +127,12 @@ export function WelcomePhase({ onAdvance }: Props) {
               initial="hidden"
               animate="visible"
               exit={{ opacity: 0, y: -8, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } }}
-              className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground drop-shadow-sm"
+              className={`${type.display.xl} text-foreground drop-shadow-sm`}
             >
               {headline}
             </motion.h1>
           </AnimatePresence>
-          <p className="text-xl text-muted-foreground max-w-xl mx-auto">
+          <p className={`${type.body.l} text-muted-foreground max-w-xl mx-auto`}>
             Tell me in your own words. I&apos;ll handle the technical parts.
           </p>
         </div>
@@ -153,7 +154,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             />
             <button
               type="submit"
-              className="text-sm font-semibold text-primary hover:underline"
+              className={`${type.label} text-primary hover:underline`}
             >
               Save
             </button>
@@ -175,7 +176,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             <button
               key={chip.label}
               onClick={() => setPrefill(chip.prompt)}
-              className="px-4 py-2 bg-card hover:bg-accent border border-border rounded-full text-sm font-semibold text-foreground transition-colors"
+              className={`px-4 py-2 bg-card hover:bg-accent border border-border rounded-full text-foreground transition-colors ${type.label}`}
             >
               {chip.label}
             </button>
@@ -191,7 +192,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: SHORT_S, ease: EASE_CINEMATIC } }}
             onClick={handleResume}
-            className="pointer-events-auto group flex items-center gap-2 px-5 py-2.5 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-sm font-semibold text-secondary transition-colors"
+            className={`pointer-events-auto group flex items-center gap-2 px-5 py-3 bg-secondary/10 hover:bg-secondary/20 border border-secondary/30 rounded-full text-secondary transition-colors ${type.label}`}
           >
             <span>Continue working on</span>
             <span className="text-foreground">{resumeName}</span>
@@ -202,7 +203,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         {/* Migration entry — alternative to typing a fresh idea. */}
         <Link
           href="/migrate"
-          className="pointer-events-auto text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mt-2"
+          className="pointer-events-auto text-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-2 mt-2"
         >
           <span className="opacity-80">Already have a site?</span>
           <span className="font-semibold underline underline-offset-2">Bring it over →</span>

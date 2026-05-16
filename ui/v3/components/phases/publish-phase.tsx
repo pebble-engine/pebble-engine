@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
+import { type } from "@/lib/type";
 import { Share2, Eye, Edit3, Droplet, Download, Rocket, Check, Globe, Trash2, Copy } from "lucide-react";
 import {
   publishSite,
@@ -119,7 +120,7 @@ function ReadyPanel({ onPublish, previewUrl }: { onPublish: () => void; previewU
       <motion.h1
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
         transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-        className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground"
+        className={`${type.display.xl} text-foreground`}
       >
         Ready to publish?
       </motion.h1>
@@ -168,8 +169,8 @@ function PublishingPanel() {
         transition={{ duration: 1.6, repeat: Infinity, ease: "linear" }} // linear spinner — no named constant applies
         className="w-12 h-12 mx-auto rounded-full border-4 border-primary border-t-transparent"
       />
-      <p className="font-display text-2xl text-foreground">Packaging your site…</p>
-      <p className="text-muted-foreground text-sm">Snapshotting, bundling, and verifying. Usually a few seconds.</p>
+      <p className={`${type.display.m} text-foreground`}>Packaging your site…</p>
+      <p className={`${type.body.s} text-muted-foreground`}>Snapshotting, bundling, and verifying. Usually a few seconds.</p>
     </motion.div>
   );
 }
@@ -197,7 +198,7 @@ function DonePanel({
       <motion.h1
         variants={{ hidden: { opacity: 0, y: 16 }, visible: { opacity: 1, y: 0 } }}
         transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-        className="font-display text-5xl md:text-6xl font-bold tracking-tight text-foreground"
+        className={`${type.display.xl} text-foreground`}
       >
         {isLive ? "Your website is live." : "Your site is packaged."}
       </motion.h1>
@@ -264,18 +265,18 @@ function ErrorPanel({ error, onRetry, onBack }: { error: string; onRetry: () => 
       transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
       className="bg-card border border-destructive/40 rounded-2xl p-8 space-y-5"
     >
-      <p className="font-display text-2xl text-foreground">Publish hit a snag.</p>
+      <p className={`${type.display.m} text-foreground`}>Publish hit a snag.</p>
       <p className="text-sm text-muted-foreground font-mono break-words">{error}</p>
       <div className="flex gap-3 justify-center">
         <button
           onClick={onRetry}
-          className="bg-primary text-primary-foreground px-5 py-2.5 rounded-full font-bold hover:opacity-90"
+          className="bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold hover:opacity-90"
         >
           Try again
         </button>
         <button
           onClick={onBack}
-          className="bg-card border border-border text-foreground px-5 py-2.5 rounded-full font-semibold hover:bg-accent"
+          className="bg-card border border-border text-foreground px-5 py-3 rounded-full font-semibold hover:bg-accent"
         >
           Back to workspace
         </button>
@@ -295,7 +296,7 @@ function ActionButton({ onClick, icon: Icon, label }: { onClick: () => void; ico
       <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center group-hover:scale-105 transition-transform">
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-sm font-semibold">{label}</span>
+      <span className={type.label}>{label}</span>
     </motion.button>
   );
 }
@@ -316,7 +317,7 @@ function ActionLink({
       <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center group-hover:scale-105 transition-transform">
         <Icon className="w-5 h-5" />
       </div>
-      <span className="text-sm font-semibold">{label}</span>
+      <span className={type.label}>{label}</span>
     </motion.a>
   );
 }
@@ -383,7 +384,7 @@ function DomainPanel({ slug }: { slug: string }) {
       onToggle={(e) => setOpen((e.currentTarget as HTMLDetailsElement).open)}
       className="bg-card border border-border rounded-2xl max-w-xl mx-auto text-left p-5"
     >
-      <summary className="font-display text-lg font-semibold text-foreground cursor-pointer flex items-center gap-2">
+      <summary className={`${type.heading.m} text-foreground cursor-pointer flex items-center gap-2`}>
         <Globe className="w-4 h-4 text-primary" />
         Connect a custom domain
       </summary>
@@ -420,7 +421,7 @@ function DomainPanel({ slug }: { slug: string }) {
               <button
                 onClick={handleDetach}
                 disabled={busy}
-                className="bg-card border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 px-3 py-1.5 rounded-lg text-sm font-semibold flex items-center gap-1 disabled:opacity-50"
+                className={`bg-card border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 px-3 py-2 rounded-lg flex items-center gap-1 disabled:opacity-50 ${type.label}`}
               >
                 <Trash2 className="w-3 h-3" /> Remove
               </button>

@@ -78,5 +78,23 @@ def test_eyebrow_uses_arbitrary_size_and_tracking():
 
 
 # Eight workspace-critical files. Anything outside this list is round 3.
-# The parametrized consumer-import test is added in the same commit as
-# the per-file application of the type module — keeps each commit green.
+TYPE_CONSUMER_FILES = [
+    REPO_ROOT / "ui" / "v3" / "components" / "workspace-shell.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "top-nav.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "welcome-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "idea-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "plan-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "draft-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "edit-phase.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "publish-phase.tsx",
+]
+
+
+@pytest.mark.parametrize("consumer", TYPE_CONSUMER_FILES, ids=lambda p: p.name)
+def test_workspace_critical_file_imports_from_type_module(consumer):
+    """The eight workspace-critical files must import from `@/lib/type`."""
+    src = consumer.read_text(encoding="utf-8")
+    assert re.search(
+        r"from\s+['\"]@/lib/type['\"]",
+        src,
+    ), f"{consumer.name} should import from @/lib/type"

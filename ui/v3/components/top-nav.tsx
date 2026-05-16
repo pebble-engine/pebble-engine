@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { LifeBuoy } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthMenu } from "./auth-menu";
+import { type } from "@/lib/type";
 
 /**
  * Shared top nav for every screen after welcome. Brand mark left, theme
@@ -31,7 +32,7 @@ export function TopNav({
       <div className="flex items-center gap-6">
         <Link
           href="/"
-          className="font-display text-2xl font-bold tracking-tight text-accent-foreground hover:text-primary transition-colors"
+          className={`${type.display.m} text-accent-foreground hover:text-primary transition-colors`}
         >
           Pebble.
         </Link>
@@ -41,7 +42,7 @@ export function TopNav({
             <motion.span
               layoutId="project-name"
               style={{ viewTransitionName: "project-name" }}
-              className="text-base font-semibold text-foreground"
+              className={`${type.heading.s} text-foreground`}
             >
               {projectName}
             </motion.span>

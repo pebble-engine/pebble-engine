@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { getBrief } from "@/lib/state";
 import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
+import { type } from "@/lib/type";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -217,13 +218,13 @@ export function DraftPhase({ error, done }: Props) {
         </div>
         <motion.h1
           variants={safeFadeUp}
-          className="font-display text-2xl md:text-3xl font-bold text-foreground"
+          className={`${type.display.m} text-foreground`}
         >
           Pebble is building your draft.
         </motion.h1>
         <motion.p
           variants={safeFadeUp}
-          className="text-sm text-muted-foreground mt-2"
+          className={`${type.body.s} text-muted-foreground mt-2`}
         >
           Usually 2–3 minutes. Feel free to keep this window open.
         </motion.p>
@@ -281,7 +282,7 @@ export function DraftPhase({ error, done }: Props) {
                 </motion.div>
                 <div>
                   <p
-                    className={`text-sm font-semibold flex items-center gap-2 ${state === "active" ? "text-primary" : "text-foreground"}`}
+                    className={`${type.label} flex items-center gap-2 ${state === "active" ? "text-primary" : "text-foreground"}`}
                   >
                     {step.label}
                     {state === "active" && (
@@ -292,7 +293,7 @@ export function DraftPhase({ error, done }: Props) {
                       />
                     )}
                   </p>
-                  <p className="text-muted-foreground text-xs mt-0.5">{step.detail}</p>
+                  <p className={`${type.caption} mt-1`}>{step.detail}</p>
                 </div>
               </motion.div>
             );
@@ -311,10 +312,10 @@ export function DraftPhase({ error, done }: Props) {
         className="w-full max-w-2xl"
       >
         <div className="flex items-center justify-between mb-2 px-1">
-          <p className="text-[11px] font-mono uppercase tracking-widest text-muted-foreground">
+          <p className={`${type.mono} text-muted-foreground`}>
             Live build feed
           </p>
-          <p className="text-[11px] font-mono text-muted-foreground/60">
+          <p className={`${type.mono} text-muted-foreground/60`}>
             {logLines.length} events
           </p>
         </div>

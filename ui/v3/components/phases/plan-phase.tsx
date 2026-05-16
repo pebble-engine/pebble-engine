@@ -6,6 +6,7 @@ import { Edit3, Sparkles, Loader2 } from "lucide-react";
 import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan } from "@/lib/state";
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
+import { type } from "@/lib/type";
 
 /**
  * Plan phase — the user-facing "here's what I'll build" review screen.
@@ -105,15 +106,15 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
         transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="text-center space-y-2"
       >
-        <h1 className="font-display text-3xl md:text-4xl font-bold text-primary">The Pebble Plan</h1>
-        <p className="text-muted-foreground text-sm md:text-base">
+        <h1 className={`${type.display.l} text-primary`}>The Pebble Plan</h1>
+        <p className={`${type.body.m} text-muted-foreground`}>
           Verify what I&apos;ll build before I generate the first draft.
         </p>
       </motion.div>
 
       <Card delay={0.05}>
         <div className="flex justify-between items-start mb-3">
-          <h3 className="font-display text-xl font-semibold text-primary">Who I think this is for</h3>
+          <h3 className={`${type.heading.m} text-primary`}>Who I think this is for</h3>
           <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-accent">
             Audience
           </span>
@@ -122,12 +123,12 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       </Card>
 
       <Card delay={0.1}>
-        <h3 className="font-display text-xl font-semibold text-primary mb-2">The one thing I&apos;m optimizing for</h3>
+        <h3 className={`${type.heading.m} text-primary mb-2`}>The one thing I&apos;m optimizing for</h3>
         <p className="leading-relaxed text-foreground">{plan.goal}</p>
       </Card>
 
       <Card delay={0.15}>
-        <h3 className="font-display text-xl font-semibold text-primary mb-4">Pages I&apos;ll create</h3>
+        <h3 className={`${type.heading.m} text-primary mb-4`}>Pages I&apos;ll create</h3>
         <div className="space-y-2">
           {plan.pages.map((page) => (
             <div
@@ -136,7 +137,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
             >
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold text-foreground text-sm">{page.title}</span>
+                  <span className={`${type.label} text-foreground`}>{page.title}</span>
                   <span
                     className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                       page.foundation
@@ -156,12 +157,12 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       </Card>
 
       <Card delay={0.2}>
-        <h3 className="font-display text-xl font-semibold text-primary mb-3">Core capabilities</h3>
+        <h3 className={`${type.heading.m} text-primary mb-3`}>Core capabilities</h3>
         <div className="flex flex-wrap gap-2">
           {plan.features.map((f) => (
             <span
               key={f.id}
-              className="px-3 py-1.5 bg-background border border-border rounded-full text-sm font-medium"
+              className={`px-3 py-2 bg-background border border-border rounded-full ${type.label}`}
             >
               {f.label}
             </span>
@@ -171,12 +172,12 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
 
       <Card delay={0.25} className="overflow-hidden p-0">
         <div className="p-6 md:p-8 border-b border-border">
-          <h3 className="font-display text-xl font-semibold text-primary">Visual style</h3>
+          <h3 className={`${type.heading.m} text-primary`}>Visual style</h3>
           <p className="text-xs text-muted-foreground italic mt-1">Inspired by {plan.style.label}</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="p-6 md:p-8 bg-background">
-            <p className="font-display text-2xl text-foreground leading-tight">{plan.style.mood || plan.style.label}</p>
+            <p className={`${type.display.m} text-foreground`}>{plan.style.mood || plan.style.label}</p>
             <p className="font-mono text-[10px] text-muted-foreground mt-2">DNA-driven layout</p>
           </div>
           <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-border space-y-4">
@@ -197,8 +198,8 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
             </div>
             <div>
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Typography</p>
-              <p className="font-display text-lg text-primary">{plan.style.fonts.display || "—"}</p>
-              <p className="text-sm text-foreground">{plan.style.fonts.body || "—"}</p>
+              <p className={`${type.heading.s} text-primary`}>{plan.style.fonts.display || "—"}</p>
+              <p className={`${type.body.s} text-foreground`}>{plan.style.fonts.body || "—"}</p>
             </div>
           </div>
         </div>
@@ -206,7 +207,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
 
       {plan.language && plan.language.code !== "en" && (
         <Card delay={0.27}>
-          <h3 className="font-display text-xl font-semibold text-primary mb-2">Language</h3>
+          <h3 className={`${type.heading.m} text-primary mb-2`}>Language</h3>
           <p className="leading-relaxed text-foreground">
             Site copy will be in{" "}
             <span className="font-semibold">{plan.language.native_name}</span>{" "}
@@ -216,7 +217,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       )}
 
       <Card delay={0.3}>
-        <h3 className="font-display text-xl font-semibold text-primary mb-1">Launch setup</h3>
+        <h3 className={`${type.heading.m} text-primary mb-1`}>Launch setup</h3>
         <p className="text-xs text-muted-foreground mb-3">
           {plan.setup_needs.length} items. Pebble handles what it can; the rest is honest about what&apos;s next.
         </p>
@@ -224,10 +225,10 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
           {plan.setup_needs.map((item) => (
             <div
               key={item.id}
-              className="flex justify-between items-center p-2.5 bg-background rounded-lg border border-border"
+              className="flex justify-between items-center p-3 bg-background rounded-lg border border-border"
               title={item.notes}
             >
-              <span className="text-sm font-medium">{item.label}</span>
+              <span className={type.label}>{item.label}</span>
               <span
                 className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
                   item.status === "auto"
@@ -247,7 +248,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <button
           onClick={onBack}
-          className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-accent text-sm font-semibold"
+          className={`flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors px-3 py-2 rounded-md hover:bg-accent ${type.label}`}
         >
           <Edit3 className="w-3.5 h-3.5" /> Edit the questions
         </button>
