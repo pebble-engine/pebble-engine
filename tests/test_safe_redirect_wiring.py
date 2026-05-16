@@ -21,6 +21,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SAFE_REDIRECT = REPO_ROOT / "ui" / "v3" / "lib" / "safe-redirect.ts"
 LOGIN_PAGE = REPO_ROOT / "ui" / "v3" / "app" / "login" / "page.tsx"
+AUTH_CALLBACK = REPO_ROOT / "ui" / "v3" / "app" / "auth" / "callback" / "route.ts"
 
 
 def test_safe_redirect_helper_exists():
@@ -66,4 +67,37 @@ def test_login_page_does_not_consume_raw_redirect_param():
     assert not illegal_lines, (
         "login/page.tsx still references params.get(\"redirect\") "
         f"outside a safeRedirect(...) wrapper: {illegal_lines!r}"
+    )
+
+
+# ---- /auth/callback wiring ------------------------------------------------
+
+def test_auth_callback_imports_safe_redirect():
+    """The OAuth callback's `next` param is attacker-controllable. Today
+    we prepend `${origin}` so `${origin}//evil.com` is parsed same-origin
+    by WHATWG URL — but that's an implicit dependency on the surrounding
+    code. Route the value through safeRedirect so a future refactor
+    that drops the prefix can't silently re-open the hole."""
+    assert AUTH_CALLBACK.is_file(), f"Missing: {AUTH_CALLBACK}"
+    src = AUTH_CALLBACK.read_text(encoding="utf-8")
+    assert re.search(
+        r"import\s*\{\s*safeRedirect\s*\}\s*from\s*['\"]@/lib/safe-redirect['\"]",
+        src,
+    ), "auth/callback/route.ts no longer imports safeRedirect"
+
+
+def test_auth_callback_uses_safe_redirect_not_inline_check():
+    """The legacy guard was `next.startsWith('/') ? next : '/workspace'`,
+    which doesn't reject `//evil.com` or `/\\evil.com`. The replacement
+    must call safeRedirect(...) and must NOT keep the inline startsWith
+    fallback."""
+    src = AUTH_CALLBACK.read_text(encoding="utf-8")
+    assert re.search(
+        r"const\s+safeNext\s*=\s*safeRedirect\s*\(",
+        src,
+    ), "auth/callback/route.ts should compute safeNext via safeRedirect(...)"
+    # The old inline pattern must be gone.
+    assert "next.startsWith(\"/\")" not in src, (
+        "auth/callback/route.ts still has the inline startsWith check — "
+        "remove it; safeRedirect covers the case correctly."
     )
