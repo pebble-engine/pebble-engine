@@ -100,6 +100,13 @@ def _write_foundation_files(site: Path) -> None:
         "- Custom auth (recommended: Clerk or NextAuth).\n"
         "- Payment processing (recommended: Stripe Payment Links).\n"
     )
+    # Crawler discoverability — Next.js 14 convention files.
+    (site / "app" / "sitemap.ts").write_text(
+        'export default function sitemap() { return [{ url: "https://example.com/" }]; }'
+    )
+    (site / "app" / "robots.ts").write_text(
+        'export default function robots() { return { rules: [{ userAgent: "*", allow: "/" }], sitemap: "https://example.com/sitemap.xml" }; }'
+    )
     # Pebble Plan — every build emits plan.json alongside brief.json.
     # Synthesised from the brief inline (assumes the caller wrote brief.json
     # to site.parent BEFORE calling this helper).

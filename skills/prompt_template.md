@@ -308,6 +308,47 @@ const ld = {{
 
 The eval `schema_org_jsonld_present` verifies `app/layout.tsx` contains BOTH `application/ld+json` MIME type AND a `"@context": "https://schema.org"` declaration. Without the `@context`, the structured data is invisible to crawlers.
 
+**Crawler discoverability — MANDATORY GLOBAL FOUNDATION (sitemap + robots):**
+
+Every site must ship Next.js 14 convention files that emit `sitemap.xml` and `robots.txt`. Together they make every page in the build findable by search engines AND modern AI agents (GPTBot, ClaudeBot, PerplexityBot, Google-Extended). Without them, only the homepage gets indexed reliably.
+
+```tsx
+// app/sitemap.ts — Next.js 14 convention. Returns MetadataRoute.Sitemap.
+import type {{ MetadataRoute }} from "next";
+
+export default function sitemap(): MetadataRoute.Sitemap {{
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+  // List every page route in the build. Homepage first, then the rest.
+  const routes = ["", "/about", "/services", "/contact", "/faq", "/privacy", "/terms"];
+  return routes.map((route) => ({{
+    url:        `${{base}}${{route}}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority:   route === "" ? 1.0 : 0.7,
+  }}));
+}}
+```
+
+```tsx
+// app/robots.ts — Next.js 14 convention. Returns MetadataRoute.Robots.
+import type {{ MetadataRoute }} from "next";
+
+export default function robots(): MetadataRoute.Robots {{
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+  return {{
+    rules: [
+      {{
+        userAgent: "*",
+        allow:     "/",
+      }},
+    ],
+    sitemap: `${{base}}/sitemap.xml`,
+  }};
+}}
+```
+
+The eval `sitemap_and_robots_present` verifies both files exist and each has a default-export function. Replace the placeholder `routes` array with the actual pages the build emits (homepage + every page in INDUSTRY-AWARE PAGES).
+
 ---
 
 ### CINEMATIC CODE PATTERNS — Implement Verbatim

@@ -2343,6 +2343,80 @@ def schema_org_jsonld_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 35. sitemap_and_robots_present — FOUNDATION (crawler discoverability)
+# ---------------------------------------------------------------------------
+
+# Next.js 14 generates sitemap.xml / robots.txt from these two files via
+# convention. The default export must be a function (or, for sitemap, a
+# function that returns an array of route descriptors). Loose patterns —
+# we don't want to false-fail on legitimate stylistic variants.
+_SITEMAP_DEFAULT_EXPORT_RE = re.compile(
+    r"export\s+default\s+(?:async\s+)?function\b|export\s+default\s+\(",
+)
+_ROBOTS_DEFAULT_EXPORT_RE = re.compile(
+    r"export\s+default\s+(?:async\s+)?function\b|export\s+default\s+\{",
+)
+
+
+@check_metadata(static_files=("app/sitemap.ts", "app/robots.ts"))
+def sitemap_and_robots_present(ctx: BuildContext) -> CheckResult:
+    """Every build must ship Next.js 14 convention files that emit
+    `sitemap.xml` and `robots.txt`.
+
+    Why both: search engines and modern AI agents (GPTBot, ClaudeBot,
+    PerplexityBot, Google-Extended, etc.) consume robots.txt to decide
+    crawling AND sitemap.xml to discover routes. Together they make
+    every page in the build findable. Without them, only the homepage
+    gets indexed reliably.
+
+    The check is shape-only. We don't validate the route list against
+    plan.json (that's drift-prone — the Footer eval covers it from a
+    different angle). We just verify both files exist and export a
+    default function — the Next.js convention requirement.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("sitemap_and_robots_present", "skip", "no site directory")
+
+    sitemap = ctx.site_dir / "app" / "sitemap.ts"
+    robots  = ctx.site_dir / "app" / "robots.ts"
+
+    missing: list[str] = []
+    if not sitemap.exists():
+        missing.append("app/sitemap.ts")
+    if not robots.exists():
+        missing.append("app/robots.ts")
+    if missing:
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            f"crawler discoverability files missing: {', '.join(missing)}",
+            details={"files": missing},
+        )
+
+    sitemap_src = sitemap.read_text(encoding="utf-8", errors="ignore")
+    if not _SITEMAP_DEFAULT_EXPORT_RE.search(sitemap_src):
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            "app/sitemap.ts has no default export function — Next.js "
+            "convention requires `export default function sitemap()` "
+            "returning a MetadataRoute.Sitemap array",
+        )
+
+    robots_src = robots.read_text(encoding="utf-8", errors="ignore")
+    if not _ROBOTS_DEFAULT_EXPORT_RE.search(robots_src):
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            "app/robots.ts has no default export — Next.js convention "
+            "requires `export default function robots()` returning a "
+            "MetadataRoute.Robots object",
+        )
+
+    return CheckResult(
+        "sitemap_and_robots_present", "pass",
+        "app/sitemap.ts + app/robots.ts present with default exports",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -2385,6 +2459,7 @@ ALL_CHECKS = [
     no_tracking_by_default,
     a11y_static_audit,
     schema_org_jsonld_present,
+    sitemap_and_robots_present,
     site_compiles,
 ]
 

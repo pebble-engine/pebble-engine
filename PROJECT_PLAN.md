@@ -33,7 +33,7 @@ Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━�
 Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
 Ch 13 Design breadth        ░░░░░░░░░░░░░░░░░░░░░  MotionSites harvest open
 Ch 14 In-app AI chat        ░░░░░░░░░░░░░░░░░░░░░  post-launch
-Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━━━░  only sitemap.xml open
+Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━━━━  COMPLETE
 ```
 
 **Net:** Stripe is the only true MVP blocker. Everything else is either
@@ -297,7 +297,9 @@ The work that compounds Pebble's lead AFTER the doors open.
 ```
 [x] 15.1  Multi-page intent — handled by PAGE_CATALOG (11 industry-aware
           page types) + plan.py. Brief already drives page selection.
-[ ] 15.2  Sitemap.xml + robots.txt auto-managed
+[x] 15.2  Sitemap.xml + robots.txt — eval #35 sitemap_and_robots_present
+          mandates Next.js 14 convention files (app/sitemap.ts +
+          app/robots.ts) in every build. Shipped 2026-05-16.
 [x] 15.3  Internal linking + navigation structure — Footer.tsx now
           mandates a sitemap column with every generated page
           (eval `footer_lists_all_pages`)

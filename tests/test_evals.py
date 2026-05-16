@@ -86,6 +86,13 @@ def good_build(tmp_path: Path) -> Path:
         '  return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
         '}'
     )
+    # Next.js 14 convention files — emit sitemap.xml + robots.txt.
+    (site / "app" / "sitemap.ts").write_text(
+        'export default function sitemap() { return [{ url: "https://example.com/", lastModified: new Date() }]; }'
+    )
+    (site / "app" / "robots.ts").write_text(
+        'export default function robots() { return { rules: [{ userAgent: "*", allow: "/" }], sitemap: "https://example.com/sitemap.xml" }; }'
+    )
     (site / "app" / "page.tsx").write_text(
         'import { Hero } from "@/components/sections/Hero";\n'
         'export default function P() {\n'
@@ -1114,3 +1121,68 @@ def test_schema_org_accepts_organization_type(good_build):
     )
     ctx = BuildContext.load(good_build)
     assert checks.schema_org_jsonld_present(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# sitemap_and_robots_present (#35) — crawler discoverability
+# ---------------------------------------------------------------------------
+
+def test_sitemap_robots_passes_on_good_build(good_build):
+    """The good_build fixture writes both Next.js 14 convention files."""
+    ctx = BuildContext.load(good_build)
+    assert checks.sitemap_and_robots_present(ctx).status == "pass"
+
+
+def test_sitemap_robots_fails_when_sitemap_missing(good_build):
+    (good_build / "site" / "app" / "sitemap.ts").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.sitemap_and_robots_present(ctx)
+    assert result.status == "fail"
+    assert "sitemap.ts" in result.message
+
+
+def test_sitemap_robots_fails_when_robots_missing(good_build):
+    (good_build / "site" / "app" / "robots.ts").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.sitemap_and_robots_present(ctx)
+    assert result.status == "fail"
+    assert "robots.ts" in result.message
+
+
+def test_sitemap_robots_fails_when_sitemap_has_no_default_export(good_build):
+    """A sitemap.ts that defines but doesn't export a default function
+    is broken under Next.js convention."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        'function sitemap() { return []; }'  # no export
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.sitemap_and_robots_present(ctx)
+    assert result.status == "fail"
+    assert "sitemap.ts" in result.message
+    assert "export" in result.message.lower()
+
+
+def test_sitemap_robots_fails_when_robots_has_no_default_export(good_build):
+    (good_build / "site" / "app" / "robots.ts").write_text(
+        'function robots() { return {}; }'  # no export
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.sitemap_and_robots_present(ctx)
+    assert result.status == "fail"
+    assert "robots.ts" in result.message
+
+
+def test_sitemap_robots_accepts_arrow_function_export(good_build):
+    """`export default () => [...]` is legal Next.js convention."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        'export default () => [{ url: "https://example.com/" }];'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.sitemap_and_robots_present(ctx).status == "pass"
+
+
+def test_sitemap_robots_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.sitemap_and_robots_present(ctx).status == "skip"
