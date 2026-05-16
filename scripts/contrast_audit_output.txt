@@ -1,0 +1,141 @@
+================================================================================
+PEBBLE v3 WCAG AA CONTRAST AUDIT
+================================================================================
+
+  PASS  15.20:1  (threshold 4.5)  light: text-foreground on bg-background
+           fg=#1f1d1a  bg=#f7f3ec
+  PASS  13.55:1  (threshold 4.5)  light: text-foreground on bg-card
+           fg=#1f1d1a  bg=#ece6dc
+  PASS   6.68:1  (threshold 4.5)  light: text-muted-foreground on bg-background
+           fg=#5a554e  bg=#f7f3ec
+  PASS   5.95:1  (threshold 4.5)  light: text-muted-foreground on bg-card
+           fg=#5a554e  bg=#ece6dc
+  PASS   6.16:1  (threshold 4.5)  light: text-muted-foreground on bg-accent
+           fg=#5a554e  bg=#efeae1
+  PASS   7.40:1  (threshold 4.5)  light: text-primary-foreground on bg-primary
+           fg=#f7f3ec  bg=#205661
+  PASS   6.45:1  (threshold 4.5)  light: text-secondary-foreground on bg-secondary
+           fg=#ffffff  bg=#4b6548
+  PASS   6.46:1  (threshold 4.5)  light: text-destructive-foreground on bg-destructive
+           fg=#ffffff  bg=#ba1a1a
+  FAIL   2.68:1  (threshold 4.5)  light: text-spark on bg-spark/10-over-card
+           fg=#c76e3a  bg=#e8dacc
+  FAIL   3.93:1  (threshold 4.5)  light: text-earth on bg-earth/10-over-card
+           fg=#5b6f4a  bg=#dedacd
+  PASS   5.71:1  (threshold 4.5)  light: text-primary on bg-primary/10-over-card
+           fg=#205661  bg=#d8d8d0
+  PASS   4.56:1  (threshold 4.5)  light: text-secondary on bg-secondary/10-over-card
+           fg=#4b6548  bg=#dcd9cd
+  FAIL   4.45:1  (threshold 4.5)  light: text-destructive on bg-destructive/10-over-card
+           fg=#ba1a1a  bg=#e7d2c9
+  FAIL   2.55:1  (threshold 4.5)  light: text-spark on bg-spark/15-over-card
+           fg=#c76e3a  bg=#e6d4c4
+  FAIL   3.69:1  (threshold 4.5)  light: text-earth on bg-earth/15-over-card
+           fg=#5b6f4a  bg=#d6d4c6
+  PASS   5.25:1  (threshold 4.5)  light: text-primary on bg-primary/15-over-card
+           fg=#205661  bg=#cdd0ca
+  FAIL   4.28:1  (threshold 4.5)  light: text-secondary on bg-secondary/15-over-card
+           fg=#4b6548  bg=#d4d3c6
+  FAIL   4.07:1  (threshold 4.5)  light: text-destructive on bg-destructive/15-over-card
+           fg=#ba1a1a  bg=#e4c7bf
+  FAIL   2.43:1  (threshold 4.5)  light: text-spark on bg-spark/20-over-card
+           fg=#c76e3a  bg=#e5cebc
+  FAIL   3.47:1  (threshold 4.5)  light: text-earth on bg-earth/20-over-card
+           fg=#5b6f4a  bg=#cfcebf
+  PASS   4.86:1  (threshold 4.5)  light: text-primary on bg-primary/20-over-card
+           fg=#205661  bg=#c3c9c3
+  FAIL   3.98:1  (threshold 4.5)  light: text-secondary on bg-secondary/20-over-card
+           fg=#4b6548  bg=#ccccbe
+  FAIL   3.75:1  (threshold 4.5)  light: text-destructive on bg-destructive/20-over-card
+           fg=#ba1a1a  bg=#e2bdb5
+  FAIL   2.19:1  (threshold 4.5)  light: text-spark on bg-spark/30-over-card
+           fg=#c76e3a  bg=#e1c2ab
+  FAIL   3.03:1  (threshold 4.5)  light: text-earth on bg-earth/30-over-card
+           fg=#5b6f4a  bg=#c0c2b0
+  FAIL   4.14:1  (threshold 4.5)  light: text-primary on bg-primary/30-over-card
+           fg=#205661  bg=#afbbb7
+  FAIL   3.45:1  (threshold 4.5)  light: text-secondary on bg-secondary/30-over-card
+           fg=#4b6548  bg=#bcbfb0
+  FAIL   3.16:1  (threshold 4.5)  light: text-destructive on bg-destructive/30-over-card
+           fg=#ba1a1a  bg=#dda9a2
+  FAIL   3.32:1  (threshold 4.5)  light: text-spark on bg-background
+           fg=#c76e3a  bg=#f7f3ec
+  PASS   4.97:1  (threshold 4.5)  light: text-earth on bg-background
+           fg=#5b6f4a  bg=#f7f3ec
+  PASS   7.40:1  (threshold 4.5)  light: text-primary on bg-background
+           fg=#205661  bg=#f7f3ec
+  PASS   5.83:1  (threshold 4.5)  light: text-secondary on bg-background
+           fg=#4b6548  bg=#f7f3ec
+  PASS   5.95:1  (threshold 4.5)  light: text-muted-foreground on bg-muted (=bg-card)
+           fg=#5a554e  bg=#ece6dc
+  FAIL   1.37:1  (threshold 3.0)  light: border-border on bg-background (UI contrast)
+           fg=#d8d1c5  bg=#f7f3ec
+  FAIL   1.22:1  (threshold 3.0)  light: border-border on bg-card (UI contrast)
+           fg=#d8d1c5  bg=#ece6dc
+  PASS  17.02:1  (threshold 4.5)  dark: text-foreground on bg-background
+           fg=#f7f3ec  bg=#14110d
+  PASS  15.20:1  (threshold 4.5)  dark: text-foreground on bg-card
+           fg=#f7f3ec  bg=#1f1d1a
+  PASS   8.84:1  (threshold 4.5)  dark: text-muted-foreground on bg-background
+           fg=#b8b1a4  bg=#14110d
+  PASS   7.90:1  (threshold 4.5)  dark: text-muted-foreground on bg-card
+           fg=#b8b1a4  bg=#1f1d1a
+  PASS   7.12:1  (threshold 4.5)  dark: text-primary-foreground on bg-primary
+           fg=#14110d  bg=#6ea8b6
+  FAIL   4.06:1  (threshold 4.5)  dark: text-spark on bg-spark/10-over-card
+           fg=#c76e3a  bg=#30251d
+  FAIL   2.80:1  (threshold 4.5)  dark: text-earth on bg-earth/10-over-card
+           fg=#5b6f4a  bg=#25251f
+  PASS   5.42:1  (threshold 4.5)  dark: text-primary on bg-primary/10-over-card
+           fg=#6ea8b6  bg=#272b2a
+  FAIL   3.80:1  (threshold 4.5)  dark: text-spark on bg-spark/15-over-card
+           fg=#c76e3a  bg=#38291f
+  FAIL   2.67:1  (threshold 4.5)  dark: text-earth on bg-earth/15-over-card
+           fg=#5b6f4a  bg=#282921
+  PASS   4.95:1  (threshold 4.5)  dark: text-primary on bg-primary/15-over-card
+           fg=#6ea8b6  bg=#2b3231
+  FAIL   3.53:1  (threshold 4.5)  dark: text-spark on bg-spark/20-over-card
+           fg=#c76e3a  bg=#412d20
+  FAIL   2.54:1  (threshold 4.5)  dark: text-earth on bg-earth/20-over-card
+           fg=#5b6f4a  bg=#2b2d24
+  FAIL   4.50:1  (threshold 4.5)  dark: text-primary on bg-primary/20-over-card
+           fg=#6ea8b6  bg=#2f3939
+  FAIL   3.04:1  (threshold 4.5)  dark: text-spark on bg-spark/30-over-card
+           fg=#c76e3a  bg=#513524
+  FAIL   2.26:1  (threshold 4.5)  dark: text-earth on bg-earth/30-over-card
+           fg=#5b6f4a  bg=#313628
+  FAIL   3.68:1  (threshold 4.5)  dark: text-primary on bg-primary/30-over-card
+           fg=#6ea8b6  bg=#374749
+
+Summary: 23 passing | 0 large-only | 29 FAILS
+
+FAILING PAIRS (WCAG AA requires >=4.5:1 for normal text, >=3:1 for large/UI):
+  - light: text-spark on bg-spark/10-over-card: 2.68:1 (need 4.5)
+  - light: text-earth on bg-earth/10-over-card: 3.93:1 (need 4.5)
+  - light: text-destructive on bg-destructive/10-over-card: 4.45:1 (need 4.5)
+  - light: text-spark on bg-spark/15-over-card: 2.55:1 (need 4.5)
+  - light: text-earth on bg-earth/15-over-card: 3.69:1 (need 4.5)
+  - light: text-secondary on bg-secondary/15-over-card: 4.28:1 (need 4.5)
+  - light: text-destructive on bg-destructive/15-over-card: 4.07:1 (need 4.5)
+  - light: text-spark on bg-spark/20-over-card: 2.43:1 (need 4.5)
+  - light: text-earth on bg-earth/20-over-card: 3.47:1 (need 4.5)
+  - light: text-secondary on bg-secondary/20-over-card: 3.98:1 (need 4.5)
+  - light: text-destructive on bg-destructive/20-over-card: 3.75:1 (need 4.5)
+  - light: text-spark on bg-spark/30-over-card: 2.19:1 (need 4.5)
+  - light: text-earth on bg-earth/30-over-card: 3.03:1 (need 4.5)
+  - light: text-primary on bg-primary/30-over-card: 4.14:1 (need 4.5)
+  - light: text-secondary on bg-secondary/30-over-card: 3.45:1 (need 4.5)
+  - light: text-destructive on bg-destructive/30-over-card: 3.16:1 (need 4.5)
+  - light: text-spark on bg-background: 3.32:1 (need 4.5)
+  - light: border-border on bg-background (UI contrast): 1.37:1 (need 3.0)
+  - light: border-border on bg-card (UI contrast): 1.22:1 (need 3.0)
+  - dark: text-spark on bg-spark/10-over-card: 4.06:1 (need 4.5)
+  - dark: text-earth on bg-earth/10-over-card: 2.80:1 (need 4.5)
+  - dark: text-spark on bg-spark/15-over-card: 3.80:1 (need 4.5)
+  - dark: text-earth on bg-earth/15-over-card: 2.67:1 (need 4.5)
+  - dark: text-spark on bg-spark/20-over-card: 3.53:1 (need 4.5)
+  - dark: text-earth on bg-earth/20-over-card: 2.54:1 (need 4.5)
+  - dark: text-primary on bg-primary/20-over-card: 4.50:1 (need 4.5)
+  - dark: text-spark on bg-spark/30-over-card: 3.04:1 (need 4.5)
+  - dark: text-earth on bg-earth/30-over-card: 2.26:1 (need 4.5)
+  - dark: text-primary on bg-primary/30-over-card: 3.68:1 (need 4.5)
