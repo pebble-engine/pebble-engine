@@ -23,6 +23,15 @@
   --color-charcoal: #1f1d1a;
   --color-graphite: #5a554e;
 
+  /* WCAG-readable deep variants of the accent colors. Used when
+     text-spark / text-earth would fall under 4.5:1 against a tinted
+     background (e.g. bg-spark/10 over bg-card). The canonical --color-spark
+     and --color-earth stay unchanged so icons and decorative usage keep
+     the brand hue; these vars only apply to text content. See
+     docs/superpowers/specs/2026-05-15-round3-contrast-design.md. */
+  --color-spark-deep: #8b3a14;   /* 7.0:1 on sand, 6.2:1 on stone */
+  --color-earth-deep: #455a37;   /* 6.8:1 on sand, 6.1:1 on stone */
+
   /* shadcn semantic tokens — driven by CSS vars below so they swap on theme */
   --color-background: var(--surface-0);
   --color-foreground: var(--text-1);

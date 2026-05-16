@@ -143,7 +143,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
                     className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
                       page.foundation
                         ? "bg-secondary/20 text-secondary"
-                        : "bg-spark/15 text-spark"
+                        : "bg-spark/15 text-spark-deep"
                     }`}
                   >
                     {page.foundation ? "Foundation" : "Industry"}
@@ -233,9 +233,9 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
               <span
                 className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
                   item.status === "auto"
-                    ? "bg-earth/20 text-earth"
+                    ? "bg-earth/20 text-earth-deep"
                     : item.status === "pending"
-                      ? "bg-spark/15 text-spark"
+                      ? "bg-spark/15 text-spark-deep"
                       : "bg-muted text-muted-foreground"
                 }`}
               >

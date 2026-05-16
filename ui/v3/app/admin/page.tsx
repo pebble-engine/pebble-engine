@@ -195,8 +195,8 @@ function ProjectsTable({ rows }: { rows: AdminProject[] }) {
               <td className="px-4 py-2 text-xs">{p.user_email || <span className="text-muted-foreground italic">unclaimed</span>}</td>
               <td className="px-4 py-2 text-xs text-muted-foreground">{(p.built_at || "").slice(0, 19).replace("T", " ")}</td>
               <td className="px-4 py-2 text-xs">
-                {p.publish ? <span className="text-earth">Published</span> : <span className="text-muted-foreground">Draft</span>}
-                {p.domain && <span className="text-spark ml-2">+ domain</span>}
+                {p.publish ? <span className="text-earth-deep">Published</span> : <span className="text-muted-foreground">Draft</span>}
+                {p.domain && <span className="text-spark-deep ml-2">+ domain</span>}
               </td>
               <td className="px-4 py-2 text-xs text-right">${p.estimated_cost_usd.toFixed(4)}</td>
             </tr>

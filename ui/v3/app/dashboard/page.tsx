@@ -420,7 +420,7 @@ function ProjectCard({
             rel="noopener"
             download={p.publish.kind === "zip"}
             onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-earth/10 text-earth border border-earth/30 hover:bg-earth/20 transition-colors"
+            className="flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg bg-earth/10 text-earth-deep border border-earth/30 hover:bg-earth/20 transition-colors"
             title={p.publish.kind === "cloudflare" ? "Live on Cloudflare" : "Download published ZIP"}
           >
             {p.publish.kind === "cloudflare" ? <Globe className="w-3 h-3" /> : <Download className="w-3 h-3" />}
@@ -434,7 +434,7 @@ function ProjectCard({
             onClick={(e) => e.stopPropagation()}
             className={`flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border ${
               p.domain.status === "active"
-                ? "bg-spark/10 text-spark border-spark/30"
+                ? "bg-spark/10 text-spark-deep border-spark/30"
                 : p.domain.status === "error"
                   ? "bg-destructive/10 text-destructive border-destructive/30"
                   : "bg-muted text-muted-foreground border-border"

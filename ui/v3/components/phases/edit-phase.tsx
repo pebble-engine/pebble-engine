@@ -533,9 +533,9 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
                   s.status === "auto"
-                    ? "bg-earth/20 text-earth"
+                    ? "bg-earth/20 text-earth-deep"
                     : s.status === "pending"
-                      ? "bg-spark/15 text-spark"
+                      ? "bg-spark/15 text-spark-deep"
                       : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -593,7 +593,7 @@ function VisualEditorPanel({
     >
       <div className="flex justify-between items-start">
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-earth">Free style tweak ✨</p>
+          <p className="text-[10px] font-mono uppercase tracking-widest text-earth-deep">Free style tweak ✨</p>
           <h2 className={`${type.heading.m} text-primary mt-1`}>
             Editing {selected.tag.toUpperCase()}
           </h2>
@@ -770,11 +770,11 @@ function ReasonBadge({ reason }: { reason: string }) {
   const style = reason.startsWith("refine")
     ? { bg: "bg-secondary/20", text: "text-secondary", label: reason.replace("refine-", "") }
     : reason.startsWith("visual-edit")
-      ? { bg: "bg-earth/20",      text: "text-earth",      label: reason.replace("visual-edit-", "") }
+      ? { bg: "bg-earth/20",      text: "text-earth-deep", label: reason.replace("visual-edit-", "") }
       : reason === "generate"
         ? { bg: "bg-primary/15",  text: "text-primary",    label: "Generated" }
         : reason === "restore"
-          ? { bg: "bg-spark/15",  text: "text-spark",      label: "Restored" }
+          ? { bg: "bg-spark/15",  text: "text-spark-deep", label: "Restored" }
           : { bg: "bg-muted",     text: "text-muted-foreground", label: reason };
   return (
     <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${style.bg} ${style.text}`}>

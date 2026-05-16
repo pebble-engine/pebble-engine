@@ -341,7 +341,7 @@ export function DraftPhase({ error, done }: Props) {
                     line.tone === "ok"
                       ? "text-sage"
                       : line.tone === "step"
-                        ? "text-spark font-semibold"
+                        ? "text-spark-deep font-semibold"
                         : "text-pebble"
                   }
                 >

@@ -99,7 +99,7 @@ export default function HelpPage() {
             <p>
               Add it at GoDaddy / Namecheap / Cloudflare DNS / wherever your domain lives.
               DNS propagation usually takes a few minutes; the badge flips from
-              &ldquo;DNS pending&rdquo; to <strong className="text-spark">Live</strong> when
+              &ldquo;DNS pending&rdquo; to <strong className="text-spark-deep">Live</strong> when
               it&apos;s ready.
             </p>
           </TopicSection>
@@ -139,14 +139,14 @@ export default function HelpPage() {
             <ul className="list-disc pl-5 space-y-2">
               <li>
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-earth mr-1.5 align-middle" />
-                <strong className="text-earth">Earth (free):</strong>{" "}
+                <strong className="text-earth-deep">Earth (free):</strong>{" "}
                 <em>Simpler</em>, <em>Change colors</em>. These are deterministic — Pebble
                 rotates the brand-safe palette or tones down decorative effects with regex.
                 No LLM call.
               </li>
               <li>
                 <span className="inline-block w-2.5 h-2.5 rounded-full bg-spark mr-1.5 align-middle" />
-                <strong className="text-spark">Spark (uses credits):</strong>{" "}
+                <strong className="text-spark-deep">Spark (uses credits):</strong>{" "}
                 <em>Friendlier</em>, <em>Professional</em>, <em>Add booking</em>. These
                 rewrite copy or add new sections via the LLM — that&apos;s what costs.
               </li>

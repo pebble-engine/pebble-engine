@@ -412,7 +412,7 @@ function DomainPanel({ slug }: { slug: string }) {
                 <p className="text-xs uppercase tracking-widest mt-1 font-bold">
                   <span className={
                     state.domain.status === "active"
-                      ? "text-spark"
+                      ? "text-spark-deep"
                       : state.domain.status === "error"
                         ? "text-destructive"
                         : "text-muted-foreground"
@@ -450,7 +450,7 @@ function DomainPanel({ slug }: { slug: string }) {
               </div>
               <p className="text-[11px] text-muted-foreground leading-relaxed">
                 After saving the record at GoDaddy / Namecheap / Cloudflare DNS / wherever, it can take
-                a few minutes to propagate. We&apos;ll show <span className="text-spark font-semibold">Live</span> automatically.
+                a few minutes to propagate. We&apos;ll show <span className="text-spark-deep font-semibold">Live</span> automatically.
               </p>
             </div>
 

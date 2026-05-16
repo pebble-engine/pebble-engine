@@ -659,7 +659,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
                 className={cn(
                   `${interactions.chip} rounded-full flex items-center gap-1 px-2 py-1 border h-9`,
                   showBrand
-                    ? "bg-spark/15 border-spark text-spark"
+                    ? "bg-spark/15 border-spark text-spark-deep"
                     : "bg-transparent border-transparent text-graphite hover:text-charcoal",
                 )}
               >
