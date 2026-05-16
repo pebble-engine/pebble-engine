@@ -104,6 +104,43 @@ def test_phase_file_imports_from_motion_module(phase_file):
     ), f"{phase_file.name} should import from @/lib/motion"
 
 
+PROJECT_NAME_LAYOUT_ID_FILES = [
+    REPO_ROOT / "ui" / "v3" / "components" / "top-nav.tsx",
+    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "welcome-phase.tsx",
+]
+
+
+@pytest.mark.parametrize(
+    "endpoint_file", PROJECT_NAME_LAYOUT_ID_FILES, ids=lambda p: p.name
+)
+def test_project_name_layout_id_is_wired(endpoint_file):
+    """Round 2 cleanup (c): the project-name slot in the TopNav and a small
+    project-name label in the welcome hero must share `layoutId="project-name"`
+    so framer-motion can morph one into the other on the welcome → workspace
+    transition. Both endpoints must be present or the morph silently breaks."""
+    src = endpoint_file.read_text(encoding="utf-8")
+    assert re.search(
+        r'layoutId\s*=\s*["\']project-name["\']',
+        src,
+    ), f"{endpoint_file.name} must declare layoutId=\"project-name\" for the morph"
+
+
+def test_workspace_shell_wraps_in_motion_config_reduced_motion():
+    """layoutId / shared-element morphs bypass the withReducedMotion wrapper
+    (it only operates on Variants). The shell must wrap its tree in
+    `<MotionConfig reducedMotion="user">` so framer honors the OS pref for
+    those animations too."""
+    shell = REPO_ROOT / "ui" / "v3" / "components" / "workspace-shell.tsx"
+    src = shell.read_text(encoding="utf-8")
+    assert "MotionConfig" in src, (
+        "workspace-shell.tsx must import MotionConfig from framer-motion"
+    )
+    assert re.search(
+        r'reducedMotion\s*=\s*["\']user["\']',
+        src,
+    ), 'workspace-shell.tsx must set reducedMotion="user" on MotionConfig'
+
+
 @pytest.mark.parametrize("phase_file", PHASE_FILES, ids=lambda p: p.name)
 def test_named_variants_pair_with_with_reduced_motion(phase_file):
     """Round 2 cleanup (b): wherever a phase file uses a named variant

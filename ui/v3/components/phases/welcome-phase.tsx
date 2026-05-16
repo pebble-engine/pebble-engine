@@ -105,6 +105,20 @@ export function WelcomePhase({ onAdvance }: Props) {
     <InfiniteGrid className="flex-1 min-h-0">
       <main className="relative z-10 flex flex-col items-center text-center px-4 max-w-3xl mx-auto space-y-8 pointer-events-none py-24">
         <div className="space-y-3 pointer-events-auto min-h-[170px]">
+          {/* Project-name label sits above the headline as a small ambient
+              kicker. Same layoutId + viewTransitionName as the TopNav
+              project-name slot, so framer-motion (in-shell) and the View
+              Transitions API (route change) can morph it into place when
+              the user advances. Hardcoded "Untitled Project" so the morph
+              is always text-identical regardless of any stale brief. */}
+          <motion.span
+            layoutId="project-name"
+            aria-hidden="true"
+            style={{ viewTransitionName: "project-name" }}
+            className="block text-base font-semibold text-foreground/55 tracking-wide"
+          >
+            Untitled Project
+          </motion.span>
           <AnimatePresence mode="wait">
             <motion.h1
               key={firstName ?? "anon"}

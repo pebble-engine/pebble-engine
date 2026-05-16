@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import {
   Lightbulb,
   Map,
@@ -220,6 +220,10 @@ export function WorkspaceShell() {
     ) : null;
 
   return (
+    // reducedMotion="user" makes framer-motion respect the OS prefers-reduced-motion
+    // preference for animations that bypass the Variants path — most importantly,
+    // the layoutId/shared-element morphs that withReducedMotion() can't reach.
+    <MotionConfig reducedMotion="user">
     <div className="min-h-screen flex flex-col">
       {/* TopNav persists across all phase changes. */}
       <TopNav projectName={projectName} rightSlot={topNavRightSlot} />
@@ -299,5 +303,6 @@ export function WorkspaceShell() {
         </AnimatePresence>
       </div>
     </div>
+    </MotionConfig>
   );
 }

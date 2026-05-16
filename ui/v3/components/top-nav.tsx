@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { LifeBuoy } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthMenu } from "./auth-menu";
@@ -9,6 +10,11 @@ import { AuthMenu } from "./auth-menu";
  * Shared top nav for every screen after welcome. Brand mark left, theme
  * toggle + Help + auth right. Keep this minimal — anything more complex
  * (project names, device toggles) belongs to the workspace shell.
+ *
+ * The project-name slot carries `layoutId="project-name"` so framer-motion
+ * morphs it from the welcome hero's matching label on the welcome →
+ * workspace transition. The viewTransitionName mirrors the same identity
+ * for the Chrome / Edge / Safari native morph path.
  */
 export function TopNav({
   projectName,
@@ -32,7 +38,13 @@ export function TopNav({
         {projectName && (
           <>
             <div className="h-6 w-px bg-border" />
-            <span className="text-base font-semibold text-foreground">{projectName}</span>
+            <motion.span
+              layoutId="project-name"
+              style={{ viewTransitionName: "project-name" }}
+              className="text-base font-semibold text-foreground"
+            >
+              {projectName}
+            </motion.span>
           </>
         )}
       </div>
