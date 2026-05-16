@@ -33,7 +33,7 @@ Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━�
 Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
 Ch 13 Design breadth        ░░░░░░░░░░░░░░░░░░░░░  MotionSites harvest open
 Ch 14 In-app AI chat        ░░░░░░░░░░░░░░░░░░░░░  post-launch
-Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━░░░  Schema.org JSON-LD open
+Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━━━░  only sitemap.xml open
 ```
 
 **Net:** Stripe is the only true MVP blocker. Everything else is either
@@ -290,15 +290,21 @@ The work that compounds Pebble's lead AFTER the doors open.
 [ ] 14.4  Conversation history saved per visitor (Supabase)
 ```
 
-## Chapter 15 — Multi-page Sites (Pro+)
+## Chapter 15 — Multi-page Sites (Pro+) — MOSTLY SHIPPED
 
 **Goal:** Generate full multi-page apps, not just one-pagers.
 
 ```
-[ ] 15.1  Quiz extension for multi-page intent (services, projects, blog)
+[x] 15.1  Multi-page intent — handled by PAGE_CATALOG (11 industry-aware
+          page types) + plan.py. Brief already drives page selection.
 [ ] 15.2  Sitemap.xml + robots.txt auto-managed
-[ ] 15.3  Internal linking + navigation structure handled by engine
-[ ] 15.4  Schema.org JSON-LD throughout (SEO + AI-agent discoverability)
+[x] 15.3  Internal linking + navigation structure — Footer.tsx now
+          mandates a sitemap column with every generated page
+          (eval `footer_lists_all_pages`)
+[x] 15.4  Schema.org JSON-LD foundation — eval #34 schema_org_jsonld_present
+          requires LocalBusiness/Organization JSON-LD in app/layout.tsx,
+          shipped 2026-05-16 (commit 5a71c19). Type-specific richer
+          markup per industry is a follow-up.
 ```
 
 ## Chapter 16 — Team Scaling
