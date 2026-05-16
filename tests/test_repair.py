@@ -804,3 +804,107 @@ def test_repair_system_mentions_anti_slop_and_dna():
     assert "Design DNA" in REPAIR_SYSTEM
     assert "<pebble-file" in REPAIR_SYSTEM
     assert "TODOs" in REPAIR_SYSTEM
+
+
+# ---------------------------------------------------------------------------
+# _count_changed_files + noop_response detection (Track 7, 2026-05-16)
+# ---------------------------------------------------------------------------
+
+def test_count_changed_returns_zero_for_empty_list(tmp_path):
+    from pebble.repair import _count_changed_files
+    assert _count_changed_files(tmp_path, []) == 0
+
+
+def test_count_changed_counts_new_files(tmp_path):
+    from pebble.repair import _count_changed_files
+    # Both files are new — the site dir is empty.
+    files = [("app/page.tsx", "x"), ("README.md", "y")]
+    assert _count_changed_files(tmp_path, files) == 2
+
+
+def test_count_changed_returns_zero_for_identical_content(tmp_path):
+    from pebble.repair import _count_changed_files
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "page.tsx").write_text("identical", encoding="utf-8")
+    files = [("app/page.tsx", "identical")]
+    assert _count_changed_files(tmp_path, files) == 0
+
+
+def test_count_changed_returns_one_for_modified_content(tmp_path):
+    from pebble.repair import _count_changed_files
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "page.tsx").write_text("before", encoding="utf-8")
+    files = [("app/page.tsx", "after")]
+    assert _count_changed_files(tmp_path, files) == 1
+
+
+def test_count_changed_handles_mixed_new_and_unchanged(tmp_path):
+    from pebble.repair import _count_changed_files
+    (tmp_path / "app").mkdir()
+    (tmp_path / "app" / "page.tsx").write_text("same", encoding="utf-8")
+    files = [
+        ("app/page.tsx", "same"),       # no change
+        ("app/new.tsx",  "new"),        # new file
+        ("README.md",    "fresh"),      # new file
+    ]
+    assert _count_changed_files(tmp_path, files) == 2
+
+
+def test_count_changed_skips_path_traversal(tmp_path):
+    """Entries containing `..` are filtered out (same gate _write_files uses).
+
+    Absolute-looking paths (e.g. "/foo/bar") get their leading slash
+    stripped by _is_safe_relative, so they ARE counted — that matches
+    the behavior of _write_files which would also accept them.
+    """
+    from pebble.repair import _count_changed_files
+    files = [
+        ("../escape.txt",      "x"),  # rejected — contains ..
+        ("..\\windows.txt",    "y"),  # rejected — contains ..
+        ("safe.txt",           "z"),  # accepted — new file
+    ]
+    assert _count_changed_files(tmp_path, files) == 1
+
+
+def test_noop_response_detected_when_llm_re_emits_identical_file(broken_build):
+    """The "Fixed!" gaslighting pattern: LLM emits a pebble-file tag
+    whose content matches an existing file. The repair round must
+    flag noop_response=True and mention it in the note.
+
+    The broken_build fixture intentionally lacks app/page.tsx — we
+    re-emit app/layout.tsx (which DOES exist) verbatim so the response
+    has tags but zero actual change."""
+    site = broken_build / "site"
+    existing = (site / "app" / "layout.tsx").read_text()
+    canned = (
+        f'<pebble-file path="app/layout.tsx">\n'
+        f'{existing}'
+        f'</pebble-file>\n'
+    )
+    client = FakeClient(response=canned)
+    report = repair_build(slug=broken_build.name, client=client,
+                          output_dir=broken_build.parent,
+                          allow_provider_fallback=False)
+    assert report.rounds, "expected at least one round"
+    primary = report.rounds[0]
+    assert primary.noop_response is True, (
+        f"expected noop_response=True, got note={primary.note!r}"
+    )
+    assert "no-op" in primary.note.lower()
+
+
+def test_noop_response_false_when_llm_actually_changes_file(broken_build):
+    """Sanity check: a real fix is NOT flagged as noop."""
+    canned = (
+        '<pebble-file path="app/page.tsx">\n'
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /><h1>Hello</h1></main>; }\n'
+        '</pebble-file>\n'
+    )
+    client = FakeClient(response=canned)
+    report = repair_build(slug=broken_build.name, client=client,
+                          output_dir=broken_build.parent,
+                          allow_provider_fallback=False)
+    assert report.rounds
+    primary = report.rounds[0]
+    assert primary.noop_response is False
