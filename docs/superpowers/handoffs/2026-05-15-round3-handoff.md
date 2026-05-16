@@ -1,7 +1,7 @@
 # Round 3 Workspace Polish — Hand-off (2026-05-15)
 
-This document hands round 3 of the premium-polish arc back to Marc. Two
-major themes shipped this round:
+This document hands round 3 of the premium-polish arc back to Marc. Three
+themes shipped this round:
 
 1. **Typography + density extension** — applied the round-2 type scale
    to the eight outside-workspace files (dashboard, admin, six
@@ -11,14 +11,24 @@ major themes shipped this round:
    iconButton, link, focusRing) and applied across the sixteen
    workspace + dashboard files. Universal focus rings + universal press
    states + universal `motion-reduce:` overrides.
+3. **WCAG contrast fix for spark/earth tinted pills** — runnable audit
+   script surfaced 29 failing pairs; the worst offenders (text-spark
+   / text-earth as text content on tinted backgrounds, worst case
+   2.19:1 vs 4.5 needed) are fixed via two new CSS vars
+   (`--color-spark-deep`, `--color-earth-deep`). Border and dark-mode
+   failures recorded as round-4 backlog.
 
-All wiring tests + plain-Node verifiers pass. Pytest at **850 green**
+All wiring tests + plain-Node verifiers pass. Pytest at **854 green**
 on the latest commit (was 836 baseline → 844 after round 2 → 850 after
-round 3: +6 new structural assertions across the two new wiring tests).
+round 3 commits 1+2 → 854 after round 3 commit 3: +10 new structural
+assertions across the three new wiring tests).
 
 ## TL;DR
 
 ```
+4389aff v3: round 3 / commit 3 — contrast fix for spark/earth tinted pills
+fd49f04 docs+tools: round 3 commit 3 spec + WCAG contrast audit script
+462d3ed docs: round 3 hand-off — workspace polish overnight session
 161196f v3: round 3 / commit 2 follow-up — review fixes
 34cfb86 v3: round 3 / commit 2 — apply interactions to 15 workspace + dashboard files
 11551fd v3: round 3 / commit 2 — interactions module
@@ -28,10 +38,10 @@ b9051c0 v3: round 3 / commit 1 — apply type scale + density to 8 dashboard/sta
 119e1b0 docs: spec for round 3 commit 1 — dashboard + standalone typography
 ```
 
-Seven commits on top of round 2's tip (`fee4861`). ~370 lines net
-change across 18 files (15 v3 + 1 new lib + 1 new plain-Node test + 1
-new Python wiring test + 2 wiring-test extensions + 2 specs + 1
-handoff).
+Ten commits on top of round 2's tip (`fee4861`). ~600 lines net
+change across 23 files (18 v3 + 1 new lib + 1 new plain-Node test + 3
+new Python wiring tests + 2 wiring-test extensions + 3 specs + 1
+audit script + 1 audit baseline output + 1 handoff).
 
 ## Commits in detail
 
@@ -176,6 +186,55 @@ Wiring-test extension: 2 parametrized anchor-import assertions added
 but aren't pinned by the wiring test — interactions usage is sparser
 than typography and artificial enforcement would be noise.
 
+### Commit 3 spec + tools — `fd49f04` WCAG contrast audit setup
+
+Adds `scripts/contrast_audit.py` — a runnable Python tool that parses
+the v3 palette from `globals.css` and computes WCAG AA contrast for the
+canonical text/bg pairs plus the alpha-composited tinted-pill pattern
+(text-X on bg-X/10 over bg-card, etc.). Captures the pre-fix baseline
+at `scripts/contrast_audit_output.txt`: 23 passing, 29 failing.
+
+Spec at `docs/superpowers/specs/2026-05-15-round3-contrast-design.md`
+records the failure clusters and the deferred-to-round-4 backlog
+(border contrast, dark-mode tints, text-destructive, text-secondary
+/15 + /20 failures).
+
+### Commit 3 — `4389aff` Contrast fix for spark/earth tinted pills
+
+Two new CSS vars in `globals.css`'s `@theme` block:
+
+- `--color-spark-deep: #8b3a14` — luminance 0.086; 7.0:1 on sand,
+  6.2:1 on stone.
+- `--color-earth-deep: #455a37` — luminance 0.089; 6.8:1 on sand,
+  6.1:1 on stone.
+
+Tailwind v4 auto-generates `text-spark-deep`, `text-earth-deep`,
+`bg-spark-deep`, etc. utilities from the new vars.
+
+19 className swaps across 8 v3 files: every `text-spark` or
+`text-earth` that was carrying **text content** (not an icon, not
+decoration) now uses the `-deep` variant. The canonical `--color-spark`
+and `--color-earth` stay unchanged so icons (dashboard star, palette
+dots, accent fills) keep the brand hue.
+
+Per-file swaps:
+- **dashboard:** 2 (live + publish status pills) — star icon raw
+- **admin:** 2 (Published + "+domain" inline spans)
+- **help:** 3 (Live callout + Earth/Spark explanatory `<strong>` text)
+- **edit-phase:** 5 (refine badges, visual-edit reason badge, restored
+  badge, "Free style tweak" eyebrow)
+- **plan-phase:** 3 (industry/foundation indicator + setup status
+  badges)
+- **draft-phase:** 1 (active-step live-feed line)
+- **publish-phase:** 2 (domain "Live" status + propagation note)
+- **ai-prompt-box:** 1 (Brand mode toggle text; `border-spark` stays
+  raw — the orange tint on the border carries the brand cue
+  independently)
+
+Wiring test (`tests/test_contrast_wiring.py`): 4 new pytest assertions
+pinning the deep vars by exact hex, the audit script's presence, and
+the dashboard's usage as the migration anchor. Pytest 850 → 854.
+
 ### Commit 2 follow-up — `161196f` Review fixes
 
 Four findings from a Sonnet review of `34cfb86`:
@@ -262,6 +321,28 @@ Then open http://localhost:3001 and walk through:
       flashing accent (the review caught this bug pre-commit).
 - [ ] On welcome, if you have a saved resume, the "Continue working on
       X" button stays secondary-tinted on hover (not accent-shifted).
+
+### Contrast (round 3 commit 3)
+
+- [ ] On `/dashboard`, view a project with a Cloudflare publish. The
+      "Live" pill text reads as a deeper, more saturated orange (vs
+      the previous lighter orange that was failing 2.68:1 WCAG AA).
+      The tinted background is unchanged.
+- [ ] View an Earth/free publish pill — "Published (ZIP)" text reads
+      as deeper green. Background unchanged.
+- [ ] Star a project. The star icon stays the original orange (it's
+      iconography, 3:1 threshold passes).
+- [ ] Open the design phase, click any refine chip. The "Free style
+      tweak" eyebrow text reads as deeper green. Refine badge labels
+      (Auto-done, Coming soon) read as deeper colors.
+- [ ] On `/help`, view the "Earth (free) / Spark (uses credits)"
+      legend. The strong tags read deeper than before.
+- [ ] Open the AI prompt box (welcome screen). Toggle the "Brand" mode.
+      The active-state text reads as deeper orange; the orange border
+      around the toggle stays the canonical brand color.
+- [ ] Run the audit: `python scripts/contrast_audit.py`. Should still
+      report some failing pairs (border, dark-mode tints, destructive,
+      secondary) — those are intentionally deferred to round 4.
 
 ### Reduced motion (the a11y bit)
 
@@ -366,16 +447,20 @@ docs/superpowers/handoffs/2026-05-15-round3-handoff.md                 (new)
 
 ## What's next (round 4)
 
-Per round 1 + round 2 + round 3 commit 2 spec's "honest scoping notes":
+Per round 1 + round 2 + round 3 specs' "honest scoping notes":
 
 1. **Standalone-page polish.** /landing, /login, /signup, /forgot,
    /reset, /help, /inbox, /migrate, /thinking, /publish, /plan-review,
-   /intake. Apply the type + density + interactions modules. The
-   migrations are mechanical (same pattern as round 2 commit 5 and
-   round 3 commit 1). ~3-4 hours.
-2. **Color / contrast pass.** WCAG AA audit of every text/bg
-   combination across the v3 app. Surface failures + fix. Document the
-   audit result. ~2 hours.
+   /intake. Apply the type + density + interactions + contrast-deep
+   modules. The migrations are mechanical (same pattern as round 2
+   commit 5 and round 3 commits 1 + 3). ~3-4 hours.
+2. **Remaining contrast failures** (see `scripts/contrast_audit.py`
+   output): border-border (1.22:1 vs 3.0 needed — needs brand
+   judgment), dark-mode tinted pills (same fix pattern with
+   `--color-spark-light` / `--color-earth-light` variants),
+   text-destructive on tinted bgs (4.07-4.45, razor-thin), text-secondary
+   on /15 + /20 tints (4.28 + 3.98 — introduce `--color-secondary-deep`).
+   ~2 hours total.
 3. **Lovable parity backlog items** (memory/project_lovable_parity_backlog.md):
    - Multi-project URL (/workspace/<slug>) — medium effort, high value
      once users have 3+ projects.
