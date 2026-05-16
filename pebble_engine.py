@@ -1642,6 +1642,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
                 slug = self.path[len("/api/projects/"):-len("/domain")]
                 self._handle_get_domain(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
+                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
+                from pebble.server.forms import run_get_webhook_config
+                run_get_webhook_config(self, slug)
             elif self.path.startswith("/api/projects/") and "/inbox" in self.path:
                 self._handle_inbox_get()
             elif self.path.startswith("/api/projects/") and self.path.endswith("/analytics"):
@@ -1718,6 +1722,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/internal/supabase-webhook":
                 from pebble.server.supabase_webhook import run_supabase_webhook
                 run_supabase_webhook(self)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
+                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
+                from pebble.server.forms import run_set_webhook_config
+                run_set_webhook_config(self, slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
@@ -1732,6 +1740,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
             if self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
                 slug = self.path[len("/api/projects/"):-len("/domain")]
                 self._handle_delete_domain(slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
+                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
+                from pebble.server.forms import run_delete_webhook_config
+                run_delete_webhook_config(self, slug)
             elif self.path.startswith("/api/projects/") and "/inbox/" in self.path:
                 self._handle_inbox_delete()
             elif self.path.startswith("/api/projects/"):

@@ -275,3 +275,199 @@ def test_submit_rate_limited_after_burst(engine_server, monkeypatch):
         statuses.append(s)
     # Some early ones succeed, eventually we see 429
     assert 429 in statuses
+
+
+# ---------------------------------------------------------------------------
+# Outbound webhook config — Track 4 (2026-05-16)
+# ---------------------------------------------------------------------------
+
+def test_webhook_config_starts_unconfigured(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh1@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    status, body = _request(
+        "GET", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["configured"] is False
+    assert body["webhook"] is None
+
+
+def test_webhook_config_set_and_get(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh2@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    status, body = _request(
+        "POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        body={"url": "https://hooks.zapier.com/abc"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["configured"] is True
+    assert body["webhook"]["url"] == "https://hooks.zapier.com/abc"
+    # Round-trip GET
+    status2, body2 = _request(
+        "GET", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        headers={"Cookie": cookie},
+    )
+    assert body2["webhook"]["url"] == "https://hooks.zapier.com/abc"
+
+
+def test_webhook_config_rejects_bad_scheme(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh3@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    status, body = _request(
+        "POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        body={"url": "ftp://example.com/hook"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+
+
+def test_webhook_config_delete(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh4@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+             body={"url": "https://example.com/hook"}, headers={"Cookie": cookie})
+    status, body = _request(
+        "DELETE", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["removed"] is True
+    # Subsequent GET confirms gone
+    _, body2 = _request(
+        "GET", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+        headers={"Cookie": cookie},
+    )
+    assert body2["configured"] is False
+
+
+def test_webhook_config_requires_auth(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh5@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    # GET without cookie
+    status, _ = _request("GET", engine_server["base"], "/api/projects/wh-co/forms/webhook")
+    assert status == 401
+    # POST without cookie
+    status, _ = _request("POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+                         body={"url": "https://example.com/hook"})
+    assert status == 401
+    # DELETE without cookie
+    status, _ = _request("DELETE", engine_server["base"], "/api/projects/wh-co/forms/webhook")
+    assert status == 401
+
+
+def test_webhook_config_blocks_other_users(engine_server):
+    """Owner-A configures a webhook; Owner-B signed in as a different
+    user gets a 403."""
+    out = engine_server["output"]
+    cookie_a, uid_a = _signup_get_cookie_and_id(
+        engine_server["base"], "owner-a@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid_a)
+    cookie_b, _ = _signup_get_cookie_and_id(
+        engine_server["base"], "owner-b@example.com", "valid-password")
+    status, _ = _request("GET", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+                         headers={"Cookie": cookie_b})
+    assert status == 403
+
+
+def test_submit_fires_webhook_when_configured(engine_server, monkeypatch):
+    """End-to-end: configure a webhook, submit a form, and observe the
+    delivery thread invoke post_webhook with the right payload."""
+    import time as _time
+    from pebble import forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh6@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+             body={"url": "https://hooks.zapier.com/abc"}, headers={"Cookie": cookie})
+
+    captured = {}
+    def fake_post(url, payload, **kwargs):
+        captured["url"] = url
+        captured["payload"] = payload
+        return True, None
+    # Patch the post_webhook the forms_webhook module imported into its
+    # namespace (not pebble.url_fetch.post_webhook directly — the
+    # module-local reference is what deliver() uses).
+    monkeypatch.setattr("pebble.forms_webhook.post_webhook", fake_post)
+
+    _request("POST", engine_server["base"], "/api/forms/wh-co",
+             {"name": "Alice", "message": "Hi"})
+
+    # The delivery runs on a daemon thread — give it a beat to land.
+    for _ in range(20):
+        if captured:
+            break
+        _time.sleep(0.05)
+    assert captured.get("url") == "https://hooks.zapier.com/abc"
+    assert captured["payload"]["event"] == "form.submitted"
+    assert captured["payload"]["project"] == "wh-co"
+    assert captured["payload"]["submission"]["fields"]["name"] == "Alice"
+
+
+def test_submit_succeeds_even_when_webhook_fails(engine_server, monkeypatch):
+    """The inbox is the source of truth — a webhook failure must NOT
+    affect the form-submit response or the inbox write."""
+    from pebble import forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "wh7@example.com", "valid-password")
+    _seed_project(out, "wh-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/wh-co/forms/webhook",
+             body={"url": "https://broken.example/hook"}, headers={"Cookie": cookie})
+
+    monkeypatch.setattr("pebble.forms_webhook.post_webhook",
+                        lambda *_a, **_k: (False, "HTTP 503"))
+
+    status, body = _request("POST", engine_server["base"], "/api/forms/wh-co",
+                             {"name": "Alice"})
+    assert status == 200
+    assert body["ok"] is True
+    # Inbox file written despite webhook failure
+    inbox = out / "wh-co" / "inbox"
+    assert any(inbox.glob("*.json"))
+
+
+def test_submit_works_when_no_webhook_configured(engine_server, monkeypatch):
+    """No webhook URL — form submit must NOT spawn any outbound call.
+    Regression guard against accidentally always-firing the delivery
+    thread."""
+    from pebble import forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+
+    out = engine_server["output"]
+    _seed_project(out, "no-webhook-co")
+    called = {"yes": False}
+    def trip(*_a, **_kw):
+        called["yes"] = True
+        return True, None
+    monkeypatch.setattr("pebble.forms_webhook.post_webhook", trip)
+
+    status, body = _request("POST", engine_server["base"], "/api/forms/no-webhook-co",
+                             {"name": "Bob"})
+    assert status == 200
+    # Give the daemon thread a moment in case something fires.
+    import time as _time
+    _time.sleep(0.15)
+    assert called["yes"] is False

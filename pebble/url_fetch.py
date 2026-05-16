@@ -35,6 +35,7 @@ need to change.
 from __future__ import annotations
 
 import ipaddress
+import json
 import socket
 import ssl
 import urllib.error
@@ -244,12 +245,109 @@ def safe_fetch_html(url: str) -> tuple[str, str, int, Optional[str]]:
     return final_url, "", 0, f"exceeded {MAX_REDIRECTS} redirects"
 
 
+def post_webhook(
+    url: str,
+    payload: dict,
+    *,
+    timeout_sec: float = 5.0,
+) -> tuple[bool, Optional[str]]:
+    """POST a JSON payload to ``url`` with full SSRF defenses.
+
+    Returns ``(ok, error)``. ``ok`` is True iff the receiver responded
+    with a 2xx status; on any failure ``error`` is a short human-
+    readable string and the body is discarded. Webhooks are fire-and-
+    forget: we don't follow redirects (webhook URLs should be stable;
+    a redirect target may dodge SSRF re-validation), don't read more
+    than 1 KB of response (just enough to keep the socket clean), and
+    use a tighter default timeout than HTML fetches.
+
+    The function is used by the form-inbox webhook feature: when a
+    generated site's contact form posts to /api/forms/<slug>, the
+    engine fires the configured webhook URL with the submission data.
+    The URL is attacker-controlled so the same SSRF gates that protect
+    /api/inspire and /api/migrate apply here.
+    """
+    if not isinstance(url, str) or not url.strip():
+        return False, "url is required"
+    url = url.strip()
+    if not url.lower().startswith(("http://", "https://")):
+        return False, f"scheme must be http or https"
+
+    parsed = urllib.parse.urlparse(url)
+    if parsed.scheme not in ("http", "https"):
+        return False, f"unsupported scheme: {parsed.scheme}"
+    if not parsed.hostname:
+        return False, "url has no host"
+
+    # Serialize the payload FIRST — fail fast on non-JSON-serializable
+    # inputs before opening any socket.
+    try:
+        body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+    except (TypeError, ValueError) as e:
+        return False, f"payload not JSON-serializable: {e}"
+
+    resolved = _resolve_safely(parsed.hostname)
+    if resolved is None:
+        return False, "host resolves to a private or blocked address"
+    ip, family = resolved
+
+    conn = _open_pinned(parsed, ip, family)
+    # Override the module-default 10s with the webhook-specific cap;
+    # callers can pass timeout_sec to tune further. The attribute is
+    # set on the connection object before .request() so the underlying
+    # socket inherits it on connect.
+    conn.timeout = timeout_sec
+    try:
+        path = parsed.path or "/"
+        if parsed.query:
+            path += "?" + parsed.query
+        host_header = parsed.hostname or ""
+        if parsed.port and not (
+            (parsed.scheme == "http" and parsed.port == 80)
+            or (parsed.scheme == "https" and parsed.port == 443)
+        ):
+            host_header = f"{host_header}:{parsed.port}"
+        conn.request(
+            "POST", path,
+            body=body,
+            headers={
+                "Host":           host_header,
+                "User-Agent":     USER_AGENT,
+                "Content-Type":   "application/json; charset=utf-8",
+                "Content-Length": str(len(body)),
+                "Accept":         "*/*",
+            },
+        )
+        resp = conn.getresponse()
+        # Drain at most 1 KB to keep the connection tidy; we don't
+        # care about the response body's contents.
+        try:
+            _ = resp.read(1024)
+        except Exception:
+            pass
+        if 200 <= resp.status < 300:
+            return True, None
+        return False, f"HTTP {resp.status}"
+    except socket.timeout:
+        return False, "timeout"
+    except (OSError, ssl.SSLError) as e:
+        return False, f"network error: {e.__class__.__name__}: {e}"
+    except Exception as e:
+        return False, f"{type(e).__name__}: {e}"
+    finally:
+        try:
+            conn.close()
+        except Exception:
+            pass
+
+
 __all__ = [
     "USER_AGENT",
     "MAX_BYTES",
     "TIMEOUT_SEC",
     "MAX_REDIRECTS",
     "safe_fetch_html",
+    "post_webhook",
     "_is_private_or_loopback",
     "_resolve_safely",
 ]

@@ -10,11 +10,18 @@ User-scoped (dashboard inbox):
 - GET    /api/projects/<slug>/inbox/<id>          — read one submission
 - PATCH  /api/projects/<slug>/inbox/<id>          — mark read/unread
 - DELETE /api/projects/<slug>/inbox/<id>          — delete a submission
+
+User-scoped (webhook delivery config):
+
+- GET    /api/projects/<slug>/forms/webhook       — current config (or null)
+- POST   /api/projects/<slug>/forms/webhook       — set webhook URL
+- DELETE /api/projects/<slug>/forms/webhook       — remove webhook
 """
 from __future__ import annotations
 
 import json
 import sys
+import threading
 from pathlib import Path
 from typing import Optional
 
@@ -29,6 +36,7 @@ from pebble.forms import (
     save_submission,
     update_submission,
 )
+from pebble import forms_webhook
 from pebble.log import log
 from pebble.security import (
     client_ip as _client_ip,
@@ -105,6 +113,36 @@ def run_submit(handler, slug: str) -> None:
     # the inbox id but knowing the submission was accepted is enough.
     handler._json(200, {"ok": True, "id": rec.id})
 
+    # Outbound webhook (fire-and-forget). Runs AFTER we've responded to
+    # the form submitter so the visitor's experience never waits on a
+    # third-party endpoint. The deliver() call has its own try/except
+    # so an error here cannot crash the response.
+    _fire_webhook_async(slug, rec)
+
+
+def _fire_webhook_async(slug: str, rec) -> None:
+    """Spawn a daemon thread to deliver the outbound webhook. We don't
+    use an event loop / executor because the engine is sync HTTP and
+    a single short-lived thread per submission has lower overhead than
+    sharing a pool — webhook deliveries are rare events.
+
+    The submission payload echoes the public-shape fields the visitor
+    typed; ip_hash and other internal fields are NOT included (the
+    inbox record already strips them via to_public_dict)."""
+    payload = {
+        "id":          rec.id,
+        "received_at": rec.received_at,
+        "fields":      rec.fields,
+        "user_agent":  getattr(rec, "user_agent", None),
+        "referrer":    getattr(rec, "referrer", None),
+    }
+    def _run():
+        try:
+            forms_webhook.deliver(slug, payload)
+        except Exception as e:  # pragma: no cover — deliver() already swallows
+            log.exception("webhook thread crashed for %s: %s", slug, e)
+    threading.Thread(target=_run, daemon=True, name=f"webhook-{slug}").start()
+
 
 # --------- GET /api/projects/<slug>/inbox -------------------------------
 
@@ -163,3 +201,49 @@ def run_delete_inbox_item(handler, slug: str, sub_id: str) -> None:
     if not delete_submission(slug, sub_id):
         handler._json(404, {"error": "submission not found"}); return
     handler._json(200, {"slug": slug, "id": sub_id, "deleted": True})
+
+
+# --------- /api/projects/<slug>/forms/webhook --------------------------
+
+def run_get_webhook_config(handler, slug: str) -> None:
+    """GET — return the configured webhook URL, or null."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    config = forms_webhook.get_webhook_config(slug)
+    if config is None:
+        handler._json(200, {"slug": slug, "configured": False, "webhook": None})
+        return
+    handler._json(200, {
+        "slug":       slug,
+        "configured": True,
+        "webhook":    config.to_dict(),
+    })
+
+
+def run_set_webhook_config(handler, slug: str) -> None:
+    """POST — set the webhook URL. Body: { "url": "https://..." }."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    body = _read_body(handler, max_bytes=4 * 1024) or {}
+    url = body.get("url")
+    if not isinstance(url, str):
+        handler._json(400, {"error": "body must include a 'url' string"}); return
+    try:
+        config = forms_webhook.set_webhook_config(slug, url)
+    except ValueError as e:
+        handler._json(400, {"error": str(e)}); return
+    handler._json(200, {"slug": slug, "configured": True, "webhook": config.to_dict()})
+
+
+def run_delete_webhook_config(handler, slug: str) -> None:
+    """DELETE — remove the configured webhook."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    removed = forms_webhook.clear_webhook_config(slug)
+    handler._json(200, {"slug": slug, "removed": removed, "configured": False})
