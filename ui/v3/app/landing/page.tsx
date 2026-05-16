@@ -11,24 +11,35 @@
  */
 
 import { useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
+import { motion, MotionConfig } from "framer-motion";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthMenu } from "@/components/auth-menu";
 import { ArrowRight, Check, ChevronDown, History, Image as ImageIcon, MousePointerClick, Shield, Sparkles, Wand2 } from "lucide-react";
 import { PUBLIC_FAQ as FAQ_ITEMS } from "@/lib/faq";
+import { EtherealShadow } from "@/components/ui/etheral-shadow";
 
 /* ------------------------------------------------------------------ Hero -- */
 
 function Hero() {
-  const reduce = useReducedMotion();
   return (
     <section className="relative overflow-hidden border-b border-border bg-background">
-      <div className="absolute inset-0 -z-10 opacity-60 [background-image:radial-gradient(var(--color-pebble)_1px,transparent_1px)] [background-size:24px_24px] dark:opacity-20" />
+      {/* Atmospheric background — adapted 21st.dev `etheral-shadow`.
+          River-tinted shadow + noise; respects prefers-reduced-motion. */}
+      <div className="absolute inset-0 -z-10">
+        <EtherealShadow
+          color="rgba(32, 86, 97, 0.45)"
+          animation={{ scale: 100, speed: 90 }}
+          noise={{ opacity: 0.5, scale: 1.2 }}
+          sizing="fill"
+          className="h-full w-full"
+        />
+      </div>
 
       <div className="mx-auto max-w-6xl px-6 pt-32 pb-24 md:pt-40 md:pb-32">
         <motion.div
-          initial={reduce ? false : { opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
           className="space-y-8 text-center md:text-left"
@@ -433,8 +444,17 @@ function FAQ() {
 
 function FinalCta() {
   return (
-    <section className="border-b border-border bg-background">
-      <div className="mx-auto max-w-4xl px-6 py-24 md:py-32 text-center space-y-8">
+    <section className="relative overflow-hidden border-b border-border bg-background">
+      {/* zen-sage ambient brand photo behind the closing CTA. Dimmed so
+          the dark text on light bg stays readable. */}
+      <Image
+        src="/brand/zen-sage.png"
+        alt=""
+        fill
+        className="object-cover opacity-30 dark:opacity-15"
+        sizes="100vw"
+      />
+      <div className="relative mx-auto max-w-4xl px-6 py-24 md:py-32 text-center space-y-8">
         <h2 className="font-display text-4xl md:text-6xl font-bold tracking-tight text-foreground">
           The first one's on us.
         </h2>
@@ -496,22 +516,80 @@ function MarketingTopBar() {
   );
 }
 
+/* ----------------------------------------------------- Photo dividers -- */
+
+/**
+ * Full-bleed brand-photo strip used between content sections to give the
+ * page visual breath. The image is rendered with next/image's `fill` mode
+ * + `object-cover`, so it scales to whatever height/width the section
+ * sets. Decorative when `alt` is empty; descriptive otherwise. The
+ * fallback `bg-background` paints first in case the image is offline.
+ */
+function PhotoDivider({
+  src,
+  alt,
+  height = "h-[60vh]",
+  priority = false,
+}: {
+  src: string;
+  alt: string;
+  height?: string;
+  priority?: boolean;
+}) {
+  return (
+    <section
+      className={`relative ${height} overflow-hidden border-b border-border bg-background`}
+    >
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        className="object-cover"
+        sizes="100vw"
+        priority={priority}
+      />
+    </section>
+  );
+}
+
 /* ----------------------------------------------------- Default export -- */
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <MarketingTopBar />
-      <div className="pt-16">
-        <Hero />
-        <section id="dna"><Differentiator /></section>
-        <section id="how"><HowItWorks /></section>
-        <FeatureGrid />
-        <section id="pricing"><Pricing /></section>
-        <section id="faq"><FAQ /></section>
-        <FinalCta />
-        <Footer />
+    // reducedMotion="user" delegates to the OS preference. With this in
+    // place, all framer-motion calls inside the tree (initial, animate,
+    // whileInView, layoutId) automatically skip animation when the user
+    // has prefers-reduced-motion enabled — no per-component check needed,
+    // and no SSR/CSR mismatch since the decision happens inside framer.
+    <MotionConfig reducedMotion="user">
+      <div className="min-h-screen bg-background">
+        <MarketingTopBar />
+        <div className="pt-16">
+          <Hero />
+          <section id="dna"><Differentiator /></section>
+          <PhotoDivider
+            src="/brand/plinth-cinematic.png"
+            alt="A black pebble on a stone plinth, lit by a single beam of warm light."
+            height="h-[50vh]"
+          />
+          <section id="how"><HowItWorks /></section>
+          <PhotoDivider
+            src="/brand/desktop-pebble.png"
+            alt="A finished Pebble site rendered on a desktop monitor, with a black pebble on the desk in front."
+            height="h-[80vh]"
+          />
+          <FeatureGrid />
+          <section id="pricing"><Pricing /></section>
+          <section id="faq"><FAQ /></section>
+          <PhotoDivider
+            src="/brand/desk-notebook.png"
+            alt="A black pebble beside an open notebook on a sunlit desk, with the Pebble wordmark."
+            height="h-[70vh]"
+          />
+          <FinalCta />
+          <Footer />
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

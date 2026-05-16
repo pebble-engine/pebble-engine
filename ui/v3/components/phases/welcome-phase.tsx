@@ -10,7 +10,6 @@ import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import {
   patchBrief,
   getUserProfile,
-  setUserProfile,
   getLastBuild,
   getBrief,
 } from "@/lib/state";
@@ -74,15 +73,6 @@ export function WelcomePhase({ onAdvance }: Props) {
     router.push("/workspace#phase=design");
   };
 
-  const handleNameSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const input = e.currentTarget.elements.namedItem("name") as HTMLInputElement;
-    const name = input.value.trim();
-    if (!name) return;
-    setUserProfile({ firstName: name });
-    setFirstName(name);
-  };
-
   const handleSend = (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
     patchBrief({
@@ -107,20 +97,6 @@ export function WelcomePhase({ onAdvance }: Props) {
     <InfiniteGrid className="flex-1 min-h-0">
       <main className="relative z-10 flex flex-col items-center text-center px-4 max-w-3xl mx-auto space-y-8 pointer-events-none py-24">
         <div className="space-y-3 pointer-events-auto min-h-[170px]">
-          {/* Project-name label sits above the headline as a small ambient
-              kicker. Same layoutId + viewTransitionName as the TopNav
-              project-name slot, so framer-motion (in-shell) and the View
-              Transitions API (route change) can morph it into place when
-              the user advances. Hardcoded "Untitled Project" so the morph
-              is always text-identical regardless of any stale brief. */}
-          <motion.span
-            layoutId="project-name"
-            aria-hidden="true"
-            style={{ viewTransitionName: "project-name" }}
-            className={`block ${type.heading.s} text-foreground/55`}
-          >
-            Untitled Project
-          </motion.span>
           <AnimatePresence mode="wait">
             <motion.h1
               key={firstName ?? "anon"}
@@ -137,30 +113,6 @@ export function WelcomePhase({ onAdvance }: Props) {
             Tell me in your own words. I&apos;ll handle the technical parts.
           </p>
         </div>
-
-        {/* First-visit ask for name — small, friendly, dismissable by just typing the prompt instead */}
-        {mounted && !firstName && (
-          <motion.form
-            onSubmit={handleNameSubmit}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1, transition: { delay: 0.5, duration: STANDARD_S, ease: EASE_CINEMATIC } }}
-            className="pointer-events-auto flex items-center gap-2 px-4 py-2 bg-card/80 backdrop-blur rounded-full border border-border"
-          >
-            <span className="text-sm text-muted-foreground">What should I call you?</span>
-            <input
-              name="name"
-              autoComplete="given-name"
-              placeholder="First name"
-              className="bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 focus:outline-none w-32"
-            />
-            <button
-              type="submit"
-              className={`${interactions.link} ${type.label} text-primary`}
-            >
-              Save
-            </button>
-          </motion.form>
-        )}
 
         <div className="w-full max-w-2xl pointer-events-auto">
           <PromptInputBox

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -190,7 +191,18 @@ export function DraftPhase({ error, done }: Props) {
   }, [error]);
 
   return (
-    <main className="flex-1 flex flex-col items-center pt-10 pb-12 px-4 max-w-3xl mx-auto w-full overflow-y-auto">
+    <main className="relative flex-1 flex flex-col items-center pt-10 pb-12 px-4 w-full overflow-y-auto">
+      {/* Ambient brand photo — ripple-cream evokes the calm of waiting
+          while the engine builds. Dimmed so the foreground reads cleanly. */}
+      <Image
+        src="/brand/ripple-cream.png"
+        alt=""
+        fill
+        sizes="100vw"
+        priority={false}
+        className="pointer-events-none object-cover opacity-15 dark:opacity-10"
+      />
+
       {/* Cinematic entrance stagger: droplet → headline → subhead. */}
       <motion.section
         initial="hidden"

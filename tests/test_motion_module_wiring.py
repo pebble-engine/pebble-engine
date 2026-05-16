@@ -106,7 +106,6 @@ def test_phase_file_imports_from_motion_module(phase_file):
 
 PROJECT_NAME_LAYOUT_ID_FILES = [
     REPO_ROOT / "ui" / "v3" / "components" / "top-nav.tsx",
-    REPO_ROOT / "ui" / "v3" / "components" / "phases" / "welcome-phase.tsx",
 ]
 
 
@@ -114,10 +113,11 @@ PROJECT_NAME_LAYOUT_ID_FILES = [
     "endpoint_file", PROJECT_NAME_LAYOUT_ID_FILES, ids=lambda p: p.name
 )
 def test_project_name_layout_id_is_wired(endpoint_file):
-    """Round 2 cleanup (c): the project-name slot in the TopNav and a small
-    project-name label in the welcome hero must share `layoutId="project-name"`
-    so framer-motion can morph one into the other on the welcome → workspace
-    transition. Both endpoints must be present or the morph silently breaks."""
+    """The project-name slot in the TopNav declares `layoutId="project-name"`
+    so framer-motion can morph it into place when arriving from any future
+    surface that mounts a peer with the same id. The welcome hero used to
+    carry the source kicker but it was removed at Marc's request — the
+    morph is now graceful (no source = no morph; destination just appears)."""
     src = endpoint_file.read_text(encoding="utf-8")
     assert re.search(
         r'layoutId\s*=\s*["\']project-name["\']',
