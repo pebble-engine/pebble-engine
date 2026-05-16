@@ -1646,6 +1646,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
                 from pebble.server.forms import run_get_webhook_config
                 run_get_webhook_config(self, slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
+                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
+                from pebble.server.forms import run_get_autoresponder_config
+                run_get_autoresponder_config(self, slug)
             elif self.path.startswith("/api/projects/") and "/inbox" in self.path:
                 self._handle_inbox_get()
             elif self.path.startswith("/api/projects/") and self.path.endswith("/analytics"):
@@ -1726,6 +1730,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
                 from pebble.server.forms import run_set_webhook_config
                 run_set_webhook_config(self, slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
+                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
+                from pebble.server.forms import run_set_autoresponder_config
+                run_set_autoresponder_config(self, slug)
             else:
                 self.send_response(404); self.end_headers()
         except Exception as exc:
@@ -1744,6 +1752,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
                 from pebble.server.forms import run_delete_webhook_config
                 run_delete_webhook_config(self, slug)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
+                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
+                from pebble.server.forms import run_delete_autoresponder_config
+                run_delete_autoresponder_config(self, slug)
             elif self.path.startswith("/api/projects/") and "/inbox/" in self.path:
                 self._handle_inbox_delete()
             elif self.path.startswith("/api/projects/"):

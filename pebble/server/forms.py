@@ -36,7 +36,7 @@ from pebble.forms import (
     save_submission,
     update_submission,
 )
-from pebble import forms_webhook
+from pebble import forms_autoresponder, forms_webhook
 from pebble.log import log
 from pebble.security import (
     client_ip as _client_ip,
@@ -113,22 +113,21 @@ def run_submit(handler, slug: str) -> None:
     # the inbox id but knowing the submission was accepted is enough.
     handler._json(200, {"ok": True, "id": rec.id})
 
-    # Outbound webhook (fire-and-forget). Runs AFTER we've responded to
-    # the form submitter so the visitor's experience never waits on a
-    # third-party endpoint. The deliver() call has its own try/except
-    # so an error here cannot crash the response.
-    _fire_webhook_async(slug, rec)
+    # Fire-and-forget side effects (webhook + autoresponder). Runs
+    # AFTER we've responded to the form submitter so the visitor's
+    # experience never waits on a third-party endpoint. Both deliver
+    # functions swallow their own exceptions so the response is safe.
+    _fire_async_followups(slug, rec)
 
 
-def _fire_webhook_async(slug: str, rec) -> None:
-    """Spawn a daemon thread to deliver the outbound webhook. We don't
-    use an event loop / executor because the engine is sync HTTP and
-    a single short-lived thread per submission has lower overhead than
-    sharing a pool — webhook deliveries are rare events.
+def _fire_async_followups(slug: str, rec) -> None:
+    """Spawn a daemon thread that runs the configured outbound side
+    effects: webhook delivery + visitor autoresponse email.
 
-    The submission payload echoes the public-shape fields the visitor
-    typed; ip_hash and other internal fields are NOT included (the
-    inbox record already strips them via to_public_dict)."""
+    A single thread covers both so we don't pay 2x thread-spawn cost
+    on every form submission. The payload shape is the public-form
+    record — id, received_at, fields, user_agent, referrer; ip_hash
+    and other internal fields are deliberately omitted."""
     payload = {
         "id":          rec.id,
         "received_at": rec.received_at,
@@ -141,7 +140,11 @@ def _fire_webhook_async(slug: str, rec) -> None:
             forms_webhook.deliver(slug, payload)
         except Exception as e:  # pragma: no cover — deliver() already swallows
             log.exception("webhook thread crashed for %s: %s", slug, e)
-    threading.Thread(target=_run, daemon=True, name=f"webhook-{slug}").start()
+        try:
+            forms_autoresponder.send_autoresponse(slug, payload)
+        except Exception as e:  # pragma: no cover — send_autoresponse already swallows
+            log.exception("autoresponder thread crashed for %s: %s", slug, e)
+    threading.Thread(target=_run, daemon=True, name=f"forms-followup-{slug}").start()
 
 
 # --------- GET /api/projects/<slug>/inbox -------------------------------
@@ -247,3 +250,60 @@ def run_delete_webhook_config(handler, slug: str) -> None:
         return
     removed = forms_webhook.clear_webhook_config(slug)
     handler._json(200, {"slug": slug, "removed": removed, "configured": False})
+
+
+# --------- /api/projects/<slug>/forms/autoresponder --------------------
+
+def run_get_autoresponder_config(handler, slug: str) -> None:
+    """GET — return the current autoresponder config (or defaults)."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    config = forms_autoresponder.get_config(slug)
+    handler._json(200, {"slug": slug, "autoresponder": config.to_dict()})
+
+
+def run_set_autoresponder_config(handler, slug: str) -> None:
+    """POST — update the autoresponder. Body fields:
+        enabled:     bool (required)
+        subject?:    str
+        body?:       str
+        reply_field?: str (identifier — defaults to "email")
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    body = _read_body(handler, max_bytes=16 * 1024) or {}
+    if "enabled" not in body or not isinstance(body["enabled"], bool):
+        handler._json(400, {"error": "'enabled' (bool) is required"}); return
+    subject = body.get("subject")
+    body_text = body.get("body")
+    reply_field = body.get("reply_field")
+    # Type-check the optional fields so a JSON 42 doesn't make it into
+    # the persisted config.
+    for name, val in (("subject", subject), ("body", body_text), ("reply_field", reply_field)):
+        if val is not None and not isinstance(val, str):
+            handler._json(400, {"error": f"'{name}' must be a string when provided"}); return
+    try:
+        config = forms_autoresponder.set_config(
+            slug,
+            enabled=body["enabled"],
+            subject=subject,
+            body=body_text,
+            reply_field=reply_field,
+        )
+    except ValueError as e:
+        handler._json(400, {"error": str(e)}); return
+    handler._json(200, {"slug": slug, "autoresponder": config.to_dict()})
+
+
+def run_delete_autoresponder_config(handler, slug: str) -> None:
+    """DELETE — remove the autoresponder config (reverts to defaults/off)."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    removed = forms_autoresponder.clear_config(slug)
+    handler._json(200, {"slug": slug, "removed": removed})

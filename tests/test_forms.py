@@ -471,3 +471,177 @@ def test_submit_works_when_no_webhook_configured(engine_server, monkeypatch):
     import time as _time
     _time.sleep(0.15)
     assert called["yes"] is False
+
+
+# ---------------------------------------------------------------------------
+# Autoresponder config — Track 5 (2026-05-16)
+# ---------------------------------------------------------------------------
+
+def test_autoresponder_starts_with_defaults(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar1@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    status, body = _request(
+        "GET", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["autoresponder"]["enabled"] is False
+    assert body["autoresponder"]["subject"]  # default subject populated
+    assert body["autoresponder"]["reply_field"] == "email"
+
+
+def test_autoresponder_enable_and_save_custom(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar2@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    status, body = _request(
+        "POST", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        body={
+            "enabled": True,
+            "subject": "Thanks for reaching out, {{ name }}",
+            "body":    "Hi {{ name }} — we got it.",
+        },
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["autoresponder"]["enabled"] is True
+    assert body["autoresponder"]["subject"] == "Thanks for reaching out, {{ name }}"
+
+
+def test_autoresponder_post_requires_enabled_bool(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar3@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    status, body = _request(
+        "POST", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        body={"subject": "no enabled flag"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+    assert "enabled" in body["error"].lower()
+
+
+def test_autoresponder_rejects_invalid_types(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar4@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    status, body = _request(
+        "POST", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        body={"enabled": True, "subject": 42},  # subject must be string
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+
+
+def test_autoresponder_delete(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar5@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+             body={"enabled": True}, headers={"Cookie": cookie})
+    status, body = _request(
+        "DELETE", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["removed"] is True
+    _, body2 = _request(
+        "GET", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        headers={"Cookie": cookie},
+    )
+    # After delete, config reverts to defaults (enabled=false)
+    assert body2["autoresponder"]["enabled"] is False
+
+
+def test_autoresponder_requires_auth(engine_server):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar6@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    for verb, body in (("GET", None), ("POST", {"enabled": True}), ("DELETE", None)):
+        status, _ = _request(verb, engine_server["base"],
+                             "/api/projects/ar-co/forms/autoresponder",
+                             body=body)
+        assert status == 401, f"{verb} should require auth, got {status}"
+
+
+def test_autoresponder_blocks_other_users(engine_server):
+    out = engine_server["output"]
+    cookie_a, uid_a = _signup_get_cookie_and_id(
+        engine_server["base"], "ar-a@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid_a)
+    cookie_b, _ = _signup_get_cookie_and_id(
+        engine_server["base"], "ar-b@example.com", "valid-password")
+    status, _ = _request(
+        "GET", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+        headers={"Cookie": cookie_b},
+    )
+    assert status == 403
+
+
+def test_submit_fires_autoresponse_when_enabled(engine_server, monkeypatch):
+    """End-to-end: enable autoresponder, submit a form with an email
+    field, observe send_async called with the rendered message."""
+    import time as _time
+    from concurrent.futures import Future
+    from pebble import forms_autoresponder as ar, forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+    ar._reset_rate_limiter_for_tests()
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "ar7@example.com", "valid-password")
+    _seed_project(out, "ar-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/ar-co/forms/autoresponder",
+             body={"enabled": True, "subject": "Thanks {{ name }}!",
+                   "body": "Hi {{ name }}, we got your note."},
+             headers={"Cookie": cookie})
+
+    captured = {}
+    def fake_send(message, *_a, **_k):
+        captured["to"] = message.to
+        captured["subject"] = message.subject
+        captured["text"] = message.text
+        f: Future = Future()
+        f.set_result({"ok": True, "provider": "fake", "id": "x"})
+        return f
+    monkeypatch.setattr("pebble.forms_autoresponder.send_async", fake_send)
+
+    _request("POST", engine_server["base"], "/api/forms/ar-co",
+             {"name": "Marc", "email": "marc@example.com", "message": "Hi"})
+
+    for _ in range(20):
+        if captured:
+            break
+        _time.sleep(0.05)
+    assert captured.get("to") == "marc@example.com"
+    assert captured["subject"] == "Thanks Marc!"
+    assert "Hi Marc" in captured["text"]
+
+
+def test_submit_no_autoresponse_when_disabled(engine_server, monkeypatch):
+    """Default config is disabled — no email should fire."""
+    import time as _time
+    from pebble import forms_autoresponder as ar, forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+    ar._reset_rate_limiter_for_tests()
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+
+    out = engine_server["output"]
+    _seed_project(out, "ar-co")
+    called = {"yes": False}
+    monkeypatch.setattr("pebble.forms_autoresponder.send_async",
+                        lambda *_a, **_k: called.update({"yes": True}))
+    _request("POST", engine_server["base"], "/api/forms/ar-co",
+             {"name": "Bob", "email": "bob@example.com"})
+    _time.sleep(0.15)
+    assert called["yes"] is False
