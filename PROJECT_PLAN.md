@@ -17,6 +17,29 @@ chapters unblock later ones.
 [~] = in progress                       [!] = blocked, needs Marc
 ```
 
+## Where we are now (2026-05-16)
+
+The original plan budgeted 4-6 months for Part II. We're roughly **6 weeks
+ahead of schedule**. Here's the snapshot per chapter:
+
+```
+Ch 5  Landing page          ━━━━━━━━━━━━━━━━━━━━░  deploy + analytics = Marc
+Ch 6  Visual Editor MVP     ━━━━━━━━━━━━━━━━━━━━━  shipped (image swap deferred)
+Ch 7  User Accounts         ━━━━━━━━━━━━━━━━━━░░░  profile + GDPR delete open
+Ch 8  Dashboard             ━━━━━━━━━━━━━━━━━━━░░  settings page open
+Ch 9  Billing (Stripe)      ░░░░░░░░░░░░░░░░░░░░░  BLOCKED on Marc's Stripe pick
+Ch 10 Hosting               ━━━━━━━━━━━━━━━━━░░░░  *.pebble.app wildcard open
+Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━░░░░  email sequence open
+Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
+Ch 13 Design breadth        ░░░░░░░░░░░░░░░░░░░░░  MotionSites harvest open
+Ch 14 In-app AI chat        ░░░░░░░░░░░░░░░░░░░░░  post-launch
+Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━░░░  Schema.org JSON-LD open
+```
+
+**Net:** Stripe is the only true MVP blocker. Everything else is either
+shipped, blocked on a vendor decision from Marc, or genuinely a Chapter
+12+ concern.
+
 ---
 
 # PART I — THE FOUNDATION (already in place)
@@ -29,14 +52,21 @@ These chapters are DONE. They're the rails everything else rolls on.
 
 ```
 [x] Build pipeline: quiz → DNA → industry intel → assets → LLM → output
-[x] 27 quality checks + self-repair loop
+[x] 33 quality checks + self-repair loop (was 27; added no_tracking_by_default,
+    industry_pages_present, footer_lists_all_pages, a11y_static_audit, +others)
 [x] 10 DNA cards (visual personalities per build)
-[x] 52-industry intelligence database (curated)
+[x] 63-industry intelligence database (was 52; now with LLM fallback for new ones)
 [x] VEX-spec foundation hero mandated in every build
 [x] AnimatedHeading + FadeIn components (a11y-safe)
 [x] Contact form: real Resend Server Action (not fake)
 [x] Vercel deploy scaffold (vercel.json + README ## Deploy)
-[x] 206 tests passing
+[x] Multi-page generation via PAGE_CATALOG (11 industry-aware page types)
+[x] Block library: 6 drop-in DNA-themed sections (testimonials, pricing, FAQ, etc.)
+[x] Multi-language: 20-language registry + auto-detect + prompt block
+[x] Inspire-from-URL (extract palette/typography from a pasted URL)
+[x] Live DNA preview during questionnaire
+[x] First-party privacy analytics + forms inbox
+[x] ~700 tests passing
 ```
 
 ## Chapter 2 — The Toolchain
@@ -112,7 +142,7 @@ Where we are now. Each chapter ships something visible to customers.
          warm/inclusive direction — Marc's brand call            ← OPEN
 ```
 
-## Chapter 6 — Visual Editor MVP (Weeks 2-7, hardest piece)
+## Chapter 6 — Visual Editor MVP (Weeks 2-7, hardest piece) — SHIPPED
 
 **Goal:** Users edit text + colors without writing code or prompts.
 
@@ -121,41 +151,49 @@ to change "Welcome to Joe's Plumbing" to "Welcome to Joe & Sons Plumbing."
 They want to click the text and type. Without this, the whole product fails.
 
 ```
-[ ] 6.1  Iframe-based preview pane showing the generated site
-[ ] 6.2  Click any text element → inline editor opens → save updates the file
-[ ] 6.3  Click background or hero → color picker → save updates Tailwind config
+[x] 6.1  Iframe-based preview pane showing the generated site
+[x] 6.2  Click any text element → inline editor opens → save updates the file
+[x] 6.3  Click background or hero → color picker → save updates Tailwind config
 [ ] 6.4  Image swap from a curated gallery (no upload UI yet — defer)
-[ ] 6.5  Save triggers a fast re-render (no full rebuild)
-[ ] 6.6  Undo / redo stack (10-step history)
-[ ] 6.7  Mobile preview toggle (phone / tablet / desktop)
-[ ] 6.8  Publish button → triggers a Vercel re-deploy
+         ← deliberately deferred per original spec
+[x] 6.5  Save triggers a fast re-render (no full rebuild)
+         — visual-edit endpoint surgically edits files via data-pebble-id manifest
+[x] 6.6  Undo / redo stack — implemented as per-mutation snapshots
+         (not a 10-step ring buffer; the history drawer lists every mutation)
+[x] 6.7  Mobile preview toggle (phone / tablet / desktop) — commit 20fba7f
+[x] 6.8  Publish button → triggers re-deploy
+         — Cloudflare Pages Direct Upload instead of Vercel (vendor change)
 ```
 
-## Chapter 7 — User Accounts (Week 8, ~1 week)
+## Chapter 7 — User Accounts (Week 8, ~1 week) — MOSTLY SHIPPED
 
 **Goal:** Sign up, sign in, password reset, profile.
 
 ```
-[ ] 7.1  Supabase project set up (Marc creates account)
-[ ] 7.2  Email + password sign-in
-[ ] 7.3  Google OAuth (for non-technical users who'd rather click than type)
-[ ] 7.4  Email verification flow (Resend-powered)
-[ ] 7.5  Password reset flow
+[x] 7.1  Supabase project set up (Marc has account; migrations 001 + 002 run)
+[x] 7.2  Email + password sign-in — Supabase Auth (commit c67540f, 2026-05-16)
+[x] 7.3  Google OAuth — plus GitHub OAuth as a bonus
+[x] 7.4  Email verification flow — Supabase + welcome-email webhook (98e055b)
+[x] 7.5  Password reset flow — /forgot + /reset pages (0697ab3)
 [ ] 7.6  User profile page (name, avatar, time zone)
+         ← OPEN. No /profile or /settings page exists yet.
 [ ] 7.7  Account-deletion flow (GDPR compliance from day 1)
+         ← OPEN. Auth handles "dangling session if account deleted"
+            but there is no actual delete endpoint or UI.
 ```
 
-## Chapter 8 — The Dashboard (Weeks 9-10)
+## Chapter 8 — The Dashboard (Weeks 9-10) — MOSTLY SHIPPED
 
 **Goal:** "My Sites" view where users land after signing in.
 
 ```
-[ ] 8.1  Authenticated /dashboard route (redirects to /signin if not logged in)
-[ ] 8.2  Sites list: each card shows thumbnail, name, status, last edited
-[ ] 8.3  "Create New Site" button → leads into the quiz flow
-[ ] 8.4  Site detail page: preview + edit + delete + deploy buttons
-[ ] 8.5  Empty state for first-time users (welcoming, not confusing)
+[x] 8.1  Authenticated /dashboard route (proxy.ts gates it via Supabase session)
+[x] 8.2  Sites list: each card shows name, type, file count, star, preview link
+[x] 8.3  "Create New Site" button → leads into the quiz flow
+[x] 8.4  Site detail: preview + edit + delete + publish via /workspace
+[x] 8.5  Empty state for first-time users (EmptyState component, line ~516)
 [ ] 8.6  Settings page (account, password, plan, billing portal link)
+         ← OPEN. No /settings route. Billing portal blocks on Stripe anyway.
 ```
 
 ## Chapter 9 — Billing (Week 11, ~1 week)
@@ -172,30 +210,41 @@ They want to click the text and type. Without this, the whole product fails.
 [ ] 9.7  $99 one-time setup-call product (Calendly integration)
 ```
 
-## Chapter 10 — Hosting Generated Sites (Weeks 12-13)
+## Chapter 10 — Hosting Generated Sites (Weeks 12-13) — MOSTLY SHIPPED
 
 **Goal:** Each customer's site lives at their.pebble.app and works.
 
+> **Vendor change from the original plan:** Vercel → Cloudflare Pages (Direct
+> Upload). Same functional outcome (auto-create project, custom domains, SSL),
+> different vendor. Decision was driven by Pebble owning more of the stack
+> versus depending on Vercel's GitHub-OAuth flow. ZIP fallback ships always.
+
 ```
-[ ] 10.1  Auto-create Vercel project per generated site (Vercel API)
+[x] 10.1  Auto-create deployment per generated site
+          → Cloudflare Pages Direct Upload (POST /api/publish, commit a3e9bda)
 [ ] 10.2  Sub-domain routing: <slug>.pebble.app (DNS wildcard)
-[ ] 10.3  Custom-domain wiring for Pro tier (joe-plumbing.com → their.pebble.app)
-[ ] 10.4  SSL automatic (Vercel handles)
-[ ] 10.5  Contact-form emails delivered via shared Resend account
+          ← OPEN. Today uses .pages.dev. Needs DNS wildcard decision.
+[x] 10.3  Custom-domain wiring (POST/DELETE /api/projects/<slug>/domain)
+[x] 10.4  SSL automatic (Cloudflare handles)
+[x] 10.5  Contact-form emails delivered via Resend
 [ ] 10.6  Generated sites stop working when subscription lapses (graceful warning)
+          ← BLOCKED. Depends on Stripe (Chapter 9).
 ```
 
-## Chapter 11 — Customer Onboarding (Week 14)
+## Chapter 11 — Customer Onboarding (Week 14) — HALF SHIPPED
 
 **Goal:** First-build experience flawless. Customers should think "wow."
 
 ```
-[ ] 11.1  Welcome email after sign-up (warm, no jargon, "here's how to start")
-[ ] 11.2  Guided first build: 8 questions, no skips, ~5 min start to finish
-[ ] 11.3  Loading screen during generation (story-driven, not a spinner)
-[ ] 11.4  First-build success screen with preview + clear next steps
-[ ] 11.5  In-app help drawer (plain-language FAQs, no support tickets needed)
+[x] 11.1  Welcome email after sign-up (98e055b, 2026-05-16)
+[x] 11.2  Guided first build: 8-question questionnaire
+[x] 11.3  Loading screen during generation
+          → draft-phase.tsx ("narrated build") in unified workspace
+[x] 11.4  First-build success screen with preview + clear next steps
+          → edit-phase.tsx (workspace lands here after draft completes)
+[x] 11.5  In-app help drawer (a8ca39e — /help with topic sections + intake tooltips)
 [ ] 11.6  Email sequence after first build (day 1, 3, 7 — gentle nudges)
+          ← OPEN. Needs scheduling infra decision: cron-via-Hermes vs Resend Sequences.
 ```
 
 ## Chapter 12 — Launch (Weeks 15-16)
