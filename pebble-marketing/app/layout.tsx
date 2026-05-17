@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces, IBM_Plex_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 
 const inter = Inter({
@@ -43,6 +44,8 @@ export const metadata: Metadata = {
   },
 };
 
+const plausibleDomain = process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -51,6 +54,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <body className={`${inter.className} antialiased`}>
         {children}
+        {plausibleDomain && (
+          <Script
+            defer
+            data-domain={plausibleDomain}
+            src="https://plausible.io/js/script.js"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
