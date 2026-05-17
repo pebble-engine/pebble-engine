@@ -474,6 +474,30 @@ export async function clearAutoresponder(slug: string): Promise<{ slug: string; 
   return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
 }
 
+// ---------- /api/projects/<slug>/forms/attachment-url (Phase 2) ------------
+
+export type AttachmentSignedUrl = {
+  url:        string;
+  expires_in: number;   // seconds
+  path:       string;
+};
+
+/**
+ * Fetch a short-lived signed URL for a stored form attachment. Used
+ * by the inbox detail view when rendering a download link for a
+ * private-bucket Supabase Storage object.
+ *
+ * The path MUST start with the project's slug (the engine validates
+ * this server-side; never trust a path the visitor wrote into the
+ * form to point at an object outside the project).
+ */
+export async function fetchAttachmentSignedUrl(slug: string, path: string): Promise<AttachmentSignedUrl> {
+  return postJSON(
+    `/api/projects/${encodeURIComponent(slug)}/forms/attachment-url`,
+    { path },
+  );
+}
+
 // ---------- /api/account/delete (GDPR — Ch 7.7) ---------------------------
 
 export type AccountDeleteResponse = {

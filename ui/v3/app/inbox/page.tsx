@@ -9,6 +9,7 @@ import { TopNav } from "@/components/top-nav";
 import { InboxSettings } from "@/components/inbox-settings";
 import {
   fetchInbox,
+  fetchAttachmentSignedUrl,
   markSubmissionRead,
   deleteSubmission,
   type Submission,
@@ -159,7 +160,9 @@ function InboxForSlug({ slug }: { slug: string }) {
                     <dt className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                       {k.replace(/_/g, " ")}
                     </dt>
-                    <dd className="mt-1 text-foreground whitespace-pre-wrap break-words">{v}</dd>
+                    <dd className="mt-1 text-foreground whitespace-pre-wrap break-words">
+                      <FieldValue slug={slug} raw={String(v)} />
+                    </dd>
                   </div>
                 ))}
               </dl>
@@ -177,6 +180,85 @@ function InboxForSlug({ slug }: { slug: string }) {
         )}
       </main>
     </div>
+  );
+}
+
+/**
+ * FieldValue — render one submission field's value. Most fields are
+ * plain text; a value that looks like a Supabase Storage URL or a
+ * stored-attachment path gets a "Download attachment" button that
+ * fetches a short-lived signed URL on click (the bucket is private).
+ *
+ * Detection rules (deliberately conservative):
+ *   1. Starts with `https://<host>.supabase.co/storage/v1/object/`,
+ *      contains `/<slug>/`, looks like a Supabase Storage URL.
+ *   2. Starts with `<slug>/` and ends in a known file extension —
+ *      treated as a bare object path (the upload endpoint's response
+ *      shape).
+ *
+ * If neither pattern matches, render as plain text.
+ */
+function FieldValue({ slug, raw }: { slug: string; raw: string }) {
+  const value = (raw || "").trim();
+
+  // Path-shape: "<slug>/<nonce>/<filename.ext>"
+  const looksLikePath =
+    value.startsWith(`${slug}/`) &&
+    /\.(jpe?g|png|gif|webp|heic|heif|pdf|txt|docx?|md)$/i.test(value) &&
+    !value.includes("\n") &&
+    value.length < 512;
+
+  // URL-shape: a public Supabase Storage URL pointing at the same slug.
+  const urlMatch = !looksLikePath &&
+    /^https:\/\/[a-z0-9-]+\.supabase\.co\/storage\/v1\/object\/(public|sign)\/[^/]+\//i.test(value) &&
+    value.includes(`/${slug}/`);
+
+  const path = looksLikePath
+    ? value
+    : urlMatch
+    ? value.substring(value.indexOf(`/${slug}/`) + 1)  // strip everything up to and including "/"
+    : null;
+
+  if (!path) {
+    return <>{raw}</>;
+  }
+
+  const filename = path.split("/").pop() || path;
+  return <AttachmentLink slug={slug} path={path} label={filename} />;
+}
+
+function AttachmentLink({ slug, path, label }: { slug: string; path: string; label: string }) {
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function openAttachment() {
+    setOpening(true);
+    setError(null);
+    try {
+      const { url } = await fetchAttachmentSignedUrl(slug, path);
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setOpening(false);
+    }
+  }
+
+  return (
+    <span className="inline-flex flex-col items-start gap-1">
+      <button
+        onClick={openAttachment}
+        disabled={opening}
+        className="inline-flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50 transition-colors"
+        title={path}
+      >
+        <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2}>
+          <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        {opening ? "Opening…" : `Download ${label}`}
+      </button>
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </span>
   );
 }
 

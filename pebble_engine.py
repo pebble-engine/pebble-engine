@@ -1733,6 +1733,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/account/delete":
                 from pebble.server.account import run_delete_account
                 run_delete_account(self)
+            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/attachment-url"):
+                slug = self.path[len("/api/projects/"):-len("/forms/attachment-url")]
+                from pebble.server.forms import run_get_attachment_signed_url
+                run_get_attachment_signed_url(self, slug)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
                 slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
                 from pebble.server.forms import run_set_webhook_config

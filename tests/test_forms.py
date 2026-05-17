@@ -874,6 +874,134 @@ def test_upload_endpoint_refuses_mime_spoof_end_to_end(engine_server, monkeypatc
     assert "magic-byte" in body["error"].lower() or "match" in body["error"].lower()
 
 
+# ---------------------------------------------------------------------------
+# Attachment signed URL — Track 13 (2026-05-17)
+# ---------------------------------------------------------------------------
+
+def test_attachment_url_requires_auth(engine_server):
+    out = engine_server["output"]
+    _seed_project(out, "att-co")
+    status, _ = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "att-co/abc/file.pdf"},
+    )
+    assert status == 401
+
+
+def test_attachment_url_requires_path_in_body(engine_server, monkeypatch):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "att1@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid)
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake")
+    status, body = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={},  # no path
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+    assert "path" in body["error"].lower()
+
+
+def test_attachment_url_rejects_cross_project_path(engine_server, monkeypatch):
+    """Owner of att-co tries to mint a URL for OTHER-co's attachments.
+    The slug-prefix check refuses — prevents one user seeing another's
+    private files via a guessed URL."""
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "att2@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid)
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake")
+    status, body = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "other-co/abc/snitched.pdf"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 403
+
+
+def test_attachment_url_rejects_path_traversal(engine_server, monkeypatch):
+    """`..` in path should be rejected even if it happens to start
+    with the owner's slug."""
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "att3@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid)
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake")
+    status, body = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "att-co/../other-co/snitched.pdf"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 400
+
+
+def test_attachment_url_503_when_storage_not_configured(engine_server, monkeypatch):
+    monkeypatch.delenv("PEBBLE_SUPABASE_URL", raising=False)
+    monkeypatch.delenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "att4@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid)
+    status, _ = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "att-co/abc/file.pdf"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 503
+
+
+def test_attachment_url_happy_path(engine_server, monkeypatch):
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "att5@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid)
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake")
+    monkeypatch.setattr(
+        "pebble.storage.create_signed_url",
+        lambda path, **kw: f"https://proj.supabase.co/signed/{path}?token=tok",
+    )
+    status, body = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "att-co/abc123/photo.jpg"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    assert body["url"].startswith("https://proj.supabase.co/signed/")
+    assert body["expires_in"] == 300
+    assert body["path"] == "att-co/abc123/photo.jpg"
+
+
+def test_attachment_url_blocks_non_owner(engine_server, monkeypatch):
+    """A different signed-in user can't mint URLs for someone else's
+    project even if they pass a correct-looking path."""
+    out = engine_server["output"]
+    cookie_a, uid_a = _signup_get_cookie_and_id(
+        engine_server["base"], "owner-a@example.com", "valid-password")
+    _seed_project(out, "att-co", owner_id=uid_a)
+    cookie_b, _ = _signup_get_cookie_and_id(
+        engine_server["base"], "owner-b@example.com", "valid-password")
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake")
+    status, _ = _request(
+        "POST", engine_server["base"],
+        "/api/projects/att-co/forms/attachment-url",
+        body={"path": "att-co/abc/file.pdf"},
+        headers={"Cookie": cookie_b},
+    )
+    assert status == 403
+
+
 def test_upload_endpoint_enforces_per_project_quota(engine_server, monkeypatch):
     """Rotated-IP defense: the per-IP limiter caps any single attacker,
     but the per-project quota bounds total uploads even when each

@@ -500,3 +500,61 @@ def run_upload_attachment(handler, slug: str) -> None:
         "url":    result.public_url,
         "bucket": result.bucket,
     })
+
+
+# --------- POST /api/projects/<slug>/forms/attachment-url ----------------
+
+def run_get_attachment_signed_url(handler, slug: str) -> None:
+    """Owner-only signed-URL minter for a stored attachment.
+
+    Body: ``{ "path": "<slug>/<nonce>/<filename>" }``
+    Returns: ``{ "url": "<signed url>", "expires_in": 300 }``
+
+    The bucket is private; visitors can upload but only the project
+    owner gets a download URL. The path MUST start with the URL's
+    slug to prevent owners of one project from minting URLs for
+    objects in another project's namespace.
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+
+    if not storage_is_configured():
+        handler._json(503, {"error": "Storage is not configured"}); return
+
+    body = _read_body(handler, max_bytes=4 * 1024) or {}
+    path = body.get("path")
+    if not isinstance(path, str) or not path.strip():
+        handler._json(400, {"error": "'path' (string) is required"}); return
+    path = path.strip()
+
+    # Prevent cross-project access. The upload endpoint puts every
+    # object under `<slug>/<nonce>/<filename>`, so the path MUST
+    # begin with this owner's slug. Reject anything else (including
+    # path-traversal attempts like "../<other-slug>/...").
+    if ".." in path or path.startswith("/") or path.startswith("\\"):
+        handler._json(400, {"error": "invalid path"}); return
+    expected_prefix = f"{slug}/"
+    if not path.startswith(expected_prefix):
+        log.warning(
+            "owner of %s tried to sign URL for path outside their namespace: %s",
+            slug, path[:60],
+        )
+        handler._json(403, {"error": "path does not belong to this project"}); return
+
+    try:
+        from pebble.storage import create_signed_url
+        signed = create_signed_url(path, expires_in_seconds=300)
+    except StorageError as e:
+        log.warning("signed URL minting failed for %s/%s: %s", slug, path, e)
+        handler._json(502, {"error": f"signed URL failed: {e}"}); return
+    except Exception as e:
+        log.exception("signed URL crashed for %s: %s", slug, e)
+        handler._json(500, {"error": "signed URL failed"}); return
+
+    handler._json(200, {
+        "url":        signed,
+        "expires_in": 300,
+        "path":       path,
+    })

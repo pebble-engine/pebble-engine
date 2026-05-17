@@ -86,6 +86,54 @@ def test_settings_panel_calls_documented_endpoints():
     assert "clearAutoresponder" in src
 
 
+# ---- Track 13 wiring: file-upload Phase 2 (inbox attachment display) ----
+
+INBOX_PAGE_FILE = REPO_ROOT / "ui" / "v3" / "app" / "inbox" / "page.tsx"
+
+
+def test_api_exports_fetch_attachment_signed_url():
+    """The function the inbox page calls to convert a stored
+    attachment path into a short-lived download URL."""
+    src = API_TS.read_text(encoding="utf-8")
+    assert re.search(r"export\s+async\s+function\s+fetchAttachmentSignedUrl\b", src), \
+        "api.ts missing fetchAttachmentSignedUrl"
+    # Hits the right endpoint shape.
+    assert "/forms/attachment-url" in src
+    # Sends the path in the body, not the URL.
+    assert re.search(r"path\s*[,}]", src), "must include path in request body"
+
+
+def test_inbox_page_renders_attachment_links():
+    """When a submission field looks like a stored Supabase Storage
+    attachment, the inbox UI must render a Download button (not raw
+    text) that fetches a signed URL on click."""
+    src = INBOX_PAGE_FILE.read_text(encoding="utf-8")
+    assert "fetchAttachmentSignedUrl" in src, \
+        "inbox/page.tsx must import the signed-URL fetcher"
+    # Renders via a sub-component so the detection logic is testable
+    # (and so the JSX stays readable).
+    assert "FieldValue" in src and "AttachmentLink" in src, \
+        "inbox/page.tsx should split rendering into FieldValue + AttachmentLink"
+    # Opens the signed URL in a new tab safely.
+    assert 'noopener' in src and 'noreferrer' in src, \
+        "AttachmentLink should open with noopener+noreferrer"
+
+
+def test_inbox_page_attachment_detection_uses_slug_namespace():
+    """Defense in depth: the client-side detection ONLY treats values
+    as attachments when the path/URL is scoped to the current slug.
+    A raw URL from a different project shouldn't be rendered as a
+    download button."""
+    src = INBOX_PAGE_FILE.read_text(encoding="utf-8")
+    # Detection logic must reference the slug parameter so cross-
+    # project URLs in submitted field values render as plain text,
+    # not buttons.
+    assert "value.startsWith" in src or "startsWith(`${slug}/`)" in src, \
+        "FieldValue should check value.startsWith(`${slug}/`)"
+    assert "includes(`/${slug}/`)" in src, \
+        "URL-shape detection should require the slug in the path"
+
+
 # ---- Track 12 wiring: GDPR account deletion (Ch 7.7) -------------------
 
 def test_api_exports_delete_account():
