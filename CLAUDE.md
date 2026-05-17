@@ -64,7 +64,7 @@ Environment flags that change behavior (see `.env`):
 - `pebble.email` — Resend SDK wrapper (welcome, password reset, form auto-responder).
 - `pebble.security` — rate limiters, project locks, `require_project_owner`, slug validation.
 - `pebble.server.build` — `/api/generate` and `/api/plan` request bodies. Snapshots site/ before overwriting.
-- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star}` + `/api/rollback` + DELETE.
+- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star,claim}` + `/api/rollback` + DELETE. `claim` migrates anon builds onto the caller's user account (cheat-sheet inverted-onboarding pattern).
 - `pebble.server.refine` — `/api/refine`. Two refinement classes:
   - **Deterministic** (`billable: false`): `simpler` (regex palette tone-down), `colors` (rotates 5 brand-safe palettes). No LLM call. Milliseconds.
   - **LLM-backed** (`billable: true`): `friendlier`, `professional`, `booking`. Single focused LLM turn.
@@ -81,7 +81,7 @@ quiz → slug + brief
   → design-system search (BM25 over CSV in skills/ui-ux-pro-max/data)
   → industry intelligence (industries.json → LLM fallback → cache)
   → hero imagery (Pexels photos + Pexels Video API)
-  → Style DNA pick (random one of 10 cards in style_dna.py)
+  → Style DNA pick (industry-weighted via `style_dna.pick_dna_for_brief` — 13 cards with `industry_affinity` 15× boost + `industry_aversion` hard-exclude; pinned `_design_dna_id` overrides)
   → anti-slop audit (CONVERGENCE_FONTS, ACCEPTABLE_DISPLAY_PAIRS, WATCH_STYLES)
   → PROMPT.md assembled from skills/prompt_template.md
   → plan.json emitted alongside brief.json (Pebble Plan = 7-field user-facing summary)
@@ -168,7 +168,7 @@ The current engine is the back-end seed for a much larger app experience describ
 - **Product principle:** "Everything explained. Everything connected. Everything editable later."
 - **Five future modes:** Guided (one Q at a time) · Chat (plain-language edits) · Design (click-to-edit preview) · Setup (domains/hosting/email/payments/SEO) · Learn (jargon explained inline). Today only the Guided questionnaire prototype exists, served by the v3 Next.js frontend at localhost:3000 (proxied to the engine at localhost:8000).
 - **Pebble Plan:** the 7-field user-facing "here's what I'll build" summary now emitted as `plan.json` for every build — see `pebble/plan.py` and the `/api/plan` preview endpoint.
-- **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships.
+- **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships. Each item also declares `dependencies: [<other_id>]` edges so the UI renders the chain (`publish` unlocks after `hosting + pages + seo_basics`); cycles are guarded by `tests/test_plan_setup_dependencies.py`.
 
 ## HTTP API reference (2026-05-17)
 
@@ -195,6 +195,7 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 | GET | `/api/projects/<slug>/analytics` | — | Page-view summary for the customer's generated site (7d window). |
 | POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. Pre-rollback state is also snapshotted (undoable). |
 | POST | `/api/projects/<slug>/star` | `{ starred?: bool }` | Toggle (or set) the `.starred` sentinel file. |
+| POST | `/api/projects/<slug>/claim` | — | Migrate an anonymous build onto the caller's user account (stamps `_user_id` atomically). 401 unauthed, 404 missing, 403 owned-by-other, 200 unowned or self-owned (idempotent). |
 | DELETE | `/api/projects/<slug>` | — | Permanent hard-delete (no trash). Frontend should confirm. |
 | POST | `/api/publish` | `{ slug }` | Deploy to Cloudflare Pages. |
 | GET / POST | `/api/projects/<slug>/domain` | domain JSON | Custom domain management. |
