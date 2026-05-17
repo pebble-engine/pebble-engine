@@ -202,9 +202,21 @@ def good_build(tmp_path: Path) -> Path:
         (page_dir / "page.tsx").write_text(
             f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
         )
+    # Navbar — liquid-glass chip (FOUNDATION — eval `navbar_present` enforces).
+    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "layout" / "Navbar.tsx").write_text(
+        'export function Navbar({ businessName }: { businessName: string }) {\n'
+        '  return (\n'
+        '    <div className="absolute inset-x-0 top-0 z-50 flex items-start px-6 pt-6">\n'
+        '      <nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between text-white">\n'
+        '        <span>{businessName}</span>\n'
+        '      </nav>\n'
+        '    </div>\n'
+        '  );\n'
+        '}'
+    )
     # Footer with sitemap links to every non-foundation page (May 2026
     # multi-page discoverability — eval `footer_lists_all_pages` enforces).
-    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
     (site / "components" / "layout" / "Footer.tsx").write_text(
         'import Link from "next/link";\n'
         'export function Footer() {\n'
@@ -1453,7 +1465,44 @@ def test_email_helper_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 40. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 40. navbar_present — FOUNDATION
+# ---------------------------------------------------------------------------
+
+def test_navbar_present_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.navbar_present(ctx).status == "pass"
+
+
+def test_navbar_present_fails_when_file_missing(good_build):
+    (good_build / "site" / "components" / "layout" / "Navbar.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.navbar_present(ctx)
+    assert result.status == "fail"
+    assert "missing" in result.message.lower()
+
+
+def test_navbar_present_fails_when_no_liquid_glass(good_build):
+    navbar = good_build / "site" / "components" / "layout" / "Navbar.tsx"
+    navbar.write_text(
+        'export function Navbar() {\n'
+        '  return <nav className="bg-black text-white p-4">Nav</nav>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.navbar_present(ctx)
+    assert result.status == "fail"
+    assert "liquid-glass" in result.message.lower()
+
+
+def test_navbar_present_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.navbar_present(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 41. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):

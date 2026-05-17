@@ -62,12 +62,24 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
     )
+    # Navbar — liquid-glass chip (FOUNDATION — eval `navbar_present` enforces).
+    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
+    (site / "components" / "layout" / "Navbar.tsx").write_text(
+        'export function Navbar({ businessName }: { businessName: string }) {\n'
+        '  return (\n'
+        '    <div className="absolute inset-x-0 top-0 z-50">\n'
+        '      <nav className="liquid-glass rounded-xl px-4 py-2 text-white">\n'
+        '        <span>{businessName}</span>\n'
+        '      </nav>\n'
+        '    </div>\n'
+        '  );\n'
+        '}'
+    )
     # Footer with sitemap to every universal extra page (May 2026 multi-page
     # discoverability — eval `footer_lists_all_pages`). The plan emitted
     # below is built from the brief alone, so only the universal extras
     # (faq/privacy/terms) need to appear here — industry-specific pages
     # only show up when industry_intel is supplied to build_pebble_plan.
-    (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
     (site / "components" / "layout" / "Footer.tsx").write_text(
         'import Link from "next/link";\n'
         'export function Footer() {\n'

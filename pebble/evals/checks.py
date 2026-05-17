@@ -3210,6 +3210,51 @@ def email_helper_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 40. navbar_present — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_NAVBAR_LIQUID_GLASS_RE = re.compile(r"liquid-glass")
+
+
+@check_metadata(static_files=("components/layout/Navbar.tsx",))
+def navbar_present(ctx: BuildContext) -> CheckResult:
+    """`components/layout/Navbar.tsx` must exist and use the liquid-glass chip.
+
+    The navbar is the visual signature of every Pebble build. It must live at
+    the canonical path — not inlined into layout.tsx or page.tsx — so the
+    repair loop can patch it independently. The `.liquid-glass` class produces
+    the frosted-glass backdrop that distinguishes the chip from a plain bar.
+
+    A missing Navbar.tsx means the build either has no navigation or baked it
+    into layout.tsx (which the LLM sometimes does under token pressure).
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("navbar_present", "skip", "no site directory")
+
+    navbar = ctx.site_dir / "components" / "layout" / "Navbar.tsx"
+    if not navbar.exists():
+        return CheckResult(
+            "navbar_present", "fail",
+            "components/layout/Navbar.tsx is missing — the navbar must be a "
+            "dedicated component at this path (Code Pattern 2), not inlined into "
+            "layout.tsx or page.tsx",
+        )
+
+    text = navbar.read_text(encoding="utf-8", errors="ignore")
+    if not _NAVBAR_LIQUID_GLASS_RE.search(text):
+        return CheckResult(
+            "navbar_present", "fail",
+            "Navbar.tsx exists but doesn't reference the liquid-glass class — "
+            "the <nav> chip must use .liquid-glass from globals.css (Code Pattern 2)",
+        )
+
+    return CheckResult(
+        "navbar_present", "pass",
+        "Navbar.tsx present with liquid-glass chip pattern",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3240,6 +3285,7 @@ ALL_CHECKS = [
     hero_text_has_legibility_safeguard,
     hero_video_has_poster,
     # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
+    navbar_present,
     contact_form_uses_server_action,
     email_helper_present,
     resend_in_dependencies,
