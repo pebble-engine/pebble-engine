@@ -224,6 +224,7 @@ In `app/layout.tsx`:
 ```tsx
 import {{ Inter }} from "next/font/google";
 import type {{ Metadata }} from "next";
+import {{ Footer }} from "@/components/layout/Footer";
 import "./globals.css";
 
 const inter = Inter({{
@@ -267,6 +268,7 @@ export default function RootLayout({{ children }}: {{ children: React.ReactNode 
       </head>
       <body className={{`${{inter.className}} antialiased`}}>
         {{children}}
+        <Footer />
       </body>
     </html>
   );
