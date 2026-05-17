@@ -5,13 +5,46 @@ No real network calls. All Supabase REST calls are mocked at the
 """
 from __future__ import annotations
 
+import base64
 import io
 import json
-from typing import Any
+from typing import Any, Optional
 
 import pytest
 
 from pebble import auth_admin
+
+
+# ---- JWT helper ----------------------------------------------------------
+
+def _b64url(raw: bytes) -> str:
+    """RFC 7515 base64url — strips trailing '=' padding."""
+    return base64.urlsafe_b64encode(raw).rstrip(b"=").decode("ascii")
+
+
+def _make_jwt(
+    iss: Optional[str] = "https://proj.supabase.co/auth/v1",
+    extra: Optional[dict] = None,
+    *,
+    omit_iss: bool = False,
+    raw_payload: Optional[bytes] = None,
+) -> str:
+    """Build a JWT-shaped string. Signature is a placeholder — auth_admin
+    NEVER verifies the signature locally (that's GoTrue's job server-side);
+    the iss check is defense-in-depth on the routing target, not the
+    cryptography."""
+    header = _b64url(b'{"alg":"HS256","typ":"JWT"}')
+    if raw_payload is not None:
+        payload = _b64url(raw_payload)
+    else:
+        body: dict = {"sub": "11111111-2222-3333-4444-555555555555"}
+        if not omit_iss and iss is not None:
+            body["iss"] = iss
+        if extra:
+            body.update(extra)
+        payload = _b64url(json.dumps(body).encode("utf-8"))
+    sig = _b64url(b"fake-signature-not-verified-locally")
+    return f"{header}.{payload}.{sig}"
 
 
 # ---- Fixture: act as if Supabase env is configured ----------------------
@@ -106,7 +139,7 @@ def test_validate_returns_user_on_success(monkeypatch):
         captured["headers"] = dict(req.headers)
         return _FakeResp(200, user_body)
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
-    user = auth_admin.validate_access_token("eyJhbGciOiJIUzI1NiJ9.fake-jwt")
+    user = auth_admin.validate_access_token(_make_jwt())
     assert user is not None
     assert user["id"] == "11111111-2222-3333-4444-555555555555"
     assert user["email"] == "marc@example.com"
@@ -116,6 +149,95 @@ def test_validate_returns_user_on_success(monkeypatch):
     headers_lower = {k.lower(): v for k, v in captured["headers"].items()}
     assert headers_lower["apikey"] == "anon-key-fake"
     assert headers_lower["authorization"].startswith("Bearer eyJ")
+
+
+# ---- iss claim hardening (NLM round 1 R1 #6) -----------------------------
+#
+# Defense-in-depth: GoTrue already verifies the JWT's signature against
+# OUR project's signing keys, so a JWT minted by a different project
+# would 401 there anyway. The iss check on top catches:
+#  (a) Operator misconfig where PEBBLE_SUPABASE_URL points at the wrong
+#      project — without iss check, a JWT minted for that *wrong* project
+#      would validate cleanly.
+#  (b) Any future scenario where two Supabase projects share enough
+#      signing infrastructure for cross-project JWT validation to succeed.
+
+def test_validate_rejects_when_iss_does_not_match_configured_url(monkeypatch):
+    """A JWT minted for a DIFFERENT Supabase project must be rejected
+    BEFORE we send it to GoTrue. Network never happens — this is a
+    pure local-validation check."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called for mismatched iss")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    token = _make_jwt(iss="https://different-project.supabase.co/auth/v1")
+    assert auth_admin.validate_access_token(token) is None
+
+
+def test_validate_rejects_when_iss_claim_missing(monkeypatch):
+    """A real Supabase JWT always has an iss claim. A token without one
+    is either tampered with or from an upstream we don't recognize."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called when iss missing")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    token = _make_jwt(omit_iss=True)
+    assert auth_admin.validate_access_token(token) is None
+
+
+def test_validate_accepts_jwt_with_matching_iss(monkeypatch):
+    """The happy-path baseline: iss matches the configured URL +
+    /auth/v1 suffix, GoTrue returns the user, we trust it."""
+    monkeypatch.setattr(
+        "urllib.request.urlopen",
+        lambda *_a, **_kw: _FakeResp(200, json.dumps({
+            "id":    "11111111-2222-3333-4444-555555555555",
+            "email": "marc@example.com",
+        }).encode("utf-8")),
+    )
+    token = _make_jwt(iss="https://proj.supabase.co/auth/v1")
+    user = auth_admin.validate_access_token(token)
+    assert user is not None
+    assert user["id"] == "11111111-2222-3333-4444-555555555555"
+
+
+def test_validate_rejects_malformed_jwt_shape(monkeypatch):
+    """Not three dot-separated parts → not a JWT → reject without
+    network call. Existing tests already cover whitespace + empty;
+    this pins the structural check."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called for malformed JWT")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    assert auth_admin.validate_access_token("only.two-parts") is None
+    assert auth_admin.validate_access_token("one-part-no-dots") is None
+    assert auth_admin.validate_access_token("four.parts.are.bad") is None
+
+
+def test_validate_rejects_jwt_with_invalid_base64_payload(monkeypatch):
+    """JWT-shaped but the payload section isn't valid base64url —
+    reject without network call."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called for bad base64")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    assert auth_admin.validate_access_token("header.!!!not-base64!!!.sig") is None
+
+
+def test_validate_rejects_jwt_with_non_json_payload(monkeypatch):
+    """JWT-shaped, payload decodes to bytes, but the bytes aren't JSON."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called for non-JSON payload")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    token = _make_jwt(raw_payload=b"this is not json")
+    assert auth_admin.validate_access_token(token) is None
+
+
+def test_validate_rejects_jwt_payload_that_is_a_list_not_a_dict(monkeypatch):
+    """Defensive — RFC 7519 says JWT claims MUST be a JSON object, but
+    a hostile JWT could legally encode `["iss", "x"]` which json.loads
+    happily returns. .get() would AttributeError on a list."""
+    def must_not_call(*_a, **_kw):
+        raise AssertionError("urlopen should not be called for list payload")
+    monkeypatch.setattr("urllib.request.urlopen", must_not_call)
+    token = _make_jwt(raw_payload=b'["this", "is", "a", "list"]')
+    assert auth_admin.validate_access_token(token) is None
 
 
 def test_validate_returns_none_on_401(monkeypatch):
@@ -142,8 +264,10 @@ def test_validate_raises_on_500(monkeypatch):
         raise urllib.error.HTTPError("x", 500, "Server Error",
                                       None, io.BytesIO(b"{}"))  # type: ignore[arg-type]
     monkeypatch.setattr("urllib.request.urlopen", fake)
+    # Use a JWT with correct iss so the local iss-check passes and the
+    # network mock is allowed to fire (which then raises HTTP 500).
     with pytest.raises(auth_admin.AdminError, match="HTTP 500"):
-        auth_admin.validate_access_token("ey.token")
+        auth_admin.validate_access_token(_make_jwt())
 
 
 def test_validate_raises_on_network_error(monkeypatch):
@@ -152,7 +276,7 @@ def test_validate_raises_on_network_error(monkeypatch):
         raise urllib.error.URLError("DNS failure")
     monkeypatch.setattr("urllib.request.urlopen", fake)
     with pytest.raises(auth_admin.AdminError, match="unreachable"):
-        auth_admin.validate_access_token("ey.token")
+        auth_admin.validate_access_token(_make_jwt())
 
 
 def test_validate_returns_none_when_response_has_no_id(monkeypatch):

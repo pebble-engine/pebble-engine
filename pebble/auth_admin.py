@@ -25,6 +25,8 @@ Project files in output/<slug>/ are NOT auto-cleaned by this module
 """
 from __future__ import annotations
 
+import base64
+import binascii
 import json
 import os
 import urllib.error
@@ -81,6 +83,49 @@ def is_configured() -> bool:
     return bool(_env_url()) and bool(_env_service_role()) and bool(_env_anon())
 
 
+def _expected_iss() -> str:
+    """The `iss` claim every legitimate Supabase JWT for THIS project
+    carries. GoTrue stamps it as ``<project_url>/auth/v1``."""
+    return f"{_env_url()}/auth/v1"
+
+
+def _decode_jwt_claims(token: str) -> Optional[dict]:
+    """Decode the JWT payload claims WITHOUT signature verification.
+
+    We never verify the signature locally — that's GoTrue's job server-
+    side, and we don't have the signing key here. This helper exists
+    so :func:`validate_access_token` can read the ``iss`` claim BEFORE
+    making a network call: a JWT whose iss doesn't match our project
+    gets rejected without ever exposing the token to a potentially-
+    misconfigured upstream.
+
+    Returns the claims dict on success, or ``None`` on any structural
+    error (wrong number of parts, bad base64, bad JSON, non-dict
+    payload). The empty / non-string token cases are caller-checked.
+    """
+    parts = token.split(".")
+    if len(parts) != 3:
+        return None
+    payload_b64 = parts[1]
+    if not payload_b64:
+        return None
+    # base64url decode — pad to a multiple of 4 since JWTs strip '='.
+    padding = "=" * (-len(payload_b64) % 4)
+    try:
+        payload_bytes = base64.urlsafe_b64decode(payload_b64 + padding)
+    except (binascii.Error, ValueError):
+        return None
+    try:
+        claims = json.loads(payload_bytes.decode("utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    # RFC 7519: claims MUST be a JSON object. Defend against a hostile
+    # JWT that encodes `["x"]` or `"string"` or any non-dict.
+    if not isinstance(claims, dict):
+        return None
+    return claims
+
+
 def validate_access_token(
     bearer_token: str,
     *,
@@ -108,6 +153,18 @@ def validate_access_token(
             "Supabase admin not configured. Set PEBBLE_SUPABASE_URL, "
             "PEBBLE_SUPABASE_SERVICE_ROLE_KEY, and PEBBLE_SUPABASE_ANON_KEY."
         )
+
+    # NLM round 1 finding R1 #6 — defense-in-depth iss-claim check.
+    # GoTrue verifies the JWT's signature against OUR project's signing
+    # keys (so a JWT from a different project would 401 there anyway),
+    # but an explicit local iss check catches operator misconfiguration
+    # where PEBBLE_SUPABASE_URL points at the wrong project, AND avoids
+    # exposing a possibly-attacker-controlled token to a possibly-
+    # misconfigured upstream. Reject malformed JWTs (wrong segment count,
+    # bad base64, non-JSON payload, non-dict claims) the same way.
+    claims = _decode_jwt_claims(token)
+    if claims is None or claims.get("iss") != _expected_iss():
+        return None
 
     req = urllib.request.Request(
         f"{_env_url()}/auth/v1/user",
