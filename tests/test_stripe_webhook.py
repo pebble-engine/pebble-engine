@@ -10,8 +10,6 @@ from __future__ import annotations
 import json
 from io import BytesIO
 from typing import Any
-from unittest.mock import MagicMock
-
 import pytest
 import stripe
 
@@ -126,24 +124,35 @@ def _reset_event_counter():
 
 @pytest.fixture
 def verified_event(monkeypatch):
-    """Patch stripe.Webhook.construct_event to return whatever event the
-    test asks for. The patcher is a function so tests can supply different
-    event shapes."""
+    """Bypass stripe.WebhookSignature.verify_header so tests skip real HMAC.
 
-    def _patch(event_dict: dict) -> MagicMock:
-        m = MagicMock(return_value=event_dict)
-        monkeypatch.setattr(stripe.Webhook, "construct_event", m)
-        return m
-    return _patch
+    The implementation (SDK-15.x compat) calls verify_header directly, then
+    json.loads the body — so the event data must live in the FakeHandler body,
+    not in a construct_event return value.
+
+    Usage::
+
+        h = verified_event(_subscription_event(...))
+        stripe_webhook.run_stripe_webhook(h)
+        assert h.status == 200
+    """
+    monkeypatch.setattr(
+        stripe.WebhookSignature, "verify_header", lambda *a, **kw: None
+    )
+
+    def _make_handler(event_dict: dict) -> FakeHandler:
+        return FakeHandler(event_dict)
+
+    return _make_handler
 
 
 @pytest.fixture
 def rejecting_signature(monkeypatch):
-    """Patch construct_event to ALWAYS raise SignatureVerificationError —
+    """Patch verify_header to ALWAYS raise SignatureVerificationError —
     simulates a spoofed/tampered request."""
     def boom(*args, **kwargs):
         raise stripe.error.SignatureVerificationError("bad sig", "raw")
-    monkeypatch.setattr(stripe.Webhook, "construct_event", boom)
+    monkeypatch.setattr(stripe.WebhookSignature, "verify_header", boom)
 
 
 # ---------- config / auth gates --------------------------------------------
@@ -200,7 +209,7 @@ def test_subscription_created_writes_sentinel(
     populated with status, plan, period_end, subscription_id."""
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event(
+    h = verified_event(_subscription_event(
         event_type="customer.subscription.created",
         pebble_user_id="uuid-marc-abc",
         plan="starter",
@@ -208,8 +217,6 @@ def test_subscription_created_writes_sentinel(
         period_end=1893456000,
         subscription_id="sub_starter_one",
     ))
-
-    h = FakeHandler({"placeholder": "real-body-is-bytes"})
     stripe_webhook.run_stripe_webhook(h)
 
     assert h.status == 200
@@ -230,11 +237,10 @@ def test_subscription_created_stamps_customer_id(
     don't want to call Stripe to resolve the customer per portal hit."""
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.created",
         customer_id="cus_marc_real",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     data = json.loads(sentinel.read_text(encoding="utf-8"))
@@ -248,18 +254,16 @@ def test_subscription_updated_overwrites_sentinel(
     from pebble.server import stripe_webhook
 
     # First event: status active
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.created",
         plan="starter", status="active", subscription_id="sub_one",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     # Second event: same user, plan upgraded to pro
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.updated",
         plan="pro", status="active", subscription_id="sub_one",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     data = json.loads(sentinel.read_text(encoding="utf-8"))
@@ -272,12 +276,11 @@ def test_subscription_deleted_marks_canceled(
     """customer.subscription.deleted → status: canceled."""
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event(
+    h = verified_event(_subscription_event(
         event_type="customer.subscription.deleted",
         status="canceled",
         subscription_id="sub_one",
     ))
-    h = FakeHandler({})
     stripe_webhook.run_stripe_webhook(h)
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
@@ -292,8 +295,7 @@ def test_event_without_pebble_user_id_is_200_and_skipped(
     must NOT crash — return 200 so Stripe stops retrying, no write."""
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event(pebble_user_id=None))
-    h = FakeHandler({})
+    h = verified_event(_subscription_event(pebble_user_id=None))
     stripe_webhook.run_stripe_webhook(h)
     assert h.status == 200
     # No file created anywhere — there's no user to attribute it to.
@@ -307,8 +309,7 @@ def test_unknown_event_type_is_200_and_skipped(
     subscribed to. Anything else → 200 + skip so we don't get retried."""
     from pebble.server import stripe_webhook
 
-    verified_event({"id": "evt", "type": "charge.dispute.created", "data": {"object": {}}})
-    h = FakeHandler({})
+    h = verified_event({"id": "evt", "type": "charge.dispute.created", "data": {"object": {}}})
     stripe_webhook.run_stripe_webhook(h)
     assert h.status == 200
     assert list(output_root.glob(".users/*/subscription.json")) == []
@@ -329,8 +330,7 @@ def test_sentinel_never_contains_card_data(
         "id": "pm_test",
         "card": {"last4": "4242", "brand": "visa", "exp_year": 2030, "exp_month": 12},
     }
-    verified_event(event)
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    stripe_webhook.run_stripe_webhook(verified_event(event))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     text = sentinel.read_text(encoding="utf-8")
@@ -349,9 +349,8 @@ def test_does_not_log_card_data(with_secret, output_root, verified_event, caplog
     event["data"]["object"]["default_payment_method"] = {
         "card": {"last4": "4242", "brand": "visa"},
     }
-    verified_event(event)
     caplog.set_level(logging.INFO, logger="pebble")
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    stripe_webhook.run_stripe_webhook(verified_event(event))
     assert "4242" not in caplog.text
 
 
@@ -365,11 +364,10 @@ def test_webhook_dedups_by_event_id(with_secret, output_root, verified_event):
     from pebble.server import stripe_webhook
 
     # First delivery
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_id="evt_pinned", event_created=2_000_000,
         plan="starter", status="active",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     first = json.loads(sentinel.read_text(encoding="utf-8"))
@@ -377,11 +375,10 @@ def test_webhook_dedups_by_event_id(with_secret, output_root, verified_event):
     # Same event.id again — Stripe's retry from a dropped ACK. The body
     # arrives byte-identical so the dedup must trigger before any
     # filesystem write.
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_id="evt_pinned", event_created=2_000_000,
         plan="starter", status="active",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     second = json.loads(sentinel.read_text(encoding="utf-8"))
     # No rewrite — updated_at is exactly preserved.
@@ -396,20 +393,18 @@ def test_webhook_rejects_out_of_order_events(with_secret, output_root, verified_
     from pebble.server import stripe_webhook
 
     # Newer event lands first: Pro subscription created at t=2000
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.created",
         event_id="evt_new", event_created=2000,
         plan="pro", status="active", subscription_id="sub_pro_new",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     # Older event arrives second: Starter cancel at t=1000 (stale)
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.deleted",
         event_id="evt_old", event_created=1000,
         plan="starter", status="canceled", subscription_id="sub_starter_old",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     data = json.loads(sentinel.read_text(encoding="utf-8"))
@@ -424,18 +419,16 @@ def test_webhook_accepts_strictly_newer_events(with_secret, output_root, verifie
     older event first, newer event second — newer should overwrite."""
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_id="evt_a", event_created=1000,
         plan="starter", status="active", subscription_id="sub_same",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_type="customer.subscription.updated",
         event_id="evt_b", event_created=2000,
         plan="pro", status="active", subscription_id="sub_same",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
     data = json.loads(sentinel.read_text(encoding="utf-8"))
@@ -499,11 +492,10 @@ def test_webhook_redacts_subscription_ids_in_multi_sub_log(
     from pebble.server import stripe_webhook
 
     # First event establishes a subscription_id
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_id="evt_one", event_created=1000,
         subscription_id="sub_legit_full_value_AAAA",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     # pebble's logger has propagate=False (see pebble/log.py) which blocks
     # caplog's root handler from seeing emitted records. Restore propagation
@@ -513,11 +505,10 @@ def test_webhook_redacts_subscription_ids_in_multi_sub_log(
     caplog.clear()  # discard the INFO-level applied-event line above
 
     # Second event with a DIFFERENT sub_id — triggers the multi-sub WARN
-    verified_event(_subscription_event(
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
         event_id="evt_two", event_created=2000,
         subscription_id="sub_other_full_value_BBBB",
-    ))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    )))
 
     # The full IDs MUST NOT appear; only the last-4 redaction should.
     assert "sub_legit_full_value_AAAA" not in caplog.text
@@ -547,10 +538,8 @@ def test_webhook_uses_unique_tmp_filenames(with_secret, output_root, verified_ev
     monkeypatch.setattr("pebble.server.stripe_webhook.os.replace", spy_replace)
 
     # Two distinct webhooks for the same user
-    verified_event(_subscription_event(event_id="evt_a", event_created=1000))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
-    verified_event(_subscription_event(event_id="evt_b", event_created=2000))
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(event_id="evt_a", event_created=1000)))
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(event_id="evt_b", event_created=2000)))
 
     assert len(tmp_sources) == 2
     # Both must end in .tmp (still under the atomic-rename pattern)
@@ -567,7 +556,7 @@ def test_webhook_writes_atomically(with_secret, output_root, verified_event, mon
     import os
     from pebble.server import stripe_webhook
 
-    verified_event(_subscription_event())
+    h = verified_event(_subscription_event())
 
     # Capture the real os.replace BEFORE patching, so the spy can call
     # through without recursing into itself (monkeypatch on the module's
@@ -580,7 +569,7 @@ def test_webhook_writes_atomically(with_secret, output_root, verified_event, mon
         return real_replace(src, dst)
 
     monkeypatch.setattr("pebble.server.stripe_webhook.os.replace", spy_replace)
-    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    stripe_webhook.run_stripe_webhook(h)
 
     # Confirm an atomic rename happened with a tmp file source.
     assert len(seen) >= 1, "expected an os.replace call from tmp -> subscription.json"

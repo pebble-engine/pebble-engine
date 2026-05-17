@@ -707,6 +707,8 @@ def test_upload_endpoint_503_when_storage_not_configured(engine_server, monkeypa
     rather than crashing on a missing env var."""
     monkeypatch.delenv("PEBBLE_SUPABASE_URL", raising=False)
     monkeypatch.delenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     out = engine_server["output"]
     _seed_project(out, "up-co")
     status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
@@ -946,6 +948,8 @@ def test_attachment_url_rejects_path_traversal(engine_server, monkeypatch):
 def test_attachment_url_503_when_storage_not_configured(engine_server, monkeypatch):
     monkeypatch.delenv("PEBBLE_SUPABASE_URL", raising=False)
     monkeypatch.delenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     out = engine_server["output"]
     cookie, uid = _signup_get_cookie_and_id(
         engine_server["base"], "att4@example.com", "valid-password")

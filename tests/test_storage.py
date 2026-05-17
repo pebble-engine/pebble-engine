@@ -27,10 +27,19 @@ _PDF_HEADER  = b"%PDF-1.4\n" + b"\x00" * 16
 
 @pytest.fixture(autouse=True)
 def _set_supabase_env(monkeypatch):
-    """Default fixture: act as if Supabase env is configured."""
+    """Default fixture: act as if Supabase env is configured.
+
+    Clears both the prefixed (PEBBLE_SUPABASE_*) and un-prefixed
+    (SUPABASE_*) variants so that delenv() on the prefixed key in
+    individual tests actually makes is_configured() return False —
+    even when the dev machine has SUPABASE_URL in its real environment.
+    """
     monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
     monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "service-role-fake-key")
     monkeypatch.delenv("PEBBLE_SUPABASE_FORM_UPLOADS_BUCKET", raising=False)
+    # Banish un-prefixed fallbacks so tests own the full env.
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
     yield
 
 
