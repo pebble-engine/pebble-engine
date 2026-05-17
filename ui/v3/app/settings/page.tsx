@@ -17,7 +17,7 @@
  * billing' → Not signed in" round trip.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
@@ -58,7 +58,14 @@ function planBadge(sub: SubscriptionState | null): string {
 }
 
 
-export default function SettingsPage() {
+/**
+ * The component is wrapped in `<Suspense>` below because `useSearchParams`
+ * forces dynamic rendering and the Next.js 15 build will refuse to
+ * prerender the page without a Suspense boundary on the consuming
+ * subtree. The fallback intentionally matches the visual outline of the
+ * page so the prerender → hydrate transition has no layout shift.
+ */
+function SettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -433,5 +440,14 @@ export default function SettingsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+
+export default function SettingsPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <SettingsPageContent />
+    </Suspense>
   );
 }
