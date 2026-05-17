@@ -982,6 +982,59 @@ def animation_components_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 19b. client_components_have_directive — FOUNDATION
+# ---------------------------------------------------------------------------
+
+# Components that use React hooks (useState, useEffect, useActionState,
+# useFormStatus) MUST have "use client" at the top. Without it, Next.js App
+# Router throws at render time: "Error: hooks cannot be called from a Server
+# Component". This is the opposite failure mode from layout_is_server_component.
+_CLIENT_DIRECTIVE_RE = re.compile(r"""^\s*['"]use client['"]""", re.MULTILINE)
+
+_REQUIRED_CLIENT_COMPONENTS = (
+    "components/ui/AnimatedHeading.tsx",
+    "components/ui/FadeIn.tsx",
+    "components/forms/ContactForm.tsx",
+)
+
+
+@check_metadata(details_file_key="missing_directive")
+def client_components_have_directive(ctx: BuildContext) -> CheckResult:
+    """Foundation hook-using components must have ``"use client"`` directives.
+
+    ``AnimatedHeading`` and ``FadeIn`` use ``useEffect``/``useState``;
+    ``ContactForm`` uses ``useActionState`` and ``useFormStatus``. Without
+    ``"use client"`` at the top of each file, Next.js App Router throws a
+    runtime error ("hooks cannot be called from a Server Component") — the
+    site is completely broken. This check catches the LLM forgetting the
+    directive on components it otherwise generates correctly.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("client_components_have_directive", "skip", "no site directory")
+
+    missing_directive: list[str] = []
+    for rel in _REQUIRED_CLIENT_COMPONENTS:
+        path = ctx.site_dir / rel
+        if not path.exists():
+            continue  # animation_components_present / contact_form_uses_server_action catch missing files
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if not _CLIENT_DIRECTIVE_RE.search(text):
+            missing_directive.append(rel)
+
+    if not missing_directive:
+        return CheckResult(
+            "client_components_have_directive", "pass",
+            f"all {len(_REQUIRED_CLIENT_COMPONENTS)} hook-using components have \"use client\"",
+        )
+    return CheckResult(
+        "client_components_have_directive", "fail",
+        f"{len(missing_directive)} component(s) missing \"use client\" directive — "
+        f"will crash in Next.js App Router: {', '.join(missing_directive)}",
+        details={"missing_directive": missing_directive},
+    )
+
+
+# ---------------------------------------------------------------------------
 # 20. prefers_reduced_motion_respected — FOUNDATION
 # ---------------------------------------------------------------------------
 
@@ -3512,6 +3565,7 @@ ALL_CHECKS = [
     inter_font_applied,
     liquid_glass_class_present,
     animation_components_present,
+    client_components_have_directive,
     prefers_reduced_motion_respected,
     # FOUNDATION a11y / legibility (May 2026 NLM cross-check addendum)
     animated_heading_screen_reader_safe,

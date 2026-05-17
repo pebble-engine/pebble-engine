@@ -988,6 +988,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] Hero h1 uses `AnimatedHeading` with `\n` line break and `letterSpacing: '-0.04em'`
 - [ ] Subhead in `FadeIn delay={{800}}`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
 - [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
+- [ ] `components/ui/AnimatedHeading.tsx`, `components/ui/FadeIn.tsx`, and `components/forms/ContactForm.tsx` MUST each have `"use client";` at the top — they use React hooks (`useEffect`, `useState`, `useActionState`, `useFormStatus`) which are forbidden in Server Components. Missing this directive causes a Next.js runtime crash. — eval `client_components_have_directive`
 - [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
 - [ ] Every `<input>`, `<textarea>`, `<select>` has EITHER `aria-label="..."` OR an associated `<label htmlFor="...">` — eval `a11y_static_audit`. Icon-only `<button>` and `<a>/<Link>` elements also need `aria-label` or `title`. Placeholder text alone is NOT sufficient.
@@ -1158,6 +1159,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
 | **layout.tsx directive** | **NEVER add `"use client"` to `app/layout.tsx`** — it must be a Server Component. Move client-side logic (context providers, scroll listeners) to a child Client Component and import it from layout. |
+| **Client Component directives** | `AnimatedHeading.tsx`, `FadeIn.tsx`, `ContactForm.tsx` MUST each begin with `"use client";` (no exceptions). Omitting it causes a Next.js crash: "hooks cannot be called from a Server Component". |
 | SSR safety | `normalizeScroll` + `ScrollTrigger.config` inside `useEffect` — NEVER at module level |
 | FAQ accordion | `ScrollTrigger.refresh()` triggered by `transitionend` — NEVER a bare `setTimeout` |
 | **Lenis config** | Only Lenis 1.1.x options: `duration`, `easing`, `smoothWheel`, `syncTouch`, `touchMultiplier`, `infinite`. `smoothTouch` and `overscroll` are REMOVED in 1.1.x. |

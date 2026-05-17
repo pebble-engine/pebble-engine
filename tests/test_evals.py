@@ -1676,7 +1676,41 @@ def test_hero_uses_animated_heading_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 45. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 45. client_components_have_directive — FOUNDATION
+# ---------------------------------------------------------------------------
+
+def test_client_components_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.client_components_have_directive(ctx).status == "pass"
+
+
+def test_client_components_fails_when_animated_heading_missing_directive(good_build):
+    path = good_build / "site" / "components" / "ui" / "AnimatedHeading.tsx"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace('"use client";\n', ""))
+    r = checks.client_components_have_directive(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "AnimatedHeading" in r.message
+
+
+def test_client_components_fails_when_contact_form_missing_directive(good_build):
+    path = good_build / "site" / "components" / "forms" / "ContactForm.tsx"
+    content = path.read_text(encoding="utf-8")
+    path.write_text(content.replace('"use client";\n', ""))
+    r = checks.client_components_have_directive(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "ContactForm" in r.message
+
+
+def test_client_components_skips_when_file_absent(good_build):
+    """Missing file is handled by animation_components_present; skip it here."""
+    (good_build / "site" / "components" / "ui" / "AnimatedHeading.tsx").unlink()
+    r = checks.client_components_have_directive(BuildContext.load(good_build))
+    assert r.status == "pass"  # absent files are skipped
+
+
+# ---------------------------------------------------------------------------
+# 46. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):
