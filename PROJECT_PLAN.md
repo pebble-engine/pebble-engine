@@ -227,11 +227,13 @@ Supabase exclusively).
 **Goal:** Stripe Checkout for $29 Starter and $59 Pro tiers.
 
 ```
-[~] 9.1  Stripe products + prices  → `python -m pebble.stripe_bootstrap` is
-                                     written + idempotent. Marc runs once
-                                     locally (sk_test_ already in .env) to
-                                     mint Pebble Starter + Pro + their
-                                     prices and paste IDs into .env.
+[x] 9.1  Stripe products + prices  → `python -m pebble.stripe_bootstrap` was
+                                     run autonomously in test mode. Pebble
+                                     Starter ($29/mo) + Pebble Pro ($59/mo)
+                                     created in sandbox acct_1TXB0dCMpE5r586W.
+                                     Price IDs landed in .env (gitignored)
+                                     at lines 175-176. Idempotent on re-run
+                                     via metadata['pebble_plan'].
 [x] 9.2  Checkout flow             → POST /api/checkout/create-session
                                      (commit 723ab8c). Subscription mode,
                                      dynamic payment methods (no
@@ -249,12 +251,20 @@ Supabase exclusively).
                                      billing" button (commit 1e1679c) +
                                      GET /api/billing/subscription
                                      "current plan" badge (commit
-                                     2091a0f). Two NLM rounds of
-                                     adversarial review applied: out-of-
-                                     order event dedup, atomic file
-                                     write, path-traversal validation
-                                     on readers, unique tmp filenames
-                                     for concurrent webhook writes.
+                                     2091a0f) + post-checkout sync
+                                     polling (commit ff13424). FOUR NLM
+                                     rounds of adversarial review
+                                     applied: out-of-order event dedup,
+                                     atomic concurrent writes (uuid'd
+                                     tmp filenames), path-traversal
+                                     validation on readers, status
+                                     filter fails-closed for
+                                     incomplete_expired/unpaid/missing-
+                                     status sentinels, log PII
+                                     redaction, whsec_ prefix sanity
+                                     warning. Shared safe_user_id
+                                     helper extracted to pebble.security
+                                     (commit 71e7e7a).
 [ ] 9.5  7-day free trial          → not built. Either add
                                      subscription_data.trial_period_days=7
                                      to checkout, or use Stripe's
