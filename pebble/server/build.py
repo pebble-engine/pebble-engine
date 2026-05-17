@@ -435,6 +435,21 @@ def run_build(handler, generate: bool) -> None:
     files = parse_files(response)
     (out_dir / "llm_response_raw.txt").write_text(response, encoding="utf-8")
 
+    # Truncation guard: if the LLM's response has more <pebble-file>
+    # opens than closes, the last file(s) were cut mid-stream. Parser
+    # is permissive about this (it boundaries off the next opening tag,
+    # not closing) so a 32-open/31-close response yields 32 "files"
+    # with the last one truncated. We don't fail the build — the partial
+    # output is still usable for diagnostics — but we set billable: false
+    # so the user isn't charged for a broken site.
+    truncated_count = pe.detect_truncation(response) if hasattr(pe, "detect_truncation") else 0
+    if truncated_count:
+        log.warning(
+            "LLM response truncated: %d unmatched <pebble-file> opens. "
+            "Build will be flagged non-billable.",
+            truncated_count,
+        )
+
     if not files:
         handler._json(500, {
             "error": "LLM response had no <pebble-file> blocks. Raw response saved to llm_response_raw.txt.",
@@ -482,7 +497,12 @@ def run_build(handler, generate: bool) -> None:
         "elapsed_seconds":  round(elapsed, 1),
         "file_count":       len(written),
         "built_at":         datetime.now().isoformat(),
-        "billable":         True,
+        # Truncated responses produce broken sites — flag non-billable
+        # so the user isn't charged. truncated_count surfaces the
+        # severity (1 = last file cut, 2+ = multiple files cut).
+        "billable":         truncated_count == 0,
+        "truncated":        bool(truncated_count),
+        "truncated_count":  truncated_count,
         "tokens_used":      {"input": cost.input_tokens, "output": cost.output_tokens},
         "estimated_cost_usd": round(cost.estimated_cost_usd, 6),
         "rate_card_used":   cost.rate_card_used,

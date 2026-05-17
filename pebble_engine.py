@@ -1278,6 +1278,32 @@ _DELETE_TAG_RE = re.compile(
 _FILE_BOUNDARY_RE = re.compile(r'<pebble-(?:file\s+path|delete\s+path)="')
 
 
+_PEBBLE_FILE_CLOSE_RE = re.compile(r'</p[a-z]*[\s-]?file>')
+
+
+def detect_truncation(llm_output: str) -> int:
+    """Return the count of unmatched `<pebble-file>` opening tags — i.e.
+    how many files appear to have been cut off mid-stream by the LLM.
+
+    Zero = the response is structurally balanced.
+    Positive = the LLM ran out of output budget mid-write. The build
+    has at least N incomplete file(s); the engine should mark the
+    result `billable: false` so the user isn't charged for a broken
+    site.
+
+    Background: ``parse_files`` keys boundaries off the NEXT opening
+    tag rather than requiring a close, so a truncated response with
+    N opens / N-1 closes still parses N files — the last with a body
+    cut mid-string. This function is the truncation guard the parser
+    intentionally lacks. Counted with the same close-tag-typo regex
+    the parser uses so Gemini's `</peble-file>` / `</pebblefile>`
+    typos don't flag false positives.
+    """
+    opens = len(FILE_OPEN_RE.findall(llm_output))
+    closes = len(_PEBBLE_FILE_CLOSE_RE.findall(llm_output))
+    return max(0, opens - closes)
+
+
 def parse_files(llm_output: str) -> list[tuple[str, str]]:
     """Extract ``<pebble-file path="...">`` blocks from an LLM response.
 
