@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Optional
 
 from pebble.log import log
+from pebble.engagement import log_event as _log_engagement
 from pebble.industry import resolve_industry_intel, research_industry
 from pebble.llm import get_llm_client, LLMError
 from pebble.plan import build_pebble_plan
@@ -555,3 +556,7 @@ def run_build(handler, generate: bool) -> None:
         "screenshots": screenshot_info,
         "repair": repair_info,
     })
+    # Per-user engagement signal (T17). Only fires on successful generation
+    # (above this point any error short-circuits with a non-200 + return).
+    # NEVER pass slug / business_type / industry / DNA — just the event name.
+    _log_engagement(answers.get("_user_id"), "build_completed")

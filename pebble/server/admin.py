@@ -260,3 +260,56 @@ def run_recent_errors(handler) -> None:
         "checked": [p.name for p in candidates if p.exists()],
         "now":     datetime.now(timezone.utc).isoformat(),
     })
+
+
+# --------- GET /api/admin/engagement --------------------------------------
+
+def run_engagement_summary(handler) -> None:
+    """User-engagement bucket summary (T17, 2026-05-17).
+
+    Joins ``pebble.engagement.engagement_summary()`` with the users index
+    so the admin UI shows email + score + activity counts in one shot.
+    Returns ``power`` → ``active`` → ``at_risk`` ordering.
+
+    Response::
+
+        {
+          "users": [
+            {
+              "user_id": "...", "email": "...", "score": "power",
+              "distinct_events": 7, "total_events": 42
+            }
+          ],
+          "count": N,
+          "now": "2026-05-17T..."
+        }
+    """
+    if _require_admin(handler) is None:
+        return
+
+    try:
+        from pebble.engagement import engagement_summary
+    except Exception as e:
+        handler._json(500, {"error": f"engagement module unavailable: {e}"}); return
+
+    # Build the uid → email map the same way run_list_all_projects does.
+    uid_to_email: dict[str, str] = {}
+    users_dir = _output_dir() / ".users"
+    if users_dir.exists():
+        for f in users_dir.glob("*.json"):
+            if f.name == "_email_index.json":
+                continue
+            try:
+                u = json.loads(f.read_text(encoding="utf-8"))
+                uid_to_email[u.get("id", "")] = u.get("email", "")
+            except Exception:
+                continue
+
+    rows = engagement_summary()
+    for row in rows:
+        row["email"] = uid_to_email.get(row["user_id"], "")
+    handler._json(200, {
+        "users":   rows,
+        "count":   len(rows),
+        "now":     datetime.now(timezone.utc).isoformat(),
+    })

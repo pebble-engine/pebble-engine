@@ -27,6 +27,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable, Optional
 
+from pebble.engagement import log_event as _log_engagement
 from pebble.history import snapshot_site
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
@@ -301,7 +302,8 @@ def run_refine(handler) -> None:
     # Auth gate — added in the 2026-05-15 security pass after NLM caught
     # that refine + visual-edit + rollback + history all predated the
     # auth system and let any signed-in user mutate any project by slug.
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
 
     site_dir = _output_dir() / slug / "site"
@@ -351,3 +353,6 @@ def run_refine(handler) -> None:
         "details":          result.get("details", ""),
         "applied_at":       datetime.now(timezone.utc).isoformat(),
     })
+    # Per-user engagement signal (T17). Best-effort — silent on failure.
+    # NEVER pass refinement_id or any user content; only the event name.
+    _log_engagement(caller_uid, "refine_used")

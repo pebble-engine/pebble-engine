@@ -1633,6 +1633,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/admin/errors":
                 from pebble.server.admin import run_recent_errors
                 run_recent_errors(self)
+            elif self.path == "/api/admin/engagement":
+                from pebble.server.admin import run_engagement_summary
+                run_engagement_summary(self)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
                 slug = self.path[len("/api/projects/"):-len("/history")]
                 self._handle_get_history(slug)
