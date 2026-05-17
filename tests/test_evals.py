@@ -1547,6 +1547,43 @@ def test_no_lorem_ipsum_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# 42. inter_font_applied — FOUNDATION
+# ---------------------------------------------------------------------------
+
+def test_inter_font_applied_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.inter_font_applied(ctx).status == "pass"
+
+
+def test_inter_font_applied_fails_when_tailwind_missing_var(good_build):
+    (good_build / "site" / "tailwind.config.ts").write_text(
+        "export default { theme: { extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } } } }"
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.inter_font_applied(ctx)
+    assert result.status == "fail"
+    assert "tailwind.config.ts" in result.message.lower()
+
+
+def test_inter_font_applied_fails_when_globals_css_missing_var(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: Inter, sans-serif; }\n"
+        ".liquid-glass { backdrop-filter: blur(4px); }\n"
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.inter_font_applied(ctx)
+    assert result.status == "fail"
+    assert "globals.css" in result.message.lower()
+
+
+def test_inter_font_applied_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.inter_font_applied(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
 # 43. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 

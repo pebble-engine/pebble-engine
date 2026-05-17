@@ -3313,6 +3313,57 @@ def no_lorem_ipsum(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 42. inter_font_applied — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_FONT_INTER_VAR_RE = re.compile(r"var\(--font-inter\)")
+
+
+@check_metadata(static_files=("tailwind.config.ts", "app/globals.css"))
+def inter_font_applied(ctx: BuildContext) -> CheckResult:
+    """`var(--font-inter)` must appear in both `tailwind.config.ts` and
+    `app/globals.css`.
+
+    Without `tailwind.config.ts` extending `fontFamily.sans`, Tailwind's
+    `font-sans` utility resolves to the system stack, not Inter — every
+    element that relies on the implicit sans default renders wrong.
+
+    Without the `body` rule in `app/globals.css`, the Inter CSS variable
+    from next/font is set but only applies via the `className` on `<html>`;
+    any element outside the class cascade uses the browser default. Both
+    are required by the checklist at line 977-978 of prompt_template.md.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("inter_font_applied", "skip", "no site directory")
+
+    missing: list[str] = []
+
+    tailwind = ctx.site_dir / "tailwind.config.ts"
+    if not tailwind.exists():
+        missing.append("tailwind.config.ts (missing)")
+    elif not _FONT_INTER_VAR_RE.search(tailwind.read_text(encoding="utf-8", errors="ignore")):
+        missing.append("tailwind.config.ts (no var(--font-inter) in fontFamily.sans)")
+
+    css = ctx.site_dir / "app" / "globals.css"
+    if not css.exists():
+        missing.append("app/globals.css (missing)")
+    elif not _FONT_INTER_VAR_RE.search(css.read_text(encoding="utf-8", errors="ignore")):
+        missing.append("app/globals.css (no var(--font-inter) in body rule)")
+
+    if not missing:
+        return CheckResult(
+            "inter_font_applied", "pass",
+            "var(--font-inter) present in tailwind.config.ts + app/globals.css",
+        )
+
+    return CheckResult(
+        "inter_font_applied", "fail",
+        f"Inter CSS variable not wired: {'; '.join(missing)}",
+        details={"missing": missing},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3334,6 +3385,7 @@ ALL_CHECKS = [
     hero_uses_background_video,
     no_dark_overlay_on_hero_video,
     inter_font_global,
+    inter_font_applied,
     liquid_glass_class_present,
     animation_components_present,
     prefers_reduced_motion_respected,

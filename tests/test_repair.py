@@ -492,7 +492,8 @@ export default function P() {
 </pebble-file>
 
 <pebble-file path="app/globals.css">
-body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }
+body { font-family: var(--font-inter), 'Cormorant Garamond', serif; height: 100dvh; }
+.liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
 </pebble-file>
 """
     client = FakeClient(response=canned)
@@ -583,7 +584,8 @@ export default function P() { return <main><h1>Hi</h1><p>(212) 234-9876</p></mai
 </pebble-file>
 
 <pebble-file path="app/globals.css">
-body { font-family: 'Cormorant Garamond', serif; height: 100dvh; }
+body { font-family: var(--font-inter), 'Cormorant Garamond', serif; height: 100dvh; }
+.liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }
 </pebble-file>
 """
     client = SequenceClient([bad_attempt, good_attempt])

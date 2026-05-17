@@ -1,1 +1,1 @@
-export default { theme: { fontFamily: { display: ['Cormorant Garamond', 'serif'] } } }
+export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter', 'sans-serif'], display: ['Cormorant Garamond', 'serif'] } } } }
