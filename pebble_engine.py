@@ -112,60 +112,17 @@ except Exception:
 
 # --------------------------------------------------------------------------
 # ANTI-SLOP AUDIT
+# Extracted to pebble/audit.py — re-exported here so existing `pe.X`
+# accessors in pebble/server/build.py keep working unchanged.
 # --------------------------------------------------------------------------
 
-CONVERGENCE_FONTS = {
-    "inter", "roboto", "poppins", "geist", "plus jakarta sans",
-    "space grotesk", "dm sans",
-}
-ACCEPTABLE_DISPLAY_PAIRS = {
-    "fraunces", "playfair", "instrument serif", "tobias", "migra",
-    "pp editorial", "söhne", "sohne", "national 2", "tiempos",
-    "gt alpina", "boogy brut", "dm serif", "serif",
-}
-WATCH_STYLES = {"neumorphism", "claymorphism", "default cyberpunk"}
-
-
-def audit_design_system(ds_text: str) -> list[tuple[str, str]]:
-    notes: list[tuple[str, str]] = []
-    text = ds_text.lower()
-    heading = _extract_field(ds_text, r"heading[^:\n]*?:\s*([^\n]+)")
-    body = _extract_field(ds_text, r"body[^:\n]*?:\s*([^\n]+)")
-    has_distinctive = any(d in heading.lower() for d in ACCEPTABLE_DISPLAY_PAIRS)
-
-    for font in CONVERGENCE_FONTS:
-        if font in heading.lower():
-            notes.append(("TYPOGRAPHY",
-                f"Heading uses '{heading.strip()}' (contains '{font}'). "
-                f"Swap heading face for Fraunces, Instrument Serif, "
-                f"PP Editorial, Migra, or Tobias."))
-        if font in body.lower() and not has_distinctive:
-            notes.append(("TYPOGRAPHY",
-                f"Body is '{body.strip()}' and heading lacks a distinctive "
-                f"display face. Pair with serif or swap body to Söhne/Mona Sans."))
-
-    if "purple" in text and ("gradient" in text or "to-blue" in text):
-        notes.append(("COLOR",
-            "Purple-to-blue gradient detected -- the most recognizable AI tell. "
-            "Replace with a flat dominant color + sharp accent."))
-
-    for style in WATCH_STYLES:
-        if style in text:
-            notes.append(("STYLE",
-                f"'{style.title()}' in recommendation -- trends slop-adjacent. "
-                "Override unless the direction explicitly calls for it."))
-
-    if "hero + 3 features + cta" in text.replace("-", " "):
-        notes.append(("LAYOUT",
-            "Default 'Hero -> 3 cards -> CTA' pattern. Break it with asymmetric "
-            "grids, full-bleed sections, or numbered lists."))
-
-    return notes
-
-
-def _extract_field(text: str, pattern: str) -> str:
-    m = re.search(pattern, text, re.IGNORECASE)
-    return m.group(1).strip() if m else ""
+from pebble.audit import (  # noqa: E402
+    audit_design_system,
+    CONVERGENCE_FONTS,
+    ACCEPTABLE_DISPLAY_PAIRS,
+    WATCH_STYLES,
+    _extract_field,
+)
 
 
 # --------------------------------------------------------------------------
@@ -674,13 +631,6 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
     return results
 
 
-# --------------------------------------------------------------------------
-# FIGMA — read a Figma file when the user provides a URL + token in .env
-# --------------------------------------------------------------------------
-
-_FIGMA_FILE_RE = re.compile(r"figma\.com/(?:file|design)/([A-Za-z0-9]+)/")
-
-
 def replace_urls_in_site(site_dir: Path, url_map: dict[str, str]) -> int:
     """Replace each (old → new) URL pair in every text file under site_dir.
 
@@ -753,41 +703,10 @@ from pebble.postbuild import (
 
 # --------------------------------------------------------------------------
 # FIGMA — read a Figma file when the user provides a URL + token in .env
+# Extracted to pebble/figma.py; re-exported here for pe.X back-compat.
 # --------------------------------------------------------------------------
 
-def figma_file_summary(figma_url: str) -> Optional[dict]:
-    """Pull a lightweight summary of a Figma file (name, colors, first frames).
-
-    Returns None unless both the URL is valid and FIGMA_ACCESS_TOKEN is set.
-    The summary is meant to be fed to the LLM as additional design context.
-    """
-    if not figma_url:
-        return None
-    token = os.environ.get("FIGMA_ACCESS_TOKEN", "").strip()
-    if not token:
-        return None
-    m = _FIGMA_FILE_RE.search(figma_url)
-    if not m:
-        return None
-    file_id = m.group(1)
-    req = urllib.request.Request(
-        f"https://api.figma.com/v1/files/{file_id}?depth=2",
-        headers={"X-Figma-Token": token, "User-Agent": "Mozilla/5.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read())
-    except Exception as e:
-        log.warning("Figma fetch failed: %s", e)
-        return None
-    summary = {
-        "file_id": file_id,
-        "name": data.get("name", ""),
-        "last_modified": data.get("lastModified", ""),
-        "thumbnail_url": data.get("thumbnailUrl", ""),
-        "pages": [p.get("name", "") for p in data.get("document", {}).get("children", [])][:10],
-    }
-    return summary
+from pebble.figma import figma_file_summary, _FIGMA_FILE_RE  # noqa: E402
 
 
 # --------------------------------------------------------------------------
