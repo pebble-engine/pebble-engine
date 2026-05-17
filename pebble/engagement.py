@@ -30,12 +30,27 @@ Storage layout::
 A user with 10 events of 4 distinct types over the last 30 days bucks as
 "active" (engagement_score). The bucketing is deliberately coarse — we
 want the at-risk signal to be reliable, not precise.
+
+Accepted trade-offs (NLM T17 round 2026-05-17 surfaced, deliberately
+not fixed):
+
+- **No filelock around append.** Concurrent log_event calls for the same
+  user can theoretically interleave bytes within a line. read_user_events
+  silently skips corrupt JSON lines, so the worst case is one lost event,
+  not crash or data leak. A filelock would add a hot-path syscall for
+  marginal benefit; revisit if interleaving becomes observable.
+- **File size unbounded.** A user's total event count is visible via the
+  file size on disk and exposed deliberately by the admin endpoint. Both
+  surfaces are admin/operator-only (filesystem access already requires
+  privilege; the API is gated by PEBBLE_ADMIN_EMAIL). No external visitor
+  can observe these counts. Add rotation when this becomes an ops concern.
 """
 from __future__ import annotations
 
 import json
 import re
 import sys
+from collections import deque
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -70,9 +85,34 @@ _SAFE_USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 # Tight enough that no caller can leak content via the event-name channel.
 _SAFE_EVENT_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
 
+# Windows reserved device names — `CON.jsonl` writes to the console; `NUL`
+# silently discards; etc. Supabase UUIDs (36-char hex) never collide with
+# these (3-4 chars), but the regex was permissive enough that a future
+# caller passing a non-UUID could hit one. Forward-defense per NLM T17
+# round 2026-05-17.
+_WINDOWS_RESERVED = frozenset(
+    {"con", "nul", "aux", "prn"}
+    | {f"com{i}" for i in range(1, 10)}
+    | {f"lpt{i}" for i in range(1, 10)}
+)
+
 
 def _is_safe_user_id(uid: object) -> bool:
-    return isinstance(uid, str) and bool(_SAFE_USER_ID_RE.fullmatch(uid))
+    if not isinstance(uid, str):
+        return False
+    if not _SAFE_USER_ID_RE.fullmatch(uid):
+        return False
+    # Reject Windows reserved device names (case-insensitive).
+    if uid.lower() in _WINDOWS_RESERVED:
+        return False
+    return True
+
+
+def _normalize_user_id(uid: str) -> str:
+    """NTFS is case-insensitive — `UserABC.jsonl` and `userabc.jsonl` share
+    one inode. Lowercase so the filename is 1:1 with the in-memory key
+    across platforms. NLM T17 round 2026-05-17."""
+    return uid.lower()
 
 
 def _is_safe_event_name(name: object) -> bool:
@@ -96,6 +136,7 @@ def log_event(user_id: Optional[str], event_name: str) -> bool:
         return False
     if not _is_safe_event_name(event_name):
         return False
+    uid = _normalize_user_id(user_id)  # type: ignore[arg-type]
 
     row = {
         "event": event_name,
@@ -104,7 +145,7 @@ def log_event(user_id: Optional[str], event_name: str) -> bool:
     storage = _engagement_dir()
     try:
         storage.mkdir(parents=True, exist_ok=True)
-        path = storage / f"{user_id}.jsonl"
+        path = storage / f"{uid}.jsonl"
         with path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(row, separators=(",", ":")) + "\n")
         return True
@@ -116,23 +157,30 @@ def read_user_events(user_id: str, limit: int = 1000) -> list[dict]:
     """Return up to ``limit`` most-recent events for ``user_id``.
 
     Empty list if the user has no log yet (or the id is unsafe).
-    Returned chronologically (oldest first) — slicing keeps the last
-    ``limit`` entries, which are the most recent."""
+    Returned chronologically (oldest first) — last ``limit`` entries.
+
+    NLM T17 round 2026-05-17: streams the file line-by-line into a
+    bounded deque so memory stays constant regardless of file size.
+    The previous read_text-then-slice approach OOM'd on arbitrarily
+    large logs."""
     if not _is_safe_user_id(user_id):
         return []
-    path = _engagement_dir() / f"{user_id}.jsonl"
+    uid = _normalize_user_id(user_id)
+    path = _engagement_dir() / f"{uid}.jsonl"
     if not path.exists():
         return []
+    if limit is None or limit <= 0:
+        limit = 1000
+    tail: deque[str] = deque(maxlen=limit)
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    tail.append(line)
     except OSError:
         return []
-    if limit is not None and limit > 0:
-        lines = lines[-limit:]
     out: list[dict] = []
-    for line in lines:
-        if not line.strip():
-            continue
+    for line in tail:
         try:
             out.append(json.loads(line))
         except json.JSONDecodeError:
@@ -195,7 +243,12 @@ def engagement_summary(window_days: int = 30) -> list[dict]:
 
     Returns ``[{user_id, score, distinct_events, total_events}, ...]``
     sorted power → active → at_risk, then by distinct_events DESC inside
-    each bucket. Admin-only — never expose to non-admins."""
+    each bucket. Admin-only — never expose to non-admins.
+
+    NLM T17 round 2026-05-17: per-user read is capped at 10k events to
+    bound memory across the whole summary. A user with >10k events in
+    30 days bucks as ``power`` regardless of the exact count, so the
+    cap is functionally lossless for the bucketing decision."""
     storage = _engagement_dir()
     if not storage.exists():
         return []

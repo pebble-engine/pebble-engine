@@ -281,6 +281,76 @@ def test_engagement_summary_skips_files_with_unsafe_names(isolated_storage):
 # Privacy regression — content NEVER leaks
 # ---------------------------------------------------------------------------
 
+def test_log_event_rejects_windows_reserved_names(isolated_storage):
+    """NLM round T17 2026-05-17: Windows reserved device names (CON, NUL,
+    AUX, PRN, COM1-9, LPT1-9) map to OS devices on NTFS. `CON.jsonl`
+    writes to the console; `NUL.jsonl` silently discards. Supabase UUIDs
+    don't collide in practice (36 chars vs 3-4) but the regex must
+    forward-defend against any future caller passing a non-UUID."""
+    for name in ("CON", "NUL", "AUX", "PRN", "COM1", "COM9", "LPT1", "LPT9",
+                 "con", "nul", "Con", "NuL"):
+        assert engagement.log_event(name, "build_completed") is False, name
+
+
+def test_log_event_normalizes_user_id_case(isolated_storage):
+    """NLM round T17 2026-05-17: NTFS is case-insensitive but the regex
+    accepted mixed-case. Two callers passing 'UserABC' and 'userabc'
+    would collide on the same .jsonl file. Lowercase before storage so
+    the filename and the key are 1:1 even on case-insensitive FS."""
+    assert engagement.log_event("UserABC", "build_completed") is True
+    assert engagement.log_event("userabc", "refine_used") is True
+    # Both should land in the same file (normalized to lowercase)
+    log_lower = isolated_storage / ".engagement" / "userabc.jsonl"
+    assert log_lower.exists()
+    events = engagement.read_user_events("UserABC")
+    # 2 events across both casings — proves they map to one identity
+    assert len(events) == 2
+
+
+def test_read_user_events_does_not_oom_on_large_file(isolated_storage):
+    """NLM round T17 2026-05-17: read_user_events loaded the entire file
+    into memory before slicing to limit. For a 10MB log, this is wasteful.
+    Verify with a moderately large file that read_user_events stays fast."""
+    storage = isolated_storage / ".engagement"
+    storage.mkdir()
+    # Write 10,000 events directly — ~700KB. Reader must return last 100
+    # without loading them all into a single list.
+    from datetime import datetime, timezone as _tz
+    ts = datetime.now(_tz.utc).isoformat()
+    big_file = storage / "u1.jsonl"
+    with big_file.open("w", encoding="utf-8") as f:
+        for i in range(10_000):
+            f.write(f'{{"event":"event_{i % 7}","timestamp":"{ts}"}}\n')
+    events = engagement.read_user_events("u1", limit=100)
+    assert len(events) == 100
+    # Most-recent slice — last batch should include event_9999 (mod 7 = 3)
+    assert events[-1]["event"] == "event_3"
+
+
+def test_engagement_summary_caps_per_user_read(isolated_storage):
+    """engagement_summary iterates every user. A single user with a huge
+    log shouldn't bring the whole summary down. Verify it works with
+    multiple users including one with 10k events."""
+    storage = isolated_storage / ".engagement"
+    storage.mkdir()
+    from datetime import datetime, timezone as _tz
+    ts = datetime.now(_tz.utc).isoformat()
+    # Heavy user — 10k events of 3 distinct types
+    big = storage / "heavy.jsonl"
+    with big.open("w", encoding="utf-8") as f:
+        for i in range(10_000):
+            f.write(f'{{"event":"event_{i % 3}","timestamp":"{ts}"}}\n')
+    # Light user — 2 events
+    (storage / "light.jsonl").write_text(
+        f'{{"event":"a","timestamp":"{ts}"}}\n{{"event":"b","timestamp":"{ts}"}}\n'
+    )
+    summary = engagement.engagement_summary()
+    by_id = {s["user_id"]: s for s in summary}
+    assert by_id["heavy"]["distinct_events"] == 3
+    assert by_id["heavy"]["score"] == "active"
+    assert by_id["light"]["distinct_events"] == 2
+
+
 def test_engagement_storage_never_contains_user_content(isolated_storage):
     """Log a bunch of events with potentially-sensitive-looking event names
     (NOT user content) and assert the storage files contain ONLY the event

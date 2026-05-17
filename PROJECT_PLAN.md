@@ -17,7 +17,7 @@ chapters unblock later ones.
 [~] = in progress                       [!] = blocked, needs Marc
 ```
 
-## Where we are now (2026-05-16)
+## Where we are now (2026-05-17)
 
 The original plan budgeted 4-6 months for Part II. We're roughly **6 weeks
 ahead of schedule**. Here's the snapshot per chapter:
@@ -52,8 +52,11 @@ These chapters are DONE. They're the rails everything else rolls on.
 
 ```
 [x] Build pipeline: quiz → DNA → industry intel → assets → LLM → output
-[x] 33 quality checks + self-repair loop (was 27; added no_tracking_by_default,
-    industry_pages_present, footer_lists_all_pages, a11y_static_audit, +others)
+[x] 38 quality checks + self-repair loop (was 27; added no_tracking_by_default,
+    industry_pages_present, footer_lists_all_pages, a11y_static_audit,
+    schema_org_jsonld_present, sitemap_and_robots_present, and the
+    2026-05-17 Core Web Vitals trio: perf_budget_or_lighter +
+    hero_cta_above_fold + mobile_optimized_responsive)
 [x] 10 DNA cards (visual personalities per build)
 [x] 63-industry intelligence database (was 52; now with LLM fallback for new ones)
 [x] VEX-spec foundation hero mandated in every build
@@ -206,6 +209,10 @@ Supabase exclusively).
 [x] 8.3  "Create New Site" button → leads into the quiz flow
 [x] 8.4  Site detail: preview + edit + delete + publish via /workspace
 [x] 8.5  Empty state for first-time users (EmptyState component, line ~516)
+[x] 8.7  Admin support tooling: /admin (users / projects / errors / engagement
+         tabs). Engagement tab landed 2026-05-17 (T17) — surfaces stuck/at-risk
+         users by counting distinct feature events in the last 30 days.
+         pebble/engagement.py + GET /api/admin/engagement.
 [ ] 8.6  Settings page (account, password, plan, billing portal link)
          ← OPEN. No /settings route. Billing portal blocks on Stripe anyway.
 ```
