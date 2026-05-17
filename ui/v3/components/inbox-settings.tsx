@@ -23,11 +23,13 @@ import {
   type AutoresponderConfig,
 } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/components/auth-provider";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 export function InboxSettings({ slug }: { slug: string }) {
   const router = useRouter();
+  const { user } = useAuth();
 
   // ---- Webhook state ----
   const [webhook, setWebhook] = useState<WebhookConfig | null>(null);
@@ -139,11 +141,22 @@ export function InboxSettings({ slug }: { slug: string }) {
   }
 
   async function onDeleteAccount() {
-    // Two-step gate: typed confirmation + browser confirm. The typed
-    // confirmation prevents one-click-misclick disasters; the
-    // browser confirm is the second guardrail.
-    if (confirmText !== "DELETE") {
-      setDeleteError('Type "DELETE" in the box first to confirm.');
+    // Two-step gate: typed EMAIL match + browser confirm.
+    //
+    // NLM round on Track 12 flagged the previous "type DELETE"
+    // pattern as a defense-in-depth gap: an unattended-computer
+    // attacker would only need to type the literal word "DELETE"
+    // to wipe the account. Requiring the user's full email defeats
+    // that — an attacker has to either know it or look it up
+    // (and if they have THAT level of access, they could already
+    // log in as the user via password reset).
+    const expectedEmail = (user?.email || "").trim().toLowerCase();
+    if (!expectedEmail) {
+      setDeleteError("You must be signed in to delete your account.");
+      return;
+    }
+    if (confirmText.trim().toLowerCase() !== expectedEmail) {
+      setDeleteError(`Type your email address exactly (${expectedEmail}) to confirm.`);
       return;
     }
     if (!confirm(
@@ -399,14 +412,19 @@ export function InboxSettings({ slug }: { slug: string }) {
 
         <label className="block space-y-2">
           <span className="text-sm font-medium text-foreground">
-            Type <code className="font-mono text-destructive">DELETE</code> below to confirm
+            Type your email{" "}
+            {user?.email && (
+              <code className="font-mono text-destructive">{user.email}</code>
+            )}{" "}
+            below to confirm
           </span>
           <input
-            type="text"
+            type="email"
             value={confirmText}
             onChange={(e) => setConfirmText(e.target.value)}
-            placeholder="DELETE"
+            placeholder={user?.email || "your-email@example.com"}
             autoComplete="off"
+            spellCheck={false}
             className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive font-mono"
           />
         </label>
@@ -417,7 +435,11 @@ export function InboxSettings({ slug }: { slug: string }) {
 
         <button
           onClick={onDeleteAccount}
-          disabled={deleteState === "saving" || confirmText !== "DELETE"}
+          disabled={
+            deleteState === "saving" ||
+            !user?.email ||
+            confirmText.trim().toLowerCase() !== user.email.trim().toLowerCase()
+          }
           className="inline-flex items-center justify-center rounded-full bg-destructive px-5 py-2.5 text-sm font-medium text-destructive-foreground hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-transform"
         >
           {deleteState === "saving" ? "Deleting account…" : "Delete my account permanently"}

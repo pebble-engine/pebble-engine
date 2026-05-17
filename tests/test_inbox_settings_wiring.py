@@ -103,13 +103,20 @@ def test_api_exports_delete_account():
 
 def test_settings_panel_renders_danger_zone():
     """The inbox settings panel must render the delete-account
-    section — typed confirmation + button + supabase signOut on
-    success."""
+    section — typed-email confirmation + button + supabase signOut
+    on success.
+
+    NLM round on Track 12 upgraded the typed confirmation from
+    literal "DELETE" to the user's email address. Unattended-
+    computer attackers can guess "DELETE"; they're far less likely
+    to know the victim's email AND remember to spell it right."""
     src = INBOX_SETTINGS.read_text(encoding="utf-8")
     assert "deleteAccount" in src, "must import + call deleteAccount"
-    # Typed 'DELETE' guard prevents one-click mishaps.
-    assert 'confirmText !== "DELETE"' in src or "confirmText !== 'DELETE'" in src, \
-        "missing the 'type DELETE to confirm' guard"
+    # The typed-EMAIL guard (replaces the old literal-DELETE check).
+    assert "user?.email" in src or "user.email" in src, \
+        "must reference user.email for the typed confirmation"
+    assert "confirmText" in src and ".toLowerCase()" in src, \
+        "confirmation should be case-insensitive email match"
     # Client-side signOut after server-side delete succeeds.
     assert "supabase.auth.signOut" in src, \
         "must call supabase.auth.signOut to clear v3-side cookies"

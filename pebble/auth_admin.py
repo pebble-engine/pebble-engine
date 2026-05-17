@@ -35,7 +35,15 @@ from typing import Optional
 
 class AdminError(Exception):
     """Anything that goes wrong calling Supabase's admin API.
-    Caller surfaces a 502 (vendor problem) or 500 to the user."""
+    Caller surfaces a 502 (vendor problem) or 500 to the user.
+
+    SECURITY NOTE — DO NOT put bearer tokens, service-role keys, or
+    other secrets in the .args of an AdminError. The engine's
+    ``_handle_500`` logs ``repr(exc)`` plus the full traceback under
+    a correlation id. Anything in the exception message lands in
+    engine.log. Use generic strings ("HTTP 401", "unreachable",
+    "validate token failed") — never inline a token value.
+    (NLM round on Track 12 flagged this as a defense-in-depth gap.)"""
 
 
 # Default 10s — admin calls hit the same Supabase project the rest of

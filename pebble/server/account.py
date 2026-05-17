@@ -28,6 +28,20 @@ from pebble.auth_admin import (
     validate_access_token,
 )
 from pebble.log import log
+from pebble.security import RateLimiter, client_ip as _client_ip
+
+
+# Per-IP rate limit for account deletion. Account-delete is RARE in
+# normal use (a user might do it once, ever) — anything more than 3
+# attempts in an hour from one IP is abuse or a token-spray oracle.
+# NLM round on Track 12 flagged the unbounded endpoint as a side-
+# channel for validating stolen tokens via the 401-vs-200 difference.
+_delete_rate_limiter = RateLimiter(rate=1/1200.0, burst=3)
+
+
+def _reset_delete_rate_limiter_for_tests() -> None:
+    global _delete_rate_limiter
+    _delete_rate_limiter = RateLimiter(rate=1/1200.0, burst=3)
 
 
 def _bearer_token(handler) -> str:
@@ -66,6 +80,14 @@ def run_delete_account(handler) -> None:
         })
         return
 
+    # Per-IP rate limit. Closes the "validate-stolen-tokens-in-bulk"
+    # oracle NLM flagged on Track 12 — 401-vs-200 differs only when a
+    # token is valid, so unbounded calls let an attacker mass-test.
+    ip = _client_ip(handler)
+    if ip and not _delete_rate_limiter.allow(f"acct-delete:{ip}"):
+        handler._json(429, {"error": "too many delete attempts, slow down"})
+        return
+
     token = _bearer_token(handler)
     if not token:
         handler._json(401, {"error": "missing Bearer access token"})
@@ -92,6 +114,15 @@ def run_delete_account(handler) -> None:
         return
 
     log.info("account deleted for %s", _redact(user_email))
+    # NOTE ON LINGERING JWTs (NLM round on Track 12 flag):
+    # Supabase JWTs are self-validating against the project secret
+    # with a 1-hour default TTL. Deleting the auth.users row stops
+    # REFRESH (the refresh token requires a valid user row), so the
+    # blast radius caps at the remaining access-token TTL. The v3
+    # frontend's middleware uses supabase.auth.getUser() which hits
+    # the database — that immediately returns no-user after delete,
+    # so v3 routes redirect to /login on the next page load even
+    # within the TTL window. Acceptable posture for now.
     handler._json(200, {
         "ok":      True,
         "deleted": True,

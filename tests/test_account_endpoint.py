@@ -22,12 +22,16 @@ def _supabase_env(monkeypatch):
 
 
 class _FakeHandler:
-    """Minimum surface the endpoint touches: headers (Authorization)
-    and _json (status + payload + extra_headers)."""
-    def __init__(self, auth_header: str | None = None):
+    """Minimum surface the endpoint touches: headers (Authorization),
+    client_address (for rate-limit IP), and _json (status + payload)."""
+    def __init__(self, auth_header: str | None = None,
+                 client_ip: str = "203.0.113.7"):
         self.headers = {}
         if auth_header is not None:
             self.headers["Authorization"] = auth_header
+        # client_address is what pebble.security.client_ip reads when
+        # PEBBLE_TRUSTED_PROXIES is unset.
+        self.client_address = (client_ip, 12345)
         self.status: int | None = None
         self.json_body: dict | None = None
         self.extra_headers: list = []
@@ -36,6 +40,15 @@ class _FakeHandler:
         self.status = status
         self.json_body = payload
         self.extra_headers = list(extra_headers or [])
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """Each test gets a fresh per-IP budget. Without this, tests
+    cross-contaminate when run in the same module."""
+    from pebble.server import account
+    account._reset_delete_rate_limiter_for_tests()
+    yield
 
 
 # ---- Auth gate: no token / wrong shape ---------------------------------
@@ -148,3 +161,39 @@ def test_validate_called_with_extracted_token(monkeypatch):
     h = _FakeHandler(auth_header="Bearer ey.real.token.value")
     account_server.run_delete_account(h)
     assert captured["token"] == "ey.real.token.value"
+
+
+# ---- NLM round on Track 12: per-IP rate limit ---------------------------
+
+def test_returns_429_after_burst_per_ip(monkeypatch):
+    """Burst is 3 from a single IP. The 4th attempt must 429,
+    regardless of whether the token is valid. Closes the "validate
+    stolen tokens in bulk via 401-vs-200 oracle" angle NLM flagged."""
+    # Bad tokens (returns None → 401) so we burn the burst without
+    # successfully deleting anyone.
+    monkeypatch.setattr("pebble.server.account.validate_access_token",
+                        lambda token, **kw: None)
+    statuses = []
+    for i in range(10):
+        h = _FakeHandler(auth_header=f"Bearer ey.t{i}", client_ip="198.51.100.42")
+        account_server.run_delete_account(h)
+        statuses.append(h.status)
+    assert 429 in statuses, f"per-IP rate limit should trip, got {statuses}"
+    # 3-burst window: at most 3 of the early attempts pass the limiter.
+    # (They return 401 from the bad token, NOT 429.)
+    pre_throttle = [s for s in statuses if s != 429]
+    assert len(pre_throttle) <= 3, f"burst should cap at 3, got {pre_throttle}"
+
+
+def test_rate_limit_is_per_ip_not_global(monkeypatch):
+    """Project A's IP burning its budget shouldn't lock out other IPs."""
+    monkeypatch.setattr("pebble.server.account.validate_access_token",
+                        lambda token, **kw: None)
+    # Exhaust IP A's budget.
+    for i in range(5):
+        h = _FakeHandler(auth_header=f"Bearer ey.{i}", client_ip="198.51.100.1")
+        account_server.run_delete_account(h)
+    # IP B should still be allowed to try.
+    h = _FakeHandler(auth_header="Bearer ey.different", client_ip="198.51.100.2")
+    account_server.run_delete_account(h)
+    assert h.status == 401, "different IP should NOT be rate-limited (still gets 401 for bad token)"

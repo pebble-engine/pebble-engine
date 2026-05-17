@@ -181,9 +181,13 @@ They want to click the text and type. Without this, the whole product fails.
          — Shipped 2026-05-17. POST /api/account/delete validates
          the Supabase access token, admin-deletes the user via
          service-role key, cascades to public.profiles via FK.
-         v3 inbox settings exposes a "Danger zone" with typed-DELETE
-         confirmation + browser confirm. Project files in output/
+         v3 inbox settings exposes a "Danger zone" with typed-EMAIL
+         confirmation (post-NLM-round hardening) + browser confirm
+         + per-IP rate limit (3/hour). Project files in output/
          are not auto-scrubbed (follow-up sweep).
+         OPEN UX QUESTION: 14/30-day soft-delete cooling-off period
+         (current behavior: immediate hard delete). NLM round flagged
+         this as a UX consideration — Marc's product call.
 
 **Phase A.5 deprecation (2026-05-16):** Legacy /api/auth/* endpoints
 (scrypt+cookie) now carry Deprecation/Sunset/Link headers + log on
