@@ -198,20 +198,42 @@ def run_stripe_webhook(handler) -> None:
         handler._json(400, {"error": "Invalid request body"})
         return
 
+    # SDK-15.x compat notes (the chain of bugs that 400'd every real
+    # event in the 2026-05-17 E2E run; test suite missed both because
+    # it mocks construct_event to return a plain dict):
+    #
+    # 1. stripe.Webhook.construct_event returns a StripeObject — NOT a
+    #    plain dict, and NOT compatible with isinstance(event, dict) or
+    #    `.get()` calls.
+    # 2. stripe.WebhookSignature.verify_header does `"%d.%s" % (ts,
+    #    payload)` internally. When payload is BYTES, %s renders the
+    #    literal Python repr (`b'{"x":1}'`), so the computed signature
+    #    NEVER matches what Stripe signed. Workaround: decode to str
+    #    before passing in.
+    #
+    # We split the SDK's "verify + parse" into two steps: decode-then-
+    # verify the HMAC ourselves, then json.loads as a plain dict.
     try:
-        event = stripe.Webhook.construct_event(raw_body, sig_header, secret)
+        decoded_body = raw_body.decode("utf-8")
+    except UnicodeDecodeError:
+        handler._json(400, {"error": "Invalid request body"})
+        return
+
+    try:
+        stripe.WebhookSignature.verify_header(decoded_body, sig_header, secret)
     except stripe.error.SignatureVerificationError:
         log.info("stripe-webhook signature rejected")
         handler._json(400, {"error": "Invalid signature"})
         return
-    except ValueError:
-        # Malformed JSON in the payload — SDK raises ValueError before
-        # the HMAC check.
+
+    try:
+        event = json.loads(decoded_body)
+    except json.JSONDecodeError:
         handler._json(400, {"error": "Invalid request body"})
         return
 
     if not isinstance(event, dict):
-        # construct_event should always return a dict; defensive fallback.
+        # JSON parsed to a list/scalar — not a Stripe event shape.
         handler._json(400, {"error": "Invalid event shape"})
         return
 
