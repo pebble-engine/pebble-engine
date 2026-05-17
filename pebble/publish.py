@@ -415,6 +415,21 @@ def publish_to_cloudflare(
     canonical_url = f"https://{name}.pages.dev"
     preview_url = result_obj.get("url") or canonical_url
 
+    # If PEBBLE_APP_DOMAIN is configured (e.g. "pebble.app"), attempt to
+    # add <slug>.pebble.app as a custom domain on the Pages project.
+    # This requires the domain to be in Cloudflare and the wildcard
+    # DNS record (CNAME *.pebble.app → <name>.pages.dev) already present.
+    # Failures are logged but non-fatal — the deployment itself succeeded.
+    app_domain = os.environ.get("PEBBLE_APP_DOMAIN", "").strip().rstrip(".")
+    if app_domain:
+        custom_subdomain = f"{slug}.{app_domain}"
+        try:
+            _add_pages_custom_domain(account_id, token, name, custom_subdomain)
+            canonical_url = f"https://{custom_subdomain}"
+            log.info("custom domain set: %s", custom_subdomain)
+        except Exception as e:
+            log.warning("custom domain setup for %s failed (non-fatal): %s", custom_subdomain, e)
+
     return PublishResult(
         slug=slug,
         kind="cloudflare",
@@ -426,6 +441,34 @@ def publish_to_cloudflare(
         project_name=name,
         note=f"Preview this build: {preview_url}" if preview_url != canonical_url else None,
     )
+
+
+def _add_pages_custom_domain(
+    account_id: str,
+    token: str,
+    project_name: str,
+    domain: str,
+) -> None:
+    """Attach *domain* as a custom domain to the Cloudflare Pages project.
+
+    Idempotent — if the domain is already attached Cloudflare returns 409
+    which we treat as success.  Raises on unexpected errors.
+    Prerequisite: the domain must be in the same Cloudflare account and the
+    wildcard CNAME (*.pebble.app → <project_name>.pages.dev) must exist.
+    """
+    url = f"{CF_API_BASE}/accounts/{account_id}/pages/projects/{project_name}/domains"
+    body = json.dumps({"name": domain}).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="POST", headers={
+        "Authorization": f"Bearer {token}",
+        "Content-Type":  "application/json",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=30) as _resp:
+            pass
+    except urllib.error.HTTPError as e:
+        if e.code == 409:
+            return  # already attached — idempotent
+        raise
 
 
 def _create_cloudflare_deployment(
