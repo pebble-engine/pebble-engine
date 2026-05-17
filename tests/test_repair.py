@@ -908,3 +908,24 @@ def test_noop_response_false_when_llm_actually_changes_file(broken_build):
     assert report.rounds
     primary = report.rounds[0]
     assert primary.noop_response is False
+
+
+def test_count_changed_normalizes_crlf_vs_lf(tmp_path):
+    """A Windows-checkout repo has CRLF on disk; the LLM emits LF.
+    Without newline normalization the comparison would flag every
+    file as changed. NLM round on Tracks 4–7 caught this.
+    """
+    from pebble.repair import _count_changed_files
+    (tmp_path / "f.txt").write_bytes(b"line1\r\nline2\r\n")
+    files = [("f.txt", "line1\nline2\n")]
+    # Same content, different line endings → 0 changed.
+    assert _count_changed_files(tmp_path, files) == 0
+
+
+def test_count_changed_still_detects_real_change_through_line_endings(tmp_path):
+    """The normalization MUST NOT mask real content changes that
+    happen to span line boundaries."""
+    from pebble.repair import _count_changed_files
+    (tmp_path / "f.txt").write_bytes(b"alpha\r\nbeta\r\n")
+    files = [("f.txt", "alpha\ngamma\n")]
+    assert _count_changed_files(tmp_path, files) == 1

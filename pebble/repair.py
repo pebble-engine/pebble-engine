@@ -308,6 +308,17 @@ def _write_files(target_site: Path, files: list[tuple[str, str]]) -> list[str]:
     return written
 
 
+def _normalize_newlines(text: str) -> str:
+    """Collapse `\\r\\n` and lone `\\r` to `\\n` so the no-op detector
+    doesn't get confused by mixed line endings. A repo checked out on
+    Windows with `core.autocrlf=true` has CRLF on disk; LLMs almost
+    always emit LF. A byte-for-byte comparison would flag every file
+    as "changed" even when the only diff is line endings.
+
+    NLM round on Tracks 4–7 flagged this as a T3 correctness gap."""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
 def _count_changed_files(
     target_site: Path,
     files: list[tuple[str, str]],
@@ -323,6 +334,9 @@ def _count_changed_files(
     spends a full re-eval round confirming what we already know: nothing
     moved. Surfaced in the RoundReport note so users can see the no-op
     explicitly.
+
+    Line endings are normalized before comparison so a CRLF-on-disk
+    file vs an LF-from-LLM response isn't a spurious "change".
     """
     if not files:
         return 0
@@ -341,7 +355,7 @@ def _count_changed_files(
             # Unreadable file — treat as different out of caution.
             changed += 1
             continue
-        if existing != content:
+        if _normalize_newlines(existing) != _normalize_newlines(content):
             changed += 1
     return changed
 

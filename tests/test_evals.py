@@ -1181,6 +1181,56 @@ def test_sitemap_robots_accepts_arrow_function_export(good_build):
     assert checks.sitemap_and_robots_present(ctx).status == "pass"
 
 
+def test_sitemap_robots_accepts_named_const_default_export(good_build):
+    """`const sitemap = ...; export default sitemap;` is a common
+    TypeScript pattern. NLM round on Tracks 4–7 flagged that the
+    original regex would false-fail this form."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        'const sitemap = () => [{ url: "https://example.com/" }];\n'
+        'export default sitemap;'
+    )
+    (good_build / "site" / "app" / "robots.ts").write_text(
+        'const robots = { rules: [{ userAgent: "*", allow: "/" }] };\n'
+        'export default robots;'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.sitemap_and_robots_present(ctx).status == "pass"
+
+
+def test_sitemap_robots_accepts_re_export(good_build):
+    """`export { default } from "./impl"` is a valid Next.js re-export
+    pattern (the default lives in a sibling module)."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        'export { default } from "./_sitemap_impl";'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.sitemap_and_robots_present(ctx).status == "pass"
+
+
+def test_sitemap_robots_accepts_class_default_export(good_build):
+    """`export default class Sitemap { ... }` is technically legal —
+    Next.js doesn't pin a function-vs-class shape here. Be permissive."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        'export default class Sitemap {\n'
+        '  static handler() { return []; }\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.sitemap_and_robots_present(ctx).status == "pass"
+
+
+def test_sitemap_robots_still_fails_without_default_export(good_build):
+    """Sanity check the broadened regex still catches the "no default
+    export at all" case."""
+    (good_build / "site" / "app" / "sitemap.ts").write_text(
+        '// just a comment, no exports anywhere\n'
+        'function sitemap() { return []; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.sitemap_and_robots_present(ctx)
+    assert result.status == "fail"
+
+
 def test_sitemap_robots_skips_when_no_site_dir(tmp_path):
     empty = tmp_path / "no-site"
     empty.mkdir()

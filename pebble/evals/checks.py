@@ -2347,14 +2347,24 @@ def schema_org_jsonld_present(ctx: BuildContext) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 # Next.js 14 generates sitemap.xml / robots.txt from these two files via
-# convention. The default export must be a function (or, for sitemap, a
-# function that returns an array of route descriptors). Loose patterns —
-# we don't want to false-fail on legitimate stylistic variants.
-_SITEMAP_DEFAULT_EXPORT_RE = re.compile(
-    r"export\s+default\s+(?:async\s+)?function\b|export\s+default\s+\(",
-)
-_ROBOTS_DEFAULT_EXPORT_RE = re.compile(
-    r"export\s+default\s+(?:async\s+)?function\b|export\s+default\s+\{",
+# convention. Both expect a default export, but the SHAPE varies:
+# sitemap returns an array, robots returns an object. The check is
+# "is there a default export at all?" — Next.js will pin the shape at
+# build time. Loose pattern accepts all legitimate forms:
+#   export default function ...
+#   export default async function ...
+#   export default () => ...
+#   export default { ... }            (object literal — robots.ts default)
+#   export default class ...
+#   const x = ...; export default x;  (named const, then exported)
+#   export { default } from './x';    (re-export)
+# Same regex for both files; the file path distinguishes their purpose.
+# NLM round on Tracks 4–7 flagged the original regex (`function\b` OR
+# `(` only) as too rigid — it would false-fail the named-const and
+# re-export forms.
+_DEFAULT_EXPORT_RE = re.compile(
+    r"export\s+default\s+\S"
+    r"|export\s*\{\s*default\s*[\},]",
 )
 
 
@@ -2393,21 +2403,21 @@ def sitemap_and_robots_present(ctx: BuildContext) -> CheckResult:
         )
 
     sitemap_src = sitemap.read_text(encoding="utf-8", errors="ignore")
-    if not _SITEMAP_DEFAULT_EXPORT_RE.search(sitemap_src):
+    if not _DEFAULT_EXPORT_RE.search(sitemap_src):
         return CheckResult(
             "sitemap_and_robots_present", "fail",
-            "app/sitemap.ts has no default export function — Next.js "
-            "convention requires `export default function sitemap()` "
-            "returning a MetadataRoute.Sitemap array",
+            "app/sitemap.ts has no default export — Next.js convention "
+            "requires a default-exported function (or arrow / object / "
+            "re-export) returning a MetadataRoute.Sitemap array",
         )
 
     robots_src = robots.read_text(encoding="utf-8", errors="ignore")
-    if not _ROBOTS_DEFAULT_EXPORT_RE.search(robots_src):
+    if not _DEFAULT_EXPORT_RE.search(robots_src):
         return CheckResult(
             "sitemap_and_robots_present", "fail",
             "app/robots.ts has no default export — Next.js convention "
-            "requires `export default function robots()` returning a "
-            "MetadataRoute.Robots object",
+            "requires a default-exported function (or arrow / object / "
+            "re-export) returning a MetadataRoute.Robots object",
         )
 
     return CheckResult(
