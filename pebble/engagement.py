@@ -55,6 +55,8 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
+from pebble.security import safe_user_id
+
 
 # ---------------------------------------------------------------------------
 # Storage location
@@ -77,42 +79,9 @@ def _engagement_dir() -> Path:
 # Input validation
 # ---------------------------------------------------------------------------
 
-# UUIDs from Supabase Auth match this; arbitrary strings with slashes / dots
-# / etc do not. Cap at 128 chars to avoid pathological filenames.
-_SAFE_USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-
 # Event name: snake_case identifier, 1-64 chars, must start with a letter.
 # Tight enough that no caller can leak content via the event-name channel.
 _SAFE_EVENT_NAME_RE = re.compile(r"^[a-z][a-z0-9_]{0,63}$")
-
-# Windows reserved device names — `CON.jsonl` writes to the console; `NUL`
-# silently discards; etc. Supabase UUIDs (36-char hex) never collide with
-# these (3-4 chars), but the regex was permissive enough that a future
-# caller passing a non-UUID could hit one. Forward-defense per NLM T17
-# round 2026-05-17.
-_WINDOWS_RESERVED = frozenset(
-    {"con", "nul", "aux", "prn"}
-    | {f"com{i}" for i in range(1, 10)}
-    | {f"lpt{i}" for i in range(1, 10)}
-)
-
-
-def _is_safe_user_id(uid: object) -> bool:
-    if not isinstance(uid, str):
-        return False
-    if not _SAFE_USER_ID_RE.fullmatch(uid):
-        return False
-    # Reject Windows reserved device names (case-insensitive).
-    if uid.lower() in _WINDOWS_RESERVED:
-        return False
-    return True
-
-
-def _normalize_user_id(uid: str) -> str:
-    """NTFS is case-insensitive — `UserABC.jsonl` and `userabc.jsonl` share
-    one inode. Lowercase so the filename is 1:1 with the in-memory key
-    across platforms. NLM T17 round 2026-05-17."""
-    return uid.lower()
 
 
 def _is_safe_event_name(name: object) -> bool:
@@ -132,11 +101,11 @@ def log_event(user_id: Optional[str], event_name: str) -> bool:
     False is the wire-in pattern: every server route calls this in a
     fire-and-forget way and a logging failure must not propagate.
     """
-    if not _is_safe_user_id(user_id):
+    uid = safe_user_id(user_id)
+    if not uid:
         return False
     if not _is_safe_event_name(event_name):
         return False
-    uid = _normalize_user_id(user_id)  # type: ignore[arg-type]
 
     row = {
         "event": event_name,
@@ -163,9 +132,9 @@ def read_user_events(user_id: str, limit: int = 1000) -> list[dict]:
     bounded deque so memory stays constant regardless of file size.
     The previous read_text-then-slice approach OOM'd on arbitrarily
     large logs."""
-    if not _is_safe_user_id(user_id):
+    uid = safe_user_id(user_id)
+    if not uid:
         return []
-    uid = _normalize_user_id(user_id)
     path = _engagement_dir() / f"{uid}.jsonl"
     if not path.exists():
         return []
@@ -254,8 +223,8 @@ def engagement_summary(window_days: int = 30) -> list[dict]:
         return []
     out: list[dict] = []
     for f in storage.glob("*.jsonl"):
-        uid = f.stem
-        if not _is_safe_user_id(uid):
+        uid = safe_user_id(f.stem)
+        if not uid:
             continue
         rows = read_user_events(uid, limit=10_000)
         distinct, total = _distinct_event_count(rows, window_days)

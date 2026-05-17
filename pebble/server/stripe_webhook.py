@@ -51,7 +51,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -59,6 +58,8 @@ from pathlib import Path
 from typing import Optional
 
 import stripe
+
+from pebble.security import safe_user_id
 
 
 log = logging.getLogger("pebble.stripe_webhook")
@@ -72,30 +73,6 @@ _SUBSCRIPTION_EVENT_TYPES = frozenset({
     "customer.subscription.updated",
     "customer.subscription.deleted",
 })
-
-
-# Mirrored from engagement.py — keep these definitions in sync if the
-# security profile changes. Forward-defense for path traversal + Windows
-# reserved device names that could redirect a write to NUL / CON / etc.
-_SAFE_USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
-_WINDOWS_RESERVED = frozenset(
-    {"con", "nul", "aux", "prn"}
-    | {f"com{i}" for i in range(1, 10)}
-    | {f"lpt{i}" for i in range(1, 10)}
-)
-
-
-def _safe_user_id(raw: object) -> str:
-    """Return a sanitized lowercase user-id, or '' if the input is unsafe.
-    Caller treats '' as 'no valid attribution' and skips the side effect."""
-    if not isinstance(raw, str):
-        return ""
-    if not _SAFE_USER_ID_RE.fullmatch(raw):
-        return ""
-    lower = raw.lower()
-    if lower in _WINDOWS_RESERVED:
-        return ""
-    return lower
 
 
 def _output_dir() -> Path:
@@ -249,7 +226,10 @@ def run_stripe_webhook(handler) -> None:
 
     obj = ((event.get("data") or {}).get("object")) or {}
     metadata = obj.get("metadata") or {}
-    user_id = _safe_user_id(metadata.get("pebble_user_id"))
+    # safe_user_id is the canonical shared helper (pebble.security).
+    # Replaces the local _safe_user_id copy that lived here through
+    # rounds 1-2 — same semantics, one source of truth.
+    user_id = safe_user_id(metadata.get("pebble_user_id"))
     if not user_id:
         log.info("stripe-webhook %s missing/invalid pebble_user_id metadata",
                  event_type)
