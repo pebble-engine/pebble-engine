@@ -546,6 +546,73 @@ export async function deleteAccount(): Promise<AccountDeleteResponse> {
   return json as AccountDeleteResponse;
 }
 
+// ---------- /api/checkout + /api/billing (Stripe) --------------------------
+
+export type CheckoutSessionResponse = {
+  url:        string;
+  session_id: string;
+};
+
+export type BillingPortalResponse = {
+  url: string;
+};
+
+/**
+ * Helper that does the "get current JWT, send Authorization: Bearer" dance
+ * for the billing endpoints (which are auth-gated via require_user). All
+ * billing routes need this, so DRY it.
+ */
+async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl(path), {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as T;
+}
+
+/**
+ * Open a Stripe Checkout session for the selected plan. Returns the
+ * hosted-payment URL; the caller is responsible for the actual redirect
+ * (typically `window.location.href = url`).
+ *
+ * Auth: requires a logged-in Supabase user. The engine looks the user
+ * up from the bearer JWT and stamps their id on the Checkout Session so
+ * the Stripe webhook can route subscription events back to this Pebble
+ * account.
+ */
+export async function createCheckoutSession(plan: "starter" | "pro"): Promise<CheckoutSessionResponse> {
+  return authedPostJSON<CheckoutSessionResponse>("/api/checkout/create-session", { plan });
+}
+
+/**
+ * Mint a Stripe Customer Portal session for the current user. Returns
+ * the portal URL; the caller redirects the browser there.
+ *
+ * Throws "No active subscription" if the user has never subscribed
+ * (the engine returns 404 in that case so the UI can route them to
+ * the pricing page instead).
+ */
+export async function openBillingPortal(): Promise<BillingPortalResponse> {
+  return authedPostJSON<BillingPortalResponse>("/api/billing/portal", {});
+}
+
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------
 
 export type AnalyticsSummary = {

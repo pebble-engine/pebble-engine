@@ -7,7 +7,7 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, LogOut, User } from "lucide-react";
+import { ChevronDown, LogOut, Settings, User } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 import { useAuth } from "@/components/auth-provider";
@@ -85,6 +85,14 @@ export function AuthMenu() {
           >
             <User className="h-4 w-4 text-muted-foreground" />
             My sites
+          </Link>
+          <Link
+            href="/settings"
+            className={`${interactions.chip} ${type.body.s} flex items-center gap-2 px-3 py-2 text-foreground`}
+            onClick={() => setOpen(false)}
+          >
+            <Settings className="h-4 w-4 text-muted-foreground" />
+            Settings
           </Link>
           <button
             type="button"
