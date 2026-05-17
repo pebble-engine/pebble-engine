@@ -31,13 +31,23 @@ import { interactions } from "@/lib/interactions";
  * isn't staring at navigation for a project that doesn't exist yet.
  */
 
-const STARTER_CHIPS = [
-  { label: "Business website", prompt: "A business website that introduces what I do and lets people reach out." },
-  { label: "Online store",     prompt: "An online store where customers can browse products and check out." },
-  { label: "Portfolio",        prompt: "A portfolio site that showcases my work and bio." },
-  { label: "Booking site",     prompt: "A booking site where clients can schedule appointments with me." },
-  { label: "Restaurant menu",  prompt: "A restaurant site with my menu, hours, and a reservation option." },
-  { label: "Real estate",      prompt: "A real-estate page that showcases listings and lets buyers contact me." },
+/**
+ * Industry-coded starter packs — Canva's "What will you create?" pattern.
+ * Clicking a chip both patches `business_type` AND advances to the
+ * questionnaire so the engine's affinity-weighted DNA picker
+ * (style_dna.pick_dna_for_brief) routes correctly from the first step.
+ * The free-form prompt box below is the "other" escape hatch.
+ *
+ * The `business_type` strings are stems the DNA matrix already knows
+ * how to route — see tests/test_dna_industry_affinity.py for coverage.
+ */
+const STARTER_PACKS = [
+  { label: "Coffee shop or café", business_type: "café",          prompt: "A site for my café — let people see the menu, hours, and where to find us." },
+  { label: "Photographer",         business_type: "photographer",  prompt: "A portfolio site that showcases my photography and lets clients book a shoot." },
+  { label: "Restaurant",           business_type: "restaurant",    prompt: "A restaurant site with my menu, hours, location, and a reservation option." },
+  { label: "Coach or trainer",     business_type: "coach",         prompt: "A site for my coaching practice — what I do, who I help, and how to book a session." },
+  { label: "Law or accounting",    business_type: "law firm",      prompt: "A professional services site that explains my practice and lets clients schedule a consultation." },
+  { label: "Trade or contractor",  business_type: "contractor",    prompt: "A site for my trade business — services offered, service area, and a way to request a quote." },
 ];
 
 type Props = {
@@ -46,7 +56,6 @@ type Props = {
 
 export function WelcomePhase({ onAdvance }: Props) {
   const router = useRouter();
-  const [prefill, setPrefill] = useState<string | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
   const [resumeName, setResumeName] = useState<string | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -89,6 +98,17 @@ export function WelcomePhase({ onAdvance }: Props) {
     onAdvance();
   };
 
+  const handleStarterPack = (pack: typeof STARTER_PACKS[number]) => {
+    if (typeof window === "undefined") return;
+    patchBrief({
+      business_type: pack.business_type,
+      extra_context: pack.prompt,
+      business_name: "Untitled Project",
+      user_first_name: firstName || undefined,
+    });
+    onAdvance();
+  };
+
   const headline = firstName
     ? `What's on your mind, ${firstName}?`
     : "What would you like to build today?";
@@ -114,26 +134,24 @@ export function WelcomePhase({ onAdvance }: Props) {
           </p>
         </div>
 
-        <div className="w-full max-w-2xl pointer-events-auto">
-          <PromptInputBox
-            onSend={handleSend}
-            placeholder={
-              prefill ??
-              "Example: I run a bakery in Brooklyn and I want a website where customers can see my menu and order online."
-            }
-          />
-        </div>
-
         <div className="flex flex-wrap justify-center gap-2 pointer-events-auto">
-          {STARTER_CHIPS.map((chip) => (
+          {STARTER_PACKS.map((pack) => (
             <button
-              key={chip.label}
-              onClick={() => setPrefill(chip.prompt)}
+              key={pack.label}
+              onClick={() => handleStarterPack(pack)}
               className={`${interactions.chip} px-4 py-2 bg-card border border-border rounded-full text-foreground ${type.label}`}
             >
-              {chip.label}
+              {pack.label}
             </button>
           ))}
+        </div>
+
+        <div className="w-full max-w-2xl pointer-events-auto">
+          <p className={`${type.body.s} text-muted-foreground mb-2`}>Or describe in your own words:</p>
+          <PromptInputBox
+            onSend={handleSend}
+            placeholder="Example: I run a bakery in Brooklyn and I want a website where customers can see my menu and order online."
+          />
         </div>
 
         {/* Returning user resume — only when there's an existing build in
