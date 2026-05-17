@@ -234,6 +234,34 @@ def test_subscription_created_writes_sentinel(
     assert data["current_period_end"] == 1893456000
 
 
+def test_current_period_end_falls_back_to_subscription_item(
+    with_secret, output_root, verified_event,
+):
+    """Stripe API 2026-04-22.dahlia moved current_period_end from the
+    Subscription root onto SubscriptionItem. Newer events have
+    items.data[0].current_period_end populated and the root field
+    missing/null. The webhook must read both shapes; without the
+    fallback Marc's first live subscription wrote a sentinel with
+    current_period_end: null and the v3 badge degraded to "Pebble
+    Starter" instead of "Pebble Starter — renews <date>".
+    """
+    from pebble.server import stripe_webhook
+    import json as _json
+
+    event = _subscription_event()
+    # Strip the root field, populate items[0] like Stripe's new shape
+    event["data"]["object"]["current_period_end"] = None
+    event["data"]["object"]["items"] = {
+        "data": [{"id": "si_test", "current_period_end": 1781712163}]
+    }
+    h = verified_event(event)
+    stripe_webhook.run_stripe_webhook(h)
+
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    data = _json.loads(sentinel.read_text(encoding="utf-8"))
+    assert data["current_period_end"] == 1781712163
+
+
 def test_subscription_created_stamps_customer_id(
     with_secret, output_root, verified_event,
 ):

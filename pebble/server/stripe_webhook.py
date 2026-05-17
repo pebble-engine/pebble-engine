@@ -303,7 +303,16 @@ def run_stripe_webhook(handler) -> None:
     if not isinstance(status, str) or len(status) > 32:
         status = "unknown"
 
+    # Stripe API 2026-04-22.dahlia moved `current_period_end` from the
+    # Subscription root onto SubscriptionItem. Read root first
+    # (preserves older API versions), fall back to items[0] for newer
+    # ones. Multi-item subscriptions all share the same period in
+    # practice, so items[0] is authoritative.
     raw_period_end = obj.get("current_period_end")
+    if not isinstance(raw_period_end, int):
+        items = (obj.get("items") or {}).get("data") or []
+        if items and isinstance(items[0], dict):
+            raw_period_end = items[0].get("current_period_end")
     period_end = raw_period_end if isinstance(raw_period_end, int) else None
 
     sub_id_raw = obj.get("id", "")
