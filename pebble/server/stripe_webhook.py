@@ -198,20 +198,42 @@ def run_stripe_webhook(handler) -> None:
         handler._json(400, {"error": "Invalid request body"})
         return
 
+    # SDK-15.x compat notes (the chain of bugs that 400'd every real
+    # event in the 2026-05-17 E2E run; test suite missed both because
+    # it mocks construct_event to return a plain dict):
+    #
+    # 1. stripe.Webhook.construct_event returns a StripeObject — NOT a
+    #    plain dict, and NOT compatible with isinstance(event, dict) or
+    #    `.get()` calls.
+    # 2. stripe.WebhookSignature.verify_header does `"%d.%s" % (ts,
+    #    payload)` internally. When payload is BYTES, %s renders the
+    #    literal Python repr (`b'{"x":1}'`), so the computed signature
+    #    NEVER matches what Stripe signed. Workaround: decode to str
+    #    before passing in.
+    #
+    # We split the SDK's "verify + parse" into two steps: decode-then-
+    # verify the HMAC ourselves, then json.loads as a plain dict.
     try:
-        event = stripe.Webhook.construct_event(raw_body, sig_header, secret)
+        decoded_body = raw_body.decode("utf-8")
+    except UnicodeDecodeError:
+        handler._json(400, {"error": "Invalid request body"})
+        return
+
+    try:
+        stripe.WebhookSignature.verify_header(decoded_body, sig_header, secret)
     except stripe.error.SignatureVerificationError:
         log.info("stripe-webhook signature rejected")
         handler._json(400, {"error": "Invalid signature"})
         return
-    except ValueError:
-        # Malformed JSON in the payload — SDK raises ValueError before
-        # the HMAC check.
+
+    try:
+        event = json.loads(decoded_body)
+    except json.JSONDecodeError:
         handler._json(400, {"error": "Invalid request body"})
         return
 
     if not isinstance(event, dict):
-        # construct_event should always return a dict; defensive fallback.
+        # JSON parsed to a list/scalar — not a Stripe event shape.
         handler._json(400, {"error": "Invalid event shape"})
         return
 
@@ -281,7 +303,16 @@ def run_stripe_webhook(handler) -> None:
     if not isinstance(status, str) or len(status) > 32:
         status = "unknown"
 
+    # Stripe API 2026-04-22.dahlia moved `current_period_end` from the
+    # Subscription root onto SubscriptionItem. Read root first
+    # (preserves older API versions), fall back to items[0] for newer
+    # ones. Multi-item subscriptions all share the same period in
+    # practice, so items[0] is authoritative.
     raw_period_end = obj.get("current_period_end")
+    if not isinstance(raw_period_end, int):
+        items = (obj.get("items") or {}).get("data") or []
+        if items and isinstance(items[0], dict):
+            raw_period_end = items[0].get("current_period_end")
     period_end = raw_period_end if isinstance(raw_period_end, int) else None
 
     sub_id_raw = obj.get("id", "")
