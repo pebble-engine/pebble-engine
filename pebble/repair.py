@@ -80,7 +80,11 @@ REPAIR_SYSTEM = (
     "5. iOS rules still apply: 100dvh not 100vh, all autoplay video has "
     "muted+playsInline+loop, form inputs >= 16px font-size.\n"
     "6. Tooling rules still apply: next/image only (no raw <img>), tsconfig "
-    "paths {\"@/*\": [\"./*\"]}, next.config.mjs only, no site/src/."
+    "paths {\"@/*\": [\"./*\"]}, next.config.mjs only, no site/src/.\n"
+    "7. Server/Client Component boundary: app/layout.tsx MUST NOT have "
+    "\"use client\" (it must be a Server Component so metadata/viewport work). "
+    "Components that use React hooks (AnimatedHeading, FadeIn, ContactForm) "
+    "MUST begin with \"use client\"."
 )
 
 
