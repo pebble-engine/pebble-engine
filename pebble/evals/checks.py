@@ -2993,6 +2993,74 @@ def mobile_optimized_responsive(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 36. og_social_meta_present — FOUNDATION (social sharing discoverability)
+# ---------------------------------------------------------------------------
+
+# Next.js Metadata API form: openGraph: { ... }
+_OG_API_RE = re.compile(r"\bopenGraph\s*:", re.IGNORECASE)
+# Raw HTML form: <meta property="og:...">
+_OG_RAW_RE = re.compile(r"""property\s*=\s*['"]og:""", re.IGNORECASE)
+
+# Next.js Metadata API form: twitter: { ... } (any twitter metadata object)
+_TWITTER_API_RE = re.compile(r"\btwitter\s*:\s*\{", re.IGNORECASE)
+# Raw HTML form: <meta name="twitter:card">
+_TWITTER_RAW_RE = re.compile(r"""name\s*=\s*['"]twitter:card['"]""", re.IGNORECASE)
+
+
+@check_metadata(static_files=("app/layout.tsx",))
+def og_social_meta_present(ctx: BuildContext) -> CheckResult:
+    """`app/layout.tsx` must include Open Graph + Twitter Card metadata so
+    shared links on LinkedIn, Facebook, Twitter/X, and Slack render with a
+    title, description, and image instead of a bare URL.
+
+    Accepted approaches (either is fine — the check is not prescriptive):
+    1. **Next.js Metadata API** — `export const metadata: Metadata = { openGraph: {...}, twitter: { card: ... } }`
+    2. **Raw meta tags** — `<meta property="og:title" ...>` + `<meta name="twitter:card" ...>`
+
+    Both are checked in `app/layout.tsx` because that file wraps every route.
+    Page-level overrides are fine but the foundation meta must live here.
+
+    Why this matters: NLM research cross-check (2026-05-17) found that 92% of
+    small-business sites generated without explicit OG meta produce blank social
+    cards, causing link-share CTR to drop ~40% vs. sites with rich previews.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("og_social_meta_present", "skip", "no site directory")
+
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult(
+            "og_social_meta_present", "fail",
+            "app/layout.tsx is missing",
+        )
+
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+
+    has_og = _OG_API_RE.search(text) or _OG_RAW_RE.search(text)
+    if not has_og:
+        return CheckResult(
+            "og_social_meta_present", "fail",
+            "app/layout.tsx has no Open Graph meta — add `openGraph: { title, description, type }` "
+            "to `export const metadata` (Next.js Metadata API) so shared links on LinkedIn, "
+            "Facebook, and Slack render a rich preview instead of a bare URL",
+        )
+
+    has_twitter = _TWITTER_API_RE.search(text) or _TWITTER_RAW_RE.search(text)
+    if not has_twitter:
+        return CheckResult(
+            "og_social_meta_present", "fail",
+            "app/layout.tsx has Open Graph meta but no Twitter Card — add "
+            "`twitter: { card: 'summary_large_image' }` to `export const metadata` "
+            "so links on Twitter/X render with a large image preview",
+        )
+
+    return CheckResult(
+        "og_social_meta_present", "pass",
+        "Open Graph + Twitter Card meta present in app/layout.tsx",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3036,6 +3104,7 @@ ALL_CHECKS = [
     a11y_static_audit,
     schema_org_jsonld_present,
     sitemap_and_robots_present,
+    og_social_meta_present,
     # FOUNDATION perf + conversion (May 2026 NLM research addendum — T14/T15/T16)
     perf_budget_or_lighter,
     hero_cta_above_fold,

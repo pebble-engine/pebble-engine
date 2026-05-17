@@ -83,6 +83,11 @@ def good_build(tmp_path: Path) -> Path:
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export const metadata = {\n'
+        '  title: "Good Co",\n'
+        '  openGraph: { title: "Good Co", type: "website" },\n'
+        '  twitter: { card: "summary_large_image" },\n'
+        '};\n'
         'export default function L({children}: any) {\n'
         '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
         '}'
@@ -1241,7 +1246,77 @@ def test_sitemap_robots_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 36. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 36. og_social_meta_present — FOUNDATION (social sharing discoverability)
+# ---------------------------------------------------------------------------
+
+def test_og_social_meta_passes_on_good_build(good_build):
+    """The good_build fixture includes openGraph + twitter metadata — check passes."""
+    ctx = BuildContext.load(good_build)
+    assert checks.og_social_meta_present(ctx).status == "pass"
+
+
+def test_og_social_meta_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.og_social_meta_present(ctx).status == "skip"
+
+
+def test_og_social_meta_fails_when_layout_missing(good_build):
+    (good_build / "site" / "app" / "layout.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.og_social_meta_present(ctx)
+    assert result.status == "fail"
+    assert "layout.tsx" in result.message
+
+
+def test_og_social_meta_fails_when_no_opengraph(good_build):
+    """Layout has twitter card but no openGraph → check fails with clear message."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["400"], variable: "--font-inter" });\n'
+        'export const metadata = { title: "X", twitter: { card: "summary_large_image" } };\n'
+        'export default function L({c}: any) { return <html lang="en"><body>{c}</body></html>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.og_social_meta_present(ctx)
+    assert result.status == "fail"
+    assert "Open Graph" in result.message
+
+
+def test_og_social_meta_fails_when_no_twitter_card(good_build):
+    """Layout has openGraph but no twitter card → check fails with clear message."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["400"], variable: "--font-inter" });\n'
+        'export const metadata = { title: "X", openGraph: { title: "X", type: "website" } };\n'
+        'export default function L({c}: any) { return <html lang="en"><body>{c}</body></html>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.og_social_meta_present(ctx)
+    assert result.status == "fail"
+    assert "Twitter" in result.message
+
+
+def test_og_social_meta_passes_with_raw_meta_tags(good_build):
+    """Raw <meta property="og:title"> + <meta name="twitter:card"> are also accepted
+    (not every site uses the Next.js Metadata API form)."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["400"], variable: "--font-inter" });\n'
+        'export default function L({c}: any) {\n'
+        '  return <html lang="en"><head>'
+        '<meta property="og:title" content="X" />'
+        '<meta name="twitter:card" content="summary_large_image" />'
+        '</head><body>{c}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.og_social_meta_present(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# 37. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):

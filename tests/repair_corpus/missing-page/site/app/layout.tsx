@@ -12,6 +12,12 @@ const ld = {
 
 export const viewport = { width: "device-width", initialScale: 1 };
 
+export const metadata = {
+  title: "Heron Plumbing",
+  openGraph: { title: "Heron Plumbing", type: "website" },
+  twitter: { card: "summary_large_image" },
+};
+
 export default function L({children}: any) {
   return (
     <html lang="en" className={inter.variable}>

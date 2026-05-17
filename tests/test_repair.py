@@ -432,6 +432,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export const metadata = { title: "Test Co", openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
         'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
@@ -776,6 +777,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export const metadata = { title: "Test Co", openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
         'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(

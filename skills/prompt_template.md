@@ -223,6 +223,7 @@ In `app/layout.tsx`:
 
 ```tsx
 import {{ Inter }} from "next/font/google";
+import type {{ Metadata }} from "next";
 import "./globals.css";
 
 const inter = Inter({{
@@ -237,6 +238,22 @@ const inter = Inter({{
 export const viewport = {{
   width: "device-width",
   initialScale: 1,
+}};
+
+// MANDATORY: OG + Twitter Card for rich social previews — eval `og_social_meta_present` requires both.
+export const metadata: Metadata = {{
+  title: "{{business_name}}",
+  description: "{{one-sentence tagline summarising what the business does}}",
+  openGraph: {{
+    title: "{{business_name}}",
+    description: "{{one-sentence tagline summarising what the business does}}",
+    type: "website",
+  }},
+  twitter: {{
+    card: "summary_large_image",
+    title: "{{business_name}}",
+    description: "{{one-sentence tagline summarising what the business does}}",
+  }},
 }};
 
 export default function RootLayout({{ children }}: {{ children: React.ReactNode }}) {{
