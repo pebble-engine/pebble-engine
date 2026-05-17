@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Edit3, Sparkles, Loader2 } from "lucide-react";
-import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan } from "@/lib/state";
+import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan, type PebbleSetupItem } from "@/lib/state";
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -223,26 +223,43 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
           {plan.setup_needs.length} items. Pebble handles what it can; the rest is honest about what&apos;s next.
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-          {plan.setup_needs.map((item) => (
-            <div
-              key={item.id}
-              className="flex justify-between items-center p-3 bg-background rounded-lg border border-border"
-              title={item.notes}
-            >
-              <span className={type.label}>{item.label}</span>
-              <span
-                className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+          {topoSortSetupNeeds(plan.setup_needs).map((item) => {
+            const byId = new Map(plan.setup_needs.map((s) => [s.id, s]));
+            const blockingDeps = item.dependencies
+              .map((id) => byId.get(id))
+              .filter((d): d is PebbleSetupItem => !!d && d.status !== "auto");
+            return (
+              <div
+                key={item.id}
+                className={`flex flex-col gap-1 p-3 rounded-lg border ${
                   item.status === "auto"
-                    ? "bg-earth/20 text-earth-deep"
-                    : item.status === "pending"
-                      ? "bg-spark/15 text-spark-deep"
-                      : "bg-muted text-muted-foreground"
+                    ? "bg-background/60 border-border/60 opacity-80"
+                    : "bg-background border-border"
                 }`}
+                title={item.notes}
               >
-                {item.status === "auto" ? "Auto" : item.status === "pending" ? "Soon" : "You"}
-              </span>
-            </div>
-          ))}
+                <div className="flex justify-between items-center">
+                  <span className={type.label}>{item.label}</span>
+                  <span
+                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                      item.status === "auto"
+                        ? "bg-earth/20 text-earth-deep"
+                        : item.status === "pending"
+                          ? "bg-spark/15 text-spark-deep"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {item.status === "auto" ? "Auto" : item.status === "pending" ? "Soon" : "You"}
+                  </span>
+                </div>
+                {blockingDeps.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground leading-tight">
+                    Unlocks after: {blockingDeps.map((d) => d.label).join(" + ")}
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       </Card>
 
@@ -276,4 +293,31 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       </AnimatePresence>
     </div>
   );
+}
+
+/**
+ * Topological sort of setup_needs so that dependencies render before
+ * dependents — the chain is readable top-down. Stable for unrelated
+ * items (preserves insertion order). Tolerates cycles by falling back
+ * to insertion order; the python-side
+ * `test_dependency_graph_has_no_cycles` is the real guard.
+ */
+function topoSortSetupNeeds(items: PebbleSetupItem[]): PebbleSetupItem[] {
+  const byId = new Map(items.map((i) => [i.id, i]));
+  const visited = new Set<string>();
+  const out: PebbleSetupItem[] = [];
+
+  function visit(id: string, stack: Set<string>) {
+    if (visited.has(id) || stack.has(id)) return;
+    const item = byId.get(id);
+    if (!item) return;
+    stack.add(id);
+    for (const dep of item.dependencies) visit(dep, stack);
+    stack.delete(id);
+    visited.add(id);
+    out.push(item);
+  }
+
+  for (const item of items) visit(item.id, new Set());
+  return out;
 }

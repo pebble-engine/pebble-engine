@@ -50,6 +50,7 @@ export type PebbleSetupItem = {
   id: string;
   label: string;
   status: "auto" | "pending" | "manual";
+  dependencies: string[];
   notes: string;
 };
 

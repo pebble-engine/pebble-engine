@@ -519,31 +519,46 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
         </p>
       </div>
       <div className="space-y-2 flex-1">
-        {plan?.setup_needs.map((s, i) => (
-          <motion.div
-            key={s.id}
-            initial={{ opacity: 0, x: 8 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
-            className="p-3 rounded-lg bg-background border border-border flex flex-col gap-1"
-            title={s.notes}
-          >
-            <div className="flex justify-between items-center">
-              <span className={type.label}>{s.label}</span>
-              <span
-                className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                  s.status === "auto"
-                    ? "bg-earth/20 text-earth-deep"
-                    : s.status === "pending"
-                      ? "bg-spark/15 text-spark-deep"
-                      : "bg-muted text-muted-foreground"
-                }`}
-              >
-                {s.status === "auto" ? "Auto-done" : s.status === "pending" ? "Coming soon" : "You'll do this"}
-              </span>
-            </div>
-          </motion.div>
-        ))}
+        {plan?.setup_needs.map((s, i) => {
+          const byId = new Map(plan.setup_needs.map((it) => [it.id, it]));
+          const blockingDeps = (s.dependencies || [])
+            .map((id) => byId.get(id))
+            .filter((d) => !!d && d.status !== "auto");
+          return (
+            <motion.div
+              key={s.id}
+              initial={{ opacity: 0, x: 8 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
+              className={`p-3 rounded-lg border flex flex-col gap-1 ${
+                s.status === "auto"
+                  ? "bg-background/60 border-border/60 opacity-80"
+                  : "bg-background border-border"
+              }`}
+              title={s.notes}
+            >
+              <div className="flex justify-between items-center">
+                <span className={type.label}>{s.label}</span>
+                <span
+                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                    s.status === "auto"
+                      ? "bg-earth/20 text-earth-deep"
+                      : s.status === "pending"
+                        ? "bg-spark/15 text-spark-deep"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
+                  {s.status === "auto" ? "Auto-done" : s.status === "pending" ? "Coming soon" : "You'll do this"}
+                </span>
+              </div>
+              {blockingDeps.length > 0 && (
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Unlocks after: {blockingDeps.map((d) => d!.label).join(" + ")}
+                </p>
+              )}
+            </motion.div>
+          );
+        })}
       </div>
       <div className="pt-3 mt-auto border-t border-border">
         <motion.button

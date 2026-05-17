@@ -66,20 +66,20 @@ _UNIVERSAL_EXTRAS = {
 # When you wire new infrastructure (e.g. domain provisioning), flip the
 # corresponding entry's status to "auto" and update the notes line.
 _LAUNCH_SETUP_TEMPLATE = [
-    {"id": "project_name",    "label": "Project name",      "status": "auto",    "notes": "Set from the business name in the brief."},
-    {"id": "website_address", "label": "Website address",   "status": "pending", "notes": "Domain provisioning not wired yet."},
-    {"id": "hosting",         "label": "Hosting",           "status": "pending", "notes": "Deployment pipeline not wired yet."},
-    {"id": "business_email",  "label": "Business email",    "status": "pending", "notes": "Email-provider integration not wired yet."},
-    {"id": "logo_photos",     "label": "Logo & photos",     "status": "manual",  "notes": "Pexels placeholders used until user supplies real assets."},
-    {"id": "pages",           "label": "Pages",             "status": "auto",    "notes": "Industry-aware page system generates 7-10 pages per build."},
-    {"id": "forms",           "label": "Forms",             "status": "auto",    "notes": "Contact form is wired via Resend Server Action."},
-    {"id": "booking",         "label": "Booking",           "status": "pending", "notes": "Booking-provider integration not wired yet."},
-    {"id": "payments",        "label": "Payments",          "status": "pending", "notes": "Payment-provider integration not wired yet."},
-    {"id": "seo_basics",      "label": "SEO basics",        "status": "auto",    "notes": "Next.js metadata, semantic HTML, sitemap-ready output."},
-    {"id": "analytics",       "label": "Analytics",         "status": "pending", "notes": "Analytics provider not wired yet."},
-    {"id": "language_region", "label": "Language & region", "status": "pending", "notes": "English-only today; multilingual not wired yet."},
-    {"id": "accessibility",   "label": "Accessibility",     "status": "auto",    "notes": "WCAG-AAA font sizes and contrast enforced by eval checks."},
-    {"id": "publish",         "label": "Publish",           "status": "pending", "notes": "Deploy pipeline not wired yet."},
+    {"id": "project_name",    "label": "Project name",      "status": "auto",    "dependencies": [],                                 "notes": "Set from the business name in the brief."},
+    {"id": "website_address", "label": "Website address",   "status": "pending", "dependencies": ["project_name"],                   "notes": "Domain provisioning not wired yet."},
+    {"id": "hosting",         "label": "Hosting",           "status": "pending", "dependencies": ["website_address"],                "notes": "Deployment pipeline not wired yet."},
+    {"id": "business_email",  "label": "Business email",    "status": "pending", "dependencies": ["website_address"],                "notes": "Email-provider integration not wired yet."},
+    {"id": "logo_photos",     "label": "Logo & photos",     "status": "manual",  "dependencies": [],                                 "notes": "Pexels placeholders used until user supplies real assets."},
+    {"id": "pages",           "label": "Pages",             "status": "auto",    "dependencies": [],                                 "notes": "Industry-aware page system generates 7-10 pages per build."},
+    {"id": "forms",           "label": "Forms",             "status": "auto",    "dependencies": [],                                 "notes": "Contact form is wired via Resend Server Action."},
+    {"id": "booking",         "label": "Booking",           "status": "pending", "dependencies": [],                                 "notes": "Booking-provider integration not wired yet."},
+    {"id": "payments",        "label": "Payments",          "status": "pending", "dependencies": [],                                 "notes": "Payment-provider integration not wired yet."},
+    {"id": "seo_basics",      "label": "SEO basics",        "status": "auto",    "dependencies": ["pages"],                          "notes": "Next.js metadata, semantic HTML, sitemap-ready output."},
+    {"id": "analytics",       "label": "Analytics",         "status": "pending", "dependencies": ["hosting"],                        "notes": "Analytics provider not wired yet."},
+    {"id": "language_region", "label": "Language & region", "status": "pending", "dependencies": [],                                 "notes": "English-only today; multilingual not wired yet."},
+    {"id": "accessibility",   "label": "Accessibility",     "status": "auto",    "dependencies": ["pages"],                          "notes": "WCAG-AAA font sizes and contrast enforced by eval checks."},
+    {"id": "publish",         "label": "Publish",           "status": "pending", "dependencies": ["hosting", "pages", "seo_basics"], "notes": "Deploy pipeline not wired yet."},
 ]
 
 
