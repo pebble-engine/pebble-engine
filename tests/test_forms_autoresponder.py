@@ -259,3 +259,74 @@ def test_send_falls_back_to_default_when_subject_renders_empty(monkeypatch):
     err = ar.send_autoresponse("acme", {"fields": {"email": "z@example.com"}})
     assert err is None
     assert captured["subject"] == ar.DEFAULT_SUBJECT
+
+
+# ---- NLM round on Tracks 4–7: spam-cannon + HTML-escape fixes -----------
+
+def test_render_strips_html_from_field_values():
+    """Visitor-submitted HTML tags must not survive into the email
+    body. Owner's template structure stays as-is; only the values
+    pulled from form fields get scrubbed."""
+    out = ar._render(
+        "Thanks for the message, {{ name }}!",
+        {"name": "<script>alert(1)</script>Bob<b>X</b>"},
+    )
+    # The script tag is gone; the surrounding text remains.
+    assert "<script>" not in out
+    assert "<b>" not in out
+    assert "Bob" in out
+    # Owner's literal "!" is preserved.
+    assert out == "Thanks for the message, alert(1)BobX!"
+
+
+def test_render_preserves_owner_template_structure():
+    """The HTML strip only applies to substituted values, not to the
+    template body the OWNER wrote (owner is the trust boundary)."""
+    out = ar._render(
+        "Owner has <strong>{{ name }}</strong> here",
+        {"name": "Bob"},
+    )
+    # Owner's <strong> tag preserved; substitution is bare.
+    assert "<strong>" in out
+    assert "Bob" in out
+
+
+def test_send_respects_per_project_daily_cap(monkeypatch):
+    """Spam-cannon protection: the per-recipient throttle won't stop a
+    bot that uses many different victim addresses. The per-project cap
+    bounds total outbound regardless of recipient diversity.
+
+    Burst is 50 — submit 60 different recipients and the project cap
+    should fire on at least one (in practice many)."""
+    ar.set_config("acme", enabled=True)
+    monkeypatch.setattr("pebble.forms_autoresponder.send_async",
+                        lambda *_a, **_k: Future())
+
+    throttled = 0
+    for i in range(60):
+        err = ar.send_autoresponse(
+            "acme",
+            {"fields": {"email": f"victim{i}@example.com"}},
+        )
+        if err == "throttled-project":
+            throttled += 1
+    assert throttled > 0, "per-project cap never fired"
+    # Reasonable margin — we don't want flaky timing tests, just
+    # confirm the cap engages well before exhausting the 60 inputs.
+    assert throttled >= 5
+
+
+def test_per_project_cap_does_not_affect_other_projects(monkeypatch):
+    """Project A burning its cap MUST NOT affect Project B."""
+    ar.set_config("acme", enabled=True)
+    ar.set_config("widgets", enabled=True)
+    monkeypatch.setattr("pebble.forms_autoresponder.send_async",
+                        lambda *_a, **_k: Future())
+
+    # Burn most of acme's burst budget.
+    for i in range(55):
+        ar.send_autoresponse("acme", {"fields": {"email": f"u{i}@example.com"}})
+
+    # widgets should still be able to send.
+    err = ar.send_autoresponse("widgets", {"fields": {"email": "first@example.com"}})
+    assert err is None, f"widgets project unfairly throttled: {err}"

@@ -22,6 +22,8 @@ from __future__ import annotations
 import json
 import sys
 import threading
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
@@ -120,20 +122,72 @@ def run_submit(handler, slug: str) -> None:
     _fire_async_followups(slug, rec)
 
 
-def _fire_async_followups(slug: str, rec) -> None:
-    """Spawn a daemon thread that runs the configured outbound side
-    effects: webhook delivery + visitor autoresponse email.
+def _strip_referrer_query(raw: Optional[str]) -> Optional[str]:
+    """Drop the query string + fragment from a Referer header before
+    putting it into an outbound webhook payload.
 
-    A single thread covers both so we don't pay 2x thread-spawn cost
-    on every form submission. The payload shape is the public-form
-    record — id, received_at, fields, user_agent, referrer; ip_hash
-    and other internal fields are deliberately omitted."""
+    Referer values can leak sensitive query params from the visitor's
+    previous page — password reset tokens, session IDs, "?email=..."
+    in URLs, etc. The receiver only needs the origin + path for
+    attribution; the query bits are PII risk with no value to them.
+    NLM round on Tracks 4–7 flagged this as T2 (privacy leak)."""
+    if not raw or not isinstance(raw, str):
+        return raw
+    try:
+        p = urllib.parse.urlparse(raw)
+        # Rebuild without query or fragment. Leaves scheme/host/path intact.
+        return urllib.parse.urlunparse((p.scheme, p.netloc, p.path, "", "", ""))
+    except (ValueError, AttributeError):
+        return None
+
+
+# Bounded thread pool for fire-and-forget form follow-ups (webhook +
+# autoresponder). Previously each submission spawned a fresh daemon
+# thread; under a form-flood attack that's unbounded thread growth +
+# OOM risk. 8 workers handles realistic concurrent traffic; bursts
+# beyond that queue up rather than spawning new threads. NLM round on
+# Tracks 4–7 flagged the bare-Thread pattern as T1 (resource exhaustion).
+_FORMS_FOLLOWUP_POOL: Optional[ThreadPoolExecutor] = None
+_FORMS_FOLLOWUP_POOL_LOCK = threading.Lock()
+
+
+def _followup_pool() -> ThreadPoolExecutor:
+    global _FORMS_FOLLOWUP_POOL
+    if _FORMS_FOLLOWUP_POOL is None:
+        with _FORMS_FOLLOWUP_POOL_LOCK:
+            if _FORMS_FOLLOWUP_POOL is None:
+                _FORMS_FOLLOWUP_POOL = ThreadPoolExecutor(
+                    max_workers=8,
+                    thread_name_prefix="forms-followup",
+                )
+    return _FORMS_FOLLOWUP_POOL
+
+
+def _reset_followup_pool_for_tests() -> None:
+    """Test hook — shutdown the existing pool so the next call gets a
+    fresh one. Used to avoid cross-test thread pollution."""
+    global _FORMS_FOLLOWUP_POOL
+    with _FORMS_FOLLOWUP_POOL_LOCK:
+        if _FORMS_FOLLOWUP_POOL is not None:
+            _FORMS_FOLLOWUP_POOL.shutdown(wait=False)
+            _FORMS_FOLLOWUP_POOL = None
+
+
+def _fire_async_followups(slug: str, rec) -> None:
+    """Submit the form's outbound side effects (webhook delivery +
+    autoresponder email) to the shared bounded thread pool. Replaces
+    the previous per-submission Thread() pattern.
+
+    Payload shape is the public-form record — id, received_at, fields,
+    user_agent, referrer; ip_hash and other internal fields are
+    deliberately omitted. The Referer header has its query + fragment
+    stripped (see _strip_referrer_query)."""
     payload = {
         "id":          rec.id,
         "received_at": rec.received_at,
         "fields":      rec.fields,
         "user_agent":  getattr(rec, "user_agent", None),
-        "referrer":    getattr(rec, "referrer", None),
+        "referrer":    _strip_referrer_query(getattr(rec, "referrer", None)),
     }
     def _run():
         try:
@@ -144,7 +198,7 @@ def _fire_async_followups(slug: str, rec) -> None:
             forms_autoresponder.send_autoresponse(slug, payload)
         except Exception as e:  # pragma: no cover — send_autoresponse already swallows
             log.exception("autoresponder thread crashed for %s: %s", slug, e)
-    threading.Thread(target=_run, daemon=True, name=f"forms-followup-{slug}").start()
+    _followup_pool().submit(_run)
 
 
 # --------- GET /api/projects/<slug>/inbox -------------------------------

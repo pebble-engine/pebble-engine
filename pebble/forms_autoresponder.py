@@ -44,6 +44,25 @@ from pebble.security import RateLimiter
 _autoresponder_limiter = RateLimiter(rate=1/3600.0, burst=1)
 
 
+# Per-PROJECT throttle — caps total autoresponses per project per day.
+# Closes the "spam cannon" abuse vector NLM flagged on Tracks 4–7
+# review: the per-recipient throttle (above) prevents spamming a SINGLE
+# user, but an attacker submitting forms with thousands of different
+# victim email addresses would each pass that check. The per-project
+# throttle bounds total outbound regardless of recipient diversity.
+# 50/day is generous for a real small-business contact form; abuse
+# patterns spike well beyond that. (For comparison: even high-traffic
+# contact forms typically see <20 submissions/day.)
+_autoresponder_project_limiter = RateLimiter(rate=50/86400.0, burst=50)
+
+
+# HTML/script tags submitted by a visitor must not survive into the
+# autoresponse body. The email goes out as text/plain today, so this
+# is defense in depth: if anyone later adds an html= variant, the
+# scrubbed values stay safe.
+_HTML_TAG_RE = re.compile(r"<[^>]*>")
+
+
 # Sane upper bounds — these end up rendered as the visitor's first
 # impression of the brand, so we cap rather than truncate silently
 # (the HTTP layer surfaces a 400).
@@ -172,7 +191,13 @@ def clear_config(slug: str) -> bool:
 
 def _render(template: str, fields: dict) -> str:
     """Replace `{{ name }}` placeholders. Unknown placeholders become
-    the empty string (never leak the template syntax to the visitor)."""
+    the empty string (never leak the template syntax to the visitor).
+
+    Visitor-supplied field values are scrubbed of HTML tags before
+    substitution — closes the email-HTML-injection vector NLM flagged
+    on Tracks 4–7 review. The OWNER's template structure is preserved
+    as-is; only the substituted VALUES from form fields are stripped.
+    """
     def replace(match: re.Match) -> str:
         key = match.group(1)
         val = fields.get(key)
@@ -184,7 +209,7 @@ def _render(template: str, fields: dict) -> str:
                     break
         if val is None:
             return ""
-        return str(val)
+        return _HTML_TAG_RE.sub("", str(val))
     return _PLACEHOLDER_RE.sub(replace, template)
 
 
@@ -229,6 +254,14 @@ def send_autoresponse(slug: str, submission: dict) -> Optional[str]:
                  _redact(recipient))
         return "throttled"
 
+    # Per-project cap: prevents the spam-cannon abuse pattern where an
+    # attacker submits forms with many different victim addresses (each
+    # of which passes the per-recipient check). Bounds total outbound
+    # per project regardless of recipient diversity.
+    if not _autoresponder_project_limiter.allow(f"autoresp-project:{slug}"):
+        log.info("autoresponse throttled for project %s (daily cap)", slug)
+        return "throttled-project"
+
     subject = _render(config.subject, fields) or DEFAULT_SUBJECT
     body    = _render(config.body, fields)
 
@@ -256,8 +289,9 @@ def _redact(email: str) -> str:
 
 
 def _reset_rate_limiter_for_tests() -> None:
-    global _autoresponder_limiter
+    global _autoresponder_limiter, _autoresponder_project_limiter
     _autoresponder_limiter = RateLimiter(rate=1/3600.0, burst=1)
+    _autoresponder_project_limiter = RateLimiter(rate=50/86400.0, burst=50)
 
 
 __all__ = [

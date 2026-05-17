@@ -645,3 +645,79 @@ def test_submit_no_autoresponse_when_disabled(engine_server, monkeypatch):
              {"name": "Bob", "email": "bob@example.com"})
     _time.sleep(0.15)
     assert called["yes"] is False
+
+
+# ---- NLM round on Tracks 4–7: referrer scrub + bounded pool -----------
+
+def test_strip_referrer_drops_query_and_fragment():
+    """Referer header can leak password-reset tokens, session IDs,
+    etc. via query params. Strip them before adding to the webhook
+    payload."""
+    from pebble.server.forms import _strip_referrer_query
+    assert _strip_referrer_query(
+        "https://example.com/login?token=secret-reset-abc123"
+    ) == "https://example.com/login"
+    assert _strip_referrer_query(
+        "https://example.com/page?session=xyz#fragment"
+    ) == "https://example.com/page"
+    assert _strip_referrer_query("https://example.com/clean") == "https://example.com/clean"
+
+
+def test_strip_referrer_handles_edge_cases():
+    from pebble.server.forms import _strip_referrer_query
+    assert _strip_referrer_query(None) is None
+    assert _strip_referrer_query("") == ""
+    # Non-string defensively returned unchanged (won't happen in
+    # practice — getattr returns Optional[str]).
+    assert _strip_referrer_query(123) == 123  # type: ignore[arg-type]
+
+
+def test_followup_pool_is_bounded_thread_pool():
+    """The follow-up pool must be a bounded ThreadPoolExecutor, not
+    bare Thread() spawning. Replaces the previous per-submission
+    Thread pattern that was an unbounded resource-exhaustion vector."""
+    from concurrent.futures import ThreadPoolExecutor
+    from pebble.server.forms import _followup_pool
+    pool = _followup_pool()
+    assert isinstance(pool, ThreadPoolExecutor)
+    # Bounded — _max_workers is private but the test pins our intent.
+    assert pool._max_workers <= 16, "pool should be bounded, not unlimited"
+
+
+def test_submit_webhook_payload_contains_stripped_referrer(engine_server, monkeypatch):
+    """End-to-end: submit a form with a Referer header that has query
+    params, observe the webhook payload's referrer field is the
+    cleaned origin+path with no query."""
+    import time as _time
+    from pebble import forms_webhook as fw
+    from pebble.security import forms_submit_limiter
+    from pebble.server.forms import _reset_followup_pool_for_tests
+    fw._reset_rate_limiter_for_tests()
+    forms_submit_limiter._buckets.clear()
+    _reset_followup_pool_for_tests()
+
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(
+        engine_server["base"], "refstrip@example.com", "valid-password")
+    _seed_project(out, "ref-co", owner_id=uid)
+    _request("POST", engine_server["base"], "/api/projects/ref-co/forms/webhook",
+             body={"url": "https://hooks.example/abc"}, headers={"Cookie": cookie})
+
+    captured = {}
+    monkeypatch.setattr("pebble.forms_webhook.post_webhook",
+                        lambda url, payload, **kw: captured.update({"p": payload}) or (True, None))
+
+    _request("POST", engine_server["base"], "/api/forms/ref-co",
+             {"name": "Alice"},
+             headers={"Referer": "https://other-site.com/landing?token=secret-xyz#anchor"})
+
+    for _ in range(20):
+        if captured:
+            break
+        _time.sleep(0.05)
+    assert captured, "webhook payload never captured"
+    referrer = captured["p"]["submission"].get("referrer")
+    assert referrer == "https://other-site.com/landing", \
+        f"referrer should be stripped to origin+path, got: {referrer!r}"
+    assert "token=secret-xyz" not in (referrer or "")
+    assert "#anchor" not in (referrer or "")
