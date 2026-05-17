@@ -141,7 +141,7 @@ Where we are now. Each chapter ships something visible to customers.
 [x] 5.5  Brand-tuned: amber primary CTAs, 18px+ body, WCAG AAA contrast,
          "no thin font weights" mandate. Soul-line in hero.
 [ ] 5.6  Deploy to Vercel under getpebble.net   ← MARC's next move
-[ ] 5.7  Plausible analytics                    ← next session
+[x] 5.7  Plausible analytics — next/script injected via NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var (2026-05-17)
 [ ] 5.8  Verify existing dark/cinematic getpebble.net vs new
          warm/inclusive direction — Marc's brand call            ← OPEN
 ```
@@ -179,8 +179,8 @@ They want to click the text and type. Without this, the whole product fails.
 [x] 7.3  Google OAuth — plus GitHub OAuth as a bonus
 [x] 7.4  Email verification flow — Supabase + welcome-email webhook (98e055b)
 [x] 7.5  Password reset flow — /forgot + /reset pages (0697ab3)
-[ ] 7.6  User profile page (name, avatar, time zone)
-         ← OPEN. No /profile or /settings page exists yet.
+[x] 7.6  User profile page — GET/PATCH /api/account/profile + supabase/migrations/004_profile_timezone.sql
+         + v3 settings page: DiceBear avatar, first_name/display_name inputs, 33-tz dropdown (2026-05-17)
 [x] 7.7  Account-deletion flow (GDPR compliance from day 1)
          — Shipped 2026-05-17. POST /api/account/delete validates
          the Supabase access token, admin-deletes the user via
@@ -189,9 +189,11 @@ They want to click the text and type. Without this, the whole product fails.
          confirmation (post-NLM-round hardening) + browser confirm
          + per-IP rate limit (3/hour). Project files in output/
          are not auto-scrubbed (follow-up sweep).
-         OPEN UX QUESTION: 14/30-day soft-delete cooling-off period
-         (current behavior: immediate hard delete). NLM round flagged
-         this as a UX consideration — Marc's product call.
+         RESOLVED 2026-05-17: 14-day soft-delete cooling-off period shipped.
+         First DELETE request schedules deletion (writes pending_deletion.json).
+         Cancel via POST /api/account/cancel-deletion during window.
+         Hard delete fires lazily on next authenticated request past due date.
+         Configurable via PEBBLE_DELETION_COOLING_DAYS env var.
 
 **Phase A.5 deprecation (2026-05-16):** Legacy /api/auth/* endpoints
 (scrypt+cookie) now carry Deprecation/Sunset/Link headers + log on
@@ -300,13 +302,18 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 ```
 [x] 10.1  Auto-create deployment per generated site
           → Cloudflare Pages Direct Upload (POST /api/publish, commit a3e9bda)
-[ ] 10.2  Sub-domain routing: <slug>.pebble.app (DNS wildcard)
-          ← OPEN. Today uses .pages.dev. Needs DNS wildcard decision.
+[~] 10.2  Sub-domain routing: <slug>.pebble.app (DNS wildcard)
+          Engine side: publish.py now calls _add_pages_custom_domain() when
+          PEBBLE_APP_DOMAIN=pebble.app is set (2026-05-17).
+          Marc's action: add the *.pebble.app wildcard CNAME in Cloudflare DNS
+          pointing to pages.dev, then set PEBBLE_APP_DOMAIN=pebble.app in .env.
 [x] 10.3  Custom-domain wiring (POST/DELETE /api/projects/<slug>/domain)
 [x] 10.4  SSL automatic (Cloudflare handles)
 [x] 10.5  Contact-form emails delivered via Resend
-[ ] 10.6  Generated sites stop working when subscription lapses (graceful warning)
-          ← BLOCKED. Depends on Stripe (Chapter 9).
+[x] 10.6  Generated sites stop working when subscription lapses (graceful warning)
+          _subscription_lapsed() checks output/.users/<uid>/subscription.json.
+          Serves 402 amber page with "Reactivate subscription" CTA (2026-05-17).
+          Fail-open: unclaimed / free-tier projects always pass through.
 ```
 
 ## Chapter 11 — Customer Onboarding (Week 14) — HALF SHIPPED
