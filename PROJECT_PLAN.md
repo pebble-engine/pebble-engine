@@ -26,8 +26,8 @@ ahead of schedule**. Here's the snapshot per chapter:
 Ch 5  Landing page          ━━━━━━━━━━━━━━━━━━━━░  deploy + analytics = Marc
 Ch 6  Visual Editor MVP     ━━━━━━━━━━━━━━━━━━━━━  shipped (image swap deferred)
 Ch 7  User Accounts         ━━━━━━━━━━━━━━━━━━░░░  profile + GDPR delete open
-Ch 8  Dashboard             ━━━━━━━━━━━━━━━━━━━░░  settings page open
-Ch 9  Billing (Stripe)      ░░░░░░░░░░░░░░░░░░░░░  BLOCKED on Marc's Stripe pick
+Ch 8  Dashboard             ━━━━━━━━━━━━━━━━━━━━━  settings page shipped 2026-05-17
+Ch 9  Billing (Stripe)      ━━━━━━━━━━━━━━━━━━░░░  endpoints + portal shipped; trial + setup-call open
 Ch 10 Hosting               ━━━━━━━━━━━━━━━━━░░░░  *.pebble.app wildcard open
 Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━░░░░  email sequence open
 Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
@@ -36,9 +36,10 @@ Ch 14 In-app AI chat        ░░░░░░░░░░░░░░░░░�
 Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━━━━━  COMPLETE
 ```
 
-**Net:** Stripe is the only true MVP blocker. Everything else is either
-shipped, blocked on a vendor decision from Marc, or genuinely a Chapter
-12+ concern.
+**Net:** Stripe endpoints are now shipped (commit 723ab8c, 35 new tests).
+What's left for billing is Marc-side: run the bootstrap, fix the
+mis-pasted STRIPE_WEBHOOK_SECRET, do the E2E payment test. After that
+the only true MVP blocker is the *.pebble.app DNS wildcard.
 
 ---
 
@@ -213,23 +214,58 @@ Supabase exclusively).
          tabs). Engagement tab landed 2026-05-17 (T17) — surfaces stuck/at-risk
          users by counting distinct feature events in the last 30 days.
          pebble/engagement.py + GET /api/admin/engagement.
-[ ] 8.6  Settings page (account, password, plan, billing portal link)
-         ← OPEN. No /settings route. Billing portal blocks on Stripe anyway.
+[x] 8.6  Settings page (account, password, plan, billing portal link)
+         → ui/v3/app/settings/page.tsx (commit 1e1679c). Email read-only,
+         Supabase password change, "Manage billing" wired to
+         /api/billing/portal. No current-plan badge yet (would need a new
+         GET /api/billing/subscription endpoint; webhook already writes the
+         sentinel data).
 ```
 
-## Chapter 9 — Billing (Week 11, ~1 week)
+## Chapter 9 — Billing (Week 11, ~1 week) — MOSTLY SHIPPED
 
 **Goal:** Stripe Checkout for $29 Starter and $59 Pro tiers.
 
 ```
-[ ] 9.1  Stripe products + prices set up in Stripe Dashboard (Marc handles)
-[ ] 9.2  Checkout flow (redirects to Stripe-hosted page — simple + secure)
-[ ] 9.3  Webhook listener for subscription events (paid / canceled / failed)
-[ ] 9.4  Customer portal link (so users manage their own billing — no support load)
-[ ] 9.5  7-day free trial logic (no card required for trial start)
-[ ] 9.6  Tier swap: upgrade Starter → Pro mid-cycle handled gracefully
-[ ] 9.7  $99 one-time setup-call product (Calendly integration)
+[~] 9.1  Stripe products + prices  → `python -m pebble.stripe_bootstrap` is
+                                     written + idempotent. Marc runs once
+                                     locally (sk_test_ already in .env) to
+                                     mint Pebble Starter + Pro + their
+                                     prices and paste IDs into .env.
+[x] 9.2  Checkout flow             → POST /api/checkout/create-session
+                                     (commit 723ab8c). Subscription mode,
+                                     dynamic payment methods (no
+                                     payment_method_types hardcode), stamps
+                                     pebble_user_id metadata.
+[x] 9.3  Webhook listener          → POST /api/internal/stripe-webhook
+                                     (commit 723ab8c). HMAC verified,
+                                     handles customer.subscription.
+                                     {created,updated,deleted}, writes
+                                     output/.users/<uid>/subscription.json
+                                     sentinel. Privacy regression pinned:
+                                     no card data in sentinel or logs.
+[x] 9.4  Customer portal           → POST /api/billing/portal (commit
+                                     723ab8c) + v3 settings page "Manage
+                                     billing" button (commit 1e1679c).
+[ ] 9.5  7-day free trial          → not built. Either add
+                                     subscription_data.trial_period_days=7
+                                     to checkout, or use Stripe's
+                                     Dashboard-side trial config.
+[ ] 9.6  Tier swap (Starter ↔ Pro) → handled FOR FREE by the Customer
+                                     Portal (Stripe upgrades/prorates
+                                     server-side). Verify the portal config
+                                     allows plan changes between our two
+                                     prices.
+[ ] 9.7  $99 setup-call product    → not built.
 ```
+
+Outstanding before launch:
+- Marc fixes STRIPE_WEBHOOK_SECRET in .env (currently has an rk_test_ pasted into the slot; should be `whsec_` from `stripe listen`).
+- Marc runs `python -m pebble.stripe_bootstrap` and pastes the two PEBBLE_STRIPE_*_PRICE_ID values into .env.
+- Marc installs Stripe CLI (`scoop install stripe` on Windows; winget is NOT supported per Stripe's docs).
+- E2E test together: `stripe listen --forward-to localhost:8000/api/internal/stripe-webhook`, then v3 /settings → "Manage billing" → card 4242 4242 4242 4242.
+
+Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-privilege `rk_` key per stripe-best-practices. The MCP toolkit's scope probe (T19.1a, session 2026-05-17 evening) found `@stripe/mcp --tools=all` doesn't expose enough writes for the bootstrap, so the Python SDK with sk_test_ was the simplest ship-path.
 
 ## Chapter 10 — Hosting Generated Sites (Weeks 12-13) — MOSTLY SHIPPED
 

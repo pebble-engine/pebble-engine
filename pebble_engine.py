@@ -1554,244 +1554,25 @@ class PebbleHandler(BaseHTTPRequestHandler):
 
     # ---- OPTIONS (CORS preflight) ----
     def do_OPTIONS(self):
-        """Browser preflight handler.
-
-        ``/api/internal/*`` paths are intentionally excluded — they're
-        server-to-server (e.g. the Supabase webhook) and have no reason
-        to participate in browser CORS. Refusing to bless those flows
-        is defense-in-depth atop the existing bearer-secret gate.
-        """
-        if self.path.startswith("/api/internal/"):
-            # 405 makes the rejection visible to operators in access
-            # logs; the browser will refuse the subsequent POST.
-            self.send_response(405)
-            self.send_header("Allow", "POST")
-            self.end_headers()
-            return
-
-        origin, allow_credentials = self._cors_decision()
-        if origin is None:
-            # Allowlist configured + Origin not on it → no CORS approval.
-            self.send_response(204)
-            self.end_headers()
-            return
-
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", origin)
-        if origin != "*":
-            self.send_header("Vary", "Origin")
-        if allow_credentials:
-            self.send_header("Access-Control-Allow-Credentials", "true")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Max-Age", "86400")
-        self.end_headers()
+        # Body extracted to pebble/server/router.py. Lazy import keeps
+        # engine startup fast (router only loads on first request).
+        from pebble.server.router import route_options
+        route_options(self)
 
     # ---- GET ----
     def do_GET(self):
-        # Strip query string for route matching (e.g. /?t=12345 should still serve index.html).
-        # Stash raw_path so handlers that legitimately need the query string (e.g.
-        # /api/dna/preview?id=...) can recover it via self._raw_path. Most handlers
-        # don't care, so the strip stays the default.
-        raw_path = self.path
-        path_only = raw_path.split("?", 1)[0]
-        self.path = path_only
-        self._raw_path = raw_path
-        try:
-            if path_only in ("/", "/index.html"):
-                self._handle_engine_root()
-            elif self.path == "/api/health":
-                self._handle_health()
-            elif self.path == "/api/dna/preview":
-                from pebble.server.dna import run_dna_preview
-                run_dna_preview(self)
-            elif self.path == "/api/blocks":
-                from pebble.server.blocks import run_list_blocks
-                run_list_blocks(self)
-            elif self.path == "/api/industries":
-                self._handle_list_industries()
-            elif self.path == "/api/briefs":
-                self._handle_list_briefs()
-            elif self.path.startswith("/api/briefs/"):
-                slug = self.path.split("/api/briefs/", 1)[1]
-                self._handle_get_brief(slug)
-            elif self.path == "/api/auth/me":
-                from pebble.server.auth import run_me
-                run_me(self)
-            elif self.path == "/api/projects":
-                self._handle_list_projects()
-            elif self.path == "/api/usage":
-                self._handle_usage_summary()
-            elif self.path == "/api/activity":
-                self._handle_activity_feed()
-            elif self.path == "/api/admin/users":
-                from pebble.server.admin import run_list_users
-                run_list_users(self)
-            elif self.path == "/api/admin/projects":
-                from pebble.server.admin import run_list_all_projects
-                run_list_all_projects(self)
-            elif self.path == "/api/admin/errors":
-                from pebble.server.admin import run_recent_errors
-                run_recent_errors(self)
-            elif self.path == "/api/admin/engagement":
-                from pebble.server.admin import run_engagement_summary
-                run_engagement_summary(self)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
-                slug = self.path[len("/api/projects/"):-len("/history")]
-                self._handle_get_history(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/publish"):
-                slug = self.path[len("/api/projects/"):-len("/publish")]
-                self._handle_get_publish_state(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_get_domain(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
-                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
-                from pebble.server.forms import run_get_webhook_config
-                run_get_webhook_config(self, slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
-                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
-                from pebble.server.forms import run_get_autoresponder_config
-                run_get_autoresponder_config(self, slug)
-            elif self.path.startswith("/api/projects/") and "/inbox" in self.path:
-                self._handle_inbox_get()
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/analytics"):
-                slug = self.path[len("/api/projects/"):-len("/analytics")]
-                from pebble.server.analytics import run_get_summary
-                run_get_summary(self, slug)
-            elif self.path.startswith("/dist/"):
-                self._handle_serve_dist()
-            elif self.path.startswith("/preview/"):
-                self._handle_preview()
-            else:
-                self.send_response(404); self.end_headers()
-                self.wfile.write(b"Not found")
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_get
+        route_get(self)
 
     # ---- POST ----
     def do_POST(self):
-        try:
-            if self.path == "/api/build":
-                self._handle_build(generate=False)
-            elif self.path == "/api/generate":
-                self._handle_build(generate=True)
-            elif self.path == "/api/plan":
-                self._handle_plan()
-            elif self.path == "/api/setup":
-                self._handle_setup()
-            elif self.path == "/api/rollback":
-                self._handle_rollback()
-            elif self.path == "/api/refine":
-                self._handle_refine()
-            elif self.path == "/api/visual-edit":
-                self._handle_visual_edit()
-            elif self.path == "/api/migrate":
-                self._handle_migrate()
-            elif self.path == "/api/inspire":
-                self._handle_inspire()
-            elif self.path == "/api/publish":
-                self._handle_publish()
-            elif self.path.startswith("/api/forms/") and self.path.endswith("/upload"):
-                slug = self.path[len("/api/forms/"):-len("/upload")]
-                from pebble.server.forms import run_upload_attachment
-                run_upload_attachment(self, slug)
-            elif self.path.startswith("/api/forms/"):
-                slug = self.path[len("/api/forms/"):]
-                self._handle_form_submit(slug)
-            elif self.path.startswith("/api/track/"):
-                slug = self.path[len("/api/track/"):]
-                from pebble.server.analytics import run_track
-                run_track(self, slug)
-            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path and self.path.endswith("/read"):
-                self._handle_inbox_mark_read()
-            elif self.path == "/api/auth/signup":
-                from pebble.server.auth import run_signup
-                run_signup(self)
-            elif self.path == "/api/auth/login":
-                from pebble.server.auth import run_login
-                run_login(self)
-            elif self.path == "/api/auth/logout":
-                from pebble.server.auth import run_logout
-                run_logout(self)
-            elif self.path == "/api/auth/forgot":
-                from pebble.server.auth import run_forgot
-                run_forgot(self)
-            elif self.path == "/api/auth/reset":
-                from pebble.server.auth import run_reset
-                run_reset(self)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
-                slug = self.path[len("/api/projects/"):-len("/star")]
-                self._handle_toggle_star(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_set_domain(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/blocks/insert"):
-                slug = self.path[len("/api/projects/"):-len("/blocks/insert")]
-                from pebble.server.blocks import run_insert_block
-                run_insert_block(self, slug)
-            elif self.path == "/api/internal/supabase-webhook":
-                from pebble.server.supabase_webhook import run_supabase_webhook
-                run_supabase_webhook(self)
-            elif self.path == "/api/internal/stripe-webhook":
-                from pebble.server.stripe_webhook import run_stripe_webhook
-                run_stripe_webhook(self)
-            elif self.path == "/api/checkout/create-session":
-                from pebble.server.stripe_checkout import run_create_session
-                run_create_session(self)
-            elif self.path == "/api/billing/portal":
-                from pebble.server.billing_portal import run_billing_portal
-                run_billing_portal(self)
-            elif self.path == "/api/account/delete":
-                from pebble.server.account import run_delete_account
-                run_delete_account(self)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/attachment-url"):
-                slug = self.path[len("/api/projects/"):-len("/forms/attachment-url")]
-                from pebble.server.forms import run_get_attachment_signed_url
-                run_get_attachment_signed_url(self, slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
-                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
-                from pebble.server.forms import run_set_webhook_config
-                run_set_webhook_config(self, slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
-                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
-                from pebble.server.forms import run_set_autoresponder_config
-                run_set_autoresponder_config(self, slug)
-            else:
-                self.send_response(404); self.end_headers()
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_post
+        route_post(self)
 
     # ---- DELETE ----
     def do_DELETE(self):
-        """The HTTP DELETE verb. Only one route uses it today —
-        DELETE /api/projects/<slug>          → hard delete project
-        DELETE /api/projects/<slug>/domain   → detach custom domain"""
-        try:
-            if self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_delete_domain(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
-                slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
-                from pebble.server.forms import run_delete_webhook_config
-                run_delete_webhook_config(self, slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/autoresponder"):
-                slug = self.path[len("/api/projects/"):-len("/forms/autoresponder")]
-                from pebble.server.forms import run_delete_autoresponder_config
-                run_delete_autoresponder_config(self, slug)
-            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path:
-                self._handle_inbox_delete()
-            elif self.path.startswith("/api/projects/"):
-                slug = self.path[len("/api/projects/"):]
-                # Reject paths with subroutes (e.g. /history, /star) — those
-                # belong to the GET/POST handlers, not DELETE.
-                if "/" in slug:
-                    self.send_response(404); self.end_headers(); return
-                self._handle_delete_project(slug)
-            else:
-                self.send_response(404); self.end_headers()
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_delete
+        route_delete(self)
 
     def _handle_500(self, exc: BaseException) -> None:
         """Common 500 path. Logs the full traceback under a short
