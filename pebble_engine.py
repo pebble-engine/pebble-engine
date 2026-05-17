@@ -1692,6 +1692,23 @@ class PebbleHandler(BaseHTTPRequestHandler):
         rel = parts[1] if len(parts) > 1 and parts[1] else "index.html"
         if ".." in rel.split("/"):
             self.send_response(403); self.end_headers(); return
+
+        # If a live `next dev` process is registered for this slug, proxy to
+        # it so SSR routes work (Next.js apps have no compiled index.html on
+        # disk — static-file serving would 404). Falls through to static
+        # files when no dev server is alive (engine restart, old build, etc.).
+        try:
+            from pebble.server.dev_registry import get_url as _get_dev_url
+            dev_url = _get_dev_url(slug)
+            if dev_url:
+                # Strip /preview/<raw-slug> so next dev sees the real route.
+                slug_prefix = "/preview/" + parts[0]
+                forward_path = self.path[len(slug_prefix):] or "/"
+                if self._proxy_to_dev(dev_url, forward_path):
+                    return
+        except Exception:
+            pass  # fall through to static files
+
         site_file = OUTPUT_DIR / slug / "site" / rel
         if not site_file.exists() or not site_file.is_file():
             self.send_response(404); self.end_headers()
@@ -1742,6 +1759,47 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if idx == -1:
             return html + tag
         return html[:idx] + tag + html[idx:]
+
+    def _proxy_to_dev(self, dev_url: str, forward_path: str) -> bool:
+        """Forward GET *forward_path* to the running next dev server at *dev_url*.
+
+        Injects the visual-edit bridge into HTML responses, matching the
+        behaviour of the static-file path.  Returns True on success.
+        The caller must not write any HTTP response on False — the connection
+        state is clean (no bytes sent).
+        """
+        import http.client
+        from urllib.parse import urlsplit
+        parsed = urlsplit(dev_url)
+        conn: http.client.HTTPConnection | None = None
+        try:
+            conn = http.client.HTTPConnection(parsed.netloc, timeout=10)
+            conn.request("GET", forward_path)
+            resp = conn.getresponse()
+            data = resp.read()
+            ct = resp.getheader("Content-Type", "application/octet-stream")
+            if "text/html" in ct:
+                try:
+                    from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
+                    html = data.decode("utf-8", errors="replace")
+                    data = self._inject_bridge(html, PEBBLE_VISUAL_EDIT_BRIDGE).encode("utf-8")
+                    ct = "text/html; charset=utf-8"
+                except Exception:
+                    pass
+            self.send_response(resp.status)
+            self.send_header("Content-Type", ct)
+            self.send_header("Content-Length", str(len(data)))
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Access-Control-Allow-Origin", "*")
+            self.end_headers()
+            self.wfile.write(data)
+            return True
+        except Exception as exc:
+            log.warning("dev proxy %s → %s failed: %s", forward_path, dev_url, exc)
+            return False
+        finally:
+            if conn:
+                conn.close()
 
     def _handle_build(self, generate: bool):
         """Build pipeline route. Body lives in :mod:`pebble.server.build` so

@@ -543,6 +543,11 @@ def run_build(handler, generate: bool) -> None:
             server_info["errors"].append(f"dev server crashed: {e}")
         if server_info.get("url"):
             try:
+                from pebble.server.dev_registry import register as _reg_dev
+                _reg_dev(slug, server_info["url"])
+            except Exception:
+                pass
+            try:
                 screenshot_info = post_build_screenshots(server_info["url"], out_dir)
             except Exception as e:
                 screenshot_info["errors"].append(f"screenshot crashed: {e}")
