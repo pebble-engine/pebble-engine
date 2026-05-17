@@ -1730,6 +1730,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/internal/supabase-webhook":
                 from pebble.server.supabase_webhook import run_supabase_webhook
                 run_supabase_webhook(self)
+            elif self.path == "/api/account/delete":
+                from pebble.server.account import run_delete_account
+                run_delete_account(self)
             elif self.path.startswith("/api/projects/") and self.path.endswith("/forms/webhook"):
                 slug = self.path[len("/api/projects/"):-len("/forms/webhook")]
                 from pebble.server.forms import run_set_webhook_config

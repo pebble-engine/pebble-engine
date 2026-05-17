@@ -10,6 +10,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   fetchWebhookConfig,
   setWebhookConfig,
@@ -17,13 +18,17 @@ import {
   fetchAutoresponder,
   saveAutoresponder,
   clearAutoresponder,
+  deleteAccount,
   type WebhookConfig,
   type AutoresponderConfig,
 } from "@/lib/api";
+import { createClient } from "@/lib/supabase/client";
 
 type SaveState = "idle" | "saving" | "saved" | "error";
 
 export function InboxSettings({ slug }: { slug: string }) {
+  const router = useRouter();
+
   // ---- Webhook state ----
   const [webhook, setWebhook] = useState<WebhookConfig | null>(null);
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -38,6 +43,11 @@ export function InboxSettings({ slug }: { slug: string }) {
   const [arReplyField, setArReplyField] = useState("email");
   const [arState, setArState] = useState<SaveState>("idle");
   const [arError, setArError] = useState<string | null>(null);
+
+  // ---- Account-delete (GDPR Ch 7.7) state ----
+  const [deleteState, setDeleteState] = useState<SaveState>("idle");
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [confirmText, setConfirmText] = useState("");
 
   const [loading, setLoading] = useState(true);
 
@@ -125,6 +135,40 @@ export function InboxSettings({ slug }: { slug: string }) {
     } catch (e) {
       setArError(e instanceof Error ? e.message : String(e));
       setArState("error");
+    }
+  }
+
+  async function onDeleteAccount() {
+    // Two-step gate: typed confirmation + browser confirm. The typed
+    // confirmation prevents one-click-misclick disasters; the
+    // browser confirm is the second guardrail.
+    if (confirmText !== "DELETE") {
+      setDeleteError('Type "DELETE" in the box first to confirm.');
+      return;
+    }
+    if (!confirm(
+      "This will PERMANENTLY delete your account, all projects, and " +
+      "any submissions. There is no undo. Proceed?"
+    )) {
+      return;
+    }
+    setDeleteState("saving");
+    setDeleteError(null);
+    try {
+      const result = await deleteAccount();
+      // Server-side delete succeeded. Now scrub client cookies via
+      // Supabase's signOut. Then route to /landing.
+      try {
+        const supabase = createClient();
+        await supabase.auth.signOut();
+      } catch {
+        // signOut errors are non-fatal — the cookies will expire on
+        // their own and the server-side account is already gone.
+      }
+      router.push(result.next || "/landing");
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : String(e));
+      setDeleteState("error");
     }
   }
 
@@ -332,6 +376,58 @@ export function InboxSettings({ slug }: { slug: string }) {
             <p>· If a visitor submits twice within an hour, only the first triggers an auto-reply.</p>
           </div>
         </details>
+      </section>
+
+      {/* --- Danger zone (Ch 7.7 GDPR delete) ---
+        * Lives at the bottom of inbox-settings for now since no
+        * dedicated /settings page exists yet. The action is per-USER
+        * (not per-project), so when the /settings page lands this
+        * section should move there.
+        */}
+      <section className="space-y-4 bg-card border-2 border-destructive/40 rounded-2xl p-6">
+        <div className="space-y-1">
+          <h2 className="font-display text-xl font-bold text-destructive">
+            Danger zone
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Permanently delete your Pebble account. This wipes your
+            login, all projects, every submission in every inbox, and
+            removes your data from our records. <strong>There is no
+            undo.</strong>
+          </p>
+        </div>
+
+        <label className="block space-y-2">
+          <span className="text-sm font-medium text-foreground">
+            Type <code className="font-mono text-destructive">DELETE</code> below to confirm
+          </span>
+          <input
+            type="text"
+            value={confirmText}
+            onChange={(e) => setConfirmText(e.target.value)}
+            placeholder="DELETE"
+            autoComplete="off"
+            className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-destructive font-mono"
+          />
+        </label>
+
+        {deleteError && (
+          <p role="alert" className="text-sm text-destructive">{deleteError}</p>
+        )}
+
+        <button
+          onClick={onDeleteAccount}
+          disabled={deleteState === "saving" || confirmText !== "DELETE"}
+          className="inline-flex items-center justify-center rounded-full bg-destructive px-5 py-2.5 text-sm font-medium text-destructive-foreground hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed transition-transform"
+        >
+          {deleteState === "saving" ? "Deleting account…" : "Delete my account permanently"}
+        </button>
+
+        <p className="text-xs text-muted-foreground">
+          You'll be signed out and returned to the landing page. We
+          honour this request within seconds — your auth row, profile
+          row, and all linked data are removed in one go.
+        </p>
       </section>
     </div>
   );

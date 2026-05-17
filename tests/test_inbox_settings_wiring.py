@@ -84,3 +84,34 @@ def test_settings_panel_calls_documented_endpoints():
     assert "fetchAutoresponder" in src
     assert "saveAutoresponder" in src
     assert "clearAutoresponder" in src
+
+
+# ---- Track 12 wiring: GDPR account deletion (Ch 7.7) -------------------
+
+def test_api_exports_delete_account():
+    """The deleteAccount function the panel calls must be exported."""
+    src = API_TS.read_text(encoding="utf-8")
+    assert re.search(r"export\s+async\s+function\s+deleteAccount\b", src), \
+        "api.ts missing deleteAccount export"
+    # Must read the Supabase access token client-side via getSession.
+    assert "supabase.auth.getSession" in src, \
+        "deleteAccount must read the Supabase access token client-side"
+    # Must POST with Bearer header (server validates the token).
+    assert re.search(r"Authorization.*Bearer", src), \
+        "deleteAccount must send Authorization: Bearer <token>"
+
+
+def test_settings_panel_renders_danger_zone():
+    """The inbox settings panel must render the delete-account
+    section — typed confirmation + button + supabase signOut on
+    success."""
+    src = INBOX_SETTINGS.read_text(encoding="utf-8")
+    assert "deleteAccount" in src, "must import + call deleteAccount"
+    # Typed 'DELETE' guard prevents one-click mishaps.
+    assert 'confirmText !== "DELETE"' in src or "confirmText !== 'DELETE'" in src, \
+        "missing the 'type DELETE to confirm' guard"
+    # Client-side signOut after server-side delete succeeds.
+    assert "supabase.auth.signOut" in src, \
+        "must call supabase.auth.signOut to clear v3-side cookies"
+    # Routes to /landing (or whatever the engine returns as `next`).
+    assert "/landing" in src or "result.next" in src

@@ -177,9 +177,13 @@ They want to click the text and type. Without this, the whole product fails.
 [x] 7.5  Password reset flow — /forgot + /reset pages (0697ab3)
 [ ] 7.6  User profile page (name, avatar, time zone)
          ← OPEN. No /profile or /settings page exists yet.
-[ ] 7.7  Account-deletion flow (GDPR compliance from day 1)
-         ← OPEN. Auth handles "dangling session if account deleted"
-            but there is no actual delete endpoint or UI.
+[x] 7.7  Account-deletion flow (GDPR compliance from day 1)
+         — Shipped 2026-05-17. POST /api/account/delete validates
+         the Supabase access token, admin-deletes the user via
+         service-role key, cascades to public.profiles via FK.
+         v3 inbox settings exposes a "Danger zone" with typed-DELETE
+         confirmation + browser confirm. Project files in output/
+         are not auto-scrubbed (follow-up sweep).
 
 **Phase A.5 deprecation (2026-05-16):** Legacy /api/auth/* endpoints
 (scrypt+cookie) now carry Deprecation/Sunset/Link headers + log on

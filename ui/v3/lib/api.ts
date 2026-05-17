@@ -474,6 +474,54 @@ export async function clearAutoresponder(slug: string): Promise<{ slug: string; 
   return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
 }
 
+// ---------- /api/account/delete (GDPR — Ch 7.7) ---------------------------
+
+export type AccountDeleteResponse = {
+  ok:      boolean;
+  deleted: boolean;
+  user_id: string;
+  next:    string;    // path to redirect to after client-side signOut
+};
+
+/**
+ * GDPR-style account deletion. Pulls the current Supabase access
+ * token client-side, POSTs to the engine which validates the token
+ * and admin-deletes the user (cascades to public.profiles via FK).
+ *
+ * On success, callers MUST follow up with:
+ *   await supabase.auth.signOut();
+ *   router.push(result.next);
+ *
+ * The engine doesn't (and can't) clear the v3-side Supabase cookies
+ * — that's a client-only API.
+ */
+export async function deleteAccount(): Promise<AccountDeleteResponse> {
+  // Lazy-import the supabase client so the engine-only build paths
+  // (e.g. tests that exercise lib/api.ts in isolation) don't pull
+  // the whole @supabase/ssr graph.
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/account/delete"), {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as AccountDeleteResponse;
+}
+
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------
 
 export type AnalyticsSummary = {
