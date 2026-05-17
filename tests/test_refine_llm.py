@@ -14,6 +14,7 @@ from pathlib import Path
 
 import pytest
 
+import pebble.engagement as engagement_mod
 import pebble.history as history_mod
 import pebble.security as security_mod
 import pebble.server.refine as refine_mod
@@ -61,6 +62,8 @@ def fake_engine(tmp_path, monkeypatch):
             return None
         return "test-user"
     monkeypatch.setattr(refine_mod, "require_project_owner", bypass)
+    # Isolate engagement storage per test (T17).
+    monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
 
     fake_pe_module = type("FakeModule", (), {
         "OUTPUT_DIR":              out,
@@ -249,3 +252,52 @@ def test_llm_snapshotted_before_call_so_failures_are_reversible(fake_engine):
     snaps = history_mod.list_history("p1")
     assert len(snaps) >= 1
     assert any("friendlier" in s.reason for s in snaps)
+
+
+# ---- T17: engagement wiring + privacy regression --------------------------
+
+def test_refine_logs_engagement_event_on_success(fake_engine):
+    _seed_site(fake_engine["output"], "p1", {
+        "app/page.tsx": "export default function P() { return <main>Yo</main>; }",
+    })
+    fake_engine["client_holder"]["client"] = FakeLLMClient(
+        response='<pebble-file path="app/page.tsx">export default function P() { return <main>Howdy</main>; }</pebble-file>'
+    )
+    h = FakeHandler({"slug": "p1", "refinement_id": "friendlier"})
+    refine_mod.run_refine(h)
+    assert h.status == 200
+    events = engagement_mod.read_user_events("test-user")
+    assert len(events) == 1
+    assert events[0]["event"] == "refine_used"
+
+
+def test_refine_does_not_log_on_502_llm_error(fake_engine):
+    """LLM-error refinement (no <pebble-file> returned) must NOT log
+    an event. Engagement counts successful actions."""
+    _seed_site(fake_engine["output"], "p1", {
+        "app/page.tsx": "export default function P() { return <main>Hi</main>; }",
+    })
+    fake_engine["client_holder"]["client"] = FakeLLMClient(response="sorry")
+    h = FakeHandler({"slug": "p1", "refinement_id": "friendlier"})
+    refine_mod.run_refine(h)
+    assert h.status == 502
+    assert engagement_mod.read_user_events("test-user") == []
+
+
+def test_refine_engagement_never_contains_refinement_id(fake_engine):
+    """PRIVACY REGRESSION — the engagement log must NEVER record which
+    refinement chip was clicked. Only the generic 'refine_used' event."""
+    _seed_site(fake_engine["output"], "p1", {
+        "app/page.tsx": "export default function P() { return <main>Hi</main>; }",
+    })
+    fake_engine["client_holder"]["client"] = FakeLLMClient(
+        response='<pebble-file path="app/page.tsx">export default function P() { return <main>Howdy</main>; }</pebble-file>'
+    )
+    h = FakeHandler({"slug": "p1", "refinement_id": "booking"})
+    refine_mod.run_refine(h)
+    log_file = fake_engine["output"] / ".engagement" / "test-user.jsonl"
+    text = log_file.read_text(encoding="utf-8")
+    assert "booking" not in text
+    assert "friendlier" not in text
+    assert "professional" not in text
+    assert "p1" not in text  # slug must not leak either

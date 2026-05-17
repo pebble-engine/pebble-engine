@@ -2268,6 +2268,731 @@ def a11y_static_audit(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 34. schema_org_jsonld_present — FOUNDATION (SEO + AI agent discoverability)
+# ---------------------------------------------------------------------------
+
+# Match a <script type="application/ld+json"> tag — JSX-form. The src
+# may be `dangerouslySetInnerHTML={{ __html: JSON.stringify({...}) }}`
+# (the canonical Next.js way) OR a plain text body. Either is fine for
+# search engines and AI agents that parse the served HTML.
+_LDJSON_SCRIPT_RE = re.compile(
+    r"""<script[^>]*?type=\s*['"]application/ld\+json['"]""",
+    re.IGNORECASE,
+)
+# Schema.org JSON-LD must declare its vocabulary. Both forms accepted —
+# string-key ("@context": "https://schema.org") OR property-shorthand
+# without quotes (rare but legal in JS object literals when key is a
+# valid identifier, which @context is NOT — but we accept both forms
+# to avoid false-negatives on creative future codegen).
+_SCHEMA_ORG_CONTEXT_RE = re.compile(
+    r"""['"]?@context['"]?\s*:\s*['"]https?://schema\.org['"]""",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("app/layout.tsx",))
+def schema_org_jsonld_present(ctx: BuildContext) -> CheckResult:
+    """`app/layout.tsx` must include a `<script type="application/ld+json">`
+    block with a Schema.org context, so every page emits structured data
+    for SEO and AI-agent discoverability.
+
+    The check is shape-only — it does NOT validate the JSON-LD body's
+    @type or property completeness, because the right type varies per
+    industry (LocalBusiness for plumber, Organization for SaaS, etc.).
+    Future tightening can pin @type per industry once industries.json
+    carries the mapping.
+
+    Why layout.tsx specifically: it's the single point that wraps every
+    route, so structured data set there is inherited by every page.
+    Pages that need extra type-specific markup (e.g. /menu using
+    Restaurant + MenuItem) can add their own <script> tag on top — but
+    the foundation Organization/LocalBusiness block belongs in layout.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("schema_org_jsonld_present", "skip", "no site directory")
+
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx is missing",
+        )
+
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if not _LDJSON_SCRIPT_RE.search(text):
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx has no <script type=\"application/ld+json\"> tag — "
+            "add a Schema.org JSON-LD block (LocalBusiness or Organization) "
+            "inside the <head> so search engines and AI agents can identify "
+            "the business",
+        )
+
+    if not _SCHEMA_ORG_CONTEXT_RE.search(text):
+        return CheckResult(
+            "schema_org_jsonld_present", "fail",
+            "app/layout.tsx has a JSON-LD script tag but no `@context: https://schema.org` "
+            "declaration — without the vocabulary, the structured data won't be "
+            "interpreted as Schema.org",
+        )
+
+    return CheckResult(
+        "schema_org_jsonld_present", "pass",
+        "Schema.org JSON-LD present in app/layout.tsx",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 35. sitemap_and_robots_present — FOUNDATION (crawler discoverability)
+# ---------------------------------------------------------------------------
+
+# Next.js 14 generates sitemap.xml / robots.txt from these two files via
+# convention. Both expect a default export, but the SHAPE varies:
+# sitemap returns an array, robots returns an object. The check is
+# "is there a default export at all?" — Next.js will pin the shape at
+# build time. Loose pattern accepts all legitimate forms:
+#   export default function ...
+#   export default async function ...
+#   export default () => ...
+#   export default { ... }            (object literal — robots.ts default)
+#   export default class ...
+#   const x = ...; export default x;  (named const, then exported)
+#   export { default } from './x';    (re-export)
+# Same regex for both files; the file path distinguishes their purpose.
+# NLM round on Tracks 4–7 flagged the original regex (`function\b` OR
+# `(` only) as too rigid — it would false-fail the named-const and
+# re-export forms.
+_DEFAULT_EXPORT_RE = re.compile(
+    r"export\s+default\s+\S"
+    r"|export\s*\{\s*default\s*[\},]",
+)
+
+
+@check_metadata(static_files=("app/sitemap.ts", "app/robots.ts"))
+def sitemap_and_robots_present(ctx: BuildContext) -> CheckResult:
+    """Every build must ship Next.js 14 convention files that emit
+    `sitemap.xml` and `robots.txt`.
+
+    Why both: search engines and modern AI agents (GPTBot, ClaudeBot,
+    PerplexityBot, Google-Extended, etc.) consume robots.txt to decide
+    crawling AND sitemap.xml to discover routes. Together they make
+    every page in the build findable. Without them, only the homepage
+    gets indexed reliably.
+
+    The check is shape-only. We don't validate the route list against
+    plan.json (that's drift-prone — the Footer eval covers it from a
+    different angle). We just verify both files exist and export a
+    default function — the Next.js convention requirement.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("sitemap_and_robots_present", "skip", "no site directory")
+
+    sitemap = ctx.site_dir / "app" / "sitemap.ts"
+    robots  = ctx.site_dir / "app" / "robots.ts"
+
+    missing: list[str] = []
+    if not sitemap.exists():
+        missing.append("app/sitemap.ts")
+    if not robots.exists():
+        missing.append("app/robots.ts")
+    if missing:
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            f"crawler discoverability files missing: {', '.join(missing)}",
+            details={"files": missing},
+        )
+
+    sitemap_src = sitemap.read_text(encoding="utf-8", errors="ignore")
+    if not _DEFAULT_EXPORT_RE.search(sitemap_src):
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            "app/sitemap.ts has no default export — Next.js convention "
+            "requires a default-exported function (or arrow / object / "
+            "re-export) returning a MetadataRoute.Sitemap array",
+        )
+
+    robots_src = robots.read_text(encoding="utf-8", errors="ignore")
+    if not _DEFAULT_EXPORT_RE.search(robots_src):
+        return CheckResult(
+            "sitemap_and_robots_present", "fail",
+            "app/robots.ts has no default export — Next.js convention "
+            "requires a default-exported function (or arrow / object / "
+            "re-export) returning a MetadataRoute.Robots object",
+        )
+
+    return CheckResult(
+        "sitemap_and_robots_present", "pass",
+        "app/sitemap.ts + app/robots.ts present with default exports",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 36. perf_budget_or_lighter — FOUNDATION (Core Web Vitals static heuristics)
+# ---------------------------------------------------------------------------
+
+# (T14, 2026-05-17) Five sub-checks, all static — no Lighthouse, no browser.
+# Catches the regressions that turn a "looks fine in dev" build into a
+# "loses 7% of conversions per second of LCP" production site.
+
+# CLS: raw <img> without width AND height attrs. images_use_next_image
+# already forbids raw <img>; this is defense-in-depth for the case where
+# that check is skipped or the LLM slips a raw <img> past it.
+_RAW_IMG_OPEN_RE = re.compile(r"<img\b([^>]*?)/?>", re.IGNORECASE | re.DOTALL)
+_HAS_WIDTH_ATTR_RE  = re.compile(r"\bwidth\s*=")
+_HAS_HEIGHT_ATTR_RE = re.compile(r"\bheight\s*=")
+
+# FOIT: hand-rolled @font-face block must declare font-display with a
+# non-blocking value. Browser default ("auto" / "block") hides text up to
+# 3s on slow connections. Acceptable: swap | optional | fallback.
+_FONT_FACE_BLOCK_RE = re.compile(r"@font-face\s*\{([^}]*)\}", re.IGNORECASE | re.DOTALL)
+_FONT_DISPLAY_OK_RE = re.compile(
+    r"\bfont-display\s*:\s*(?:swap|optional|fallback)\b",
+    re.IGNORECASE,
+)
+
+# TBT: heavy 3D libs static-imported in app/page.tsx block first paint.
+# `three` is ~700kb, `@react-three/*` builds on it. Must be loaded via
+# next/dynamic({ ssr: false }) so they defer to after first paint.
+#
+# NLM round 2026-05-17: the negative lookahead `(?!type\s)` excludes
+# `import type { Mesh } from 'three'` — type-only imports are erased at
+# compile time and have zero bundle cost.
+_HEAVY_LIB_IMPORT_RE = re.compile(
+    r"""^[ \t]*import\s+(?!type\s)[^;]*?from\s*['"](three|@react-three/[^'"]+)['"]""",
+    re.MULTILINE,
+)
+
+# LCP: hero <video> must declare preload= explicitly. Any value (metadata,
+# auto, none) is acceptable — the point is the attribute documents intent
+# rather than relying on inconsistent browser defaults.
+_VIDEO_OPEN_RE = re.compile(r"<video\b([^>]*?)>", re.IGNORECASE | re.DOTALL)
+_HAS_PRELOAD_ATTR_RE = re.compile(r"\bpreload\s*=")
+
+# LCP: preload link OR <Image priority>. Either satisfies the "primary hero
+# asset paints before JS hydrates" rule — <Image priority> auto-generates
+# the preload link via Next.js's image pipeline.
+#
+# NLM round 2026-05-17: the negative lookahead after `priority` rejects
+# `<Image priority={false}>` (explicit disable) while still accepting:
+#   - bare `priority` (followed by space, `/`, or `>`)
+#   - `priority={true}`, `priority="..."`, or any non-false expression
+_PRELOAD_LINK_RE = re.compile(
+    r"""<link\b[^>]*?\brel\s*=\s*['"]preload['"]""",
+    re.IGNORECASE | re.DOTALL,
+)
+_IMAGE_PRIORITY_RE = re.compile(
+    r"<Image\b[^>]*?\bpriority(?!\s*=\s*\{?\s*false\b)",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+@check_metadata(static_files=(
+    "app/layout.tsx", "app/page.tsx",
+    "components/sections/Hero.tsx", "app/globals.css",
+))
+def perf_budget_or_lighter(ctx: BuildContext) -> CheckResult:
+    """Static Core Web Vitals heuristics — no Lighthouse, no browser.
+
+    Five rules covering the four user-facing metrics:
+
+    1. **CLS** — every raw `<img>` must declare `width` AND `height` attrs.
+       `images_use_next_image` forbids raw `<img>` entirely; this is the
+       defense-in-depth backstop.
+    2. **FOIT** — every `@font-face` in any CSS must declare
+       `font-display: swap | optional | fallback`. Browser default (auto/
+       block) hides text up to 3s on slow connections.
+    3. **TBT** — `three` and `@react-three/*` MUST be loaded via
+       `next/dynamic({ ssr: false })` in `app/page.tsx`. Static imports of
+       these ~700kb libs block first paint.
+    4. **LCP** — hero `<video>` MUST declare a `preload=` attribute
+       explicitly. The value (metadata / auto / none) is up to the author;
+       the absence is the regression.
+    5. **LCP** — a `<link rel="preload">` OR `<Image priority>` MUST exist
+       somewhere across layout / page / hero. Without it, the above-the-fold
+       asset waits for JS hydration before the browser discovers it.
+
+    Why this matters (NotebookLM source — 2026-05-17 research):
+    - 1s slower load = 7% fewer conversions
+    - 53% of mobile users bounce on sites > 3s
+    - 0.05s = time to first impression
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("perf_budget_or_lighter", "skip", "no site directory")
+
+    failures: list[str] = []
+    offender_files: list[str] = []
+
+    # 1. CLS — raw <img> without width AND height
+    img_offenders: list[str] = []
+    for tsx in ctx.site_dir.rglob("*.tsx"):
+        if "node_modules" in tsx.parts:
+            continue
+        text = tsx.read_text(encoding="utf-8", errors="ignore")
+        for m in _RAW_IMG_OPEN_RE.finditer(text):
+            attrs = m.group(1) or ""
+            if not (_HAS_WIDTH_ATTR_RE.search(attrs) and _HAS_HEIGHT_ATTR_RE.search(attrs)):
+                img_offenders.append(str(tsx.relative_to(ctx.site_dir)))
+                break
+    if img_offenders:
+        failures.append(
+            f"{len(img_offenders)} file(s) with raw <img> missing width/height (CLS risk)"
+        )
+        offender_files.extend(img_offenders[:5])
+
+    # 2. FOIT — @font-face without font-display: swap|optional|fallback
+    # NLM round 2026-05-17:
+    #   (a) strip CSS comments first so `/* font-display: swap */` doesn't
+    #       falsely satisfy the requirement.
+    #   (b) blocks with ONLY `src: local(...)` (system fonts) have no
+    #       network fetch and therefore no FOIT risk — skip them.
+    font_offenders: list[str] = []
+    for css in ctx.site_dir.rglob("*.css"):
+        if "node_modules" in css.parts:
+            continue
+        text = css.read_text(encoding="utf-8", errors="ignore")
+        stripped = _BLOCK_COMMENT_RE.sub("", text)
+        for block in _FONT_FACE_BLOCK_RE.finditer(stripped):
+            body = block.group(1) or ""
+            # Skip local-only blocks — no url() means no network fetch.
+            if "url(" not in body.lower():
+                continue
+            if not _FONT_DISPLAY_OK_RE.search(body):
+                font_offenders.append(str(css.relative_to(ctx.site_dir)))
+                break
+    if font_offenders:
+        failures.append(
+            f"{len(font_offenders)} CSS file(s) with @font-face missing "
+            "font-display: swap|optional|fallback (FOIT risk)"
+        )
+        offender_files.extend(font_offenders[:5])
+
+    # 3. TBT — heavy 3D libs static-imported in app/page.tsx
+    page = ctx.site_dir / "app" / "page.tsx"
+    if page.exists():
+        page_text = page.read_text(encoding="utf-8", errors="ignore")
+        static_heavy = _HEAVY_LIB_IMPORT_RE.findall(page_text)
+        if static_heavy:
+            uniq = sorted(set(static_heavy))
+            failures.append(
+                f"app/page.tsx statically imports {', '.join(uniq)} — wrap "
+                "in next/dynamic({ ssr: false }) so it loads after first paint"
+            )
+            offender_files.append("app/page.tsx")
+
+    # 4. LCP — hero <video> without explicit preload= attribute
+    video_preload_missing: list[str] = []
+    hero_files = [
+        ctx.site_dir / "app" / "page.tsx",
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+    ]
+    for path in hero_files:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        for m in _VIDEO_OPEN_RE.finditer(text):
+            attrs = m.group(1) or ""
+            if not _HAS_PRELOAD_ATTR_RE.search(attrs):
+                video_preload_missing.append(str(path.relative_to(ctx.site_dir)))
+                break
+    if video_preload_missing:
+        failures.append(
+            f"{len(video_preload_missing)} hero file(s) with <video> missing "
+            "explicit preload= attribute (LCP risk — browser defaults vary)"
+        )
+        offender_files.extend(video_preload_missing[:5])
+
+    # 5. LCP — preload link OR <Image priority> somewhere
+    preload_evidence = False
+    candidates = [
+        ctx.site_dir / "app" / "layout.tsx",
+        ctx.site_dir / "app" / "page.tsx",
+        ctx.site_dir / "components" / "sections" / "Hero.tsx",
+    ]
+    for path in candidates:
+        if not path.exists():
+            continue
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        if _PRELOAD_LINK_RE.search(text) or _IMAGE_PRIORITY_RE.search(text):
+            preload_evidence = True
+            break
+    if not preload_evidence:
+        failures.append(
+            "no <link rel=\"preload\"> or <Image priority> for the hero asset "
+            "(LCP risk — first paint waits for JS to discover the asset)"
+        )
+
+    if failures:
+        return CheckResult(
+            "perf_budget_or_lighter", "fail",
+            "; ".join(failures),
+            details={"files": list(dict.fromkeys(offender_files))[:10]} if offender_files else None,
+        )
+    return CheckResult(
+        "perf_budget_or_lighter", "pass",
+        "CLS / FOIT / TBT / LCP heuristics clean",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 37. hero_cta_above_fold — FOUNDATION (conversion driver)
+# ---------------------------------------------------------------------------
+
+# (T15, 2026-05-17) The hero MUST contain at least one clear CTA. 70% of
+# small-biz sites lack one (NLM source). Without a CTA above the fold the
+# landing user has nothing to do — scroll past or bounce.
+
+# Action verbs — first word of the CTA text. Common patterns lifted from
+# Pebble's prompt template + general CTA copy norms. Case-insensitive.
+_ACTION_VERBS = {
+    "get", "start", "try", "book", "contact", "schedule", "learn",
+    "call", "discover", "explore", "find", "reserve", "buy", "order",
+    "shop", "join", "subscribe", "sign", "see", "view", "request",
+    "claim", "download", "watch", "build", "create", "make", "talk",
+    "chat", "speak", "meet", "visit", "browse", "read", "ask", "send",
+    "tell", "let", "save", "grab", "pick", "choose", "open", "tap",
+}
+
+# CTA tag — capture tag, attrs, inner content. IGNORECASE so <a>/<A>/<Link>
+# all match; back-ref \1 with IGNORECASE matches case-insensitively too.
+_CTA_TAG_RE = re.compile(
+    r"<(a|button|Link)\b([^>]*?)>((?:.|\n)*?)</\1>",
+    re.IGNORECASE,
+)
+# Visually-prominent bg utility — solid color or arbitrary value.
+_PROMINENT_BG_RE = re.compile(
+    r"\bbg-(?:white|black|primary|secondary|accent|[a-z]+-\d{2,3}|\[[^]]+\])",
+    re.IGNORECASE,
+)
+# href= attr extractor — both single- and double-quoted forms.
+_HREF_RE = re.compile(r"""\bhref\s*=\s*['"]([^'"]*)['"]""")
+# Variable href — `href={CONTACT_ROUTE}` or `href={`/${slug}`}` etc.
+# NLM round 2026-05-17: dynamic-routing forms must be accepted because
+# we can't introspect the variable's value at static-analysis time.
+_HREF_EXPR_RE = re.compile(r"\bhref\s*=\s*\{[^}]+\}")
+
+
+@check_metadata(static_files=("app/page.tsx", "components/sections/Hero.tsx"))
+def hero_cta_above_fold(ctx: BuildContext) -> CheckResult:
+    """The hero section MUST contain at least one clear CTA above the fold.
+
+    A qualifying CTA has THREE properties:
+
+    1. **Action verb in text** — 'Get a quote', 'Book a call', 'Start your
+       trial'. First word of the link text matches the verb whitelist.
+       Rejects 'About us', 'Click here', bare business names.
+    2. **Recognizable href** — `/path`, `tel:`, `mailto:`, `#section`,
+       `https://...`. Reject `href="#"` alone (the canonical dead link).
+       `<button>` is exempt from href validation.
+    3. **Visually prominent className** — `bg-white`, `bg-primary`,
+       `bg-blue-500`, `bg-[#abc]`, etc. Distinguishes the primary CTA from
+       inline links in body copy.
+
+    Scope: `app/page.tsx` + `components/sections/Hero.tsx`. ONE qualifying
+    CTA across both files satisfies the check.
+
+    Why: 70% of small-business sites lack a clear homepage CTA (NLM source),
+    and a 0.05s first-impression window means the CTA must land above the
+    fold or it doesn't exist for most visitors.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_cta_above_fold", "skip", "no site directory")
+
+    files: list[Path] = []
+    for rel in ("app/page.tsx", "components/sections/Hero.tsx"):
+        p = ctx.site_dir / rel
+        if p.exists():
+            files.append(p)
+    if not files:
+        return CheckResult(
+            "hero_cta_above_fold", "fail",
+            "no hero files — neither app/page.tsx nor components/sections/Hero.tsx exist",
+        )
+
+    found_any_cta = False
+    diagnostic: list[str] = []
+
+    for path in files:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+        for m in _CTA_TAG_RE.finditer(stripped):
+            tag = m.group(1).lower()
+            attrs = m.group(2) or ""
+            inner_raw = m.group(3) or ""
+            inner = re.sub(r"<[^>]+>", " ", inner_raw)
+            inner = re.sub(r"\s+", " ", inner).strip()
+            if not inner:
+                continue  # icon-only — covered by a11y_static_audit, not a CTA
+            found_any_cta = True
+
+            # 1. Action verb (first word, stripped of punctuation)
+            first_word = inner.split()[0].lower().strip(",.!?;:'\"-")
+            has_verb = first_word in _ACTION_VERBS
+
+            # 2. Valid href (button exempt). String forms (`href="..."`)
+            # get the dead-`#` check; expression forms (`href={CONTACT}`)
+            # are accepted unconditionally — we can't introspect the value.
+            if tag == "button":
+                href_ok = True
+                href = ""
+            else:
+                href_match = _HREF_RE.search(attrs)
+                if href_match:
+                    href = href_match.group(1).strip()
+                    href_ok = bool(href) and href != "#"
+                elif _HREF_EXPR_RE.search(attrs):
+                    href = "(expression)"
+                    href_ok = True
+                else:
+                    href = ""
+                    href_ok = False
+
+            # 3. Prominent className
+            prominent = bool(_PROMINENT_BG_RE.search(attrs))
+
+            if has_verb and href_ok and prominent:
+                return CheckResult(
+                    "hero_cta_above_fold", "pass",
+                    f"hero contains qualifying CTA in {path.relative_to(ctx.site_dir)}",
+                )
+
+            missing: list[str] = []
+            if not has_verb:
+                missing.append(f"action verb (first word: '{first_word}')")
+            if not href_ok:
+                missing.append(f"valid href (got '{href}')")
+            if not prominent:
+                missing.append("prominent bg utility")
+            diagnostic.append(f"<{tag}> '{inner[:40]}' missing: {', '.join(missing)}")
+
+    if not found_any_cta:
+        return CheckResult(
+            "hero_cta_above_fold", "fail",
+            "hero has no <a>/<button> CTA — add one with an action verb "
+            "(Get/Start/Book/Call/Schedule etc.) and a real href",
+            details={"files": [str(p.relative_to(ctx.site_dir)) for p in files]},
+        )
+
+    return CheckResult(
+        "hero_cta_above_fold", "fail",
+        f"hero CTAs exist but none qualify — {'; '.join(diagnostic[:3])}",
+        details={"files": [str(p.relative_to(ctx.site_dir)) for p in files]},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 38. mobile_optimized_responsive — FOUNDATION (58% of traffic is mobile)
+# ---------------------------------------------------------------------------
+
+# (T16, 2026-05-17) Four checks. 58% of traffic is mobile, only 22% of
+# small-biz sites are mobile-optimized (NLM source).
+
+# Viewport meta — raw <meta name="viewport"> OR Next.js `export const viewport`.
+_VIEWPORT_META_RE = re.compile(
+    r"""<meta\b[^>]*?\bname\s*=\s*['"]viewport['"]""",
+    re.IGNORECASE,
+)
+_EXPORT_VIEWPORT_RE = re.compile(r"export\s+const\s+viewport\s*[:=]")
+
+# Responsive prefix usage in hero
+_RESPONSIVE_PREFIX_RE = re.compile(r"\b(?:sm|md|lg|xl|2xl):")
+
+# Tailwind config `screens` key — if explicitly defined, must include
+# at least one of sm/md/lg. Default config (no `screens:` override) keeps
+# sm/md/lg/xl/2xl intact.
+_TAILWIND_SCREENS_RE = re.compile(r"\bscreens\s*:\s*\{([^}]*)\}", re.DOTALL)
+
+# Touch target ≥44px. NLM round 2026-05-17 surfaced two bugs in the
+# original regex-only approach:
+#   (a) `px-12 py-0` matched `px-12` and passed — but px-only padding
+#       gives zero vertical lift. Touch targets need VERTICAL height.
+#   (b) `min-h-[3rem]` (48px) was rejected because the arbitrary-value
+#       branch only accepted integer pixel values ≥40.
+#
+# Replaced the omnibus regex with a small inspector function that:
+#   - Accepts ONLY axis-vertical utilities (p-N, py-N, min-h-*, h-*)
+#   - Parses arbitrary values [Npx] / [Nrem] / [N.NNrem] / [Nem] / [N]
+#     numerically and compares to ≥44px (≥2.75rem at 16px root).
+#
+# `px-N` is no longer accepted as a touch-target signal.
+_NUMERIC_UTIL_RE = re.compile(
+    r"\b(p|py|min-h|h)-(\d{1,3})\b"
+)
+_ARBITRARY_UTIL_RE = re.compile(
+    r"\b(min-h|h)-\[(\d+(?:\.\d+)?)(px|rem|em)?\]"
+)
+
+
+def _has_acceptable_touch_target(cls: str) -> bool:
+    """Does this className declare a Tailwind utility that guarantees
+    ≥44px vertical touch target?
+
+    Accepts:
+    - ``p-3+`` / ``py-3+`` (both axes / vertical only) — Tailwind scale
+      where N ≥ 3 gives 12px+ padding → 44px+ button.
+    - ``min-h-11+`` / ``h-11+`` — 44px+ in default scale (×4).
+    - ``min-h-[<value>]`` / ``h-[<value>]`` where the value resolves
+      to ≥44px (px) or ≥2.75rem/em (at 16px root). Decimals supported.
+    """
+    # 1. Numeric Tailwind utilities — p-N, py-N, min-h-N, h-N where N maps
+    #    to ≥44px (×4 in default scale → N ≥ 11 for min-h/h; ≥3 for
+    #    padding which gives 12px each side around 16px text → ~40px,
+    #    rounded as acceptable per Apple HIG threshold).
+    for m in _NUMERIC_UTIL_RE.finditer(cls):
+        util, n_str = m.group(1), m.group(2)
+        n = int(n_str)
+        if util in ("p", "py") and n >= 3:
+            return True
+        if util in ("min-h", "h") and n >= 11:
+            return True
+    # 2. Arbitrary values — min-h-[44px], h-[3rem], min-h-[2.75rem], etc.
+    for m in _ARBITRARY_UTIL_RE.finditer(cls):
+        val_str, unit = m.group(2), (m.group(3) or "px")
+        try:
+            val = float(val_str)
+        except ValueError:
+            continue
+        if unit == "px" and val >= 44:
+            return True
+        if unit in ("rem", "em") and val >= 2.75:
+            return True
+    return False
+# className value extractor — handles three common shapes:
+#   className="bg-white px-6"
+#   className={`bg-white px-6`}
+#   className={"bg-white px-6"}
+_CLASSNAME_VAL_RE = re.compile(
+    r"""className\s*=\s*(?:['"]([^'"]*)['"]|\{`([^`]*)`\}|\{['"]([^'"]*)['"]\})"""
+)
+
+
+@check_metadata(static_files=(
+    "app/layout.tsx", "components/sections/Hero.tsx",
+    "app/page.tsx", "tailwind.config.ts",
+))
+def mobile_optimized_responsive(ctx: BuildContext) -> CheckResult:
+    """Mobile-first responsive design checks.
+
+    Four heuristics:
+
+    1. **Viewport meta** — `<meta name="viewport">` OR Next.js
+       `export const viewport`. Without it, mobile renders the page at
+       desktop width and forces user-zoom.
+    2. **Tailwind breakpoints intact** — if `tailwind.config.ts` explicitly
+       sets `screens: {}` (or omits sm/md/lg from a custom screens object),
+       `sm:`/`md:`/`lg:` utilities become no-ops on every page.
+    3. **Hero uses responsive prefixes** — at least one `sm:`/`md:`/`lg:`
+       (etc) prefix in the hero file. Desktop-only classes hit mobile at
+       desktop scale.
+    4. **Hero CTA touch target ≥44px** — interactive elements in hero
+       need vertical-axis padding/height. Accepted utilities: ``p-3+``
+       (both axes), ``py-3+`` (vertical), ``min-h-11+`` / ``min-h-[44px]``
+       (decimals and rem/em supported). ``px-N`` alone is NOT accepted
+       (horizontal-only padding doesn't lift the tap target). WCAG 2.5.5 /
+       Apple HIG / Material all converge on 44px minimum.
+
+    Hero-CTA scope note: the touch-target sub-check + hero_cta_above_fold
+    both scan ``app/page.tsx`` + ``components/sections/Hero.tsx``. A CTA
+    defined in a sub-imported component (e.g. ``components/ui/HeroCTA.tsx``
+    rendered as ``<HeroCTA />`` in Hero.tsx) is invisible to both. Pebble's
+    prompt template inlines the hero CTAs so this is rarely hit in practice;
+    flagged in NLM round 2026-05-17 as a deferred enhancement.
+
+    Why: 58% of traffic is mobile, 53% of mobile users bounce on sites >3s,
+    only 22% of small-business sites are mobile-optimized (NLM source).
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("mobile_optimized_responsive", "skip", "no site directory")
+
+    failures: list[str] = []
+    files_touched: list[str] = []
+
+    # 1. Viewport meta
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        failures.append("app/layout.tsx is missing — can't verify viewport meta")
+        files_touched.append("app/layout.tsx")
+    else:
+        text = layout.read_text(encoding="utf-8", errors="ignore")
+        if not (_VIEWPORT_META_RE.search(text) or _EXPORT_VIEWPORT_RE.search(text)):
+            failures.append(
+                "no viewport meta in app/layout.tsx — add `<meta name=\"viewport\" "
+                "content=\"width=device-width, initial-scale=1\">` or "
+                "`export const viewport = { width: \"device-width\", initialScale: 1 }`"
+            )
+            files_touched.append("app/layout.tsx")
+
+    # 2. Tailwind config breakpoints
+    tw_config = ctx.site_dir / "tailwind.config.ts"
+    if tw_config.exists():
+        text = tw_config.read_text(encoding="utf-8", errors="ignore")
+        screens_match = _TAILWIND_SCREENS_RE.search(text)
+        if screens_match:
+            screens_body = screens_match.group(1) or ""
+            if not re.search(r"\b(?:sm|md|lg)\s*:", screens_body):
+                failures.append(
+                    "tailwind.config.ts has explicit `screens: {}` (or screens "
+                    "without sm/md/lg keys) — responsive utilities will no-op"
+                )
+                files_touched.append("tailwind.config.ts")
+
+    # 3. Responsive prefix usage in hero file(s)
+    hero_files: list[Path] = []
+    for rel in ("components/sections/Hero.tsx", "app/page.tsx"):
+        p = ctx.site_dir / rel
+        if p.exists():
+            hero_files.append(p)
+    if hero_files:
+        any_responsive = any(
+            _RESPONSIVE_PREFIX_RE.search(p.read_text(encoding="utf-8", errors="ignore"))
+            for p in hero_files
+        )
+        if not any_responsive:
+            failures.append(
+                "hero files have no responsive prefix (sm:/md:/lg:) — "
+                "desktop classes hit mobile at desktop scale"
+            )
+            files_touched.extend(str(p.relative_to(ctx.site_dir)) for p in hero_files)
+
+    # 4. Hero CTA touch target — interactives with className must meet 44px
+    if hero_files:
+        small_offenders: list[str] = []
+        for path in hero_files:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
+            file_offended = False
+            for m in _INTERACTIVE_OPEN_RE.finditer(stripped):
+                attrs = m.group(2) or ""
+                if not _HAS_CLASSNAME_RE.search(attrs):
+                    continue
+                cls_match = _CLASSNAME_VAL_RE.search(attrs)
+                cls = ""
+                if cls_match:
+                    cls = cls_match.group(1) or cls_match.group(2) or cls_match.group(3) or ""
+                if not _has_acceptable_touch_target(cls):
+                    file_offended = True
+                    break
+            if file_offended:
+                small_offenders.append(str(path.relative_to(ctx.site_dir)))
+        if small_offenders:
+            failures.append(
+                f"{len(small_offenders)} hero file(s) have interactive elements "
+                "with <44px touch target — use p-3+ / py-3+ / min-h-11 / min-h-[44px]"
+            )
+            files_touched.extend(small_offenders)
+
+    if failures:
+        return CheckResult(
+            "mobile_optimized_responsive", "fail",
+            "; ".join(failures),
+            details={"files": list(dict.fromkeys(files_touched))[:10]} if files_touched else None,
+        )
+    return CheckResult(
+        "mobile_optimized_responsive", "pass",
+        "viewport + Tailwind breakpoints + responsive prefixes + 44px touch targets",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -2309,6 +3034,12 @@ ALL_CHECKS = [
     limitations_disclosed_in_readme,
     no_tracking_by_default,
     a11y_static_audit,
+    schema_org_jsonld_present,
+    sitemap_and_robots_present,
+    # FOUNDATION perf + conversion (May 2026 NLM research addendum — T14/T15/T16)
+    perf_budget_or_lighter,
+    hero_cta_above_fold,
+    mobile_optimized_responsive,
     site_compiles,
 ]
 

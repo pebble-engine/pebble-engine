@@ -10,11 +10,21 @@ User-scoped (dashboard inbox):
 - GET    /api/projects/<slug>/inbox/<id>          — read one submission
 - PATCH  /api/projects/<slug>/inbox/<id>          — mark read/unread
 - DELETE /api/projects/<slug>/inbox/<id>          — delete a submission
+
+User-scoped (webhook delivery config):
+
+- GET    /api/projects/<slug>/forms/webhook       — current config (or null)
+- POST   /api/projects/<slug>/forms/webhook       — set webhook URL
+- DELETE /api/projects/<slug>/forms/webhook       — remove webhook
 """
 from __future__ import annotations
 
+import base64
 import json
 import sys
+import threading
+import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Optional
 
@@ -29,12 +39,51 @@ from pebble.forms import (
     save_submission,
     update_submission,
 )
+from pebble import forms_autoresponder, forms_webhook
 from pebble.log import log
 from pebble.security import (
+    RateLimiter,
     client_ip as _client_ip,
     forms_submit_limiter,
     require_project_owner,
 )
+from pebble.storage import (
+    StorageError,
+    is_configured as storage_is_configured,
+    upload_attachment,
+)
+
+
+# Upload allowlist — covers the common service-business attachment
+# patterns (photo of damage, signed PDF, intake form, project doc).
+# Deliberately excludes image/svg+xml (XSS via inline script) and
+# anything executable.
+_UPLOAD_MIME_ALLOWLIST = frozenset({
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif",
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+})
+_UPLOAD_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+# Visitor-facing endpoint, so IP-rate-limited like the public form submit.
+# 5 burst / 1 per 12s sustained — generous for a real submitter who
+# attaches 2-3 files, tight enough that a bot can't quickly fill the bucket.
+_upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
+
+# Per-PROJECT upload quota — closes the "rotated-IPs storage
+# exhaustion" vector NLM flagged on Tracks 9–11 review. The per-IP
+# limiter caps any single attacker, but an attacker with many IPs
+# (botnet, datacenter pool) sums to unbounded uploads otherwise.
+# 100/day per project is generous for real contact-form attachment
+# volume; spam patterns trip the cap quickly.
+_upload_project_limiter = RateLimiter(rate=100/86400.0, burst=100)
+
+
+def _reset_upload_rate_limiter_for_tests() -> None:
+    global _upload_rate_limiter, _upload_project_limiter
+    _upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
+    _upload_project_limiter = RateLimiter(rate=100/86400.0, burst=100)
 
 
 def _engine():
@@ -105,6 +154,91 @@ def run_submit(handler, slug: str) -> None:
     # the inbox id but knowing the submission was accepted is enough.
     handler._json(200, {"ok": True, "id": rec.id})
 
+    # Fire-and-forget side effects (webhook + autoresponder). Runs
+    # AFTER we've responded to the form submitter so the visitor's
+    # experience never waits on a third-party endpoint. Both deliver
+    # functions swallow their own exceptions so the response is safe.
+    _fire_async_followups(slug, rec)
+
+
+def _strip_referrer_query(raw: Optional[str]) -> Optional[str]:
+    """Drop the query string + fragment from a Referer header before
+    putting it into an outbound webhook payload.
+
+    Referer values can leak sensitive query params from the visitor's
+    previous page — password reset tokens, session IDs, "?email=..."
+    in URLs, etc. The receiver only needs the origin + path for
+    attribution; the query bits are PII risk with no value to them.
+    NLM round on Tracks 4–7 flagged this as T2 (privacy leak)."""
+    if not raw or not isinstance(raw, str):
+        return raw
+    try:
+        p = urllib.parse.urlparse(raw)
+        # Rebuild without query or fragment. Leaves scheme/host/path intact.
+        return urllib.parse.urlunparse((p.scheme, p.netloc, p.path, "", "", ""))
+    except (ValueError, AttributeError):
+        return None
+
+
+# Bounded thread pool for fire-and-forget form follow-ups (webhook +
+# autoresponder). Previously each submission spawned a fresh daemon
+# thread; under a form-flood attack that's unbounded thread growth +
+# OOM risk. 8 workers handles realistic concurrent traffic; bursts
+# beyond that queue up rather than spawning new threads. NLM round on
+# Tracks 4–7 flagged the bare-Thread pattern as T1 (resource exhaustion).
+_FORMS_FOLLOWUP_POOL: Optional[ThreadPoolExecutor] = None
+_FORMS_FOLLOWUP_POOL_LOCK = threading.Lock()
+
+
+def _followup_pool() -> ThreadPoolExecutor:
+    global _FORMS_FOLLOWUP_POOL
+    if _FORMS_FOLLOWUP_POOL is None:
+        with _FORMS_FOLLOWUP_POOL_LOCK:
+            if _FORMS_FOLLOWUP_POOL is None:
+                _FORMS_FOLLOWUP_POOL = ThreadPoolExecutor(
+                    max_workers=8,
+                    thread_name_prefix="forms-followup",
+                )
+    return _FORMS_FOLLOWUP_POOL
+
+
+def _reset_followup_pool_for_tests() -> None:
+    """Test hook — shutdown the existing pool so the next call gets a
+    fresh one. Used to avoid cross-test thread pollution."""
+    global _FORMS_FOLLOWUP_POOL
+    with _FORMS_FOLLOWUP_POOL_LOCK:
+        if _FORMS_FOLLOWUP_POOL is not None:
+            _FORMS_FOLLOWUP_POOL.shutdown(wait=False)
+            _FORMS_FOLLOWUP_POOL = None
+
+
+def _fire_async_followups(slug: str, rec) -> None:
+    """Submit the form's outbound side effects (webhook delivery +
+    autoresponder email) to the shared bounded thread pool. Replaces
+    the previous per-submission Thread() pattern.
+
+    Payload shape is the public-form record — id, received_at, fields,
+    user_agent, referrer; ip_hash and other internal fields are
+    deliberately omitted. The Referer header has its query + fragment
+    stripped (see _strip_referrer_query)."""
+    payload = {
+        "id":          rec.id,
+        "received_at": rec.received_at,
+        "fields":      rec.fields,
+        "user_agent":  getattr(rec, "user_agent", None),
+        "referrer":    _strip_referrer_query(getattr(rec, "referrer", None)),
+    }
+    def _run():
+        try:
+            forms_webhook.deliver(slug, payload)
+        except Exception as e:  # pragma: no cover — deliver() already swallows
+            log.exception("webhook thread crashed for %s: %s", slug, e)
+        try:
+            forms_autoresponder.send_autoresponse(slug, payload)
+        except Exception as e:  # pragma: no cover — send_autoresponse already swallows
+            log.exception("autoresponder thread crashed for %s: %s", slug, e)
+    _followup_pool().submit(_run)
+
 
 # --------- GET /api/projects/<slug>/inbox -------------------------------
 
@@ -163,3 +297,264 @@ def run_delete_inbox_item(handler, slug: str, sub_id: str) -> None:
     if not delete_submission(slug, sub_id):
         handler._json(404, {"error": "submission not found"}); return
     handler._json(200, {"slug": slug, "id": sub_id, "deleted": True})
+
+
+# --------- /api/projects/<slug>/forms/webhook --------------------------
+
+def run_get_webhook_config(handler, slug: str) -> None:
+    """GET — return the configured webhook URL, or null."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    config = forms_webhook.get_webhook_config(slug)
+    if config is None:
+        handler._json(200, {"slug": slug, "configured": False, "webhook": None})
+        return
+    handler._json(200, {
+        "slug":       slug,
+        "configured": True,
+        "webhook":    config.to_dict(),
+    })
+
+
+def run_set_webhook_config(handler, slug: str) -> None:
+    """POST — set the webhook URL. Body: { "url": "https://..." }."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    body = _read_body(handler, max_bytes=4 * 1024) or {}
+    url = body.get("url")
+    if not isinstance(url, str):
+        handler._json(400, {"error": "body must include a 'url' string"}); return
+    try:
+        config = forms_webhook.set_webhook_config(slug, url)
+    except ValueError as e:
+        handler._json(400, {"error": str(e)}); return
+    handler._json(200, {"slug": slug, "configured": True, "webhook": config.to_dict()})
+
+
+def run_delete_webhook_config(handler, slug: str) -> None:
+    """DELETE — remove the configured webhook."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    removed = forms_webhook.clear_webhook_config(slug)
+    handler._json(200, {"slug": slug, "removed": removed, "configured": False})
+
+
+# --------- /api/projects/<slug>/forms/autoresponder --------------------
+
+def run_get_autoresponder_config(handler, slug: str) -> None:
+    """GET — return the current autoresponder config (or defaults)."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    config = forms_autoresponder.get_config(slug)
+    handler._json(200, {"slug": slug, "autoresponder": config.to_dict()})
+
+
+def run_set_autoresponder_config(handler, slug: str) -> None:
+    """POST — update the autoresponder. Body fields:
+        enabled:     bool (required)
+        subject?:    str
+        body?:       str
+        reply_field?: str (identifier — defaults to "email")
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    body = _read_body(handler, max_bytes=16 * 1024) or {}
+    if "enabled" not in body or not isinstance(body["enabled"], bool):
+        handler._json(400, {"error": "'enabled' (bool) is required"}); return
+    subject = body.get("subject")
+    body_text = body.get("body")
+    reply_field = body.get("reply_field")
+    # Type-check the optional fields so a JSON 42 doesn't make it into
+    # the persisted config.
+    for name, val in (("subject", subject), ("body", body_text), ("reply_field", reply_field)):
+        if val is not None and not isinstance(val, str):
+            handler._json(400, {"error": f"'{name}' must be a string when provided"}); return
+    try:
+        config = forms_autoresponder.set_config(
+            slug,
+            enabled=body["enabled"],
+            subject=subject,
+            body=body_text,
+            reply_field=reply_field,
+        )
+    except ValueError as e:
+        handler._json(400, {"error": str(e)}); return
+    handler._json(200, {"slug": slug, "autoresponder": config.to_dict()})
+
+
+def run_delete_autoresponder_config(handler, slug: str) -> None:
+    """DELETE — remove the autoresponder config (reverts to defaults/off)."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+    removed = forms_autoresponder.clear_config(slug)
+    handler._json(200, {"slug": slug, "removed": removed})
+
+
+# --------- POST /api/forms/<slug>/upload (public, file attach) -----------
+
+def run_upload_attachment(handler, slug: str) -> None:
+    """Accept a file attachment for ``slug``'s contact form.
+
+    Body (JSON):
+        filename:     "...",     # visitor-supplied
+        content_type: "image/jpeg",
+        data:         "<base64>" # at most 5 MB decoded
+    Returns:
+        { ok: true, path: "<bucket-key>", url: "<public-url>" }
+
+    Visitor-facing — no auth (a form's visitor is by definition not
+    signed in). Rate-limited per IP. Hard caps on size + MIME so a
+    bot can't dump junk into the bucket. The visitor uploads first,
+    then submits the form with the returned URL embedded as a
+    regular text field.
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    project_dir = _output_dir() / slug
+    if not project_dir.exists():
+        handler._json(404, {"error": "project not found"}); return
+
+    if not storage_is_configured():
+        handler._json(503, {
+            "error": (
+                "File uploads are not configured on this Pebble instance. "
+                "Set PEBBLE_SUPABASE_URL + PEBBLE_SUPABASE_SERVICE_ROLE_KEY."
+            ),
+        })
+        return
+
+    ip = _client_ip(handler)
+    if ip and not _upload_rate_limiter.allow(f"upload:{ip}"):
+        handler._json(429, {"error": "too many uploads, slow down"}); return
+    # Per-project daily cap (rotated-IP defense). Returns the same
+    # 429 shape so the client treats it uniformly with the per-IP cap.
+    if not _upload_project_limiter.allow(f"upload-project:{slug}"):
+        log.info("upload throttled for project %s (daily cap)", slug)
+        handler._json(429, {"error": "this project has hit today's upload quota"}); return
+
+    # Cap the JSON envelope at ~7 MB to absorb base64 inflation of a
+    # 5 MB payload (4/3 expansion + JSON overhead) without enabling
+    # significantly larger uploads.
+    body = _read_body(handler, max_bytes=7 * 1024 * 1024)
+    if body is None:
+        return
+
+    filename = body.get("filename")
+    content_type = body.get("content_type")
+    data_b64 = body.get("data")
+    if not isinstance(filename, str) or not filename.strip():
+        handler._json(400, {"error": "'filename' (string) is required"}); return
+    if not isinstance(content_type, str) or content_type not in _UPLOAD_MIME_ALLOWLIST:
+        handler._json(400, {
+            "error":   f"unsupported content_type. Allowed: {sorted(_UPLOAD_MIME_ALLOWLIST)}",
+        })
+        return
+    if not isinstance(data_b64, str) or not data_b64:
+        handler._json(400, {"error": "'data' (base64 string) is required"}); return
+
+    try:
+        content = base64.b64decode(data_b64, validate=True)
+    except (ValueError, TypeError):
+        handler._json(400, {"error": "'data' is not valid base64"}); return
+
+    if not content:
+        handler._json(400, {"error": "decoded content is empty"}); return
+    if len(content) > _UPLOAD_MAX_BYTES:
+        handler._json(413, {
+            "error": f"file too large; max {_UPLOAD_MAX_BYTES // (1024*1024)} MB",
+        })
+        return
+
+    try:
+        result = upload_attachment(
+            slug=slug,
+            filename=filename,
+            content=content,
+            content_type=content_type,
+        )
+    except StorageError as e:
+        log.warning("upload failed for %s: %s", slug, e)
+        handler._json(502, {"error": f"storage upload failed: {e}"})
+        return
+    except Exception as e:
+        log.exception("upload crashed for %s: %s", slug, e)
+        handler._json(500, {"error": "upload failed"})
+        return
+
+    handler._json(200, {
+        "ok":     True,
+        "slug":   slug,
+        "path":   result.path,
+        "url":    result.public_url,
+        "bucket": result.bucket,
+    })
+
+
+# --------- POST /api/projects/<slug>/forms/attachment-url ----------------
+
+def run_get_attachment_signed_url(handler, slug: str) -> None:
+    """Owner-only signed-URL minter for a stored attachment.
+
+    Body: ``{ "path": "<slug>/<nonce>/<filename>" }``
+    Returns: ``{ "url": "<signed url>", "expires_in": 300 }``
+
+    The bucket is private; visitors can upload but only the project
+    owner gets a download URL. The path MUST start with the URL's
+    slug to prevent owners of one project from minting URLs for
+    objects in another project's namespace.
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return
+
+    if not storage_is_configured():
+        handler._json(503, {"error": "Storage is not configured"}); return
+
+    body = _read_body(handler, max_bytes=4 * 1024) or {}
+    path = body.get("path")
+    if not isinstance(path, str) or not path.strip():
+        handler._json(400, {"error": "'path' (string) is required"}); return
+    path = path.strip()
+
+    # Prevent cross-project access. The upload endpoint puts every
+    # object under `<slug>/<nonce>/<filename>`, so the path MUST
+    # begin with this owner's slug. Reject anything else (including
+    # path-traversal attempts like "../<other-slug>/...").
+    if ".." in path or path.startswith("/") or path.startswith("\\"):
+        handler._json(400, {"error": "invalid path"}); return
+    expected_prefix = f"{slug}/"
+    if not path.startswith(expected_prefix):
+        log.warning(
+            "owner of %s tried to sign URL for path outside their namespace: %s",
+            slug, path[:60],
+        )
+        handler._json(403, {"error": "path does not belong to this project"}); return
+
+    try:
+        from pebble.storage import create_signed_url
+        signed = create_signed_url(path, expires_in_seconds=300)
+    except StorageError as e:
+        log.warning("signed URL minting failed for %s/%s: %s", slug, path, e)
+        handler._json(502, {"error": f"signed URL failed: {e}"}); return
+    except Exception as e:
+        log.exception("signed URL crashed for %s: %s", slug, e)
+        handler._json(500, {"error": "signed URL failed"}); return
+
+    handler._json(200, {
+        "url":        signed,
+        "expires_in": 300,
+        "path":       path,
+    })

@@ -26,3 +26,11 @@ playwright>=1.40.0
 # Cloudflare's content-addressed upload manifest. Pure-Rust wheels are
 # published on PyPI for every major OS, so no compile step on Render.
 blake3>=0.4.0
+
+# --- Stripe (billing) ---
+# Used by pebble/server/stripe_checkout.py (create-session), stripe_webhook.py
+# (HMAC verify + subscription side-effects), billing_portal.py (customer portal
+# sessions), and the one-shot bootstrap pebble/stripe_bootstrap.py.
+# Tests stub the SDK entirely; this dep is only needed for the live runtime
+# and the bootstrap CLI.
+stripe>=8.0

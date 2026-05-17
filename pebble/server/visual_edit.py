@@ -32,6 +32,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
+from pebble.engagement import log_event as _log_engagement
 from pebble.security import project_lock, require_project_owner
 from pebble.visual_ids import find_element_span, load_manifest
 
@@ -359,7 +360,8 @@ def run_visual_edit(handler) -> None:
         handler._json(400, {"error": "op must be 'text', 'color', or 'font-size'"}); return
 
     # Auth gate — see refine.py + the 2026-05-15 evening NLM pass.
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
 
     site_dir = _output_dir() / slug / "site"
@@ -425,6 +427,8 @@ def run_visual_edit(handler) -> None:
         "used_manifest": used_manifest,
         "applied_at":    datetime.now(timezone.utc).isoformat(),
     })
+    # Per-user engagement signal (T17). NEVER pass op/text/color/etc.
+    _log_engagement(caller_uid, "visual_edit_used")
 
 
 # ---- Iframe bridge script --------------------------------------------------

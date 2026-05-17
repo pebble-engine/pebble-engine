@@ -15,7 +15,7 @@ python pebble_engine.py
 # Override port if 8000 is taken
 python pebble_engine.py --port 8765
 
-# Test suite — 310 passing as of 2026-05-14 (incl. 15 e2e HTTP tests)
+# Test suite — 1173 passing as of 2026-05-17 (incl. 15 e2e HTTP tests)
 python -m pytest -q
 
 # Run only the e2e HTTP integration tests (boots engine in-process)
@@ -47,7 +47,7 @@ Environment flags that change behavior (see `.env`):
 
 ## Architecture in 60 seconds
 
-`pebble_engine.py` (~1800 lines) is the HTTP server + build orchestrator. Most of the build pipeline has been carved out into the `pebble/` package:
+`pebble_engine.py` (~2255 lines) is the HTTP server + build orchestrator. Most of the build pipeline has been carved out into the `pebble/` package:
 
 - `pebble.llm` — Gemini + Anthropic clients with vision support
 - `pebble.industry` — 63-industry lookup with LLM fallback for new industries, fuzzy matching, writes new entries back to `industries.json`; also exposes `PAGE_CATALOG` (11 industry-aware page types) + `build_pages_block`
@@ -56,14 +56,23 @@ Environment flags that change behavior (see `.env`):
 - `pebble.cost` — token + cost estimation. `estimate_cost(prompt, response, model) → CostEstimate`. Used by `/api/generate` to write `tokens_used`, `estimated_cost_usd`, and `rate_card_used` into `build_meta.json` for every paid build.
 - `pebble.postbuild` — Imagen image generation, npm install, `next dev`, Playwright screenshots
 - `pebble.repair` — critique-and-fix loop wired in via `PEBBLE_AUTO_REPAIR`
-- `pebble.evals` — 33 FOUNDATION checks + repair-corpus harness
+- `pebble.evals` — 38 FOUNDATION checks + repair-corpus harness. Recent additions (May 2026): `perf_budget_or_lighter` (CWV), `hero_cta_above_fold`, `mobile_optimized_responsive`, `schema_org_jsonld_present`, `sitemap_and_robots_present`.
+- `pebble.engagement` — per-user product analytics for the Pebble APP (NOT for generated sites — that's pebble.analytics). Records {event, timestamp} only — never content. Powers /api/admin/engagement. See module docstring for the privacy moat that distinguishes it from the `no_tracking_by_default` eval.
+- `pebble.storage` — Supabase Storage uploads for form attachments. Magic-byte validation, MIME allowlist, per-IP + per-project quotas.
+- `pebble.forms_webhook` + `pebble.forms_autoresponder` — outbound webhook delivery + auto-reply email on form submission. Per-project config, per-recipient throttle.
+- `pebble.publish` — Cloudflare Pages publish flow. `pebble.domain` — custom domain mgmt.
+- `pebble.email` — Resend SDK wrapper (welcome, password reset, form auto-responder).
+- `pebble.security` — rate limiters, project locks, `require_project_owner`, slug validation.
 - `pebble.server.build` — `/api/generate` and `/api/plan` request bodies. Snapshots site/ before overwriting.
-- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star}` + `/api/rollback`.
+- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star}` + `/api/rollback` + DELETE.
 - `pebble.server.refine` — `/api/refine`. Two refinement classes:
   - **Deterministic** (`billable: false`): `simpler` (regex palette tone-down), `colors` (rotates 5 brand-safe palettes). No LLM call. Milliseconds.
   - **LLM-backed** (`billable: true`): `friendlier`, `professional`, `booking`. Single focused LLM turn.
   Every refinement snapshots first.
 - `pebble.server.visual_edit` — `/api/visual-edit` for click-to-edit on the preview iframe. Three deterministic ops: `text`, `color`, `font-size`. **All billable: false** — the whole point is letting users tweak presentation without spending credits. Module also exports `PEBBLE_VISUAL_EDIT_BRIDGE` — a JS payload the preview server injects into every `/preview/<slug>/` HTML response, providing hover-outline + click-select + postMessage of element metadata to the parent workspace.
+- `pebble.server.blocks` — `/api/blocks` (catalog) + `/api/projects/<slug>/blocks/insert`. DNA-themed drop-in sections (testimonials, pricing, FAQ, etc.). Billable: false.
+- `pebble.server.admin` — admin-only diagnostics (users, projects, errors, engagement). Gated by `PEBBLE_ADMIN_EMAIL` allow-list.
+- `pebble.server.auth` — legacy homegrown auth (deprecated as of Phase A.5, sunset 2026-11-16). Headers emit `Deprecation: true`. Set `PEBBLE_LEGACY_AUTH_DISABLED=true` to flip to 410.
 
 `/api/generate` runs this sequence for each build:
 
@@ -143,14 +152,13 @@ This project runs on a triangle:
 - **Hermes Agent** — installed locally, Telegram-gateway, scheduled tasks (cron), capture-and-monitor. The watcher. Config keys are in `.env` (`OPENROUTER_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_ID`).
 - **NotebookLM** (via `notebooklm-mcp`) — adversarial critique, deep research, source-grounded review. The critic. Used heavily for strategic decisions; tends to overshoot for code-level questions.
 
-See `.claude/UNSUPERVISED_SESSION_SUMMARY.md` for the full workflow patterns and `.claude/SENIOR_LEVEL_ROADMAP.md` for the strategic frame.
+See `.claude/SENIOR_LEVEL_ROADMAP.md` for the strategic frame and the per-session memory files in `~/.claude/projects/C--Users-marci-pebble-engine/memory/project_2026-05-*.md` for the rolling hand-off log.
 
-## Strategic context files (gitignored, but load them when relevant)
+## Strategic context files
 
-- `.claude/SENIOR_LEVEL_ROADMAP.md` — the multi-phase plan (foundation → SaaS → ops scale)
-- `.claude/UNSUPERVISED_SESSION_SUMMARY.md` — most recent hand-off summary
-- `.claude/OVERNIGHT_OVERHAUL_SUMMARY.md` — the May 14 foundation overhaul narrative
-- User memory at `~/.claude/projects/C--Users-marci-pebble-engine/memory/` — persistent across sessions, auto-loaded
+- `PROJECT_PLAN.md` (repo root, committed) — chapter-by-chapter shipping plan with ✓/[ ] per item. The living source of truth for "what's shipped vs. open."
+- `.claude/SENIOR_LEVEL_ROADMAP.md` (gitignored) — positioning frame vs. Base44/Lovable; differentiators by axis. Synthesized from a 61-source NotebookLM run.
+- User memory at `~/.claude/projects/C--Users-marci-pebble-engine/memory/` — persistent across sessions, auto-loaded. Per-session `project_2026-05-*.md` files are the rolling hand-off log.
 
 ## Product direction (May 2026 Codex-assisted spec)
 
@@ -162,27 +170,88 @@ The current engine is the back-end seed for a much larger app experience describ
 - **Pebble Plan:** the 7-field user-facing "here's what I'll build" summary now emitted as `plan.json` for every build — see `pebble/plan.py` and the `/api/plan` preview endpoint.
 - **Honest "Launch Setup" checklist:** the Plan's `setup_needs` field lists all 14 spec items, but with `status: "auto" | "pending" | "manual"` so the UI doesn't over-promise. Only flip `pending → auto` when the underlying infra actually ships.
 
-## HTTP API reference (May 2026)
+## HTTP API reference (2026-05-17)
 
-All routes return JSON unless noted. Errors use `{ "error": "..." }` with appropriate HTTP status.
+All routes return JSON unless noted. Errors use `{ "error": "..." }` with appropriate HTTP status. Owner-gated routes require a Supabase session cookie + project ownership (or unclaimed project). Admin routes require an email in `PEBBLE_ADMIN_EMAIL`.
+
+### Build pipeline
 
 | Method | Path | Body / Query | Purpose |
 |---|---|---|---|
 | GET | `/api/health` | — | Engine + LLM readiness |
 | GET | `/api/industries` | — | List industries.json entries for the typeahead |
-| GET | `/api/briefs` | — | List saved briefs (legacy) |
-| GET | `/api/briefs/<slug>` | — | Get one brief |
-| GET | `/api/projects` | — | **List every project for the dashboard** — slug, name, type, file_count, starred, built_at |
-| GET | `/api/projects/<slug>/history` | — | **List snapshots, newest-first** — for the workspace history drawer |
 | POST | `/api/plan` | brief JSON | Compute Pebble Plan WITHOUT running LLM (cheap preview) |
 | POST | `/api/build` | brief JSON | Render prompt only; no generation |
 | POST | `/api/generate` | brief JSON | Full build. Snapshots site/ first. Writes `build_meta.json` with `billable:true`, `tokens_used`, `estimated_cost_usd`, `rate_card_used`. |
-| POST | `/api/refine` | `{ slug, refinement_id }` | Apply a refinement to an existing build. `billable: false` for `simpler`/`colors`, `billable: true` for `friendlier`/`professional`/`booking`. Always snapshots first. |
-| POST | `/api/visual-edit` | `{ slug, op, ... }` | Click-to-edit from the preview iframe. Ops: `text` (`original_text` + `new_text`), `color` (`new_color` #RRGGBB + optional `selector_hint`), `font-size` (`delta` ±n). **Always `billable: false`.** |
-| POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. The pre-rollback state is also snapshotted (rollback is undoable). |
+| POST | `/api/migrate` | `{ slug, brief }` | Re-stamp an existing project with a fresh brief (no re-generate). |
+| POST | `/api/inspire` | `{ industry }` | Surface industry-relevant Dribbble references. |
+
+### Project management (owner-gated)
+
+| Method | Path | Body / Query | Purpose |
+|---|---|---|---|
+| GET | `/api/projects` | — | **List every project for the dashboard** — slug, name, type, file_count, starred, built_at |
+| GET | `/api/projects/<slug>/history` | — | List snapshots, newest-first — for the workspace history drawer |
+| GET | `/api/projects/<slug>/analytics` | — | Page-view summary for the customer's generated site (7d window). |
+| POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. Pre-rollback state is also snapshotted (undoable). |
 | POST | `/api/projects/<slug>/star` | `{ starred?: bool }` | Toggle (or set) the `.starred` sentinel file. |
-| POST | `/api/setup` | (legacy) | Setup flow |
-| GET | `/preview/<slug>/` | — | Serve generated site files. **HTML responses get the visual-edit bridge auto-injected before `</body>`** so the click-to-edit flow works without the generated site knowing about it. |
-| GET | `/` | — | Plaintext liveness landing — engine is backend-only, points users to the v3 frontend at port 3000. |
+| DELETE | `/api/projects/<slug>` | — | Permanent hard-delete (no trash). Frontend should confirm. |
+| POST | `/api/publish` | `{ slug }` | Deploy to Cloudflare Pages. |
+| GET / POST | `/api/projects/<slug>/domain` | domain JSON | Custom domain management. |
+
+### Editing
+
+| Method | Path | Body / Query | Purpose |
+|---|---|---|---|
+| POST | `/api/refine` | `{ slug, refinement_id }` | Apply a refinement to an existing build. `billable: false` for `simpler`/`colors`, `billable: true` for `friendlier`/`professional`/`booking`. Always snapshots first. |
+| POST | `/api/visual-edit` | `{ slug, op, ... }` | Click-to-edit from the preview iframe. Ops: `text`, `color`, `font-size`. **Always `billable: false`.** |
+| GET | `/api/blocks` | — | List the DNA-themed block catalog (testimonials, pricing, FAQ, etc.). Public. |
+| POST | `/api/projects/<slug>/blocks/insert` | `{ block_id }` | Insert one block into the site. Snapshots first. `billable: false`. |
+
+### Inbox / forms (public submit + owner-gated config)
+
+| Method | Path | Body / Query | Purpose |
+|---|---|---|---|
+| POST | `/api/forms/<slug>` | form JSON | Public form submit. Fires webhook + auto-responder asynchronously after 200. |
+| POST | `/api/forms/<slug>/upload` | `{ filename, content_type, data: base64 }` | Public attachment upload to Supabase Storage. MIME allowlist + magic-byte validation + per-IP/per-project quotas. |
+| GET / POST / DELETE | `/api/projects/<slug>/forms/webhook` | webhook config | Owner-gated outbound webhook URL config. |
+| GET / POST / DELETE | `/api/projects/<slug>/forms/autoresponder` | autoresponder config | Owner-gated reply-email config. |
+| POST | `/api/track/<slug>` | `{ path?, referrer? }` | Public page-view tracker for the customer's generated site. |
+
+### Auth + account
+
+| Method | Path | Body / Query | Purpose |
+|---|---|---|---|
+| GET | `/api/auth/me` | — | Resolve current session → user. |
+| POST | `/api/auth/{signup,login,logout,forgot,reset}` | varies | **Deprecated** (Phase A.5, sunset 2026-11-16). v3 uses Supabase Auth directly. Headers emit `Deprecation: true`. |
+| POST | `/api/account/delete` | `{ email_confirmation }` | GDPR account delete — drops Supabase user + scrubs project ownership. |
+| POST | `/api/internal/supabase-webhook` | Supabase webhook payload | Welcome-email trigger on email verification. HMAC-signed. |
+
+### Billing (Stripe)
+
+| Method | Path | Body | Purpose |
+|---|---|---|---|
+| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" }` | Auth-gated (Bearer JWT). Creates a Stripe Checkout Session in `mode=subscription`, returns `{url, session_id}`. Stamps `pebble_user_id` + `pebble_plan` metadata on session + subscription so the webhook can route events back. |
+| POST | `/api/billing/portal` | — | Auth-gated. Reads `stripe_customer_id` from `output/.users/<uid>/subscription.json`, mints a Stripe Customer Portal session, returns `{url}`. 404 if no subscription. |
+| POST | `/api/internal/stripe-webhook` | Stripe event payload | HMAC-verified via `STRIPE_WEBHOOK_SECRET`. On `customer.subscription.{created,updated,deleted}` writes `output/.users/<uid>/subscription.json` with `{status, plan, stripe_customer_id, stripe_subscription_id, current_period_end, updated_at}`. Other event types 200-ignored. |
+
+Env vars (all in `.env`): `STRIPE_SECRET_KEY` (sk_test_), `STRIPE_PUBLISHABLE_KEY` (pk_test_, v3-side only), `STRIPE_WEBHOOK_SECRET` (whsec_, from `stripe listen` or Dashboard), `PEBBLE_STRIPE_STARTER_PRICE_ID`, `PEBBLE_STRIPE_PRO_PRICE_ID`. Bootstrap the two price IDs once via `python -m pebble.stripe_bootstrap`.
+
+### Admin (gated by `PEBBLE_ADMIN_EMAIL`)
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/api/admin/users` | All users + project counts |
+| GET | `/api/admin/projects` | All projects + owner email + publish state |
+| GET | `/api/admin/errors` | Tail of engine.err.log filtered to ERROR/WARN lines |
+| GET | `/api/admin/engagement` | Per-user engagement buckets (power/active/at-risk) |
+
+### Serving
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/preview/<slug>/` | Serve generated site files. **HTML responses get the visual-edit bridge auto-injected before `</body>`** so the click-to-edit flow works without the generated site knowing about it. |
+| GET | `/dist/` | Serve pre-built static assets (used by the v3 frontend in production). |
+| GET | `/` | Plaintext liveness landing — engine is backend-only, points users to the v3 frontend at port 3000. |
 
 The v3 Next.js frontend at `ui/v3/` proxies `/api/*` and `/preview/*` to the engine via `next.config.ts` rewrites; in dev, run v3 on port 3001 because port 3000 is Marc's getpebble.net dev server.

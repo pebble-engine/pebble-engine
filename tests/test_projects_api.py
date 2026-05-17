@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+import pebble.engagement as engagement_mod
 import pebble.history as history_mod
 import pebble.security as security_mod
 import pebble.server.projects as projects
@@ -73,6 +74,9 @@ def fake_output(tmp_path, monkeypatch):
     monkeypatch.setattr(projects, "require_project_owner", bypass)
     monkeypatch.setattr(refine, "require_project_owner", bypass)
     monkeypatch.setattr(visual_edit, "require_project_owner", bypass)
+    # Isolate engagement storage per test (T17). Without this every test
+    # would append to a shared output/.engagement/ dir.
+    monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
     return out
 
 
@@ -338,3 +342,64 @@ def test_visual_edit_snapshots_before_changing(fake_output):
     visual_edit.run_visual_edit(h)
     assert h.json_body["snapshot_id"]
     assert len(history_mod.list_history("p1")) == 1
+
+
+# ---- T17: engagement wiring + privacy regression --------------------------
+
+def test_visual_edit_logs_engagement_event_on_success(fake_output):
+    """visual_edit success path must call engagement.log_event with
+    the bypass fixture's user ('test-user') and the canonical event name."""
+    _seed_site(fake_output, "p1", {"app/page.tsx": "export default function P() { return <main>Hello</main>; }"})
+    h = FakeHandler(body={"slug": "p1", "op": "text", "original_text": "Hello", "new_text": "Hi"})
+    visual_edit.run_visual_edit(h)
+    assert h.status == 200
+    events = engagement_mod.read_user_events("test-user")
+    assert len(events) == 1
+    assert events[0]["event"] == "visual_edit_used"
+
+
+def test_visual_edit_does_not_log_engagement_on_validation_failure(fake_output):
+    """Failed validations (bad op) must NOT log an event — engagement counts
+    successful actions, not error replies."""
+    h = FakeHandler(body={"slug": "p1", "op": "delete-everything"})
+    visual_edit.run_visual_edit(h)
+    assert h.status == 400
+    assert engagement_mod.read_user_events("test-user") == []
+
+
+def test_visual_edit_engagement_never_contains_content(fake_output):
+    """PRIVACY REGRESSION — log files must contain ONLY {event, timestamp}.
+    Run a visual-edit with sensitive-looking text and assert no leakage."""
+    sensitive_text = "Hello-secret-marker-zxyq"
+    _seed_site(fake_output, "p1", {"app/page.tsx": f"export default function P() {{ return <main>{sensitive_text}</main>; }}"})
+    h = FakeHandler(body={"slug": "p1", "op": "text", "original_text": sensitive_text, "new_text": "Hi-new-marker"})
+    visual_edit.run_visual_edit(h)
+    log_file = fake_output / ".engagement" / "test-user.jsonl"
+    assert log_file.exists()
+    text = log_file.read_text(encoding="utf-8")
+    assert sensitive_text not in text
+    assert "Hi-new-marker" not in text
+    # The event line itself must contain exactly two keys.
+    row = json.loads(text.splitlines()[0])
+    assert set(row.keys()) == {"event", "timestamp"}
+
+
+def test_project_star_logs_engagement_event(fake_output):
+    """Toggling a project's star fires `project_starred` (regardless of
+    direction — engagement cares about variety not state)."""
+    (fake_output / "p1").mkdir()
+    h = FakeHandler(body={"starred": True})
+    projects.run_toggle_star(h, "p1")
+    assert h.status == 200
+    events = engagement_mod.read_user_events("test-user")
+    assert any(e["event"] == "project_starred" for e in events)
+
+
+def test_project_delete_logs_engagement_event(fake_output):
+    (fake_output / "p1").mkdir()
+    (fake_output / "p1" / "brief.json").write_text('{"business_name":"p1"}')
+    h = FakeHandler()
+    projects.run_delete_project(h, "p1")
+    assert h.status == 200
+    events = engagement_mod.read_user_events("test-user")
+    assert any(e["event"] == "project_deleted" for e in events)

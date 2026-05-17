@@ -48,6 +48,55 @@ _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,99}$")
 # "YYYYMMDDTHHMMSS-<reason>" — the literal `T` and digits force the
 # capital-T allowance; reasons add hyphens and lowercase letters.
 _SNAPSHOT_ID_RE = re.compile(r"^[0-9]{8}T[0-9]{6}[A-Za-z0-9_-]{0,100}$")
+# User IDs (Supabase UUIDs in practice) — alphanumerics + hyphen/underscore.
+# Tight enough that ``../victim``-style traversal can never reach
+# `OUTPUT_DIR / .users / <uid>` and walk out. Matches engagement.py and
+# stripe_webhook.py's local copies; this is the canonical version that
+# the billing readers + future modules should depend on.
+_USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+# Windows reserved device names — `CON.json` writes to the console, `NUL`
+# silently discards, etc. Block them so a future identity provider that
+# returns short non-UUID ids can't collide.
+_WINDOWS_RESERVED_NAMES = frozenset(
+    {"con", "nul", "aux", "prn"}
+    | {f"com{i}" for i in range(1, 10)}
+    | {f"lpt{i}" for i in range(1, 10)}
+)
+
+
+def safe_user_id(raw: object) -> str:
+    """Return ``raw`` normalized to lowercase if it's a safe user-id, else ``""``.
+
+    Used by any module that interpolates a Supabase user-id into a
+    filesystem path under ``output/.users/<uid>/...``. Without this,
+    ``../victim`` would resolve through ``OUTPUT_DIR/.users/<raw>/`` to
+    a sibling directory the attacker can read.
+
+    NOT a substitute for parameterized queries / proper escaping; this is
+    SPECIFICALLY the filesystem-path safety check. Returns ``""`` on any
+    invalid input so callers can ``if not safe_user_id(x): return None``.
+
+    Identity-provider assumption (NLM round 3 R3.B1)
+    ------------------------------------------------
+    The ``.lower()`` step assumes the identity provider treats user IDs as
+    case-INSENSITIVE — i.e. ``USER1`` and ``user1`` refer to the same
+    account. Supabase Auth satisfies this: it mints UUID v4 in lowercase
+    hex and stores them as-is. If Pebble ever swaps identity providers
+    to one that treats case as significant (Auth0 with custom IDs, some
+    SAML IdPs), two distinct users with names differing only in case
+    would collide on the same sentinel directory and share billing
+    state. Revisit this normalization at that point — likely solution
+    is hashing the user-id into a fixed-shape directory name and
+    embedding the exact original id inside the sentinel JSON.
+    """
+    if not isinstance(raw, str) or not raw:
+        return ""
+    if not _USER_ID_RE.fullmatch(raw):
+        return ""
+    lower = raw.lower()
+    if lower in _WINDOWS_RESERVED_NAMES:
+        return ""
+    return lower
 
 
 def is_valid_slug(slug: str) -> bool:
@@ -153,6 +202,59 @@ def _project_owner(slug: str) -> Optional[str]:
         return None
     owner = brief.get("_user_id")
     return owner if isinstance(owner, str) and owner else None
+
+
+def require_user(handler) -> Optional[dict]:
+    """Auth gate for user-level endpoints (billing, account settings).
+
+    Returns the validated Supabase user dict (``{'id', 'email', ...}``) on
+    success. Writes the appropriate HTTP error and returns None otherwise.
+
+    Sister to :func:`require_project_owner`, which adds an ownership check
+    on top. Use this when the endpoint operates on the caller themselves
+    rather than a project they own.
+
+    Status codes:
+    - 401 — no/malformed Authorization header, or token rejected by GoTrue
+    - 503 — Supabase not configured on this instance, or GoTrue unreachable
+    """
+    raw = (handler.headers.get("Authorization", "") or "").strip()
+    # Case-insensitive scheme per RFC 6750 — a "bearer" / "BEARER" prefix is
+    # equivalent to "Bearer".
+    if not raw.lower().startswith("bearer "):
+        handler._json(401, {"error": "sign in required"})
+        return None
+    token = raw[7:].strip()
+    if not token:
+        handler._json(401, {"error": "sign in required"})
+        return None
+
+    # Lazy import so test_security.py (which heavily monkeypatches
+    # auth_admin) doesn't pay GoTrue's network imports at module load.
+    try:
+        from pebble import auth_admin
+    except Exception:
+        handler._json(500, {"error": "auth subsystem unavailable"})
+        return None
+
+    if not auth_admin.is_configured():
+        handler._json(503, {"error": "auth not configured on this Pebble instance"})
+        return None
+
+    try:
+        user = auth_admin.validate_access_token(token)
+    except auth_admin.AdminError:
+        # NLM round on Track 12 documented why this must be 503 and not 401:
+        # a transient GoTrue outage would otherwise look identical to a bad
+        # token to the v3 frontend, which would then log the user out.
+        handler._json(503, {"error": "auth backend unavailable"})
+        return None
+
+    if not isinstance(user, dict) or not user.get("id"):
+        handler._json(401, {"error": "sign in required"})
+        return None
+
+    return user
 
 
 def require_project_owner(handler, slug: str) -> Optional[str]:

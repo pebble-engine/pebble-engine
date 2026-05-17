@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Users, Folder, AlertTriangle, RefreshCw, ShieldAlert } from "lucide-react";
+import { Users, Folder, AlertTriangle, RefreshCw, ShieldAlert, Activity } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -31,7 +31,15 @@ type AdminProject = {
 
 type AdminErrorLine = { file: string; line: string };
 
-type Tab = "users" | "projects" | "errors";
+type AdminEngagementRow = {
+  user_id:         string;
+  email:           string;
+  score:           "power" | "active" | "at_risk";
+  distinct_events: number;
+  total_events:    number;
+};
+
+type Tab = "users" | "projects" | "errors" | "engagement";
 
 async function adminFetch<T>(path: string): Promise<T> {
   const resp = await fetch(path);
@@ -52,6 +60,7 @@ export default function AdminPage() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [projects, setProjects] = useState<AdminProject[]>([]);
   const [errors, setErrors] = useState<AdminErrorLine[]>([]);
+  const [engagement, setEngagement] = useState<AdminEngagementRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -66,9 +75,10 @@ export default function AdminPage() {
     setLoading(true);
     setError(null);
     try {
-      if (tab === "users")    setUsers   ((await adminFetch<{ users:    AdminUser[] }>   ("/api/admin/users")).users);
-      if (tab === "projects") setProjects((await adminFetch<{ projects: AdminProject[] }>("/api/admin/projects")).projects);
-      if (tab === "errors")   setErrors  ((await adminFetch<{ errors:   AdminErrorLine[] }>("/api/admin/errors")).errors);
+      if (tab === "users")      setUsers     ((await adminFetch<{ users:    AdminUser[] }>         ("/api/admin/users")).users);
+      if (tab === "projects")   setProjects  ((await adminFetch<{ projects: AdminProject[] }>      ("/api/admin/projects")).projects);
+      if (tab === "errors")     setErrors    ((await adminFetch<{ errors:   AdminErrorLine[] }>    ("/api/admin/errors")).errors);
+      if (tab === "engagement") setEngagement((await adminFetch<{ users:    AdminEngagementRow[] }>("/api/admin/engagement")).users);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Admin fetch failed.");
     } finally {
@@ -108,9 +118,10 @@ export default function AdminPage() {
           </div>
 
           <div className="flex gap-2 border-b border-border">
-            <TabButton active={tab === "users"}    onClick={() => setTab("users")}    Icon={Users}          label="Users" />
-            <TabButton active={tab === "projects"} onClick={() => setTab("projects")} Icon={Folder}         label="Projects" />
-            <TabButton active={tab === "errors"}   onClick={() => setTab("errors")}   Icon={AlertTriangle}  label="Errors" />
+            <TabButton active={tab === "users"}      onClick={() => setTab("users")}      Icon={Users}         label="Users" />
+            <TabButton active={tab === "projects"}   onClick={() => setTab("projects")}   Icon={Folder}        label="Projects" />
+            <TabButton active={tab === "engagement"} onClick={() => setTab("engagement")} Icon={Activity}      label="Engagement" />
+            <TabButton active={tab === "errors"}     onClick={() => setTab("errors")}     Icon={AlertTriangle} label="Errors" />
           </div>
 
           {error && (
@@ -119,9 +130,10 @@ export default function AdminPage() {
             </div>
           )}
 
-          {!error && tab === "users"    && <UsersTable    rows={users} />}
-          {!error && tab === "projects" && <ProjectsTable rows={projects} />}
-          {!error && tab === "errors"   && <ErrorsList    rows={errors} />}
+          {!error && tab === "users"      && <UsersTable      rows={users} />}
+          {!error && tab === "projects"   && <ProjectsTable   rows={projects} />}
+          {!error && tab === "engagement" && <EngagementTable rows={engagement} />}
+          {!error && tab === "errors"     && <ErrorsList      rows={errors} />}
 
           <p className={`${type.caption} pt-6 text-center`}>
             <Link href="/dashboard" className={`${interactions.link}`}>← Back to dashboard</Link>
@@ -199,6 +211,42 @@ function ProjectsTable({ rows }: { rows: AdminProject[] }) {
                 {p.domain && <span className="text-spark-deep ml-2">+ domain</span>}
               </td>
               <td className="px-4 py-2 text-xs text-right">${p.estimated_cost_usd.toFixed(4)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </motion.div>
+  );
+}
+
+function EngagementTable({ rows }: { rows: AdminEngagementRow[] }) {
+  if (!rows.length) return <p className="text-sm text-muted-foreground">No engagement data yet — events appear after users start using refine / visual-edit / blocks / projects.</p>;
+  const badge = (score: AdminEngagementRow["score"]) => {
+    if (score === "power")   return <span className="text-earth-deep font-semibold">Power</span>;
+    if (score === "active")  return <span className="text-spark-deep font-semibold">Active</span>;
+    return <span className="text-muted-foreground">At-risk</span>;
+  };
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-card border border-border rounded-xl overflow-hidden">
+      <table className="w-full text-sm">
+        <thead className="bg-accent text-muted-foreground">
+          <tr>
+            <th className="text-left px-4 py-2 font-semibold">User</th>
+            <th className="text-left px-4 py-2 font-semibold">Bucket</th>
+            <th className="text-right px-4 py-2 font-semibold">Distinct (30d)</th>
+            <th className="text-right px-4 py-2 font-semibold">Total events (30d)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.user_id} className="border-t border-border">
+              <td className="px-4 py-2">
+                <p className="text-xs">{r.email || <span className="text-muted-foreground italic">no email</span>}</p>
+                <p className="text-[11px] font-mono text-muted-foreground">{r.user_id.slice(0, 12)}…</p>
+              </td>
+              <td className="px-4 py-2 text-xs">{badge(r.score)}</td>
+              <td className="px-4 py-2 text-xs text-right">{r.distinct_events}</td>
+              <td className="px-4 py-2 text-xs text-right">{r.total_events}</td>
             </tr>
           ))}
         </tbody>

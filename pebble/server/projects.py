@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Optional
 
 import shutil
+from pebble.engagement import log_event as _log_engagement
 from pebble.history import list_history, restore_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner, validate_snapshot_id
@@ -324,7 +325,8 @@ def run_toggle_star(handler, slug: str) -> None:
     Auth: gated through require_project_owner so a user can't star/unstar
     another user's project to leak ownership signals via timing.
     """
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
     body = _read_body(handler) or {}
     project_dir = _output_dir() / slug
@@ -348,6 +350,9 @@ def run_toggle_star(handler, slug: str) -> None:
             handler._json(500, {"error": f"could not unstar: {e}"}); return
 
     handler._json(200, {"slug": slug, "starred": new_state})
+    # Per-user engagement signal (T17). Single event for both star + unstar —
+    # the bucketing cares about variety not direction.
+    _log_engagement(caller_uid, "project_starred")
 
 
 # --------- GET /api/usage ---------
@@ -436,7 +441,8 @@ def run_delete_project(handler, slug: str) -> None:
     # require_project_owner now validates the slug shape AND checks
     # ownership; the explicit traversal check below is preserved as a
     # belt-and-braces defense in case the gate is ever bypassed.
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
     project_dir = _output_dir() / slug
     if not project_dir.exists() or not project_dir.is_dir():
@@ -449,3 +455,5 @@ def run_delete_project(handler, slug: str) -> None:
         log.warning("delete failed: %s", e)
         handler._json(500, {"error": f"delete failed: {e}"}); return
     handler._json(200, {"slug": slug, "deleted": True})
+    # Per-user engagement signal (T17).
+    _log_engagement(caller_uid, "project_deleted")

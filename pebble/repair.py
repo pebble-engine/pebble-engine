@@ -211,6 +211,11 @@ class RoundReport:
     deletions_applied: list[str] = field(default_factory=list)
     # True if this round was a retry attempt after a non-improving round.
     is_retry: bool = False
+    # No-op response detection. True when the LLM emitted pebble-file
+    # tags but their content matched the existing site byte-for-byte —
+    # i.e. the "Fixed!" gaslighting pattern users of Lovable/Base44
+    # complain about. See _count_changed_files in repair.py.
+    noop_response: bool = False
 
 
 @dataclass
@@ -301,6 +306,58 @@ def _write_files(target_site: Path, files: list[tuple[str, str]]) -> list[str]:
         full.write_text(content, encoding="utf-8")
         written.append(safe)
     return written
+
+
+def _normalize_newlines(text: str) -> str:
+    """Collapse `\\r\\n` and lone `\\r` to `\\n` so the no-op detector
+    doesn't get confused by mixed line endings. A repo checked out on
+    Windows with `core.autocrlf=true` has CRLF on disk; LLMs almost
+    always emit LF. A byte-for-byte comparison would flag every file
+    as "changed" even when the only diff is line endings.
+
+    NLM round on Tracks 4–7 flagged this as a T3 correctness gap."""
+    return text.replace("\r\n", "\n").replace("\r", "\n")
+
+
+def _count_changed_files(
+    target_site: Path,
+    files: list[tuple[str, str]],
+) -> int:
+    """Return how many of the parsed `files` would ACTUALLY change content
+    under ``target_site``. New files count; identical-content overwrites
+    don't.
+
+    Used to detect "no-op" LLM responses — the gaslighting pattern users
+    of Lovable/Base44 report: the model emits ``<pebble-file>`` tags whose
+    bodies are byte-identical to what's already on disk, but proudly
+    declares "Fixed!" in its prose. Without this check, the repair loop
+    spends a full re-eval round confirming what we already know: nothing
+    moved. Surfaced in the RoundReport note so users can see the no-op
+    explicitly.
+
+    Line endings are normalized before comparison so a CRLF-on-disk
+    file vs an LF-from-LLM response isn't a spurious "change".
+    """
+    if not files:
+        return 0
+    changed = 0
+    for path, content in files:
+        if not _is_safe_relative(path):
+            continue
+        safe = path.lstrip("/\\")
+        full = target_site / safe
+        if not full.exists():
+            changed += 1
+            continue
+        try:
+            existing = full.read_text(encoding="utf-8")
+        except (OSError, UnicodeDecodeError):
+            # Unreadable file — treat as different out of caution.
+            changed += 1
+            continue
+        if _normalize_newlines(existing) != _normalize_newlines(content):
+            changed += 1
+    return changed
 
 
 # Next.js / Tailwind structural directories that must never be removed even
@@ -403,6 +460,14 @@ def _attempt_round(
     new_files = _parse_files(response)
     deletions_requested = _parse_deletions(response)
 
+    # Count files that would ACTUALLY change content. Catches the "Fixed!"
+    # gaslighting pattern from Lovable/Base44 reviews where the model
+    # claims a fix but re-emits the existing file unchanged. The check
+    # runs BEFORE we copy to tmp_site so it compares against the
+    # canonical site, not a stale copy.
+    files_actually_changed = _count_changed_files(ctx.site_dir, new_files)
+    noop_response = bool(new_files) and files_actually_changed == 0 and not deletions_requested
+
     with tempfile.TemporaryDirectory(prefix=f"pebble-repair-{ctx.slug}-") as td:
         tmp_site = Path(td) / "site"
         shutil.copytree(ctx.site_dir, tmp_site)
@@ -432,6 +497,8 @@ def _attempt_round(
         "prompt_chars": len(prompt),
         "response_chars": len(response),
         "provider": getattr(client, "provider", "unknown"),
+        "files_actually_changed": files_actually_changed,
+        "noop_response": noop_response,
     }
     return payload, improved
 
@@ -562,6 +629,11 @@ def repair_build(
         note_bits = list(pre_actions)
         if not payload["new_files"] and not payload["deleted_tmp"]:
             note_bits.append("LLM returned 0 <pebble-file>/<pebble-delete> tags")
+        elif payload.get("noop_response"):
+            note_bits.append(
+                f"LLM returned {len(payload['new_files'])} <pebble-file> tag(s) "
+                f"but 0 actual content changes — no-op response"
+            )
 
         report.rounds.append(RoundReport(
             round=round_no,
@@ -579,6 +651,7 @@ def repair_build(
             response_chars=payload["response_chars"],
             provider=payload["provider"],
             deletions_applied=payload["deleted_tmp"] if improved else [],
+            noop_response=payload.get("noop_response", False),
         ))
 
         if improved:
@@ -625,6 +698,11 @@ def repair_build(
         retry_note_bits: list[str] = []
         if not payload["new_files"] and not payload["deleted_tmp"]:
             retry_note_bits.append("LLM returned 0 <pebble-file>/<pebble-delete> tags")
+        elif payload.get("noop_response"):
+            retry_note_bits.append(
+                f"LLM returned {len(payload['new_files'])} <pebble-file> tag(s) "
+                f"but 0 actual content changes — no-op response"
+            )
 
         report.rounds.append(RoundReport(
             round=round_no,
@@ -643,6 +721,7 @@ def repair_build(
             provider=payload["provider"],
             deletions_applied=payload["deleted_tmp"] if improved else [],
             is_retry=True,
+            noop_response=payload.get("noop_response", False),
         ))
 
         if improved:

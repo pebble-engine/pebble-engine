@@ -191,3 +191,57 @@ def test_errors_returns_filtered_tail(engine_server, tmp_path):
     assert any("WARNING" in ln for ln in lines)
     # INFO lines are filtered out
     assert all("INFO: routine" not in ln for ln in lines)
+
+
+# ---- T17: /api/admin/engagement ------------------------------------------
+
+def test_engagement_503_when_no_admins_configured(engine_server):
+    status, body = _get(engine_server["base"], "/api/admin/engagement")
+    assert status == 503
+
+
+def test_engagement_401_when_not_signed_in(engine_server):
+    engine_server["monkey"].setenv("PEBBLE_ADMIN_EMAIL", "admin@example.com")
+    status, _ = _get(engine_server["base"], "/api/admin/engagement")
+    assert status == 401
+
+
+def test_engagement_403_when_signed_in_as_non_admin(engine_server):
+    engine_server["monkey"].setenv("PEBBLE_ADMIN_EMAIL", "admin@example.com")
+    cookie = _signup_get_cookie(engine_server["base"], "other@example.com", "otherpass123")
+    status, _ = _get(engine_server["base"], "/api/admin/engagement", cookie=cookie)
+    assert status == 403
+
+
+def test_engagement_returns_bucketed_users_for_admin(engine_server):
+    """Admin gets a sorted list of users with engagement bucket + counts."""
+    engine_server["monkey"].setenv("PEBBLE_ADMIN_EMAIL", "admin@example.com")
+    # Plant some engagement events directly (don't trigger real routes).
+    storage = engine_server["output"] / ".engagement"
+    storage.mkdir()
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    (storage / "user-power").write_text("")  # placeholder, will be overwritten below
+    for uid, events in [
+        ("user-power",  ["a", "b", "c", "d", "e"]),
+        ("user-active", ["a", "b"]),
+        ("user-stuck",  ["a"]),
+    ]:
+        (storage / f"{uid}.jsonl").write_text(
+            "\n".join(json.dumps({"event": e, "timestamp": now}, separators=(",", ":")) for e in events) + "\n",
+            encoding="utf-8",
+        )
+    cookie = _signup_get_cookie(engine_server["base"], "admin@example.com", "adminpass123")
+    status, body = _get(engine_server["base"], "/api/admin/engagement", cookie=cookie)
+    assert status == 200
+    users = body["users"]
+    # Sort order: power → active → at_risk
+    assert [u["user_id"] for u in users] == ["user-power", "user-active", "user-stuck"]
+    assert users[0]["score"] == "power"
+    assert users[1]["score"] == "active"
+    assert users[2]["score"] == "at_risk"
+    assert users[0]["distinct_events"] == 5
+    assert "now" in body
+    assert "count" in body
+    # email field is present even when empty (admin UI relies on it)
+    assert all("email" in u for u in users)

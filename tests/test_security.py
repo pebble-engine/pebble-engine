@@ -320,3 +320,137 @@ def test_revoke_all_falls_back_when_index_missing(tmp_path, monkeypatch):
     revoked = auth_mod.revoke_all_sessions_for(user.id)
     assert revoked == 1
     assert auth_mod.get_session(s.token) is None
+
+
+# ---- require_user (Supabase JWT auth gate) ------------------------------
+#
+# Companion to require_project_owner, but for endpoints that operate on the
+# CALLER themselves (billing, account settings) rather than a project. Pulls
+# the Supabase access token from the Authorization header, validates it
+# against GoTrue, and returns the user dict.
+
+class _UserAuthHandler:
+    """Minimal handler shape — captures the JSON response so tests can
+    assert on status + body without spinning up a real HTTP server."""
+    def __init__(self, authorization: str | None = None):
+        self.headers = {}
+        if authorization is not None:
+            self.headers["Authorization"] = authorization
+        self.status: int | None = None
+        self.body: dict | None = None
+
+    def _json(self, status, body, extra_headers=None):  # noqa: ARG002
+        self.status = status
+        self.body = body
+
+
+def test_require_user_returns_401_when_authorization_header_missing(monkeypatch):
+    """No header at all — caller is anonymous; we must not leak whether the
+    Supabase backend is even configured."""
+    handler = _UserAuthHandler()
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 401
+
+
+def test_require_user_returns_401_when_bearer_prefix_missing(monkeypatch):
+    """An Authorization header with the wrong format ('Basic ...' or a raw
+    token without 'Bearer ') must be treated as unauthenticated, not
+    forwarded to the backend (which would 401 anyway but at extra cost)."""
+    handler = _UserAuthHandler(authorization="Basic dXNlcjpwYXNz")
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 401
+
+
+def test_require_user_returns_401_when_bearer_token_empty(monkeypatch):
+    """'Bearer ' with no token after the space is still anonymous."""
+    handler = _UserAuthHandler(authorization="Bearer ")
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 401
+
+
+def test_require_user_returns_validated_user_dict(monkeypatch):
+    """Happy path — valid token, configured backend. The function returns
+    the user dict GoTrue gives back and does NOT write any error response."""
+    # Patch the GoTrue validator + configured-check so the unit test never
+    # actually reaches the network.
+    monkeypatch.setattr("pebble.auth_admin.is_configured", lambda: True)
+    user_obj = {"id": "uuid-abc-123", "email": "marc@example.com"}
+    monkeypatch.setattr(
+        "pebble.auth_admin.validate_access_token",
+        lambda tok, **_kw: user_obj if tok == "valid-token" else None,
+    )
+    handler = _UserAuthHandler(authorization="Bearer valid-token")
+    result = security_mod.require_user(handler)
+    assert result == user_obj
+    assert handler.status is None  # no error written
+    assert handler.body is None
+
+
+def test_require_user_returns_401_when_token_invalid(monkeypatch):
+    """GoTrue returned None — the token was bad. We respond 401, NOT 503,
+    so the caller can tell 'sign in again' from 'backend is broken'."""
+    monkeypatch.setattr("pebble.auth_admin.is_configured", lambda: True)
+    monkeypatch.setattr(
+        "pebble.auth_admin.validate_access_token",
+        lambda tok, **_kw: None,
+    )
+    handler = _UserAuthHandler(authorization="Bearer something-bad")
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 401
+
+
+def test_require_user_returns_503_when_supabase_not_configured(monkeypatch):
+    """If the engine isn't wired up to Supabase at all (missing
+    PEBBLE_SUPABASE_URL/KEY env vars), return 503 — distinguishable from
+    a bad token so frontend can surface 'this Pebble instance isn't
+    configured' rather than 'sign in again'."""
+    monkeypatch.setattr("pebble.auth_admin.is_configured", lambda: False)
+    handler = _UserAuthHandler(authorization="Bearer doesnt-matter")
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 503
+
+
+def test_require_user_returns_503_on_admin_error(monkeypatch):
+    """If GoTrue is unreachable (network failure, 5xx from Supabase),
+    validate_access_token raises AdminError. Return 503, NOT 401 — the
+    user's token might be perfectly valid; we just can't tell."""
+    from pebble.auth_admin import AdminError
+    monkeypatch.setattr("pebble.auth_admin.is_configured", lambda: True)
+
+    def boom(tok, **_kw):
+        raise AdminError("upstream timeout")
+
+    monkeypatch.setattr("pebble.auth_admin.validate_access_token", boom)
+    handler = _UserAuthHandler(authorization="Bearer valid-token")
+    result = security_mod.require_user(handler)
+    assert result is None
+    assert handler.status == 503
+
+
+def test_require_user_treats_bearer_case_insensitively(monkeypatch):
+    """RFC 6750 says the scheme is case-insensitive ('bearer', 'BEARER',
+    'Bearer' all valid). Don't reject a working token over header casing."""
+    monkeypatch.setattr("pebble.auth_admin.is_configured", lambda: True)
+    monkeypatch.setattr(
+        "pebble.auth_admin.validate_access_token",
+        lambda tok, **_kw: {"id": "u", "email": "u@e.com"} if tok == "t" else None,
+    )
+    handler = _UserAuthHandler(authorization="bearer t")
+    result = security_mod.require_user(handler)
+    assert result is not None
+    assert result["id"] == "u"
+
+
+def test_require_user_does_not_leak_token_in_error_response(monkeypatch):
+    """Defense in depth — a debug-output regression that put the bearer
+    token into the 401 body would leak it into logs and analytics. Make
+    sure the response body is generic."""
+    handler = _UserAuthHandler(authorization="Bearer super-secret-jwt-value")
+    security_mod.require_user(handler)
+    body_text = repr(handler.body or {})
+    assert "super-secret-jwt-value" not in body_text

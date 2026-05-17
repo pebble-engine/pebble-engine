@@ -801,3 +801,62 @@ def test_publish_requires_auth(engine_server):
         body={"slug": "owned-project"},
     )
     assert status == 401
+
+
+# ---- T17: engagement wiring -----------------------------------------------
+
+def _wait_for_engagement_file(log_file: Path, timeout: float = 2.0) -> bool:
+    """Engagement.log_event runs AFTER handler._json returns (fire-and-forget
+    contract — logging must never block the user response). The HTTP client
+    can return slightly before the handler thread finishes the post-response
+    log write, so poll briefly for the file."""
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if log_file.exists():
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def test_insert_block_logs_engagement_event(engine_server):
+    """Block insertion on success fires `block_inserted`. The engagement
+    file lives under tmp_path/output/.engagement/<user_id>.jsonl since
+    engagement._engagement_dir reads pebble_engine.OUTPUT_DIR which the
+    fixture monkey-patches."""
+    out: Path = engine_server["output"]
+    cookie, uid = _signup(engine_server["base"], "engage1@example.com", "engageblock1234")
+    _seed_project(out, "engage-project", owner_id=uid)
+    status, body = _request(
+        "POST",
+        engine_server["base"],
+        "/api/projects/engage-project/blocks/insert",
+        body={"block_id": "faq_accordion"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    log_file = out / ".engagement" / f"{uid}.jsonl"
+    assert _wait_for_engagement_file(log_file), f"engagement file not written: {log_file}"
+    rows = [json.loads(l) for l in log_file.read_text(encoding="utf-8").splitlines() if l.strip()]
+    assert any(r["event"] == "block_inserted" for r in rows)
+
+
+def test_insert_block_engagement_does_not_contain_block_id(engine_server):
+    """PRIVACY REGRESSION — block_id (e.g. 'pricing_tiers') must NOT leak
+    into engagement logs. The 'block_inserted' event is the only payload."""
+    out: Path = engine_server["output"]
+    cookie, uid = _signup(engine_server["base"], "engage2@example.com", "engageblock1234")
+    _seed_project(out, "engage-pricing", owner_id=uid)
+    status, body = _request(
+        "POST",
+        engine_server["base"],
+        "/api/projects/engage-pricing/blocks/insert",
+        body={"block_id": "pricing_tiers"},
+        headers={"Cookie": cookie},
+    )
+    assert status == 200
+    log_file = out / ".engagement" / f"{uid}.jsonl"
+    assert _wait_for_engagement_file(log_file), f"engagement file not written: {log_file}"
+    text = log_file.read_text(encoding="utf-8")
+    assert "pricing_tiers" not in text
+    assert "engage-pricing" not in text   # slug must not leak
+    assert "engage2@example.com" not in text  # email must not leak

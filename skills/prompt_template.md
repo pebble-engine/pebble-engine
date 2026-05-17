@@ -232,9 +232,22 @@ const inter = Inter({{
   display: "swap",
 }});
 
+// MANDATORY: viewport export so mobile renders at device width, not desktop.
+// Eval `mobile_optimized_responsive` will fail without it.
+export const viewport = {{
+  width: "device-width",
+  initialScale: 1,
+}};
+
 export default function RootLayout({{ children }}: {{ children: React.ReactNode }}) {{
   return (
     <html lang="en" className={{inter.variable}}>
+      <head>
+        {{/* MANDATORY: preload the hero poster image so the first paint lands
+            before JS hydrates. Eval `perf_budget_or_lighter` will fail without
+            a <link rel="preload"> OR an <Image priority> somewhere. */}}
+        <link rel="preload" as="image" href="/images/hero-poster.jpg" />
+      </head>
       <body className={{`${{inter.className}} antialiased`}}>
         {{children}}
       </body>
@@ -273,6 +286,81 @@ body {{
 ```
 
 This is non-negotiable. Every Tailwind `font-sans` usage picks up Inter automatically. The DNA's display_font, when used, is loaded as a SECOND font via `next/font/google` (or `<link>` in head for non-Google fonts) and applied via its own utility class — never replacing Inter as the default.
+
+**Schema.org JSON-LD — MANDATORY GLOBAL FOUNDATION:**
+
+Every site must emit Schema.org structured data so search engines AND modern AI agents (Perplexity, ChatGPT browse, Gemini Search) can identify the business. Emit it from `app/layout.tsx` as a `<script type="application/ld+json">` tag inside the document — the body works fine; the parser doesn't care where in the page the tag lives as long as it's in the served HTML.
+
+For most Pebble builds (local-service businesses: plumbing, real estate, medical, restaurants, etc.), use `LocalBusiness`. For purely online services (SaaS, consultancies with no physical presence), use `Organization`.
+
+```tsx
+// inside app/layout.tsx, somewhere inside the <body>:
+const ld = {{
+  "@context": "https://schema.org",
+  "@type": "LocalBusiness",   // or "Organization" for online-only
+  "name": "{{business_name}}",
+  "description": "{{one-sentence summary of what the business does}}",
+  // Optional but recommended when available in the brief:
+  // "telephone": "+1-555-555-5555",
+  // "url": "https://example.com",
+  // "address": {{
+  //   "@type": "PostalAddress",
+  //   "streetAddress": "123 Main St",
+  //   "addressLocality": "Austin",
+  //   "addressRegion": "TX",
+  //   "postalCode": "78701",
+  //   "addressCountry": "US"
+  // }},
+}};
+
+<script
+  type="application/ld+json"
+  dangerouslySetInnerHTML={{{{ __html: JSON.stringify(ld) }}}}
+/>
+```
+
+The eval `schema_org_jsonld_present` verifies `app/layout.tsx` contains BOTH `application/ld+json` MIME type AND a `"@context": "https://schema.org"` declaration. Without the `@context`, the structured data is invisible to crawlers.
+
+**Crawler discoverability — MANDATORY GLOBAL FOUNDATION (sitemap + robots):**
+
+Every site must ship Next.js 14 convention files that emit `sitemap.xml` and `robots.txt`. Together they make every page in the build findable by search engines AND modern AI agents (GPTBot, ClaudeBot, PerplexityBot, Google-Extended). Without them, only the homepage gets indexed reliably.
+
+```tsx
+// app/sitemap.ts — Next.js 14 convention. Returns MetadataRoute.Sitemap.
+import type {{ MetadataRoute }} from "next";
+
+export default function sitemap(): MetadataRoute.Sitemap {{
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+  // List every page route in the build. Homepage first, then the rest.
+  const routes = ["", "/about", "/services", "/contact", "/faq", "/privacy", "/terms"];
+  return routes.map((route) => ({{
+    url:        `${{base}}${{route}}`,
+    lastModified: new Date(),
+    changeFrequency: "monthly" as const,
+    priority:   route === "" ? 1.0 : 0.7,
+  }}));
+}}
+```
+
+```tsx
+// app/robots.ts — Next.js 14 convention. Returns MetadataRoute.Robots.
+import type {{ MetadataRoute }} from "next";
+
+export default function robots(): MetadataRoute.Robots {{
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://example.com";
+  return {{
+    rules: [
+      {{
+        userAgent: "*",
+        allow:     "/",
+      }},
+    ],
+    sitemap: `${{base}}/sitemap.xml`,
+  }};
+}}
+```
+
+The eval `sitemap_and_robots_present` verifies both files exist and each has a default-export function. Replace the placeholder `routes` array with the actual pages the build emits (homepage + every page in INDUSTRY-AWARE PAGES).
 
 ---
 
@@ -403,6 +491,7 @@ export function Hero() {{
     <section className="relative min-h-[100dvh] overflow-hidden bg-black flex flex-col">
       <video
         autoPlay muted loop playsInline
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-cover"
         src="/videos/hero.mp4"
         poster="/images/hero-poster.jpg"
@@ -868,6 +957,18 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
 - [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
 - [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
+
+**FOUNDATION perf + conversion + mobile (May 2026 NLM research addendum):**
+- [ ] Hero `<video>` element includes a `preload=` attribute (`preload="metadata"` is the default recommendation; `preload="auto"` also acceptable). Without it, browser defaults drift and LCP regresses. — eval `perf_budget_or_lighter`
+- [ ] `app/layout.tsx` `<head>` includes a `<link rel="preload" as="image" href="/images/hero-poster.jpg" />` (OR the hero renders the poster via `<Image priority>`) so the first paint lands before JS hydrates. — eval `perf_budget_or_lighter`
+- [ ] Any hand-rolled `@font-face` block in `app/globals.css` (or any CSS) MUST declare `font-display: swap` (or `optional` / `fallback`). FOIT hides text for up to 3s on slow connections. `next/font/google` already handles this — only flag hand-rolled @font-face. — eval `perf_budget_or_lighter`
+- [ ] If `three` or any `@react-three/*` package is used, import it via `next/dynamic({{ ssr: false }})` in `app/page.tsx`. Static imports of these ~700kb libs block first paint. — eval `perf_budget_or_lighter`
+- [ ] Any raw `<img>` (use `next/image` instead — but defense in depth) MUST declare both `width` and `height` attributes so layout doesn't shift when the image loads. — eval `perf_budget_or_lighter`
+- [ ] Hero section MUST contain at least ONE qualifying CTA above the fold: an `<a>` or `<button>` with (1) an action-verb first word (Get / Start / Try / Book / Contact / Schedule / Learn / Call / Discover / Explore etc.), (2) a real href (`/path`, `tel:`, `mailto:`, `#section`, `https://...` — never `href="#"` alone), and (3) a visually-prominent `bg-*` className. 70% of small-business sites lack a clear homepage CTA — Pebble doesn't. — eval `hero_cta_above_fold`
+- [ ] `app/layout.tsx` MUST export viewport via `export const viewport = {{ width: "device-width", initialScale: 1 }}` (or include `<meta name="viewport" content="width=device-width, initial-scale=1">` in `<head>`). Without it, mobile renders at desktop width and forces user-zoom. — eval `mobile_optimized_responsive`
+- [ ] Hero file uses at least one Tailwind responsive prefix (`sm:`, `md:`, `lg:`, `xl:`, or `2xl:`). Desktop-only classes hit mobile at desktop scale — 58% of traffic is mobile. — eval `mobile_optimized_responsive`
+- [ ] Hero CTAs meet the 44px touch-target minimum via VERTICAL-axis padding/height: `p-3+`, `py-3+`, `min-h-11`, `min-h-[44px]`, `min-h-[3rem]` (decimals like `2.75rem` OK). `px-N` alone does NOT count — horizontal padding doesn't lift the tap target. WCAG 2.5.5 / Apple HIG / Material all converge on 44px. — eval `mobile_optimized_responsive`
+- [ ] `tailwind.config.ts` must NOT explicitly empty the `screens` key (`screens: {{}}`) — that disables all `sm:`/`md:`/`lg:` utilities globally. Leave `screens` unset to keep Tailwind defaults. — eval `mobile_optimized_responsive`
 
 **SECTIONS BELOW HERO:**
 - [ ] Trust bar: counting stats with `data-target` + GSAP textContent

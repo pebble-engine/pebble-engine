@@ -232,3 +232,107 @@ def test_logout_handler_revokes_session(fake_output):
     assert h.status == 200
     # Session is gone
     assert auth.get_session(sess.token) is None
+
+
+# ---- Phase A.5 deprecation (2026-05-16) ---------------------------------
+
+def _has_deprecation_headers(headers: list) -> bool:
+    """The three headers every legacy /api/auth/* response should carry."""
+    keys = {k for k, _ in headers}
+    return (
+        "Deprecation" in keys
+        and "Sunset" in keys
+        and any(k == "Link" for k in keys)
+    )
+
+
+def test_legacy_signup_emits_deprecation_headers(fake_output):
+    """Every legacy auth response carries Deprecation + Sunset + Link
+    headers so clients see the EOL signal explicitly."""
+    h = FakeHandler({"email": "phase-a5@example.com", "password": "valid-password"})
+    auth_server.run_signup(h)
+    assert h.status == 201
+    assert _has_deprecation_headers(h.extra_headers), \
+        f"expected deprecation headers, got {h.extra_headers!r}"
+
+
+def test_legacy_login_emits_deprecation_headers(fake_output):
+    auth.create_user("dep-login@example.com", "valid-password")
+    h = FakeHandler({"email": "dep-login@example.com", "password": "valid-password"})
+    auth_server.run_login(h)
+    assert h.status == 200
+    assert _has_deprecation_headers(h.extra_headers)
+
+
+def test_legacy_me_emits_deprecation_headers(fake_output):
+    u = auth.create_user("dep-me@example.com", "valid-password")
+    sess = auth.create_session(u.id)
+    h = FakeHandler(cookie=f"pebble_session={sess.token}")
+    auth_server.run_me(h)
+    assert h.status == 200
+    assert _has_deprecation_headers(h.extra_headers)
+
+
+def test_legacy_logout_emits_deprecation_headers(fake_output):
+    u = auth.create_user("dep-logout@example.com", "valid-password")
+    sess = auth.create_session(u.id)
+    h = FakeHandler(cookie=f"pebble_session={sess.token}")
+    auth_server.run_logout(h)
+    assert h.status == 200
+    assert _has_deprecation_headers(h.extra_headers)
+
+
+def test_legacy_endpoints_return_410_when_disabled(fake_output, monkeypatch):
+    """PEBBLE_LEGACY_AUTH_DISABLED=true flips every legacy endpoint to
+    410 Gone with the migration JSON. Production posture once Supabase
+    Auth migration is verified end-to-end."""
+    monkeypatch.setenv("PEBBLE_LEGACY_AUTH_DISABLED", "true")
+    # No matter which legacy endpoint we hit, response is 410.
+    for run_fn in (
+        auth_server.run_signup,
+        auth_server.run_login,
+        auth_server.run_logout,
+        auth_server.run_me,
+        auth_server.run_forgot,
+        auth_server.run_reset,
+    ):
+        h = FakeHandler({"email": "x@example.com", "password": "valid-password"})
+        run_fn(h)
+        assert h.status == 410, f"{run_fn.__name__} should return 410 when disabled, got {h.status}"
+        assert "migration" in h.json_body, f"{run_fn.__name__} should include migration pointer"
+        # 410 responses ALSO carry deprecation headers
+        assert _has_deprecation_headers(h.extra_headers), \
+            f"{run_fn.__name__} 410 should still carry deprecation headers"
+
+
+def test_legacy_disabled_supports_various_truthy_values(fake_output, monkeypatch):
+    """Env-var parsing should accept the standard truthy spellings."""
+    for val in ("1", "true", "True", "yes", "ON"):
+        monkeypatch.setenv("PEBBLE_LEGACY_AUTH_DISABLED", val)
+        h = FakeHandler({"email": "x@example.com", "password": "valid-password"})
+        auth_server.run_signup(h)
+        assert h.status == 410, f"value {val!r} should disable legacy auth"
+
+
+def test_legacy_disabled_default_is_off(fake_output, monkeypatch):
+    """Without the env var, the endpoints stay enabled (backwards compat)."""
+    monkeypatch.delenv("PEBBLE_LEGACY_AUTH_DISABLED", raising=False)
+    h = FakeHandler({"email": "default-on@example.com", "password": "valid-password"})
+    auth_server.run_signup(h)
+    assert h.status == 201, "default should keep legacy auth enabled"
+
+
+def test_legacy_auth_client_was_removed_from_v3():
+    """Sanity check: ui/v3/lib/auth.ts was deleted in Phase A.5.
+    The new auth flow is via @supabase/ssr — see ui/v3/lib/supabase/*.
+
+    If anything imports the legacy module again, the build fails fast
+    via the TS compiler, but a Python-side regression test pins the
+    deletion so a future "restore from git" can't silently bring it
+    back without the deprecation discussion."""
+    legacy_path = Path(__file__).resolve().parent.parent / "ui" / "v3" / "lib" / "auth.ts"
+    assert not legacy_path.exists(), (
+        f"{legacy_path} still exists. The Phase A.5 deprecation removed "
+        f"the legacy auth client; restore would re-introduce a parallel "
+        f"auth surface alongside Supabase. Don't."
+    )

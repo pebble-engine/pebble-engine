@@ -49,6 +49,18 @@ async function getJSON<T>(path: string): Promise<T> {
   return json as T;
 }
 
+async function deleteJSON<T>(path: string): Promise<T> {
+  const resp = await fetch(engineUrl(path), { method: "DELETE" });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as T;
+}
+
 // ---------- /api/plan + /api/generate (existing) ----------------------------
 
 export type PlanResponse = {
@@ -401,6 +413,235 @@ export async function fetchInbox(slug: string): Promise<{ slug: string; submissi
 
 export async function markSubmissionRead(slug: string, id: string, read: boolean = true): Promise<Submission> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/inbox/${encodeURIComponent(id)}/read`, { read });
+}
+
+// ---------- /api/projects/<slug>/forms/webhook ------------------------------
+
+export type WebhookConfig = {
+  url:            string;
+  configured_at:  string;
+};
+
+export type WebhookConfigResponse = {
+  slug:        string;
+  configured:  boolean;
+  webhook:     WebhookConfig | null;
+};
+
+export async function fetchWebhookConfig(slug: string): Promise<WebhookConfigResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`);
+}
+
+export async function setWebhookConfig(slug: string, url: string): Promise<WebhookConfigResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`, { url });
+}
+
+export async function clearWebhookConfig(slug: string): Promise<{ slug: string; removed: boolean; configured: false }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`);
+}
+
+// ---------- /api/projects/<slug>/forms/autoresponder -----------------------
+
+export type AutoresponderConfig = {
+  enabled:        boolean;
+  subject:        string;
+  body:           string;
+  reply_field:    string;
+  configured_at:  string;
+};
+
+export type AutoresponderConfigResponse = {
+  slug:           string;
+  autoresponder:  AutoresponderConfig;
+};
+
+export type AutoresponderUpdate = {
+  enabled:        boolean;
+  subject?:       string;
+  body?:          string;
+  reply_field?:   string;
+};
+
+export async function fetchAutoresponder(slug: string): Promise<AutoresponderConfigResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
+}
+
+export async function saveAutoresponder(slug: string, update: AutoresponderUpdate): Promise<AutoresponderConfigResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`, update);
+}
+
+export async function clearAutoresponder(slug: string): Promise<{ slug: string; removed: boolean }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
+}
+
+// ---------- /api/projects/<slug>/forms/attachment-url (Phase 2) ------------
+
+export type AttachmentSignedUrl = {
+  url:        string;
+  expires_in: number;   // seconds
+  path:       string;
+};
+
+/**
+ * Fetch a short-lived signed URL for a stored form attachment. Used
+ * by the inbox detail view when rendering a download link for a
+ * private-bucket Supabase Storage object.
+ *
+ * The path MUST start with the project's slug (the engine validates
+ * this server-side; never trust a path the visitor wrote into the
+ * form to point at an object outside the project).
+ */
+export async function fetchAttachmentSignedUrl(slug: string, path: string): Promise<AttachmentSignedUrl> {
+  return postJSON(
+    `/api/projects/${encodeURIComponent(slug)}/forms/attachment-url`,
+    { path },
+  );
+}
+
+// ---------- /api/account/delete (GDPR — Ch 7.7) ---------------------------
+
+export type AccountDeleteResponse = {
+  ok:      boolean;
+  deleted: boolean;
+  user_id: string;
+  next:    string;    // path to redirect to after client-side signOut
+};
+
+/**
+ * GDPR-style account deletion. Pulls the current Supabase access
+ * token client-side, POSTs to the engine which validates the token
+ * and admin-deletes the user (cascades to public.profiles via FK).
+ *
+ * On success, callers MUST follow up with:
+ *   await supabase.auth.signOut();
+ *   router.push(result.next);
+ *
+ * The engine doesn't (and can't) clear the v3-side Supabase cookies
+ * — that's a client-only API.
+ */
+export async function deleteAccount(): Promise<AccountDeleteResponse> {
+  // Lazy-import the supabase client so the engine-only build paths
+  // (e.g. tests that exercise lib/api.ts in isolation) don't pull
+  // the whole @supabase/ssr graph.
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/account/delete"), {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as AccountDeleteResponse;
+}
+
+// ---------- /api/checkout + /api/billing (Stripe) --------------------------
+
+export type CheckoutSessionResponse = {
+  url:        string;
+  session_id: string;
+};
+
+export type BillingPortalResponse = {
+  url: string;
+};
+
+export type SubscriptionState = {
+  plan:               "starter" | "pro" | null;
+  status:             string | null;   // "active" | "past_due" | "canceled" | ... | null
+  current_period_end: number | null;   // unix seconds, or null
+};
+
+/**
+ * Helper that does the "get current JWT, send Authorization: Bearer" dance
+ * for the billing endpoints (which are auth-gated via require_user). All
+ * billing routes need this, so DRY it.
+ */
+async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl(path), {
+    method:  "POST",
+    headers: {
+      "Content-Type":  "application/json",
+      "Authorization": `Bearer ${session.access_token}`,
+    },
+    body: JSON.stringify(body),
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as T;
+}
+
+/**
+ * Open a Stripe Checkout session for the selected plan. Returns the
+ * hosted-payment URL; the caller is responsible for the actual redirect
+ * (typically `window.location.href = url`).
+ *
+ * Auth: requires a logged-in Supabase user. The engine looks the user
+ * up from the bearer JWT and stamps their id on the Checkout Session so
+ * the Stripe webhook can route subscription events back to this Pebble
+ * account.
+ */
+export async function createCheckoutSession(plan: "starter" | "pro"): Promise<CheckoutSessionResponse> {
+  return authedPostJSON<CheckoutSessionResponse>("/api/checkout/create-session", { plan });
+}
+
+/**
+ * Mint a Stripe Customer Portal session for the current user. Returns
+ * the portal URL; the caller redirects the browser there.
+ *
+ * Throws "No active subscription" if the user has never subscribed
+ * (the engine returns 404 in that case so the UI can route them to
+ * the pricing page instead).
+ */
+export async function openBillingPortal(): Promise<BillingPortalResponse> {
+  return authedPostJSON<BillingPortalResponse>("/api/billing/portal", {});
+}
+
+/**
+ * Get the current user's subscription state — plan, status, renewal date.
+ * Returns ``{plan: null, ...}`` for users who have never subscribed
+ * (instead of throwing) so the UI can branch on the field.
+ */
+export async function fetchSubscription(): Promise<SubscriptionState> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/billing/subscription"), {
+    headers: { "Authorization": `Bearer ${session.access_token}` },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as SubscriptionState;
 }
 
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------

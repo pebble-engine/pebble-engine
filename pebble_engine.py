@@ -112,60 +112,17 @@ except Exception:
 
 # --------------------------------------------------------------------------
 # ANTI-SLOP AUDIT
+# Extracted to pebble/audit.py — re-exported here so existing `pe.X`
+# accessors in pebble/server/build.py keep working unchanged.
 # --------------------------------------------------------------------------
 
-CONVERGENCE_FONTS = {
-    "inter", "roboto", "poppins", "geist", "plus jakarta sans",
-    "space grotesk", "dm sans",
-}
-ACCEPTABLE_DISPLAY_PAIRS = {
-    "fraunces", "playfair", "instrument serif", "tobias", "migra",
-    "pp editorial", "söhne", "sohne", "national 2", "tiempos",
-    "gt alpina", "boogy brut", "dm serif", "serif",
-}
-WATCH_STYLES = {"neumorphism", "claymorphism", "default cyberpunk"}
-
-
-def audit_design_system(ds_text: str) -> list[tuple[str, str]]:
-    notes: list[tuple[str, str]] = []
-    text = ds_text.lower()
-    heading = _extract_field(ds_text, r"heading[^:\n]*?:\s*([^\n]+)")
-    body = _extract_field(ds_text, r"body[^:\n]*?:\s*([^\n]+)")
-    has_distinctive = any(d in heading.lower() for d in ACCEPTABLE_DISPLAY_PAIRS)
-
-    for font in CONVERGENCE_FONTS:
-        if font in heading.lower():
-            notes.append(("TYPOGRAPHY",
-                f"Heading uses '{heading.strip()}' (contains '{font}'). "
-                f"Swap heading face for Fraunces, Instrument Serif, "
-                f"PP Editorial, Migra, or Tobias."))
-        if font in body.lower() and not has_distinctive:
-            notes.append(("TYPOGRAPHY",
-                f"Body is '{body.strip()}' and heading lacks a distinctive "
-                f"display face. Pair with serif or swap body to Söhne/Mona Sans."))
-
-    if "purple" in text and ("gradient" in text or "to-blue" in text):
-        notes.append(("COLOR",
-            "Purple-to-blue gradient detected -- the most recognizable AI tell. "
-            "Replace with a flat dominant color + sharp accent."))
-
-    for style in WATCH_STYLES:
-        if style in text:
-            notes.append(("STYLE",
-                f"'{style.title()}' in recommendation -- trends slop-adjacent. "
-                "Override unless the direction explicitly calls for it."))
-
-    if "hero + 3 features + cta" in text.replace("-", " "):
-        notes.append(("LAYOUT",
-            "Default 'Hero -> 3 cards -> CTA' pattern. Break it with asymmetric "
-            "grids, full-bleed sections, or numbered lists."))
-
-    return notes
-
-
-def _extract_field(text: str, pattern: str) -> str:
-    m = re.search(pattern, text, re.IGNORECASE)
-    return m.group(1).strip() if m else ""
+from pebble.audit import (  # noqa: E402
+    audit_design_system,
+    CONVERGENCE_FONTS,
+    ACCEPTABLE_DISPLAY_PAIRS,
+    WATCH_STYLES,
+    _extract_field,
+)
 
 
 # --------------------------------------------------------------------------
@@ -674,13 +631,6 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
     return results
 
 
-# --------------------------------------------------------------------------
-# FIGMA — read a Figma file when the user provides a URL + token in .env
-# --------------------------------------------------------------------------
-
-_FIGMA_FILE_RE = re.compile(r"figma\.com/(?:file|design)/([A-Za-z0-9]+)/")
-
-
 def replace_urls_in_site(site_dir: Path, url_map: dict[str, str]) -> int:
     """Replace each (old → new) URL pair in every text file under site_dir.
 
@@ -753,41 +703,10 @@ from pebble.postbuild import (
 
 # --------------------------------------------------------------------------
 # FIGMA — read a Figma file when the user provides a URL + token in .env
+# Extracted to pebble/figma.py; re-exported here for pe.X back-compat.
 # --------------------------------------------------------------------------
 
-def figma_file_summary(figma_url: str) -> Optional[dict]:
-    """Pull a lightweight summary of a Figma file (name, colors, first frames).
-
-    Returns None unless both the URL is valid and FIGMA_ACCESS_TOKEN is set.
-    The summary is meant to be fed to the LLM as additional design context.
-    """
-    if not figma_url:
-        return None
-    token = os.environ.get("FIGMA_ACCESS_TOKEN", "").strip()
-    if not token:
-        return None
-    m = _FIGMA_FILE_RE.search(figma_url)
-    if not m:
-        return None
-    file_id = m.group(1)
-    req = urllib.request.Request(
-        f"https://api.figma.com/v1/files/{file_id}?depth=2",
-        headers={"X-Figma-Token": token, "User-Agent": "Mozilla/5.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            data = json.loads(resp.read())
-    except Exception as e:
-        log.warning("Figma fetch failed: %s", e)
-        return None
-    summary = {
-        "file_id": file_id,
-        "name": data.get("name", ""),
-        "last_modified": data.get("lastModified", ""),
-        "thumbnail_url": data.get("thumbnailUrl", ""),
-        "pages": [p.get("name", "") for p in data.get("document", {}).get("children", [])][:10],
-    }
-    return summary
+from pebble.figma import figma_file_summary, _FIGMA_FILE_RE  # noqa: E402
 
 
 # --------------------------------------------------------------------------
@@ -1554,197 +1473,25 @@ class PebbleHandler(BaseHTTPRequestHandler):
 
     # ---- OPTIONS (CORS preflight) ----
     def do_OPTIONS(self):
-        """Browser preflight handler.
-
-        ``/api/internal/*`` paths are intentionally excluded — they're
-        server-to-server (e.g. the Supabase webhook) and have no reason
-        to participate in browser CORS. Refusing to bless those flows
-        is defense-in-depth atop the existing bearer-secret gate.
-        """
-        if self.path.startswith("/api/internal/"):
-            # 405 makes the rejection visible to operators in access
-            # logs; the browser will refuse the subsequent POST.
-            self.send_response(405)
-            self.send_header("Allow", "POST")
-            self.end_headers()
-            return
-
-        origin, allow_credentials = self._cors_decision()
-        if origin is None:
-            # Allowlist configured + Origin not on it → no CORS approval.
-            self.send_response(204)
-            self.end_headers()
-            return
-
-        self.send_response(204)
-        self.send_header("Access-Control-Allow-Origin", origin)
-        if origin != "*":
-            self.send_header("Vary", "Origin")
-        if allow_credentials:
-            self.send_header("Access-Control-Allow-Credentials", "true")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
-        self.send_header("Access-Control-Max-Age", "86400")
-        self.end_headers()
+        # Body extracted to pebble/server/router.py. Lazy import keeps
+        # engine startup fast (router only loads on first request).
+        from pebble.server.router import route_options
+        route_options(self)
 
     # ---- GET ----
     def do_GET(self):
-        # Strip query string for route matching (e.g. /?t=12345 should still serve index.html).
-        # Stash raw_path so handlers that legitimately need the query string (e.g.
-        # /api/dna/preview?id=...) can recover it via self._raw_path. Most handlers
-        # don't care, so the strip stays the default.
-        raw_path = self.path
-        path_only = raw_path.split("?", 1)[0]
-        self.path = path_only
-        self._raw_path = raw_path
-        try:
-            if path_only in ("/", "/index.html"):
-                self._handle_engine_root()
-            elif self.path == "/api/health":
-                self._handle_health()
-            elif self.path == "/api/dna/preview":
-                from pebble.server.dna import run_dna_preview
-                run_dna_preview(self)
-            elif self.path == "/api/blocks":
-                from pebble.server.blocks import run_list_blocks
-                run_list_blocks(self)
-            elif self.path == "/api/industries":
-                self._handle_list_industries()
-            elif self.path == "/api/briefs":
-                self._handle_list_briefs()
-            elif self.path.startswith("/api/briefs/"):
-                slug = self.path.split("/api/briefs/", 1)[1]
-                self._handle_get_brief(slug)
-            elif self.path == "/api/auth/me":
-                from pebble.server.auth import run_me
-                run_me(self)
-            elif self.path == "/api/projects":
-                self._handle_list_projects()
-            elif self.path == "/api/usage":
-                self._handle_usage_summary()
-            elif self.path == "/api/activity":
-                self._handle_activity_feed()
-            elif self.path == "/api/admin/users":
-                from pebble.server.admin import run_list_users
-                run_list_users(self)
-            elif self.path == "/api/admin/projects":
-                from pebble.server.admin import run_list_all_projects
-                run_list_all_projects(self)
-            elif self.path == "/api/admin/errors":
-                from pebble.server.admin import run_recent_errors
-                run_recent_errors(self)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/history"):
-                slug = self.path[len("/api/projects/"):-len("/history")]
-                self._handle_get_history(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/publish"):
-                slug = self.path[len("/api/projects/"):-len("/publish")]
-                self._handle_get_publish_state(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_get_domain(slug)
-            elif self.path.startswith("/api/projects/") and "/inbox" in self.path:
-                self._handle_inbox_get()
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/analytics"):
-                slug = self.path[len("/api/projects/"):-len("/analytics")]
-                from pebble.server.analytics import run_get_summary
-                run_get_summary(self, slug)
-            elif self.path.startswith("/dist/"):
-                self._handle_serve_dist()
-            elif self.path.startswith("/preview/"):
-                self._handle_preview()
-            else:
-                self.send_response(404); self.end_headers()
-                self.wfile.write(b"Not found")
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_get
+        route_get(self)
 
     # ---- POST ----
     def do_POST(self):
-        try:
-            if self.path == "/api/build":
-                self._handle_build(generate=False)
-            elif self.path == "/api/generate":
-                self._handle_build(generate=True)
-            elif self.path == "/api/plan":
-                self._handle_plan()
-            elif self.path == "/api/setup":
-                self._handle_setup()
-            elif self.path == "/api/rollback":
-                self._handle_rollback()
-            elif self.path == "/api/refine":
-                self._handle_refine()
-            elif self.path == "/api/visual-edit":
-                self._handle_visual_edit()
-            elif self.path == "/api/migrate":
-                self._handle_migrate()
-            elif self.path == "/api/inspire":
-                self._handle_inspire()
-            elif self.path == "/api/publish":
-                self._handle_publish()
-            elif self.path.startswith("/api/forms/"):
-                slug = self.path[len("/api/forms/"):]
-                self._handle_form_submit(slug)
-            elif self.path.startswith("/api/track/"):
-                slug = self.path[len("/api/track/"):]
-                from pebble.server.analytics import run_track
-                run_track(self, slug)
-            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path and self.path.endswith("/read"):
-                self._handle_inbox_mark_read()
-            elif self.path == "/api/auth/signup":
-                from pebble.server.auth import run_signup
-                run_signup(self)
-            elif self.path == "/api/auth/login":
-                from pebble.server.auth import run_login
-                run_login(self)
-            elif self.path == "/api/auth/logout":
-                from pebble.server.auth import run_logout
-                run_logout(self)
-            elif self.path == "/api/auth/forgot":
-                from pebble.server.auth import run_forgot
-                run_forgot(self)
-            elif self.path == "/api/auth/reset":
-                from pebble.server.auth import run_reset
-                run_reset(self)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/star"):
-                slug = self.path[len("/api/projects/"):-len("/star")]
-                self._handle_toggle_star(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_set_domain(slug)
-            elif self.path.startswith("/api/projects/") and self.path.endswith("/blocks/insert"):
-                slug = self.path[len("/api/projects/"):-len("/blocks/insert")]
-                from pebble.server.blocks import run_insert_block
-                run_insert_block(self, slug)
-            elif self.path == "/api/internal/supabase-webhook":
-                from pebble.server.supabase_webhook import run_supabase_webhook
-                run_supabase_webhook(self)
-            else:
-                self.send_response(404); self.end_headers()
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_post
+        route_post(self)
 
     # ---- DELETE ----
     def do_DELETE(self):
-        """The HTTP DELETE verb. Only one route uses it today —
-        DELETE /api/projects/<slug>          → hard delete project
-        DELETE /api/projects/<slug>/domain   → detach custom domain"""
-        try:
-            if self.path.startswith("/api/projects/") and self.path.endswith("/domain"):
-                slug = self.path[len("/api/projects/"):-len("/domain")]
-                self._handle_delete_domain(slug)
-            elif self.path.startswith("/api/projects/") and "/inbox/" in self.path:
-                self._handle_inbox_delete()
-            elif self.path.startswith("/api/projects/"):
-                slug = self.path[len("/api/projects/"):]
-                # Reject paths with subroutes (e.g. /history, /star) — those
-                # belong to the GET/POST handlers, not DELETE.
-                if "/" in slug:
-                    self.send_response(404); self.end_headers(); return
-                self._handle_delete_project(slug)
-            else:
-                self.send_response(404); self.end_headers()
-        except Exception as exc:
-            self._handle_500(exc)
+        from pebble.server.router import route_delete
+        route_delete(self)
 
     def _handle_500(self, exc: BaseException) -> None:
         """Common 500 path. Logs the full traceback under a short

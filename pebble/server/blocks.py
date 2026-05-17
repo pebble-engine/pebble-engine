@@ -29,6 +29,7 @@ from pebble.blocks import (
     render_block,
 )
 from pebble.blocks.insert import load_brief, load_dna_for_site
+from pebble.engagement import log_event as _log_engagement
 from pebble.history import snapshot_site
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
@@ -81,7 +82,8 @@ def run_insert_block(handler, slug: str) -> None:
         500 — unexpected
     """
     # Auth gate FIRST — never read the body for a project we don't own.
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
 
     try:
@@ -168,3 +170,5 @@ def run_insert_block(handler, slug: str) -> None:
         "applied_at":      datetime.now(timezone.utc).isoformat(),
         **result.to_dict(),
     })
+    # Per-user engagement signal (T17). NEVER pass block_id or rendered content.
+    _log_engagement(caller_uid, "block_inserted")
