@@ -1584,7 +1584,34 @@ def test_inter_font_applied_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 43. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 43. no_gsap_split_text — QUALITY
+# ---------------------------------------------------------------------------
+
+def test_no_gsap_split_text_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_gsap_split_text(ctx).status == "pass"
+
+
+def test_no_gsap_split_text_fails_when_import_found(good_build):
+    (good_build / "site" / "components" / "ui" / "SplitHeading.tsx").write_text(
+        'import { SplitText } from "gsap/SplitText";\n'
+        'export function SplitHeading({ text }: { text: string }) { return <h1>{text}</h1>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.no_gsap_split_text(ctx)
+    assert result.status == "fail"
+    assert "SplitText" in result.message
+
+
+def test_no_gsap_split_text_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.no_gsap_split_text(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 44. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):

@@ -3267,7 +3267,7 @@ def navbar_present(ctx: BuildContext) -> CheckResult:
 # ---------------------------------------------------------------------------
 
 _LOREM_IPSUM_RE = re.compile(r"\blorem\s+ipsum\b", re.IGNORECASE)
-_LOREM_SCAN_DIRS = ("app", "components", "lib")
+_SOURCE_SCAN_DIRS = ("app", "components", "lib")
 
 
 @check_metadata()
@@ -3285,7 +3285,7 @@ def no_lorem_ipsum(ctx: BuildContext) -> CheckResult:
         return CheckResult("no_lorem_ipsum", "skip", "no site directory")
 
     hits: list[str] = []
-    for subdir in _LOREM_SCAN_DIRS:
+    for subdir in _SOURCE_SCAN_DIRS:
         d = ctx.site_dir / subdir
         if not d.exists():
             continue
@@ -3364,6 +3364,49 @@ def inter_font_applied(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 43. no_gsap_split_text — QUALITY
+# ---------------------------------------------------------------------------
+
+_GSAP_SPLIT_TEXT_RE = re.compile(
+    r"""from\s+['"]gsap/SplitText['"]|require\s*\(\s*['"]gsap/SplitText['"]\s*\)""",
+    re.IGNORECASE,
+)
+@check_metadata()
+def no_gsap_split_text(ctx: BuildContext) -> CheckResult:
+    """No import of `gsap/SplitText` — this is a paid GSAP Club plugin.
+
+    `gsap/SplitText` is not in the public npm registry. Any import crashes
+    `next dev` with 'Cannot find module gsap/SplitText'. The hero h1 uses
+    `AnimatedHeading` (Code Pattern 1) for per-character animation — that
+    covers the primary SplitText use case without the paid dependency.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_gsap_split_text", "skip", "no site directory")
+
+    hits: list[str] = []
+    for subdir in _SOURCE_SCAN_DIRS:
+        d = ctx.site_dir / subdir
+        if not d.exists():
+            continue
+        for p in (*d.rglob("*.tsx"), *d.rglob("*.ts")):
+            try:
+                if _GSAP_SPLIT_TEXT_RE.search(p.read_text(encoding="utf-8", errors="ignore")):
+                    hits.append(str(p.relative_to(ctx.site_dir)))
+            except OSError:
+                pass
+
+    if not hits:
+        return CheckResult("no_gsap_split_text", "pass", "no gsap/SplitText imports found")
+
+    return CheckResult(
+        "no_gsap_split_text", "fail",
+        f"{len(hits)} file(s) import gsap/SplitText — paid Club plugin, crashes next dev; "
+        "use AnimatedHeading (Code Pattern 1) instead",
+        details={"files": hits[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3409,6 +3452,7 @@ ALL_CHECKS = [
     limitations_disclosed_in_readme,
     no_tracking_by_default,
     no_lorem_ipsum,
+    no_gsap_split_text,
     a11y_static_audit,
     schema_org_jsonld_present,
     sitemap_and_robots_present,
