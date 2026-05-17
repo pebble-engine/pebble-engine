@@ -53,6 +53,7 @@ import logging
 import os
 import re
 import sys
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -142,11 +143,18 @@ def _write_subscription_sentinel(user_id: str, *, status: str, plan: str,
                                  current_period_end: Optional[int],
                                  last_event_id: str,
                                  last_event_created: int) -> None:
-    """Write the sentinel atomically — tmp file + os.replace so a reader
-    racing the write never sees a truncated/half-written JSON (NLM round 1
-    Finding #4). On both POSIX and NTFS, os.replace is atomic across
-    same-volume renames, so the destination either has the OLD contents or
-    the NEW contents, never partial."""
+    """Write the sentinel atomically — unique tmp file + os.replace so
+    (a) a reader racing the write never sees a truncated/half-written
+    JSON, and (b) two concurrent webhook handlers for the same user
+    don't stomp each other's tmp file. The engine runs on
+    ThreadingHTTPServer, so two Stripe deliveries for the same user can
+    land in parallel — a fixed tmp filename would race (NLM round 2
+    Finding #R2.1).
+
+    On both POSIX and NTFS, ``os.replace`` is atomic across same-volume
+    renames, so the destination either has the OLD contents or the NEW
+    contents, never partial.
+    """
     user_dir = _output_dir() / ".users" / user_id
     user_dir.mkdir(parents=True, exist_ok=True)
     out = {
@@ -163,9 +171,22 @@ def _write_subscription_sentinel(user_id: str, *, status: str, plan: str,
         "last_event_created":     last_event_created,
     }
     target = user_dir / "subscription.json"
-    tmp = user_dir / "subscription.json.tmp"
-    tmp.write_text(json.dumps(out, indent=2), encoding="utf-8")
-    os.replace(tmp, target)
+    # uuid4().hex is collision-free across handler threads for our
+    # purposes (122 bits of entropy). Don't reuse — each write gets a
+    # fresh tmp so concurrent writers never stomp each other.
+    tmp = user_dir / f"subscription.json.{uuid.uuid4().hex}.tmp"
+    try:
+        tmp.write_text(json.dumps(out, indent=2), encoding="utf-8")
+        os.replace(tmp, target)
+    finally:
+        # Best-effort cleanup if the rename failed (e.g. Windows held
+        # the destination open). Leaves no orphan tmp files in the
+        # user's dir.
+        if tmp.exists():
+            try:
+                tmp.unlink()
+            except OSError:
+                pass
 
 
 def run_stripe_webhook(handler) -> None:

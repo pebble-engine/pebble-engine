@@ -48,6 +48,42 @@ _SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9_-]{0,99}$")
 # "YYYYMMDDTHHMMSS-<reason>" — the literal `T` and digits force the
 # capital-T allowance; reasons add hyphens and lowercase letters.
 _SNAPSHOT_ID_RE = re.compile(r"^[0-9]{8}T[0-9]{6}[A-Za-z0-9_-]{0,100}$")
+# User IDs (Supabase UUIDs in practice) — alphanumerics + hyphen/underscore.
+# Tight enough that ``../victim``-style traversal can never reach
+# `OUTPUT_DIR / .users / <uid>` and walk out. Matches engagement.py and
+# stripe_webhook.py's local copies; this is the canonical version that
+# the billing readers + future modules should depend on.
+_USER_ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
+# Windows reserved device names — `CON.json` writes to the console, `NUL`
+# silently discards, etc. Block them so a future identity provider that
+# returns short non-UUID ids can't collide.
+_WINDOWS_RESERVED_NAMES = frozenset(
+    {"con", "nul", "aux", "prn"}
+    | {f"com{i}" for i in range(1, 10)}
+    | {f"lpt{i}" for i in range(1, 10)}
+)
+
+
+def safe_user_id(raw: object) -> str:
+    """Return ``raw`` normalized to lowercase if it's a safe user-id, else ``""``.
+
+    Used by any module that interpolates a Supabase user-id into a
+    filesystem path under ``output/.users/<uid>/...``. Without this,
+    ``../victim`` would resolve through ``OUTPUT_DIR/.users/<raw>/`` to
+    a sibling directory the attacker can read.
+
+    NOT a substitute for parameterized queries / proper escaping; this is
+    SPECIFICALLY the filesystem-path safety check. Returns ``""`` on any
+    invalid input so callers can ``if not safe_user_id(x): return None``.
+    """
+    if not isinstance(raw, str) or not raw:
+        return ""
+    if not _USER_ID_RE.fullmatch(raw):
+        return ""
+    lower = raw.lower()
+    if lower in _WINDOWS_RESERVED_NAMES:
+        return ""
+    return lower
 
 
 def is_valid_slug(slug: str) -> bool:

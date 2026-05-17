@@ -254,3 +254,34 @@ def test_finds_sentinel_when_jwt_user_id_has_mixed_case(
     assert h.status == 200
     kwargs = fake_stripe.billing_portal.Session.create.call_args.kwargs
     assert kwargs["customer"] == "cus_marc"
+
+
+def test_rejects_path_traversal_user_id(
+    monkeypatch, output_root, stripe_env, fake_stripe,
+):
+    """NLM round 2 Finding #R2.4 — a `.lower()`-only fix to the case
+    asymmetry is insufficient. Without applying the same validation the
+    webhook uses (safe_user_id regex), an attacker-controlled user_id
+    like ``../victim`` would resolve to a sibling user's sentinel and
+    expose their Stripe customer to a Customer Portal session takeover."""
+    from pebble.server import billing_portal
+
+    # Create a victim's sentinel
+    _write_subscription_sentinel(output_root, "victim",
+                                 customer_id="cus_victim_real")
+
+    # Attacker arrives with a JWT whose id contains a traversal segment.
+    # In practice Supabase wouldn't mint such an id, but the validation
+    # is defense-in-depth against future identity provider changes.
+    monkeypatch.setattr(
+        "pebble.server.billing_portal.require_user",
+        lambda h: {"id": "../victim", "email": "attacker@example.com"},
+    )
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+
+    # Endpoint MUST refuse to mint a portal session for the victim's
+    # customer. 404 (no subscription) is the safe answer.
+    assert h.status == 404
+    fake_stripe.billing_portal.Session.create.assert_not_called()

@@ -176,3 +176,28 @@ def test_lowercases_user_id_for_path_lookup(monkeypatch, output_root):
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
     assert h.body["plan"] == "pro"
+
+
+def test_rejects_path_traversal_user_id(monkeypatch, output_root):
+    """NLM round 2 Finding #R2.4 — the read endpoints must apply the same
+    safe_user_id validation the webhook does. Without it, a malicious
+    user_id like ``../victim`` reads a different user's sentinel and
+    leaks their plan + renewal date."""
+    from pebble.server import billing_subscription
+
+    # Plant a victim's sentinel with a recognizable plan
+    _write_sentinel(output_root, "victim", plan="pro", status="active")
+
+    # Attacker JWT with traversal segment
+    monkeypatch.setattr(
+        "pebble.server.billing_subscription.require_user",
+        lambda h: {"id": "../victim", "email": "attacker@example.com"},
+    )
+
+    h = FakeHandler()
+    billing_subscription.run_get_subscription(h)
+
+    # MUST NOT leak the victim's plan — fall through to the "no
+    # subscription" 200/null branch instead.
+    assert h.status == 200
+    assert h.body == {"plan": None, "status": None, "current_period_end": None}

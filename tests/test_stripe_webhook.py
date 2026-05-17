@@ -442,6 +442,38 @@ def test_webhook_accepts_strictly_newer_events(with_secret, output_root, verifie
     assert data["plan"] == "pro"
 
 
+def test_webhook_uses_unique_tmp_filenames(with_secret, output_root, verified_event, monkeypatch):
+    """NLM round 2 Finding #R2.1 — pebble_engine runs on
+    ThreadingHTTPServer, so two webhook calls for the same user can land
+    in parallel. A fixed `subscription.json.tmp` would race; both threads
+    open + truncate + write the same file, producing interleaved JSON
+    garbage or FileNotFoundError on rename. Each write must use a unique
+    tmp filename."""
+    import os
+    from pebble.server import stripe_webhook
+
+    real_replace = os.replace
+    tmp_sources: list[str] = []
+
+    def spy_replace(src, dst):
+        tmp_sources.append(str(src))
+        return real_replace(src, dst)
+
+    monkeypatch.setattr("pebble.server.stripe_webhook.os.replace", spy_replace)
+
+    # Two distinct webhooks for the same user
+    verified_event(_subscription_event(event_id="evt_a", event_created=1000))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+    verified_event(_subscription_event(event_id="evt_b", event_created=2000))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    assert len(tmp_sources) == 2
+    # Both must end in .tmp (still under the atomic-rename pattern)
+    assert all(p.endswith(".tmp") for p in tmp_sources)
+    # ...but must be DIFFERENT filenames so concurrent writers don't stomp.
+    assert tmp_sources[0] != tmp_sources[1]
+
+
 def test_webhook_writes_atomically(with_secret, output_root, verified_event, monkeypatch):
     """NLM Finding #4 — Path.write_text truncates before write. A reader
     racing the write sees an empty file -> JSONDecodeError -> 404 for a

@@ -25,7 +25,7 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from pebble.security import require_user
+from pebble.security import require_user, safe_user_id
 
 
 log = logging.getLogger("pebble.billing_subscription")
@@ -39,12 +39,15 @@ def _output_dir() -> Path:
 
 
 def _load_sentinel(user_id: str) -> Optional[dict]:
-    """Read the user's subscription sentinel, lowercasing user_id for path
-    construction to match the webhook's normalization (NLM round 1
-    Finding #2). Returns None for missing / corrupt files."""
-    if not isinstance(user_id, str) or not user_id:
+    """Read the user's subscription sentinel via the strict ``safe_user_id``
+    validation. NLM round 2 Finding #R2.4: a ``.lower()``-only fix lets
+    ``../victim`` traverse out of ``output/.users/`` and read a different
+    user's sentinel. Returns None for invalid uid, missing, or corrupt
+    files."""
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
         return None
-    sentinel = _output_dir() / ".users" / user_id.lower() / "subscription.json"
+    sentinel = _output_dir() / ".users" / safe_uid / "subscription.json"
     if not sentinel.exists():
         return None
     try:

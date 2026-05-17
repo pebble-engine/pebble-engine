@@ -35,7 +35,7 @@ from typing import Optional
 
 import stripe
 
-from pebble.security import require_user
+from pebble.security import require_user, safe_user_id
 
 
 log = logging.getLogger("pebble.billing_portal")
@@ -57,15 +57,15 @@ def _load_customer_id(user_id: str) -> Optional[str]:
     """Read the Stripe customer_id from the user's subscription sentinel,
     or return None if there isn't one (no subscription / corrupt file).
 
-    The user_id is lowercased before path construction to mirror
-    ``stripe_webhook._safe_user_id`` (which writes to the lowercased
-    directory). NLM round 1 Finding #2 — Supabase returns lowercase UUIDs
-    in practice, but the asymmetry would silently 404 on case-sensitive
-    filesystems if a future identity provider ever returned mixed case.
+    NLM round 2 Finding #R2.4: pass user_id through ``safe_user_id`` —
+    not just ``.lower()`` — so a malicious ``../victim`` id can't read a
+    different user's sentinel. The webhook writes through the same
+    validation; readers must enforce it too.
     """
-    if not isinstance(user_id, str) or not user_id:
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
         return None
-    sentinel = _output_dir() / ".users" / user_id.lower() / "subscription.json"
+    sentinel = _output_dir() / ".users" / safe_uid / "subscription.json"
     if not sentinel.exists():
         return None
     try:

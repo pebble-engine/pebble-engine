@@ -246,7 +246,15 @@ Supabase exclusively).
                                      no card data in sentinel or logs.
 [x] 9.4  Customer portal           → POST /api/billing/portal (commit
                                      723ab8c) + v3 settings page "Manage
-                                     billing" button (commit 1e1679c).
+                                     billing" button (commit 1e1679c) +
+                                     GET /api/billing/subscription
+                                     "current plan" badge (commit
+                                     2091a0f). Two NLM rounds of
+                                     adversarial review applied: out-of-
+                                     order event dedup, atomic file
+                                     write, path-traversal validation
+                                     on readers, unique tmp filenames
+                                     for concurrent webhook writes.
 [ ] 9.5  7-day free trial          → not built. Either add
                                      subscription_data.trial_period_days=7
                                      to checkout, or use Stripe's
