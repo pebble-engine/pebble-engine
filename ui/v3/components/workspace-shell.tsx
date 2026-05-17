@@ -144,6 +144,11 @@ export function WorkspaceShell() {
           slug: response.slug,
           preview_url: response.preview_url,
           industry_intel_key: response.industry_intel_key,
+          // Surface the live `next dev` URL so the iframe can load the
+          // running app directly. preview_url 404s for Next.js sites
+          // (no static index.html on disk). dev_server.url is the live
+          // process URL — only valid while the engine is running.
+          dev_server: response.dev_server ?? null,
         };
         setLastBuild(built);
         setBuild(built);

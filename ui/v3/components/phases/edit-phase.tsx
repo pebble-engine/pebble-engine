@@ -39,8 +39,10 @@ import {
   rollback,
   fetchHistory,
   visualEdit,
+  pickPreviewUrl,
   type RefinementId,
   type HistorySnapshot,
+  type DevServerInfo,
 } from "@/lib/api";
 
 /**
@@ -72,7 +74,11 @@ type Toast = {
 };
 
 type Props = {
-  build: { slug: string; preview_url: string } | null;
+  build: {
+    slug: string;
+    preview_url: string;
+    dev_server?: DevServerInfo | null;
+  } | null;
   plan: PebblePlan | null;
   onPublish: () => void;
 };
@@ -319,7 +325,10 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
     }
   }
 
-  const previewUrl = build?.preview_url ? `${build.preview_url}?v=${iframeBust}` : "about:blank";
+  const basePreview = pickPreviewUrl(build);
+  const previewUrl = basePreview === "about:blank"
+    ? "about:blank"
+    : `${basePreview}${basePreview.includes("?") ? "&" : "?"}v=${iframeBust}`;
   const slugForUrl = build?.slug || "your-site";
 
   return (

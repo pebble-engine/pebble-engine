@@ -73,6 +73,14 @@ export async function fetchPlan(brief: Brief): Promise<PlanResponse> {
   return postJSON<PlanResponse>("/api/plan", brief);
 }
 
+export type DevServerInfo = {
+  enabled?: boolean;
+  port?: number | null;
+  pid?: number | null;
+  url?: string | null;
+  errors?: string[];
+};
+
 export type GenerateResponse = {
   slug: string;
   preview_url: string;
@@ -81,10 +89,31 @@ export type GenerateResponse = {
   file_count: number;
   elapsed_seconds: number;
   industry_intel_key: string | null;
+  // Populated when PEBBLE_AUTO_RUN=true and the engine started `next dev`.
+  // Generated sites are Next.js apps with no static index.html — preview_url
+  // (/preview/<slug>/) 404s for them. The live dev_server.url loads via the
+  // running `next dev` process. Falls back to preview_url when absent.
+  dev_server?: DevServerInfo;
 };
 
 export async function generateSite(brief: Brief): Promise<GenerateResponse> {
   return postJSON<GenerateResponse>("/api/generate", brief);
+}
+
+type PreviewBuild = {
+  preview_url?: string;
+  dev_server?: DevServerInfo | null;
+};
+
+// Prefer the running `next dev` URL over the static preview path. The
+// preview path serves files from output/<slug>/site/ — fine for plain
+// HTML but 404s for Next.js sites (no compiled index.html on disk).
+// Falls back to preview_url, then to "about:blank" as a last resort.
+export function pickPreviewUrl(build: PreviewBuild | null | undefined): string {
+  const devUrl = build?.dev_server?.url;
+  if (typeof devUrl === "string" && devUrl.length > 0) return devUrl;
+  if (build?.preview_url) return build.preview_url;
+  return "about:blank";
 }
 
 // ---------- /api/projects (new) --------------------------------------------

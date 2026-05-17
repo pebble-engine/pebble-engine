@@ -11,8 +11,10 @@ import {
   fetchDomain,
   setDomain,
   removeDomain,
+  pickPreviewUrl,
   type PublishResponse,
   type DomainResponse,
+  type DevServerInfo,
 } from "@/lib/api";
 
 /**
@@ -30,7 +32,11 @@ import {
 type InternalPhase = "ready" | "publishing" | "done" | "error";
 
 type Props = {
-  build: { slug: string; preview_url: string } | null;
+  build: {
+    slug: string;
+    preview_url: string;
+    dev_server?: DevServerInfo | null;
+  } | null;
   onBack: () => void;
 };
 
@@ -67,7 +73,7 @@ export function PublishPhase({ build, onBack }: Props) {
     setTimeout(() => setShareLabel("Share"), 1500);
   }
 
-  const previewUrl = build?.preview_url || "#";
+  const previewUrl = pickPreviewUrl(build);
 
   return (
     <main className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 py-16">
