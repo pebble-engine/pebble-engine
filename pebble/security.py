@@ -155,6 +155,59 @@ def _project_owner(slug: str) -> Optional[str]:
     return owner if isinstance(owner, str) and owner else None
 
 
+def require_user(handler) -> Optional[dict]:
+    """Auth gate for user-level endpoints (billing, account settings).
+
+    Returns the validated Supabase user dict (``{'id', 'email', ...}``) on
+    success. Writes the appropriate HTTP error and returns None otherwise.
+
+    Sister to :func:`require_project_owner`, which adds an ownership check
+    on top. Use this when the endpoint operates on the caller themselves
+    rather than a project they own.
+
+    Status codes:
+    - 401 — no/malformed Authorization header, or token rejected by GoTrue
+    - 503 — Supabase not configured on this instance, or GoTrue unreachable
+    """
+    raw = (handler.headers.get("Authorization", "") or "").strip()
+    # Case-insensitive scheme per RFC 6750 — a "bearer" / "BEARER" prefix is
+    # equivalent to "Bearer".
+    if not raw.lower().startswith("bearer "):
+        handler._json(401, {"error": "sign in required"})
+        return None
+    token = raw[7:].strip()
+    if not token:
+        handler._json(401, {"error": "sign in required"})
+        return None
+
+    # Lazy import so test_security.py (which heavily monkeypatches
+    # auth_admin) doesn't pay GoTrue's network imports at module load.
+    try:
+        from pebble import auth_admin
+    except Exception:
+        handler._json(500, {"error": "auth subsystem unavailable"})
+        return None
+
+    if not auth_admin.is_configured():
+        handler._json(503, {"error": "auth not configured on this Pebble instance"})
+        return None
+
+    try:
+        user = auth_admin.validate_access_token(token)
+    except auth_admin.AdminError:
+        # NLM round on Track 12 documented why this must be 503 and not 401:
+        # a transient GoTrue outage would otherwise look identical to a bad
+        # token to the v3 frontend, which would then log the user out.
+        handler._json(503, {"error": "auth backend unavailable"})
+        return None
+
+    if not isinstance(user, dict) or not user.get("id"):
+        handler._json(401, {"error": "sign in required"})
+        return None
+
+    return user
+
+
 def require_project_owner(handler, slug: str) -> Optional[str]:
     """Return the calling user's id on success, otherwise respond and
     return None.
