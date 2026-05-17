@@ -39,10 +39,14 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "sections").mkdir(parents=True, exist_ok=True)
     (site / "components" / "ui").mkdir(parents=True, exist_ok=True)
     (site / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
         '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
         '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text="Test Co" className="text-7xl text-white" />\n'
+        '      <FadeIn delay={800}><p>Subheading copy.</p></FadeIn>\n'
         '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
         '    </section>\n'
         '  );\n'
@@ -231,10 +235,14 @@ def broken_build(tmp_path: Path) -> Path:
     )
     # Foundation hero (background video, no overlay, with poster).
     (site / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
         '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
         '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text="Test Co" className="text-7xl text-white" />\n'
+        '      <FadeIn delay={800}><p>Subheading copy.</p></FadeIn>\n'
         '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
         '    </section>\n'
         '  );\n'

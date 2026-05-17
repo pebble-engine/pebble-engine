@@ -1611,7 +1611,49 @@ def test_no_gsap_split_text_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 44. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 44. hero_uses_animated_heading — FOUNDATION
+# ---------------------------------------------------------------------------
+
+def test_hero_uses_animated_heading_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_uses_animated_heading(ctx).status == "pass"
+
+
+def test_hero_uses_animated_heading_fails_when_hero_uses_plain_h1(good_build):
+    hero = good_build / "site" / "components" / "sections" / "Hero.tsx"
+    hero.write_text(
+        'export function Hero() {\n'
+        '  return <section><h1>Welcome</h1></section>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.hero_uses_animated_heading(ctx)
+    assert result.status == "fail"
+    assert "AnimatedHeading" in result.message
+
+
+def test_hero_uses_animated_heading_passes_when_used_in_page(good_build):
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'export function Hero() { return <section><h1>Welcome</h1></section>; }'
+    )
+    page = good_build / "site" / "app" / "page.tsx"
+    page.write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export default function P() { return <main><AnimatedHeading text="Hi" /></main>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_uses_animated_heading(ctx).status == "pass"
+
+
+def test_hero_uses_animated_heading_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.hero_uses_animated_heading(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 45. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):

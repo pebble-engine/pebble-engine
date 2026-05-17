@@ -3407,6 +3407,49 @@ def no_gsap_split_text(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 44. hero_uses_animated_heading — FOUNDATION
+# ---------------------------------------------------------------------------
+
+_ANIMATED_HEADING_USAGE_RE = re.compile(r"<AnimatedHeading\b|AnimatedHeading\s*\(")
+_ANIMATED_HEADING_IMPORT_RE = re.compile(r"""from\s+['"]@?/components/ui/AnimatedHeading['"]""")
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx", "components/ui/AnimatedHeading.tsx"))
+def hero_uses_animated_heading(ctx: BuildContext) -> CheckResult:
+    """The hero file must import and render `AnimatedHeading` for the h1.
+
+    `animation_components_present` verifies AnimatedHeading.tsx exists, but
+    the LLM sometimes generates a plain `<h1>` in Hero.tsx instead of using
+    the component. A bare `<h1>` skips the per-character entrance animation,
+    the sr-only semantic text, and the built-in textShadow — three
+    foundation constraints in one regression.
+
+    Checks `components/sections/Hero.tsx` first; falls back to `app/page.tsx`
+    in case the LLM inlines the hero there.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_uses_animated_heading", "skip", "no site directory")
+
+    for rel in ("components/sections/Hero.tsx", "app/page.tsx"):
+        p = ctx.site_dir / rel
+        if not p.exists():
+            continue
+        text = p.read_text(encoding="utf-8", errors="ignore")
+        if _ANIMATED_HEADING_USAGE_RE.search(text) or _ANIMATED_HEADING_IMPORT_RE.search(text):
+            return CheckResult(
+                "hero_uses_animated_heading", "pass",
+                f"AnimatedHeading used in {rel}",
+            )
+
+    return CheckResult(
+        "hero_uses_animated_heading", "fail",
+        "neither Hero.tsx nor app/page.tsx imports or renders AnimatedHeading — "
+        "the hero h1 must use AnimatedHeading (Code Pattern 1) for the a11y + "
+        "animation contract",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3425,6 +3468,7 @@ ALL_CHECKS = [
     scroll_trigger_ssr_safe,
     no_css_smooth_scroll,
     # FOUNDATION checks (May 2026 overhaul — VEX-spec hero pattern)
+    hero_uses_animated_heading,
     hero_uses_background_video,
     no_dark_overlay_on_hero_video,
     inter_font_global,
