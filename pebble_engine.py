@@ -1733,6 +1733,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
             elif self.path == "/api/internal/supabase-webhook":
                 from pebble.server.supabase_webhook import run_supabase_webhook
                 run_supabase_webhook(self)
+            elif self.path == "/api/internal/stripe-webhook":
+                from pebble.server.stripe_webhook import run_stripe_webhook
+                run_stripe_webhook(self)
+            elif self.path == "/api/checkout/create-session":
+                from pebble.server.stripe_checkout import run_create_session
+                run_create_session(self)
+            elif self.path == "/api/billing/portal":
+                from pebble.server.billing_portal import run_billing_portal
+                run_billing_portal(self)
             elif self.path == "/api/account/delete":
                 from pebble.server.account import run_delete_account
                 run_delete_account(self)

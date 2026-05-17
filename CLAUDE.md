@@ -227,6 +227,16 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 | POST | `/api/account/delete` | `{ email_confirmation }` | GDPR account delete — drops Supabase user + scrubs project ownership. |
 | POST | `/api/internal/supabase-webhook` | Supabase webhook payload | Welcome-email trigger on email verification. HMAC-signed. |
 
+### Billing (Stripe)
+
+| Method | Path | Body | Purpose |
+|---|---|---|---|
+| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" }` | Auth-gated (Bearer JWT). Creates a Stripe Checkout Session in `mode=subscription`, returns `{url, session_id}`. Stamps `pebble_user_id` + `pebble_plan` metadata on session + subscription so the webhook can route events back. |
+| POST | `/api/billing/portal` | — | Auth-gated. Reads `stripe_customer_id` from `output/.users/<uid>/subscription.json`, mints a Stripe Customer Portal session, returns `{url}`. 404 if no subscription. |
+| POST | `/api/internal/stripe-webhook` | Stripe event payload | HMAC-verified via `STRIPE_WEBHOOK_SECRET`. On `customer.subscription.{created,updated,deleted}` writes `output/.users/<uid>/subscription.json` with `{status, plan, stripe_customer_id, stripe_subscription_id, current_period_end, updated_at}`. Other event types 200-ignored. |
+
+Env vars (all in `.env`): `STRIPE_SECRET_KEY` (sk_test_), `STRIPE_PUBLISHABLE_KEY` (pk_test_, v3-side only), `STRIPE_WEBHOOK_SECRET` (whsec_, from `stripe listen` or Dashboard), `PEBBLE_STRIPE_STARTER_PRICE_ID`, `PEBBLE_STRIPE_PRO_PRICE_ID`. Bootstrap the two price IDs once via `python -m pebble.stripe_bootstrap`.
+
 ### Admin (gated by `PEBBLE_ADMIN_EMAIL`)
 
 | Method | Path | Purpose |
