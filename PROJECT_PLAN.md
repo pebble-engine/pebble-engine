@@ -180,6 +180,12 @@ They want to click the text and type. Without this, the whole product fails.
 [ ] 7.7  Account-deletion flow (GDPR compliance from day 1)
          ← OPEN. Auth handles "dangling session if account deleted"
             but there is no actual delete endpoint or UI.
+
+**Phase A.5 deprecation (2026-05-16):** Legacy /api/auth/* endpoints
+(scrypt+cookie) now carry Deprecation/Sunset/Link headers + log on
+every call. Set `PEBBLE_LEGACY_AUTH_DISABLED=true` to flip them to
+410 Gone. ui/v3/lib/auth.ts deleted (was dead code — v3 uses
+Supabase exclusively).
 ```
 
 ## Chapter 8 — The Dashboard (Weeks 9-10) — MOSTLY SHIPPED

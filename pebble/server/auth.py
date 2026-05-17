@@ -1,17 +1,36 @@
 """HTTP entry points for user accounts and sessions.
 
+PHASE A.5 DEPRECATION (2026-05-16):
+These endpoints are the homegrown scrypt+cookie auth that predates the
+Supabase Auth migration (commit c67540f). All six routes still function
+for backwards compat AND for the legacy test fixtures that hit them
+to mint a session cookie. They emit:
+
+  - ``Deprecation: true`` (RFC 8594)
+  - ``Sunset: Sun, 16 Nov 2026 00:00:00 GMT`` (6 months out)
+  - ``Link: </docs/auth-migration>; rel="deprecation"``
+
+And log a warning on every call. Set ``PEBBLE_LEGACY_AUTH_DISABLED=true``
+to flip them to 410 Gone (production posture once the migration is
+verified end-to-end). The v3 frontend uses Supabase Auth exclusively —
+none of these endpoints are reachable through the UI today; the only
+remaining callers are Python test fixtures.
+
 Routes:
 
 - POST /api/auth/signup  {email, password}      → 201 + Set-Cookie
 - POST /api/auth/login   {email, password}      → 200 + Set-Cookie
 - POST /api/auth/logout                          → 200 + clear cookie
 - GET  /api/auth/me                              → 200 if logged in, 401 if not
+- POST /api/auth/forgot  {email}                 → 200 (always, prevents enum)
+- POST /api/auth/reset   {token, password}       → 200 / 400
 
 All endpoints respond with JSON. On success, the session token rides in an
 HttpOnly cookie named ``pebble_session`` — never in the response body.
 """
 from __future__ import annotations
 
+import functools
 import json
 import os
 from typing import Optional
@@ -80,6 +99,80 @@ def current_user_id(handler) -> Optional[str]:
     return sess.user_id if sess else None
 
 
+# ---------- Phase A.5 deprecation wrapper --------------------------------
+
+# Standard headers emitted by every response from a legacy endpoint.
+# RFC 8594 Deprecation marker + a Sunset date 6 months out gives clients
+# explicit signal that the URL has a defined end-of-life.
+LEGACY_DEPRECATION_HEADERS = (
+    ("Deprecation", "true"),
+    ("Sunset", "Sun, 16 Nov 2026 00:00:00 GMT"),
+    ("Link", '</docs/auth-migration>; rel="deprecation"'),
+)
+
+
+def _legacy_auth_disabled() -> bool:
+    """When ``PEBBLE_LEGACY_AUTH_DISABLED`` is truthy, the legacy
+    endpoints all return 410 Gone instead of executing. Test fixtures
+    set the var to false (default); production will flip it true once
+    the Supabase Auth migration is fully verified end-to-end."""
+    return os.environ.get("PEBBLE_LEGACY_AUTH_DISABLED", "").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+
+
+def _legacy_endpoint(fn):
+    """Decorator for the six /api/auth/* handlers.
+
+    1. Short-circuits to 410 Gone when PEBBLE_LEGACY_AUTH_DISABLED is set.
+    2. Logs a deprecation warning on every call.
+    3. Monkey-patches the request's ``_json`` so every response written
+       through it carries the deprecation headers (per-request scope —
+       the handler instance is fresh per HTTP request, so this doesn't
+       leak globally).
+
+    Keeps the run_* function bodies unchanged; the wrapper handles all
+    the deprecation plumbing.
+    """
+    @functools.wraps(fn)
+    def wrapper(handler):
+        if _legacy_auth_disabled():
+            _write_410(handler)
+            return
+        log.warning(
+            "legacy %s called (deprecated; migrate clients to Supabase Auth)",
+            getattr(handler, "path", "/api/auth/?"),
+        )
+        orig = handler._json
+        def patched(status, payload, *, extra_headers=None):
+            merged = list(extra_headers or []) + list(LEGACY_DEPRECATION_HEADERS)
+            return orig(status, payload, extra_headers=merged)
+        handler._json = patched  # type: ignore[method-assign]
+        try:
+            return fn(handler)
+        finally:
+            handler._json = orig  # type: ignore[method-assign]
+    return wrapper
+
+
+def _write_410(handler) -> None:
+    """410 Gone payload used when the legacy endpoints are disabled.
+    Carries the deprecation headers so any client that follows the
+    Link relation sees the migration docs."""
+    handler._json(
+        410,
+        {
+            "error":     "Legacy auth endpoint disabled.",
+            "migration": (
+                "This endpoint was retired in favour of Supabase Auth. "
+                "Sign in via /login or /signup in the v3 frontend."
+            ),
+        },
+        extra_headers=list(LEGACY_DEPRECATION_HEADERS),
+    )
+
+
+@_legacy_endpoint
 def run_signup(handler) -> None:
     body = _read_body(handler)
     if body is None:
@@ -109,6 +202,7 @@ def run_signup(handler) -> None:
     )
 
 
+@_legacy_endpoint
 def run_login(handler) -> None:
     body = _read_body(handler)
     if body is None:
@@ -128,6 +222,7 @@ def run_login(handler) -> None:
     )
 
 
+@_legacy_endpoint
 def run_logout(handler) -> None:
     cookie_header = handler.headers.get("Cookie") or ""
     token = parse_session_token(cookie_header)
@@ -140,6 +235,7 @@ def run_logout(handler) -> None:
     )
 
 
+@_legacy_endpoint
 def run_me(handler) -> None:
     user_id = current_user_id(handler)
     if not user_id:
@@ -167,6 +263,7 @@ def _reset_url_for(token: str) -> str:
     return f"{_public_base_url()}/reset?token={token}"
 
 
+@_legacy_endpoint
 def run_forgot(handler) -> None:
     """POST /api/auth/forgot — request a password reset link.
 
@@ -204,6 +301,7 @@ def run_forgot(handler) -> None:
     handler._json(200, {"ok": True, "sent": sent})
 
 
+@_legacy_endpoint
 def run_reset(handler) -> None:
     """POST /api/auth/reset — finalize a password reset.
 
