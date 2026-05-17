@@ -241,11 +241,9 @@ export const viewport = {{
 }};
 
 // MANDATORY: OG + Twitter Card for rich social previews — eval `og_social_meta_present` requires both.
-// icons — eval `favicon_defined` requires at least one form; metadata.icons is easiest.
 export const metadata: Metadata = {{
   title: "{{business_name}}",
   description: "{{one-sentence tagline summarising what the business does}}",
-  icons: {{ icon: "/icon.svg" }},
   openGraph: {{
     title: "{{business_name}}",
     description: "{{one-sentence tagline summarising what the business does}}",
@@ -339,6 +337,21 @@ const ld = {{
 ```
 
 The eval `schema_org_jsonld_present` verifies `app/layout.tsx` contains BOTH `application/ld+json` MIME type AND a `"@context": "https://schema.org"` declaration. Without the `@context`, the structured data is invisible to crawlers.
+
+**Favicon — MANDATORY GLOBAL FOUNDATION:**
+
+Every site must have a favicon so browser tabs and bookmarks show the business identity instead of a blank icon. Use the Next.js App Router file convention: create `app/icon.svg` and Next.js automatically generates the correct `<link rel="icon">` tag — no `metadata.icons` configuration needed.
+
+```svg
+<!-- app/icon.svg — use the DNA's primary accent color for fill. First letter of business_name. -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <rect width="100" height="100" rx="16" fill="{{dna_accent_color}}"/>
+  <text x="50" y="72" text-anchor="middle" font-family="-apple-system,system-ui,sans-serif"
+        font-size="60" font-weight="700" fill="white">{{first_letter_of_business_name}}</text>
+</svg>
+```
+
+The eval `favicon_defined` verifies `app/icon.svg`, `app/favicon.ico`, or `app/icon.png` exists. A purely typographic monogram SVG is always acceptable — do NOT invent a complex logo that requires assets you don't have.
 
 **Crawler discoverability — MANDATORY GLOBAL FOUNDATION (sitemap + robots):**
 

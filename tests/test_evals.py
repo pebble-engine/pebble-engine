@@ -85,13 +85,19 @@ def good_build(tmp_path: Path) -> Path:
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
         'export const metadata = {\n'
         '  title: "Good Co",\n'
-        '  icons: { icon: "/icon.svg" },\n'
         '  openGraph: { title: "Good Co", type: "website" },\n'
         '  twitter: { card: "summary_large_image" },\n'
         '};\n'
         'export default function L({children}: any) {\n'
         '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
         '}'
+    )
+    # Favicon — Next.js App Router file convention (auto-generates <link rel="icon">).
+    (site / "app" / "icon.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
+        '<rect width="100" height="100" rx="16" fill="#1a1a1a"/>'
+        '<text x="50" y="72" text-anchor="middle" font-family="system-ui" font-size="60" font-weight="700" fill="white">G</text>'
+        '</svg>'
     )
     # Next.js 14 convention files — emit sitemap.xml + robots.txt.
     (site / "app" / "sitemap.ts").write_text(
@@ -1332,35 +1338,37 @@ def test_og_social_meta_passes_with_raw_meta_tags(good_build):
 # 37. favicon_defined — FOUNDATION (browser tab + bookmark identity)
 # ---------------------------------------------------------------------------
 
-def test_favicon_defined_passes_with_metadata_icons(good_build):
-    """good_build includes icons: in metadata export — check passes."""
+def test_favicon_defined_passes_on_good_build(good_build):
+    """good_build includes app/icon.svg — file-based favicon convention passes."""
     ctx = BuildContext.load(good_build)
     assert checks.favicon_defined(ctx).status == "pass"
 
 
 def test_favicon_defined_passes_with_favicon_ico(good_build):
-    """A physical app/favicon.ico file is the other accepted form."""
-    (good_build / "site" / "app" / "favicon.ico").write_bytes(b"\x00\x00")
-    # Remove icons from metadata to test the file path alone
-    layout = good_build / "site" / "app" / "layout.tsx"
-    layout.write_text(layout.read_text().replace("  icons: { icon: \"/icon.svg\" },\n", ""))
+    """A physical app/favicon.ico file is also accepted."""
+    (good_build / "site" / "app" / "icon.svg").unlink()
+    (good_build / "site" / "app" / "favicon.ico").write_bytes(b"\x00\x00\x01\x00")
     ctx = BuildContext.load(good_build)
     assert checks.favicon_defined(ctx).status == "pass"
 
 
-def test_favicon_defined_passes_with_icon_svg(good_build):
-    """app/icon.svg is accepted by Next.js App Router as a favicon."""
-    (good_build / "site" / "app" / "icon.svg").write_text("<svg/>")
+def test_favicon_defined_passes_with_metadata_icons(good_build):
+    """metadata.icons form is also accepted (some builds may use this instead of app/icon.svg)."""
+    (good_build / "site" / "app" / "icon.svg").unlink()
     layout = good_build / "site" / "app" / "layout.tsx"
-    layout.write_text(layout.read_text().replace("  icons: { icon: \"/icon.svg\" },\n", ""))
+    layout.write_text(
+        'import { Inter } from "next/font/google";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["400"], variable: "--font-inter" });\n'
+        'export const metadata = { title: "X", icons: { icon: "/icon.svg" }, openGraph: { title: "X", type: "website" }, twitter: { card: "summary_large_image" } };\n'
+        'export default function L({c}: any) { return <html lang="en"><body>{c}</body></html>; }'
+    )
     ctx = BuildContext.load(good_build)
     assert checks.favicon_defined(ctx).status == "pass"
 
 
 def test_favicon_defined_fails_when_none_defined(good_build):
     """No favicon.ico, no icon.svg/png, no metadata.icons → fail."""
-    layout = good_build / "site" / "app" / "layout.tsx"
-    layout.write_text(layout.read_text().replace("  icons: { icon: \"/icon.svg\" },\n", ""))
+    (good_build / "site" / "app" / "icon.svg").unlink()
     ctx = BuildContext.load(good_build)
     result = checks.favicon_defined(ctx)
     assert result.status == "fail"
