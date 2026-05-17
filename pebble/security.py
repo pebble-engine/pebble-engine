@@ -75,6 +75,19 @@ def safe_user_id(raw: object) -> str:
     NOT a substitute for parameterized queries / proper escaping; this is
     SPECIFICALLY the filesystem-path safety check. Returns ``""`` on any
     invalid input so callers can ``if not safe_user_id(x): return None``.
+
+    Identity-provider assumption (NLM round 3 R3.B1)
+    ------------------------------------------------
+    The ``.lower()`` step assumes the identity provider treats user IDs as
+    case-INSENSITIVE — i.e. ``USER1`` and ``user1`` refer to the same
+    account. Supabase Auth satisfies this: it mints UUID v4 in lowercase
+    hex and stores them as-is. If Pebble ever swaps identity providers
+    to one that treats case as significant (Auth0 with custom IDs, some
+    SAML IdPs), two distinct users with names differing only in case
+    would collide on the same sentinel directory and share billing
+    state. Revisit this normalization at that point — likely solution
+    is hashing the user-id into a fixed-shape directory name and
+    embedding the exact original id inside the sentinel JSON.
     """
     if not isinstance(raw, str) or not raw:
         return ""

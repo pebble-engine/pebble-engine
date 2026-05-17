@@ -196,6 +196,20 @@ def run_stripe_webhook(handler) -> None:
         log.warning("stripe-webhook called but STRIPE_WEBHOOK_SECRET not set")
         handler._json(503, {"error": "Webhook not configured on this host"})
         return
+    # NLM round 3 R3.D1 — catch the most common misconfig pattern: pasting
+    # something that isn't a Stripe webhook signing secret into the env
+    # var (we've literally seen an rk_test_ key pasted into this slot on
+    # 2026-05-17). A real whsec_... value starts with that prefix; the
+    # HMAC verifier below would 400 the request anyway, but a clearer
+    # log line saves operators a debugging session.
+    if not secret.startswith("whsec_"):
+        log.warning(
+            "stripe-webhook STRIPE_WEBHOOK_SECRET prefix=%r does not match "
+            "expected 'whsec_'. Webhooks will fail signature verification. "
+            "Run `stripe listen` locally to mint one, or copy from Stripe "
+            "Dashboard -> Developers -> Webhooks -> <endpoint> -> Signing secret.",
+            secret[:6],
+        )
 
     sig_header = (handler.headers.get("Stripe-Signature") or "").strip()
     if not sig_header:
@@ -306,9 +320,15 @@ def run_stripe_webhook(handler) -> None:
         and subscription_id
         and existing["stripe_subscription_id"] != subscription_id
     ):
+        # Redact subscription IDs to last 4 chars so logs forwarded to a
+        # lower-trust system (Datadog, ELK, support tools) don't expose
+        # full billing identifiers. The user_id is enough for an operator
+        # to cross-reference in the Stripe Dashboard. NLM round 3 R3.C1.
+        prior_short = existing["stripe_subscription_id"][-4:]
+        new_short = subscription_id[-4:]
         log.warning(
-            "stripe-webhook user=%s subscription changed %s -> %s (was the user double-subscribed?)",
-            user_id, existing["stripe_subscription_id"], subscription_id,
+            "stripe-webhook user=%s subscription changed ...%s -> ...%s (was the user double-subscribed?)",
+            user_id, prior_short, new_short,
         )
 
     _write_subscription_sentinel(

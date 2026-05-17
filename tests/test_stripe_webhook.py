@@ -442,6 +442,91 @@ def test_webhook_accepts_strictly_newer_events(with_secret, output_root, verifie
     assert data["plan"] == "pro"
 
 
+def test_webhook_warns_on_non_whsec_secret(monkeypatch, caplog):
+    """NLM round 3 R3.D1 — catch the misconfig where someone pastes an
+    rk_test_ / sk_test_ / arbitrary token into STRIPE_WEBHOOK_SECRET
+    instead of the whsec_ value from `stripe listen`. The HMAC verifier
+    would 400 anyway, but a clearer log line saves debugging time.
+
+    Note: pebble's root logger has ``propagate=False`` to avoid
+    double-logging via the root handler, so caplog must attach DIRECTLY
+    to the module's logger (``pebble.stripe_webhook``) to see WARN
+    lines emitted from it.
+    """
+    import logging
+    from pebble.server import stripe_webhook
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "rk_test_pasted_by_mistake")
+    # pebble's logger has propagate=False (see pebble/log.py) which blocks
+    # caplog's root handler from seeing emitted records. Restore propagation
+    # for this test only — monkeypatch auto-reverts at teardown.
+    monkeypatch.setattr(logging.getLogger("pebble"), "propagate", True)
+    caplog.set_level(logging.WARNING)
+
+    h = FakeHandler({}, sig_header="t=1,v1=invalid")
+    stripe_webhook.run_stripe_webhook(h)
+
+    assert "whsec_" in caplog.text
+    assert "rk_tes" in caplog.text  # first 6 chars of the wrong value
+
+
+def test_webhook_does_not_warn_on_valid_whsec(monkeypatch, caplog):
+    """The whsec_ prefix check must NOT fire when the secret is correctly
+    formatted — keep the log signal-to-noise high."""
+    import logging
+    from pebble.server import stripe_webhook
+
+    monkeypatch.setenv("STRIPE_WEBHOOK_SECRET", "whsec_legitimate_test_value")
+    # pebble's logger has propagate=False (see pebble/log.py) which blocks
+    # caplog's root handler from seeing emitted records. Restore propagation
+    # for this test only — monkeypatch auto-reverts at teardown.
+    monkeypatch.setattr(logging.getLogger("pebble"), "propagate", True)
+    caplog.set_level(logging.WARNING)
+
+    h = FakeHandler({}, sig_header="t=1,v1=bad")
+    stripe_webhook.run_stripe_webhook(h)
+
+    assert "does not match expected 'whsec_'" not in caplog.text
+
+
+def test_webhook_redacts_subscription_ids_in_multi_sub_log(
+    with_secret, output_root, verified_event, caplog, monkeypatch,
+):
+    """NLM round 3 R3.C1 — full sub_xxx identifiers shouldn't appear in
+    WARN logs; only the last 4 chars + the user_id (which an operator
+    can look up in Stripe Dashboard if needed)."""
+    import logging
+    from pebble.server import stripe_webhook
+
+    # First event establishes a subscription_id
+    verified_event(_subscription_event(
+        event_id="evt_one", event_created=1000,
+        subscription_id="sub_legit_full_value_AAAA",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    # pebble's logger has propagate=False (see pebble/log.py) which blocks
+    # caplog's root handler from seeing emitted records. Restore propagation
+    # for this test only — monkeypatch auto-reverts at teardown.
+    monkeypatch.setattr(logging.getLogger("pebble"), "propagate", True)
+    caplog.set_level(logging.WARNING)
+    caplog.clear()  # discard the INFO-level applied-event line above
+
+    # Second event with a DIFFERENT sub_id — triggers the multi-sub WARN
+    verified_event(_subscription_event(
+        event_id="evt_two", event_created=2000,
+        subscription_id="sub_other_full_value_BBBB",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    # The full IDs MUST NOT appear; only the last-4 redaction should.
+    assert "sub_legit_full_value_AAAA" not in caplog.text
+    assert "sub_other_full_value_BBBB" not in caplog.text
+    # Last-4 markers should appear so an operator can correlate
+    assert "AAAA" in caplog.text
+    assert "BBBB" in caplog.text
+
+
 def test_webhook_uses_unique_tmp_filenames(with_secret, output_root, verified_event, monkeypatch):
     """NLM round 2 Finding #R2.1 — pebble_engine runs on
     ThreadingHTTPServer, so two webhook calls for the same user can land

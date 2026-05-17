@@ -256,6 +256,55 @@ def test_finds_sentinel_when_jwt_user_id_has_mixed_case(
     assert kwargs["customer"] == "cus_marc"
 
 
+@pytest.mark.parametrize("allowed_status", [
+    "active", "trialing", "past_due", "incomplete", "canceled",
+])
+def test_portal_minted_for_allowed_statuses(
+    signed_in_user, output_root, stripe_env, fake_stripe, allowed_status,
+):
+    """NLM round 3 R3.A2 — the portal should be reachable for any
+    subscription state the user might legitimately want to manage:
+    active (cancel/upgrade), trialing (cancel before charge), past_due
+    (update card), incomplete (retry payment), canceled (view history)."""
+    from pebble.server import billing_portal
+
+    _write_subscription_sentinel(output_root, "uuid-marc-abc",
+                                 customer_id="cus_marc")
+    # Override the default 'active' written by _write_subscription_sentinel
+    import json
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    data = json.loads(sentinel.read_text(encoding="utf-8"))
+    data["status"] = allowed_status
+    sentinel.write_text(json.dumps(data), encoding="utf-8")
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+    assert h.status == 200, f"status={allowed_status} should mint a portal session"
+
+
+@pytest.mark.parametrize("dead_status", ["incomplete_expired", "unpaid"])
+def test_portal_blocks_dead_statuses(
+    signed_in_user, output_root, stripe_env, fake_stripe, dead_status,
+):
+    """NLM round 3 R3.A2 — terminal-failure statuses (Stripe's dead-end
+    states) get the same 404 as never-subscribed users so v3 can route
+    them to a fresh checkout."""
+    from pebble.server import billing_portal
+
+    _write_subscription_sentinel(output_root, "uuid-marc-abc",
+                                 customer_id="cus_marc")
+    import json
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    data = json.loads(sentinel.read_text(encoding="utf-8"))
+    data["status"] = dead_status
+    sentinel.write_text(json.dumps(data), encoding="utf-8")
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+    assert h.status == 404
+    fake_stripe.billing_portal.Session.create.assert_not_called()
+
+
 def test_rejects_path_traversal_user_id(
     monkeypatch, output_root, stripe_env, fake_stripe,
 ):

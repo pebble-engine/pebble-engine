@@ -19,7 +19,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CreditCard, Lock, Settings as SettingsIcon, User } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
@@ -60,8 +60,16 @@ function planBadge(sub: SubscriptionState | null): string {
 
 export default function SettingsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const supabase = useMemo(() => createClient(), []);
+
+  // When Stripe redirects the user back after Checkout
+  // (`/settings?billing=updated`), the webhook may not have fired yet —
+  // it's async and can take 5-30 seconds. Without this flag the page
+  // would render "No active subscription" for a user who literally just
+  // paid. NLM round 3 R3.A1.
+  const justCheckedOut = searchParams?.get("billing") === "updated";
 
   // ---- Password change state -----------------------------------------
   const [pw, setPw]               = useState("");
@@ -90,21 +98,42 @@ export default function SettingsPage() {
   // Fetch the current subscription state once we know who the user is.
   // Failures (network, 503) degrade gracefully to "no subscription" — the
   // portal button still works for users who have one.
+  //
+  // Post-checkout polling (justCheckedOut): the Stripe webhook is async.
+  // If the user just paid, the sentinel may not exist yet when this page
+  // mounts. Poll briefly with a "syncing" message rather than flashing
+  // "No active subscription" at someone who literally just gave us money.
   useEffect(() => {
     if (loading || !user) return;
     let cancelled = false;
+    const maxAttempts = justCheckedOut ? 8 : 1;  // ~12s total when polling
+    const intervalMs = 1500;
+
     (async () => {
-      try {
-        const sub = await fetchSubscription();
-        if (!cancelled) setSubscription(sub);
-      } catch {
-        if (!cancelled) setSubscription(null);
-      } finally {
-        if (!cancelled) setSubLoading(false);
+      for (let attempt = 0; attempt < maxAttempts && !cancelled; attempt++) {
+        try {
+          const sub = await fetchSubscription();
+          if (cancelled) return;
+          // Success: stop polling as soon as the sentinel exists with a plan.
+          if (sub.plan) {
+            setSubscription(sub);
+            setSubLoading(false);
+            return;
+          }
+          setSubscription(sub);
+        } catch {
+          if (cancelled) return;
+          setSubscription(null);
+        }
+        // Last attempt? Don't sleep; just fall through and stop loading.
+        if (attempt < maxAttempts - 1 && !cancelled) {
+          await new Promise((r) => setTimeout(r, intervalMs));
+        }
       }
+      if (!cancelled) setSubLoading(false);
     })();
     return () => { cancelled = true; };
-  }, [loading, user]);
+  }, [loading, user, justCheckedOut]);
 
   async function onChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -290,13 +319,23 @@ export default function SettingsPage() {
             </div>
             {/* Current-plan badge — driven by the webhook-written sentinel.
                 Hidden while loading to avoid flashing "No active subscription"
-                for users who do have one. */}
-            {!subLoading && (
+                for users who do have one. Post-checkout (?billing=updated)
+                shows a friendly "syncing" message during the brief webhook-
+                lag window instead of the misleading "No active subscription"
+                badge. */}
+            {subLoading && justCheckedOut ? (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Current plan</p>
+                <p className="text-muted-foreground italic">
+                  Syncing your subscription with Stripe…
+                </p>
+              </div>
+            ) : !subLoading ? (
               <div className="space-y-1">
                 <p className="text-sm text-muted-foreground">Current plan</p>
                 <p className="text-foreground font-medium">{planBadge(subscription)}</p>
               </div>
-            )}
+            ) : null}
             <p className="text-sm text-muted-foreground">
               Manage your plan, payment method, and download invoices. The
               billing portal is hosted by Stripe — Pebble never sees your

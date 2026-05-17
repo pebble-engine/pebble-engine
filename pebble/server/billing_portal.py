@@ -53,14 +53,32 @@ def _public_base_url() -> str:
             or "http://localhost:3001")
 
 
+# Subscription statuses we'll mint a portal session for. Excluded:
+# `incomplete_expired` (Stripe's terminal state ~23h after a payment
+# never confirms — the subscription is dead, no point in portal), and
+# `unpaid` (also a terminal-failure state). We DO allow `incomplete`
+# because the user can complete payment via the portal, and `canceled`
+# because users should still be able to view invoice history.
+# NLM round 3 R3.A2.
+_PORTAL_ALLOWED_STATUSES = frozenset({
+    "active", "trialing", "past_due", "incomplete", "canceled",
+})
+
+
 def _load_customer_id(user_id: str) -> Optional[str]:
     """Read the Stripe customer_id from the user's subscription sentinel,
-    or return None if there isn't one (no subscription / corrupt file).
+    or return None if there isn't one (no subscription / corrupt file /
+    sentinel exists but status indicates a dead subscription).
 
     NLM round 2 Finding #R2.4: pass user_id through ``safe_user_id`` —
     not just ``.lower()`` — so a malicious ``../victim`` id can't read a
     different user's sentinel. The webhook writes through the same
     validation; readers must enforce it too.
+
+    NLM round 3 R3.A2: status filter — don't mint a portal session for
+    `incomplete_expired` / `unpaid` (terminal-failure states). Those
+    users get the same 404 as never-subscribed users; v3 can route them
+    to a fresh checkout instead.
     """
     safe_uid = safe_user_id(user_id)
     if not safe_uid:
@@ -73,6 +91,9 @@ def _load_customer_id(user_id: str) -> Optional[str]:
     except (json.JSONDecodeError, UnicodeDecodeError, OSError):
         return None
     if not isinstance(data, dict):
+        return None
+    status = data.get("status")
+    if isinstance(status, str) and status not in _PORTAL_ALLOWED_STATUSES:
         return None
     cid = data.get("stripe_customer_id")
     return cid if isinstance(cid, str) and cid else None
