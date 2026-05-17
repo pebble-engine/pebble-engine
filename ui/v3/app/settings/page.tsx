@@ -24,7 +24,7 @@ import { motion } from "framer-motion";
 import { CreditCard, Lock, Settings as SettingsIcon, User } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { fetchSubscription, openBillingPortal, type SubscriptionState } from "@/lib/api";
+import { createCheckoutSession, fetchSubscription, openBillingPortal, type SubscriptionState } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
 
 
@@ -70,6 +70,10 @@ export default function SettingsPage() {
   // would render "No active subscription" for a user who literally just
   // paid. NLM round 3 R3.A1.
   const justCheckedOut = searchParams?.get("billing") === "updated";
+  // ?test=1 unlocks dev-mode "Subscribe (test)" buttons that drive the
+  // Stripe Checkout end-to-end test. Hidden from normal users; only
+  // appears when the URL explicitly opts in.
+  const testMode = searchParams?.get("test") === "1";
 
   // ---- Password change state -----------------------------------------
   const [pw, setPw]               = useState("");
@@ -178,6 +182,19 @@ export default function SettingsPage() {
       setPwError(err instanceof Error ? err.message : "Password update failed.");
     } finally {
       setPwSubmitting(false);
+    }
+  }
+
+  async function onStartCheckout(plan: "starter" | "pro") {
+    setBillingError(null);
+    setBillingLoading(true);
+    try {
+      const { url } = await createCheckoutSession(plan);
+      window.location.href = url;
+    } catch (err) {
+      setBillingError(err instanceof Error ? err.message : "Couldn't start checkout.");
+    } finally {
+      setBillingLoading(false);
     }
   }
 
@@ -378,6 +395,40 @@ export default function SettingsPage() {
                 Back to dashboard
               </Link>
             </div>
+
+            {/* Test-mode subscribe buttons — gated on ?test=1 so they never
+                appear in normal user flow. Used to drive the Stripe Checkout
+                end-to-end test until a real /pricing page lands. */}
+            {testMode && (
+              <div className="mt-4 pt-4 border-t border-border space-y-3">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+                  Test mode
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Drive a checkout end-to-end. Use Stripe's test card
+                  <code className="mx-1 px-1 py-0.5 rounded bg-muted text-xs">4242 4242 4242 4242</code>
+                  with any future expiry and CVC.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={() => onStartCheckout("starter")}
+                    disabled={billingLoading}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Subscribe (test) — Starter $29/mo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onStartCheckout("pro")}
+                    disabled={billingLoading}
+                    className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Subscribe (test) — Pro $59/mo
+                  </button>
+                </div>
+              </div>
+            )}
           </motion.section>
         </div>
       </main>
