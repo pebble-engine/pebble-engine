@@ -748,18 +748,6 @@ export async function removeDomain(slug: string): Promise<{ slug: string; remove
   return json as { slug: string; removed: DomainRecord };
 }
 
-async function deleteJSON<T>(path: string): Promise<T> {
-  const resp = await fetch(path, { method: "DELETE" });
-  const text = await resp.text();
-  let json: unknown;
-  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
-  if (!resp.ok) {
-    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
-    throw new Error(err);
-  }
-  return json as T;
-}
-
 export async function deleteProject(slug: string): Promise<{ slug: string; deleted: boolean }> {
   return deleteJSON(`/api/projects/${encodeURIComponent(slug)}`);
 }
