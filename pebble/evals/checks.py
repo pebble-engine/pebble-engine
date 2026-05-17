@@ -598,7 +598,43 @@ def html_lang_attr(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
-# 12. images_have_alt
+# 12. layout_is_server_component
+# ---------------------------------------------------------------------------
+
+_USE_CLIENT_DIRECTIVE_RE = re.compile(r"""^\s*['"]use client['"]""", re.MULTILINE)
+
+
+@check_metadata(static_files=("app/layout.tsx",))
+def layout_is_server_component(ctx: BuildContext) -> CheckResult:
+    """``app/layout.tsx`` must NOT have a ``"use client"`` directive.
+
+    Next.js App Router only allows ``export const metadata = {...}`` and
+    ``export const viewport = {...}`` in Server Components. If the LLM adds
+    ``"use client"`` to the layout file, the metadata export is silently
+    ignored: OG tags, JSON-LD, viewport meta — all disappear. The build
+    won't error, but the site ships invisible to social crawlers and SEO.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("layout_is_server_component", "skip", "no site directory")
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult("layout_is_server_component", "fail", "app/layout.tsx missing")
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if _USE_CLIENT_DIRECTIVE_RE.search(text):
+        return CheckResult(
+            "layout_is_server_component", "fail",
+            'app/layout.tsx has "use client" directive — remove it. '
+            "layout.tsx must be a Server Component so that `export const metadata` and "
+            "`export const viewport` work. Move any client-side logic to a child component.",
+        )
+    return CheckResult(
+        "layout_is_server_component", "pass",
+        "app/layout.tsx has no \"use client\" directive (Server Component)",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 12b. images_have_alt
 # ---------------------------------------------------------------------------
 
 # Match an <Image .../> block start through its self-close or `>` so we can
@@ -3465,6 +3501,7 @@ ALL_CHECKS = [
     no_invented_phone,
     uses_100dvh_not_100vh,
     html_lang_attr,
+    layout_is_server_component,
     scroll_trigger_ssr_safe,
     no_css_smooth_scroll,
     # FOUNDATION checks (May 2026 overhaul — VEX-spec hero pattern)

@@ -559,6 +559,29 @@ def test_html_lang_attr_fails_when_missing(good_build):
     assert "lang" in r.message
 
 
+def test_layout_is_server_component_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.layout_is_server_component(ctx).status == "pass"
+
+
+def test_layout_is_server_component_fails_with_use_client(good_build):
+    layout = good_build / "site" / "app" / "layout.tsx"
+    layout.write_text(
+        '"use client";\n'
+        + layout.read_text(encoding="utf-8")
+    )
+    r = checks.layout_is_server_component(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "use client" in r.message
+
+
+def test_layout_is_server_component_fails_when_layout_missing(tmp_path):
+    (tmp_path / "site").mkdir()
+    (tmp_path / "brief.json").write_text("{}")
+    r = checks.layout_is_server_component(BuildContext.load(tmp_path))
+    assert r.status == "fail"
+
+
 def test_images_have_alt_passes_with_alt_present(good_build):
     (good_build / "site" / "components" / "sections" / "Photo.tsx").write_text(
         'import Image from "next/image";\n'

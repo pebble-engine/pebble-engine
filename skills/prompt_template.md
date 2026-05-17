@@ -902,10 +902,10 @@ export function ContactForm() {{
   const [state, action] = useActionState<ContactFormState | null, FormData>(submitContactForm, null);
   return (
     <form action={{action}} className="space-y-4 max-w-xl">
-      <input name="name" placeholder="Your name" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
-      <input type="email" name="email" placeholder="Email" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
-      <input name="phone" placeholder="Phone (optional)" className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
-      <textarea name="message" placeholder="How can we help?" rows={{5}} required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <input aria-label="Your name" name="name" placeholder="Your name" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <input aria-label="Email address" type="email" name="email" placeholder="Email" required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <input aria-label="Phone number (optional)" name="phone" placeholder="Phone (optional)" className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
+      <textarea aria-label="Message" name="message" placeholder="How can we help?" rows={{5}} required className="w-full bg-black/40 border border-white/20 rounded-lg px-4 py-3 text-white placeholder-white/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70" />
       <SubmitButton />
       {{state?.ok && (
         <p role="status" className="text-green-300">{{state.message ?? "Sent."}}</p>
@@ -975,6 +975,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 ### Delivery Checklist
 
 **FOUNDATION (every item required — eval suite enforces):**
+- [ ] `app/layout.tsx` MUST NOT have a `"use client"` directive — it is a Server Component. Metadata (`export const metadata`) and viewport (`export const viewport`) only work in Server Components. If you need client-side logic (scroll listener, context provider), wrap it in a child component with `"use client"` and import it from `layout.tsx`. — eval `layout_is_server_component`
 - [ ] `Inter` loaded via `next/font/google` (weights 300/400/500/600) in `app/layout.tsx`
 - [ ] `tailwind.config.ts` `fontFamily.sans` extended with `var(--font-inter)` + `Inter`
 - [ ] `app/globals.css` `body` rule sets `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` + `-webkit-font-smoothing: antialiased`
@@ -989,6 +990,8 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
 - [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
+- [ ] Every `<input>`, `<textarea>`, `<select>` has EITHER `aria-label="..."` OR an associated `<label htmlFor="...">` — eval `a11y_static_audit`. Icon-only `<button>` and `<a>/<Link>` elements also need `aria-label` or `title`. Placeholder text alone is NOT sufficient.
+- [ ] Heading levels never skip ranks (no h1 → h3 without an h2 in between) — eval `a11y_static_audit`
 - [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
 - [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
 
@@ -1116,6 +1119,9 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | FadeIn respects reduced-motion | Same — renders at final opacity immediately when user has reduced-motion set |
 | AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>` |
 | Focus-visible on interactives | Every `<a>` / `<button>` with a `className` (hero CTAs, navbar links, Call Us pill) carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` |
+| Form input labels | Every `<input>` / `<textarea>` / `<select>` has `aria-label="..."` OR an associated `<label htmlFor="...">`. Placeholder text does NOT count. |
+| Icon-only interactives | Any `<button>` or `<a>` whose sole child is an icon component (e.g. `<X />`, `<ChevronRight />`) needs `aria-label="..."` or `title="..."` |
+| Heading order | Heading levels must be sequential — h1 → h2 → h3. Never skip (no h1 → h3). |
 | Hero text legibility | `textShadow` on hero h1 (built into AnimatedHeading) AND on hero subhead `<p>` (inline `style`). Foundation has no dark overlay, so text carries its own shadow. |
 | Hero video poster | `<video>` element has a `poster="..."` attribute. Painted instantly while the video loads — should visually match the chosen video (mood / darkness). |
 
@@ -1151,6 +1157,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Form | Real Next.js Server Action calling Resend (see Code Pattern 8) — `useActionState` on the client, `"use server"` on the action |
 | Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
+| **layout.tsx directive** | **NEVER add `"use client"` to `app/layout.tsx`** — it must be a Server Component. Move client-side logic (context providers, scroll listeners) to a child Client Component and import it from layout. |
 | SSR safety | `normalizeScroll` + `ScrollTrigger.config` inside `useEffect` — NEVER at module level |
 | FAQ accordion | `ScrollTrigger.refresh()` triggered by `transitionend` — NEVER a bare `setTimeout` |
 | **Lenis config** | Only Lenis 1.1.x options: `duration`, `easing`, `smoothWheel`, `syncTouch`, `touchMultiplier`, `infinite`. `smoothTouch` and `overscroll` are REMOVED in 1.1.x. |
@@ -1207,10 +1214,21 @@ The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` hea
 - `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
 - `app/globals.css` — must contain the `.liquid-glass` class (Code Pattern 2b) AND a `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif`
 - `postcss.config.js`, `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
+- `app/icon.svg` — branded favicon via Next.js App Router file convention; Next.js auto-generates the `<link rel="icon">` tag — no `metadata.icons` config needed. Use a simple SVG with the business initial or a relevant icon shape. Eval `favicon_defined` verifies this file exists.
+- `app/sitemap.ts` — Next.js dynamic sitemap export. Must return an array of `{{ url, lastModified }}` entries covering every page generated in this build. Eval `sitemap_and_robots_present` verifies.
+- `app/robots.ts` — Next.js robots.txt export. Must include a `Sitemap` entry pointing to the absolute sitemap URL. Eval `sitemap_and_robots_present` verifies.
 
 Every import statement uses the `@/` alias rooted at the project. Examples:
 `import {{ Reveal }} from "@/components/motion/Reveal"`,
 `import {{ SITE_TITLE }} from "@/content/site"`,
 `import {{ cn }} from "@/lib/utils"`.
+
+`lib/utils.ts` MUST be implemented WITHOUT external packages (no `clsx`, no `tailwind-merge`) so that the eval `imports_resolve_to_dependencies` doesn't reject the build. Use this exact implementation:
+
+```ts
+export function cn(...classes: (string | undefined | null | false | 0)[]): string {{
+  return classes.filter(Boolean).join(" ");
+}}
+```
 
 Where contact info is missing: use `[BUSINESS PHONE]`, `[EMAIL]`, `[ADDRESS]`. Never invent.
