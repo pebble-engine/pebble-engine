@@ -2405,5 +2405,38 @@
       "specialties",
       "insurance_fees"
     ]
+  },
+  "small_business": {
+    "emotion": "trust, connection, reliability, growth",
+    "visual_style": "warm, authentic, people-forward",
+    "hero_type": "video",
+    "video_keyword": "friendly small business owner working",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#3A5A40",
+      "accent": "#E07A5F",
+      "background": "#FDFBF7"
+    },
+    "tone": "welcoming, professional, authentic, supportive",
+    "key_sections": [
+      "hero",
+      "services_overview",
+      "about_our_story",
+      "testimonials",
+      "contact_and_location"
+    ],
+    "trust_signals": [
+      "local community awards",
+      "real customer reviews",
+      "founder photo and story",
+      "years in business",
+      "chamber of commerce badges"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "stock photos of handshakes",
+      "complex corporate jargon",
+      "faceless abstract imagery"
+    ]
   }
 }

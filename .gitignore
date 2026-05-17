@@ -1,5 +1,6 @@
 # secrets — never commit
 .env
+.mcp.json
 
 # generated output (client sites)
 output/
@@ -20,7 +21,10 @@ ui/package-lock.json
 
 # Claude Code internal
 .claude/
+.superpowers/
 
 # OS
 .DS_Store
 Thumbs.db
+.vercel
+.env*.local
