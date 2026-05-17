@@ -1948,6 +1948,14 @@ def deploy_to_vercel_scaffold(ctx: BuildContext) -> CheckResult:
     vercel = ctx.site_dir / "vercel.json"
     if not vercel.exists():
         missing.append("vercel.json")
+    else:
+        try:
+            json.loads(vercel.read_text(encoding="utf-8", errors="ignore"))
+        except json.JSONDecodeError as exc:
+            return CheckResult(
+                "deploy_to_vercel_scaffold", "fail",
+                f"vercel.json is not valid JSON: {exc}",
+            )
 
     readme = ctx.site_dir / "README.md"
     if not readme.exists():
@@ -3255,6 +3263,56 @@ def navbar_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 41. no_lorem_ipsum — QUALITY
+# ---------------------------------------------------------------------------
+
+_LOREM_IPSUM_RE = re.compile(r"\blorem\s+ipsum\b", re.IGNORECASE)
+_LOREM_SCAN_DIRS = ("app", "components", "lib")
+
+
+@check_metadata()
+def no_lorem_ipsum(ctx: BuildContext) -> CheckResult:
+    """No `lorem ipsum` placeholder text in any TSX/TS source file.
+
+    When the LLM runs low on context or hits a token cap it sometimes emits
+    Lorem ipsum filler in testimonial copy, paragraph text, or placeholder
+    sections. A site with Lorem ipsum visible to a real customer destroys
+    trust instantly — it signals an unfinished product.
+
+    Scans app/, components/, and lib/ recursively (*.tsx + *.ts only).
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_lorem_ipsum", "skip", "no site directory")
+
+    hits: list[str] = []
+    for subdir in _LOREM_SCAN_DIRS:
+        d = ctx.site_dir / subdir
+        if not d.exists():
+            continue
+        for p in d.rglob("*.tsx"):
+            try:
+                if _LOREM_IPSUM_RE.search(p.read_text(encoding="utf-8", errors="ignore")):
+                    hits.append(str(p.relative_to(ctx.site_dir)))
+            except OSError:
+                pass
+        for p in d.rglob("*.ts"):
+            try:
+                if _LOREM_IPSUM_RE.search(p.read_text(encoding="utf-8", errors="ignore")):
+                    hits.append(str(p.relative_to(ctx.site_dir)))
+            except OSError:
+                pass
+
+    if not hits:
+        return CheckResult("no_lorem_ipsum", "pass", "no lorem ipsum placeholder text found")
+
+    return CheckResult(
+        "no_lorem_ipsum", "fail",
+        f"{len(hits)} file(s) contain lorem ipsum placeholder text — replace with real copy",
+        details={"files": hits[:10]},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3298,6 +3356,7 @@ ALL_CHECKS = [
     no_duplicate_inline_forms,
     limitations_disclosed_in_readme,
     no_tracking_by_default,
+    no_lorem_ipsum,
     a11y_static_audit,
     schema_org_jsonld_present,
     sitemap_and_robots_present,

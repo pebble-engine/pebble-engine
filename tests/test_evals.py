@@ -1502,7 +1502,52 @@ def test_navbar_present_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 41. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 41. deploy_to_vercel_scaffold — vercel.json JSON validity
+# ---------------------------------------------------------------------------
+
+def test_deploy_to_vercel_scaffold_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.deploy_to_vercel_scaffold(ctx).status == "pass"
+
+
+def test_deploy_to_vercel_scaffold_fails_on_malformed_vercel_json(good_build):
+    (good_build / "site" / "vercel.json").write_text("{not valid json")
+    ctx = BuildContext.load(good_build)
+    result = checks.deploy_to_vercel_scaffold(ctx)
+    assert result.status == "fail"
+    assert "not valid json" in result.message.lower()
+
+
+# ---------------------------------------------------------------------------
+# 42. no_lorem_ipsum — QUALITY
+# ---------------------------------------------------------------------------
+
+def test_no_lorem_ipsum_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_lorem_ipsum(ctx).status == "pass"
+
+
+def test_no_lorem_ipsum_fails_when_found_in_tsx(good_build):
+    (good_build / "site" / "components" / "sections" / "About.tsx").write_text(
+        'export function About() {\n'
+        '  return <p>Lorem ipsum dolor sit amet</p>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.no_lorem_ipsum(ctx)
+    assert result.status == "fail"
+    assert "lorem ipsum" in result.message.lower()
+
+
+def test_no_lorem_ipsum_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.no_lorem_ipsum(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 43. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):
