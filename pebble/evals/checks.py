@@ -3061,6 +3061,104 @@ def og_social_meta_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 37. favicon_defined — FOUNDATION (browser tab + bookmark identity)
+# ---------------------------------------------------------------------------
+
+# Next.js metadata API: icons: { ... } or icons: "..."
+_METADATA_ICONS_RE = re.compile(r"\bicons\s*:", re.IGNORECASE)
+
+
+@check_metadata(static_files=("app/favicon.ico", "app/icon.svg", "app/icon.png", "app/layout.tsx"))
+def favicon_defined(ctx: BuildContext) -> CheckResult:
+    """Every generated site must have a favicon so browser tabs and bookmarks
+    show the business identity instead of the browser's generic blank-page icon.
+
+    Accepted approaches (any one suffices):
+    1. `app/favicon.ico` — Next.js App Router serves it automatically as /favicon.ico
+    2. `app/icon.svg` or `app/icon.png` — App Router convention for non-ico formats
+    3. `icons:` field in `export const metadata` inside `app/layout.tsx`
+
+    Why this matters: a blank favicon signals "work in progress" to every visitor
+    who opens the tab or bookmarks the page. It's the lowest-effort polish that
+    makes the difference between a prototype and a shipped product.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("favicon_defined", "skip", "no site directory")
+
+    app_dir = ctx.site_dir / "app"
+    for filename in ("favicon.ico", "icon.svg", "icon.png"):
+        if (app_dir / filename).exists():
+            return CheckResult(
+                "favicon_defined", "pass",
+                f"favicon defined via app/{filename}",
+            )
+
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if layout.exists():
+        text = layout.read_text(encoding="utf-8", errors="ignore")
+        if _METADATA_ICONS_RE.search(text):
+            return CheckResult(
+                "favicon_defined", "pass",
+                "favicon defined via metadata.icons in app/layout.tsx",
+            )
+
+    return CheckResult(
+        "favicon_defined", "fail",
+        "no favicon defined — add `icons: { icon: '/icon.svg' }` to `export const metadata` "
+        "in app/layout.tsx, OR place `app/favicon.ico` / `app/icon.svg` in the site directory. "
+        "Without a favicon, every browser tab shows a blank icon instead of the business logo.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 38. env_example_present — FOUNDATION (deployment developer experience)
+# ---------------------------------------------------------------------------
+
+_ENV_RESEND_RE = re.compile(r"RESEND_API_KEY", re.IGNORECASE)
+
+
+@check_metadata(static_files=(".env.example",))
+def env_example_present(ctx: BuildContext) -> CheckResult:
+    """Every build must ship `.env.example` at the site root with the
+    required secret names so users can deploy without hunting through the
+    README and source code to discover which environment variables are needed.
+
+    The mandatory variables are: `RESEND_API_KEY`, `CONTACT_FROM_EMAIL`,
+    `CONTACT_TO_EMAIL`. The check verifies that at least `RESEND_API_KEY`
+    is named — if that's present, the others are almost certainly there too.
+
+    Why layout.tsx is NOT the right place for this: `.env.example` is
+    a convention understood by Vercel, Netlify, Railway, and every hosting
+    guide. It makes the deploy story self-contained: push repo, see
+    .env.example, copy to .env, fill in keys, ship.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("env_example_present", "skip", "no site directory")
+
+    env_example = ctx.site_dir / ".env.example"
+    if not env_example.exists():
+        return CheckResult(
+            "env_example_present", "fail",
+            ".env.example is missing — create it at the project root with "
+            "`RESEND_API_KEY=`, `CONTACT_FROM_EMAIL=`, `CONTACT_TO_EMAIL=` "
+            "so users know which secrets to configure before deploying",
+        )
+
+    text = env_example.read_text(encoding="utf-8", errors="ignore")
+    if not _ENV_RESEND_RE.search(text):
+        return CheckResult(
+            "env_example_present", "fail",
+            ".env.example exists but is missing RESEND_API_KEY — "
+            "the contact form Server Action requires it to send mail via Resend",
+        )
+
+    return CheckResult(
+        "env_example_present", "pass",
+        ".env.example present with RESEND_API_KEY",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3095,6 +3193,7 @@ ALL_CHECKS = [
     resend_in_dependencies,
     imports_resolve_to_dependencies,
     deploy_to_vercel_scaffold,
+    env_example_present,
     industry_pages_present,
     plan_present,
     footer_lists_all_pages,
@@ -3105,6 +3204,7 @@ ALL_CHECKS = [
     schema_org_jsonld_present,
     sitemap_and_robots_present,
     og_social_meta_present,
+    favicon_defined,
     # FOUNDATION perf + conversion (May 2026 NLM research addendum — T14/T15/T16)
     perf_budget_or_lighter,
     hero_cta_above_fold,

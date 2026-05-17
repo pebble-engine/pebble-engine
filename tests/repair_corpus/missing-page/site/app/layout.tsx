@@ -14,6 +14,7 @@ export const viewport = { width: "device-width", initialScale: 1 };
 
 export const metadata = {
   title: "Heron Plumbing",
+  icons: { icon: "/icon.svg" },
   openGraph: { title: "Heron Plumbing", type: "website" },
   twitter: { card: "summary_large_image" },
 };

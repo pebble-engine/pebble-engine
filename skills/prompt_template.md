@@ -241,9 +241,11 @@ export const viewport = {{
 }};
 
 // MANDATORY: OG + Twitter Card for rich social previews — eval `og_social_meta_present` requires both.
+// icons — eval `favicon_defined` requires at least one form; metadata.icons is easiest.
 export const metadata: Metadata = {{
   title: "{{business_name}}",
   description: "{{one-sentence tagline summarising what the business does}}",
+  icons: {{ icon: "/icon.svg" }},
   openGraph: {{
     title: "{{business_name}}",
     description: "{{one-sentence tagline summarising what the business does}}",

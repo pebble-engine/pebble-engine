@@ -93,8 +93,13 @@ def _write_foundation_files(site: Path) -> None:
         'import { submitContactForm } from "@/app/actions/contact";\n'
         'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
     )
-    # Deploy-to-Vercel scaffold (vercel.json + README Deploy section).
+    # Deploy-to-Vercel scaffold (vercel.json + README Deploy section + .env.example).
     (site / "vercel.json").write_text('{"framework":"nextjs"}')
+    (site / ".env.example").write_text(
+        "RESEND_API_KEY=re_your_key_here\n"
+        "CONTACT_FROM_EMAIL=hello@example.com\n"
+        "CONTACT_TO_EMAIL=you@example.com\n"
+    )
     (site / "README.md").write_text(
         "# Site\n\n## Deploy\n\nPush to GitHub + import at vercel.com/new.\n\n"
         "## What This Site Does NOT Include\n\n"
@@ -432,7 +437,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
-        'export const metadata = { title: "Test Co", openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
+        'export const metadata = { title: "Test Co", icons: { icon: "/icon.svg" }, openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
         'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
@@ -777,7 +782,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
         'export const viewport = { width: "device-width", initialScale: 1 };\n'
-        'export const metadata = { title: "Test Co", openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
+        'export const metadata = { title: "Test Co", icons: { icon: "/icon.svg" }, openGraph: { title: "Test Co", type: "website" }, twitter: { card: "summary_large_image" } };\n'
         'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
