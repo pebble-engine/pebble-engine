@@ -123,7 +123,7 @@ DNA_CARDS: list[dict] = [
         ],
         "forbidden": ["Fraunces", "serif headlines", "card grids", "horizontal scroll", "static heroes", "any flat background color hero"],
         "industry_affinity": ["automotive", "real estate", "hotel", "resort", "travel", "luxury", "fitness", "gym", "sport", "music", "film", "video", "agency", "brand", "fashion", "performance"],
-        "industry_aversion": ["daycare", "kids", "baby", "pediatric", "therapy", "hospice", "funeral"],
+        "industry_aversion": ["daycare", "kids", "baby", "pediatric", "therapy", "hospice", "funeral", "law", "attorney", "legal", "account", "financ", "advisor"],
     },
     {
         "id": "architectural_spec",
@@ -273,7 +273,7 @@ DNA_CARDS: list[dict] = [
         ],
         "forbidden": ["Fraunces", "serif headlines", "rounded corners > 2px", "soft drop shadows", "pastel palettes", "delicate motion"],
         "industry_affinity": ["contractor", "plumb", "electric", "hvac", "roof", "landscape", "automotive", "mechanic", "tow", "manufactur", "warehouse", "logistics", "construct", "demolition", "freight", "fleet", "hauling", "industrial"],
-        "industry_aversion": ["wedding", "yoga", "spa", "baker", "florist", "jewel", "salon", "therapy", "pediatric", "gallery", "art", "photo", "cafe", "coffee", "restaurant", "food"],
+        "industry_aversion": ["wedding", "yoga", "spa", "baker", "florist", "jewel", "salon", "therapy", "pediatric", "gallery", "art", "photo", "cafe", "coffee", "restaurant", "food", "law", "attorney", "legal", "account", "financ", "advisor", "consult", "real estate", "boutique"],
     },
     {
         "id": "garden_press",
@@ -348,7 +348,7 @@ DNA_CARDS: list[dict] = [
         ],
         "forbidden": ["literal cartoon anchors", "ship's wheels", "pirate motifs", "bright tropical-vacation color palettes", "all-caps 'BOATING' or 'SAIL' word marks", "surfer aesthetics", "stock photos of people laughing on yachts"],
         "industry_affinity": ["yacht", "boat", "sail", "charter", "marine", "coastal", "beach", "hotel", "resort", "fish", "real estate", "wedding", "photo", "jewel", "watch"],
-        "industry_aversion": ["software", "automotive", "plumb", "contractor", "daycare", "urban", "factory", "industrial"],
+        "industry_aversion": ["software", "automotive", "plumb", "contractor", "daycare", "urban", "factory", "industrial", "law", "attorney", "legal", "account", "financ", "advisor"],
     },
 ]
 
@@ -359,7 +359,7 @@ def pick_random_dna(seed: Optional[int] = None) -> dict:
     return rng.choice(DNA_CARDS)
 
 
-_AFFINITY_BOOST = 15
+_AFFINITY_BOOST = 30
 
 
 def pick_dna_for_brief(brief: dict, seed: Optional[int] = None) -> dict:

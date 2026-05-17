@@ -110,6 +110,19 @@ def test_law_firm_never_picks_postmodern_or_terminal():
     assert "terminal_operator" not in rolls
 
 
+def test_law_firm_never_picks_industrial_freight_or_cinematic_imax():
+    """Round-2 5-build regression: Holloway & Reed (boutique law firm)
+    rolled industrial_freight on 2026-05-17 — yellow hazard stripes +
+    'CALL DISPATCH' button + pipette-lab background — a catastrophic
+    aesthetic mismatch. Lock the hard exclusion now: trade-freight and
+    cinematic-blockbuster DNAs must never land on professional
+    services."""
+    rolls = [pick_dna_for_brief(_law_brief())["id"] for _ in range(500)]
+    assert "industrial_freight" not in rolls
+    assert "cinematic_imax" not in rolls
+    assert "marina" not in rolls  # yacht catalog wrong for law firm too
+
+
 def test_coffee_roaster_picks_diverse_but_not_industrial():
     """Coffee roasters can be edgy (postmodern), warm (garden_press), or
     moody (velvet_lounge). All three are acceptable. What we DON'T want
