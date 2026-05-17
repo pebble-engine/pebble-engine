@@ -2453,8 +2453,12 @@ _FONT_DISPLAY_OK_RE = re.compile(
 # TBT: heavy 3D libs static-imported in app/page.tsx block first paint.
 # `three` is ~700kb, `@react-three/*` builds on it. Must be loaded via
 # next/dynamic({ ssr: false }) so they defer to after first paint.
+#
+# NLM round 2026-05-17: the negative lookahead `(?!type\s)` excludes
+# `import type { Mesh } from 'three'` — type-only imports are erased at
+# compile time and have zero bundle cost.
 _HEAVY_LIB_IMPORT_RE = re.compile(
-    r"""^[ \t]*import\s+[^;]*?from\s*['"](three|@react-three/[^'"]+)['"]""",
+    r"""^[ \t]*import\s+(?!type\s)[^;]*?from\s*['"](three|@react-three/[^'"]+)['"]""",
     re.MULTILINE,
 )
 
@@ -2467,12 +2471,17 @@ _HAS_PRELOAD_ATTR_RE = re.compile(r"\bpreload\s*=")
 # LCP: preload link OR <Image priority>. Either satisfies the "primary hero
 # asset paints before JS hydrates" rule — <Image priority> auto-generates
 # the preload link via Next.js's image pipeline.
+#
+# NLM round 2026-05-17: the negative lookahead after `priority` rejects
+# `<Image priority={false}>` (explicit disable) while still accepting:
+#   - bare `priority` (followed by space, `/`, or `>`)
+#   - `priority={true}`, `priority="..."`, or any non-false expression
 _PRELOAD_LINK_RE = re.compile(
     r"""<link\b[^>]*?\brel\s*=\s*['"]preload['"]""",
     re.IGNORECASE | re.DOTALL,
 )
 _IMAGE_PRIORITY_RE = re.compile(
-    r"<Image\b[^>]*?\bpriority\b",
+    r"<Image\b[^>]*?\bpriority(?!\s*=\s*\{?\s*false\b)",
     re.IGNORECASE | re.DOTALL,
 )
 
@@ -2531,13 +2540,23 @@ def perf_budget_or_lighter(ctx: BuildContext) -> CheckResult:
         offender_files.extend(img_offenders[:5])
 
     # 2. FOIT — @font-face without font-display: swap|optional|fallback
+    # NLM round 2026-05-17:
+    #   (a) strip CSS comments first so `/* font-display: swap */` doesn't
+    #       falsely satisfy the requirement.
+    #   (b) blocks with ONLY `src: local(...)` (system fonts) have no
+    #       network fetch and therefore no FOIT risk — skip them.
     font_offenders: list[str] = []
     for css in ctx.site_dir.rglob("*.css"):
         if "node_modules" in css.parts:
             continue
         text = css.read_text(encoding="utf-8", errors="ignore")
-        for block in _FONT_FACE_BLOCK_RE.finditer(text):
-            if not _FONT_DISPLAY_OK_RE.search(block.group(1) or ""):
+        stripped = _BLOCK_COMMENT_RE.sub("", text)
+        for block in _FONT_FACE_BLOCK_RE.finditer(stripped):
+            body = block.group(1) or ""
+            # Skip local-only blocks — no url() means no network fetch.
+            if "url(" not in body.lower():
+                continue
+            if not _FONT_DISPLAY_OK_RE.search(body):
                 font_offenders.append(str(css.relative_to(ctx.site_dir)))
                 break
     if font_offenders:
@@ -2646,6 +2665,10 @@ _PROMINENT_BG_RE = re.compile(
 )
 # href= attr extractor — both single- and double-quoted forms.
 _HREF_RE = re.compile(r"""\bhref\s*=\s*['"]([^'"]*)['"]""")
+# Variable href — `href={CONTACT_ROUTE}` or `href={`/${slug}`}` etc.
+# NLM round 2026-05-17: dynamic-routing forms must be accepted because
+# we can't introspect the variable's value at static-analysis time.
+_HREF_EXPR_RE = re.compile(r"\bhref\s*=\s*\{[^}]+\}")
 
 
 @check_metadata(static_files=("app/page.tsx", "components/sections/Hero.tsx"))
@@ -2705,14 +2728,23 @@ def hero_cta_above_fold(ctx: BuildContext) -> CheckResult:
             first_word = inner.split()[0].lower().strip(",.!?;:'\"-")
             has_verb = first_word in _ACTION_VERBS
 
-            # 2. Valid href (button exempt)
+            # 2. Valid href (button exempt). String forms (`href="..."`)
+            # get the dead-`#` check; expression forms (`href={CONTACT}`)
+            # are accepted unconditionally — we can't introspect the value.
             if tag == "button":
                 href_ok = True
                 href = ""
             else:
                 href_match = _HREF_RE.search(attrs)
-                href = (href_match.group(1) if href_match else "").strip()
-                href_ok = bool(href) and href != "#"
+                if href_match:
+                    href = href_match.group(1).strip()
+                    href_ok = bool(href) and href != "#"
+                elif _HREF_EXPR_RE.search(attrs):
+                    href = "(expression)"
+                    href_ok = True
+                else:
+                    href = ""
+                    href_ok = False
 
             # 3. Prominent className
             prominent = bool(_PROMINENT_BG_RE.search(attrs))
@@ -2769,23 +2801,61 @@ _RESPONSIVE_PREFIX_RE = re.compile(r"\b(?:sm|md|lg|xl|2xl):")
 # sm/md/lg/xl/2xl intact.
 _TAILWIND_SCREENS_RE = re.compile(r"\bscreens\s*:\s*\{([^}]*)\}", re.DOTALL)
 
-# Touch target ≥44px. Accept:
-# - p-N / px-N / py-N where N ∈ {3..29} → ~12-116px padding (44px+ targets)
-# - min-h-N where N ∈ {11..99} → 44px+ in default Tailwind scale (×4)
-# - min-h-[44px] / min-h-[3rem] / etc → arbitrary value ≥44 or ≥3rem
-# - h-N / h-[44px] same patterns
-# No trailing \b — `min-h-[44px]` ends with `]` which is non-word, so
-# `\b` between `]` and a following non-word char (space, quote) would fail.
-# Leading \b on each alternative still anchors to the utility-name boundary.
-_TOUCH_OK_RE = re.compile(
-    r"(?:"
-    r"\bp-(?:[3-9]|1\d|2\d)|"
-    r"\bpx-(?:[3-9]|1\d|2\d)|"
-    r"\bpy-(?:[3-9]|1\d|2\d)|"
-    r"\bmin-h-(?:1[1-9]|[2-9]\d|\[(?:[4-9]\d|\d{3,})(?:px|rem)?\])|"
-    r"\bh-(?:1[1-9]|[2-9]\d|\[(?:[4-9]\d|\d{3,})(?:px|rem)?\])"
-    r")"
+# Touch target ≥44px. NLM round 2026-05-17 surfaced two bugs in the
+# original regex-only approach:
+#   (a) `px-12 py-0` matched `px-12` and passed — but px-only padding
+#       gives zero vertical lift. Touch targets need VERTICAL height.
+#   (b) `min-h-[3rem]` (48px) was rejected because the arbitrary-value
+#       branch only accepted integer pixel values ≥40.
+#
+# Replaced the omnibus regex with a small inspector function that:
+#   - Accepts ONLY axis-vertical utilities (p-N, py-N, min-h-*, h-*)
+#   - Parses arbitrary values [Npx] / [Nrem] / [N.NNrem] / [Nem] / [N]
+#     numerically and compares to ≥44px (≥2.75rem at 16px root).
+#
+# `px-N` is no longer accepted as a touch-target signal.
+_NUMERIC_UTIL_RE = re.compile(
+    r"\b(p|py|min-h|h)-(\d{1,3})\b"
 )
+_ARBITRARY_UTIL_RE = re.compile(
+    r"\b(min-h|h)-\[(\d+(?:\.\d+)?)(px|rem|em)?\]"
+)
+
+
+def _has_acceptable_touch_target(cls: str) -> bool:
+    """Does this className declare a Tailwind utility that guarantees
+    ≥44px vertical touch target?
+
+    Accepts:
+    - ``p-3+`` / ``py-3+`` (both axes / vertical only) — Tailwind scale
+      where N ≥ 3 gives 12px+ padding → 44px+ button.
+    - ``min-h-11+`` / ``h-11+`` — 44px+ in default scale (×4).
+    - ``min-h-[<value>]`` / ``h-[<value>]`` where the value resolves
+      to ≥44px (px) or ≥2.75rem/em (at 16px root). Decimals supported.
+    """
+    # 1. Numeric Tailwind utilities — p-N, py-N, min-h-N, h-N where N maps
+    #    to ≥44px (×4 in default scale → N ≥ 11 for min-h/h; ≥3 for
+    #    padding which gives 12px each side around 16px text → ~40px,
+    #    rounded as acceptable per Apple HIG threshold).
+    for m in _NUMERIC_UTIL_RE.finditer(cls):
+        util, n_str = m.group(1), m.group(2)
+        n = int(n_str)
+        if util in ("p", "py") and n >= 3:
+            return True
+        if util in ("min-h", "h") and n >= 11:
+            return True
+    # 2. Arbitrary values — min-h-[44px], h-[3rem], min-h-[2.75rem], etc.
+    for m in _ARBITRARY_UTIL_RE.finditer(cls):
+        val_str, unit = m.group(2), (m.group(3) or "px")
+        try:
+            val = float(val_str)
+        except ValueError:
+            continue
+        if unit == "px" and val >= 44:
+            return True
+        if unit in ("rem", "em") and val >= 2.75:
+            return True
+    return False
 # className value extractor — handles three common shapes:
 #   className="bg-white px-6"
 #   className={`bg-white px-6`}
@@ -2814,8 +2884,18 @@ def mobile_optimized_responsive(ctx: BuildContext) -> CheckResult:
        (etc) prefix in the hero file. Desktop-only classes hit mobile at
        desktop scale.
     4. **Hero CTA touch target ≥44px** — interactive elements in hero
-       need `p-3+`, `py-3+`, `min-h-11+`, or `min-h-[44px]+`. WCAG 2.5.5 /
+       need vertical-axis padding/height. Accepted utilities: ``p-3+``
+       (both axes), ``py-3+`` (vertical), ``min-h-11+`` / ``min-h-[44px]``
+       (decimals and rem/em supported). ``px-N`` alone is NOT accepted
+       (horizontal-only padding doesn't lift the tap target). WCAG 2.5.5 /
        Apple HIG / Material all converge on 44px minimum.
+
+    Hero-CTA scope note: the touch-target sub-check + hero_cta_above_fold
+    both scan ``app/page.tsx`` + ``components/sections/Hero.tsx``. A CTA
+    defined in a sub-imported component (e.g. ``components/ui/HeroCTA.tsx``
+    rendered as ``<HeroCTA />`` in Hero.tsx) is invisible to both. Pebble's
+    prompt template inlines the hero CTAs so this is rarely hit in practice;
+    flagged in NLM round 2026-05-17 as a deferred enhancement.
 
     Why: 58% of traffic is mobile, 53% of mobile users bounce on sites >3s,
     only 22% of small-business sites are mobile-optimized (NLM source).
@@ -2888,7 +2968,7 @@ def mobile_optimized_responsive(ctx: BuildContext) -> CheckResult:
                 cls = ""
                 if cls_match:
                     cls = cls_match.group(1) or cls_match.group(2) or cls_match.group(3) or ""
-                if not _TOUCH_OK_RE.search(cls):
+                if not _has_acceptable_touch_target(cls):
                     file_offended = True
                     break
             if file_offended:

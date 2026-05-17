@@ -1672,3 +1672,200 @@ def test_mobile_accepts_min_h_44_as_touch_target(good_build):
     )
     ctx = BuildContext.load(good_build)
     assert checks.mobile_optimized_responsive(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# NLM critique fixes (T14/T15/T16) — 2026-05-17 adversarial pass
+# ---------------------------------------------------------------------------
+
+def test_perf_budget_ignores_type_only_three_import(good_build):
+    """`import type { Mesh } from 'three'` is erased at compile time — zero
+    bundle impact. Must not flag TBT regression. (NLM round 2026-05-17)"""
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'import type { Mesh } from "three";\n'
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /></main>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_rejects_image_priority_false_as_preload_evidence(good_build):
+    """`<Image priority={false}>` explicitly DISABLES preload — must not
+    count as preload evidence. (NLM round 2026-05-17)"""
+    # Strip the manual preload link so we depend on Image-priority evidence.
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import Image from "next/image";\n'
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <Image src="/images/hero-poster.jpg" alt="" width={1920} height={1080} priority={false} />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "preload" in result.message.lower()
+
+
+def test_perf_budget_ignores_commented_out_font_display(good_build):
+    """`/* font-display: swap */` is a comment — must NOT satisfy the
+    font-display requirement. CSS comments must be stripped before
+    checking. (NLM round 2026-05-17)"""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, sans-serif; "
+        "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+        "@font-face { font-family: 'Custom'; src: url('/fonts/custom.woff2'); /* font-display: swap; */ }\n"
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "font-display" in result.message.lower()
+
+
+def test_perf_budget_accepts_local_only_font_face_without_font_display(good_build):
+    """`@font-face { src: local('Arial') }` has no network fetch → no FOIT
+    risk → must NOT require font-display. (NLM round 2026-05-17)"""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, sans-serif; "
+        "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+        "@font-face { font-family: 'SystemArial'; src: local('Arial'), local('Helvetica'); }\n"
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_mobile_rejects_px_only_padding_with_zero_vertical(good_build):
+    """`px-12 py-0` has 24px horizontal padding but ZERO vertical — touch
+    target is just text height (~16px). Must fail. (NLM round 2026-05-17)"""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-12 py-0 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+
+
+def test_mobile_accepts_arbitrary_3rem_min_height(good_build):
+    """`min-h-[3rem]` = 48px ≥ 44px — must pass. The original regex only
+    accepted px values. (NLM round 2026-05-17)"""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black p-1 min-h-[3rem] focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.mobile_optimized_responsive(ctx).status == "pass"
+
+
+def test_mobile_accepts_decimal_rem_min_height(good_build):
+    """`min-h-[2.75rem]` = 44px exactly — must pass. (NLM round 2026-05-17)"""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black p-1 min-h-[2.75rem] focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.mobile_optimized_responsive(ctx).status == "pass"
+
+
+def test_mobile_rejects_arbitrary_small_rem_min_height(good_build):
+    """`min-h-[2rem]` = 32px < 44px — must fail."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black p-1 min-h-[2rem] focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+
+
+def test_hero_cta_accepts_variable_href(good_build):
+    """`href={CONTACT_ROUTE}` is standard Next.js dynamic routing — must
+    pass. We can't introspect the variable's value, so assume valid.
+    (NLM round 2026-05-17)"""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'const CONTACT_ROUTE = "/contact";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href={CONTACT_ROUTE} className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_cta_above_fold(ctx).status == "pass"
+
+
+def test_hero_cta_still_rejects_dead_hash_with_variable_check_in_place(good_build):
+    """Sanity — adding variable-href support must NOT regress `href="#"`
+    rejection."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="#" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_cta_above_fold(ctx).status == "fail"
