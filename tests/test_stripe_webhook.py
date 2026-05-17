@@ -60,9 +60,19 @@ def output_root(tmp_path, monkeypatch):
     return tmp_path
 
 
+# Monotonic counter so every _subscription_event() call gets a unique
+# (event_id, event_created) pair by default. The webhook now dedups by
+# event_id and rejects events with .created older than the stored state,
+# so tests that call the handler multiple times need DIFFERENT defaults
+# per call. Reset between tests via the _reset_event_counter fixture.
+_event_counter = [0]
+
+
 def _subscription_event(
     event_type: str = "customer.subscription.created",
     *,
+    event_id: str | None = None,
+    event_created: int | None = None,
     pebble_user_id: str | None = "uuid-marc-abc",
     plan: str | None = "starter",
     status: str = "active",
@@ -73,6 +83,13 @@ def _subscription_event(
 ) -> dict:
     """Build a Stripe event dict shaped like the real `customer.subscription.*`
     payloads, with the metadata we stamp in checkout."""
+    _event_counter[0] += 1
+    if event_id is None:
+        event_id = f"evt_test_{_event_counter[0]}"
+    if event_created is None:
+        # Monotonically increasing default; tests that need a specific
+        # order override these explicitly.
+        event_created = 1_700_000_000 + _event_counter[0]
     metadata: dict[str, Any] = {}
     if pebble_user_id is not None:
         metadata["pebble_user_id"] = pebble_user_id
@@ -91,10 +108,20 @@ def _subscription_event(
     if customer_id is not None:
         obj["customer"] = customer_id
     return {
-        "id": "evt_test",
-        "type": event_type,
-        "data": {"object": obj},
+        "id":      event_id,
+        "type":    event_type,
+        "created": event_created,
+        "data":    {"object": obj},
     }
+
+
+@pytest.fixture(autouse=True)
+def _reset_event_counter():
+    """Reset the event counter between tests so default ids/timestamps are
+    deterministic per-test."""
+    _event_counter[0] = 0
+    yield
+    _event_counter[0] = 0
 
 
 @pytest.fixture
@@ -326,3 +353,120 @@ def test_does_not_log_card_data(with_secret, output_root, verified_event, caplog
     caplog.set_level(logging.INFO, logger="pebble")
     stripe_webhook.run_stripe_webhook(FakeHandler({}))
     assert "4242" not in caplog.text
+
+
+# ---- NLM round 1: race conditions / out-of-order delivery -----------------
+
+def test_webhook_dedups_by_event_id(with_secret, output_root, verified_event):
+    """Stripe retries deliver the SAME event.id when our 200 was lost in
+    transit. Apply once, no-op the second time. Defends against both
+    Stripe-side retries (legitimate) and replay attacks within the 5-min
+    construct_event tolerance window (attacker who captured ciphertext)."""
+    from pebble.server import stripe_webhook
+
+    # First delivery
+    verified_event(_subscription_event(
+        event_id="evt_pinned", event_created=2_000_000,
+        plan="starter", status="active",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    first = json.loads(sentinel.read_text(encoding="utf-8"))
+
+    # Same event.id again — Stripe's retry from a dropped ACK. The body
+    # arrives byte-identical so the dedup must trigger before any
+    # filesystem write.
+    verified_event(_subscription_event(
+        event_id="evt_pinned", event_created=2_000_000,
+        plan="starter", status="active",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    second = json.loads(sentinel.read_text(encoding="utf-8"))
+    # No rewrite — updated_at is exactly preserved.
+    assert second["updated_at"] == first["updated_at"]
+
+
+def test_webhook_rejects_out_of_order_events(with_secret, output_root, verified_event):
+    """NLM Finding #1 — Stripe webhooks can arrive out of order. If a user
+    cancels Starter then immediately buys Pro, the .deleted event for the
+    old subscription might land AFTER the .created event for the new one.
+    The OLDER event must NOT overwrite the newer state."""
+    from pebble.server import stripe_webhook
+
+    # Newer event lands first: Pro subscription created at t=2000
+    verified_event(_subscription_event(
+        event_type="customer.subscription.created",
+        event_id="evt_new", event_created=2000,
+        plan="pro", status="active", subscription_id="sub_pro_new",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    # Older event arrives second: Starter cancel at t=1000 (stale)
+    verified_event(_subscription_event(
+        event_type="customer.subscription.deleted",
+        event_id="evt_old", event_created=1000,
+        plan="starter", status="canceled", subscription_id="sub_starter_old",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    data = json.loads(sentinel.read_text(encoding="utf-8"))
+    # The stale "deleted" did NOT win — the Pro subscription remains active.
+    assert data["plan"] == "pro"
+    assert data["status"] == "active"
+    assert data["stripe_subscription_id"] == "sub_pro_new"
+
+
+def test_webhook_accepts_strictly_newer_events(with_secret, output_root, verified_event):
+    """The dedup must NOT block legitimate in-order updates. Same sub_id,
+    older event first, newer event second — newer should overwrite."""
+    from pebble.server import stripe_webhook
+
+    verified_event(_subscription_event(
+        event_id="evt_a", event_created=1000,
+        plan="starter", status="active", subscription_id="sub_same",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    verified_event(_subscription_event(
+        event_type="customer.subscription.updated",
+        event_id="evt_b", event_created=2000,
+        plan="pro", status="active", subscription_id="sub_same",
+    ))
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    data = json.loads(sentinel.read_text(encoding="utf-8"))
+    assert data["plan"] == "pro"
+
+
+def test_webhook_writes_atomically(with_secret, output_root, verified_event, monkeypatch):
+    """NLM Finding #4 — Path.write_text truncates before write. A reader
+    racing the write sees an empty file -> JSONDecodeError -> 404 for a
+    valid subscriber. Switch to tmp+os.replace so the destination file is
+    never visible as a partial write."""
+    import os
+    from pebble.server import stripe_webhook
+
+    verified_event(_subscription_event())
+
+    # Capture the real os.replace BEFORE patching, so the spy can call
+    # through without recursing into itself (monkeypatch on the module's
+    # `os.replace` attribute mutates the shared os module).
+    real_replace = os.replace
+    seen: list[tuple[str, str]] = []
+
+    def spy_replace(src, dst):
+        seen.append((str(src), str(dst)))
+        return real_replace(src, dst)
+
+    monkeypatch.setattr("pebble.server.stripe_webhook.os.replace", spy_replace)
+    stripe_webhook.run_stripe_webhook(FakeHandler({}))
+
+    # Confirm an atomic rename happened with a tmp file source.
+    assert len(seen) >= 1, "expected an os.replace call from tmp -> subscription.json"
+    src, dst = seen[-1]
+    assert src.endswith(".tmp")
+    assert dst.endswith("subscription.json")

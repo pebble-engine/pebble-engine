@@ -557,6 +557,12 @@ export type BillingPortalResponse = {
   url: string;
 };
 
+export type SubscriptionState = {
+  plan:               "starter" | "pro" | null;
+  status:             string | null;   // "active" | "past_due" | "canceled" | ... | null
+  current_period_end: number | null;   // unix seconds, or null
+};
+
 /**
  * Helper that does the "get current JWT, send Authorization: Bearer" dance
  * for the billing endpoints (which are auth-gated via require_user). All
@@ -611,6 +617,31 @@ export async function createCheckoutSession(plan: "starter" | "pro"): Promise<Ch
  */
 export async function openBillingPortal(): Promise<BillingPortalResponse> {
   return authedPostJSON<BillingPortalResponse>("/api/billing/portal", {});
+}
+
+/**
+ * Get the current user's subscription state — plan, status, renewal date.
+ * Returns ``{plan: null, ...}`` for users who have never subscribed
+ * (instead of throwing) so the UI can branch on the field.
+ */
+export async function fetchSubscription(): Promise<SubscriptionState> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/billing/subscription"), {
+    headers: { "Authorization": `Bearer ${session.access_token}` },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as SubscriptionState;
 }
 
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------

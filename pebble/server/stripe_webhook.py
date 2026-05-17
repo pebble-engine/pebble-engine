@@ -122,10 +122,31 @@ def _read_raw_body(handler) -> Optional[bytes]:
     return handler.rfile.read(length)
 
 
+def _read_existing_sentinel(user_id: str) -> Optional[dict]:
+    """Load the user's current subscription state, or None if no sentinel
+    exists yet / it's malformed. Treat unreadable as 'no prior state' so
+    a single corrupt file doesn't permanently jam the webhook."""
+    sentinel = _output_dir() / ".users" / user_id / "subscription.json"
+    if not sentinel.exists():
+        return None
+    try:
+        data = json.loads(sentinel.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return None
+    return data if isinstance(data, dict) else None
+
+
 def _write_subscription_sentinel(user_id: str, *, status: str, plan: str,
                                  subscription_id: str,
                                  customer_id: str,
-                                 current_period_end: Optional[int]) -> None:
+                                 current_period_end: Optional[int],
+                                 last_event_id: str,
+                                 last_event_created: int) -> None:
+    """Write the sentinel atomically — tmp file + os.replace so a reader
+    racing the write never sees a truncated/half-written JSON (NLM round 1
+    Finding #4). On both POSIX and NTFS, os.replace is atomic across
+    same-volume renames, so the destination either has the OLD contents or
+    the NEW contents, never partial."""
     user_dir = _output_dir() / ".users" / user_id
     user_dir.mkdir(parents=True, exist_ok=True)
     out = {
@@ -135,10 +156,16 @@ def _write_subscription_sentinel(user_id: str, *, status: str, plan: str,
         "stripe_customer_id":     customer_id,
         "current_period_end":     current_period_end,
         "updated_at":             datetime.now(timezone.utc).isoformat(),
+        # NLM round 1: track last-applied event so subsequent deliveries
+        # of the SAME event.id are dedup'd, and stale (.created earlier
+        # than what we already have) events are rejected.
+        "last_event_id":          last_event_id,
+        "last_event_created":     last_event_created,
     }
-    (user_dir / "subscription.json").write_text(
-        json.dumps(out, indent=2), encoding="utf-8",
-    )
+    target = user_dir / "subscription.json"
+    tmp = user_dir / "subscription.json.tmp"
+    tmp.write_text(json.dumps(out, indent=2), encoding="utf-8")
+    os.replace(tmp, target)
 
 
 def run_stripe_webhook(handler) -> None:
@@ -195,6 +222,43 @@ def run_stripe_webhook(handler) -> None:
                             "reason": "no pebble_user_id"})
         return
 
+    # NLM round 1 (Finding #1, #5): dedup by event.id, reject stale
+    # events. Stripe webhooks can be retried (legitimate — our 200 ACK
+    # was lost in transit) and can deliver out of order (rare, but
+    # documented). Both classes look identical from our side; the same
+    # check handles both.
+    event_id_raw = event.get("id", "")
+    if not isinstance(event_id_raw, str) or len(event_id_raw) > 128:
+        event_id_raw = ""
+    event_created_raw = event.get("created")
+    event_created = event_created_raw if isinstance(event_created_raw, int) else 0
+
+    existing = _read_existing_sentinel(user_id)
+    if existing is not None:
+        if event_id_raw and existing.get("last_event_id") == event_id_raw:
+            # Same event.id — Stripe re-delivered after a dropped ACK
+            # or an attacker replayed within the 5-min HMAC tolerance.
+            # Idempotent: don't rewrite the file.
+            handler._json(200, {"ok": True, "action": "deduped",
+                                "reason": "event already applied"})
+            return
+        prior_created = existing.get("last_event_created")
+        if (
+            isinstance(prior_created, int)
+            and event_created
+            and event_created < prior_created
+        ):
+            # Out-of-order delivery — this event is older than what we
+            # already applied. Skip it; the newer event already reflects
+            # the truer state.
+            log.info(
+                "stripe-webhook %s stale event_created=%s < prior=%s for user=%s",
+                event_type, event_created, prior_created, user_id,
+            )
+            handler._json(200, {"ok": True, "action": "skipped",
+                                "reason": "stale event"})
+            return
+
     plan = metadata.get("pebble_plan") or "unknown"
     if not isinstance(plan, str) or len(plan) > 32:
         plan = "unknown"
@@ -211,6 +275,21 @@ def run_stripe_webhook(handler) -> None:
     cus_id_raw = obj.get("customer", "")
     customer_id = cus_id_raw if isinstance(cus_id_raw, str) and len(cus_id_raw) <= 128 else ""
 
+    # If the incoming subscription_id differs from what we already track,
+    # we're in the multi-sub case (NLM Finding #3). Pebble's data model
+    # assumes one active subscription per user, so we still write — but
+    # we log so ops can investigate whether the user actually has two.
+    if (
+        existing is not None
+        and existing.get("stripe_subscription_id")
+        and subscription_id
+        and existing["stripe_subscription_id"] != subscription_id
+    ):
+        log.warning(
+            "stripe-webhook user=%s subscription changed %s -> %s (was the user double-subscribed?)",
+            user_id, existing["stripe_subscription_id"], subscription_id,
+        )
+
     _write_subscription_sentinel(
         user_id,
         status=status,
@@ -218,6 +297,8 @@ def run_stripe_webhook(handler) -> None:
         subscription_id=subscription_id,
         customer_id=customer_id,
         current_period_end=period_end,
+        last_event_id=event_id_raw,
+        last_event_created=event_created,
     )
 
     log.info("stripe-webhook %s applied user=%s plan=%s status=%s",

@@ -76,6 +76,32 @@ def _load_env(path: Path) -> None:
             os.environ[key] = val
 
 
+def _stripe_metadata_get(obj: Any, key: str) -> Optional[str]:
+    """Read a metadata field off a Stripe object. SDK 15.x's metadata
+    isn't a plain dict — it's a ``StripeObject`` whose ``.get`` isn't
+    inherited from ``dict``, so we use the indexing protocol + try/except
+    rather than ``.get``."""
+    meta = getattr(obj, "metadata", None)
+    if meta is None:
+        return None
+    try:
+        return meta[key]
+    except (KeyError, AttributeError, TypeError):
+        return None
+
+
+def _stripe_recurring_interval(price: Any) -> Optional[str]:
+    """Same shape gotcha as metadata — ``price.recurring`` is a StripeObject
+    not a dict. Use indexing with a fallback."""
+    rec = getattr(price, "recurring", None)
+    if rec is None:
+        return None
+    try:
+        return rec["interval"]
+    except (KeyError, AttributeError, TypeError):
+        return None
+
+
 def find_existing_product(stripe_mod, plan_key: str) -> Optional[Any]:
     """Return the Pebble product whose ``metadata['pebble_plan']`` matches
     ``plan_key``, or None if no such product exists in the account."""
@@ -83,8 +109,7 @@ def find_existing_product(stripe_mod, plan_key: str) -> Optional[Any]:
     # have; if it ever exceeds that we'd see this fail loudly during a
     # bootstrap re-run and add pagination then.
     for product in stripe_mod.Product.list(limit=100, active=True).auto_paging_iter():
-        meta = getattr(product, "metadata", None) or {}
-        if meta.get("pebble_plan") == plan_key:
+        if _stripe_metadata_get(product, "pebble_plan") == plan_key:
             return product
     return None
 
@@ -96,8 +121,7 @@ def find_existing_price(stripe_mod, product_id: str, amount_cents: int) -> Optio
         if (
             price.unit_amount == amount_cents
             and price.currency == "usd"
-            and getattr(price, "recurring", None) is not None
-            and price.recurring.get("interval") == "month"
+            and _stripe_recurring_interval(price) == "month"
         ):
             return price
     return None
@@ -159,10 +183,13 @@ def main(argv: Optional[list[str]] = None) -> int:  # noqa: ARG001
     import stripe
     stripe.api_key = key
 
-    print("→ Looking up / creating Pebble products and prices in Stripe...")
+    # ASCII-only output — Windows consoles default to cp1252 which doesn't
+    # encode the U+2192 arrow / U+2713 check, and Python raises rather than
+    # silently mojibake. Keep it portable.
+    print("Looking up / creating Pebble products and prices in Stripe...")
     result = bootstrap(stripe)
 
-    print("\n✓ Done. Paste these lines into your .env:\n")
+    print("\nDone. Paste these lines into your .env:\n")
     print(f"PEBBLE_STRIPE_STARTER_PRICE_ID={result['starter']['price_id']}")
     print(f"PEBBLE_STRIPE_PRO_PRICE_ID={result['pro']['price_id']}")
     print()

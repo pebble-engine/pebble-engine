@@ -24,8 +24,38 @@ import { motion } from "framer-motion";
 import { CreditCard, Lock, Settings as SettingsIcon, User } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
-import { openBillingPortal } from "@/lib/api";
+import { fetchSubscription, openBillingPortal, type SubscriptionState } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
+
+
+const PLAN_LABEL: Record<string, string> = {
+  starter: "Pebble Starter",
+  pro:     "Pebble Pro",
+};
+
+
+function planBadge(sub: SubscriptionState | null): string {
+  if (!sub || !sub.plan) {
+    return "No active subscription";
+  }
+  const label = PLAN_LABEL[sub.plan] ?? sub.plan;
+  if (sub.status === "canceled") {
+    return `${label} (canceled)`;
+  }
+  if (sub.status && sub.status !== "active") {
+    return `${label} (${sub.status})`;
+  }
+  if (sub.current_period_end) {
+    const renews = new Date(sub.current_period_end * 1000);
+    const formatted = renews.toLocaleDateString(undefined, {
+      year:  "numeric",
+      month: "short",
+      day:   "numeric",
+    });
+    return `${label} — renews ${formatted}`;
+  }
+  return label;
+}
 
 
 export default function SettingsPage() {
@@ -44,6 +74,10 @@ export default function SettingsPage() {
   const [billingError, setBillingError]   = useState<string | null>(null);
   const [billingLoading, setBillingLoading] = useState(false);
 
+  // ---- Current-plan badge --------------------------------------------
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
+  const [subLoading, setSubLoading]     = useState(true);
+
   // Bounce unauthenticated visitors to /login. Wait for the auth state
   // to finish loading so we don't redirect during the brief flicker
   // before the session hydrates.
@@ -52,6 +86,25 @@ export default function SettingsPage() {
       router.replace("/login?next=/settings");
     }
   }, [loading, user, router]);
+
+  // Fetch the current subscription state once we know who the user is.
+  // Failures (network, 503) degrade gracefully to "no subscription" — the
+  // portal button still works for users who have one.
+  useEffect(() => {
+    if (loading || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const sub = await fetchSubscription();
+        if (!cancelled) setSubscription(sub);
+      } catch {
+        if (!cancelled) setSubscription(null);
+      } finally {
+        if (!cancelled) setSubLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loading, user]);
 
   async function onChangePassword(e: React.FormEvent) {
     e.preventDefault();
@@ -235,6 +288,15 @@ export default function SettingsPage() {
               <CreditCard className="w-5 h-5 text-muted-foreground" />
               <h2 className="font-display text-xl font-semibold">Billing</h2>
             </div>
+            {/* Current-plan badge — driven by the webhook-written sentinel.
+                Hidden while loading to avoid flashing "No active subscription"
+                for users who do have one. */}
+            {!subLoading && (
+              <div className="space-y-1">
+                <p className="text-sm text-muted-foreground">Current plan</p>
+                <p className="text-foreground font-medium">{planBadge(subscription)}</p>
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               Manage your plan, payment method, and download invoices. The
               billing portal is hosted by Stripe — Pebble never sees your

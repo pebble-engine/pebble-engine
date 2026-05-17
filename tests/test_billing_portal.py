@@ -226,3 +226,31 @@ def test_does_not_log_customer_id_or_email(
     billing_portal.run_billing_portal(h)
     assert "cus_sensitive_id" not in caplog.text
     assert "marc@example.com" not in caplog.text
+
+
+# ---- NLM round 1: case-sensitivity parity --------------------------------
+
+def test_finds_sentinel_when_jwt_user_id_has_mixed_case(
+    monkeypatch, output_root, stripe_env, fake_stripe,
+):
+    """NLM Finding #2 — the webhook lowercases user_id before writing the
+    sentinel path (via _safe_user_id). If a JWT ever returns the same UUID
+    in mixed case, the portal must still find it. Defense-in-depth: in
+    practice Supabase returns lowercase, but a future identity provider
+    swap could break this silently otherwise."""
+    from pebble.server import billing_portal
+
+    # JWT returns mixed-case user_id
+    monkeypatch.setattr(
+        "pebble.server.billing_portal.require_user",
+        lambda h: {"id": "UUID-MARC-ABC", "email": "marc@example.com"},
+    )
+    # Sentinel written by webhook lives at the LOWERCASED path
+    _write_subscription_sentinel(output_root, "uuid-marc-abc",
+                                 customer_id="cus_marc")
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+    assert h.status == 200
+    kwargs = fake_stripe.billing_portal.Session.create.call_args.kwargs
+    assert kwargs["customer"] == "cus_marc"

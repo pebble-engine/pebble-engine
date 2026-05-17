@@ -55,8 +55,17 @@ def _public_base_url() -> str:
 
 def _load_customer_id(user_id: str) -> Optional[str]:
     """Read the Stripe customer_id from the user's subscription sentinel,
-    or return None if there isn't one (no subscription / corrupt file)."""
-    sentinel = _output_dir() / ".users" / user_id / "subscription.json"
+    or return None if there isn't one (no subscription / corrupt file).
+
+    The user_id is lowercased before path construction to mirror
+    ``stripe_webhook._safe_user_id`` (which writes to the lowercased
+    directory). NLM round 1 Finding #2 — Supabase returns lowercase UUIDs
+    in practice, but the asymmetry would silently 404 on case-sensitive
+    filesystems if a future identity provider ever returned mixed case.
+    """
+    if not isinstance(user_id, str) or not user_id:
+        return None
+    sentinel = _output_dir() / ".users" / user_id.lower() / "subscription.json"
     if not sentinel.exists():
         return None
     try:
