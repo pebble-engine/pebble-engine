@@ -10,9 +10,15 @@ const ld = {
   "name": "Heron Plumbing",
 };
 
+export const viewport = { width: "device-width", initialScale: 1 };
+
 export default function L({children}: any) {
   return (
     <html lang="en" className={inter.variable}>
+      <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <link rel="preload" as="image" href="/images/hero-poster.jpg" />
+      </head>
       <body className={inter.className}>
         <script
           type="application/ld+json"

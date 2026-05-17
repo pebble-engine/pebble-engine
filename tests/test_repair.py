@@ -41,8 +41,9 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "sections" / "Hero.tsx").write_text(
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
         '    </section>\n'
         '  );\n'
         '}'
@@ -209,8 +210,9 @@ def broken_build(tmp_path: Path) -> Path:
     (site / "components" / "sections" / "Hero.tsx").write_text(
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
         '    </section>\n'
         '  );\n'
         '}'
@@ -429,7 +431,8 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         'import { Inter } from "next/font/google";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
-        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
         'import { Hero } from "@/components/sections/Hero";\n'
@@ -772,7 +775,8 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         'import { Inter } from "next/font/google";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Test Co" };\n'
-        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) { return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>; }'
     )
     (site / "app" / "page.tsx").write_text(
         'import { Hero } from "@/components/sections/Hero";\n'

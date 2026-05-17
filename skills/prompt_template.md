@@ -232,9 +232,22 @@ const inter = Inter({{
   display: "swap",
 }});
 
+// MANDATORY: viewport export so mobile renders at device width, not desktop.
+// Eval `mobile_optimized_responsive` will fail without it.
+export const viewport = {{
+  width: "device-width",
+  initialScale: 1,
+}};
+
 export default function RootLayout({{ children }}: {{ children: React.ReactNode }}) {{
   return (
     <html lang="en" className={{inter.variable}}>
+      <head>
+        {{/* MANDATORY: preload the hero poster image so the first paint lands
+            before JS hydrates. Eval `perf_budget_or_lighter` will fail without
+            a <link rel="preload"> OR an <Image priority> somewhere. */}}
+        <link rel="preload" as="image" href="/images/hero-poster.jpg" />
+      </head>
       <body className={{`${{inter.className}} antialiased`}}>
         {{children}}
       </body>
@@ -478,6 +491,7 @@ export function Hero() {{
     <section className="relative min-h-[100dvh] overflow-hidden bg-black flex flex-col">
       <video
         autoPlay muted loop playsInline
+        preload="metadata"
         className="absolute inset-0 w-full h-full object-cover"
         src="/videos/hero.mp4"
         poster="/images/hero-poster.jpg"
@@ -943,6 +957,18 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
 - [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
 - [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
+
+**FOUNDATION perf + conversion + mobile (May 2026 NLM research addendum):**
+- [ ] Hero `<video>` element includes a `preload=` attribute (`preload="metadata"` is the default recommendation; `preload="auto"` also acceptable). Without it, browser defaults drift and LCP regresses. — eval `perf_budget_or_lighter`
+- [ ] `app/layout.tsx` `<head>` includes a `<link rel="preload" as="image" href="/images/hero-poster.jpg" />` (OR the hero renders the poster via `<Image priority>`) so the first paint lands before JS hydrates. — eval `perf_budget_or_lighter`
+- [ ] Any hand-rolled `@font-face` block in `app/globals.css` (or any CSS) MUST declare `font-display: swap` (or `optional` / `fallback`). FOIT hides text for up to 3s on slow connections. `next/font/google` already handles this — only flag hand-rolled @font-face. — eval `perf_budget_or_lighter`
+- [ ] If `three` or any `@react-three/*` package is used, import it via `next/dynamic({{ ssr: false }})` in `app/page.tsx`. Static imports of these ~700kb libs block first paint. — eval `perf_budget_or_lighter`
+- [ ] Any raw `<img>` (use `next/image` instead — but defense in depth) MUST declare both `width` and `height` attributes so layout doesn't shift when the image loads. — eval `perf_budget_or_lighter`
+- [ ] Hero section MUST contain at least ONE qualifying CTA above the fold: an `<a>` or `<button>` with (1) an action-verb first word (Get / Start / Try / Book / Contact / Schedule / Learn / Call / Discover / Explore etc.), (2) a real href (`/path`, `tel:`, `mailto:`, `#section`, `https://...` — never `href="#"` alone), and (3) a visually-prominent `bg-*` className. 70% of small-business sites lack a clear homepage CTA — Pebble doesn't. — eval `hero_cta_above_fold`
+- [ ] `app/layout.tsx` MUST export viewport via `export const viewport = {{ width: "device-width", initialScale: 1 }}` (or include `<meta name="viewport" content="width=device-width, initial-scale=1">` in `<head>`). Without it, mobile renders at desktop width and forces user-zoom. — eval `mobile_optimized_responsive`
+- [ ] Hero file uses at least one Tailwind responsive prefix (`sm:`, `md:`, `lg:`, `xl:`, or `2xl:`). Desktop-only classes hit mobile at desktop scale — 58% of traffic is mobile. — eval `mobile_optimized_responsive`
+- [ ] Hero CTAs meet the 44px touch-target minimum: `p-3+` / `py-3+` / `min-h-11` / `min-h-[44px]`. WCAG 2.5.5 / Apple HIG / Material all converge on 44px. `p-1` / `p-2` give a sub-32px tap target → users miss-tap and bounce. — eval `mobile_optimized_responsive`
+- [ ] `tailwind.config.ts` must NOT explicitly empty the `screens` key (`screens: {{}}`) — that disables all `sm:`/`md:`/`lg:` utilities globally. Leave `screens` unset to keep Tailwind defaults. — eval `mobile_optimized_responsive`
 
 **SECTIONS BELOW HERO:**
 - [ ] Trust bar: counting stats with `data-target` + GSAP textContent

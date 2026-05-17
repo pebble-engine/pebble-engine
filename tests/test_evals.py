@@ -82,8 +82,9 @@ def good_build(tmp_path: Path) -> Path:
         'import "./globals.css";\n'
         'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
         'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
         'export default function L({children}: any) {\n'
-        '  return <html lang="en" className={inter.variable}><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
         '}'
     )
     # Next.js 14 convention files — emit sitemap.xml + robots.txt.
@@ -110,10 +111,11 @@ def good_build(tmp_path: Path) -> Path:
         'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] overflow-hidden bg-black">\n'
-        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
         '      <AnimatedHeading text={"Hello\\nworld."} className="text-7xl text-white" />\n'
         '      <FadeIn delay={800}><p>(212) 234-9876</p></FadeIn>\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
         '    </section>\n'
         '  );\n'
         '}'
@@ -1236,3 +1238,437 @@ def test_sitemap_robots_skips_when_no_site_dir(tmp_path):
     empty.mkdir()
     ctx = BuildContext.load(empty)
     assert checks.sitemap_and_robots_present(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 36. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# ---------------------------------------------------------------------------
+
+def test_perf_budget_passes_on_good_build(good_build):
+    """Fixture provides preload=metadata on hero <video> + preload link in
+    layout + no raw <img> + no @font-face + no static three import. Should
+    pass every heuristic."""
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.perf_budget_or_lighter(ctx).status == "skip"
+
+
+def test_perf_budget_fails_when_raw_img_lacks_dimensions(good_build):
+    """Raw <img> without width+height is a CLS regression. images_use_next_image
+    forbids raw <img> entirely, but this is defense-in-depth."""
+    (good_build / "site" / "components" / "ui" / "Bad.tsx").write_text(
+        'export function Bad() { return <img src="/x.jpg" alt="x" />; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "width" in result.message.lower() or "dimension" in result.message.lower() or "height" in result.message.lower()
+
+
+def test_perf_budget_passes_when_raw_img_has_dimensions(good_build):
+    """Raw <img> with explicit width/height attrs is CLS-safe even if it
+    skips next/image — the perf budget covers CLS, not bundle weight."""
+    (good_build / "site" / "components" / "ui" / "Sized.tsx").write_text(
+        'export function Sized() { return <img src="/x.jpg" alt="x" width={200} height={100} />; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_fails_when_font_face_lacks_font_display(good_build):
+    """Hand-rolled @font-face without font-display causes FOIT — the page
+    stays text-invisible while the font downloads. font-display: swap is
+    the minimum acceptable value."""
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, sans-serif; "
+        "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+        "@font-face { font-family: 'Custom'; src: url('/fonts/custom.woff2'); }\n"  # no font-display
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "font-display" in result.message.lower()
+
+
+def test_perf_budget_passes_when_font_face_has_swap(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: var(--font-inter), Inter, sans-serif; "
+        "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+        "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
+        "@font-face { font-family: 'Custom'; src: url('/fonts/custom.woff2'); font-display: swap; }\n"
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_fails_when_three_imported_statically(good_build):
+    """Three.js bundle is ~700kb — heavy. Static import in app/page.tsx
+    blocks first paint; must use next/dynamic with ssr:false."""
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'import * as THREE from "three";\n'
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /></main>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "three" in result.message.lower() or "dynamic" in result.message.lower()
+
+
+def test_perf_budget_passes_when_three_imported_dynamically(good_build):
+    """next/dynamic with ssr:false defers Three.js to client + after-paint."""
+    (good_build / "site" / "app" / "page.tsx").write_text(
+        'import dynamic from "next/dynamic";\n'
+        'const ThreeScene = dynamic(() => import("@/components/sections/ThreeScene"), { ssr: false });\n'
+        'import { Hero } from "@/components/sections/Hero";\n'
+        'export default function P() { return <main><Hero /><ThreeScene /></main>; }'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_fails_when_hero_video_lacks_preload(good_build):
+    """Hero <video> without an explicit preload= attribute leaves browsers
+    on their inconsistent defaults. Set preload="metadata" (or "auto") so
+    the choice is intentional and the eval catches regressions."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'import { FadeIn } from "@/components/ui/FadeIn";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "preload" in result.message.lower()
+
+
+def test_perf_budget_passes_when_hero_video_preload_auto(good_build):
+    """preload="auto" is also a valid intentional choice."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'import { FadeIn } from "@/components/ui/FadeIn";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="auto" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+def test_perf_budget_fails_when_no_preload_link_anywhere(good_build):
+    """Layout (or page/hero) must include a <link rel="preload"> for the
+    above-the-fold hero asset so it paints before the JS hydrates."""
+    # Strip the preload link from layout — leave viewport meta intact.
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.perf_budget_or_lighter(ctx)
+    assert result.status == "fail"
+    assert "preload" in result.message.lower()
+
+
+def test_perf_budget_accepts_image_priority_as_preload_evidence(good_build):
+    """<Image priority /> generates a preload link automatically — should
+    count as satisfying the preload requirement without a manual <link>."""
+    # Strip the manual preload link
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><head><meta name="viewport" content="width=device-width, initial-scale=1" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    # Add Image priority somewhere
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import Image from "next/image";\n'
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <Image src="/images/hero-poster.jpg" alt="" width={1920} height={1080} priority />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.perf_budget_or_lighter(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# 37. hero_cta_above_fold (T15)
+# ---------------------------------------------------------------------------
+
+def test_hero_cta_passes_on_good_build(good_build):
+    """Fixture's hero has <a href='/contact' class='bg-white ...'>Get Started</a>
+    — action verb + recognizable href + prominent bg class."""
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_cta_above_fold(ctx).status == "pass"
+
+
+def test_hero_cta_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.hero_cta_above_fold(ctx).status == "skip"
+
+
+def test_hero_cta_fails_when_no_cta_anywhere(good_build):
+    """Strip the CTA — hero is just heading + subhead now. Should fail."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.hero_cta_above_fold(ctx)
+    assert result.status == "fail"
+    assert "cta" in result.message.lower() or "action" in result.message.lower()
+
+
+def test_hero_cta_fails_when_link_text_has_no_action_verb(good_build):
+    """A <a href='/about'>About us</a> with no action verb doesn't tell the
+    user what to do. Hero CTA must lead with an action."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/about" className="bg-white text-black px-6 py-3 focus-visible:ring-2">About us</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.hero_cta_above_fold(ctx)
+    assert result.status == "fail"
+    assert "verb" in result.message.lower() or "action" in result.message.lower()
+
+
+def test_hero_cta_fails_when_href_is_dead_hash(good_build):
+    """href='#' is a dead link — common LLM slop. Reject."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="#" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.hero_cta_above_fold(ctx)
+    assert result.status == "fail"
+    assert "href" in result.message.lower() or "dead" in result.message.lower()
+
+
+def test_hero_cta_accepts_button_with_onclick(good_build):
+    """<button> with action-verb text counts (even without onClick — the
+    LLM may wire it later; we just verify CTA shape)."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <button type="button" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Book a call</button>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_cta_above_fold(ctx).status == "pass"
+
+
+def test_hero_cta_accepts_tel_href(good_build):
+    """tel:[BUSINESS PHONE] is the canonical hero CTA — verb 'Call' counts."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Call us today</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_cta_above_fold(ctx).status == "pass"
+
+
+# ---------------------------------------------------------------------------
+# 38. mobile_optimized_responsive (T16)
+# ---------------------------------------------------------------------------
+
+def test_mobile_passes_on_good_build(good_build):
+    """Fixture has viewport meta, default Tailwind config (sm/md/lg included),
+    md:/lg: prefixes on hero section, px-6 py-3 on CTA. Should pass."""
+    ctx = BuildContext.load(good_build)
+    assert checks.mobile_optimized_responsive(ctx).status == "pass"
+
+
+def test_mobile_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.mobile_optimized_responsive(ctx).status == "skip"
+
+
+def test_mobile_fails_when_viewport_meta_missing(good_build):
+    """No viewport meta + no `export const viewport` → mobile renders at
+    desktop width, then user-zooms. Classic mobile-broken site."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><head><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+    assert "viewport" in result.message.lower()
+
+
+def test_mobile_accepts_export_const_viewport(good_build):
+    """Next.js 14 idiomatic form: `export const viewport = {...}` instead
+    of raw <meta>. Both should satisfy the check."""
+    (good_build / "site" / "app" / "layout.tsx").write_text(
+        'import { Inter } from "next/font/google";\n'
+        'import "./globals.css";\n'
+        'const inter = Inter({ subsets: ["latin"], weight: ["300","400","500","600"], variable: "--font-inter" });\n'
+        'const ld = { "@context": "https://schema.org", "@type": "LocalBusiness", "name": "Good Co" };\n'
+        'export const viewport = { width: "device-width", initialScale: 1 };\n'
+        'export default function L({children}: any) {\n'
+        '  return <html lang="en" className={inter.variable}><head><link rel="preload" as="image" href="/images/hero-poster.jpg" /></head><body className={inter.className}><script type="application/ld+json" dangerouslySetInnerHTML={{__html: JSON.stringify(ld)}} />{children}</body></html>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.mobile_optimized_responsive(ctx).status == "pass"
+
+
+def test_mobile_fails_when_hero_has_no_responsive_prefixes(good_build):
+    """Hero must use sm:/md:/lg: prefixes — desktop-only classes mean
+    mobile gets the same massive type/spacing scale."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black px-6 py-3 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+    assert "responsive" in result.message.lower() or "breakpoint" in result.message.lower()
+
+
+def test_mobile_fails_when_tailwind_explicitly_drops_breakpoints(good_build):
+    """If tailwind.config.ts explicitly empties the `screens` key, sm:/md:/lg:
+    prefixes become no-ops. Catch this regression."""
+    (good_build / "site" / "tailwind.config.ts").write_text(
+        "export default { theme: { screens: {}, extend: { fontFamily: { "
+        "sans: ['var(--font-inter)', 'Inter', 'sans-serif'], "
+        "display: ['Cormorant Garamond', 'serif'] } } } }"
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+    assert "screens" in result.message.lower() or "breakpoint" in result.message.lower()
+
+
+def test_mobile_fails_when_hero_cta_has_tiny_padding(good_build):
+    """44px touch-target minimum. p-1 / px-1 / py-1 give ~24px height —
+    below the WCAG 2.5.5 / Apple HIG / Material guideline."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black p-1 focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.mobile_optimized_responsive(ctx)
+    assert result.status == "fail"
+    assert "touch" in result.message.lower() or "padding" in result.message.lower() or "44" in result.message
+
+
+def test_mobile_accepts_min_h_44_as_touch_target(good_build):
+    """`min-h-[44px]` or `min-h-11` (11×4=44) directly satisfies the
+    touch target rule regardless of padding."""
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return (\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen overflow-hidden bg-black">\n'
+        '      <video autoPlay muted loop playsInline preload="metadata" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '      <AnimatedHeading text={"x"} className="text-7xl text-white" />\n'
+        '      <a href="/contact" className="bg-white text-black p-1 min-h-[44px] focus-visible:ring-2">Get Started</a>\n'
+        '    </section>\n'
+        '  );\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.mobile_optimized_responsive(ctx).status == "pass"
