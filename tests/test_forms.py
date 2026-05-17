@@ -684,6 +684,178 @@ def test_followup_pool_is_bounded_thread_pool():
     assert pool._max_workers <= 16, "pool should be bounded, not unlimited"
 
 
+# ---------------------------------------------------------------------------
+# File uploads to Supabase Storage — Track 11 (2026-05-16)
+# ---------------------------------------------------------------------------
+
+def _b64(data: bytes) -> str:
+    import base64
+    return base64.b64encode(data).decode("ascii")
+
+
+def test_upload_endpoint_404_for_unknown_project(engine_server, monkeypatch):
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    status, body = _request("POST", engine_server["base"], "/api/forms/ghost/upload", {
+        "filename": "x.png", "content_type": "image/png", "data": _b64(b"x"),
+    })
+    assert status == 404
+
+
+def test_upload_endpoint_503_when_storage_not_configured(engine_server, monkeypatch):
+    """If neither URL nor service-role key is set, the endpoint refuses
+    rather than crashing on a missing env var."""
+    monkeypatch.delenv("PEBBLE_SUPABASE_URL", raising=False)
+    monkeypatch.delenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename": "x.png", "content_type": "image/png", "data": _b64(b"x"),
+    })
+    assert status == 503
+    assert "not configured" in body["error"].lower()
+
+
+def test_upload_endpoint_400_for_bad_mime(engine_server, monkeypatch):
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename": "evil.exe", "content_type": "application/x-msdownload",
+        "data": _b64(b"MZ\x90\x00"),
+    })
+    assert status == 400
+    assert "content_type" in body["error"].lower() or "allowed" in body["error"].lower()
+
+
+def test_upload_endpoint_400_for_invalid_base64(engine_server, monkeypatch):
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename": "x.png", "content_type": "image/png",
+        "data": "!!! not base64 !!!",
+    })
+    assert status == 400
+    assert "base64" in body["error"].lower()
+
+
+def test_upload_endpoint_refuses_oversized_payload(engine_server, monkeypatch):
+    """Cap is 5 MB decoded (7 MB JSON envelope). Submit ~6 MB raw
+    (~8 MB envelope) — the server must refuse it. On Windows, urllib
+    sometimes sees a connection abort instead of the clean 413
+    because the server doesn't drain the unread body; treat either
+    as a successful refusal."""
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    big = b"x" * (6 * 1024 * 1024)
+    try:
+        status, _body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+            "filename": "big.pdf", "content_type": "application/pdf",
+            "data": _b64(big),
+        })
+        # Clean refusal — the server returned 413 before reading the body.
+        assert status == 413, f"expected 413, got {status}"
+    except (ConnectionAbortedError, ConnectionResetError):
+        # Also acceptable: the server hung up the connection mid-upload
+        # rather than serving the response. The point is "rejected,
+        # not stored" — either signal works for the client.
+        pass
+
+
+def test_upload_endpoint_success_calls_storage(engine_server, monkeypatch):
+    """Happy path: monkeypatch upload_attachment to bypass network,
+    confirm the endpoint returns the expected JSON shape."""
+    from pebble import storage
+    from pebble.server.forms import _reset_upload_rate_limiter_for_tests
+    _reset_upload_rate_limiter_for_tests()
+
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+
+    captured = {}
+    def fake_upload(slug, filename, content, content_type, **kw):
+        captured.update({"slug": slug, "filename": filename,
+                         "content": content, "content_type": content_type})
+        return storage.UploadResult(
+            path=f"{slug}/abc123/{filename}",
+            public_url=f"https://proj.supabase.co/storage/v1/object/public/form-uploads/{slug}/abc123/{filename}",
+            bucket="form-uploads",
+        )
+    monkeypatch.setattr("pebble.server.forms.upload_attachment", fake_upload)
+
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename": "photo.jpg", "content_type": "image/jpeg",
+        "data": _b64(b"fake-jpeg-bytes"),
+    })
+    assert status == 200
+    assert body["ok"] is True
+    assert body["slug"] == "up-co"
+    assert body["path"].endswith("photo.jpg")
+    assert "public/form-uploads/" in body["url"]
+    assert captured["slug"] == "up-co"
+    assert captured["filename"] == "photo.jpg"
+    assert captured["content"] == b"fake-jpeg-bytes"
+    assert captured["content_type"] == "image/jpeg"
+
+
+def test_upload_endpoint_surfaces_storage_error_as_502(engine_server, monkeypatch):
+    from pebble.storage import StorageError
+    from pebble.server.forms import _reset_upload_rate_limiter_for_tests
+    _reset_upload_rate_limiter_for_tests()
+
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+
+    def fake_upload(*_a, **_kw):
+        raise StorageError("bucket does not exist")
+    monkeypatch.setattr("pebble.server.forms.upload_attachment", fake_upload)
+
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename": "x.png", "content_type": "image/png", "data": _b64(b"x"),
+    })
+    assert status == 502
+    assert "bucket" in body["error"].lower()
+
+
+def test_upload_endpoint_rate_limited_after_burst(engine_server, monkeypatch):
+    """Per-IP burst is 5 uploads; 6th should 429."""
+    from pebble import storage
+    from pebble.server.forms import _reset_upload_rate_limiter_for_tests
+    _reset_upload_rate_limiter_for_tests()
+
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    monkeypatch.setattr("pebble.server.forms.upload_attachment",
+        lambda slug, filename, content, content_type, **kw: storage.UploadResult(
+            path=f"{slug}/x/{filename}",
+            public_url="https://x",
+            bucket="form-uploads",
+        ),
+    )
+
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    statuses = []
+    for i in range(10):
+        s, _ = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+            "filename": f"f{i}.png", "content_type": "image/png", "data": _b64(b"x"),
+        })
+        statuses.append(s)
+    assert 429 in statuses, f"expected 429 after burst, got {statuses}"
+
+
+# ---------------------------------------------------------------------------
+
+
 def test_submit_webhook_payload_contains_stripped_referrer(engine_server, monkeypatch):
     """End-to-end: submit a form with a Referer header that has query
     params, observe the webhook payload's referrer field is the

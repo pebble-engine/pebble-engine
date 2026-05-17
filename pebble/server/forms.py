@@ -19,6 +19,7 @@ User-scoped (webhook delivery config):
 """
 from __future__ import annotations
 
+import base64
 import json
 import sys
 import threading
@@ -41,10 +42,39 @@ from pebble.forms import (
 from pebble import forms_autoresponder, forms_webhook
 from pebble.log import log
 from pebble.security import (
+    RateLimiter,
     client_ip as _client_ip,
     forms_submit_limiter,
     require_project_owner,
 )
+from pebble.storage import (
+    StorageError,
+    is_configured as storage_is_configured,
+    upload_attachment,
+)
+
+
+# Upload allowlist — covers the common service-business attachment
+# patterns (photo of damage, signed PDF, intake form, project doc).
+# Deliberately excludes image/svg+xml (XSS via inline script) and
+# anything executable.
+_UPLOAD_MIME_ALLOWLIST = frozenset({
+    "image/jpeg", "image/png", "image/gif", "image/webp", "image/heic", "image/heif",
+    "application/pdf",
+    "text/plain",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+})
+_UPLOAD_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
+# Visitor-facing endpoint, so IP-rate-limited like the public form submit.
+# 5 burst / 1 per 12s sustained — generous for a real submitter who
+# attaches 2-3 files, tight enough that a bot can't quickly fill the bucket.
+_upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
+
+
+def _reset_upload_rate_limiter_for_tests() -> None:
+    global _upload_rate_limiter
+    _upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
 
 
 def _engine():
@@ -361,3 +391,98 @@ def run_delete_autoresponder_config(handler, slug: str) -> None:
         return
     removed = forms_autoresponder.clear_config(slug)
     handler._json(200, {"slug": slug, "removed": removed})
+
+
+# --------- POST /api/forms/<slug>/upload (public, file attach) -----------
+
+def run_upload_attachment(handler, slug: str) -> None:
+    """Accept a file attachment for ``slug``'s contact form.
+
+    Body (JSON):
+        filename:     "...",     # visitor-supplied
+        content_type: "image/jpeg",
+        data:         "<base64>" # at most 5 MB decoded
+    Returns:
+        { ok: true, path: "<bucket-key>", url: "<public-url>" }
+
+    Visitor-facing — no auth (a form's visitor is by definition not
+    signed in). Rate-limited per IP. Hard caps on size + MIME so a
+    bot can't dump junk into the bucket. The visitor uploads first,
+    then submits the form with the returned URL embedded as a
+    regular text field.
+    """
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    project_dir = _output_dir() / slug
+    if not project_dir.exists():
+        handler._json(404, {"error": "project not found"}); return
+
+    if not storage_is_configured():
+        handler._json(503, {
+            "error": (
+                "File uploads are not configured on this Pebble instance. "
+                "Set PEBBLE_SUPABASE_URL + PEBBLE_SUPABASE_SERVICE_ROLE_KEY."
+            ),
+        })
+        return
+
+    ip = _client_ip(handler)
+    if ip and not _upload_rate_limiter.allow(f"upload:{ip}"):
+        handler._json(429, {"error": "too many uploads, slow down"}); return
+
+    # Cap the JSON envelope at ~7 MB to absorb base64 inflation of a
+    # 5 MB payload (4/3 expansion + JSON overhead) without enabling
+    # significantly larger uploads.
+    body = _read_body(handler, max_bytes=7 * 1024 * 1024)
+    if body is None:
+        return
+
+    filename = body.get("filename")
+    content_type = body.get("content_type")
+    data_b64 = body.get("data")
+    if not isinstance(filename, str) or not filename.strip():
+        handler._json(400, {"error": "'filename' (string) is required"}); return
+    if not isinstance(content_type, str) or content_type not in _UPLOAD_MIME_ALLOWLIST:
+        handler._json(400, {
+            "error":   f"unsupported content_type. Allowed: {sorted(_UPLOAD_MIME_ALLOWLIST)}",
+        })
+        return
+    if not isinstance(data_b64, str) or not data_b64:
+        handler._json(400, {"error": "'data' (base64 string) is required"}); return
+
+    try:
+        content = base64.b64decode(data_b64, validate=True)
+    except (ValueError, TypeError):
+        handler._json(400, {"error": "'data' is not valid base64"}); return
+
+    if not content:
+        handler._json(400, {"error": "decoded content is empty"}); return
+    if len(content) > _UPLOAD_MAX_BYTES:
+        handler._json(413, {
+            "error": f"file too large; max {_UPLOAD_MAX_BYTES // (1024*1024)} MB",
+        })
+        return
+
+    try:
+        result = upload_attachment(
+            slug=slug,
+            filename=filename,
+            content=content,
+            content_type=content_type,
+        )
+    except StorageError as e:
+        log.warning("upload failed for %s: %s", slug, e)
+        handler._json(502, {"error": f"storage upload failed: {e}"})
+        return
+    except Exception as e:
+        log.exception("upload crashed for %s: %s", slug, e)
+        handler._json(500, {"error": "upload failed"})
+        return
+
+    handler._json(200, {
+        "ok":     True,
+        "slug":   slug,
+        "path":   result.path,
+        "url":    result.public_url,
+        "bucket": result.bucket,
+    })

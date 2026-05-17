@@ -1689,6 +1689,10 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 self._handle_inspire()
             elif self.path == "/api/publish":
                 self._handle_publish()
+            elif self.path.startswith("/api/forms/") and self.path.endswith("/upload"):
+                slug = self.path[len("/api/forms/"):-len("/upload")]
+                from pebble.server.forms import run_upload_attachment
+                run_upload_attachment(self, slug)
             elif self.path.startswith("/api/forms/"):
                 slug = self.path[len("/api/forms/"):]
                 self._handle_form_submit(slug)
