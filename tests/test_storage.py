@@ -16,6 +16,13 @@ import pytest
 from pebble import storage
 
 
+# Real magic bytes for the types we accept — used as a baseline body
+# in upload tests so the magic-byte validator passes.
+_PNG_HEADER  = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+_JPEG_HEADER = b"\xff\xd8\xff\xe0" + b"\x00" * 16
+_PDF_HEADER  = b"%PDF-1.4\n" + b"\x00" * 16
+
+
 # ---- Config helpers + fixtures ------------------------------------------
 
 @pytest.fixture(autouse=True)
@@ -113,7 +120,7 @@ def test_upload_raises_when_not_configured(monkeypatch):
     monkeypatch.delenv("PEBBLE_SUPABASE_URL")
     with pytest.raises(storage.StorageError, match="not configured"):
         storage.upload_attachment(
-            "acme", "x.png", b"data", "image/png",
+            "acme", "x.png", _PNG_HEADER, "image/png",
         )
 
 
@@ -140,7 +147,7 @@ def test_upload_constructs_correct_url(monkeypatch):
     result = storage.upload_attachment(
         slug="acme",
         filename="photo.jpg",
-        content=b"fake-jpeg-bytes",
+        content=_JPEG_HEADER,
         content_type="image/jpeg",
     )
     assert captured["method"] == "POST"
@@ -149,7 +156,7 @@ def test_upload_constructs_correct_url(monkeypatch):
     # Path begins with slug folder
     assert "acme/" in captured["url"]
     # File body sent through
-    assert captured["data"] == b"fake-jpeg-bytes"
+    assert captured["data"] == _JPEG_HEADER
     # Bearer token + content-type set (urllib normalizes header casing)
     headers_lower = {k.lower(): v for k, v in captured["headers"].items()}
     assert headers_lower["authorization"] == "Bearer service-role-fake-key"
@@ -166,7 +173,7 @@ def test_upload_uses_custom_bucket_env(monkeypatch):
         "urllib.request.urlopen",
         lambda req, *_a, **_k: captured.update({"url": req.full_url}) or _FakeResponse(200),
     )
-    storage.upload_attachment("acme", "x.png", b"data", "image/png")
+    storage.upload_attachment("acme", "x.png", _PNG_HEADER, "image/png")
     assert "/alt-bucket/" in captured["url"]
 
 
@@ -176,8 +183,8 @@ def test_upload_includes_random_nonce_segment(monkeypatch):
     upload URLs)."""
     monkeypatch.setattr(
         "urllib.request.urlopen", lambda *_a, **_k: _FakeResponse(200))
-    a = storage.upload_attachment("acme", "x.png", b"data", "image/png")
-    b = storage.upload_attachment("acme", "x.png", b"data", "image/png")
+    a = storage.upload_attachment("acme", "x.png", _PNG_HEADER, "image/png")
+    b = storage.upload_attachment("acme", "x.png", _PNG_HEADER, "image/png")
     assert a.path != b.path
 
 
@@ -192,7 +199,7 @@ def test_upload_raises_on_http_error(monkeypatch):
         raise err
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
     with pytest.raises(storage.StorageError, match="Bucket not found"):
-        storage.upload_attachment("acme", "x.png", b"data", "image/png")
+        storage.upload_attachment("acme", "x.png", _PNG_HEADER, "image/png")
 
 
 def test_upload_raises_on_url_error(monkeypatch):
@@ -201,7 +208,7 @@ def test_upload_raises_on_url_error(monkeypatch):
         raise urllib.error.URLError("DNS lookup failed")
     monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
     with pytest.raises(storage.StorageError, match="unreachable"):
-        storage.upload_attachment("acme", "x.png", b"data", "image/png")
+        storage.upload_attachment("acme", "x.png", _PNG_HEADER, "image/png")
 
 
 # ---- create_signed_url --------------------------------------------------
@@ -229,3 +236,64 @@ def test_signed_url_raises_on_missing_signed_url_field(monkeypatch):
     )
     with pytest.raises(storage.StorageError, match="missing"):
         storage.create_signed_url("acme/x.png")
+
+
+# ---- NLM round on Tracks 9–11: double-extension + magic-byte defense ----
+
+def test_safe_name_collapses_internal_dots():
+    """Double-extension confusion: "malware.php.jpg" must become
+    "malware_php.jpg" so the file can't be mistaken for a PHP that
+    happens to end in .jpg or a JPEG with a PHP-like middle name."""
+    assert storage._safe_name("malware.php.jpg") == "malware_php.jpg"
+    assert storage._safe_name("a.b.c.d.exe") == "a_b_c_d.exe"
+
+
+def test_safe_name_preserves_simple_extension():
+    """A single dot stays as-is."""
+    assert storage._safe_name("photo.jpg") == "photo.jpg"
+    assert storage._safe_name("report.pdf") == "report.pdf"
+
+
+def test_validate_magic_bytes_accepts_real_png():
+    assert storage.validate_magic_bytes(_PNG_HEADER, "image/png") is True
+
+
+def test_validate_magic_bytes_accepts_real_jpeg():
+    assert storage.validate_magic_bytes(_JPEG_HEADER, "image/jpeg") is True
+
+
+def test_validate_magic_bytes_accepts_real_pdf():
+    assert storage.validate_magic_bytes(_PDF_HEADER, "application/pdf") is True
+
+
+def test_validate_magic_bytes_rejects_jpeg_with_png_header():
+    """MIME-spoof defense: bytes are PNG but content_type says JPEG."""
+    assert storage.validate_magic_bytes(_PNG_HEADER, "image/jpeg") is False
+
+
+def test_validate_magic_bytes_rejects_arbitrary_bytes_as_image():
+    """Plain text declared as image must be rejected."""
+    assert storage.validate_magic_bytes(b"hello world" * 4, "image/png") is False
+
+
+def test_validate_magic_bytes_accepts_heic_without_strict_check():
+    """HEIC has variable ftyp box; we allow it (in the map with None)."""
+    assert storage.validate_magic_bytes(b"\x00\x00\x00\x20ftypheic", "image/heic") is True
+
+
+def test_validate_magic_bytes_rejects_short_input():
+    """A 1-byte upload can't carry a 4-byte magic header."""
+    assert storage.validate_magic_bytes(b"x", "image/png") is False
+
+
+def test_validate_magic_bytes_rejects_unknown_mime():
+    """If declared MIME isn't in the map, fail closed."""
+    assert storage.validate_magic_bytes(_PNG_HEADER, "application/octet-stream") is False
+
+
+def test_upload_refuses_mime_spoof(monkeypatch):
+    """End-to-end: claim image/jpeg, send PNG bytes → upload refused
+    before any network call. Closes the NLM T2."""
+    monkeypatch.setattr("urllib.request.urlopen", lambda *_a, **_k: _FakeResponse(200))
+    with pytest.raises(storage.StorageError, match="magic-byte"):
+        storage.upload_attachment("acme", "x.jpg", _PNG_HEADER, "image/jpeg")

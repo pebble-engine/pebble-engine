@@ -71,10 +71,19 @@ _UPLOAD_MAX_BYTES = 5 * 1024 * 1024  # 5 MB
 # attaches 2-3 files, tight enough that a bot can't quickly fill the bucket.
 _upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
 
+# Per-PROJECT upload quota — closes the "rotated-IPs storage
+# exhaustion" vector NLM flagged on Tracks 9–11 review. The per-IP
+# limiter caps any single attacker, but an attacker with many IPs
+# (botnet, datacenter pool) sums to unbounded uploads otherwise.
+# 100/day per project is generous for real contact-form attachment
+# volume; spam patterns trip the cap quickly.
+_upload_project_limiter = RateLimiter(rate=100/86400.0, burst=100)
+
 
 def _reset_upload_rate_limiter_for_tests() -> None:
-    global _upload_rate_limiter
+    global _upload_rate_limiter, _upload_project_limiter
     _upload_rate_limiter = RateLimiter(rate=1/12.0, burst=5)
+    _upload_project_limiter = RateLimiter(rate=100/86400.0, burst=100)
 
 
 def _engine():
@@ -429,6 +438,11 @@ def run_upload_attachment(handler, slug: str) -> None:
     ip = _client_ip(handler)
     if ip and not _upload_rate_limiter.allow(f"upload:{ip}"):
         handler._json(429, {"error": "too many uploads, slow down"}); return
+    # Per-project daily cap (rotated-IP defense). Returns the same
+    # 429 shape so the client treats it uniformly with the per-IP cap.
+    if not _upload_project_limiter.allow(f"upload-project:{slug}"):
+        log.info("upload throttled for project %s (daily cap)", slug)
+        handler._json(429, {"error": "this project has hit today's upload quota"}); return
 
     # Cap the JSON envelope at ~7 MB to absorb base64 inflation of a
     # 5 MB payload (4/3 expansion + JSON overhead) without enabling

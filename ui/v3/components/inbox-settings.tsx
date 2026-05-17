@@ -45,26 +45,35 @@ export function InboxSettings({ slug }: { slug: string }) {
     let cancelled = false;
     async function load() {
       setLoading(true);
-      try {
-        const [wh, autoresp] = await Promise.all([
-          fetchWebhookConfig(slug),
-          fetchAutoresponder(slug),
-        ]);
-        if (cancelled) return;
-        setWebhook(wh.webhook);
-        setWebhookUrl(wh.webhook?.url || "");
-        setAr(autoresp.autoresponder);
-        setArEnabled(autoresp.autoresponder.enabled);
-        setArSubject(autoresp.autoresponder.subject);
-        setArBody(autoresp.autoresponder.body);
-        setArReplyField(autoresp.autoresponder.reply_field || "email");
-      } catch (e) {
-        if (!cancelled) {
-          setWebhookError(e instanceof Error ? e.message : String(e));
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
+      // Settle each fetch independently so a failure on one config
+      // doesn't take the other section down with it. NLM round on
+      // Tracks 9–11 flagged the previous Promise.all-then-catch
+      // pattern as a state-desync T3 (autoresponder section would
+      // hang in loading state when only webhook failed).
+      const results = await Promise.allSettled([
+        fetchWebhookConfig(slug),
+        fetchAutoresponder(slug),
+      ]);
+      if (cancelled) return;
+      const [whResult, arResult] = results;
+      if (whResult.status === "fulfilled") {
+        setWebhook(whResult.value.webhook);
+        setWebhookUrl(whResult.value.webhook?.url || "");
+      } else {
+        const err = whResult.reason;
+        setWebhookError(err instanceof Error ? err.message : String(err));
       }
+      if (arResult.status === "fulfilled") {
+        setAr(arResult.value.autoresponder);
+        setArEnabled(arResult.value.autoresponder.enabled);
+        setArSubject(arResult.value.autoresponder.subject);
+        setArBody(arResult.value.autoresponder.body);
+        setArReplyField(arResult.value.autoresponder.reply_field || "email");
+      } else {
+        const err = arResult.reason;
+        setArError(err instanceof Error ? err.message : String(err));
+      }
+      setLoading(false);
     }
     void load();
     return () => { cancelled = true; };

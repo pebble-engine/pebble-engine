@@ -853,6 +853,63 @@ def test_upload_endpoint_rate_limited_after_burst(engine_server, monkeypatch):
     assert 429 in statuses, f"expected 429 after burst, got {statuses}"
 
 
+def test_upload_endpoint_refuses_mime_spoof_end_to_end(engine_server, monkeypatch):
+    """Declared image/jpeg but bytes are PNG → validate_magic_bytes
+    refuses inside upload_attachment, surfaces as 502 from the
+    handler. No network call escapes."""
+    from pebble.server.forms import _reset_upload_rate_limiter_for_tests
+    _reset_upload_rate_limiter_for_tests()
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+
+    out = engine_server["output"]
+    _seed_project(out, "up-co")
+    png_bytes = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
+    status, body = _request("POST", engine_server["base"], "/api/forms/up-co/upload", {
+        "filename":     "claims-to-be.jpg",
+        "content_type": "image/jpeg",
+        "data":         _b64(png_bytes),
+    })
+    assert status == 502
+    assert "magic-byte" in body["error"].lower() or "match" in body["error"].lower()
+
+
+def test_upload_endpoint_enforces_per_project_quota(engine_server, monkeypatch):
+    """Rotated-IP defense: the per-IP limiter caps any single attacker,
+    but the per-project quota bounds total uploads even when each
+    request comes from a different IP. Burst is 100/day."""
+    from pebble import storage
+    from pebble.server.forms import _reset_upload_rate_limiter_for_tests
+    _reset_upload_rate_limiter_for_tests()
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "fake-key")
+    monkeypatch.setattr("pebble.server.forms.upload_attachment",
+        lambda slug, filename, content, content_type, **kw: storage.UploadResult(
+            path=f"{slug}/x/{filename}",
+            public_url="https://x",
+            bucket="form-uploads",
+        ),
+    )
+    # Patch out the per-IP limiter so we test the per-project one in
+    # isolation (simulates rotated IPs).
+    monkeypatch.setattr(
+        "pebble.server.forms._upload_rate_limiter",
+        type("Always", (), {"allow": staticmethod(lambda _k: True)})(),
+    )
+
+    out = engine_server["output"]
+    _seed_project(out, "up-quota-co")
+    statuses = []
+    for i in range(120):
+        s, _ = _request("POST", engine_server["base"], "/api/forms/up-quota-co/upload", {
+            "filename": f"f{i}.png", "content_type": "image/png", "data": _b64(b"x"),
+        })
+        statuses.append(s)
+    assert 429 in statuses, f"per-project quota should trip, got {set(statuses)}"
+    # Most early ones pass (burst is 100); 429s appear after.
+    assert statuses.count(200) <= 100, "burst should cap at 100 successful uploads"
+
+
 # ---------------------------------------------------------------------------
 
 

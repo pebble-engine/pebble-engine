@@ -70,9 +70,16 @@ def is_configured() -> bool:
 
 
 def _safe_name(filename: str) -> str:
-    """Slugify the visitor-provided filename. Keeps the extension;
+    """Slugify the visitor-provided filename. Keeps a single extension;
     drops everything that isn't `[a-zA-Z0-9._-]`. Caps the result so
-    a 1KB filename can't blow up the storage key."""
+    a 1KB filename can't blow up the storage key.
+
+    Double-extension defense (NLM round on Tracks 9–11): "shell.php.jpg"
+    would otherwise survive the [.] check and be served as a JPEG with
+    a PHP-like middle name. We collapse all internal dots to underscores
+    and keep only the FINAL extension — so the example becomes
+    "shell_php.jpg" which is unambiguous.
+    """
     if not isinstance(filename, str) or not filename:
         return "file"
     # Strip any directory traversal pieces up front.
@@ -81,6 +88,14 @@ def _safe_name(filename: str) -> str:
     base = re.sub(r"[^a-zA-Z0-9._-]+", "_", base).strip("._")
     if not base:
         base = "file"
+
+    # Collapse internal dots — keep only the final extension. Prevents
+    # double-extension confusion ("malware.php.jpg" → "malware_php.jpg").
+    if "." in base:
+        head, _, ext = base.rpartition(".")
+        head_clean = head.replace(".", "_")
+        base = f"{head_clean}.{ext}" if ext else head_clean
+
     if len(base) > _MAX_SAFE_NAME_LEN:
         # Preserve the extension if present.
         if "." in base:
@@ -89,6 +104,54 @@ def _safe_name(filename: str) -> str:
         else:
             base = base[:_MAX_SAFE_NAME_LEN]
     return base
+
+
+# Magic-byte prefixes for the MIME types we accept. Used to refuse
+# uploads where the declared content_type doesn't match the actual
+# bytes — a basic file-type-spoof defense.
+#
+# Tuple of accepted prefixes per MIME. None means "skip the check"
+# (e.g. text/plain has no fixed magic bytes; .docx is a ZIP and
+# multiple variants exist; just trust the declared type for these).
+_MIME_MAGIC_BYTES: dict[str, Optional[tuple[bytes, ...]]] = {
+    "image/jpeg":      (b"\xff\xd8\xff",),
+    "image/png":       (b"\x89PNG\r\n\x1a\n",),
+    "image/gif":       (b"GIF87a", b"GIF89a"),
+    "image/webp":      (b"RIFF",),  # followed by 4 size bytes + "WEBP"
+    "image/heic":      None,        # variable ftyp box; trust declaration
+    "image/heif":      None,
+    "application/pdf": (b"%PDF-",),
+    "text/plain":      None,        # no magic; allow
+    "application/msword":           (b"\xd0\xcf\x11\xe0",),  # OLE
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+                                    (b"PK\x03\x04",),       # ZIP (docx)
+}
+
+
+def validate_magic_bytes(content: bytes, declared_mime: str) -> bool:
+    """Return True iff the first bytes of `content` match what the
+    declared MIME type implies.
+
+    `None` in the map = no check (text/plain, heic/heif variations).
+    Unknown MIME = False (caller should have allowlist-checked first
+    but we fail closed in case of drift).
+
+    Used by `upload_attachment` as a basic anti-spoofing gate. Not a
+    full mime-sniffing replacement — sufficient for the small
+    allowlist we accept.
+    """
+    if not isinstance(content, (bytes, bytearray)) or len(content) < 4:
+        return False
+    expected = _MIME_MAGIC_BYTES.get(declared_mime)
+    if expected is None:
+        # Either the MIME has no fixed magic, or it's not in the map.
+        # If it's in the map with explicit None, accept; else reject.
+        return declared_mime in _MIME_MAGIC_BYTES
+    head = bytes(content[:32])
+    # WebP needs the "WEBP" marker at offset 8 in addition to "RIFF".
+    if declared_mime == "image/webp":
+        return head.startswith(b"RIFF") and b"WEBP" in head[:16]
+    return any(head.startswith(prefix) for prefix in expected)
 
 
 def _safe_slug(slug: str) -> str:
@@ -131,6 +194,14 @@ def upload_attachment(
         raise StorageError("upload content is empty")
     if not isinstance(content_type, str) or not content_type:
         raise StorageError("content_type is required")
+    # Anti-spoofing: check the bytes match the declared MIME for the
+    # types we know how to fingerprint. Closes the "malware.exe
+    # declared as image/jpeg" vector NLM flagged on Tracks 9–11.
+    if not validate_magic_bytes(bytes(content), content_type):
+        raise StorageError(
+            f"content does not match declared content_type {content_type!r} "
+            f"(magic-byte check failed)"
+        )
 
     bucket = _bucket()
     safe_slug = _safe_slug(slug)
@@ -234,6 +305,7 @@ __all__ = [
     "is_configured",
     "upload_attachment",
     "create_signed_url",
+    "validate_magic_bytes",
     "_safe_name",
     "_safe_slug",
 ]
