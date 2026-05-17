@@ -50,11 +50,28 @@ _MAX_SAFE_NAME_LEN = 80
 
 
 def _env_url() -> str:
-    return os.environ.get("PEBBLE_SUPABASE_URL", "").strip().rstrip("/")
+    """Resolve the Supabase project URL from env.
+
+    Accepts BOTH conventions:
+    - PEBBLE_SUPABASE_URL (engine-prefixed; what older docs reference)
+    - SUPABASE_URL (Supabase's own template convention; what you get if
+      you copy the snippet straight out of their dashboard)
+
+    The prefixed name wins when both are set, so an explicit override
+    in .env beats whatever the v3 frontend already has."""
+    val = (os.environ.get("PEBBLE_SUPABASE_URL")
+           or os.environ.get("SUPABASE_URL")
+           or "").strip()
+    return val.rstrip("/")
 
 
 def _env_key() -> str:
-    return os.environ.get("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    """Resolve the service-role key. Same fallback pattern as _env_url —
+    accepts either PEBBLE_SUPABASE_SERVICE_ROLE_KEY (engine-prefixed)
+    or SUPABASE_SERVICE_ROLE_KEY (Supabase's snippet convention)."""
+    return (os.environ.get("PEBBLE_SUPABASE_SERVICE_ROLE_KEY")
+            or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+            or "").strip()
 
 
 def _bucket() -> str:
