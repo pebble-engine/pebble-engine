@@ -265,10 +265,13 @@ Supabase exclusively).
                                      warning. Shared safe_user_id
                                      helper extracted to pebble.security
                                      (commit 71e7e7a).
-[ ] 9.5  7-day free trial          → not built. Either add
-                                     subscription_data.trial_period_days=7
-                                     to checkout, or use Stripe's
-                                     Dashboard-side trial config.
+[x] 9.5  7-day free trial          → env-gated via PEBBLE_TRIAL_DAYS
+                                     (commit pending). Set to a positive
+                                     integer; Stripe-managed trial via
+                                     subscription_data.trial_period_days.
+                                     Default unset = immediate charge.
+                                     Customer Portal lets users cancel
+                                     during trial with no charge.
 [ ] 9.6  Tier swap (Starter ↔ Pro) → handled FOR FREE by the Customer
                                      Portal (Stripe upgrades/prorates
                                      server-side). Verify the portal config

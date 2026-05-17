@@ -71,6 +71,25 @@ def _public_base_url() -> str:
             or "http://localhost:3001")
 
 
+def _trial_period_days() -> Optional[int]:
+    """Return the configured trial length, or None for "no trial".
+
+    Reads ``PEBBLE_TRIAL_DAYS`` from env. Accepts only positive integers;
+    anything else (unset, ``"0"``, negative, non-numeric) returns None
+    so the Checkout call omits ``trial_period_days`` entirely. Stripe
+    treats ``trial_period_days=0`` as a 1-day trial — explicitly NOT
+    what the operator means when they set the env to 0.
+    """
+    raw = os.environ.get("PEBBLE_TRIAL_DAYS", "").strip()
+    if not raw:
+        return None
+    try:
+        n = int(raw)
+    except ValueError:
+        return None
+    return n if n > 0 else None
+
+
 def run_create_session(handler) -> None:
     """Entry point — wired from PebbleHandler.do_POST."""
     user = require_user(handler)
@@ -106,6 +125,16 @@ def run_create_session(handler) -> None:
     base_url = _public_base_url()
     pebble_user_id = user.get("id", "")
 
+    subscription_data: dict = {
+        "metadata": {"pebble_user_id": pebble_user_id, "pebble_plan": plan},
+    }
+    trial_days = _trial_period_days()
+    if trial_days is not None:
+        # Chapter 9.5 — env-gated free trial. Stripe charges the card
+        # `trial_days` after Checkout completes (Customer Portal users
+        # can cancel during the trial with no charge).
+        subscription_data["trial_period_days"] = trial_days
+
     try:
         session = stripe.checkout.Session.create(
             mode="subscription",
@@ -119,9 +148,7 @@ def run_create_session(handler) -> None:
             # subscription so the webhook can route events back to a Pebble
             # user without join-on-email (emails can be changed).
             metadata={"pebble_user_id": pebble_user_id, "pebble_plan": plan},
-            subscription_data={
-                "metadata": {"pebble_user_id": pebble_user_id, "pebble_plan": plan},
-            },
+            subscription_data=subscription_data,
         )
     except stripe.error.StripeError:
         # Don't log .args of the exception — they can contain message

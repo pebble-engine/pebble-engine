@@ -238,6 +238,61 @@ def test_success_url_has_session_id_placeholder(signed_in_user, stripe_env, fake
     assert kwargs["cancel_url"].startswith("https://app.test.pebble/")
 
 
+def test_no_trial_days_when_env_unset(signed_in_user, stripe_env, fake_stripe, monkeypatch):
+    """Chapter 9.5 — when PEBBLE_TRIAL_DAYS is not set, the Checkout
+    Session must NOT include subscription_data.trial_period_days. Default
+    behavior is immediate-charge."""
+    monkeypatch.delenv("PEBBLE_TRIAL_DAYS", raising=False)
+    from pebble.server import stripe_checkout
+
+    h = FakeHandler({"plan": "starter"})
+    stripe_checkout.run_create_session(h)
+    sub_data = fake_stripe.checkout.Session.create.call_args.kwargs.get("subscription_data") or {}
+    assert "trial_period_days" not in sub_data
+
+
+def test_trial_days_passed_when_env_set_to_positive_int(
+    signed_in_user, stripe_env, fake_stripe, monkeypatch,
+):
+    """When PEBBLE_TRIAL_DAYS=7, the Checkout Session gets a 7-day
+    trial before the first charge."""
+    monkeypatch.setenv("PEBBLE_TRIAL_DAYS", "7")
+    from pebble.server import stripe_checkout
+
+    h = FakeHandler({"plan": "starter"})
+    stripe_checkout.run_create_session(h)
+    sub_data = fake_stripe.checkout.Session.create.call_args.kwargs["subscription_data"]
+    assert sub_data["trial_period_days"] == 7
+
+
+def test_trial_days_zero_means_no_trial(signed_in_user, stripe_env, fake_stripe, monkeypatch):
+    """PEBBLE_TRIAL_DAYS=0 is the explicit 'no trial' value — must NOT
+    pass trial_period_days=0 to Stripe (Stripe's API treats 0 as a
+    1-day trial)."""
+    monkeypatch.setenv("PEBBLE_TRIAL_DAYS", "0")
+    from pebble.server import stripe_checkout
+
+    h = FakeHandler({"plan": "starter"})
+    stripe_checkout.run_create_session(h)
+    sub_data = fake_stripe.checkout.Session.create.call_args.kwargs.get("subscription_data") or {}
+    assert "trial_period_days" not in sub_data
+
+
+def test_trial_days_invalid_value_is_ignored(signed_in_user, stripe_env, fake_stripe, monkeypatch):
+    """Non-int values (whitespace, 'abc', negatives) must be silently
+    ignored — the endpoint stays functional rather than 500'ing on a
+    misconfigured env."""
+    from pebble.server import stripe_checkout
+
+    for bad_value in ["abc", "-1", "7.5", "  ", "true"]:
+        monkeypatch.setenv("PEBBLE_TRIAL_DAYS", bad_value)
+        fake_stripe.checkout.Session.create.reset_mock()
+        h = FakeHandler({"plan": "starter"})
+        stripe_checkout.run_create_session(h)
+        sub_data = fake_stripe.checkout.Session.create.call_args.kwargs.get("subscription_data") or {}
+        assert "trial_period_days" not in sub_data, f"bad value {bad_value!r} leaked into Checkout"
+
+
 def test_passes_pebble_user_id_in_metadata(signed_in_user, stripe_env, fake_stripe):
     """Stamp the Supabase user id on the Checkout Session as metadata so
     the webhook can look up which Pebble user a subscription belongs to
