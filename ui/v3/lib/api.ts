@@ -780,3 +780,21 @@ export async function removeDomain(slug: string): Promise<{ slug: string; remove
 export async function deleteProject(slug: string): Promise<{ slug: string; deleted: boolean }> {
   return deleteJSON(`/api/projects/${encodeURIComponent(slug)}`);
 }
+
+// ---------- /api/account/* --------------------------------------------------
+
+export type ProfileResponse = {
+  id:                     string;
+  email:                  string;
+  first_name:             string | null;
+  display_name:           string | null;
+  timezone:               string;
+  plan_tier:              string;
+  deletion_scheduled_for: string | null;
+};
+
+export type ProfileUpdates = {
+  first_name?:   string | null;
+  display_name?: string | null;
+  timezone?:     string;
+};

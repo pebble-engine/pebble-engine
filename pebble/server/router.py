@@ -65,7 +65,7 @@ def route_options(handler) -> None:
         handler.send_header("Vary", "Origin")
     if allow_credentials:
         handler.send_header("Access-Control-Allow-Credentials", "true")
-    handler.send_header("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS")
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
     handler.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
     handler.send_header("Access-Control-Max-Age", "86400")
     handler.end_headers()
@@ -142,6 +142,9 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/analytics")]
             from pebble.server.analytics import run_get_summary
             run_get_summary(handler, slug)
+        elif handler.path == "/api/account/profile":
+            from pebble.server.account import run_get_profile
+            run_get_profile(handler)
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
@@ -235,6 +238,9 @@ def route_post(handler) -> None:
         elif handler.path == "/api/account/delete":
             from pebble.server.account import run_delete_account
             run_delete_account(handler)
+        elif handler.path == "/api/account/cancel-deletion":
+            from pebble.server.account import run_cancel_deletion
+            run_cancel_deletion(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url
@@ -280,5 +286,20 @@ def route_delete(handler) -> None:
             handler._handle_delete_project(slug)
         else:
             handler.send_response(404); handler.end_headers()
+    except Exception as exc:
+        handler._handle_500(exc)
+
+
+def route_patch(handler) -> None:
+    """PATCH is only used for profile updates today."""
+    handler.path = handler.path.split("?", 1)[0]
+    try:
+        if handler.path == "/api/account/profile":
+            from pebble.server.account import run_patch_profile
+            run_patch_profile(handler)
+        else:
+            handler.send_response(405)
+            handler.send_header("Allow", "GET, POST, DELETE, OPTIONS")
+            handler.end_headers()
     except Exception as exc:
         handler._handle_500(exc)

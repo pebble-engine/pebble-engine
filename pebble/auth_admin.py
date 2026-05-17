@@ -242,9 +242,102 @@ def delete_user(
         raise AdminError(f"delete user: Supabase unreachable: {e.reason}") from e
 
 
+def get_profile(
+    user_id: str,
+    *,
+    timeout_sec: float = _DEFAULT_TIMEOUT_SEC,
+) -> Optional[dict]:
+    """Fetch the public.profiles row for *user_id* via PostgREST.
+
+    Returns the profile dict or None if not found.
+    Raises AdminError on config / network failure.
+    """
+    if not is_configured():
+        raise AdminError("Supabase admin not configured")
+    uid = (user_id or "").strip()
+    if not uid or len(uid) > 64 or "/" in uid or "\\" in uid:
+        raise AdminError("user_id has unexpected shape")
+    url = (
+        f"{_env_url()}/rest/v1/profiles"
+        f"?id=eq.{urllib.parse.quote(uid)}&select=*&limit=1"
+    )
+    req = urllib.request.Request(url, headers={
+        "apikey":        _env_service_role(),
+        "Authorization": f"Bearer {_env_service_role()}",
+        "Accept":        "application/json",
+        "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            rows = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise AdminError(f"get_profile: HTTP {e.code}") from e
+    except urllib.error.URLError as e:
+        raise AdminError(f"get_profile: Supabase unreachable: {e.reason}") from e
+    if not isinstance(rows, list) or not rows:
+        return None
+    return rows[0]
+
+
+def update_profile(
+    user_id: str,
+    updates: dict,
+    *,
+    timeout_sec: float = _DEFAULT_TIMEOUT_SEC,
+) -> Optional[dict]:
+    """PATCH the public.profiles row for *user_id* via PostgREST.
+
+    Only the fields in *updates* that are in the allowed set
+    (``first_name``, ``display_name``, ``timezone``) are forwarded.
+    Returns the updated row, or None if the row wasn't found.
+    Raises AdminError on config / network / validation failure.
+    """
+    if not is_configured():
+        raise AdminError("Supabase admin not configured")
+    uid = (user_id or "").strip()
+    if not uid or len(uid) > 64 or "/" in uid or "\\" in uid:
+        raise AdminError("user_id has unexpected shape")
+    allowed = {"first_name", "display_name", "timezone"}
+    safe: dict = {}
+    for k, v in (updates or {}).items():
+        if k not in allowed:
+            continue
+        if not isinstance(v, (str, type(None))):
+            raise AdminError(f"field {k!r} must be a string or null")
+        if isinstance(v, str) and len(v) > 256:
+            raise AdminError(f"field {k!r} is too long (max 256 chars)")
+        safe[k] = v
+    if not safe:
+        raise AdminError("no updatable fields provided")
+    url = (
+        f"{_env_url()}/rest/v1/profiles"
+        f"?id=eq.{urllib.parse.quote(uid)}"
+    )
+    body = json.dumps(safe).encode("utf-8")
+    req = urllib.request.Request(url, data=body, method="PATCH", headers={
+        "apikey":        _env_service_role(),
+        "Authorization": f"Bearer {_env_service_role()}",
+        "Content-Type":  "application/json",
+        "Prefer":        "return=representation",
+        "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
+            rows = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as e:
+        raise AdminError(f"update_profile: HTTP {e.code}") from e
+    except urllib.error.URLError as e:
+        raise AdminError(f"update_profile: Supabase unreachable: {e.reason}") from e
+    if not isinstance(rows, list) or not rows:
+        return None
+    return rows[0]
+
+
 __all__ = [
     "AdminError",
     "is_configured",
     "validate_access_token",
     "delete_user",
+    "get_profile",
+    "update_profile",
 ]

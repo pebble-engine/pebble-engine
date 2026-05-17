@@ -1519,6 +1519,11 @@ class PebbleHandler(BaseHTTPRequestHandler):
         from pebble.server.router import route_delete
         route_delete(self)
 
+    # ---- PATCH ----
+    def do_PATCH(self):
+        from pebble.server.router import route_patch
+        route_patch(self)
+
     def _handle_500(self, exc: BaseException) -> None:
         """Common 500 path. Logs the full traceback under a short
         correlation id and returns a generic JSON body so the client
@@ -1693,6 +1698,14 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if ".." in rel.split("/"):
             self.send_response(403); self.end_headers(); return
 
+        # Block preview if the project owner's subscription has lapsed.
+        # Unclaimed projects and free-tier users (no subscription.json) pass
+        # through. Only fired when a sentinel file is present with a
+        # non-active/trialing status — fail-open on any read error.
+        if self._subscription_lapsed(slug):
+            self._serve_subscription_lapse_page()
+            return
+
         # If a live `next dev` process is registered for this slug, proxy to
         # it so SSR routes work (Next.js apps have no compiled index.html on
         # disk — static-file serving would 404). Falls through to static
@@ -1800,6 +1813,59 @@ class PebbleHandler(BaseHTTPRequestHandler):
         finally:
             if conn:
                 conn.close()
+
+    def _subscription_lapsed(self, slug: str) -> bool:
+        """Return True only when a project owner has a subscription sentinel
+        file AND its status is neither active nor trialing.  Fail-open on
+        any read error so unclaimed / free-tier sites are never blocked."""
+        try:
+            brief_file = OUTPUT_DIR / slug / "brief.json"
+            if not brief_file.exists():
+                return False
+            brief = json.loads(brief_file.read_text(encoding="utf-8"))
+            user_id = brief.get("_user_id")
+            if not user_id:
+                return False
+            sub_file = OUTPUT_DIR / ".users" / user_id / "subscription.json"
+            if not sub_file.exists():
+                return False
+            sub = json.loads(sub_file.read_text(encoding="utf-8"))
+            status = sub.get("status") or ""
+            return status not in ("active", "trialing")
+        except Exception:
+            return False
+
+    def _serve_subscription_lapse_page(self) -> None:
+        """Serve a simple HTML notice when a project's subscription has lapsed."""
+        html = (
+            "<!DOCTYPE html><html lang='en'><head>"
+            "<meta charset='utf-8'>"
+            "<meta name='viewport' content='width=device-width,initial-scale=1'>"
+            "<title>Site unavailable — Pebble</title>"
+            "<style>"
+            "body{font-family:system-ui,sans-serif;display:flex;align-items:center;"
+            "justify-content:center;min-height:100vh;margin:0;background:#f8f8f7;}"
+            ".card{background:#fff;border-radius:16px;padding:48px;max-width:480px;"
+            "text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.07);}"
+            "h1{font-size:1.5rem;margin:0 0 12px;color:#1a1a1a;}"
+            "p{color:#6b7280;line-height:1.6;margin:0 0 24px;}"
+            "a{display:inline-block;background:#f59e0b;color:#fff;padding:10px 24px;"
+            "border-radius:999px;text-decoration:none;font-weight:600;}"
+            "</style></head><body>"
+            "<div class='card'>"
+            "<h1>This site is temporarily unavailable</h1>"
+            "<p>The Pebble subscription for this site has lapsed. "
+            "The site owner can reactivate it from their billing settings.</p>"
+            "<a href='/settings'>Reactivate subscription</a>"
+            "</div></body></html>"
+        )
+        data = html.encode("utf-8")
+        self.send_response(402)
+        self.send_header("Content-Type", "text/html; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(data)
 
     def _handle_build(self, generate: bool):
         """Build pipeline route. Body lives in :mod:`pebble.server.build` so
