@@ -151,6 +151,29 @@ def test_missing_business_type_does_not_crash():
     assert "id" in card
 
 
+def test_business_type_matching_is_case_insensitive():
+    """The picker lowercases business_type before substring matching,
+    so a user typing 'WEDDING PHOTOGRAPHER' or 'Wedding Photographer'
+    routes the same as 'wedding photographer'. Locks the behavior the
+    intake form depends on."""
+    lower = {"business_type": "wedding photographer"}
+    upper = {"business_type": "WEDDING PHOTOGRAPHER"}
+    title = {"business_type": "Wedding Photographer"}
+    # All three should hard-exclude terminal_operator
+    for brief in (lower, upper, title):
+        rolls = [pick_dna_for_brief(brief)["id"] for _ in range(200)]
+        assert "terminal_operator" not in rolls, (
+            f"case variant {brief['business_type']!r} should still exclude terminal_operator"
+        )
+
+
+def test_extra_whitespace_in_business_type_does_not_break_matching():
+    """Real intake forms sometimes ship trailing/leading whitespace."""
+    brief = {"business_type": "  wedding photographer  "}
+    rolls = [pick_dna_for_brief(brief)["id"] for _ in range(200)]
+    assert "terminal_operator" not in rolls
+
+
 def test_pick_random_dna_still_works_unchanged():
     """Backward compat: existing tests + callers using pick_random_dna
     must continue to see uniform-random behavior across all 13 cards."""
