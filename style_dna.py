@@ -359,37 +359,65 @@ def pick_random_dna(seed: Optional[int] = None) -> dict:
     return rng.choice(DNA_CARDS)
 
 
-_AFFINITY_BOOST = 30
-
-
 def pick_dna_for_brief(brief: dict, seed: Optional[int] = None) -> dict:
-    """Pick a DNA card weighted by the brief's industry signals.
+    """Strict industry-aware DNA pick.
 
-    Each card declares `industry_affinity` (10× weight boost) and
-    `industry_aversion` (hard exclude) keyword lists. A card is excluded
-    if ANY aversion keyword appears as a substring of the brief's
-    `business_type`. Otherwise its weight is `_AFFINITY_BOOST` when any
-    affinity keyword matches, else 1. Falls back to uniform random if
-    every card was aversed (defensive — shouldn't happen with current
-    taxonomy).
+    The selection has three tiers:
+
+    1. **Strict mode** (preferred): when the brief's `business_type`
+       matches at least one card's `industry_affinity` keyword, ONLY
+       affinity-matched cards (minus any with a conflicting aversion)
+       are eligible. Pick uniform-random across them.
+
+    2. **Safe-random fallback**: when no card has an affinity for the
+       brief (industry is novel or not yet taxonomized), pick uniform-
+       random across all cards whose aversion list does NOT match —
+       still avoiding the catastrophic mismatches we know about.
+
+    3. **Last-resort fallback**: if even tier-2 produces no candidates
+       (e.g. an industry that conflicts with every card's aversion),
+       fall back to `pick_random_dna` — defensive only; not reachable
+       with the current taxonomy.
+
+    Why strict over weighted: weighting (15× / 30× affinity vs. 1×
+    baseline) still left a non-trivial probability of "unlucky baseline"
+    rolls. The 2026-05-17 round-2 5-build run caught Holloway & Reed
+    (boutique law firm) landing `industrial_freight` at ~2.6% chance,
+    and Vector Lane (software consultancy) landing `arthouse_folio`
+    despite the `software` aversion not protecting against it. Strict
+    mode reduces the surface to zero: if a card is in the affinity set
+    for the industry, ONLY peers also in the set can compete with it.
     """
     haystack = (brief.get("business_type") or "").lower()
-    candidates: list[dict] = []
-    weights: list[int] = []
-    for card in DNA_CARDS:
-        if any(kw in haystack for kw in card.get("industry_aversion", [])):
-            continue
-        weight = _AFFINITY_BOOST if any(
-            kw in haystack for kw in card.get("industry_affinity", [])
-        ) else 1
-        candidates.append(card)
-        weights.append(weight)
 
-    if not candidates:
-        return pick_random_dna(seed)
+    # Tier 1: any card with an affinity match?
+    affinity_matched = [
+        c for c in DNA_CARDS
+        if any(kw in haystack for kw in c.get("industry_affinity", []))
+    ]
+    if affinity_matched:
+        # Restrict to affinity AND not aversed (defensive — a single card
+        # shouldn't list a keyword on both sides, but the engine doesn't
+        # enforce that).
+        candidates = [
+            c for c in affinity_matched
+            if not any(kw in haystack for kw in c.get("industry_aversion", []))
+        ]
+        if candidates:
+            rng = random.Random(seed) if seed is not None else random
+            return rng.choice(candidates)
 
-    rng = random.Random(seed) if seed is not None else random
-    return rng.choices(candidates, weights=weights, k=1)[0]
+    # Tier 2: novel/untaxonomized industry — pick from non-aversed pool.
+    safe_candidates = [
+        c for c in DNA_CARDS
+        if not any(kw in haystack for kw in c.get("industry_aversion", []))
+    ]
+    if safe_candidates:
+        rng = random.Random(seed) if seed is not None else random
+        return rng.choice(safe_candidates)
+
+    # Tier 3: pathological — every card aversed. Shouldn't happen.
+    return pick_random_dna(seed)
 
 
 def pick_dna_by_id(dna_id: str) -> Optional[dict]:
