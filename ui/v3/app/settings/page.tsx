@@ -103,18 +103,33 @@ export default function SettingsPage() {
   // If the user just paid, the sentinel may not exist yet when this page
   // mounts. Poll briefly with a "syncing" message rather than flashing
   // "No active subscription" at someone who literally just gave us money.
+  //
+  // NLM round 4 R4.1: the cleanup must actually CLEAR the pending
+  // setTimeout, not just set a flag the loop will eventually notice.
+  // StrictMode mounts the component twice in dev; without clearTimeout
+  // both poll loops would run to completion in the background, leaking
+  // a few network requests + timers per visit.
   useEffect(() => {
     if (loading || !user) return;
     let cancelled = false;
+    let timerId: ReturnType<typeof setTimeout> | null = null;
     const maxAttempts = justCheckedOut ? 8 : 1;  // ~12s total when polling
     const intervalMs = 1500;
+
+    function sleep(ms: number): Promise<void> {
+      return new Promise((resolve) => {
+        timerId = setTimeout(() => {
+          timerId = null;
+          resolve();
+        }, ms);
+      });
+    }
 
     (async () => {
       for (let attempt = 0; attempt < maxAttempts && !cancelled; attempt++) {
         try {
           const sub = await fetchSubscription();
           if (cancelled) return;
-          // Success: stop polling as soon as the sentinel exists with a plan.
           if (sub.plan) {
             setSubscription(sub);
             setSubLoading(false);
@@ -125,14 +140,16 @@ export default function SettingsPage() {
           if (cancelled) return;
           setSubscription(null);
         }
-        // Last attempt? Don't sleep; just fall through and stop loading.
         if (attempt < maxAttempts - 1 && !cancelled) {
-          await new Promise((r) => setTimeout(r, intervalMs));
+          await sleep(intervalMs);
         }
       }
       if (!cancelled) setSubLoading(false);
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+      if (timerId !== null) clearTimeout(timerId);
+    };
   }, [loading, user, justCheckedOut]);
 
   async function onChangePassword(e: React.FormEvent) {

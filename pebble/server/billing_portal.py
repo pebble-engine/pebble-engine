@@ -92,8 +92,14 @@ def _load_customer_id(user_id: str) -> Optional[str]:
         return None
     if not isinstance(data, dict):
         return None
+    # NLM round 4 R4.2 — fail CLOSED, not open. The previous form
+    # `if isinstance(status, str) and status not in _ALLOWED: return None`
+    # let through sentinels where status was missing/None/non-string,
+    # because the isinstance check failed and skipped the membership
+    # test entirely. Invert so any non-string status (None, int, dict)
+    # OR any string outside the allowlist returns None.
     status = data.get("status")
-    if isinstance(status, str) and status not in _PORTAL_ALLOWED_STATUSES:
+    if not isinstance(status, str) or status not in _PORTAL_ALLOWED_STATUSES:
         return None
     cid = data.get("stripe_customer_id")
     return cid if isinstance(cid, str) and cid else None

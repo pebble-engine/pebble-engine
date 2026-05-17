@@ -282,6 +282,52 @@ def test_portal_minted_for_allowed_statuses(
     assert h.status == 200, f"status={allowed_status} should mint a portal session"
 
 
+def test_portal_blocks_when_status_missing(
+    signed_in_user, output_root, stripe_env, fake_stripe,
+):
+    """NLM round 4 R4.2 — the status filter must fail CLOSED. A sentinel
+    missing the status field altogether (older write, partial corruption,
+    future schema change) used to slip through because the previous
+    `isinstance(status, str) and ...` form short-circuited the membership
+    check. Now any non-string status returns None."""
+    import json
+    from pebble.server import billing_portal
+
+    p = output_root / ".users" / "uuid-marc-abc"
+    p.mkdir(parents=True)
+    # Sentinel with NO status field — only customer_id
+    (p / "subscription.json").write_text(json.dumps({
+        "stripe_customer_id":     "cus_marc",
+        "plan":                   "starter",
+        # status:                 INTENTIONALLY ABSENT
+    }), encoding="utf-8")
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+    assert h.status == 404
+    fake_stripe.billing_portal.Session.create.assert_not_called()
+
+
+def test_portal_blocks_when_status_is_null(
+    signed_in_user, output_root, stripe_env, fake_stripe,
+):
+    """Same defense as the missing-status case but with explicit JSON null."""
+    import json
+    from pebble.server import billing_portal
+
+    p = output_root / ".users" / "uuid-marc-abc"
+    p.mkdir(parents=True)
+    (p / "subscription.json").write_text(json.dumps({
+        "stripe_customer_id": "cus_marc",
+        "plan":               "starter",
+        "status":             None,
+    }), encoding="utf-8")
+
+    h = FakeHandler()
+    billing_portal.run_billing_portal(h)
+    assert h.status == 404
+
+
 @pytest.mark.parametrize("dead_status", ["incomplete_expired", "unpaid"])
 def test_portal_blocks_dead_statuses(
     signed_in_user, output_root, stripe_env, fake_stripe, dead_status,
