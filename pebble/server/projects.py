@@ -457,3 +457,78 @@ def run_delete_project(handler, slug: str) -> None:
     handler._json(200, {"slug": slug, "deleted": True})
     # Per-user engagement signal (T17).
     _log_engagement(caller_uid, "project_deleted")
+
+
+# --------- POST /api/projects/<slug>/claim ---------
+
+def run_claim_project(handler, slug: str) -> None:
+    """Attach an anonymous build to the caller's user account.
+
+    Inverted-onboarding pattern (#3 of the Onboarding Pattern Cheat
+    Sheet): a visitor can run the questionnaire and see a generated site
+    without signing up. When they decide to keep it, signup happens; the
+    UI then calls this endpoint with the build's slug. The endpoint
+    stamps ``_user_id`` onto the build's ``brief.json`` so it appears in
+    the user's dashboard.
+
+    Auth gates (via ``require_project_owner``):
+    - 400 if slug fails shape validation (path-traversal guard)
+    - 401 if not signed in
+    - 404 if project doesn't exist
+    - 403 if project is already owned by someone else
+    - 200 if project is unowned (claimable) OR already owned by caller
+      (idempotent — re-claim is a no-op).
+
+    Side effects: rewrites ``brief.json`` atomically (write to tmp, then
+    ``os.replace``) so a crash mid-claim leaves the file readable in
+    either the old or new state, never half-written. Preserves every
+    other field in the brief.
+    """
+    import os
+    import tempfile
+
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
+        return  # require_project_owner already wrote the response
+
+    brief_path = _output_dir() / slug / "brief.json"
+    if not brief_path.exists():
+        # Project dir exists (require_project_owner checked) but no brief.json.
+        # Unusual state; treat as not-claimable.
+        handler._json(404, {"error": "brief.json missing — cannot claim"}); return
+
+    try:
+        brief = json.loads(brief_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        log.warning("claim: brief.json parse failed for %s: %s", slug, e)
+        handler._json(500, {"error": "could not read brief.json"}); return
+    if not isinstance(brief, dict):
+        handler._json(500, {"error": "brief.json is not a JSON object"}); return
+
+    already_owned = brief.get("_user_id") == caller_uid
+    brief["_user_id"] = caller_uid
+
+    # Atomic write — tmp in same directory (same filesystem) then replace.
+    # Prevents readers from ever seeing a half-written brief.json.
+    tmp_fd, tmp_name = tempfile.mkstemp(
+        prefix=".brief.", suffix=".tmp", dir=str(brief_path.parent)
+    )
+    try:
+        with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+            json.dump(brief, f, indent=2)
+        os.replace(tmp_name, brief_path)
+    except Exception as e:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        log.warning("claim: atomic write failed for %s: %s", slug, e)
+        handler._json(500, {"error": "claim write failed"}); return
+
+    handler._json(200, {
+        "slug":            slug,
+        "claimed":         True,
+        "already_owned":   already_owned,
+    })
+    if not already_owned:
+        _log_engagement(caller_uid, "project_claimed")

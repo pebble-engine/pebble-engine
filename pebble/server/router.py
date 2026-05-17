@@ -209,6 +209,10 @@ def route_post(handler) -> None:
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/star"):
             slug = handler.path[len("/api/projects/"):-len("/star")]
             handler._handle_toggle_star(slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/claim"):
+            slug = handler.path[len("/api/projects/"):-len("/claim")]
+            from pebble.server.projects import run_claim_project
+            run_claim_project(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_set_domain(slug)
