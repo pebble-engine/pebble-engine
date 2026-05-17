@@ -1,0 +1,86 @@
+"""Pin the v3 inbox settings UI panel — Python-side wiring guard.
+
+The actual component is TypeScript (no JS test runner installed in v3),
+so these tests verify the WIRING from Python: the component file
+exists, the inbox page imports it, and the API client exposes the
+five functions the panel needs.
+
+The functional behavior is exercised by the existing HTTP tests in
+tests/test_forms.py + tests/test_forms_webhook.py +
+tests/test_forms_autoresponder.py.
+"""
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+INBOX_SETTINGS = REPO_ROOT / "ui" / "v3" / "components" / "inbox-settings.tsx"
+INBOX_PAGE = REPO_ROOT / "ui" / "v3" / "app" / "inbox" / "page.tsx"
+API_TS = REPO_ROOT / "ui" / "v3" / "lib" / "api.ts"
+
+
+def test_inbox_settings_component_exists():
+    assert INBOX_SETTINGS.is_file(), f"Missing: {INBOX_SETTINGS}"
+
+
+def test_inbox_settings_exports_named_component():
+    """The InboxSettings export is what the inbox page imports."""
+    src = INBOX_SETTINGS.read_text(encoding="utf-8")
+    assert re.search(r"export\s+function\s+InboxSettings\b", src), \
+        "InboxSettings export not found"
+
+
+def test_inbox_page_imports_settings():
+    src = INBOX_PAGE.read_text(encoding="utf-8")
+    assert re.search(
+        r"import\s*\{\s*InboxSettings\s*\}\s*from\s*['\"]@/components/inbox-settings['\"]",
+        src,
+    ), "inbox/page.tsx does not import InboxSettings"
+
+
+def test_inbox_page_has_view_toggle():
+    """The inbox page must toggle between submissions and settings."""
+    src = INBOX_PAGE.read_text(encoding="utf-8")
+    # The view state declaration is the load-bearing piece.
+    assert "view, setView" in src or 'setView("settings")' in src or "setView('settings')" in src, \
+        "inbox/page.tsx missing the settings/submissions view toggle"
+    # And the InboxSettings component is actually rendered.
+    assert "<InboxSettings" in src, \
+        "inbox/page.tsx does not render <InboxSettings />"
+
+
+def test_api_module_exports_webhook_functions():
+    """The five API client functions the panel calls."""
+    src = API_TS.read_text(encoding="utf-8")
+    for fn in (
+        "fetchWebhookConfig",
+        "setWebhookConfig",
+        "clearWebhookConfig",
+    ):
+        assert re.search(rf"export\s+async\s+function\s+{fn}\b", src), \
+            f"api.ts missing webhook function: {fn}"
+
+
+def test_api_module_exports_autoresponder_functions():
+    src = API_TS.read_text(encoding="utf-8")
+    for fn in (
+        "fetchAutoresponder",
+        "saveAutoresponder",
+        "clearAutoresponder",
+    ):
+        assert re.search(rf"export\s+async\s+function\s+{fn}\b", src), \
+            f"api.ts missing autoresponder function: {fn}"
+
+
+def test_settings_panel_calls_documented_endpoints():
+    """The panel hits both engine surfaces — sanity-check the imports."""
+    src = INBOX_SETTINGS.read_text(encoding="utf-8")
+    # We import via @/lib/api so the calls are typed; verify the
+    # import list has the right names.
+    assert "fetchWebhookConfig" in src
+    assert "setWebhookConfig" in src
+    assert "clearWebhookConfig" in src
+    assert "fetchAutoresponder" in src
+    assert "saveAutoresponder" in src
+    assert "clearAutoresponder" in src

@@ -4,8 +4,9 @@ import { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mail, Trash2, MailOpen, Inbox as InboxIcon, ArrowLeft, RefreshCw } from "lucide-react";
+import { Mail, Trash2, MailOpen, Inbox as InboxIcon, ArrowLeft, RefreshCw, Settings } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { InboxSettings } from "@/components/inbox-settings";
 import {
   fetchInbox,
   markSubmissionRead,
@@ -18,6 +19,7 @@ function InboxForSlug({ slug }: { slug: string }) {
   const [items, setItems] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
+  const [view, setView] = useState<"submissions" | "settings">("submissions");
 
   async function refresh() {
     setLoading(true);
@@ -57,13 +59,25 @@ function InboxForSlug({ slug }: { slug: string }) {
           >
             <ArrowLeft className="w-4 h-4" /> Dashboard
           </button>
-          <button
-            onClick={() => refresh()}
-            className="w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center"
-            aria-label="Refresh"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setView(view === "settings" ? "submissions" : "settings")}
+              className={`w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center ${
+                view === "settings" ? "bg-accent text-foreground" : "text-muted-foreground"
+              }`}
+              aria-label={view === "settings" ? "Back to submissions" : "Inbox settings"}
+              title={view === "settings" ? "Back to submissions" : "Inbox settings"}
+            >
+              <Settings className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => refresh()}
+              className="w-8 h-8 rounded-full hover:bg-accent flex items-center justify-center"
+              aria-label="Refresh"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+            </button>
+          </div>
         </div>
         <div className="p-4 border-b border-border">
           <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Inbox</p>
@@ -109,7 +123,9 @@ function InboxForSlug({ slug }: { slug: string }) {
       </aside>
 
       <main className="flex-1 p-8 overflow-y-auto">
-        {!selected ? (
+        {view === "settings" ? (
+          <InboxSettings slug={slug} />
+        ) : !selected ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
             <InboxIcon className="w-10 h-10 mb-2 opacity-50" />
             <p className="font-display text-xl text-foreground">Pick a submission</p>

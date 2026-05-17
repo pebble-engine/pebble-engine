@@ -49,6 +49,18 @@ async function getJSON<T>(path: string): Promise<T> {
   return json as T;
 }
 
+async function deleteJSON<T>(path: string): Promise<T> {
+  const resp = await fetch(engineUrl(path), { method: "DELETE" });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as T;
+}
+
 // ---------- /api/plan + /api/generate (existing) ----------------------------
 
 export type PlanResponse = {
@@ -401,6 +413,65 @@ export async function fetchInbox(slug: string): Promise<{ slug: string; submissi
 
 export async function markSubmissionRead(slug: string, id: string, read: boolean = true): Promise<Submission> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/inbox/${encodeURIComponent(id)}/read`, { read });
+}
+
+// ---------- /api/projects/<slug>/forms/webhook ------------------------------
+
+export type WebhookConfig = {
+  url:            string;
+  configured_at:  string;
+};
+
+export type WebhookConfigResponse = {
+  slug:        string;
+  configured:  boolean;
+  webhook:     WebhookConfig | null;
+};
+
+export async function fetchWebhookConfig(slug: string): Promise<WebhookConfigResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`);
+}
+
+export async function setWebhookConfig(slug: string, url: string): Promise<WebhookConfigResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`, { url });
+}
+
+export async function clearWebhookConfig(slug: string): Promise<{ slug: string; removed: boolean; configured: false }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/webhook`);
+}
+
+// ---------- /api/projects/<slug>/forms/autoresponder -----------------------
+
+export type AutoresponderConfig = {
+  enabled:        boolean;
+  subject:        string;
+  body:           string;
+  reply_field:    string;
+  configured_at:  string;
+};
+
+export type AutoresponderConfigResponse = {
+  slug:           string;
+  autoresponder:  AutoresponderConfig;
+};
+
+export type AutoresponderUpdate = {
+  enabled:        boolean;
+  subject?:       string;
+  body?:          string;
+  reply_field?:   string;
+};
+
+export async function fetchAutoresponder(slug: string): Promise<AutoresponderConfigResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
+}
+
+export async function saveAutoresponder(slug: string, update: AutoresponderUpdate): Promise<AutoresponderConfigResponse> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`, update);
+}
+
+export async function clearAutoresponder(slug: string): Promise<{ slug: string; removed: boolean }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/forms/autoresponder`);
 }
 
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------
