@@ -47,6 +47,8 @@ DNA_CARDS: list[dict] = [
             "Page numbers in the footer like a magazine: '03 / 07'",
         ],
         "forbidden": ["Three.js", "rounded corners > 4px", "glow shadows", "card grids with shadows", "any use of Fraunces or Inter (use the DNA fonts only)"],
+        "industry_affinity": ["editorial", "journal", "publish", "gallery", "museum", "art", "design", "architect", "consult", "advisor", "law", "legal", "attorney", "foundation", "nonprofit"],
+        "industry_aversion": ["bar", "club", "gym", "daycare", "plumb", "electric", "hvac", "tow", "automotive"],
     },
     {
         "id": "brutalist_editorial",
@@ -70,6 +72,8 @@ DNA_CARDS: list[dict] = [
             "Footer is a single typographic block, no columns, set in Tektur",
         ],
         "forbidden": ["Fraunces", "Inter as display", "serif headlines", "rounded corners > 2px", "drop shadows", "gradient backgrounds", "Three.js particles"],
+        "industry_affinity": ["software", "tech", "security", "defense", "engineer", "fintech", "crypto", "b2b", "manufactur", "agency", "data", "infrastructure"],
+        "industry_aversion": ["wedding", "yoga", "spa", "daycare", "kids", "baby", "pediatric", "therapy", "florist", "baker", "salon", "beauty", "nursery"],
     },
     {
         "id": "terminal_operator",
@@ -93,6 +97,8 @@ DNA_CARDS: list[dict] = [
             "All buttons render as: [ CALL NOW ] with bracket characters as the border",
         ],
         "forbidden": ["any sans-serif other than mono", "any serif font", "color photography", "gradients", "rounded corners > 0px", "glow effects beyond CRT bloom", "Three.js"],
+        "industry_affinity": ["software", "security", "devops", "cybersecurity", "infosec", "host", "gaming", "blockchain", "infrastructure", "network", "data", "saas", "dev tool"],
+        "industry_aversion": ["wedding", "yoga", "spa", "photo", "daycare", "kids", "baby", "therapy", "florist", "baker", "salon", "beauty", "restaurant", "bar", "hotel", "real estate", "health", "dental", "medical", "retire", "funeral", "hospice", "law", "account", "advisor", "financ", "gallery", "museum", "art", "fashion", "jewel", "watch", "automotive", "plumb", "electric", "hvac", "tow", "construct", "roof", "landscape", "cafe", "deli", "brewery", "distillery", "music venue", "herb", "garden", "farm", "naturopath", "holistic", "coach", "fitness", "gym", "sport", "dance", "pilates", "family", "nursery", "coffee"],
     },
     {
         "id": "cinematic_imax",
@@ -116,6 +122,8 @@ DNA_CARDS: list[dict] = [
             "End-of-section transitions: a 0.6s fade-to-black between major chapters",
         ],
         "forbidden": ["Fraunces", "serif headlines", "card grids", "horizontal scroll", "static heroes", "any flat background color hero"],
+        "industry_affinity": ["automotive", "real estate", "hotel", "resort", "travel", "luxury", "fitness", "gym", "sport", "music", "film", "video", "agency", "brand", "fashion", "performance"],
+        "industry_aversion": ["daycare", "kids", "baby", "pediatric", "therapy", "hospice", "funeral"],
     },
     {
         "id": "architectural_spec",
@@ -139,6 +147,8 @@ DNA_CARDS: list[dict] = [
             "Toggle button labeled 'GRID' in the footer that shows/hides the underlying 12-column grid",
         ],
         "forbidden": ["Fraunces", "drop shadows", "gradient anything", "rounded corners > 0px", "color photography (monochrome only)"],
+        "industry_affinity": ["architect", "interior", "design", "engineer", "furniture", "yoga", "pilates", "dance", "surveyor", "real estate", "studio"],
+        "industry_aversion": ["daycare", "kids", "fast food", "hospice", "funeral"],
     },
     {
         "id": "tactile_y2k",
@@ -146,7 +156,7 @@ DNA_CARDS: list[dict] = [
         "feel": "Pinterest moodboard × early-2000s Apple × a really good neighborhood bakery. Soft, friendly, organic.",
         "display_font": "Bricolage Grotesque",
         "display_font_weight": "600 (variable width)",
-        "body_font": "General Sans",
+        "body_font": "Inter Tight",
         "body_font_weight": "400 / 500",
         "mono_font": "IBM Plex Mono",
         "palette_posture": "warm peach-cream #FBF1E3 page, cocoa #2A1F1A type, dusty rose #D4899A primary accent, soft sage #B8C5A6 secondary accent",
@@ -162,6 +172,8 @@ DNA_CARDS: list[dict] = [
             "Soft-glow focus states on inputs (box-shadow with peach tint)",
         ],
         "forbidden": ["pure black backgrounds", "Tektur", "any aggressive motion", "ASCII characters", "monochrome photography only — color is required"],
+        "industry_affinity": ["baker", "cafe", "florist", "daycare", "kids", "baby", "family", "salon", "spa", "therapy", "coach", "wellness", "pet", "boutique", "yoga", "photo", "nursery", "beauty"],
+        "industry_aversion": ["software", "security", "defense", "contractor", "automotive", "plumb", "electric", "hvac", "tow", "manufactur", "law", "attorney", "account", "fintech"],
     },
     {
         "id": "neue_haas_minimal",
@@ -185,18 +197,20 @@ DNA_CARDS: list[dict] = [
             "Massive negative space — sections often only 30% filled vertically",
         ],
         "forbidden": ["multiple accent colors", "gradients", "rounded corners > 2px", "drop shadows", "Fraunces", "any decorative element"],
+        "industry_affinity": ["consult", "software", "agency", "design", "brand", "architect", "law", "account", "financ", "advisor", "professional", "saas"],
+        "industry_aversion": ["daycare", "kids", "automotive", "plumb", "hvac", "tow", "wedding", "florist"],
     },
     {
         "id": "postmodern_max",
         "label": "Postmodern Maximalist",
         "feel": "David Carson × Wieden+Kennedy lookbook × club flyer. Loud, layered, intentionally chaotic.",
-        "display_font": "Big Shoulders Display",
+        "display_font": "Big Shoulders",
         "display_font_weight": "900",
         "body_font": "Space Grotesk",
         "body_font_weight": "400 / 500",
         "mono_font": "Space Mono",
         "palette_posture": "off-black #1A1A1A page, white #FAFAFA type, THREE accent colors clashing intentionally — hot pink #FF2D87, lime #DCFF00, electric blue #2B6BFF",
-        "hero_structure": "Layered chaotic hero. Headline is Big Shoulders 900 at 9XL, rotated -3deg, set behind a smaller secondary headline in Space Mono at 2XL rotated +2deg. Photographic element collaged in the background with a halftone filter. Multiple text fragments scattered at different rotations.",
+        "hero_structure": "Layered chaotic hero. Headline is Big Shoulders 900 at 9XL (industrial display variable font), rotated -3deg, set behind a smaller secondary headline in Space Mono at 2XL rotated +2deg. Photographic element collaged in the background with a halftone filter. Multiple text fragments scattered at different rotations.",
         "motion_intensity": "aggressive",
         "motion_rules": "Marquee scrollers running horizontally in multiple sections (different speeds, different directions). Hover states flash to a clashing color and shake (subtle). Sections slide in from different directions on scroll (left, right, up). Three.js NOT used — keep it 2D and graphic.",
         "layout_grid": "Broken grid. Elements bleed off edges. Some images at 110% width (clipped by overflow:hidden on body). Diagonal section dividers (SVG triangles, not rules).",
@@ -208,6 +222,8 @@ DNA_CARDS: list[dict] = [
             "Sticker-style trust signals — circular badges with rotated text 'LICENSED!' 'INSURED!' overlapping each other",
         ],
         "forbidden": ["Fraunces", "Inter as display", "minimalism", "single accent color", "perfect grid alignment", "rounded subtle anything"],
+        "industry_affinity": ["coffee", "brewery", "music", "club", "gallery", "art", "streetwear", "fashion", "agency", "restaurant", "bar", "tattoo", "skate", "record label", "creative"],
+        "industry_aversion": ["law", "attorney", "account", "health", "daycare", "therapy", "financ", "dental", "medical", "retire", "hospice", "funeral", "pediatric", "wedding", "real estate", "advisor"],
     },
     {
         "id": "arthouse_folio",
@@ -231,6 +247,8 @@ DNA_CARDS: list[dict] = [
             "Page numbers in the footer as roman numerals (iii / x)",
         ],
         "forbidden": ["sans-serif headlines", "Three.js", "card grids", "drop shadows", "neon or saturated accents", "centered headlines that aren't italic"],
+        "industry_affinity": ["gallery", "museum", "art", "photo", "bookshop", "antique", "publish", "editorial", "writer", "jewel", "ceramic", "atelier", "wedding", "studio"],
+        "industry_aversion": ["software", "contractor", "automotive", "plumb", "gym", "fitness", "fast food", "tow", "hvac", "electric"],
     },
     {
         "id": "industrial_freight",
@@ -254,6 +272,8 @@ DNA_CARDS: list[dict] = [
             "A 'CERTIFIED' stamp graphic (rotated -8deg, terracotta on cream) over a trust-signal element",
         ],
         "forbidden": ["Fraunces", "serif headlines", "rounded corners > 2px", "soft drop shadows", "pastel palettes", "delicate motion"],
+        "industry_affinity": ["contractor", "plumb", "electric", "hvac", "roof", "landscape", "automotive", "mechanic", "tow", "manufactur", "warehouse", "logistics", "construct", "demolition", "freight", "fleet", "hauling", "industrial"],
+        "industry_aversion": ["wedding", "yoga", "spa", "baker", "florist", "jewel", "salon", "therapy", "pediatric", "gallery", "art", "photo", "cafe", "coffee", "restaurant", "food"],
     },
     {
         "id": "garden_press",
@@ -263,7 +283,7 @@ DNA_CARDS: list[dict] = [
         "display_font_weight": "400 (only weight — light editorial, never bold)",
         "body_font": "Inter",
         "body_font_weight": "400",
-        "mono_font": "ABC Diatype Mono",
+        "mono_font": "JetBrains Mono",
         "palette_posture": "warm cream #FAF6EE page, charcoal #2C2C2A type, ONE single muted botanical accent (deep sage #4A5D4F or terracotta #C57E5A)",
         "hero_structure": "Decorative hand-drawn botanical line illustrations (single leaf, herb sprig, fern frond) as accents at section dividers and beside pull-quotes. The foundation hero h1 stands clean in Inter; the DNA adds a small botanical illustration in the right column instead of the standard liquid-glass tag — same FadeIn delay (1400ms), same restraint.",
         "motion_intensity": "subtle",
@@ -277,39 +297,43 @@ DNA_CARDS: list[dict] = [
             "Issue-number footer: 'ISSUE 01 · SUMMER 2026' in mono small caps",
         ],
         "forbidden": ["bright neon", "harsh pure-white backgrounds", "sterile minimalism with no warmth", "sans-serif-only display typography", "stock photography of smiling people in offices"],
+        "industry_affinity": ["florist", "herb", "nursery", "garden", "farm", "restaurant", "baker", "wellness", "yoga", "naturopath", "holistic", "photo", "wedding", "tea", "soap", "candle", "artisan", "ceramic", "jewel", "baby", "organic"],
+        "industry_aversion": ["software", "automotive", "contractor", "plumb", "security", "hvac", "tow", "defense"],
     },
     {
         "id": "velvet_lounge",
         "label": "Velvet Lounge",
         "feel": "Late-night Manhattan jazz bar × private members club brochure × 1962 cocktail menu. Rich, intimate, candlelit, never garish.",
-        "display_font": "Tiempos Headline",
+        "display_font": "Fraunces",
         "display_font_weight": "400 / 500",
-        "body_font": "Söhne",
+        "body_font": "Inter Tight",
         "body_font_weight": "400",
         "mono_font": "IBM Plex Mono",
         "palette_posture": "deep oxblood #2E1A1D page, warm cream #F0E6D2 type, ONE warm gold accent #C8A96E used like brass inlay — never as a button background, always as a hairline or numeral",
-        "hero_structure": "Foundation hero with a candlelit night-vision Pexels video (search 'jazz bar low light cocktail'). DNA's right-column accent: a gold-foil-style serif numeral '§ 01' in Tiempos italic instead of the standard liquid-glass tag. Photo captions in IBM Plex Mono small caps mimic a vintage cocktail menu (e.g. 'OLD FASHIONED · 1947').",
+        "hero_structure": "Foundation hero with a candlelit night-vision Pexels video (search 'jazz bar low light cocktail'). DNA's right-column accent: a gold-foil-style serif numeral '§ 01' in Fraunces italic (use the SOFT optical-size axis for editorial warmth) instead of the standard liquid-glass tag. Photo captions in IBM Plex Mono small caps mimic a vintage cocktail menu (e.g. 'OLD FASHIONED · 1947').",
         "motion_intensity": "subtle",
         "motion_rules": "Slow opacity fades (1s). Soft warm glow on accent gold elements (text-shadow: 0 0 12px rgba(200,169,110,0.3)). Hover transitions are slow and considered (0.5s ease). No bouncing, no aggressive scroll, no harsh cuts.",
         "layout_grid": "Asymmetric centered with margins. Photographic full-bleeds at section breaks. Body copy hangs in a single column max 60ch wide, never the full viewport width.",
         "image_treatment": "Very warm-toned, low-key lighting, intimate detail shots (one cocktail close-up, one band silhouette, one barback's hands). No bright daylight. No people facing camera. Captions in mono small caps.",
         "signature_moves": [
-            "Gold-foil-style serif numerals ('§ 01', '§ 02') at section dividers, in Tiempos italic",
-            "Pull-quotes set in Tiempos italic XL, indented like a poem, gold accent on the opening quotation mark",
+            "Gold-foil-style serif numerals ('§ 01', '§ 02') at section dividers, in Fraunces italic",
+            "Pull-quotes set in Fraunces italic XL, indented like a poem, gold accent on the opening quotation mark",
             "Photo captions in IBM Plex Mono small caps mimicking a vintage cocktail menu ('OLD FASHIONED · 1947')",
             "Footer with a faint film-grain texture and small gold ornament between sections",
         ],
         "forbidden": ["pure white backgrounds", "bright primary colors", "sans-serif-only display headlines", "harsh daylight photography", "neon palette", "rounded corners > 4px", "modern startup tech aesthetic"],
+        "industry_affinity": ["bar", "cocktail", "lounge", "jazz", "music", "restaurant", "hotel", "wine", "whiskey", "distillery", "tobacco", "tailor", "jewel", "watchmaker", "club"],
+        "industry_aversion": ["daycare", "kids", "baby", "pediatric", "family", "software", "contractor", "gym", "fitness", "plumb", "automotive", "hvac"],
     },
     {
         "id": "marina",
         "label": "Marina",
         "feel": "Hinckley Yachts catalog × Hamptons summer journal × maritime chart. Clean, fresh, salt-air premium — coastal without a single cliched anchor or pirate.",
-        "display_font": "GT Sectra Display",
+        "display_font": "Fraunces",
         "display_font_weight": "400 / 500",
-        "body_font": "Söhne",
+        "body_font": "Inter Tight",
         "body_font_weight": "400 / 500",
-        "mono_font": "ABC Diatype Mono",
+        "mono_font": "JetBrains Mono",
         "palette_posture": "sailcloth white #FAFAF7 page, deep navy #0E2842 type, ONE warm rope-brown accent #C49E6C used for hairlines and metadata, weathered teak #5D4037 for occasional warm contrast",
         "hero_structure": "Foundation hero video shows coastal water (Pexels search 'sailing yacht coastal water sunset'). DNA's right-column accent: latitude/longitude microcopy in IBM Plex Mono ('40.7128°N · 74.0060°W') instead of the standard liquid-glass tag. A tiny compass-rose icon (4 cardinal points only) appears at section break dividers.",
         "motion_intensity": "subtle",
@@ -323,6 +347,8 @@ DNA_CARDS: list[dict] = [
             "Footer in 4-section compass layout: NORTH (mission) · EAST (services) · SOUTH (contact) · WEST (legal)",
         ],
         "forbidden": ["literal cartoon anchors", "ship's wheels", "pirate motifs", "bright tropical-vacation color palettes", "all-caps 'BOATING' or 'SAIL' word marks", "surfer aesthetics", "stock photos of people laughing on yachts"],
+        "industry_affinity": ["yacht", "boat", "sail", "charter", "marine", "coastal", "beach", "hotel", "resort", "fish", "real estate", "wedding", "photo", "jewel", "watch"],
+        "industry_aversion": ["software", "automotive", "plumb", "contractor", "daycare", "urban", "factory", "industrial"],
     },
 ]
 
@@ -331,6 +357,39 @@ def pick_random_dna(seed: Optional[int] = None) -> dict:
     """Return one random DNA card. Each call rerolls — pass `seed` for determinism in tests."""
     rng = random.Random(seed) if seed is not None else random
     return rng.choice(DNA_CARDS)
+
+
+_AFFINITY_BOOST = 15
+
+
+def pick_dna_for_brief(brief: dict, seed: Optional[int] = None) -> dict:
+    """Pick a DNA card weighted by the brief's industry signals.
+
+    Each card declares `industry_affinity` (10× weight boost) and
+    `industry_aversion` (hard exclude) keyword lists. A card is excluded
+    if ANY aversion keyword appears as a substring of the brief's
+    `business_type`. Otherwise its weight is `_AFFINITY_BOOST` when any
+    affinity keyword matches, else 1. Falls back to uniform random if
+    every card was aversed (defensive — shouldn't happen with current
+    taxonomy).
+    """
+    haystack = (brief.get("business_type") or "").lower()
+    candidates: list[dict] = []
+    weights: list[int] = []
+    for card in DNA_CARDS:
+        if any(kw in haystack for kw in card.get("industry_aversion", [])):
+            continue
+        weight = _AFFINITY_BOOST if any(
+            kw in haystack for kw in card.get("industry_affinity", [])
+        ) else 1
+        candidates.append(card)
+        weights.append(weight)
+
+    if not candidates:
+        return pick_random_dna(seed)
+
+    rng = random.Random(seed) if seed is not None else random
+    return rng.choices(candidates, weights=weights, k=1)[0]
 
 
 def pick_dna_by_id(dna_id: str) -> Optional[dict]:

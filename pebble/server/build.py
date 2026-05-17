@@ -51,8 +51,12 @@ def _select_dna(answers: dict, pick_random_dna, pick_dna_by_id):
 
     If the brief carries a pinned ``_design_dna_id`` (e.g. from the
     Plan-review UI: "user approved this style, lock it in"), look that
-    card up and use it. Otherwise pick a fresh random DNA. Returns the
-    DNA dict or ``None`` if the DNA module isn't loaded.
+    card up and use it. Otherwise route through ``pick_dna_for_brief``
+    which weights DNA cards by industry affinity (10×) and hard-excludes
+    cards with conflicting industry aversion — replaces the prior pure-
+    random pick that produced catastrophic mismatches (e.g. terminal_operator
+    on a wedding photographer). Returns the DNA dict or ``None`` if the
+    DNA module isn't loaded.
     """
     if not pick_random_dna:
         return None
@@ -61,12 +65,22 @@ def _select_dna(answers: dict, pick_random_dna, pick_dna_by_id):
         card = pick_dna_by_id(pinned_id)
         if card:
             return card
-        log.warning("pinned DNA id %r not found — falling back to random", pinned_id)
+        log.warning("pinned DNA id %r not found — falling back to industry-weighted pick", pinned_id)
     try:
-        return pick_random_dna()
+        from style_dna import pick_dna_for_brief
+        return pick_dna_for_brief(answers)
+    except ImportError:
+        try:
+            return pick_random_dna()
+        except Exception as e:
+            log.warning("DNA picker failed: %s", e)
+            return None
     except Exception as e:
-        log.warning("DNA picker failed: %s", e)
-        return None
+        log.warning("industry-weighted DNA picker failed: %s — falling back to random", e)
+        try:
+            return pick_random_dna()
+        except Exception:
+            return None
 
 
 def run_plan(handler) -> None:
