@@ -144,10 +144,16 @@ def good_build(tmp_path: Path) -> Path:
         '}'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
-    # Foundation contact form scaffold (Server Action + Resend).
+    # Foundation contact form scaffold (Server Action + Resend wrapper + form).
+    (site / "lib").mkdir(parents=True, exist_ok=True)
+    (site / "lib" / "email.ts").write_text(
+        'import { Resend } from "resend";\n'
+        'export const resend = new Resend(process.env.RESEND_API_KEY);\n'
+    )
     (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
     (site / "app" / "actions" / "contact.ts").write_text(
         '"use server";\n'
+        'import { resend } from "@/lib/email";\n'
         'export async function submitContactForm(_p:any, f:FormData) {\n'
         '  return { ok: true, message: "Thanks." };\n'
         '}'
@@ -1403,7 +1409,43 @@ def test_env_example_skips_when_no_site_dir(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# 39. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
+# 39. email_helper_present — FOUNDATION (contact form runtime safety)
+# ---------------------------------------------------------------------------
+
+def test_email_helper_passes_on_good_build(good_build):
+    """good_build includes lib/email.ts with Resend import — check passes."""
+    ctx = BuildContext.load(good_build)
+    assert checks.email_helper_present(ctx).status == "pass"
+
+
+def test_email_helper_fails_when_file_missing(good_build):
+    (good_build / "site" / "lib" / "email.ts").unlink()
+    ctx = BuildContext.load(good_build)
+    result = checks.email_helper_present(ctx)
+    assert result.status == "fail"
+    assert "lib/email.ts" in result.message
+
+
+def test_email_helper_fails_when_resend_not_imported(good_build):
+    """File exists but doesn't import Resend — probably a stub or wrong file."""
+    (good_build / "site" / "lib" / "email.ts").write_text(
+        'export function sendEmail() { return null; }\n'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.email_helper_present(ctx)
+    assert result.status == "fail"
+    assert "resend" in result.message.lower()
+
+
+def test_email_helper_skips_when_no_site_dir(tmp_path):
+    empty = tmp_path / "no-site"
+    empty.mkdir()
+    ctx = BuildContext.load(empty)
+    assert checks.email_helper_present(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 40. perf_budget_or_lighter (T14 — Core Web Vitals static heuristics)
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):

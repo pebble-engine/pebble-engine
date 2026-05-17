@@ -3159,6 +3159,57 @@ def env_example_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 39. email_helper_present — FOUNDATION (contact form runtime safety)
+# ---------------------------------------------------------------------------
+
+_RESEND_IMPORT_RE = re.compile(r"""from\s+['"]resend['"]""", re.IGNORECASE)
+
+
+@check_metadata(static_files=("lib/email.ts",))
+def email_helper_present(ctx: BuildContext) -> CheckResult:
+    """`lib/email.ts` must exist and import Resend so the contact form Server
+    Action can send mail at runtime.
+
+    The contact form scaffold is:
+        app/actions/contact.ts  → Server Action, imports from lib/email.ts
+        lib/email.ts            → Resend client wrapper (server-only)
+        components/forms/ContactForm.tsx → useActionState client form
+
+    If `lib/email.ts` is missing, `next dev` / `next build` throws
+    "Cannot find module '@/lib/email'" and the entire site fails to start.
+    The `contact_form_uses_server_action` check catches the form-side gap;
+    this check closes the helper-side gap.
+
+    The check is deliberately loose: it only verifies the file exists and
+    imports from 'resend'. The Resend API key is validated at runtime.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("email_helper_present", "skip", "no site directory")
+
+    email_lib = ctx.site_dir / "lib" / "email.ts"
+    if not email_lib.exists():
+        return CheckResult(
+            "email_helper_present", "fail",
+            "lib/email.ts is missing — the contact form Server Action imports "
+            "from '@/lib/email' at runtime; without this file, next dev crashes "
+            "with 'Cannot find module'. Add the Resend client wrapper from Code Pattern 8.",
+        )
+
+    text = email_lib.read_text(encoding="utf-8", errors="ignore")
+    if not _RESEND_IMPORT_RE.search(text):
+        return CheckResult(
+            "email_helper_present", "fail",
+            "lib/email.ts exists but does not import from 'resend' — "
+            "the file must wrap the Resend SDK (import { Resend } from 'resend')",
+        )
+
+    return CheckResult(
+        "email_helper_present", "pass",
+        "lib/email.ts present with Resend import",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3190,6 +3241,7 @@ ALL_CHECKS = [
     hero_video_has_poster,
     # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
     contact_form_uses_server_action,
+    email_helper_present,
     resend_in_dependencies,
     imports_resolve_to_dependencies,
     deploy_to_vercel_scaffold,

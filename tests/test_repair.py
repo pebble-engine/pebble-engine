@@ -80,10 +80,16 @@ def _write_foundation_files(site: Path) -> None:
         '  );\n'
         '}'
     )
-    # Contact form Server Action scaffold (Resend wiring).
+    # Contact form Server Action scaffold (Resend wrapper + Server Action + form).
+    (site / "lib").mkdir(parents=True, exist_ok=True)
+    (site / "lib" / "email.ts").write_text(
+        'import { Resend } from "resend";\n'
+        'export const resend = new Resend(process.env.RESEND_API_KEY);\n'
+    )
     (site / "app" / "actions").mkdir(parents=True, exist_ok=True)
     (site / "app" / "actions" / "contact.ts").write_text(
         '"use server";\n'
+        'import { resend } from "@/lib/email";\n'
         'export async function submitContactForm(_p:any, _f:FormData) { return { ok: true }; }'
     )
     (site / "components" / "forms").mkdir(parents=True, exist_ok=True)
