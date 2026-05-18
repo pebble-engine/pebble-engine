@@ -101,3 +101,44 @@ def test_auth_callback_uses_safe_redirect_not_inline_check():
         "auth/callback/route.ts still has the inline startsWith check — "
         "remove it; safeRedirect covers the case correctly."
     )
+
+
+# ---- /signup wiring -------------------------------------------------------
+
+SIGNUP_PAGE = REPO_ROOT / "ui" / "v3" / "app" / "signup" / "page.tsx"
+
+
+def test_signup_page_imports_safe_redirect():
+    """Signup page must use safeRedirect for the ?redirect= param so that
+    a crafted link can't bounce a fresh account to an off-site URL."""
+    assert SIGNUP_PAGE.is_file(), f"Missing: {SIGNUP_PAGE}"
+    src = SIGNUP_PAGE.read_text(encoding="utf-8")
+    assert re.search(
+        r"import\s*\{\s*safeRedirect\s*\}\s*from\s*['\"]@/lib/safe-redirect['\"]",
+        src,
+    ), "signup/page.tsx no longer imports safeRedirect from @/lib/safe-redirect"
+
+
+def test_signup_page_does_not_consume_raw_redirect_param():
+    """The raw ?redirect= value must go through safeRedirect before being
+    passed to router.push — same invariant as the login page."""
+    src = SIGNUP_PAGE.read_text(encoding="utf-8")
+    legal = re.search(r"const\s+redirect\s*=\s*safeRedirect\s*\(", src)
+    assert legal, "signup/page.tsx should compute `redirect` via safeRedirect(...)"
+    illegal_lines = [
+        line for line in src.splitlines()
+        if "params.get(\"redirect\")" in line and "safeRedirect(" not in line
+    ]
+    assert not illegal_lines, (
+        "signup/page.tsx references params.get(\"redirect\") outside "
+        f"safeRedirect(...): {illegal_lines!r}"
+    )
+
+
+def test_signup_page_has_suspense_boundary():
+    """useSearchParams() requires a Suspense boundary in Next.js. Without it
+    the page throws at runtime during prerendering."""
+    src = SIGNUP_PAGE.read_text(encoding="utf-8")
+    assert "Suspense" in src, (
+        "signup/page.tsx uses useSearchParams but is missing a Suspense boundary"
+    )
