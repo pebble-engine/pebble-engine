@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -105,6 +106,41 @@ def _cancel_pending_deletion(user_id: str) -> bool:
         return False
 
 
+def _scrub_user_projects(user_id: str) -> int:
+    """Remove all project directories owned by user_id.
+
+    Iterates output/<slug>/brief.json files and deletes any slug directory
+    where brief["_user_id"] == user_id. Returns the count of directories
+    removed. Called after the Supabase hard-delete so local files don't
+    outlive the account (Ch 7.7 GDPR follow-up).
+
+    Also removes output/.users/<user_id>/ (drip state, subscription sentinel,
+    pending deletion marker).
+    """
+    out = _output_dir()
+    removed = 0
+    for brief_path in out.glob("*/brief.json"):
+        try:
+            brief = json.loads(brief_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if brief.get("_user_id") == user_id:
+            slug_dir = brief_path.parent
+            try:
+                shutil.rmtree(slug_dir)
+                removed += 1
+                log.info("gdpr scrub: removed project dir %s", slug_dir.name)
+            except OSError as exc:
+                log.warning("gdpr scrub: could not remove %s: %s", slug_dir.name, exc)
+    user_dir = out / ".users" / user_id
+    if user_dir.exists():
+        try:
+            shutil.rmtree(user_dir)
+        except OSError as exc:
+            log.warning("gdpr scrub: could not remove user dir %s: %s", user_id, exc)
+    return removed
+
+
 def _execute_deletion_if_due(user_id: str, email: str) -> bool:
     """If a pending deletion exists and is past its scheduled_for date,
     execute the hard delete now. Returns True if deletion was executed."""
@@ -127,6 +163,8 @@ def _execute_deletion_if_due(user_id: str, email: str) -> bool:
     except AdminError as e:
         log.error("scheduled deletion failed for %s: %s", _redact(email), e)
         return False
+    scrubbed = _scrub_user_projects(user_id)
+    log.info("gdpr scrub: %d project(s) removed for %s", scrubbed, _redact(email))
     _cancel_pending_deletion(user_id)
     return True
 
@@ -163,6 +201,8 @@ def run_get_profile(handler) -> None:
                 log.info("executing scheduled deletion for %s", _redact(user_email))
                 try:
                     delete_user(user_id)
+                    scrubbed = _scrub_user_projects(user_id)
+                    log.info("gdpr scrub: %d project(s) removed for %s", scrubbed, _redact(user_email))
                     _cancel_pending_deletion(user_id)
                     handler._json(410, {"error": "account deleted", "deleted": True})
                     return

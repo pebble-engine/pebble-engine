@@ -298,3 +298,55 @@ def test_rate_limit_is_per_ip_not_global(monkeypatch, output_dir):
     h = _FakeHandler(auth_header="Bearer ey.different", client_ip="198.51.100.2")
     account_server.run_delete_account(h)
     assert h.status == 401
+
+
+# ── GDPR project scrub ────────────────────────────────────────────────────────
+
+def test_scrub_removes_owned_project_dirs(tmp_path, monkeypatch):
+    monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
+    uid = "aaaa-bbbb-cccc-dddd"
+    other_uid = "1111-2222-3333-4444"
+
+    # owned project
+    owned = tmp_path / "my-site"
+    owned.mkdir()
+    (owned / "brief.json").write_text(
+        json.dumps({"_user_id": uid, "business_name": "My Biz"}), encoding="utf-8"
+    )
+
+    # someone else's project — must NOT be removed
+    theirs = tmp_path / "their-site"
+    theirs.mkdir()
+    (theirs / "brief.json").write_text(
+        json.dumps({"_user_id": other_uid}), encoding="utf-8"
+    )
+
+    # unclaimed project — must NOT be removed
+    unclaimed = tmp_path / "unclaimed-site"
+    unclaimed.mkdir()
+    (unclaimed / "brief.json").write_text(
+        json.dumps({"business_name": "No Owner"}), encoding="utf-8"
+    )
+
+    count = account_server._scrub_user_projects(uid)
+    assert count == 1
+    assert not owned.exists()
+    assert theirs.exists()
+    assert unclaimed.exists()
+
+
+def test_scrub_removes_user_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
+    uid = "aaaa-bbbb-cccc-dddd"
+    user_dir = tmp_path / ".users" / uid
+    user_dir.mkdir(parents=True)
+    (user_dir / "subscription.json").write_text("{}", encoding="utf-8")
+
+    account_server._scrub_user_projects(uid)
+    assert not user_dir.exists()
+
+
+def test_scrub_returns_zero_when_no_projects(tmp_path, monkeypatch):
+    monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
+    count = account_server._scrub_user_projects("ghost-uid")
+    assert count == 0
