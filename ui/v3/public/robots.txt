@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Private app routes — not useful to crawl
+Disallow: /workspace
+Disallow: /workspace/
+Disallow: /settings
+Disallow: /dashboard
+Disallow: /api/
+
+Sitemap: https://getpebble.net/sitemap.xml
