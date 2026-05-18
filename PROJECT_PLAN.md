@@ -346,7 +346,7 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 
 ```
 [ ] 12.1  Final landing page polish (Marc + Claude QA together)
-[ ] 12.2  Pricing page live with comparison table
+[x] 12.2  Pricing page live with comparison table — /pricing: plan cards (Free/$29/$59) + 5-category comparison table + FAQ + real Stripe CTAs; landing page synced
 [ ] 12.3  Privacy policy + Terms of Service (Marc handles + a lawyer)
 [ ] 12.4  ProductHunt launch prep (assets, story, day-of plan)
 [ ] 12.5  Beta-tester recruitment (10-20 friends, agents, small biz owners)
