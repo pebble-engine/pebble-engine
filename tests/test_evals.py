@@ -2673,3 +2673,33 @@ def test_framer_motion_in_dependencies_skips_when_no_site(tmp_path):
     (tmp_path / "no-site").mkdir()
     ctx = BuildContext.load(tmp_path / "no-site")
     assert checks.framer_motion_in_dependencies(ctx).status == "skip"
+
+
+def test_hero_uses_gradient_mesh_passes_in_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_uses_gradient_mesh(ctx).status == "pass"
+
+
+def test_hero_uses_gradient_mesh_fails_when_no_mesh(good_build):
+    hero = good_build / "site" / "components" / "sections" / "Hero.tsx"
+    hero.write_text(
+        'export function Hero() {\n'
+        '  return <section className="min-h-screen bg-black"><h1>Hello</h1></section>;\n'
+        '}'
+    )
+    ctx = BuildContext.load(good_build)
+    result = checks.hero_uses_gradient_mesh(ctx)
+    assert result.status == "fail"
+    assert "gradient mesh" in result.message
+
+
+def test_hero_uses_gradient_mesh_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.hero_uses_gradient_mesh(ctx).status == "skip"
+
+
+def test_hero_uses_gradient_mesh_skips_when_no_hero(good_build):
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").unlink()
+    ctx = BuildContext.load(good_build)
+    assert checks.hero_uses_gradient_mesh(ctx).status == "skip"

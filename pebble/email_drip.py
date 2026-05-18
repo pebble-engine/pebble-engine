@@ -241,7 +241,7 @@ def _render_tips_next(email: str, name: str, workspace_url: str, base: str) -> E
     subject = "Your Pebble site is ready — here's what to do first"
     text = (
         f"Hi {name},\n\n"
-        f"Your site is live in your Pebble workspace — great work getting that first build done.\n\n"
+        f"Your site is ready in your Pebble workspace — great work getting that first build done.\n\n"
         f"Three things worth doing in the next few minutes:\n\n"
         f"  1. Share it with someone you trust.\n"
         f"     Send them the preview link and ask: does this look like my business?\n\n"

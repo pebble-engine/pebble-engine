@@ -3896,6 +3896,39 @@ def framer_motion_in_dependencies(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 42. hero_uses_gradient_mesh — FOUNDATION (cinematic system, May 2026)
+# ---------------------------------------------------------------------------
+
+_GRADIENT_MESH_RE = re.compile(
+    r"--color-accent-glow|conic-gradient|gradient-mesh|radial-gradient.*color-accent",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("components/sections/Hero.tsx",))
+def hero_uses_gradient_mesh(ctx: BuildContext) -> CheckResult:
+    """Hero.tsx must use a CSS gradient mesh (--color-accent-glow or conic/radial-gradient).
+
+    The cinematic system requires every hero to use a CSS gradient mesh rather
+    than a flat background color. Flat heroes kill the DNA's atmospheric depth
+    and are a sign the LLM ignored the DNA block entirely.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("hero_uses_gradient_mesh", "skip", "no site directory")
+    hero = ctx.site_dir / "components" / "sections" / "Hero.tsx"
+    if not hero.exists():
+        return CheckResult("hero_uses_gradient_mesh", "skip", "Hero.tsx not found")
+    src = hero.read_text(encoding="utf-8", errors="ignore")
+    if _GRADIENT_MESH_RE.search(src):
+        return CheckResult("hero_uses_gradient_mesh", "pass", "gradient mesh pattern found in Hero.tsx")
+    return CheckResult(
+        "hero_uses_gradient_mesh", "fail",
+        "Hero.tsx has no CSS gradient mesh — add a radial/conic gradient using --color-accent-glow "
+        "so the DNA's atmospheric depth is present",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3961,6 +3994,7 @@ ALL_CHECKS = [
     design_tokens_defined,
     grain_overlay_present,
     framer_motion_in_dependencies,
+    hero_uses_gradient_mesh,
     site_compiles,
 ]
 

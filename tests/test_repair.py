@@ -43,8 +43,12 @@ def _write_foundation_files(site: Path) -> None:
         'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
-        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden"\n'
+        '      style={{ background: "var(--color-bg)" }}>\n'
+        '      <div className="absolute inset-0 pointer-events-none">\n'
+        '        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"\n'
+        '          style={{ background: "var(--color-accent-glow)" }} />\n'
+        '      </div>\n'
         '      <AnimatedHeading text="Test Co" className="text-7xl text-white" />\n'
         '      <FadeIn delay={800}><p>Subheading copy.</p></FadeIn>\n'
         '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
@@ -269,14 +273,18 @@ def broken_build(tmp_path: Path) -> Path:
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
         "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
     )
-    # Foundation hero (background video, no overlay, with poster).
+    # Foundation hero (gradient mesh, no overlay).
     (site / "components" / "sections" / "Hero.tsx").write_text(
         'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
         'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
-        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden"\n'
+        '      style={{ background: "var(--color-bg)" }}>\n'
+        '      <div className="absolute inset-0 pointer-events-none">\n'
+        '        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"\n'
+        '          style={{ background: "var(--color-accent-glow)" }} />\n'
+        '      </div>\n'
         '      <AnimatedHeading text="Test Co" className="text-7xl text-white" />\n'
         '      <FadeIn delay={800}><p>Subheading copy.</p></FadeIn>\n'
         '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
