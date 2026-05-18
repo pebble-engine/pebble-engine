@@ -14,7 +14,7 @@ export const PUBLIC_FAQ: FaqItem[] = [
   },
   {
     q: "Will my site work on phones?",
-    a: "Yes. Every build targets mobile-first with 16px-minimum input fonts, 100dvh-safe heights for mobile browsers, and tested across phone breakpoints. Mobile correctness is one of the 33 FOUNDATION eval checks every site has to pass.",
+    a: "Yes. Every build targets mobile-first with 16px-minimum input fonts, 100dvh-safe heights for mobile browsers, and tested across phone breakpoints. Mobile correctness is one of 50+ automated quality checks every site has to pass before it leaves the engine.",
   },
   {
     q: "Do you sell my data or run trackers?",
@@ -22,7 +22,7 @@ export const PUBLIC_FAQ: FaqItem[] = [
   },
   {
     q: "What if I don't like what Pebble built?",
-    a: "Try a different DNA — regenerate from the same brief and you'll get a different site. Or click into the visual editor and tweak directly. Every change is undoable. We're also planning a refund window once billing launches.",
+    a: "Try a different DNA — regenerate from the same brief and you'll get a different site. Or click into the visual editor and tweak directly. Every change is undoable. If you're on a paid plan and it's within 7 days, we refund — no questions asked.",
   },
 ];
 
@@ -52,7 +52,7 @@ export const ACCOUNT_FAQ: FaqItem[] = [
   },
   {
     q: "Can I delete my account?",
-    a: "Not via the UI yet — email us. (We're shipping the dashboard self-delete shortly.) Until then, every project's files live at output/<slug>/ on the engine host; remove the directory to drop a project.",
+    a: "Yes — go to Settings, scroll to Account, and click Delete account. You'll be asked to confirm with your email, and then there's a 14-day cooling-off window during which you can cancel. After that, your account, projects, and files are permanently removed.",
   },
 ];
 

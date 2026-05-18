@@ -479,9 +479,9 @@ function Footer() {
         </span>
         <span>© {new Date().getFullYear()} Pebble Engine. Built with care.</span>
         <div className="flex items-center gap-5">
+          <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           <Link href="/migrate" className="hover:text-foreground transition-colors">Migrate</Link>
-          <Link href="/workspace#phase=idea" className="hover:text-foreground transition-colors">Start</Link>
-          <Link href="/" className="hover:text-foreground transition-colors">App</Link>
+          <Link href="/workspace#phase=idea" className="hover:text-foreground transition-colors">Start building</Link>
         </div>
       </div>
     </footer>
