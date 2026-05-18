@@ -177,6 +177,13 @@ function LoginForm() {
               Forgot your password?
             </Link>
           </p>
+
+          <p className="text-center text-xs text-muted-foreground">
+            By signing in you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-foreground transition-colors">Terms</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="underline hover:text-foreground transition-colors">Privacy Policy</Link>.
+          </p>
         </motion.div>
       </main>
     </div>

@@ -362,7 +362,14 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
           FAQ stale entries, robots.txt, sitemap.ts, footer Pricing link. Marc + Claude
           visual QA pass still needed before launch.
 [x] 12.2  Pricing page live with comparison table — /pricing: plan cards (Free/$29/$59) + 5-category comparison table + FAQ + real Stripe CTAs; landing page synced
-[ ] 12.3  Privacy policy + Terms of Service (Marc handles + a lawyer)
+[~] 12.3  Privacy policy + Terms of Service
+          Draft pages shipped 2026-05-18: /privacy (11 sections covering data
+          collection, Supabase/Stripe/Resend third parties, GDPR rights, deletion
+          cooling-off) + /terms (12 sections: plans/billing/refund/AUP/IP/liability).
+          Footer links added (Privacy + Terms). Login + signup pages updated with
+          "By signing in/up you agree to Terms + Privacy Policy" consent line.
+          /privacy and /terms added to sitemap.ts.
+          Marc's action: have a lawyer review both drafts before launch.
 [ ] 12.4  ProductHunt launch prep (assets, story, day-of plan)
 [ ] 12.5  Beta-tester recruitment (10-20 friends, agents, small biz owners)
 [~] 12.6  Status page at status.pebble.app (UptimeRobot or BetterStack)

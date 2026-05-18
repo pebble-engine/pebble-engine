@@ -481,6 +481,8 @@ function Footer() {
         <div className="flex items-center gap-5">
           <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           <Link href="/migrate" className="hover:text-foreground transition-colors">Migrate</Link>
+          <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
+          <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
           <Link href="/workspace#phase=idea" className="hover:text-foreground transition-colors">Start building</Link>
         </div>
       </div>

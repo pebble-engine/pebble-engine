@@ -205,7 +205,10 @@ function SignupForm() {
           <p className="text-center text-xs text-muted-foreground">
             Auth is handled by Supabase — your password is hashed; we never see it in plaintext.
             <br />
-            <Link href="/landing#faq" className="underline">Privacy details</Link>.
+            By signing up you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-foreground transition-colors">Terms</Link>
+            {" "}and{" "}
+            <Link href="/privacy" className="underline hover:text-foreground transition-colors">Privacy Policy</Link>.
           </p>
         </motion.div>
       </main>
