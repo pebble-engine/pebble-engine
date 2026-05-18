@@ -224,7 +224,14 @@ type PreviewBuild = {
 export function pickPreviewUrl(build: PreviewBuild | null | undefined): string {
   const devUrl = build?.dev_server?.url;
   if (typeof devUrl === "string" && devUrl.length > 0) return devUrl;
-  if (build?.preview_url) return build.preview_url;
+  if (build?.preview_url) {
+    const url = build.preview_url;
+    // When engine is hosted remotely, relative preview URLs must be
+    // resolved against the engine base so the iframe loads directly
+    // from the engine (bypasses Vercel's SSRF-blocked proxy).
+    if (url.startsWith("/") && ENGINE_BASE) return `${ENGINE_BASE}${url}`;
+    return url;
+  }
   return "about:blank";
 }
 
