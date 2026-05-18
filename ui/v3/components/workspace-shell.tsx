@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import {
@@ -36,6 +36,11 @@ import { PlanPhase } from "@/components/phases/plan-phase";
 import { DraftPhase } from "@/components/phases/draft-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { PublishPhase } from "@/components/phases/publish-phase";
+
+// Fires synchronously before paint on the client; falls back to useEffect
+// on the server (where there is no DOM) to suppress the SSR warning.
+const useIsomorphicLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
  * Unified workspace shell. Single component, rendered by both ``/`` (the
@@ -88,17 +93,29 @@ export function WorkspaceShell() {
   const safeChipDeck = useMemo(() => withReducedMotion(chipDeck), []);
   const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
-  // Initial hydrate. Snap to a sensible phase based on what state actually
-  // exists: no build + asking for design/draft/publish → step back to the
-  // earliest phase the user can reasonably resume from.
-  useEffect(() => {
+  // Hydrate from localStorage before the first paint so the user never sees
+  // an "empty" brief or the wrong phase. useLayoutEffect fires synchronously
+  // after the commit but before the browser paints; useEffect would show the
+  // wrong state for one frame (causes the logo / project-name flicker).
+  // Phase resolution reads the hash directly so it doesn't race with
+  // usePhase's own layoutEffect that also reads the hash.
+  useIsomorphicLayoutEffect(() => {
     const currentBrief = getBrief();
     const currentBuild = getLastBuild();
     const currentPlan = getPlan();
     setBrief(currentBrief);
     setBuild(currentBuild);
     setPlan(currentPlan);
-    if (!currentBuild && (phase === "design" || phase === "draft" || phase === "publish")) {
+    // Resolve the actual phase: prefer the URL hash (usePhase also reads this,
+    // but we check it here so we don't race with its layoutEffect).
+    const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+    const hashPhase = hashParams.get("phase");
+    const resolvedPhase: Phase = (
+      hashPhase && ["welcome","idea","plan","draft","design","publish"].includes(hashPhase)
+        ? hashPhase as Phase
+        : phase
+    );
+    if (!currentBuild && (resolvedPhase === "design" || resolvedPhase === "draft" || resolvedPhase === "publish")) {
       const hasBriefContent = !!(currentBrief.business_name || currentBrief.extra_context);
       setPhase(hasBriefContent ? "idea" : "welcome");
     }

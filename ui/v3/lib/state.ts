@@ -82,13 +82,16 @@ const KEY_BRIEF = "pebble.brief";
 const KEY_PLAN  = "pebble.plan";
 const KEY_BUILD = "pebble.lastBuild";
 
+// localStorage so state survives tab close / browser restart.
+// sessionStorage would lose everything on close, sending the user back
+// to the welcome screen after a fresh tab open.
 export function getBrief(): Brief {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(sessionStorage.getItem(KEY_BRIEF) || "{}"); } catch { return {}; }
+  try { return JSON.parse(localStorage.getItem(KEY_BRIEF) || "{}"); } catch { return {}; }
 }
 export function setBrief(b: Brief): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(KEY_BRIEF, JSON.stringify(b));
+  localStorage.setItem(KEY_BRIEF, JSON.stringify(b));
 }
 export function patchBrief(patch: Partial<Brief>): Brief {
   const next = { ...getBrief(), ...patch };
@@ -97,19 +100,19 @@ export function patchBrief(patch: Partial<Brief>): Brief {
 }
 export function getPlan(): PebblePlan | null {
   if (typeof window === "undefined") return null;
-  try { return JSON.parse(sessionStorage.getItem(KEY_PLAN) || "null"); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(KEY_PLAN) || "null"); } catch { return null; }
 }
 export function setPlan(p: PebblePlan): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(KEY_PLAN, JSON.stringify(p));
+  localStorage.setItem(KEY_PLAN, JSON.stringify(p));
 }
 export function getLastBuild(): { slug: string; preview_url: string; [key: string]: unknown } | null {
   if (typeof window === "undefined") return null;
-  try { return JSON.parse(sessionStorage.getItem(KEY_BUILD) || "null"); } catch { return null; }
+  try { return JSON.parse(localStorage.getItem(KEY_BUILD) || "null"); } catch { return null; }
 }
 export function setLastBuild(b: unknown): void {
   if (typeof window === "undefined") return;
-  sessionStorage.setItem(KEY_BUILD, JSON.stringify(b));
+  localStorage.setItem(KEY_BUILD, JSON.stringify(b));
 }
 
 // Industry heuristic — quick keyword match used by intake.
