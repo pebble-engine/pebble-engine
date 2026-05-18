@@ -59,7 +59,6 @@ from typing import Optional
 
 import stripe
 
-from pebble.email import get_sender, EmailMessage
 from pebble.security import safe_user_id
 
 
@@ -74,14 +73,6 @@ _SUBSCRIPTION_EVENT_TYPES = frozenset({
     "customer.subscription.updated",
     "customer.subscription.deleted",
 })
-
-# checkout.session.completed fires after every successful Checkout —
-# both subscriptions (handled above) and one-time payments. We listen
-# to this to send the setup-call confirmation email.
-_CHECKOUT_EVENT_TYPES = frozenset({
-    "checkout.session.completed",
-})
-
 
 def _output_dir() -> Path:
     """Resolve OUTPUT_DIR via the same lookup pattern as security.py /
@@ -174,83 +165,6 @@ def _write_subscription_sentinel(user_id: str, *, status: str, plan: str,
                 pass
 
 
-def _handle_setup_call_checkout(event: dict, handler) -> None:
-    """Handle checkout.session.completed for plan=setup_call.
-
-    Sends a confirmation email with the PEBBLE_SETUP_CALL_LINK calendar
-    URL so the user can book even if they closed the Stripe tab before the
-    success redirect completed. Email failure is non-fatal — the payment
-    is already processed and recorded in Stripe.
-    """
-    session = ((event.get("data") or {}).get("object")) or {}
-    metadata = session.get("metadata") or {}
-
-    # Only act on payments that were stamped with pebble_plan=setup_call.
-    if metadata.get("pebble_plan") != "setup_call":
-        handler._json(200, {"ok": True, "action": "ignored",
-                            "reason": "checkout not a setup_call"})
-        return
-
-    # Guard against webhooks that fire before the payment clears (e.g.
-    # for async payment methods). In those cases, payment_status is
-    # "unpaid" — we'll get another checkout.session.completed when it
-    # settles. Only act on "paid".
-    if session.get("payment_status") != "paid":
-        handler._json(200, {"ok": True, "action": "skipped",
-                            "reason": "payment_status not paid yet"})
-        return
-
-    email = (session.get("customer_email") or "").strip()
-    if not email or "@" not in email:
-        log.info("stripe-webhook setup_call checkout has no customer_email")
-        handler._json(200, {"ok": True, "action": "ok",
-                            "reason": "no email to confirm"})
-        return
-
-    calendar_link = os.environ.get("PEBBLE_SETUP_CALL_LINK", "").strip()
-
-    if calendar_link:
-        text = (
-            "Your Pebble Setup Call payment is confirmed.\n\n"
-            f"Book your 1-hour session here:\n{calendar_link}\n\n"
-            "We'll build your site together — domain, contact form, publishing. "
-            "Any slot that works for you works for us.\n\n"
-            "Questions? Reply to this email.\n\n— The Pebble Team"
-        )
-        html = (
-            "<p>Your Pebble Setup Call payment is confirmed.</p>"
-            f'<p><a href="{calendar_link}" '
-            'style="display:inline-block;background:#000;color:#fff;'
-            'padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">'
-            "Book your setup call &rarr;</a></p>"
-            "<p>We’ll build your site together — domain, contact form, publishing. "
-            "Any slot that works for you works for us.</p>"
-            "<p>Questions? Reply to this email.</p>"
-            "<p>— The Pebble Team</p>"
-        )
-    else:
-        text = (
-            "Your Pebble Setup Call payment is confirmed.\n\n"
-            "We'll be in touch within 24 hours with your booking link.\n\n"
-            "— The Pebble Team"
-        )
-        html = None
-
-    try:
-        sender = get_sender()
-        sender.send(EmailMessage(to=email, subject="Your Pebble Setup Call is confirmed",
-                                 text=text, html=html))
-        # Redact email from log — only include the last 4 chars of the local
-        # part so an operator can sanity-check without storing PII in logs.
-        local, _, domain = email.partition("@")
-        redacted = f"***{local[-4:]}@{domain}" if len(local) > 4 else "***@" + domain
-        log.info("stripe-webhook setup_call confirmation sent to %s", redacted)
-    except Exception:
-        log.warning("stripe-webhook setup_call confirmation email failed (non-fatal)")
-
-    handler._json(200, {"ok": True, "action": "applied"})
-
-
 def run_stripe_webhook(handler) -> None:
     """Entry point — wired from PebbleHandler.do_POST."""
     secret = os.environ.get("STRIPE_WEBHOOK_SECRET", "").strip()
@@ -323,13 +237,6 @@ def run_stripe_webhook(handler) -> None:
         return
 
     event_type = event.get("type", "")
-
-    # One-time payment fulfillment (e.g. setup_call). Must be checked
-    # before the subscription-only filter below so checkout events don't
-    # get swallowed as "ignored".
-    if event_type in _CHECKOUT_EVENT_TYPES:
-        _handle_setup_call_checkout(event, handler)
-        return
 
     if event_type not in _SUBSCRIPTION_EVENT_TYPES:
         # Stripe sends many event types; we only act on subscription state

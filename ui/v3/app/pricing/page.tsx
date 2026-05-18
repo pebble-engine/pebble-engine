@@ -11,7 +11,7 @@ import { createCheckoutSession, fetchSubscription, type SubscriptionState } from
 // ── Plan definitions ──────────────────────────────────────────────────────────
 
 type PlanKey = "free" | "starter" | "pro";
-type LoadingKey = PlanKey | "setup_call";
+type LoadingKey = PlanKey;
 
 const PLANS: Record<PlanKey, {
   name: string;
@@ -113,10 +113,6 @@ const FAQ = [
     q: "What happens if my subscription lapses?",
     a: "Your sites display a courtesy notice to visitors. Your files stay safe in your account — reactivate and they're back live instantly.",
   },
-  {
-    q: "What is the setup call?",
-    a: "A 1-hour video call where we build your site together, live. We'll handle your domain, contact form, publishing — anything that needs configuring. It's a one-time $99 fee, no subscription required. Book it from the pricing page after checkout.",
-  },
 ];
 
 // ── Components ────────────────────────────────────────────────────────────────
@@ -161,22 +157,6 @@ export default function PricingPage() {
     setError(null);
     try {
       const { url } = await createCheckoutSession(tier.stripePlan);
-      window.location.href = url;
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
-      setLoading(null);
-    }
-  }
-
-  async function onBookSetupCall() {
-    if (!user) {
-      router.push(`/signup?redirect=/pricing`);
-      return;
-    }
-    setLoading("setup_call");
-    setError(null);
-    try {
-      const { url } = await createCheckoutSession("setup_call");
       window.location.href = url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
@@ -274,33 +254,6 @@ export default function PricingPage() {
                 </div>
               );
             })}
-          </div>
-
-          {/* Setup-call add-on */}
-          <div className="mx-auto max-w-5xl mt-6">
-            <div className="rounded-2xl border border-border bg-card p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6 md:gap-12">
-              <div className="flex-1">
-                <h3 className="text-lg font-semibold">Need hands-on help launching?</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                  Book a 1-hour setup call. We'll build your site together, live — configure your domain,
-                  set up your contact form, and answer every question. One-time fee, no subscription required.
-                </p>
-              </div>
-              <div className="flex items-center gap-5 shrink-0">
-                <div>
-                  <span className="font-display text-3xl font-bold">$99</span>
-                  <span className="text-sm text-muted-foreground ml-1.5">one-time</span>
-                </div>
-                <button
-                  type="button"
-                  disabled={loading === "setup_call"}
-                  onClick={onBookSetupCall}
-                  className="inline-flex items-center justify-center rounded-full border border-border bg-background px-5 py-2.5 text-sm font-semibold hover:bg-muted transition-colors disabled:opacity-60 whitespace-nowrap"
-                >
-                  {loading === "setup_call" ? "Redirecting…" : "Book a session →"}
-                </button>
-              </div>
-            </div>
           </div>
 
           {error && (

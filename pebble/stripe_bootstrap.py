@@ -60,16 +60,6 @@ PLANS: list[dict[str, Any]] = [
     },
 ]
 
-# One-time products (not subscriptions). Same idempotency guarantee as PLANS.
-SETUP_CALLS: list[dict[str, Any]] = [
-    {
-        "key": "setup_call",
-        "name": "Pebble Setup Call",
-        "description": "One-hour hands-on setup call — build your site together, live with the Pebble team.",
-        "amount_cents": 9900,
-    },
-]
-
 
 def _load_env(path: Path) -> None:
     """Stdlib-only .env loader matching pebble_engine.load_env_file so the
@@ -137,19 +127,6 @@ def find_existing_price(stripe_mod, product_id: str, amount_cents: int) -> Optio
     return None
 
 
-def find_existing_one_time_price(stripe_mod, product_id: str, amount_cents: int) -> Optional[Any]:
-    """Return the active one-time USD price on ``product_id`` matching
-    ``amount_cents``, or None if no matching price exists."""
-    for price in stripe_mod.Price.list(product=product_id, limit=100, active=True).auto_paging_iter():
-        if (
-            price.unit_amount == amount_cents
-            and price.currency == "usd"
-            and _stripe_recurring_interval(price) is None
-        ):
-            return price
-    return None
-
-
 def ensure_plan(stripe_mod, plan: dict[str, Any]) -> dict[str, str]:
     """Ensure a single plan's product + price exist, creating them if not.
     Returns ``{"product_id": ..., "price_id": ...}``."""
@@ -174,36 +151,10 @@ def ensure_plan(stripe_mod, plan: dict[str, Any]) -> dict[str, str]:
     return {"product_id": product.id, "price_id": price.id}
 
 
-def ensure_setup_call(stripe_mod, item: dict[str, Any]) -> dict[str, str]:
-    """Ensure the setup-call one-time product + price exist.
-    Returns ``{"product_id": ..., "price_id": ...}``."""
-    product = find_existing_product(stripe_mod, item["key"])
-    if product is None:
-        product = stripe_mod.Product.create(
-            name=item["name"],
-            description=item["description"],
-            metadata={"pebble_plan": item["key"]},
-        )
-
-    price = find_existing_one_time_price(stripe_mod, product.id, item["amount_cents"])
-    if price is None:
-        price = stripe_mod.Price.create(
-            product=product.id,
-            currency="usd",
-            unit_amount=item["amount_cents"],
-            metadata={"pebble_plan": item["key"]},
-        )
-
-    return {"product_id": product.id, "price_id": price.id}
-
-
 def bootstrap(stripe_mod) -> dict[str, dict[str, str]]:
     """Run the full bootstrap. Pure of side-effects beyond the Stripe API
     so callers can inject a stub stripe module in tests."""
-    result = {plan["key"]: ensure_plan(stripe_mod, plan) for plan in PLANS}
-    for item in SETUP_CALLS:
-        result[item["key"]] = ensure_setup_call(stripe_mod, item)
-    return result
+    return {plan["key"]: ensure_plan(stripe_mod, plan) for plan in PLANS}
 
 
 def main(argv: Optional[list[str]] = None) -> int:  # noqa: ARG001
@@ -241,7 +192,6 @@ def main(argv: Optional[list[str]] = None) -> int:  # noqa: ARG001
     print("\nDone. Paste these lines into your .env:\n")
     print(f"PEBBLE_STRIPE_STARTER_PRICE_ID={result['starter']['price_id']}")
     print(f"PEBBLE_STRIPE_PRO_PRICE_ID={result['pro']['price_id']}")
-    print(f"PEBBLE_STRIPE_SETUP_PRICE_ID={result['setup_call']['price_id']}")
     print()
     print("Reference IDs (for the Stripe Dashboard if you want to confirm):")
     for plan_key, ids in result.items():

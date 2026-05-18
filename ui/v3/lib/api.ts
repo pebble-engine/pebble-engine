@@ -645,7 +645,7 @@ async function authedPostJSON<T>(path: string, body: unknown): Promise<T> {
  * the Stripe webhook can route subscription events back to this Pebble
  * account.
  */
-export async function createCheckoutSession(plan: "starter" | "pro" | "setup_call"): Promise<CheckoutSessionResponse> {
+export async function createCheckoutSession(plan: "starter" | "pro"): Promise<CheckoutSessionResponse> {
   return authedPostJSON<CheckoutSessionResponse>("/api/checkout/create-session", { plan });
 }
 
