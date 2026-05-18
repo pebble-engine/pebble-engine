@@ -28,7 +28,7 @@ Ch 6  Visual Editor MVP     ━━━━━━━━━━━━━━━━━�
 Ch 7  User Accounts         ━━━━━━━━━━━━━━━━━━░░░  profile + GDPR delete open
 Ch 8  Dashboard             ━━━━━━━━━━━━━━━━━━━━━  settings page shipped 2026-05-17
 Ch 9  Billing (Stripe)      ━━━━━━━━━━━━━━━━━━░░░  endpoints + portal shipped; trial + setup-call open
-Ch 10 Hosting               ━━━━━━━━━━━━━━━━━░░░░  *.pebble.app wildcard open
+Ch 10 Hosting               ━━━━━━━━━━━━━━━━━░░░░  *.pebbleapp.ai wildcard open
 Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━░░░░  email sequence open
 Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
 Ch 13 Design breadth        ░░░░░░░░░░░░░░░░░░░░░  MotionSites harvest open
@@ -39,7 +39,7 @@ Ch 15 Multi-page sites      ━━━━━━━━━━━━━━━━━�
 **Net:** Stripe endpoints are now shipped (commit 723ab8c, 35 new tests).
 What's left for billing is Marc-side: run the bootstrap, fix the
 mis-pasted STRIPE_WEBHOOK_SECRET, do the E2E payment test. After that
-the only true MVP blocker is the *.pebble.app DNS wildcard.
+the only true MVP blocker is the *.pebbleapp.ai DNS wildcard.
 
 ---
 
@@ -121,7 +121,7 @@ Where we are now. Each chapter ships something visible to customers.
 
 ## Chapter 5 — The Landing Page (Week 1, ~3 days)
 
-**Goal:** One public page at getpebble.net that explains Pebble + captures emails.
+**Goal:** One public page at pebbleapp.ai that explains Pebble + captures emails.
 
 ```
 [x] 5.1  Built manually instead of via Pebble engine
@@ -140,9 +140,9 @@ Where we are now. Each chapter ships something visible to customers.
 [x] 5.4  Waitlist email-capture via Resend Server Action
 [x] 5.5  Brand-tuned: amber primary CTAs, 18px+ body, WCAG AAA contrast,
          "no thin font weights" mandate. Soul-line in hero.
-[ ] 5.6  Deploy to Vercel under getpebble.net   ← MARC's next move
+[ ] 5.6  Deploy to Vercel under pebbleapp.ai   ← MARC's next move
 [x] 5.7  Plausible analytics — next/script injected via NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var (2026-05-18, re-shipped: was in a separate branch)
-[ ] 5.8  Verify existing dark/cinematic getpebble.net vs new
+[ ] 5.8  Verify existing dark/cinematic pebbleapp.ai vs new
          warm/inclusive direction — Marc's brand call            ← OPEN
 ```
 
@@ -305,7 +305,7 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 
 ## Chapter 10 — Hosting Generated Sites (Weeks 12-13) — MOSTLY SHIPPED
 
-**Goal:** Each customer's site lives at their.pebble.app and works.
+**Goal:** Each customer's site lives at their.pebbleapp.ai and works.
 
 > **Vendor change from the original plan:** Vercel → Cloudflare Pages (Direct
 > Upload). Same functional outcome (auto-create project, custom domains, SSL),
@@ -315,11 +315,11 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 ```
 [x] 10.1  Auto-create deployment per generated site
           → Cloudflare Pages Direct Upload (POST /api/publish, commit a3e9bda)
-[~] 10.2  Sub-domain routing: <slug>.pebble.app (DNS wildcard)
+[~] 10.2  Sub-domain routing: <slug>.pebbleapp.ai (DNS wildcard)
           Engine side: publish.py now calls _add_pages_custom_domain() when
-          PEBBLE_APP_DOMAIN=pebble.app is set (2026-05-17).
-          Marc's action: add the *.pebble.app wildcard CNAME in Cloudflare DNS
-          pointing to pages.dev, then set PEBBLE_APP_DOMAIN=pebble.app in .env.
+          PEBBLE_APP_DOMAIN=pebbleapp.ai is set (2026-05-17).
+          Marc's action: add the *.pebbleapp.ai wildcard CNAME in Cloudflare DNS
+          pointing to pages.dev, then set PEBBLE_APP_DOMAIN=pebbleapp.ai in .env.
 [x] 10.3  Custom-domain wiring (POST/DELETE /api/projects/<slug>/domain)
 [x] 10.4  SSL automatic (Cloudflare handles)
 [x] 10.5  Contact-form emails delivered via Resend
@@ -372,11 +372,11 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
           Marc's action: have a lawyer review both drafts before launch.
 [ ] 12.4  ProductHunt launch prep (assets, story, day-of plan)
 [ ] 12.5  Beta-tester recruitment (10-20 friends, agents, small biz owners)
-[~] 12.6  Status page at status.pebble.app (UptimeRobot or BetterStack)
+[~] 12.6  Status page at status.pebbleapp.ai (UptimeRobot or BetterStack)
           Engine side: /api/health returns JSON with engine_ok + llm_ready for
           external monitoring. Marc's action: create BetterStack monitor pointing
           at /api/health, check that json.engine_ok == true.
-[ ] 12.7  Support inbox routing setup (help@pebble.app → Marc, escalate to Claude)
+[ ] 12.7  Support inbox routing setup (help@pebbleapp.ai → Marc, escalate to Claude)
 [ ] 12.8  First $1 of MRR
 ```
 

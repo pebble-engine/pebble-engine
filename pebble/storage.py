@@ -238,7 +238,7 @@ def upload_attachment(
             "Authorization": f"Bearer {_env_key()}",
             "Content-Type":  content_type,
             "x-upsert":      "false",  # never silently overwrite
-            "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+            "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
         },
     )
     try:
@@ -294,7 +294,7 @@ def create_signed_url(
         headers={
             "Authorization": f"Bearer {_env_key()}",
             "Content-Type":  "application/json",
-            "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+            "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
         },
     )
     try:

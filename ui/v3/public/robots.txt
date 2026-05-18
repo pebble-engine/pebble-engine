@@ -8,4 +8,4 @@ Disallow: /settings
 Disallow: /dashboard
 Disallow: /api/
 
-Sitemap: https://getpebble.net/sitemap.xml
+Sitemap: https://pebbleapp.ai/sitemap.xml

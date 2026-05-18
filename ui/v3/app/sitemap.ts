@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://getpebble.net";
+const BASE = process.env.NEXT_PUBLIC_BASE_URL ?? "https://pebbleapp.ai";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [

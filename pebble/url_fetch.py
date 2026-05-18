@@ -47,7 +47,7 @@ from typing import Optional
 
 # ---- Constants -----------------------------------------------------------
 
-USER_AGENT  = "PebbleBot/1.0 (+https://getpebble.net)"
+USER_AGENT  = "PebbleBot/1.0 (+https://pebbleapp.ai)"
 MAX_BYTES   = 2 * 1024 * 1024  # 2 MB
 TIMEOUT_SEC = 10.0
 MAX_REDIRECTS = 5

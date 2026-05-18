@@ -200,7 +200,7 @@ CF_PAGES_API  = f"{CF_API_BASE}/pages"
 # default "Python-urllib/3.x" UA. Cloudflare's own api.cloudflare.com
 # currently doesn't, but set a real UA defensively so we don't get
 # surprised if their bot rules change.
-PEBBLE_UA = "PebbleEngine/1.0 (+https://getpebble.net)"
+PEBBLE_UA = "PebbleEngine/1.0 (+https://pebbleapp.ai)"
 
 
 def _cf_request(

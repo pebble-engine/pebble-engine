@@ -29,12 +29,12 @@ export default function PrivacyPage() {
             <p>
               Pebble Engine (&ldquo;Pebble&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) operates
               the website-building platform at{" "}
-              <a href="https://getpebble.net" className="underline hover:text-foreground transition-colors">
-                getpebble.net
+              <a href="https://pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+                pebbleapp.ai
               </a>{" "}
               and its associated services. Questions:{" "}
-              <a href="mailto:hello@getpebble.net" className="underline hover:text-foreground transition-colors">
-                hello@getpebble.net
+              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+                hello@pebbleapp.ai
               </a>
               .
             </p>
@@ -117,7 +117,7 @@ export default function PrivacyPage() {
               </li>
               <li>
                 <strong>Plausible Analytics</strong> — privacy-friendly traffic analytics on
-                getpebble.net. No cookies, no cross-site tracking, no personal data collected.
+                pebbleapp.ai. No cookies, no cross-site tracking, no personal data collected.
               </li>
             </ul>
           </section>
@@ -181,8 +181,8 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               Email{" "}
-              <a href="mailto:hello@getpebble.net" className="underline hover:text-foreground transition-colors">
-                hello@getpebble.net
+              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+                hello@pebbleapp.ai
               </a>{" "}
               to exercise any of these rights. Account deletion is self-serve via Settings.
             </p>
@@ -226,8 +226,8 @@ export default function PrivacyPage() {
             </h2>
             <p>
               Pebble Engine &mdash;{" "}
-              <a href="mailto:hello@getpebble.net" className="underline hover:text-foreground transition-colors">
-                hello@getpebble.net
+              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+                hello@pebbleapp.ai
               </a>
             </p>
           </section>
@@ -241,8 +241,8 @@ export default function PrivacyPage() {
           <Link href="/landing" className="hover:text-foreground transition-colors">
             Back to Pebble
           </Link>
-          <a href="mailto:hello@getpebble.net" className="hover:text-foreground transition-colors">
-            hello@getpebble.net
+          <a href="mailto:hello@pebbleapp.ai" className="hover:text-foreground transition-colors">
+            hello@pebbleapp.ai
           </a>
         </div>
       </div>

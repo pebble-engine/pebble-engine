@@ -175,7 +175,7 @@ Column 3 — **Hours & social**:
 - Social icons row (only platforms the brief mentions; if none, omit this row entirely — never invent profiles)
 - Copyright line at the bottom of the column: `© {{new Date().getFullYear()}} [Business Name]. All rights reserved.` — the year comes from `new Date().getFullYear()` so it auto-rolls over, and the business name is the one from the brief
 
-Bottom strip below the 3 columns: `border-t border-white/10 mt-12 pt-6 text-xs text-white/50` row with "Built with [Pebble](https://getpebble.net)" attribution on the left and "Privacy · Terms" links on the right.
+Bottom strip below the 3 columns: `border-t border-white/10 mt-12 pt-6 text-xs text-white/50` row with "Built with [Pebble](https://pebbleapp.ai)" attribution on the left and "Privacy · Terms" links on the right.
 
 The eval `footer_lists_all_pages` parses the footer file and FAILS the build if any page declared in `plan.json` is missing from the sitemap column. Don't ship a footer without the sitemap.
 

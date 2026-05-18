@@ -348,7 +348,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               <div className="w-3 h-3 rounded-full bg-border opacity-30" />
             </div>
             <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
-              {slugForUrl}.pebble.app
+              {slugForUrl}.pebbleapp.ai
             </div>
             {/* Desktop / mobile device toggle. Mobile constrains the iframe
                 wrapper to ~390px so the user can verify the responsive

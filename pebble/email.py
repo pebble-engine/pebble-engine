@@ -33,7 +33,7 @@ _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 # All outbound API calls need a real User-Agent — vendors fronting their
 # APIs with Cloudflare (Resend in particular) block the default
 # "Python-urllib/3.x" UA at the WAF and return HTTP 403 / error 1010.
-PEBBLE_UA = "PebbleEngine/1.0 (+https://getpebble.net)"
+PEBBLE_UA = "PebbleEngine/1.0 (+https://pebbleapp.ai)"
 
 
 def _engine_output_dir() -> Path:

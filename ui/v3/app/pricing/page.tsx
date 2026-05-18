@@ -72,7 +72,7 @@ const TABLE: TableRow[] = [
   { category: "Sites & Publishing" },
   { label: "AI site generation",              free: true,        starter: true,        pro: true },
   { label: "Published sites",                 free: "2",         starter: "Unlimited", pro: "Unlimited" },
-  { label: "Free Pebble URL (*.pebble.app)",  free: true,        starter: true,        pro: true },
+  { label: "Free Pebble URL (*.pebbleapp.ai)",  free: true,        starter: true,        pro: true },
   { label: "Custom domain (yourname.com)",    free: false,       starter: true,        pro: true },
 
   { category: "Editing" },

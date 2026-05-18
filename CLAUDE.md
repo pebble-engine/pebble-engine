@@ -255,4 +255,4 @@ Env vars (all in `.env`): `STRIPE_SECRET_KEY` (sk_test_), `STRIPE_PUBLISHABLE_KE
 | GET | `/dist/` | Serve pre-built static assets (used by the v3 frontend in production). |
 | GET | `/` | Plaintext liveness landing — engine is backend-only, points users to the v3 frontend at port 3000. |
 
-The v3 Next.js frontend at `ui/v3/` proxies `/api/*` and `/preview/*` to the engine via `next.config.ts` rewrites; in dev, run v3 on port 3001 because port 3000 is Marc's getpebble.net dev server.
+The v3 Next.js frontend at `ui/v3/` proxies `/api/*` and `/preview/*` to the engine via `next.config.ts` rewrites; in dev, run v3 on port 3001 because port 3000 is Marc's pebbleapp.ai dev server.

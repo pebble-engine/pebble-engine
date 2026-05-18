@@ -173,7 +173,7 @@ def validate_access_token(
             # and the bearer for the actual session.
             "apikey":        _env_anon(),
             "Authorization": f"Bearer {token}",
-            "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+            "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
         },
     )
     try:
@@ -224,7 +224,7 @@ def delete_user(
         headers={
             "apikey":        _env_anon(),
             "Authorization": f"Bearer {_env_service_role()}",
-            "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+            "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
         },
     )
     try:
@@ -265,7 +265,7 @@ def get_profile(
         "apikey":        _env_service_role(),
         "Authorization": f"Bearer {_env_service_role()}",
         "Accept":        "application/json",
-        "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+        "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
     })
     try:
         with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
@@ -319,7 +319,7 @@ def update_profile(
         "Authorization": f"Bearer {_env_service_role()}",
         "Content-Type":  "application/json",
         "Prefer":        "return=representation",
-        "User-Agent":    "PebbleEngine/1.0 (+https://getpebble.net)",
+        "User-Agent":    "PebbleEngine/1.0 (+https://pebbleapp.ai)",
     })
     try:
         with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
