@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Minus, X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { AuthMenu } from "@/components/auth-menu";
 import { useAuth } from "@/components/auth-provider";
 import { createCheckoutSession, fetchSubscription, type SubscriptionState } from "@/lib/api";
@@ -131,13 +131,12 @@ export default function PricingPage() {
   const [error, setError] = useState<string | null>(null);
   const [sub, setSub] = useState<SubscriptionState | null | "loading">("loading");
 
-  // Lazy-load subscription state for authenticated users.
-  useState(() => {
+  useEffect(() => {
     if (!user) { setSub(null); return; }
     fetchSubscription()
       .then(setSub)
       .catch(() => setSub(null));
-  });
+  }, [user]);
 
   async function onChoosePlan(plan: PlanKey) {
     const tier = PLANS[plan];
@@ -273,7 +272,7 @@ export default function PricingPage() {
                 <thead>
                   <tr className="border-b border-border bg-muted/40">
                     <th className="py-4 px-6 text-left font-medium text-muted-foreground w-1/2">Feature</th>
-                    {(["free", "starter", "pro"] as PlanKey[]).map((k) => (
+                    {(Object.keys(PLANS) as PlanKey[]).map((k) => (
                       <th key={k} className="py-4 px-4 text-center font-semibold text-foreground">
                         {PLANS[k].name}
                       </th>

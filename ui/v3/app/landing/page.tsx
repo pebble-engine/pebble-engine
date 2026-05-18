@@ -306,7 +306,6 @@ const TIERS = [
     cta: "Start building",
     href: "/workspace#phase=idea",
     featured: false,
-    coming: false,
   },
   {
     name: "Starter",
@@ -316,7 +315,6 @@ const TIERS = [
     cta: "Get Starter",
     href: "/pricing",
     featured: true,
-    coming: false,
   },
   {
     name: "Pro",
@@ -326,7 +324,6 @@ const TIERS = [
     cta: "Get Pro",
     href: "/pricing",
     featured: false,
-    coming: false,
   },
 ];
 
