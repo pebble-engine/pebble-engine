@@ -1032,6 +1032,8 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] All docs: README, HANDOFF, TODO_ASSETS, STYLE_GUIDE
 - [ ] README MUST include a `## What This Site Does NOT Include` section listing 2-5 concrete capabilities the build did NOT cover (e.g. for a therapist site: HIPAA-compliant patient intake; for an HVAC site: real-time technician dispatch; for an ecommerce site: payment-processing certification). Each gap names a recommended third-party tool or workaround. This is honesty, not failure — surface it so the user knows where Pebble stops. — eval `limitations_disclosed_in_readme`
 - [ ] `next.config.mjs` is plain JS (JSDoc, not `import type` — that's TS and crashes Node's ESM loader)
+- [ ] No hardcoded `http://localhost:...` or `http://127.0.0.1:...` URLs in `app/`, `components/`, or `lib/`. API calls must use relative paths (`/api/...`) or `process.env.NEXT_PUBLIC_*`. Hardcoded dev URLs ship broken to production and are invisible at build time. — eval `no_hardcoded_localhost`
+- [ ] No Next.js Pages Router APIs in an App Router build: no `import Head from 'next/head'` (use `export const metadata`), no `getServerSideProps`/`getStaticProps`/`getStaticPaths` (use async Server Components), no `import {{ useRouter }} from 'next/router'` (use `next/navigation`). Mixing router APIs causes silent failures or runtime crashes. — eval `no_pages_router_patterns`
 
 ---
 

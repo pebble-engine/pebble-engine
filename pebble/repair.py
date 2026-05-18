@@ -84,7 +84,12 @@ REPAIR_SYSTEM = (
     "7. Server/Client Component boundary: app/layout.tsx MUST NOT have "
     "\"use client\" (it must be a Server Component so metadata/viewport work). "
     "Components that use React hooks (AnimatedHeading, FadeIn, ContactForm) "
-    "MUST begin with \"use client\"."
+    "MUST begin with \"use client\".\n"
+    "8. No hardcoded localhost URLs: never write http://localhost:... or "
+    "http://127.0.0.1:... in app/, components/, or lib/. Use relative paths "
+    "(/api/...) or process.env.NEXT_PUBLIC_* for all API references. "
+    "Use next/navigation (not next/router) for all router hooks; use "
+    "export const metadata in layout.tsx (not import Head from next/head)."
 )
 
 

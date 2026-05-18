@@ -3539,6 +3539,164 @@ def hero_uses_animated_heading(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 45. no_hardcoded_localhost — prevents dev URLs shipping to production
+# ---------------------------------------------------------------------------
+
+_LOCALHOST_URL_RE = re.compile(
+    r"""https?://(?:localhost|127\.0\.0\.1)(?::\d+)?(?=/|['""\s]|$)""",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(details_file_key="files")
+def no_hardcoded_localhost(ctx: BuildContext) -> CheckResult:
+    """Source files must not contain hardcoded ``http://localhost`` URLs.
+
+    A common LLM mistake: generating ``fetch("http://localhost:3000/api/...")``
+    in a Server Action or ``href="http://localhost:8000/..."`` in a link.
+    These work during local dev but ship completely broken links and API calls
+    to production — the error is silent because Next.js builds without
+    type-checking fetch URLs.
+
+    Scans ``app/``, ``components/``, and ``lib/`` source files only.
+    Line-only comments (``// http://localhost...``) are ignored; inline
+    code is flagged regardless of surrounding strings.
+
+    Fix: use relative paths (``/api/...``) or ``process.env.NEXT_PUBLIC_*``.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_hardcoded_localhost", "skip", "no site directory")
+
+    offenders: list[str] = []
+    for src_dir in _SOURCE_SCAN_DIRS:
+        scan = ctx.site_dir / src_dir
+        if not scan.exists():
+            continue
+        for f in scan.rglob("*"):
+            if not f.is_file():
+                continue
+            if f.suffix not in {".ts", ".tsx", ".js", ".jsx", ".mjs"}:
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            # Strip lines that are pure comments (start with //) so that
+            # documentation notes like `// dev: http://localhost:3000` are
+            # ignored. Cannot use _LINE_COMMENT_RE here because its `//`
+            # pattern also matches the `://` inside URL string literals.
+            filtered = "\n".join(
+                line for line in text.splitlines()
+                if not line.lstrip().startswith("//")
+            )
+            if _LOCALHOST_URL_RE.search(filtered):
+                offenders.append(f.relative_to(ctx.site_dir).as_posix())
+
+    if not offenders:
+        return CheckResult(
+            "no_hardcoded_localhost", "pass",
+            "no hardcoded localhost URLs in source files",
+        )
+    return CheckResult(
+        "no_hardcoded_localhost", "fail",
+        f"{len(offenders)} file(s) contain hardcoded localhost URLs (breaks production): "
+        f"{', '.join(offenders[:5])}"
+        + (f" and {len(offenders) - 5} more" if len(offenders) > 5 else "")
+        + " — use relative paths or process.env.NEXT_PUBLIC_* instead",
+        details={"files": offenders},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 46. no_pages_router_patterns — catches App Router + Pages Router mixups
+# ---------------------------------------------------------------------------
+
+# Patterns that are valid in Next.js Pages Router but crash or are silently
+# broken in App Router. The LLM sometimes regresses to Pages Router patterns,
+# especially for Head, data-fetching, and router imports.
+_PAGES_ROUTER_PATTERNS: list[tuple[re.Pattern, str]] = [
+    (
+        re.compile(r"""import\s+(?:Head|default)\s+from\s+['"]next/head['"]"""),
+        "next/head import (use `export const metadata` in layout.tsx instead)",
+    ),
+    (
+        re.compile(r"""\bexport\s+(?:async\s+)?function\s+getServerSideProps\b"""),
+        "getServerSideProps (Pages Router only — use async Server Components or Route Handlers)",
+    ),
+    (
+        re.compile(r"""\bexport\s+(?:async\s+)?function\s+getStaticProps\b"""),
+        "getStaticProps (Pages Router only — use async Server Components with fetch)",
+    ),
+    (
+        re.compile(r"""\bexport\s+(?:async\s+)?function\s+getStaticPaths\b"""),
+        "getStaticPaths (Pages Router only — use generateStaticParams)",
+    ),
+    (
+        re.compile(r"""from\s+['"]next/router['"]"""),
+        "next/router import (use next/navigation for App Router)",
+    ),
+]
+
+@check_metadata(details_file_key="files")
+def no_pages_router_patterns(ctx: BuildContext) -> CheckResult:
+    """Source files must not use Next.js Pages Router APIs in an App Router build.
+
+    The LLM sometimes regresses to Pages Router patterns — especially
+    ``import Head from 'next/head'``, ``getServerSideProps``, and
+    ``useRouter`` from ``next/router``. In an App Router build these are
+    either silent no-ops (Head tags are ignored by the crawler) or runtime
+    crashes. This check catches the five most common regressions:
+
+    - ``next/head`` import → use ``export const metadata`` in layout.tsx
+    - ``getServerSideProps`` → use async Server Components
+    - ``getStaticProps`` → use fetch() in Server Components
+    - ``getStaticPaths`` → use ``generateStaticParams``
+    - ``next/router`` → use ``next/navigation``
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_pages_router_patterns", "skip", "no site directory")
+
+    offenders: list[str] = []
+    seen: set[str] = set()
+
+    for src_dir in _SOURCE_SCAN_DIRS:
+        scan = ctx.site_dir / src_dir
+        if not scan.exists():
+            continue
+        for f in scan.rglob("*"):
+            if not f.is_file():
+                continue
+            if f.suffix not in {".ts", ".tsx", ".js", ".jsx"}:
+                continue
+            rel = f.relative_to(ctx.site_dir).as_posix()
+            if rel in seen:
+                continue
+            try:
+                text = f.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            stripped = _LINE_COMMENT_RE.sub("", text)
+            for pattern, label in _PAGES_ROUTER_PATTERNS:
+                if pattern.search(stripped):
+                    offenders.append(f"{rel}: {label}")
+                    seen.add(rel)
+                    break  # one offense per file
+
+    if not offenders:
+        return CheckResult(
+            "no_pages_router_patterns", "pass",
+            "no Pages Router patterns detected in App Router build",
+        )
+    return CheckResult(
+        "no_pages_router_patterns", "fail",
+        f"{len(offenders)} file(s) use Pages Router APIs (breaks App Router): "
+        + "; ".join(offenders[:3])
+        + ("..." if len(offenders) > 3 else ""),
+        details={"files": offenders},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3597,6 +3755,9 @@ ALL_CHECKS = [
     perf_budget_or_lighter,
     hero_cta_above_fold,
     mobile_optimized_responsive,
+    # FOUNDATION correctness — catches dev URLs + Pages Router regressions
+    no_hardcoded_localhost,
+    no_pages_router_patterns,
     site_compiles,
 ]
 

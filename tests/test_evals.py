@@ -2338,3 +2338,115 @@ def test_hero_cta_still_rejects_dead_hash_with_variable_check_in_place(good_buil
     )
     ctx = BuildContext.load(good_build)
     assert checks.hero_cta_above_fold(ctx).status == "fail"
+
+
+# ---------------------------------------------------------------------------
+# 45. no_hardcoded_localhost
+# ---------------------------------------------------------------------------
+
+def test_no_hardcoded_localhost_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_hardcoded_localhost(ctx).status == "pass"
+
+
+def test_no_hardcoded_localhost_fails_when_fetch_uses_localhost(good_build):
+    (good_build / "site" / "app" / "actions" / "contact.ts").write_text(
+        '"use server";\n'
+        'export async function submitContactForm() {\n'
+        '  const res = await fetch("http://localhost:3000/api/send");\n'
+        '  return { ok: res.ok };\n'
+        '}\n'
+    )
+    r = checks.no_hardcoded_localhost(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "localhost" in r.message
+
+
+def test_no_hardcoded_localhost_fails_for_127_variant(good_build):
+    (good_build / "site" / "lib" / "api.ts").write_text(
+        'export const API = "http://127.0.0.1:8000/api";\n'
+    )
+    r = checks.no_hardcoded_localhost(BuildContext.load(good_build))
+    assert r.status == "fail"
+
+
+def test_no_hardcoded_localhost_ignores_comments(good_build):
+    (good_build / "site" / "lib" / "api.ts").write_text(
+        '// In dev run: http://localhost:3000\n'
+        'export const API = process.env.NEXT_PUBLIC_API_URL;\n'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_hardcoded_localhost(ctx).status == "pass"
+
+
+def test_no_hardcoded_localhost_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.no_hardcoded_localhost(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 46. no_pages_router_patterns
+# ---------------------------------------------------------------------------
+
+def test_no_pages_router_patterns_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.no_pages_router_patterns(ctx).status == "pass"
+
+
+def test_no_pages_router_patterns_fails_on_next_head_import(good_build):
+    (good_build / "site" / "components" / "sections" / "Hero.tsx").write_text(
+        'import Head from "next/head";\n'
+        'import { AnimatedHeading } from "@/components/ui/AnimatedHeading";\n'
+        'export function Hero() {\n'
+        '  return <>\n'
+        '    <Head><title>Test</title></Head>\n'
+        '    <section><AnimatedHeading text="Hello" /></section>\n'
+        '  </>;\n'
+        '}\n'
+    )
+    r = checks.no_pages_router_patterns(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "next/head" in r.message
+
+
+def test_no_pages_router_patterns_fails_on_get_server_side_props(good_build):
+    about_dir = good_build / "site" / "app" / "about"
+    about_dir.mkdir(parents=True, exist_ok=True)
+    (about_dir / "page.tsx").write_text(
+        'export async function getServerSideProps() { return { props: {} }; }\n'
+        'export default function About() { return <main>About</main>; }\n'
+    )
+    r = checks.no_pages_router_patterns(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "getServerSideProps" in r.message
+
+
+def test_no_pages_router_patterns_fails_on_next_router_import(good_build):
+    (good_build / "site" / "components" / "layout" / "Navbar.tsx").write_text(
+        '"use client";\n'
+        'import { useRouter } from "next/router";\n'
+        'export function Navbar() {\n'
+        '  const router = useRouter();\n'
+        '  return <nav><button onClick={() => router.push("/")}>Home</button></nav>;\n'
+        '}\n'
+    )
+    r = checks.no_pages_router_patterns(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "next/router" in r.message
+
+
+def test_no_pages_router_patterns_ignores_commented_code(good_build):
+    (good_build / "site" / "lib" / "compat.ts").write_text(
+        '// Old Pages Router: import Head from "next/head"\n'
+        '// Instead use export const metadata in layout.tsx\n'
+        'export {};\n'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.no_pages_router_patterns(ctx).status == "pass"
+
+
+def test_no_pages_router_patterns_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.no_pages_router_patterns(ctx).status == "skip"
