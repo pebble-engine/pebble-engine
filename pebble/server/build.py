@@ -151,9 +151,21 @@ def run_plan(handler) -> None:
     })
 
 
-def run_build(handler, generate: bool) -> None:
+def run_build(handler, generate: bool, progress_cb=None) -> None:
     """Handle a build request. ``handler`` is a ``PebbleHandler`` instance;
-    the JSON response is written via its ``_json`` helper."""
+    the JSON response is written via its ``_json`` helper.
+
+    ``progress_cb``, if provided, is called as ``progress_cb(event_type, data)``
+    at key pipeline milestones so callers can emit SSE frames without polling.
+    Failures inside the callback are silently swallowed.
+    """
+    def _emit(event_type: str, data: dict) -> None:
+        if progress_cb is not None:
+            try:
+                progress_cb(event_type, data)
+            except Exception:
+                pass
+
     pe = _engine()
 
     # Hoist module symbols to locals so the body below reads like the original
@@ -197,6 +209,7 @@ def run_build(handler, generate: bool) -> None:
 
     slug = _slugify(answers.get("business_name", "untitled"))
     answers["_slug"] = slug
+    _emit("started", {"slug": slug})
     if "_created_at" not in answers:
         answers["_created_at"] = datetime.now().isoformat()
 
@@ -240,6 +253,7 @@ def run_build(handler, generate: bool) -> None:
                 answers["_industry_intel_key"] = industry_key
         except Exception as e:
             log.warning("industry intel resolution failed: %s", e)
+    _emit("industry", {"key": industry_key})
 
     # Research industry for data-driven recommendations (the long-form text block)
     research_text = ""
@@ -274,6 +288,10 @@ def run_build(handler, generate: bool) -> None:
         if design_dna:
             answers["_design_dna"] = design_dna["id"]
             log.info("Design DNA: %s (%s)", design_dna['label'], design_dna['id'])
+    _emit("style", {
+        "dna_label": design_dna.get("label", "") if design_dna else "",
+        "dna_id":    design_dna.get("id", "")    if design_dna else "",
+    })
 
     # Language — same flow as run_plan. Detected once + persisted so the
     # generated brief.json carries the canonical code through repairs,
@@ -338,6 +356,8 @@ def run_build(handler, generate: bool) -> None:
         is_lite = answers.get("output_mode") == "lite"
         format_instruction = LITE_FILE_FORMAT_INSTRUCTION if is_lite else FILE_FORMAT_INSTRUCTION
         full_user = prompt + format_instruction
+        _max_tok = 8000 if is_lite else 32000
+        _emit("generating", {"model": client.model, "max_tokens": _max_tok})
 
         if is_lite:
             system = (
@@ -391,7 +411,6 @@ def run_build(handler, generate: bool) -> None:
                 "The owner reviews the output. You are not the reviewer."
             )
         t0 = time.time()
-        _max_tok = 8000 if answers.get("output_mode") == "lite" else 32000
         vision_images = (design_reference or {}).get("_raw_attachments") if design_reference else None
         response = client.generate(
             system=system,
@@ -453,6 +472,8 @@ def run_build(handler, generate: bool) -> None:
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
         written.append(safe)
+
+    _emit("writing", {"file_count": len(written)})
 
     # Inject data-pebble-id on every text-bearing tag so /api/visual-edit can
     # do surgical lookups via the manifest at <site>/.pebble-ids.json instead
@@ -525,6 +546,7 @@ def run_build(handler, generate: bool) -> None:
     auto_repair_enabled = os.environ.get("PEBBLE_AUTO_REPAIR", "").strip().lower() in {"1", "true", "yes", "on"}
     repair_info: dict = {"enabled": auto_repair_enabled}
     if auto_repair_enabled and answers.get("output_mode") != "lite" and written:
+        _emit("evaluating", {})
         try:
             from pebble.repair import repair_build as _repair_build
             rep = _repair_build(slug=slug, max_rounds=2, client=client, skip_compile=True)
@@ -546,7 +568,7 @@ def run_build(handler, generate: bool) -> None:
         except Exception as e:
             repair_info["error"] = f"{type(e).__name__}: {e}"
 
-    handler._json(200, {
+    _response_payload = {
         "prompt": prompt, "warning_count": len(notes),
         "slug": slug, "saved_to": f"output/{slug}/",
         "files_written": written, "file_count": len(written),
@@ -559,7 +581,9 @@ def run_build(handler, generate: bool) -> None:
         "dev_server": server_info,
         "screenshots": screenshot_info,
         "repair": repair_info,
-    })
+    }
+    _emit("done", _response_payload)
+    handler._json(200, _response_payload)
     # Per-user engagement signal (T17). Only fires on successful generation
     # (above this point any error short-circuits with a non-200 + return).
     # NEVER pass slug / business_type / industry / DNA — just the event name.

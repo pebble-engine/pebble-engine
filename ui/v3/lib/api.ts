@@ -74,6 +74,105 @@ async function deleteJSON<T>(path: string): Promise<T> {
   return json as T;
 }
 
+// ---------- SSE build streaming (new) ----------------------------------------
+
+/**
+ * Discriminated union of all SSE events emitted by /api/generate-stream.
+ * The ``done`` event carries the full GenerateResponse payload.
+ */
+export type SSEEvent =
+  | { type: "started";    data: { slug: string } }
+  | { type: "industry";   data: { key: string | null } }
+  | { type: "style";      data: { dna_label: string; dna_id: string } }
+  | { type: "generating"; data: { model: string; max_tokens: number } }
+  | { type: "writing";    data: { file_count: number } }
+  | { type: "evaluating"; data: Record<string, never> }
+  | { type: "done";       data: GenerateResponse }
+  | { type: "error";      data: { error: string } };
+
+/**
+ * Stream a site build via /api/generate-stream (POST + SSE).
+ *
+ * Calls ``onEvent`` for each SSE frame, resolves with the GenerateResponse
+ * from the ``done`` event, or rejects on ``error`` or network failure.
+ *
+ * Uses fetch + ReadableStream rather than EventSource because EventSource
+ * only supports GET requests.
+ *
+ * The engine URL must be set to a direct connection
+ * (NEXT_PUBLIC_PEBBLE_ENGINE_URL=http://localhost:8000) in dev so SSE
+ * bypasses the Next.js proxy, which buffers the stream.
+ */
+export async function streamGenerateSite(
+  brief: Brief,
+  onEvent: (e: SSEEvent) => void,
+): Promise<GenerateResponse> {
+  // Include the Supabase session token when available so the engine can
+  // associate the build with the authenticated user (publish limit check,
+  // email drip). Auth is optional — anonymous builds still work.
+  let authHeader: Record<string, string> = {};
+  try {
+    const { createClient } = await import("./supabase/client");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) {
+      authHeader = { "Authorization": `Bearer ${session.access_token}` };
+    }
+  } catch {
+    // No Supabase available — proceed as anonymous
+  }
+
+  const resp = await fetch(engineUrl("/api/generate-stream"), {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader },
+    body: JSON.stringify(brief),
+  });
+
+  if (!resp.ok) {
+    const text = await resp.text();
+    let payload: { error?: string; upgrade_url?: string };
+    try { payload = JSON.parse(text); } catch { payload = { error: text || `HTTP ${resp.status}` }; }
+    const err = payload.error || `HTTP ${resp.status}`;
+    if (resp.status === 402 && payload.upgrade_url) {
+      throw new PlanLimitError(err, payload.upgrade_url);
+    }
+    throw new Error(err);
+  }
+
+  const reader = resp.body!.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+
+    // SSE blocks are separated by \n\n. Split, keep the last incomplete one.
+    const blocks = buffer.split("\n\n");
+    buffer = blocks.pop() ?? "";
+
+    for (const block of blocks) {
+      if (!block.trim()) continue;
+      let eventType = "";
+      let dataStr = "";
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event: ")) eventType = line.slice(7).trim();
+        else if (line.startsWith("data: ")) dataStr = line.slice(6).trim();
+      }
+      if (!eventType || !dataStr) continue;
+      let data: unknown;
+      try { data = JSON.parse(dataStr); } catch { continue; }
+      const event = { type: eventType, data } as SSEEvent;
+      onEvent(event);
+      if (eventType === "done") return data as GenerateResponse;
+      if (eventType === "error") throw new Error((data as { error: string }).error || "Build failed");
+    }
+  }
+
+  throw new Error("Stream ended without a done event");
+}
+
 // ---------- /api/plan + /api/generate (existing) ----------------------------
 
 export type PlanResponse = {

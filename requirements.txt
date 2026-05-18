@@ -27,6 +27,12 @@ playwright>=1.40.0
 # published on PyPI for every major OS, so no compile step on Render.
 blake3>=0.4.0
 
+# --- FastAPI + uvicorn (HTTP server, SSE streaming) ---
+# Enables the FastAPI app layer with SSE progress streaming on
+# /api/generate-stream. Falls back to ThreadingHTTPServer if absent.
+fastapi>=0.110
+uvicorn[standard]>=0.29
+
 # --- Stripe (billing) ---
 # Used by pebble/server/stripe_checkout.py (create-session), stripe_webhook.py
 # (HMAC verify + subscription side-effects), billing_portal.py (customer portal

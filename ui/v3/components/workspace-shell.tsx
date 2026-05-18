@@ -24,7 +24,7 @@ import {
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
-import { generateSite, type GenerateResponse } from "@/lib/api";
+import { streamGenerateSite, type GenerateResponse, type SSEEvent } from "@/lib/api";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -81,6 +81,7 @@ export function WorkspaceShell() {
   const [plan, setPlan] = useState<PebblePlan | null>(null);
   const [generateDone, setGenerateDone] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
+  const [sseEvents, setSseEvents] = useState<SSEEvent[]>([]);
   const editPhaseRef = useRef<EditPhaseHandle>(null);
 
   const safePhaseVariants = useMemo(() => withReducedMotion(phaseVariants), []);
@@ -131,14 +132,20 @@ export function WorkspaceShell() {
     setPhase("idea");
   }
 
-  // Plan phase → Draft phase → Design phase. The plan phase hands us a
-  // closure that posts to /api/generate when invoked. We kick it off,
-  // flip into draft for the animation, and on resolution flip to design.
-  function handleGenerate(kickOff: () => Promise<GenerateResponse>) {
+  // Plan phase → Draft phase → Design phase. Streams build progress via
+  // /api/generate-stream (SSE), feeding real events into DraftPhase.
+  // The kickOff param is accepted for API compatibility with PlanPhase
+  // but is not used — we call streamGenerateSite directly so we can
+  // feed live events into the draft animation.
+  function handleGenerate(_kickOff: () => Promise<GenerateResponse>) {
+    setSseEvents([]);
     setGenerateDone(false);
     setGenerateError(null);
     setPhase("draft");
-    kickOff()
+    const brief = getBrief();
+    streamGenerateSite(brief, (event) => {
+      setSseEvents((prev) => [...prev, event]);
+    })
       .then((response) => {
         const built = {
           slug: response.slug,
@@ -305,7 +312,7 @@ export function WorkspaceShell() {
             {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
             {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
             {phase === "plan"    && <PlanPhase  onBack={handleBackToIdea} onGenerate={handleGenerate} />}
-            {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} />}
+            {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
           </motion.div>
         </AnimatePresence>
       </div>

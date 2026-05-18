@@ -14,29 +14,25 @@ import {
   Droplet,
   type LucideIcon,
 } from "lucide-react";
-import { getBrief } from "@/lib/state";
+import { type SSEEvent } from "@/lib/api";
 import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 
 /**
  * Draft phase — "Pebble is building your draft."
  *
- * Shell-driven: the workspace shell owns the /api/generate promise. This
- * phase just animates progress while we wait. Three layers of feedback,
- * each finer-grained than the last:
+ * Shell-driven: the workspace shell owns the /api/generate-stream call.
+ * This phase animates real progress events from the engine's SSE stream.
+ * Three layers of feedback:
  *
  * 1. Pebble droplet logo with a smooth scale pulse (no rotate — rotating
  *    a glyph by small angles causes sub-pixel jitter that reads as
  *    "stuttering" even though Framer is hitting 60fps).
  * 2. The 6-step macro checklist (industry → style → pages → photos →
- *    checks → ready). Advances on a soft 30s cadence so the timeline
- *    feels alive without racing past the actual work.
- * 3. The live build feed — a typewriter-style log of pseudo-generated
- *    output, visible by default so impatient users can SEE that work
- *    is happening and don't assume the engine froze. Lines reference
- *    real files Pebble actually writes; cadence matches the empirical
- *    distribution of where time is spent (~10s prep, ~70s LLM call,
- *    ~30s post-build checks).
+ *    checks → ready). Advances on real SSE events from the engine.
+ * 3. The live build feed — log lines derived from real SSE events so
+ *    the user sees actual engine milestones (industry resolved, DNA
+ *    selected, LLM call started, files written) rather than a fake timer.
  */
 
 type ThinkingStep = {
@@ -62,16 +58,18 @@ type Props = {
   /** True once the shell has resolved the promise — pin the timeline to
    *  the final "Ready" step. Reset to false on re-entry. */
   done?: boolean;
+  /** SSE events streamed from /api/generate-stream. When provided, the
+   *  build feed and checklist advance from real engine milestones instead
+   *  of the scripted fallback animation. */
+  sseEvents?: SSEEvent[];
 };
 
 type LogLine = { ts: string; text: string; tone: "info" | "ok" | "step" };
 
-export function DraftPhase({ error, done }: Props) {
+export function DraftPhase({ error, done, sseEvents }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
   const [readyPulsing, setReadyPulsing] = useState(false);
-  const startedRef = useRef(false);
-  const timeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const feedRef = useRef<HTMLDivElement>(null);
 
   const safeDropletPulse = useMemo(() => withReducedMotion(dropletPulse), []);
@@ -84,91 +82,59 @@ export function DraftPhase({ error, done }: Props) {
     }
   }, [logLines]);
 
+  // SSE-driven build feed — map engine events to log lines and step advances.
   useEffect(() => {
-    if (startedRef.current) return;
-    startedRef.current = true;
+    if (!sseEvents || sseEvents.length === 0) return;
+    const latest = sseEvents[sseEvents.length - 1];
 
-    const brief = getBrief();
-    const industry = (brief.business_type as string) || "small business";
-    const audiences = Array.isArray(brief.audience)
-      ? (brief.audience as string[]).join(", ")
-      : (brief.audience as string) || "general visitors";
-    const tone = (brief.brand_tone as string) || "professional";
-    const slug = ((brief.business_name as string) || "untitled-project")
-      .toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-
-    // Scripted feed. Times are ms from start of phase mount. Tone:
-    //   "step" = section header        (uppercase, accent-2)
-    //   "info" = neutral status        (muted)
-    //   "ok"   = checkmark / success   (sage/spark)
-    //
-    // Times were tuned against the engine's actual log timestamps for a
-    // typical Gemini build: ~8s of prep, ~60-90s LLM call, ~30s post-
-    // build. Total scripted length ~135s — if the real build finishes
-    // sooner, the `done` prop pins us to a final state immediately.
-    const script: Array<[number, string, LogLine["tone"]]> = [
-      [   0,  `pebble.engine v0.6 — build for "${slug}"`,                                          "step"],
-      [ 400,  `reading project brief: audience = ${audiences}, tone = ${tone}`,                    "info"],
-      [1100,  `loading industry intel for "${industry}"...`,                                       "info"],
-      [2400,  `✓ industry intel ready (47 patterns, 12 page templates)`,                           "ok"  ],
-      [2900,  `picking style DNA from 10 personalities...`,                                        "info"],
-      [4500,  `✓ DNA selected — palette, typography, signature moves set`,                         "ok"  ],
-      [5000,  `fetching hero imagery from pexels...`,                                              "info"],
-      [7400,  `✓ 4 stills + 1 hero video saved → public/`,                                         "ok"  ],
-      [7900,  `assembling PROMPT.md from skills/prompt_template.md`,                               "info"],
-      [8800,  `prompt ready — ~12.4k input tokens`,                                                "info"],
-      [9400,  `calling LLM (gemini-3.1-pro) for full-site generation...`,                          "step"],
-      [38000, `streaming: app/layout.tsx (Inter font, html lang attribute)`,                       "info"],
-      [41500, `streaming: app/page.tsx (hero, about, services, contact)`,                          "info"],
-      [44800, `streaming: app/globals.css (.liquid-glass, prefers-reduced-motion)`,                "info"],
-      [48000, `streaming: components/ui/AnimatedHeading.tsx`,                                      "info"],
-      [50500, `streaming: components/ui/FadeIn.tsx`,                                               "info"],
-      [53200, `streaming: components/sections/Hero.tsx (VEX spec)`,                                "info"],
-      [56100, `streaming: components/sections/About.tsx`,                                          "info"],
-      [59000, `streaming: components/sections/Services.tsx`,                                       "info"],
-      [62000, `streaming: components/sections/Gallery.tsx`,                                        "info"],
-      [65000, `streaming: components/forms/ContactForm.tsx (real Resend Server Action)`,           "info"],
-      [68000, `streaming: app/actions/contact.ts + lib/email.ts`,                                  "info"],
-      [71000, `streaming: components/layout/Navbar.tsx (liquid-glass)`,                            "info"],
-      [74000, `streaming: tailwind.config.ts (DNA palette mapped)`,                                "info"],
-      [76500, `streaming: vercel.json + .env.example + README.md`,                                 "info"],
-      [78500, `✓ 26 files written → output/${slug}/site/`,                                         "ok"  ],
-      [79500, `running eval suite — 32 foundation checks`,                                         "step"],
-      [82000, `✓ hero VEX spec`,                                                                   "ok"  ],
-      [82500, `✓ Inter font weights (300/400/500/600)`,                                            "ok"  ],
-      [83100, `✓ a11y audit — no high-impact violations`,                                          "ok"  ],
-      [83700, `✓ no_src_directory`,                                                                "ok"  ],
-      [84300, `✓ next.config.mjs (not .ts)`,                                                       "ok"  ],
-      [84900, `✓ tsconfig paths { "@/*": ["./*"] }`,                                               "ok"  ],
-      [85500, `✓ contact form is a real Resend Server Action`,                                     "ok"  ],
-      [86100, `✓ all 32 checks pass — repair loop not needed`,                                     "ok"  ],
-      [87000, `writing build_meta.json (tokens, est cost, rate card)`,                             "info"],
-      [88500, `✓ draft ready — handing back to workspace`,                                         "ok"  ],
-    ];
-
-    function appendLog(text: string, tone: LogLine["tone"]) {
+    const appendLog = (text: string, tone: LogLine["tone"]) =>
       setLogLines((prev) => [...prev, { ts: new Date().toLocaleTimeString(), text, tone }]);
+
+    switch (latest.type) {
+      case "started":
+        appendLog(`pebble.engine — build for "${latest.data.slug}"`, "step");
+        setActiveIdx(0);
+        break;
+      case "industry":
+        appendLog(
+          latest.data.key
+            ? `✓ industry intel ready (${latest.data.key})`
+            : `✓ industry intel ready`,
+          "ok",
+        );
+        setActiveIdx(1);
+        break;
+      case "style":
+        appendLog(
+          latest.data.dna_label
+            ? `✓ DNA selected — ${latest.data.dna_label}`
+            : `✓ style DNA selected`,
+          "ok",
+        );
+        setActiveIdx(1);
+        break;
+      case "generating":
+        appendLog(`calling ${latest.data.model} for full-site generation...`, "step");
+        setActiveIdx(2);
+        break;
+      case "writing":
+        appendLog(`✓ ${latest.data.file_count} files written`, "ok");
+        setActiveIdx(4);
+        break;
+      case "evaluating":
+        appendLog(`running eval suite — quality checks...`, "step");
+        setActiveIdx(4);
+        break;
+      case "done":
+        appendLog(`✓ draft ready — handing back to workspace`, "ok");
+        setActiveIdx(STEPS.length - 1);
+        break;
+      case "error":
+        appendLog(`ERROR: ${latest.data.error}`, "info");
+        break;
     }
-
-    for (const [delay, text, tone] of script) {
-      const id = setTimeout(() => appendLog(text, tone), delay);
-      timeoutsRef.current.push(id);
-    }
-
-    // Soft macro-cadence: advance the visible step every ~30s. Pins one
-    // short of "ready" so the final transition only fires when `done` is
-    // true.
-    const interval = setInterval(() => {
-      setActiveIdx((idx) => Math.min(idx + 1, STEPS.length - 2));
-    }, 30_000);
-    timeoutsRef.current.push(interval as unknown as ReturnType<typeof setTimeout>);
-
-    return () => {
-      for (const id of timeoutsRef.current) clearTimeout(id);
-      clearInterval(interval);
-      timeoutsRef.current = [];
-    };
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sseEvents]);
 
   useEffect(() => {
     if (done) {

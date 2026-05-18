@@ -1792,17 +1792,26 @@ def serve(port: int = 8000, open_browser: bool = True) -> None:
     _banner()
     url = f"http://localhost:{port}"
     print(f"   running at {url}\n")
-    # ThreadingHTTPServer so a slow LLM build doesn't block other requests
-    # (e.g. the browser's keep-alive socket, /api/health, /api/industries).
-    server = ThreadingHTTPServer(("127.0.0.1", port), PebbleHandler)
-    server.daemon_threads = True
+
     if open_browser:
         try: webbrowser.open(url)
         except Exception: pass
+
     try:
-        server.serve_forever()
-    except KeyboardInterrupt:
-        print("\n  Stopped.")
+        import uvicorn
+        # pebble.app is imported here (not at module level) so pebble_engine
+        # is already in sys.modules when HandlerShim looks up PebbleHandler.
+        from pebble.app import app as _fastapi_app
+        uvicorn.run(_fastapi_app, host="127.0.0.1", port=port, log_level="warning")
+    except ImportError:
+        # uvicorn not installed — fall back to the stdlib ThreadingHTTPServer.
+        # All functionality works; SSE streaming is unavailable.
+        server = ThreadingHTTPServer(("127.0.0.1", port), PebbleHandler)
+        server.daemon_threads = True
+        try:
+            server.serve_forever()
+        except KeyboardInterrupt:
+            print("\n  Stopped.")
 
 
 if __name__ == "__main__":
