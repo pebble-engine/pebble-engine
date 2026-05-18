@@ -352,7 +352,10 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 [ ] 12.3  Privacy policy + Terms of Service (Marc handles + a lawyer)
 [ ] 12.4  ProductHunt launch prep (assets, story, day-of plan)
 [ ] 12.5  Beta-tester recruitment (10-20 friends, agents, small biz owners)
-[ ] 12.6  Status page at status.pebble.app (UptimeRobot or BetterStack)
+[~] 12.6  Status page at status.pebble.app (UptimeRobot or BetterStack)
+          Engine side: /api/health returns JSON with engine_ok + llm_ready for
+          external monitoring. Marc's action: create BetterStack monitor pointing
+          at /api/health, check that json.engine_ok == true.
 [ ] 12.7  Support inbox routing setup (help@pebble.app → Marc, escalate to Claude)
 [ ] 12.8  First $1 of MRR
 ```
