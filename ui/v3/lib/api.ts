@@ -30,10 +30,21 @@ export class PlanLimitError extends Error {
   }
 }
 
+async function getAuthHeader(): Promise<Record<string, string>> {
+  try {
+    const { createClient } = await import("./supabase/client");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) return { "Authorization": `Bearer ${session.access_token}` };
+  } catch { /* not authenticated */ }
+  return {};
+}
+
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
+  const authHeader = await getAuthHeader();
   const resp = await fetch(engineUrl(path), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeader },
     body: JSON.stringify(body),
   });
   const text = await resp.text();
@@ -51,7 +62,8 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getJSON<T>(path: string): Promise<T> {
-  const resp = await fetch(engineUrl(path));
+  const authHeader = await getAuthHeader();
+  const resp = await fetch(engineUrl(path), { headers: authHeader });
   const text = await resp.text();
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
@@ -63,7 +75,8 @@ async function getJSON<T>(path: string): Promise<T> {
 }
 
 async function deleteJSON<T>(path: string): Promise<T> {
-  const resp = await fetch(engineUrl(path), { method: "DELETE" });
+  const authHeader = await getAuthHeader();
+  const resp = await fetch(engineUrl(path), { method: "DELETE", headers: authHeader });
   const text = await resp.text();
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
