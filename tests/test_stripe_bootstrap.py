@@ -76,31 +76,36 @@ def test_recurring_interval_none_for_one_time_price():
 
 def _make_fake_stripe_with_no_products():
     fake = MagicMock()
-    fake.Product.list.return_value.auto_paging_iter.return_value = iter([])
+    # Use side_effect (not return_value) so each call gets a fresh iterator —
+    # bootstrap() calls Product.list once per plan, sharing a return_value
+    # would exhaust the iterator on the first call.
+    fake.Product.list.return_value.auto_paging_iter.side_effect = lambda: iter([])
     fake.Product.create.side_effect = lambda **kw: SimpleNamespace(
         id=f"prod_new_{kw['metadata']['pebble_plan']}",
         metadata=kw["metadata"],
     )
-    fake.Price.list.return_value.auto_paging_iter.return_value = iter([])
+    fake.Price.list.return_value.auto_paging_iter.side_effect = lambda: iter([])
     fake.Price.create.side_effect = lambda **kw: SimpleNamespace(
         id=f"price_new_{kw['metadata']['pebble_plan']}",
         unit_amount=kw["unit_amount"],
         currency=kw["currency"],
-        recurring=kw["recurring"],
+        recurring=kw.get("recurring"),  # None for one-time prices
     )
     return fake
 
 
-def test_bootstrap_creates_both_plans_when_account_empty():
+def test_bootstrap_creates_all_plans_when_account_empty():
     fake = _make_fake_stripe_with_no_products()
     result = stripe_bootstrap.bootstrap(fake)
     assert result["starter"]["product_id"] == "prod_new_starter"
     assert result["starter"]["price_id"]   == "price_new_starter"
     assert result["pro"]["product_id"]     == "prod_new_pro"
     assert result["pro"]["price_id"]       == "price_new_pro"
-    # Two products created (one per plan)
-    assert fake.Product.create.call_count == 2
-    assert fake.Price.create.call_count == 2
+    assert result["setup_call"]["product_id"] == "prod_new_setup_call"
+    assert result["setup_call"]["price_id"]   == "price_new_setup_call"
+    # Three products created (starter, pro, setup_call)
+    assert fake.Product.create.call_count == 3
+    assert fake.Price.create.call_count == 3
 
 
 def test_bootstrap_reuses_existing_products_on_rerun():
@@ -114,6 +119,10 @@ def test_bootstrap_reuses_existing_products_on_rerun():
         id="prod_existing_pro",
         metadata={"pebble_plan": "pro"},
     )
+    existing_setup_call = SimpleNamespace(
+        id="prod_existing_setup_call",
+        metadata={"pebble_plan": "setup_call"},
+    )
     existing_starter_price = SimpleNamespace(
         id="price_existing_starter",
         unit_amount=2900,
@@ -126,12 +135,19 @@ def test_bootstrap_reuses_existing_products_on_rerun():
         currency="usd",
         recurring={"interval": "month"},
     )
+    existing_setup_price = SimpleNamespace(
+        id="price_existing_setup_call",
+        unit_amount=9900,
+        currency="usd",
+        recurring=None,
+    )
+
+    all_products = [existing_starter, existing_pro, existing_setup_call]
 
     fake = MagicMock()
-    # Product.list returns both
-    fake.Product.list.return_value.auto_paging_iter.return_value = iter([
-        existing_starter, existing_pro,
-    ])
+    # Fresh iterator on each call so multiple find_existing_product calls
+    # each see all three products.
+    fake.Product.list.return_value.auto_paging_iter.side_effect = lambda: iter(all_products)
     # Price.list returns the matching price for whatever product is asked
     def price_list(*, product, **_kw):
         m = MagicMock()
@@ -139,6 +155,8 @@ def test_bootstrap_reuses_existing_products_on_rerun():
             m.auto_paging_iter.return_value = iter([existing_starter_price])
         elif product == "prod_existing_pro":
             m.auto_paging_iter.return_value = iter([existing_pro_price])
+        elif product == "prod_existing_setup_call":
+            m.auto_paging_iter.return_value = iter([existing_setup_price])
         else:
             m.auto_paging_iter.return_value = iter([])
         return m
@@ -147,9 +165,53 @@ def test_bootstrap_reuses_existing_products_on_rerun():
     result = stripe_bootstrap.bootstrap(fake)
 
     # Existing IDs reused — nothing new created
-    assert result["starter"] == {"product_id": "prod_existing_starter",
-                                 "price_id": "price_existing_starter"}
-    assert result["pro"]     == {"product_id": "prod_existing_pro",
-                                 "price_id": "price_existing_pro"}
+    assert result["starter"]    == {"product_id": "prod_existing_starter",
+                                    "price_id": "price_existing_starter"}
+    assert result["pro"]        == {"product_id": "prod_existing_pro",
+                                    "price_id": "price_existing_pro"}
+    assert result["setup_call"] == {"product_id": "prod_existing_setup_call",
+                                    "price_id": "price_existing_setup_call"}
     fake.Product.create.assert_not_called()
     fake.Price.create.assert_not_called()
+
+
+# ---- find_existing_one_time_price ----------------------------------------
+
+def test_find_existing_one_time_price_returns_matching():
+    """Finds a price with recurring=None and matching amount."""
+    one_time = SimpleNamespace(unit_amount=9900, currency="usd", recurring=None)
+    recurring = SimpleNamespace(unit_amount=9900, currency="usd",
+                                recurring={"interval": "month"})
+
+    fake = MagicMock()
+    fake.Price.list.return_value.auto_paging_iter.return_value = iter([recurring, one_time])
+    result = stripe_bootstrap.find_existing_one_time_price(fake, "prod_x", 9900)
+    assert result is one_time
+
+
+def test_find_existing_one_time_price_returns_none_when_only_recurring():
+    """Does NOT return a monthly price even if the amount matches."""
+    recurring = SimpleNamespace(unit_amount=9900, currency="usd",
+                                recurring={"interval": "month"})
+    fake = MagicMock()
+    fake.Price.list.return_value.auto_paging_iter.return_value = iter([recurring])
+    assert stripe_bootstrap.find_existing_one_time_price(fake, "prod_x", 9900) is None
+
+
+# ---- ensure_setup_call creates one-time price ----------------------------
+
+def test_ensure_setup_call_creates_price_without_recurring():
+    """The Price.create call for a setup call must NOT include the
+    `recurring` key — Stripe rejects one-time prices that have it."""
+    fake = MagicMock()
+    fake.Product.list.return_value.auto_paging_iter.return_value = iter([])
+    fake.Product.create.return_value = SimpleNamespace(id="prod_sc", metadata={})
+    fake.Price.list.return_value.auto_paging_iter.return_value = iter([])
+    fake.Price.create.return_value = SimpleNamespace(id="price_sc")
+
+    stripe_bootstrap.ensure_setup_call(fake, stripe_bootstrap.SETUP_CALLS[0])
+
+    price_kwargs = fake.Price.create.call_args.kwargs
+    assert "recurring" not in price_kwargs
+    assert price_kwargs["unit_amount"] == 9900
+    assert price_kwargs["currency"] == "usd"

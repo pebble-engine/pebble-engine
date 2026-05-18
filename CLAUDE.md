@@ -232,7 +232,7 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 
 | Method | Path | Body | Purpose |
 |---|---|---|---|
-| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" }` | Auth-gated (Bearer JWT). Creates a Stripe Checkout Session in `mode=subscription`, returns `{url, session_id}`. Stamps `pebble_user_id` + `pebble_plan` metadata on session + subscription so the webhook can route events back. |
+| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" \| "setup_call" }` | Auth-gated (Bearer JWT). `starter`/`pro` → `mode=subscription`, returns `{url, session_id}`. `setup_call` → `mode=payment` ($99 one-time), success redirects to `PEBBLE_SETUP_CALL_LINK` (calendar). Stamps `pebble_user_id` + `pebble_plan` metadata so the webhook can route events back. |
 | POST | `/api/billing/portal` | — | Auth-gated. Reads `stripe_customer_id` from `output/.users/<uid>/subscription.json`, mints a Stripe Customer Portal session, returns `{url}`. 404 if no subscription. |
 | POST | `/api/internal/stripe-webhook` | Stripe event payload | HMAC-verified via `STRIPE_WEBHOOK_SECRET`. On `customer.subscription.{created,updated,deleted}` writes `output/.users/<uid>/subscription.json` with `{status, plan, stripe_customer_id, stripe_subscription_id, current_period_end, updated_at}`. Other event types 200-ignored. |
 

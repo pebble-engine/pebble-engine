@@ -39,12 +39,16 @@ log = logging.getLogger("pebble.stripe_checkout")
 
 
 # Plan key → env-var name for the matching Stripe price ID. Single source
-# of truth; adding a third plan is one entry here, one in stripe_bootstrap,
+# of truth; adding a new product is one entry here, one in stripe_bootstrap,
 # and one v3 button.
 _PRICE_ENV: dict[str, str] = {
-    "starter": "PEBBLE_STRIPE_STARTER_PRICE_ID",
-    "pro":     "PEBBLE_STRIPE_PRO_PRICE_ID",
+    "starter":    "PEBBLE_STRIPE_STARTER_PRICE_ID",
+    "pro":        "PEBBLE_STRIPE_PRO_PRICE_ID",
+    "setup_call": "PEBBLE_STRIPE_SETUP_PRICE_ID",
 }
+
+# Plans that are one-time payments (mode="payment") rather than subscriptions.
+_ONE_TIME_PLANS = frozenset({"setup_call"})
 
 
 def _read_body(handler) -> Optional[dict]:
@@ -103,7 +107,7 @@ def run_create_session(handler) -> None:
 
     plan = body.get("plan")
     if plan not in _PRICE_ENV:
-        handler._json(400, {"error": "plan must be 'starter' or 'pro'"})
+        handler._json(400, {"error": "plan must be 'starter', 'pro', or 'setup_call'"})
         return
 
     secret_key = os.environ.get("STRIPE_SECRET_KEY", "").strip()
@@ -125,31 +129,51 @@ def run_create_session(handler) -> None:
     base_url = _public_base_url()
     pebble_user_id = user.get("id", "")
 
-    subscription_data: dict = {
-        "metadata": {"pebble_user_id": pebble_user_id, "pebble_plan": plan},
-    }
-    trial_days = _trial_period_days()
-    if trial_days is not None:
-        # Chapter 9.5 — env-gated free trial. Stripe charges the card
-        # `trial_days` after Checkout completes (Customer Portal users
-        # can cancel during the trial with no charge).
-        subscription_data["trial_period_days"] = trial_days
-
     try:
-        session = stripe.checkout.Session.create(
-            mode="subscription",
-            line_items=[{"price": price_id, "quantity": 1}],
-            customer_email=user.get("email"),
-            # CRITICAL — no payment_method_types here. Stripe picks the best
-            # methods dynamically; hardcoding ['card'] tanks conversion.
-            success_url=f"{base_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
-            cancel_url=f"{base_url}/billing/cancel",
-            # Stamp the Supabase user id on BOTH the session and the future
-            # subscription so the webhook can route events back to a Pebble
-            # user without join-on-email (emails can be changed).
-            metadata={"pebble_user_id": pebble_user_id, "pebble_plan": plan},
-            subscription_data=subscription_data,
-        )
+        if plan in _ONE_TIME_PLANS:
+            # One-time payment (e.g. setup call) — no subscription created.
+            # On success, redirect directly to the calendar booking link when
+            # PEBBLE_SETUP_CALL_LINK is set; otherwise fall back to the
+            # standard billing success page so users aren't stranded.
+            calendar_link = os.environ.get("PEBBLE_SETUP_CALL_LINK", "").strip()
+            success_url = (
+                calendar_link
+                if calendar_link
+                else f"{base_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}"
+            )
+            session = stripe.checkout.Session.create(
+                mode="payment",
+                line_items=[{"price": price_id, "quantity": 1}],
+                customer_email=user.get("email"),
+                success_url=success_url,
+                cancel_url=f"{base_url}/billing/cancel",
+                metadata={"pebble_user_id": pebble_user_id, "pebble_plan": plan},
+            )
+        else:
+            subscription_data: dict = {
+                "metadata": {"pebble_user_id": pebble_user_id, "pebble_plan": plan},
+            }
+            trial_days = _trial_period_days()
+            if trial_days is not None:
+                # Chapter 9.5 — env-gated free trial. Stripe charges the card
+                # `trial_days` after Checkout completes (Customer Portal users
+                # can cancel during the trial with no charge).
+                subscription_data["trial_period_days"] = trial_days
+
+            session = stripe.checkout.Session.create(
+                mode="subscription",
+                line_items=[{"price": price_id, "quantity": 1}],
+                customer_email=user.get("email"),
+                # CRITICAL — no payment_method_types here. Stripe picks the best
+                # methods dynamically; hardcoding ['card'] tanks conversion.
+                success_url=f"{base_url}/billing/success?session_id={{CHECKOUT_SESSION_ID}}",
+                cancel_url=f"{base_url}/billing/cancel",
+                # Stamp the Supabase user id on BOTH the session and the future
+                # subscription so the webhook can route events back to a Pebble
+                # user without join-on-email (emails can be changed).
+                metadata={"pebble_user_id": pebble_user_id, "pebble_plan": plan},
+                subscription_data=subscription_data,
+            )
     except stripe.error.StripeError:
         # Don't log .args of the exception — they can contain message
         # text Stripe doesn't promise is secret-free.

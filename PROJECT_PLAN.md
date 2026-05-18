@@ -279,12 +279,25 @@ Supabase exclusively).
                                      server-side). Verify the portal config
                                      allows plan changes between our two
                                      prices.
-[ ] 9.7  $99 setup-call product    → not built.
+[x] 9.7  $99 setup-call product    → Shipped 2026-05-18. Stripe one-time
+         product "Pebble Setup Call" ($99) added to stripe_bootstrap.py
+         (SETUP_CALLS list + ensure_setup_call + find_existing_one_time_price).
+         POST /api/checkout/create-session now accepts plan="setup_call" and
+         creates a mode="payment" session (no subscription_data). Success
+         redirects to PEBBLE_SETUP_CALL_LINK (e.g. Calendly) if set, else
+         falls back to /billing/success. /pricing shows a "Need hands-on help?"
+         card below the plan grid. Run python -m pebble.stripe_bootstrap to
+         create the product in Stripe and paste PEBBLE_STRIPE_SETUP_PRICE_ID
+         into .env. Set PEBBLE_SETUP_CALL_LINK to your calendar URL.
+         Webhook: checkout.session.completed fires a Resend confirmation
+         email with the calendar link (non-fatal if email fails). Marc must
+         also subscribe checkout.session.completed in Stripe Dashboard and
+         update the stripe listen command — see .env.example.
 ```
 
 Outstanding before launch:
 - Marc fixes STRIPE_WEBHOOK_SECRET in .env (currently has an rk_test_ pasted into the slot; should be `whsec_` from `stripe listen`).
-- Marc runs `python -m pebble.stripe_bootstrap` and pastes the two PEBBLE_STRIPE_*_PRICE_ID values into .env.
+- Marc runs `python -m pebble.stripe_bootstrap` and pastes the THREE PEBBLE_STRIPE_*_PRICE_ID values into .env (starter, pro, setup_call).
 - Marc installs Stripe CLI (`scoop install stripe` on Windows; winget is NOT supported per Stripe's docs).
 - E2E test together: `stripe listen --forward-to localhost:8000/api/internal/stripe-webhook`, then v3 /settings → "Manage billing" → card 4242 4242 4242 4242.
 
