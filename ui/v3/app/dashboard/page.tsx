@@ -24,10 +24,12 @@ import {
   toggleStar,
   fetchUsage,
   fetchActivity,
+  fetchSubscription,
   deleteProject,
   type ProjectSummary,
   type UsageSummary,
   type ActivityRow,
+  type SubscriptionState,
 } from "@/lib/api";
 import { setLastBuild, getUserProfile } from "@/lib/state";
 import { interactions } from "@/lib/interactions";
@@ -44,6 +46,7 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [firstName, setFirstName] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null); // slug pending confirm
+  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
 
   useEffect(() => {
     setFirstName(getUserProfile().firstName || null);
@@ -53,14 +56,16 @@ export default function DashboardPage() {
   async function refresh() {
     setLoading(true);
     try {
-      const [projRes, usageRes, activityRes] = await Promise.all([
+      const [projRes, usageRes, activityRes, subRes] = await Promise.all([
         listProjects(),
         fetchUsage().catch(() => null),
         fetchActivity().catch(() => ({ activity: [], count: 0 })),
+        fetchSubscription().catch(() => null),
       ]);
       setProjects(projRes.projects);
       setUsage(usageRes);
       setActivity(activityRes.activity || []);
+      setSubscription(subRes);
     } finally {
       setLoading(false);
     }
@@ -155,6 +160,29 @@ export default function DashboardPage() {
           />
 
           <div className="mt-auto pt-4 border-t border-border space-y-3">
+            {/* Free-plan publish-limit indicator — only shows for users with no
+                active subscription so they know how many more sites they can
+                publish before hitting the paywall. */}
+            {subscription !== null && !subscription?.plan && (() => {
+              const published = projects.filter(p => p.publish != null).length;
+              const FREE_LIMIT = 2;
+              const atLimit = published >= FREE_LIMIT;
+              return (
+                <div className={`px-3 py-2 bg-background border rounded-lg ${atLimit ? "border-destructive/40" : "border-border"}`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className={type.eyebrow}>Free plan</p>
+                    <span className={`text-xs font-bold ${atLimit ? "text-destructive" : "text-muted-foreground"}`}>
+                      {published} / {FREE_LIMIT} live
+                    </span>
+                  </div>
+                  {atLimit && (
+                    <Link href="/pricing" className="text-xs text-primary hover:underline mt-1 block">
+                      Upgrade for more →
+                    </Link>
+                  )}
+                </div>
+              );
+            })()}
             {/* Usage indicator — honest cost telemetry. Shows total only when
                 we have at least one paid build to report. */}
             {usage && usage.projects > 0 && (
