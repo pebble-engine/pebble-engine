@@ -299,34 +299,34 @@ function FeatureGrid() {
 
 const TIERS = [
   {
-    name: "Free preview",
+    name: "Free",
     price: "$0",
-    period: "during preview",
-    body: "Two sites. Full visual editor. Real undo. No card required.",
-    cta: "Start free",
+    period: "forever",
+    body: "Two published sites. Full visual editor. Real undo. No card required.",
+    cta: "Start building",
     href: "/workspace#phase=idea",
+    featured: false,
+    coming: false,
+  },
+  {
+    name: "Starter",
+    price: "$29",
+    period: "/month",
+    body: "Unlimited sites. Custom domain. AI refinements. Form submissions inbox.",
+    cta: "Get Starter",
+    href: "/pricing",
     featured: true,
     coming: false,
   },
   {
     name: "Pro",
-    price: "$19",
+    price: "$59",
     period: "/month",
-    body: "Unlimited sites. LLM-backed refinements. Custom domain. Forms inbox.",
-    cta: "Coming soon",
-    href: "#",
+    body: "Everything in Starter plus multi-page sites, drop-in sections, and priority support.",
+    cta: "Get Pro",
+    href: "/pricing",
     featured: false,
-    coming: true,
-  },
-  {
-    name: "Studio",
-    price: "$49",
-    period: "/month",
-    body: "Everything in Pro plus multi-page generation, agency invoicing, and team seats.",
-    cta: "Coming soon",
-    href: "#",
-    featured: false,
-    coming: true,
+    coming: false,
   },
 ];
 
@@ -350,7 +350,7 @@ function Pricing() {
               className={`rounded-2xl border p-6 space-y-4 ${
                 t.featured
                   ? "border-primary bg-card shadow-[var(--shadow-1)]"
-                  : "border-border bg-card opacity-90"
+                  : "border-border bg-card"
               }`}
             >
               <div>
@@ -361,26 +361,25 @@ function Pricing() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground leading-relaxed">{t.body}</p>
-              {t.coming ? (
-                <span className="inline-flex w-full items-center justify-center rounded-full border border-border bg-background px-4 py-2.5 text-sm font-medium text-muted-foreground">
-                  {t.cta}
-                </span>
-              ) : (
-                <Link
-                  href={t.href}
-                  className="inline-flex w-full items-center justify-center rounded-full bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground hover:scale-[1.02] transition-transform"
-                >
-                  {t.cta}
-                </Link>
-              )}
+              <Link
+                href={t.href}
+                className={`inline-flex w-full items-center justify-center rounded-full px-4 py-2.5 text-sm font-medium transition-transform hover:scale-[1.02] ${
+                  t.featured
+                    ? "bg-primary text-primary-foreground"
+                    : "border border-border bg-background text-foreground hover:bg-muted"
+                }`}
+              >
+                {t.cta}
+              </Link>
             </div>
           ))}
         </div>
 
         <p className="pt-8 text-center text-sm text-muted-foreground max-w-xl mx-auto">
-          When billing ships, we'll be specific about what's billable and what's free. Visual
-          edits and deterministic refinements will always be free — that's a promise, not a
-          marketing line.
+          Visual edits and deterministic refinements are always free on every plan — forever.{" "}
+          <Link href="/pricing" className="underline underline-offset-2 hover:text-foreground transition-colors">
+            See full comparison →
+          </Link>
         </p>
       </div>
     </section>
@@ -504,7 +503,7 @@ function MarketingTopBar() {
         <nav className="hidden md:flex items-center gap-7 text-sm text-muted-foreground">
           <a href="#dna" className="hover:text-foreground transition-colors">Design DNA</a>
           <a href="#how" className="hover:text-foreground transition-colors">How it works</a>
-          <a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a>
+          <Link href="/pricing" className="hover:text-foreground transition-colors">Pricing</Link>
           <a href="#faq" className="hover:text-foreground transition-colors">FAQ</a>
         </nav>
         <div className="flex items-center gap-3">
