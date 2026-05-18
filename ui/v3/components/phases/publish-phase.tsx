@@ -12,6 +12,7 @@ import {
   setDomain,
   removeDomain,
   pickPreviewUrl,
+  PlanLimitError,
   type PublishResponse,
   type DomainResponse,
   type DevServerInfo,
@@ -44,6 +45,7 @@ export function PublishPhase({ build, onBack }: Props) {
   const [phase, setPhase] = useState<InternalPhase>("ready");
   const [result, setResult] = useState<PublishResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [upgradeUrl, setUpgradeUrl] = useState<string | null>(null);
   const [shareLabel, setShareLabel] = useState("Share");
 
   // If the shell ever lands here without a build (e.g. user types
@@ -55,11 +57,15 @@ export function PublishPhase({ build, onBack }: Props) {
     if (!build?.slug) return;
     setPhase("publishing");
     setError(null);
+    setUpgradeUrl(null);
     try {
       const r = await publishSite(build.slug, "auto");
       setResult(r);
       setPhase("done");
     } catch (e) {
+      if (e instanceof PlanLimitError) {
+        setUpgradeUrl(e.upgradeUrl);
+      }
       setError(e instanceof Error ? e.message : "Publish failed.");
       setPhase("error");
     }
@@ -110,6 +116,7 @@ export function PublishPhase({ build, onBack }: Props) {
         {phase === "error" && (
           <ErrorPanel
             error={error || "Something went wrong."}
+            upgradeUrl={upgradeUrl}
             onRetry={handlePublish}
             onBack={onBack}
           />
@@ -270,7 +277,14 @@ function DonePanel({
   );
 }
 
-function ErrorPanel({ error, onRetry, onBack }: { error: string; onRetry: () => void; onBack: () => void }) {
+function ErrorPanel({
+  error, upgradeUrl, onRetry, onBack,
+}: {
+  error: string;
+  upgradeUrl: string | null;
+  onRetry: () => void;
+  onBack: () => void;
+}) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -278,15 +292,26 @@ function ErrorPanel({ error, onRetry, onBack }: { error: string; onRetry: () => 
       transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
       className="bg-card border border-destructive/40 rounded-2xl p-8 space-y-5"
     >
-      <p className={`${type.display.m} text-foreground`}>Publish hit a snag.</p>
-      <p className="text-sm text-muted-foreground font-mono break-words">{error}</p>
-      <div className="flex gap-3 justify-center">
-        <button
-          onClick={onRetry}
-          className={`${interactions.button} bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold`}
-        >
-          Try again
-        </button>
+      <p className={`${type.display.m} text-foreground`}>
+        {upgradeUrl ? "Plan limit reached." : "Publish hit a snag."}
+      </p>
+      <p className="text-sm text-muted-foreground break-words">{error}</p>
+      <div className="flex flex-wrap gap-3 justify-center">
+        {upgradeUrl ? (
+          <a
+            href={upgradeUrl}
+            className={`${interactions.button} bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold`}
+          >
+            Upgrade plan →
+          </a>
+        ) : (
+          <button
+            onClick={onRetry}
+            className={`${interactions.button} bg-primary text-primary-foreground px-5 py-3 rounded-full font-bold`}
+          >
+            Try again
+          </button>
+        )}
         <button
           onClick={onBack}
           className={`${interactions.chip} bg-card border border-border text-foreground px-5 py-3 rounded-full font-semibold`}

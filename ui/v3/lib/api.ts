@@ -21,6 +21,15 @@ function engineUrl(path: string): string {
   return ENGINE_BASE ? `${ENGINE_BASE}${path}` : path;
 }
 
+export class PlanLimitError extends Error {
+  upgradeUrl: string;
+  constructor(message: string, upgradeUrl: string) {
+    super(message);
+    this.name = "PlanLimitError";
+    this.upgradeUrl = upgradeUrl;
+  }
+}
+
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
   const resp = await fetch(engineUrl(path), {
     method: "POST",
@@ -31,7 +40,11 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
   if (!resp.ok) {
-    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    const payload = json as { error?: string; upgrade_url?: string };
+    const err = payload.error || `HTTP ${resp.status}`;
+    if (resp.status === 402 && payload.upgrade_url) {
+      throw new PlanLimitError(err, payload.upgrade_url);
+    }
     throw new Error(err);
   }
   return json as T;
