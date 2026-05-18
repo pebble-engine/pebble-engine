@@ -33,8 +33,8 @@ export default function PrivacyPage() {
                 pebbleapp.ai
               </a>{" "}
               and its associated services. Questions:{" "}
-              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                hello@pebbleapp.ai
+              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                web@getpebble.net
               </a>
               .
             </p>
@@ -181,8 +181,8 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               Email{" "}
-              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                hello@pebbleapp.ai
+              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                web@getpebble.net
               </a>{" "}
               to exercise any of these rights. Account deletion is self-serve via Settings.
             </p>
@@ -226,8 +226,8 @@ export default function PrivacyPage() {
             </h2>
             <p>
               Pebble Engine &mdash;{" "}
-              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                hello@pebbleapp.ai
+              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                web@getpebble.net
               </a>
             </p>
           </section>
@@ -241,8 +241,8 @@ export default function PrivacyPage() {
           <Link href="/landing" className="hover:text-foreground transition-colors">
             Back to Pebble
           </Link>
-          <a href="mailto:hello@pebbleapp.ai" className="hover:text-foreground transition-colors">
-            hello@pebbleapp.ai
+          <a href="mailto:web@getpebble.net" className="hover:text-foreground transition-colors">
+            web@getpebble.net
           </a>
         </div>
       </div>

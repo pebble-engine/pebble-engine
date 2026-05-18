@@ -44,8 +44,8 @@ export default function TermsPage() {
               You must provide a valid email address and keep your account credentials secure. You
               are responsible for all activity that occurs under your account. Notify us immediately
               at{" "}
-              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                hello@pebbleapp.ai
+              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                web@getpebble.net
               </a>{" "}
               if you suspect unauthorised access.
             </p>
@@ -100,8 +100,8 @@ export default function TermsPage() {
                 <p>
                   We offer a no-questions-asked refund within 7 days of your first charge on a new
                   subscription. Email{" "}
-                  <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                    hello@pebbleapp.ai
+                  <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                    web@getpebble.net
                   </a>{" "}
                   with your account email to request one.
                 </p>
@@ -233,8 +233,8 @@ export default function TermsPage() {
             </h2>
             <p>
               Pebble Engine &mdash;{" "}
-              <a href="mailto:hello@pebbleapp.ai" className="underline hover:text-foreground transition-colors">
-                hello@pebbleapp.ai
+              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                web@getpebble.net
               </a>
             </p>
           </section>
@@ -248,8 +248,8 @@ export default function TermsPage() {
           <Link href="/landing" className="hover:text-foreground transition-colors">
             Back to Pebble
           </Link>
-          <a href="mailto:hello@pebbleapp.ai" className="hover:text-foreground transition-colors">
-            hello@pebbleapp.ai
+          <a href="mailto:web@getpebble.net" className="hover:text-foreground transition-colors">
+            web@getpebble.net
           </a>
         </div>
       </div>

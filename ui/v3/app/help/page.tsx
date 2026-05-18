@@ -174,7 +174,7 @@ export default function HelpPage() {
               Still stuck?
             </h2>
             <p className="text-sm text-muted-foreground">
-              Email <a href="mailto:hello@pebbleapp.ai" className="text-primary hover:underline">hello@pebbleapp.ai</a>{" "}
+              Email <a href="mailto:web@getpebble.net" className="text-primary hover:underline">web@getpebble.net</a>{" "}
               and we&apos;ll get back to you.
             </p>
             <p className="text-xs text-muted-foreground">
