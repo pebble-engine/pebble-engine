@@ -476,6 +476,13 @@ forgot_email_limiter   = RateLimiter(rate=1/300.0,  burst=3)     # 3 then 1 / 5 
 # /api/inspire fetches arbitrary user-supplied URLs (network + 2MB read +
 # parse). Tighter budget than form-submit because each request costs more.
 inspire_fetch_limiter  = RateLimiter(rate=1/60.0,   burst=6)     # 6 burst, then 1 / minute / IP
+# /api/generate and /api/generate-stream each trigger a full LLM call
+# (~$0.30–3.00). 5-burst lets a developer iterate quickly; 1/2-min sustained
+# keeps a single IP to ~35 builds/hour max — still costly but not unlimited.
+generate_limiter       = RateLimiter(rate=1/120.0,  burst=5)     # 5 burst, then 1 / 2 min / IP
+# /api/plan is cheap (no LLM call) but we still cap it to prevent enumeration
+# of industry intel + DNA combinations.
+plan_limiter           = RateLimiter(rate=1/10.0,   burst=20)    # 20 burst, then 1 / 10 sec / IP
 
 
 __all__ = [
@@ -486,4 +493,6 @@ __all__ = [
     "track_view_limiter",
     "forgot_email_limiter",
     "inspire_fetch_limiter",
+    "generate_limiter",
+    "plan_limiter",
 ]

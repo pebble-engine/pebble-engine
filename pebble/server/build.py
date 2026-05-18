@@ -28,6 +28,7 @@ from pebble.plan import build_pebble_plan
 from pebble.history import snapshot_site
 from pebble.cost import estimate_cost
 from pebble.visual_ids import inject_pebble_ids
+from pebble.security import client_ip, generate_limiter, plan_limiter
 
 
 def _engine():
@@ -97,6 +98,10 @@ def run_plan(handler) -> None:
     validate_build_payload = pe.validate_build_payload
     pick_random_dna     = pe.pick_random_dna
     pick_dna_by_id      = pe.pick_dna_by_id
+
+    ip = client_ip(handler)
+    if not plan_limiter.allow(ip or ""):
+        handler._json(429, {"error": "too many plan requests, slow down"}); return
 
     try:
         length = int(handler.headers.get("Content-Length", "0"))
@@ -187,6 +192,10 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     post_build_screenshots = pe.post_build_screenshots
     generate_design_system = pe.generate_design_system  # None when degraded
     pick_random_dna = pe.pick_random_dna                # None when DNA module missing
+
+    ip = client_ip(handler)
+    if generate and not generate_limiter.allow(ip or ""):
+        handler._json(429, {"error": "too many build requests — max 5 per 10 min per IP"}); return
 
     try:
         length = int(handler.headers.get("Content-Length", "0"))

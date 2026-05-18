@@ -15,10 +15,11 @@ import os
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 
 from pebble.server.router import route_delete, route_get, route_patch, route_post
 from pebble.server.shim import make_shim, shim_to_response
+from pebble.security import client_ip as _client_ip, generate_limiter
 
 # ---------------------------------------------------------------------------
 # App + CORS
@@ -76,9 +77,15 @@ async def generate_stream(request: Request):
     """
     from pebble.server.build_stream import build_stream_generator
 
+    client_host = (request.client.host if request.client else "127.0.0.1")
+    if not generate_limiter.allow(client_host):
+        return JSONResponse(
+            {"error": "too many build requests — max 5 per 10 min per IP"},
+            status_code=429,
+        )
+
     body = await request.body()
     headers = dict(request.headers)
-    client_host = (request.client.host if request.client else "127.0.0.1")
     return StreamingResponse(
         build_stream_generator(body, headers, client_host),
         media_type="text/event-stream",
