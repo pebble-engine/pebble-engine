@@ -187,8 +187,8 @@ They want to click the text and type. Without this, the whole product fails.
          service-role key, cascades to public.profiles via FK.
          v3 inbox settings exposes a "Danger zone" with typed-EMAIL
          confirmation (post-NLM-round hardening) + browser confirm
-         + per-IP rate limit (3/hour). Project files in output/
-         are not auto-scrubbed (follow-up sweep).
+         + per-IP rate limit (3/hour). Project files scrubbed on
+         hard-delete (output/<slug>/ + .users/<uid>/ — 2026-05-18).
          RESOLVED 2026-05-17: 14-day soft-delete cooling-off period shipped.
          First DELETE request schedules deletion (writes pending_deletion.json).
          Cancel via POST /api/account/cancel-deletion during window.
