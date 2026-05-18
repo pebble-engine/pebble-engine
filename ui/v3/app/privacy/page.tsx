@@ -64,7 +64,7 @@ export default function PrivacyPage() {
               <div>
                 <p className="font-medium text-foreground">Billing information</p>
                 <p>
-                  If you subscribe to a paid plan or purchase a setup call, your payment is
+                  If you subscribe to a paid plan, your payment is
                   processed by Stripe. We never see or store your full card number. We do store your
                   Stripe customer ID and subscription status to manage your account.
                 </p>

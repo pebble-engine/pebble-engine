@@ -78,14 +78,6 @@ export default function TermsPage() {
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Setup call</p>
-                <p>
-                  The $99 one-time setup call is a non-refundable purchase of a one-hour live
-                  session with the Pebble team. A calendar booking link is sent to your email after
-                  payment.
-                </p>
-              </div>
-              <div>
                 <p className="font-medium text-foreground">Cancellation</p>
                 <p>
                   Cancel your subscription at any time via{" "}
