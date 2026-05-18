@@ -1790,6 +1790,9 @@ def _banner():
 
 def serve(port: int = 8000, open_browser: bool = True) -> None:
     _banner()
+    # Bind to 0.0.0.0 on hosted platforms (Railway etc. set PORT); stay on
+    # 127.0.0.1 locally so the engine isn't exposed on the local network.
+    host = "0.0.0.0" if os.environ.get("PORT") else "127.0.0.1"
     url = f"http://localhost:{port}"
     print(f"   running at {url}\n")
 
@@ -1802,11 +1805,11 @@ def serve(port: int = 8000, open_browser: bool = True) -> None:
         # pebble.app is imported here (not at module level) so pebble_engine
         # is already in sys.modules when HandlerShim looks up PebbleHandler.
         from pebble.app import app as _fastapi_app
-        uvicorn.run(_fastapi_app, host="127.0.0.1", port=port, log_level="warning")
+        uvicorn.run(_fastapi_app, host=host, port=port, log_level="warning")
     except ImportError:
         # uvicorn not installed — fall back to the stdlib ThreadingHTTPServer.
         # All functionality works; SSE streaming is unavailable.
-        server = ThreadingHTTPServer(("127.0.0.1", port), PebbleHandler)
+        server = ThreadingHTTPServer((host, port), PebbleHandler)
         server.daemon_threads = True
         try:
             server.serve_forever()
@@ -1816,7 +1819,7 @@ def serve(port: int = 8000, open_browser: bool = True) -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Pebble Engine -- visual website briefing.")
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--port", type=int, default=int(os.environ.get("PORT", 8000)))
     parser.add_argument("--no-browser", action="store_true")
     args = parser.parse_args()
     serve(port=args.port, open_browser=not args.no_browser)
