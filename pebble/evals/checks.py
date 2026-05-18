@@ -62,6 +62,11 @@ def check_metadata(static_files: tuple[str, ...] = (), details_file_key: str | N
     return wrap
 
 
+# Directories to skip when scanning generated site source files.
+# node_modules: third-party packages  |  .next: compiled build artifacts
+_SKIP_DIRS: frozenset[str] = frozenset({"node_modules", ".next"})
+
+
 # ---------------------------------------------------------------------------
 # 1. site_compiles
 # ---------------------------------------------------------------------------
@@ -293,7 +298,7 @@ def images_use_next_image(ctx: BuildContext) -> CheckResult:
 
     offenders: list[str] = []
     for tsx in ctx.site_dir.rglob("*.tsx"):
-        if "node_modules" in tsx.parts:
+        if _SKIP_DIRS.intersection(tsx.parts):
             continue
         text = tsx.read_text(encoding="utf-8", errors="ignore")
         if _RAW_IMG_RE.search(text):
@@ -358,7 +363,7 @@ def no_invented_phone(ctx: BuildContext) -> CheckResult:
 
     for ext in ("*.tsx", "*.ts"):
         for f in ctx.site_dir.rglob(ext):
-            if "node_modules" in f.parts:
+            if _SKIP_DIRS.intersection(f.parts):
                 continue
             text = f.read_text(encoding="utf-8", errors="ignore")
             if brief_phone and brief_phone in text:
@@ -509,7 +514,7 @@ def uses_100dvh_not_100vh(ctx: BuildContext) -> CheckResult:
     offenders: list[str] = []
     for ext in ("*.tsx", "*.ts", "*.css"):
         for f in ctx.site_dir.rglob(ext):
-            if "node_modules" in f.parts:
+            if _SKIP_DIRS.intersection(f.parts):
                 continue
             text = f.read_text(encoding="utf-8", errors="ignore")
             if _VH_RE.search(text):
@@ -658,7 +663,7 @@ def images_have_alt(ctx: BuildContext) -> CheckResult:
     offenders: list[str] = []
     total_images = 0
     for tsx in ctx.site_dir.rglob("*.tsx"):
-        if "node_modules" in tsx.parts:
+        if _SKIP_DIRS.intersection(tsx.parts):
             continue
         text = tsx.read_text(encoding="utf-8", errors="ignore")
         for block in _IMAGE_BLOCK_RE.findall(text):
@@ -706,7 +711,7 @@ def scroll_trigger_ssr_safe(ctx: BuildContext) -> CheckResult:
 
     offenders: list[str] = []
     for tsx in ctx.site_dir.rglob("*.tsx"):
-        if "node_modules" in tsx.parts:
+        if _SKIP_DIRS.intersection(tsx.parts):
             continue
         text = tsx.read_text(encoding="utf-8", errors="ignore")
         if not _SSR_DANGEROUS_RE.search(text):
@@ -775,7 +780,7 @@ def no_css_smooth_scroll(ctx: BuildContext) -> CheckResult:
     offenders: list[str] = []
     for ext in ("*.css", "*.tsx", "*.ts"):
         for f in ctx.site_dir.rglob(ext):
-            if "node_modules" in f.parts or ".next" in f.parts:
+            if _SKIP_DIRS.intersection(f.parts):
                 continue
             text = f.read_text(encoding="utf-8", errors="ignore")
             stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
@@ -1506,7 +1511,7 @@ def imports_resolve_to_dependencies(ctx: BuildContext) -> CheckResult:
     undeclared: dict[str, list[str]] = {}  # pkg-name -> [files using it]
     for ext in ("*.tsx", "*.ts"):
         for f in ctx.site_dir.rglob(ext):
-            if "node_modules" in f.parts or ".next" in f.parts:
+            if _SKIP_DIRS.intersection(f.parts):
                 continue
             file_text = f.read_text(encoding="utf-8", errors="ignore")
             for m in _IMPORT_FROM_RE.finditer(file_text):
@@ -2622,7 +2627,7 @@ def perf_budget_or_lighter(ctx: BuildContext) -> CheckResult:
     # 1. CLS — raw <img> without width AND height
     img_offenders: list[str] = []
     for tsx in ctx.site_dir.rglob("*.tsx"):
-        if "node_modules" in tsx.parts:
+        if _SKIP_DIRS.intersection(tsx.parts):
             continue
         text = tsx.read_text(encoding="utf-8", errors="ignore")
         for m in _RAW_IMG_OPEN_RE.finditer(text):
@@ -2644,7 +2649,7 @@ def perf_budget_or_lighter(ctx: BuildContext) -> CheckResult:
     #       network fetch and therefore no FOIT risk — skip them.
     font_offenders: list[str] = []
     for css in ctx.site_dir.rglob("*.css"):
-        if "node_modules" in css.parts:
+        if _SKIP_DIRS.intersection(css.parts):
             continue
         text = css.read_text(encoding="utf-8", errors="ignore")
         stripped = _BLOCK_COMMENT_RE.sub("", text)

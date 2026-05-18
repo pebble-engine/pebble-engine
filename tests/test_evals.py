@@ -559,6 +559,16 @@ def test_uses_100dvh_fails_on_100vh_in_css(good_build):
     assert checks.uses_100dvh_not_100vh(ctx).status == "fail"
 
 
+def test_uses_100dvh_ignores_next_build_artifacts(good_build):
+    """Third-party packages compiled into .next/static/css legitimately use
+    100vh — only source files under the author's control should be flagged."""
+    next_css = good_build / "site" / ".next" / "static" / "css" / "app"
+    next_css.mkdir(parents=True, exist_ok=True)
+    (next_css / "layout.css").write_text(".x { height: 100vh; }")
+    ctx = BuildContext.load(good_build)
+    assert checks.uses_100dvh_not_100vh(ctx).status == "pass"
+
+
 def test_html_lang_attr_passes_when_present(good_build):
     ctx = BuildContext.load(good_build)
     assert checks.html_lang_attr(ctx).status == "pass"

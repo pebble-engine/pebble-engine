@@ -992,7 +992,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
 - [ ] Every `<input>`, `<textarea>`, `<select>` has EITHER `aria-label="..."` OR an associated `<label htmlFor="...">` — eval `a11y_static_audit`. Icon-only `<button>` and `<a>/<Link>` elements also need `aria-label` or `title`. Placeholder text alone is NOT sufficient.
-- [ ] Heading levels never skip ranks (no h1 → h3 without an h2 in between) — eval `a11y_static_audit`
+- [ ] Heading levels are strictly sequential: `h1` = page title (one per page), `h2` = section/group headings within the page (e.g. "What We Offer", "Our Values", "Questions & Answers"), `h3` = card/item titles within a section. The most common failure: inner pages jump h1 → h3 and omit h2 entirely. Every section that groups multiple h3 cards MUST have an h2 above it. — eval `a11y_static_audit`
 - [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
 - [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
 
@@ -1126,7 +1126,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Focus-visible on interactives | Every `<a>` / `<button>` with a `className` (hero CTAs, navbar links, Call Us pill) carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` |
 | Form input labels | Every `<input>` / `<textarea>` / `<select>` has `aria-label="..."` OR an associated `<label htmlFor="...">`. Placeholder text does NOT count. |
 | Icon-only interactives | Any `<button>` or `<a>` whose sole child is an icon component (e.g. `<X />`, `<ChevronRight />`) needs `aria-label="..."` or `title="..."` |
-| Heading order | Heading levels must be sequential — h1 → h2 → h3. Never skip (no h1 → h3). |
+| Heading order | Strictly sequential: h1 = page title, h2 = section heading, h3 = card/item heading. Inner pages must NOT jump h1 → h3 — each group of h3 cards needs an h2 above it. — eval `a11y_static_audit` |
 | Hero text legibility | `textShadow` on hero h1 (built into AnimatedHeading) AND on hero subhead `<p>` (inline `style`). Foundation has no dark overlay, so text carries its own shadow. |
 | Hero video poster | `<video>` element has a `poster="..."` attribute. Painted instantly while the video loads — should visually match the chosen video (mood / darkness). |
 
