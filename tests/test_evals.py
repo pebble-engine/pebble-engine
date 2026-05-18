@@ -171,7 +171,14 @@ def good_build(tmp_path: Path) -> Path:
         'import { submitContactForm } from "@/app/actions/contact";\n'
         'export function ContactForm() {\n'
         '  const [state, action] = useActionState(submitContactForm, null);\n'
-        '  return <form action={action} />;\n'
+        '  return (\n'
+        '    <form action={action}>\n'
+        '      <input aria-label="Your name" name="name" required />\n'
+        '      <input aria-label="Email address" type="email" name="email" required />\n'
+        '      <textarea aria-label="Message" name="message" required />\n'
+        '      <button type="submit">Send</button>\n'
+        '    </form>\n'
+        '  );\n'
         '}'
     )
     # Deploy-to-Vercel scaffold.
@@ -193,6 +200,14 @@ def good_build(tmp_path: Path) -> Path:
         "- Payment processing beyond contact-form lead capture (recommended: Stripe Payment Links).\n"
         "- Customer accounts or saved estimates (recommended: out of scope for v1).\n"
     )
+    # Foundation inner pages — Services, About, Contact must exist or navbar
+    # links are dead 404s (eval `foundation_pages_present` enforces).
+    for route in ("services", "about", "contact"):
+        page_dir = site / "app" / route
+        page_dir.mkdir(parents=True, exist_ok=True)
+        (page_dir / "page.tsx").write_text(
+            f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
+        )
     # Industry-aware pages (May 2026 expansion). For brief["_industry_intel_key"]
     # = "plumbing", industries.json declares pages = ["service_area", "guarantee"].
     # Plus the universal extras: faq, privacy, terms. Five stub pages total.
@@ -2450,3 +2465,86 @@ def test_no_pages_router_patterns_skips_when_no_site(tmp_path):
     (tmp_path / "no-site").mkdir()
     ctx = BuildContext.load(tmp_path / "no-site")
     assert checks.no_pages_router_patterns(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 47. foundation_pages_present
+# ---------------------------------------------------------------------------
+
+def test_foundation_pages_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.foundation_pages_present(ctx).status == "pass"
+
+
+def test_foundation_pages_fails_when_services_missing(good_build):
+    (good_build / "site" / "app" / "services" / "page.tsx").unlink()
+    r = checks.foundation_pages_present(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "services" in r.message
+
+
+def test_foundation_pages_fails_when_contact_missing(good_build):
+    (good_build / "site" / "app" / "contact" / "page.tsx").unlink()
+    r = checks.foundation_pages_present(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "contact" in r.message
+
+
+def test_foundation_pages_fails_when_about_missing(good_build):
+    (good_build / "site" / "app" / "about" / "page.tsx").unlink()
+    r = checks.foundation_pages_present(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "about" in r.message
+
+
+def test_foundation_pages_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.foundation_pages_present(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 48. contact_form_has_inputs
+# ---------------------------------------------------------------------------
+
+def test_contact_form_has_inputs_passes_on_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.contact_form_has_inputs(ctx).status == "pass"
+
+
+def test_contact_form_has_inputs_fails_when_form_is_empty(good_build):
+    (good_build / "site" / "components" / "forms" / "ContactForm.tsx").write_text(
+        '"use client";\n'
+        'import { useActionState } from "react";\n'
+        'import { submitContactForm } from "@/app/actions/contact";\n'
+        'export function ContactForm() {\n'
+        '  const [state, action] = useActionState(submitContactForm, null);\n'
+        '  return <form action={action} />;\n'
+        '}\n'
+    )
+    r = checks.contact_form_has_inputs(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "name=" in r.message
+
+
+def test_contact_form_has_inputs_passes_with_textarea(good_build):
+    (good_build / "site" / "components" / "forms" / "ContactForm.tsx").write_text(
+        '"use client";\n'
+        'export function ContactForm() {\n'
+        '  return <form><textarea name="message" /></form>;\n'
+        '}\n'
+    )
+    ctx = BuildContext.load(good_build)
+    assert checks.contact_form_has_inputs(ctx).status == "pass"
+
+
+def test_contact_form_has_inputs_skips_when_file_missing(good_build):
+    (good_build / "site" / "components" / "forms" / "ContactForm.tsx").unlink()
+    r = checks.contact_form_has_inputs(BuildContext.load(good_build))
+    assert r.status == "skip"
+
+
+def test_contact_form_has_inputs_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.contact_form_has_inputs(ctx).status == "skip"

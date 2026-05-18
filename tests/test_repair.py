@@ -113,8 +113,25 @@ def _write_foundation_files(site: Path) -> None:
         '"use client";\n'
         'import { useActionState } from "react";\n'
         'import { submitContactForm } from "@/app/actions/contact";\n'
-        'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
+        'export function ContactForm() {\n'
+        '  const [_, a] = useActionState(submitContactForm, null);\n'
+        '  return (\n'
+        '    <form action={a}>\n'
+        '      <input aria-label="Name" name="name" required />\n'
+        '      <input aria-label="Email" type="email" name="email" required />\n'
+        '      <textarea aria-label="Message" name="message" required />\n'
+        '      <button type="submit">Send</button>\n'
+        '    </form>\n'
+        '  );\n'
+        '}'
     )
+    # Foundation inner pages — Services, About, Contact (eval `foundation_pages_present`).
+    for route in ("services", "about", "contact"):
+        page_dir = site / "app" / route
+        page_dir.mkdir(parents=True, exist_ok=True)
+        (page_dir / "page.tsx").write_text(
+            f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
+        )
     # Deploy-to-Vercel scaffold (vercel.json + README Deploy section + .env.example).
     (site / "vercel.json").write_text('{"framework":"nextjs"}')
     (site / ".env.example").write_text(
@@ -291,8 +308,26 @@ def broken_build(tmp_path: Path) -> Path:
         '"use client";\n'
         'import { useActionState } from "react";\n'
         'import { submitContactForm } from "@/app/actions/contact";\n'
-        'export function ContactForm() { const [_, a] = useActionState(submitContactForm, null); return <form action={a} />; }'
+        'export function ContactForm() {\n'
+        '  const [_, a] = useActionState(submitContactForm, null);\n'
+        '  return (\n'
+        '    <form action={a}>\n'
+        '      <input aria-label="Name" name="name" required />\n'
+        '      <input aria-label="Email" type="email" name="email" required />\n'
+        '      <textarea aria-label="Message" name="message" required />\n'
+        '      <button type="submit">Send</button>\n'
+        '    </form>\n'
+        '  );\n'
+        '}'
     )
+    # Foundation inner pages so foundation_pages_present doesn't appear in
+    # broken_build's failure set — keep intentional failures scoped.
+    for route in ("services", "about", "contact"):
+        page_dir = site / "app" / route
+        page_dir.mkdir(parents=True, exist_ok=True)
+        (page_dir / "page.tsx").write_text(
+            f'export default function P() {{ return <main><h1>{route}</h1></main>; }}'
+        )
     # Deploy-to-Vercel scaffold so broken_build's only intentional failures
     # stay scoped to required_files_present + hero_has_h1 + dna_display_font_honored.
     (site / "vercel.json").write_text('{"framework":"nextjs"}')

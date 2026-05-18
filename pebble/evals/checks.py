@@ -3697,6 +3697,100 @@ def no_pages_router_patterns(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 47. foundation_pages_present — every Pebble site ships 4 navigable pages
+# ---------------------------------------------------------------------------
+
+_FOUNDATION_PAGE_ROUTES = (
+    "app/services/page.tsx",
+    "app/about/page.tsx",
+    "app/contact/page.tsx",
+)
+
+
+@check_metadata(details_file_key="missing")
+def foundation_pages_present(ctx: BuildContext) -> CheckResult:
+    """The three core inner pages must exist as App Router route files.
+
+    Every Pebble site guarantees four navigable pages: Homepage (checked
+    by ``required_files_present``), Services, About, and Contact. The
+    Navbar and Footer both link to ``/services``, ``/about``, and
+    ``/contact`` by default. If any of these page files is missing, those
+    navbar links are dead 404s — the most visible quality failure a
+    small-business site can have.
+
+    The LLM occasionally drops one or more inner pages when the context
+    is long or the token budget is tight. This check makes that failure
+    loud instead of silent.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("foundation_pages_present", "skip", "no site directory")
+
+    missing = [path for path in _FOUNDATION_PAGE_ROUTES
+               if not (ctx.site_dir / path).exists()]
+    if not missing:
+        return CheckResult(
+            "foundation_pages_present", "pass",
+            "all 3 foundation inner pages present (services / about / contact)",
+        )
+    return CheckResult(
+        "foundation_pages_present", "fail",
+        f"{len(missing)} foundation page(s) missing — dead navbar links: "
+        + ", ".join(missing),
+        details={"missing": missing},
+    )
+
+
+# ---------------------------------------------------------------------------
+# 48. contact_form_has_inputs — form must be functional, not empty skeleton
+# ---------------------------------------------------------------------------
+
+_FORM_INPUT_RE = re.compile(
+    r"""<(?:input|textarea|select)\b[^>]*\bname\s*=""",
+    re.IGNORECASE,
+)
+
+
+@check_metadata(static_files=("components/forms/ContactForm.tsx",))
+def contact_form_has_inputs(ctx: BuildContext) -> CheckResult:
+    """ContactForm.tsx must have at least one named input field.
+
+    ``contact_form_uses_server_action`` verifies the wiring is correct
+    (Server Action + useActionState), but the LLM sometimes generates a
+    correct-looking scaffold with an empty ``<form action={action} />``
+    containing no fields. That form submits nothing, delivers nothing,
+    and is invisible to the user as broken — there are no visible inputs
+    to fill in.
+
+    Pass criterion: ``components/forms/ContactForm.tsx`` contains at
+    least one ``<input>``, ``<textarea>``, or ``<select>`` element with
+    a ``name="..."`` attribute. Any single named field is enough — the
+    detail is enforced by ``a11y_static_audit`` (aria-labels) and the
+    prompt template.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("contact_form_has_inputs", "skip", "no site directory")
+
+    form_path = ctx.site_dir / "components" / "forms" / "ContactForm.tsx"
+    if not form_path.exists():
+        return CheckResult(
+            "contact_form_has_inputs", "skip",
+            "ContactForm.tsx missing (contact_form_uses_server_action catches this)",
+        )
+
+    text = form_path.read_text(encoding="utf-8", errors="ignore")
+    if _FORM_INPUT_RE.search(text):
+        return CheckResult(
+            "contact_form_has_inputs", "pass",
+            "ContactForm.tsx has at least one named input field",
+        )
+    return CheckResult(
+        "contact_form_has_inputs", "fail",
+        "ContactForm.tsx has no <input>, <textarea>, or <select> with a name= attribute — "
+        "the form submits nothing; add name, email, and message fields",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3758,6 +3852,9 @@ ALL_CHECKS = [
     # FOUNDATION correctness — catches dev URLs + Pages Router regressions
     no_hardcoded_localhost,
     no_pages_router_patterns,
+    # FOUNDATION completeness — all four navigable pages + working form
+    foundation_pages_present,
+    contact_form_has_inputs,
     site_compiles,
 ]
 

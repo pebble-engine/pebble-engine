@@ -1034,6 +1034,8 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] `next.config.mjs` is plain JS (JSDoc, not `import type` — that's TS and crashes Node's ESM loader)
 - [ ] No hardcoded `http://localhost:...` or `http://127.0.0.1:...` URLs in `app/`, `components/`, or `lib/`. API calls must use relative paths (`/api/...`) or `process.env.NEXT_PUBLIC_*`. Hardcoded dev URLs ship broken to production and are invisible at build time. — eval `no_hardcoded_localhost`
 - [ ] No Next.js Pages Router APIs in an App Router build: no `import Head from 'next/head'` (use `export const metadata`), no `getServerSideProps`/`getStaticProps`/`getStaticPaths` (use async Server Components), no `import {{ useRouter }} from 'next/router'` (use `next/navigation`). Mixing router APIs causes silent failures or runtime crashes. — eval `no_pages_router_patterns`
+- [ ] `app/services/page.tsx`, `app/about/page.tsx`, and `app/contact/page.tsx` MUST all exist. The Navbar links to `/services`, `/about`, and `/contact` by default — missing page files produce dead 404s on every navbar click. The LLM sometimes drops one when context is long. — eval `foundation_pages_present`
+- [ ] `components/forms/ContactForm.tsx` MUST have at least one `<input>`, `<textarea>`, or `<select>` element with a `name="..."` attribute. An empty `<form action={{action}} />` with no fields submits nothing. Minimum: name, email, message fields, each with both `name=` and `aria-label=`. — eval `contact_form_has_inputs`
 
 ---
 
