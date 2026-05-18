@@ -86,7 +86,7 @@ function SignupForm() {
               Create your account
             </h1>
             <p className="text-muted-foreground">
-              Start building. Free during preview, no card required.
+              Start building for free. No card required.
             </p>
           </div>
 

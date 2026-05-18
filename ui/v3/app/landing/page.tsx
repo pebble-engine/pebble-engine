@@ -49,7 +49,7 @@ function Hero() {
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-60" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
             </span>
-            Free preview — no card required
+            Free to start — no card required
           </span>
 
           <h1 className="font-display text-5xl md:text-7xl font-bold tracking-tight leading-[1.05] text-foreground">
