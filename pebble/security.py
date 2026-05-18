@@ -149,6 +149,40 @@ def validate_snapshot_id(handler, snapshot_id: str) -> bool:
 _PROJECT_LOCKS_MUTEX = threading.Lock()
 _PROJECT_LOCKS: dict[str, threading.Lock] = {}
 
+# --------- Per-user publish lock ------------------------------------------
+# Prevents the TOCTOU race where two concurrent publish requests from the
+# same user both pass the free-tier site-count check before either writes
+# the publish.json that would make them visible to the counter.
+
+_USER_PUBLISH_LOCKS_MUTEX = threading.Lock()
+_USER_PUBLISH_LOCKS: dict[str, threading.Lock] = {}
+
+
+def _get_user_publish_lock(user_id: str) -> threading.Lock:
+    with _USER_PUBLISH_LOCKS_MUTEX:
+        lock = _USER_PUBLISH_LOCKS.get(user_id)
+        if lock is None:
+            lock = threading.Lock()
+            _USER_PUBLISH_LOCKS[user_id] = lock
+        return lock
+
+
+@contextmanager
+def user_publish_lock(user_id: str, *, timeout: float = 60.0) -> Iterator[bool]:
+    """Acquire the per-user mutex around the publish-limit check + publish.
+
+    Prevents two concurrent publish requests from the same user from both
+    passing the free-tier site-count check before either writes publish.json.
+    Yields ``True`` when acquired, ``False`` on timeout (caller should 503).
+    """
+    lock = _get_user_publish_lock(user_id)
+    acquired = lock.acquire(timeout=timeout)
+    try:
+        yield acquired
+    finally:
+        if acquired:
+            lock.release()
+
 
 def _get_project_lock(slug: str) -> threading.Lock:
     """Return (and lazily allocate) the lock for one project slug. The

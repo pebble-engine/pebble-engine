@@ -141,7 +141,7 @@ Where we are now. Each chapter ships something visible to customers.
 [x] 5.5  Brand-tuned: amber primary CTAs, 18px+ body, WCAG AAA contrast,
          "no thin font weights" mandate. Soul-line in hero.
 [ ] 5.6  Deploy to Vercel under getpebble.net   ← MARC's next move
-[x] 5.7  Plausible analytics — next/script injected via NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var (2026-05-17)
+[x] 5.7  Plausible analytics — next/script injected via NEXT_PUBLIC_PLAUSIBLE_DOMAIN env var (2026-05-18, re-shipped: was in a separate branch)
 [ ] 5.8  Verify existing dark/cinematic getpebble.net vs new
          warm/inclusive direction — Marc's brand call            ← OPEN
 ```
@@ -345,7 +345,9 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 **Goal:** Open the doors to real paying customers.
 
 ```
-[ ] 12.1  Final landing page polish (Marc + Claude QA together)
+[~] 12.1  Final landing page polish — mechanical QA done (2026-05-18): OG metadata,
+          FAQ stale entries, robots.txt, sitemap.ts, footer Pricing link. Marc + Claude
+          visual QA pass still needed before launch.
 [x] 12.2  Pricing page live with comparison table — /pricing: plan cards (Free/$29/$59) + 5-category comparison table + FAQ + real Stripe CTAs; landing page synced
 [ ] 12.3  Privacy policy + Terms of Service (Marc handles + a lawyer)
 [ ] 12.4  ProductHunt launch prep (assets, story, day-of plan)

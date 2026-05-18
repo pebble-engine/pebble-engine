@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Literata, JetBrains_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPalette } from "@/components/command-palette";
@@ -23,6 +24,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://getpebble.net"),
   title: "Pebble",
   description: "Pebble — build a website you understand.",
 };
@@ -60,6 +62,13 @@ export default function RootLayout({
           {children}
           <CommandPalette />
         </AuthProvider>
+        {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
+          <Script
+            defer
+            data-domain={process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN}
+            src="https://plausible.io/js/script.js"
+          />
+        )}
       </body>
     </html>
   );

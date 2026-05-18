@@ -391,3 +391,63 @@ def test_subscriber_can_publish_beyond_free_limit(engine_server):
                   brief={"_user_id": "test-user", "business_name": "Three"})
     status, _body = _post(engine_server["base"], "/api/publish", {"slug": "site-three"})
     assert status == 200
+
+
+# ---- Intent sentinel tests (TOCTOU fix) ----------------------------------------
+
+def test_publish_intent_counts_toward_limit(tmp_path, monkeypatch):
+    """A .publish_intent file for another slug must block a third publish."""
+    import pebble.server.publish as srv
+    monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", tmp_path)
+
+    _seed_published(tmp_path, "site-one", user_id="u1")
+    # Simulate an in-flight publish for site-two (intent written, upload pending).
+    (tmp_path / "site-two").mkdir(parents=True)
+    (tmp_path / "site-two" / "brief.json").write_text(
+        json.dumps({"_user_id": "u1", "business_name": "Two"}), encoding="utf-8"
+    )
+    (tmp_path / "site-two" / ".publish_intent").touch()
+
+    # Now site-three wants to publish — should be blocked at limit=2.
+    count = srv._count_published_sites("u1", exclude_slug="site-three")
+    assert count == 2
+
+
+def test_publish_intent_cleared_after_successful_zip(engine_server):
+    """After a successful ZIP publish, .publish_intent must not remain."""
+    out = engine_server["output"]
+    _seed_project(out, "my-site", {"app/page.tsx": "x"},
+                  brief={"_user_id": "test-user", "business_name": "My"})
+    status, _ = _post(engine_server["base"], "/api/publish", {"slug": "my-site"})
+    assert status == 200
+    assert not (out / "my-site" / ".publish_intent").exists()
+
+
+def test_concurrent_free_tier_publishes_cant_both_succeed(engine_server):
+    """Two simultaneous publish requests for different slugs by the same free
+    user — when already at limit-1 — must result in exactly one 200 and one 402.
+    """
+    out = engine_server["output"]
+    _seed_published(out, "site-one", user_id="test-user")
+    _seed_project(out, "site-two", {"app/page.tsx": "x"},
+                  brief={"_user_id": "test-user", "business_name": "Two"})
+    _seed_project(out, "site-three", {"app/page.tsx": "x"},
+                  brief={"_user_id": "test-user", "business_name": "Three"})
+
+    results: list[int] = []
+    lock = threading.Lock()
+
+    def do_publish(slug: str) -> None:
+        status, _ = _post(engine_server["base"], "/api/publish", {"slug": slug})
+        with lock:
+            results.append(status)
+
+    t2 = threading.Thread(target=do_publish, args=("site-two",))
+    t3 = threading.Thread(target=do_publish, args=("site-three",))
+    t2.start(); t3.start()
+    t2.join(); t3.join()
+
+    results.sort()
+    assert results == [200, 402], (
+        f"Expected one 200 and one 402 for concurrent free-tier publishes, got {results}"
+    )

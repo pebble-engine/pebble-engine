@@ -17,7 +17,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
-from pebble.security import project_lock, require_project_owner, safe_user_id
+from pebble.security import project_lock, require_project_owner, safe_user_id, user_publish_lock
 from pebble.publish import (
     PublishError,
     PublishResult,
@@ -50,7 +50,12 @@ def _subscription_active(user_id: str) -> bool:
 
 
 def _count_published_sites(user_id: str, exclude_slug: str) -> int:
-    """Count how many OTHER sites this user has already published."""
+    """Count how many OTHER sites this user has published (or is publishing).
+
+    Counts both completed publish.json and in-flight .publish_intent sentinels
+    so that concurrent publish requests are reflected in the limit check even
+    before the slow upload completes.
+    """
     out = _output_dir()
     count = 0
     for brief_path in out.glob("*/brief.json"):
@@ -63,9 +68,26 @@ def _count_published_sites(user_id: str, exclude_slug: str) -> int:
             continue
         if brief.get("_user_id") != user_id:
             continue
-        if (brief_path.parent / "publish.json").exists():
+        proj = brief_path.parent
+        if (proj / "publish.json").exists() or (proj / ".publish_intent").exists():
             count += 1
     return count
+
+
+def _write_publish_intent(slug: str) -> None:
+    """Write a sentinel so concurrent limit checks see this publish as claimed."""
+    try:
+        (_output_dir() / slug / ".publish_intent").touch()
+    except Exception:
+        pass
+
+
+def _clear_publish_intent(slug: str) -> None:
+    """Remove the intent sentinel (called on publish success or failure)."""
+    try:
+        (_output_dir() / slug / ".publish_intent").unlink(missing_ok=True)
+    except Exception:
+        pass
 
 
 def _engine():
@@ -132,22 +154,35 @@ def run_publish(handler) -> None:
 
     # Free-plan site limit. Active subscribers are unlimited. Free users
     # cap at FREE_PUBLISH_LIMIT published sites.
+    #
+    # A per-user lock + intent sentinel prevents the TOCTOU race where two
+    # concurrent publishes (different slugs, same user) both pass the count
+    # check before either writes publish.json. The lock window is tiny:
+    # check + touch .publish_intent. The slow upload happens outside the lock.
     if not _subscription_active(uid):
-        already = _count_published_sites(uid, exclude_slug=slug)
-        if already >= FREE_PUBLISH_LIMIT:
-            handler._json(402, {
-                "error": (
-                    f"Free plan allows {FREE_PUBLISH_LIMIT} published sites. "
-                    "Upgrade to Starter or Pro to publish unlimited sites."
-                ),
-                "upgrade_url": "/pricing",
-                "published_count": already,
-                "limit": FREE_PUBLISH_LIMIT,
-            })
-            return
+        with user_publish_lock(uid) as acquired:
+            if not acquired:
+                handler._json(503, {"error": "another publish is in progress; try again shortly"})
+                return
+            already = _count_published_sites(uid, exclude_slug=slug)
+            if already >= FREE_PUBLISH_LIMIT:
+                handler._json(402, {
+                    "error": (
+                        f"Free plan allows {FREE_PUBLISH_LIMIT} published sites. "
+                        "Upgrade to Starter or Pro to publish unlimited sites."
+                    ),
+                    "upgrade_url": "/pricing",
+                    "published_count": already,
+                    "limit": FREE_PUBLISH_LIMIT,
+                })
+                return
+            # Claim the slot before releasing the lock so concurrent requests
+            # for OTHER slugs see this one as in-flight.
+            _write_publish_intent(slug)
 
     project_dir = _output_dir() / slug
     if not project_dir.exists():
+        _clear_publish_intent(slug)
         handler._json(404, {"error": f"project not found: {slug}"}); return
 
     started = time.time()
@@ -163,6 +198,7 @@ def run_publish(handler) -> None:
     # ---- Cloudflare path ----
     if effective == "cloudflare":
         if not cloudflare_configured():
+            _clear_publish_intent(slug)
             handler._json(400, {
                 "error": "Cloudflare not configured. Set CLOUDFLARE_ACCOUNT_ID and CLOUDFLARE_API_TOKEN in .env.",
                 "cloudflare_setup_md": cloudflare_setup_checklist(),
@@ -170,16 +206,17 @@ def run_publish(handler) -> None:
         try:
             result = publish_to_cloudflare(slug)
         except PublishError as e:
-            # Surface the Cloudflare-specific error AND offer the checklist
-            # so the user knows what to fix.
+            _clear_publish_intent(slug)
             log.warning("cloudflare publish failed for %s: %s", slug, e)
             handler._json(502, {
                 "error": str(e),
                 "cloudflare_setup_md": cloudflare_setup_checklist(),
             }); return
         except Exception as e:
+            _clear_publish_intent(slug)
             log.warning("cloudflare publish errored for %s: %s", slug, e)
             handler._json(500, {"error": f"cloudflare publish failed: {e}"}); return
+        _clear_publish_intent(slug)
         result.snapshot_id = snapshot_id
         write_publish_state(slug, result)
         payload = result.to_dict()
@@ -190,8 +227,10 @@ def run_publish(handler) -> None:
     try:
         _zip_path, files_count, bytes_count = package_zip(slug)
     except PublishError as e:
+        _clear_publish_intent(slug)
         handler._json(400, {"error": str(e)}); return
     except Exception as e:
+        _clear_publish_intent(slug)
         log.warning("publish zip failed for %s: %s", slug, e)
         handler._json(500, {"error": f"zip failed: {e}"}); return
 
@@ -217,6 +256,7 @@ def run_publish(handler) -> None:
         note=note,
         cloudflare_setup_md=setup_md,
     )
+    _clear_publish_intent(slug)
     write_publish_state(slug, result)
 
     payload = result.to_dict()
