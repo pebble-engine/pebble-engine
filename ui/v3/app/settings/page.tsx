@@ -599,13 +599,22 @@ function SettingsPageContent() {
             </p>
             {billingError && <p className="text-sm text-destructive" role="alert">{billingError}</p>}
             <div className="flex flex-wrap items-center gap-3">
-              <button
-                type="button" onClick={onManageBilling} disabled={billingLoading}
-                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <CreditCard className="w-4 h-4" />
-                {billingLoading ? "Opening…" : "Manage billing"}
-              </button>
+              {subscription ? (
+                <button
+                  type="button" onClick={onManageBilling} disabled={billingLoading}
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <CreditCard className="w-4 h-4" />
+                  {billingLoading ? "Opening…" : "Manage billing"}
+                </button>
+              ) : (
+                <Link
+                  href="/pricing"
+                  className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+                >
+                  Choose a plan →
+                </Link>
+              )}
               <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
                 Back to dashboard
               </Link>
