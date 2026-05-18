@@ -17,7 +17,7 @@ from typing import Optional
 
 from pebble.history import snapshot_site
 from pebble.log import log
-from pebble.security import project_lock, require_project_owner
+from pebble.security import project_lock, require_project_owner, safe_user_id
 from pebble.publish import (
     PublishError,
     PublishResult,
@@ -30,6 +30,42 @@ from pebble.publish import (
     slug_to_project_name,
     write_publish_state,
 )
+
+FREE_PUBLISH_LIMIT = 2
+
+
+def _subscription_active(user_id: str) -> bool:
+    """Return True when the user has an active Stripe subscription."""
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
+        return False
+    sentinel = _output_dir() / ".users" / safe_uid / "subscription.json"
+    if not sentinel.exists():
+        return False
+    try:
+        data = json.loads(sentinel.read_text(encoding="utf-8"))
+        return data.get("status") == "active"
+    except Exception:
+        return False
+
+
+def _count_published_sites(user_id: str, exclude_slug: str) -> int:
+    """Count how many OTHER sites this user has already published."""
+    out = _output_dir()
+    count = 0
+    for brief_path in out.glob("*/brief.json"):
+        slug = brief_path.parent.name
+        if slug == exclude_slug:
+            continue
+        try:
+            brief = json.loads(brief_path.read_text(encoding="utf-8"))
+        except Exception:
+            continue
+        if brief.get("_user_id") != user_id:
+            continue
+        if (brief_path.parent / "publish.json").exists():
+            count += 1
+    return count
 
 
 def _engine():
@@ -90,8 +126,25 @@ def run_publish(handler) -> None:
     # Auth gate — publish is the most consequential mutation (writes to a
     # public deploy target). The 2026-05-15 evening NLM pass flagged that
     # any signed-in user could publish another user's project by slug.
-    if require_project_owner(handler, slug) is None:
+    uid = require_project_owner(handler, slug)
+    if uid is None:
         return
+
+    # Free-plan site limit. Active subscribers are unlimited. Free users
+    # cap at FREE_PUBLISH_LIMIT published sites.
+    if not _subscription_active(uid):
+        already = _count_published_sites(uid, exclude_slug=slug)
+        if already >= FREE_PUBLISH_LIMIT:
+            handler._json(402, {
+                "error": (
+                    f"Free plan allows {FREE_PUBLISH_LIMIT} published sites. "
+                    "Upgrade to Starter or Pro to publish unlimited sites."
+                ),
+                "upgrade_url": "/pricing",
+                "published_count": already,
+                "limit": FREE_PUBLISH_LIMIT,
+            })
+            return
 
     project_dir = _output_dir() / slug
     if not project_dir.exists():

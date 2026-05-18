@@ -334,3 +334,60 @@ def test_dashboard_summary_includes_publish_after_publishing(engine_server):
     assert proj["publish"] is not None
     assert proj["publish"]["kind"] == "zip"
     assert proj["publish"]["url"].endswith("/dist.zip")
+
+
+# ---- Free-plan publish limit ------------------------------------------------
+
+def _seed_published(out: Path, slug: str, user_id: str = "test-user") -> None:
+    """Create a project that is already published (has a publish.json)."""
+    site = out / slug / "site" / "app"
+    site.mkdir(parents=True)
+    (site / "page.tsx").write_text("x", encoding="utf-8")
+    (out / slug / "brief.json").write_text(
+        json.dumps({"_user_id": user_id, "business_name": slug}), encoding="utf-8"
+    )
+    (out / slug / "publish.json").write_text(
+        json.dumps({"kind": "zip", "url": f"/dist/{slug}/dist.zip",
+                    "deployed_at": "2026-01-01T00:00:00+00:00"}), encoding="utf-8"
+    )
+
+
+def test_free_user_blocked_at_publish_limit(engine_server):
+    out = engine_server["output"]
+    # Two already-published sites for the same user.
+    _seed_published(out, "site-one", user_id="test-user")
+    _seed_published(out, "site-two", user_id="test-user")
+    # Third site — not yet published.
+    _seed_project(out, "site-three", {"app/page.tsx": "x"},
+                  brief={"_user_id": "test-user", "business_name": "Three"})
+    status, body = _post(engine_server["base"], "/api/publish", {"slug": "site-three"})
+    assert status == 402
+    assert "upgrade" in body.get("error", "").lower() or "upgrade_url" in body
+
+
+def test_free_user_can_republish_existing_published_site(engine_server):
+    out = engine_server["output"]
+    # Two already-published sites.
+    _seed_published(out, "site-one", user_id="test-user")
+    _seed_published(out, "site-two", user_id="test-user")
+    # Re-publishing site-two (already counted, so still within limit).
+    status, _body = _post(engine_server["base"], "/api/publish", {"slug": "site-two"})
+    assert status == 200  # allowed — not a new site
+
+
+def test_subscriber_can_publish_beyond_free_limit(engine_server):
+    out = engine_server["output"]
+    # Two already-published sites.
+    _seed_published(out, "site-one", user_id="test-user")
+    _seed_published(out, "site-two", user_id="test-user")
+    # Write an active subscription sentinel for test-user.
+    sub_dir = out / ".users" / "test-user"
+    sub_dir.mkdir(parents=True)
+    (sub_dir / "subscription.json").write_text(
+        json.dumps({"status": "active", "plan": "starter"}), encoding="utf-8"
+    )
+    # Third site — should be allowed for subscriber.
+    _seed_project(out, "site-three", {"app/page.tsx": "x"},
+                  brief={"_user_id": "test-user", "business_name": "Three"})
+    status, _body = _post(engine_server["base"], "/api/publish", {"slug": "site-three"})
+    assert status == 200
