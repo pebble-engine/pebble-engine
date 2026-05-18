@@ -34,14 +34,28 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter Tight",
         "body_font_weight": "400 / 500",
         "mono_font": "IBM Plex Mono",
-        "palette_posture": "warm off-white #FAF8F3 page, ink #0E0E10 type, ONE single muted accent (sage #5E7A6E or burgundy #6B2B2B)",
-        "hero_structure": "Asymmetric two-column. Left: oversized italic Cormorant headline (8XL, hangs into negative space). Right: thin meta column with year established, license number, jurisdiction set in IBM Plex Mono 10px uppercase. NO video, NO image overlay — a single dominant editorial photograph sits below the fold, not behind the text.",
+        "palette_posture": "warm dark #100E0A page, warm cream #E8E0D0 type, ONE single muted accent (sage #5E7A6E or burgundy #6B2B2B)",
+        "css_tokens": {
+            "color_bg": "#100E0A",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(232,224,208,0.92)",
+            "color_text_secondary": "rgba(232,224,208,0.52)",
+            "color_text_muted": "rgba(232,224,208,0.32)",
+            "color_accent": "#5E7A6E",
+            "color_accent_glow": "rgba(94,122,110,0.20)",
+            "color_accent_subtle": "rgba(94,122,110,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Asymmetric two-column CSS gradient mesh hero built from --color-bg and --color-accent-glow. Left: oversized italic Cormorant headline (8XL, hangs into negative space). Right: thin meta column with year established, license number, jurisdiction set in IBM Plex Mono 10px uppercase. A single editorial photograph sits below the fold, not behind the text.",
         "motion_intensity": "subtle",
         "motion_rules": "Scroll-tied opacity fades only (0.6s). NO SplitText, NO parallax, NO clip-path reveals, NO Three.js. Drop caps animate in via simple opacity. Lenis smooth scroll is on, but ScrollTrigger usage is minimal.",
         "layout_grid": "12-column asymmetric with generous outer margins (10% on desktop). Sections separated by hairline rules (#E8E2D5), never by colored bands.",
         "image_treatment": "ONE dominant photograph per section, full-bleed or two-column, never card grids. Black and white or desaturated. Captions in IBM Plex Mono.",
         "signature_moves": [
-            "Drop cap on first body paragraph (4-line, Cormorant 600, color #6B2B2B)",
+            "Drop cap on first body paragraph (4-line, Cormorant 600, color var(--color-accent))",
             "Running header at top of each section: '§ 02 · SERVICES' in IBM Plex Mono",
             "Pull-quotes set in Cormorant italic 4XL, no quote marks, hairline rules above and below",
             "Page numbers in the footer like a magazine: '03 / 07'",
@@ -49,56 +63,6 @@ DNA_CARDS: list[dict] = [
         "forbidden": ["Three.js", "rounded corners > 4px", "glow shadows", "card grids with shadows", "any use of Fraunces or Inter (use the DNA fonts only)"],
         "industry_affinity": ["editorial", "journal", "publish", "gallery", "museum", "art", "design", "architect", "consult", "advisor", "law", "legal", "attorney", "foundation", "nonprofit"],
         "industry_aversion": ["bar", "club", "gym", "daycare", "plumb", "electric", "hvac", "tow", "automotive"],
-    },
-    {
-        "id": "brutalist_editorial",
-        "label": "Brutalist Editorial",
-        "feel": "Stripe Press × Are.na × defense-contractor investor deck. Confident, unornamented, large.",
-        "display_font": "Tektur",
-        "display_font_weight": "900 (wide stance, hard edges)",
-        "body_font": "Geist",
-        "body_font_weight": "400 / 500",
-        "mono_font": "Geist Mono",
-        "palette_posture": "pure black #050505 page, off-white #F5F5F5 type, ONE saturated accent (electric orange #FF5A1F or acid green #C4FF00)",
-        "hero_structure": "Full-bleed typographic hero. Headline is Tektur 900 set to wrap into 2-3 lines that fill the viewport — uppercase, tight tracking, raw. No image behind it. Single thin horizontal rule across the bottom of the viewport with mono kicker text. CTA is a flat rectangular button, no shadow, hover inverts colors.",
-        "motion_intensity": "aggressive",
-        "motion_rules": "Hero text splits character-by-character on scroll using vanilla splitWords. ScrollTrigger pins one statement section mid-page. Hover states snap (no 300ms ease). One looping video clip muted in the background of section 2, not the hero.",
-        "layout_grid": "Hard 12-column with zero outer margin (page goes edge to edge). Sections separated by thick (4px) horizontal rules in the accent color.",
-        "image_treatment": "Raw photo grids, no rounded corners, no captions overlaid — captions sit below in mono. Photos in full saturation or pure black-and-white, never desaturated middle ground.",
-        "signature_moves": [
-            "Big numbers section with one statistic per line, mono kicker labels (e.g. '5,000+ JOBS' / '12-YR WARRANTY')",
-            "Sticky horizontal rule at the bottom of viewport on scroll with current section name in mono",
-            "Image captions formatted as: 'FIG. 03 — TECHNICIAN ON SITE, BAY SHORE NY'",
-            "Footer is a single typographic block, no columns, set in Tektur",
-        ],
-        "forbidden": ["Fraunces", "Inter as display", "serif headlines", "rounded corners > 2px", "drop shadows", "gradient backgrounds", "Three.js particles"],
-        "industry_affinity": ["software", "tech", "security", "defense", "engineer", "fintech", "crypto", "b2b", "manufactur", "agency", "data", "infrastructure"],
-        "industry_aversion": ["wedding", "yoga", "spa", "daycare", "kids", "baby", "pediatric", "therapy", "florist", "baker", "salon", "beauty", "nursery"],
-    },
-    {
-        "id": "terminal_operator",
-        "label": "Terminal Operator",
-        "feel": "Vintage CRT terminal. Mission control. Hacker News × NASA Apollo Guidance Computer.",
-        "display_font": "IBM Plex Mono",
-        "display_font_weight": "700 (uppercase, wide tracking)",
-        "body_font": "IBM Plex Mono",
-        "body_font_weight": "400",
-        "mono_font": "IBM Plex Mono",
-        "palette_posture": "pure black #000000 page, phosphor green #00FF7F primary or amber #FFB000 type, no other colors except white #FFFFFF for emphasis",
-        "hero_structure": "Boot-sequence hero. Top of viewport shows mono text typing in line by line: '> initializing...', '> module: [BUSINESS_NAME].sys loaded', '> location: [CITY]', then the headline appears in big mono 6XL after a 0.4s delay. Cursor blinks at the end. NO images in hero. ASCII art logo optional in the corner.",
-        "motion_intensity": "smooth",
-        "motion_rules": "Every reveal is a typewriter effect (vanilla JS, ~30ms per char). Scanline overlay across the whole page (1px horizontal lines at 1% opacity). Subtle CRT bloom on text (text-shadow 0 0 8px accent color). No GSAP timelines beyond the typewriter — Lenis still on.",
-        "layout_grid": "Fixed-width monospace columns (80 chars max body, like a terminal). ASCII box-drawing characters as section dividers: ┌─────┐ etc.",
-        "image_treatment": "Images dithered to 2-tone (black + accent) using CSS filter. Captions formatted as '[ IMG_03.JPG — TECHNICIAN ]'. No full-color photography.",
-        "signature_moves": [
-            "ASCII section dividers between every block (e.g. '════════════════')",
-            "Cursor block (█) that blinks next to interactive elements",
-            "Status bar at the bottom of viewport showing 'CONN: SECURE · TIME: 14:32:08 · MODE: OPERATIONAL' updating live",
-            "All buttons render as: [ CALL NOW ] with bracket characters as the border",
-        ],
-        "forbidden": ["any sans-serif other than mono", "any serif font", "color photography", "gradients", "rounded corners > 0px", "glow effects beyond CRT bloom", "Three.js"],
-        "industry_affinity": ["software", "security", "devops", "cybersecurity", "infosec", "host", "gaming", "blockchain", "infrastructure", "network", "data", "saas", "dev tool"],
-        "industry_aversion": ["wedding", "yoga", "spa", "photo", "daycare", "kids", "baby", "therapy", "florist", "baker", "salon", "beauty", "restaurant", "bar", "hotel", "real estate", "health", "dental", "medical", "retire", "funeral", "hospice", "law", "account", "advisor", "financ", "gallery", "museum", "art", "fashion", "jewel", "watch", "automotive", "plumb", "electric", "hvac", "tow", "construct", "roof", "landscape", "cafe", "deli", "brewery", "distillery", "music venue", "herb", "garden", "farm", "naturopath", "holistic", "coach", "fitness", "gym", "sport", "dance", "pilates", "family", "nursery", "coffee"],
     },
     {
         "id": "cinematic_imax",
@@ -110,9 +74,23 @@ DNA_CARDS: list[dict] = [
         "body_font_weight": "400 / 500",
         "mono_font": "Geist Mono",
         "palette_posture": "deep black #0A0A0A page, white #FFFFFF type, ONE single bold accent (vermilion #FF3A1F or cyan #00DAF3 — pick by industry mood)",
-        "hero_structure": "Full-viewport video hero (Pexels mp4) at 100vh, dark gradient overlay from black at bottom to transparent at top. Unbounded 900 headline anchored bottom-left, 8XL, set to wrap to fill the bottom third. Eyebrow in mono uppercase above it. CTAs at the very bottom: one filled rectangle, one ghost.",
+        "css_tokens": {
+            "color_bg": "#0A0A0A",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(255,255,255,0.92)",
+            "color_text_secondary": "rgba(255,255,255,0.52)",
+            "color_text_muted": "rgba(255,255,255,0.32)",
+            "color_accent": "#FF3A1F",
+            "color_accent_glow": "rgba(255,58,31,0.20)",
+            "color_accent_subtle": "rgba(255,58,31,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Full-viewport CSS gradient mesh hero with radial accent glows. The gradient uses --color-accent-glow as the bloom source. Unbounded 900 headline anchored bottom-left, 8XL, set to wrap to fill the bottom third. Eyebrow in mono uppercase above it. CTAs at the very bottom: one filled rectangle, one ghost.",
         "motion_intensity": "cinematic",
-        "motion_rules": "Hero text reveals via clip-path inset wipe (0.8s cubic-bezier). ScrollTrigger pins each 100vh section, scroll-zooms the hero video out as you leave it. Three.js particle field optional in section 3. GSAP timelines with offset delays. Lenis lerp 0.08 (a touch slower than default).",
+        "motion_rules": "Hero text reveals via clip-path inset wipe (0.8s cubic-bezier). ScrollTrigger pins each 100vh section, scroll-zooms out as you leave it. Three.js particle field optional in section 3. GSAP timelines with offset delays. Lenis lerp 0.08 (a touch slower than default).",
         "layout_grid": "100vh-section based, full-bleed everything, no outer margins on desktop, content max-width 1400px centered.",
         "image_treatment": "Widescreen crops (16:9 or wider) only. High contrast, cinematic color grade. Each image is full-bleed or 2/3 width with massive caption.",
         "signature_moves": [
@@ -134,10 +112,24 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter",
         "body_font_weight": "400 / 500",
         "mono_font": "JetBrains Mono",
-        "palette_posture": "drafting-paper #F4F1EA page, ink #1A1A1A type, ONE blueprint blue #2B4DCB accent",
-        "hero_structure": "Technical-drawing hero. Headline set in Archivo 700 left-aligned. To its right: a technical line-drawing diagram (SVG, no fills, just strokes) showing the business in plan view. Dimension lines with mono labels mark the headline like architectural plans: '← 480px →'.",
+        "palette_posture": "dark drafting #1A1916 page, off-white #E8E4DC type, ONE blueprint blue #2B4DCB accent",
+        "css_tokens": {
+            "color_bg": "#1A1916",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(232,228,220,0.92)",
+            "color_text_secondary": "rgba(232,228,220,0.52)",
+            "color_text_muted": "rgba(232,228,220,0.32)",
+            "color_accent": "#2B4DCB",
+            "color_accent_glow": "rgba(43,77,203,0.20)",
+            "color_accent_subtle": "rgba(43,77,203,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Technical-drawing hero using CSS gradient mesh from --color-bg and --color-accent-glow. Headline set in Archivo 700 left-aligned. To its right: a technical line-drawing diagram (SVG, no fills, just strokes) showing the business in plan view. Dimension lines with mono labels mark the headline like architectural plans: '← 480px →'.",
         "motion_intensity": "minimal",
-        "motion_rules": "SVG line-drawings stroke-animate on scroll into view (stroke-dasharray trick). Dimension labels fade in 0.2s after their lines complete. Everything else is static. No video, no Three.js.",
+        "motion_rules": "SVG line-drawings stroke-animate on scroll into view (stroke-dasharray trick). Dimension labels fade in 0.2s after their lines complete. Everything else is static. No Three.js.",
         "layout_grid": "Grid lines visible on hover (toggle via small button in footer). Strict 12-column with 8px gutters. Sections labeled '01.00 — IDENTITY' '02.00 — SERVICES' in mono.",
         "image_treatment": "Photos rendered as monochrome with dimension annotations overlaid (e.g. arrows pointing to specific elements with mono labels). Or replaced entirely with SVG technical drawings.",
         "signature_moves": [
@@ -159,8 +151,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter Tight",
         "body_font_weight": "400 / 500",
         "mono_font": "IBM Plex Mono",
-        "palette_posture": "warm peach-cream #FBF1E3 page, cocoa #2A1F1A type, dusty rose #D4899A primary accent, soft sage #B8C5A6 secondary accent",
-        "hero_structure": "Centered hero with a single soft-shadowed photograph at the top, organic blob-shaped frame (border-radius: 60% 40% 70% 30%). Headline below in Bricolage italic 5XL with the variable-width axis animated subtly. CTA is a pill button with a soft inner shadow.",
+        "palette_posture": "deep warm cocoa #1A0F08 page, peach #F5CEAD type, dusty rose #D4899A primary accent, soft sage #B8C5A6 secondary accent",
+        "css_tokens": {
+            "color_bg": "#1A0F08",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(245,206,173,0.92)",
+            "color_text_secondary": "rgba(245,206,173,0.52)",
+            "color_text_muted": "rgba(245,206,173,0.32)",
+            "color_accent": "#D4899A",
+            "color_accent_glow": "rgba(212,137,154,0.20)",
+            "color_accent_subtle": "rgba(212,137,154,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Centered hero with a CSS gradient mesh using --color-bg and --color-accent-glow as a warm bloom. A single soft-shadowed photograph with organic blob-shaped frame (border-radius: 60% 40% 70% 30%) overlaid. Headline below in Bricolage italic 5XL with the variable-width axis animated subtly. CTA is a pill button with a soft inner shadow.",
         "motion_intensity": "smooth",
         "motion_rules": "Subtle wobble animations on interactive elements (rotate -1deg to 1deg on hover). Bricolage variable axis morphs on scroll. Soft fade-ups on section reveal. No aggressive scroll pinning.",
         "layout_grid": "Loose centered single-column with offset image floats. Generous padding (96px section gaps). All corners rounded 24px-32px.",
@@ -184,8 +190,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter",
         "body_font_weight": "400",
         "mono_font": "JetBrains Mono",
-        "palette_posture": "pure white #FFFFFF page, near-black #111111 type, ONE single accent — Vignelli red #C8102E — used sparingly (CTA only, one underline, one quote dash)",
-        "hero_structure": "Centered hero. Headline in Inter Tight 700 uppercase, letter-spacing 0.02em, max 4 words, fills 60% of viewport. Below it a single horizontal red bar (4px × 80px). Below that a one-sentence sub. No image in hero. Negative space dominates.",
+        "palette_posture": "near-black #0D0D0D page, white #F5F5F5 type, ONE single accent — Vignelli red #C8102E — used sparingly (CTA only, one underline, one quote dash)",
+        "css_tokens": {
+            "color_bg": "#0D0D0D",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(245,245,245,0.92)",
+            "color_text_secondary": "rgba(245,245,245,0.52)",
+            "color_text_muted": "rgba(245,245,245,0.32)",
+            "color_accent": "#C8102E",
+            "color_accent_glow": "rgba(200,16,46,0.20)",
+            "color_accent_subtle": "rgba(200,16,46,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Centered hero with CSS gradient mesh from --color-bg and --color-accent-glow. Headline in Inter Tight 700 uppercase, letter-spacing 0.02em, max 4 words, fills 60% of viewport. Below it a single horizontal red bar (4px × 80px). Below that a one-sentence sub. Negative space dominates.",
         "motion_intensity": "minimal",
         "motion_rules": "Single opacity fade-in on each section as it enters viewport (0.5s). Hover states use 0.2s linear color shift only. No GSAP timelines, no SplitText, no parallax. Lenis on but barely noticeable.",
         "layout_grid": "Strict 12-column, perfectly aligned. All text left-aligned. Every section starts with a number label '01.' '02.' '03.' in red.",
@@ -210,7 +230,21 @@ DNA_CARDS: list[dict] = [
         "body_font_weight": "400 / 500",
         "mono_font": "Space Mono",
         "palette_posture": "off-black #1A1A1A page, white #FAFAFA type, THREE accent colors clashing intentionally — hot pink #FF2D87, lime #DCFF00, electric blue #2B6BFF",
-        "hero_structure": "Layered chaotic hero. Headline is Big Shoulders 900 at 9XL (industrial display variable font), rotated -3deg, set behind a smaller secondary headline in Space Mono at 2XL rotated +2deg. Photographic element collaged in the background with a halftone filter. Multiple text fragments scattered at different rotations.",
+        "css_tokens": {
+            "color_bg": "#1A1A1A",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(250,250,250,0.92)",
+            "color_text_secondary": "rgba(250,250,250,0.52)",
+            "color_text_muted": "rgba(250,250,250,0.32)",
+            "color_accent": "#FF2D87",
+            "color_accent_glow": "rgba(255,45,135,0.20)",
+            "color_accent_subtle": "rgba(255,45,135,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Layered chaotic hero with CSS gradient mesh using --color-bg and --color-accent-glow as base. Headline is Big Shoulders 900 at 9XL (industrial display variable font), rotated -3deg, set behind a smaller secondary headline in Space Mono at 2XL rotated +2deg. Multiple text fragments scattered at different rotations.",
         "motion_intensity": "aggressive",
         "motion_rules": "Marquee scrollers running horizontally in multiple sections (different speeds, different directions). Hover states flash to a clashing color and shake (subtle). Sections slide in from different directions on scroll (left, right, up). Three.js NOT used — keep it 2D and graphic.",
         "layout_grid": "Broken grid. Elements bleed off edges. Some images at 110% width (clipped by overflow:hidden on body). Diagonal section dividers (SVG triangles, not rules).",
@@ -234,8 +268,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter",
         "body_font_weight": "400",
         "mono_font": "Geist Mono",
-        "palette_posture": "soft cream #F7F3EC page, warm ink #2A2520 type, ONE muted accent — dusty terracotta #C5614B — appearing only on links and small marks",
-        "hero_structure": "Centered editorial hero. Single italic EB Garamond 6XL headline (max one sentence, often italic-only), centered on the page. Below it: a thin horizontal rule (1px terracotta, 120px wide). Below that: subhead in Inter 18px italic. NO image in the hero — the typography is the hero.",
+        "palette_posture": "dark cream-tinted #1A1714 page, warm text #E8DDD0 type, ONE muted accent — dusty terracotta #C5614B — appearing only on links and small marks",
+        "css_tokens": {
+            "color_bg": "#1A1714",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(232,221,208,0.92)",
+            "color_text_secondary": "rgba(232,221,208,0.52)",
+            "color_text_muted": "rgba(232,221,208,0.32)",
+            "color_accent": "#C5614B",
+            "color_accent_glow": "rgba(197,97,75,0.20)",
+            "color_accent_subtle": "rgba(197,97,75,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Centered editorial hero with CSS gradient mesh from --color-bg and --color-accent-glow. Single italic EB Garamond 6XL headline (max one sentence, often italic-only), centered on the page. Below it: a thin horizontal rule (1px terracotta, 120px wide). Below that: subhead in Inter 18px italic. The typography is the hero.",
         "motion_intensity": "minimal",
         "motion_rules": "Subtle parallax on hero text only — slight Y-translate on scroll (10px max). Section reveals are gentle fade-ups (0.7s ease-out). No SplitText, no clip-path. Lenis on, very smooth.",
         "layout_grid": "Centered single-column for prose (max-width 680px), full-bleed for images. Generous vertical padding between sections (160px desktop).",
@@ -259,8 +307,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter",
         "body_font_weight": "400 / 500",
         "mono_font": "JetBrains Mono",
-        "palette_posture": "concrete grey #2D2D2D page, off-white #E8E5E0 type, ONE high-vis accent — safety yellow #FFD200 — used like industrial signage",
-        "hero_structure": "Hero feels like a freight container side. Anton headline at 9XL set in all-caps fills the width. Mono stencil-style ID number ('REF-2026-IRN') in the top corner. Yellow diagonal hazard stripes (CSS gradient) at the very top of the page as a 4px-tall band.",
+        "palette_posture": "concrete dark #1A1A1A page, off-white #E8E5E0 type, ONE high-vis accent — safety yellow #FFD200 — used like industrial signage",
+        "css_tokens": {
+            "color_bg": "#1A1A1A",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(232,229,224,0.92)",
+            "color_text_secondary": "rgba(232,229,224,0.52)",
+            "color_text_muted": "rgba(232,229,224,0.32)",
+            "color_accent": "#FFD200",
+            "color_accent_glow": "rgba(255,210,0,0.20)",
+            "color_accent_subtle": "rgba(255,210,0,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Hero built on dark CSS gradient mesh using --color-bg deepened with --color-accent-glow at low opacity to simulate industrial amber haze. Anton headline at 9XL set in all-caps fills the width. Mono stencil-style ID number ('REF-2026-IRN') in the top corner. Yellow diagonal hazard stripes (CSS gradient) at the very top of the page as a 4px-tall band.",
         "motion_intensity": "smooth",
         "motion_rules": "Section reveals: slide in from the right like loading containers (transform: translateX, 0.6s ease-out). Buttons have a depressed-stamp animation on click (briefly translateY 2px). No flashy stuff — feels mechanical.",
         "layout_grid": "Strict modular grid like a cargo manifest. Equal-height rows. Every section labeled at top-left with stencil-style mono code: 'SVC-001 / EMERGENCY' 'CRD-014 / TESTIMONIAL'.",
@@ -284,8 +346,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter",
         "body_font_weight": "400",
         "mono_font": "JetBrains Mono",
-        "palette_posture": "warm cream #FAF6EE page, charcoal #2C2C2A type, ONE single muted botanical accent (deep sage #4A5D4F or terracotta #C57E5A)",
-        "hero_structure": "Decorative hand-drawn botanical line illustrations (single leaf, herb sprig, fern frond) as accents at section dividers and beside pull-quotes. The foundation hero h1 stands clean in Inter; the DNA adds a small botanical illustration in the right column instead of the standard liquid-glass tag — same FadeIn delay (1400ms), same restraint.",
+        "palette_posture": "deep warm green-black #0F1209 page, cream #E8E0CC type, ONE single muted botanical accent (deep sage #4A5D4F or terracotta #C57E5A)",
+        "css_tokens": {
+            "color_bg": "#0F1209",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(232,224,204,0.92)",
+            "color_text_secondary": "rgba(232,224,204,0.52)",
+            "color_text_muted": "rgba(232,224,204,0.32)",
+            "color_accent": "#4A5D4F",
+            "color_accent_glow": "rgba(74,93,79,0.20)",
+            "color_accent_subtle": "rgba(74,93,79,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "CSS gradient mesh hero from --color-bg and --color-accent-glow (warm botanical bloom). Decorative hand-drawn botanical line illustrations (single leaf, herb sprig, fern frond) as accents at section dividers and beside pull-quotes. The hero h1 stands clean in Inter; the DNA adds a small botanical illustration in the right column instead of the standard liquid-glass tag — same FadeIn delay (1400ms), same restraint.",
         "motion_intensity": "subtle",
         "motion_rules": "Opacity fades only (0.6s). No parallax. No clip-path reveals. Drop caps animate in via simple opacity. Botanical illustrations appear with a gentle stroke-draw animation (1.2s) if SVG paths allow — otherwise plain fade.",
         "layout_grid": "12-column asymmetric with generous outer margins (12% on desktop). Sections separated by hairline rules (#E8E2D5), never by colored bands. Pull-quotes hang in the margin like a print magazine.",
@@ -309,8 +385,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter Tight",
         "body_font_weight": "400",
         "mono_font": "IBM Plex Mono",
-        "palette_posture": "deep oxblood #2E1A1D page, warm cream #F0E6D2 type, ONE warm gold accent #C8A96E used like brass inlay — never as a button background, always as a hairline or numeral",
-        "hero_structure": "Foundation hero with a candlelit night-vision Pexels video (search 'jazz bar low light cocktail'). DNA's right-column accent: a gold-foil-style serif numeral '§ 01' in Fraunces italic (use the SOFT optical-size axis for editorial warmth) instead of the standard liquid-glass tag. Photo captions in IBM Plex Mono small caps mimic a vintage cocktail menu (e.g. 'OLD FASHIONED · 1947').",
+        "palette_posture": "deep oxblood #1A0D0F page, warm cream #F0E6D2 type, ONE warm gold accent #C8A96E used like brass inlay — never as a button background, always as a hairline or numeral",
+        "css_tokens": {
+            "color_bg": "#1A0D0F",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(240,230,210,0.92)",
+            "color_text_secondary": "rgba(240,230,210,0.52)",
+            "color_text_muted": "rgba(240,230,210,0.32)",
+            "color_accent": "#C8A96E",
+            "color_accent_glow": "rgba(200,169,110,0.20)",
+            "color_accent_subtle": "rgba(200,169,110,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Deep oxblood gradient mesh with warm amber glow bloom using --color-accent-glow radially centered in the hero. DNA's right-column accent: a gold-foil-style serif numeral '§ 01' in Fraunces italic (use the SOFT optical-size axis for editorial warmth) instead of the standard liquid-glass tag. Photo captions in IBM Plex Mono small caps mimic a vintage cocktail menu (e.g. 'OLD FASHIONED · 1947').",
         "motion_intensity": "subtle",
         "motion_rules": "Slow opacity fades (1s). Soft warm glow on accent gold elements (text-shadow: 0 0 12px rgba(200,169,110,0.3)). Hover transitions are slow and considered (0.5s ease). No bouncing, no aggressive scroll, no harsh cuts.",
         "layout_grid": "Asymmetric centered with margins. Photographic full-bleeds at section breaks. Body copy hangs in a single column max 60ch wide, never the full viewport width.",
@@ -334,8 +424,22 @@ DNA_CARDS: list[dict] = [
         "body_font": "Inter Tight",
         "body_font_weight": "400 / 500",
         "mono_font": "JetBrains Mono",
-        "palette_posture": "sailcloth white #FAFAF7 page, deep navy #0E2842 type, ONE warm rope-brown accent #C49E6C used for hairlines and metadata, weathered teak #5D4037 for occasional warm contrast",
-        "hero_structure": "Foundation hero video shows coastal water (Pexels search 'sailing yacht coastal water sunset'). DNA's right-column accent: latitude/longitude microcopy in IBM Plex Mono ('40.7128°N · 74.0060°W') instead of the standard liquid-glass tag. A tiny compass-rose icon (4 cardinal points only) appears at section break dividers.",
+        "palette_posture": "deep navy #0A1929 page, white #F5F8FA type, ONE warm rope-brown accent #C49E6C used for hairlines and metadata",
+        "css_tokens": {
+            "color_bg": "#0A1929",
+            "color_surface_1": "rgba(255,255,255,0.04)",
+            "color_surface_2": "rgba(255,255,255,0.08)",
+            "color_border": "rgba(255,255,255,0.08)",
+            "color_border_bright": "rgba(255,255,255,0.18)",
+            "color_text_primary": "rgba(245,248,250,0.92)",
+            "color_text_secondary": "rgba(245,248,250,0.52)",
+            "color_text_muted": "rgba(245,248,250,0.32)",
+            "color_accent": "#C49E6C",
+            "color_accent_glow": "rgba(196,158,108,0.20)",
+            "color_accent_subtle": "rgba(196,158,108,0.08)",
+            "glass_blur": "12px",
+        },
+        "hero_structure": "Deep navy gradient mesh with subtle rope-brown glow at the horizon, using --color-accent-glow as a low warm band across the lower portion of the hero. DNA's right-column accent: latitude/longitude microcopy in IBM Plex Mono ('40.7128°N · 74.0060°W') instead of the standard liquid-glass tag. A tiny compass-rose icon (4 cardinal points only) appears at section break dividers.",
         "motion_intensity": "subtle",
         "motion_rules": "Opacity fades (0.8s). Very gentle parallax on coastal imagery (yPercent -8% only). No aggressive scroll-jacking, no jarring transitions. Wave-like ease curves where motion exists.",
         "layout_grid": "Asymmetric editorial with generous outer margins. Photographic full-bleeds. Body content centered, max 65ch.",
@@ -432,12 +536,14 @@ def build_dna_block(dna: dict) -> str:
     """Return the markdown block to prepend at the TOP of PROMPT.md.
 
     The DNA block describes ACCENT decorations layered over the engine's
-    mandatory foundation (Inter typography, video hero, AnimatedHeading +
-    FadeIn components, liquid-glass utility). The DNA does NOT redefine the
-    hero, override the body font, or skip the foundation components.
+    mandatory foundation (Inter typography, CSS gradient mesh hero,
+    AnimatedHeading + FadeIn components, liquid-glass utility). The DNA
+    does NOT redefine the hero structure beyond gradient composition, does
+    NOT override the body font, and does NOT skip the foundation components.
     """
     signatures = "\n".join(f"- {m}" for m in dna["signature_moves"])
     forbidden = ", ".join(dna["forbidden"])
+    tokens = dna["css_tokens"]
     return f"""# ============================================================
 # DESIGN DNA — ACCENT LAYER OVER THE FOUNDATION
 # ============================================================
@@ -450,18 +556,12 @@ def build_dna_block(dna: dict) -> str:
 
 The engine's MANDATORY FOUNDATION (defined later in Section 2: AnimatedHeading
 hero, FadeIn cascade, liquid-glass navbar chip, Inter typography globally,
-background-video hero with NO overlay) is the universal floor every build
+CSS gradient mesh hero built from DNA tokens) is the universal floor every build
 matches. The DNA below adds personality ON TOP of that foundation. It does NOT
-replace the hero. It does NOT override Inter as the global body/h1 typeface.
+override Inter as the global body/h1 typeface.
 
-When this DNA's `Hero structure` description (below) names elements that
-contradict the foundation (a "boot-sequence terminal hero," "no image in hero,"
-"NO video"), treat those as accent decorations to layer where compatible — NOT
-as a replacement for the foundation. The foundation video + AnimatedHeading +
-FadeIn cascade stays in place.
-
-When this DNA's accent display font is named (Cormorant Garamond, Tektur, EB
-Garamond, etc.), use it for ACCENT/decorative elements ONLY: pull-quotes, drop
+When this DNA's accent display font is named (Cormorant Garamond, EB Garamond,
+Unbounded, etc.), use it for ACCENT/decorative elements ONLY: pull-quotes, drop
 caps in body sections, stat numbers, the optional right-column hero tag, big
 sectional numerals. The hero h1 and body copy ALWAYS use Inter. Load the
 accent font via `next/font/google` as a second face, attach to a Tailwind
@@ -471,6 +571,30 @@ in Signature Moves.
 The skill files (iOS, Stack, No-Slop, Business Intelligence) still apply for
 code correctness. The Foundation governs the universal visual structure. The
 DNA governs accent + voice + signature decorations layered on top.
+
+## CSS Design Tokens — INJECT into :root in app/globals.css
+
+These EXACT values define the visual language for this build. Copy them verbatim
+into the `:root {{}}` block in `app/globals.css`. Do not invent alternate values.
+
+```css
+:root {{
+  --color-bg: {tokens['color_bg']};
+  --color-surface-1: {tokens['color_surface_1']};
+  --color-surface-2: {tokens['color_surface_2']};
+  --color-border: {tokens['color_border']};
+  --color-border-bright: {tokens['color_border_bright']};
+  --color-text-primary: {tokens['color_text_primary']};
+  --color-text-secondary: {tokens['color_text_secondary']};
+  --color-text-muted: {tokens['color_text_muted']};
+  --color-accent: {tokens['color_accent']};
+  --color-accent-glow: {tokens['color_accent_glow']};
+  --color-accent-subtle: {tokens['color_accent_subtle']};
+  --glass-blur: {tokens['glass_blur']};
+  --font-display: '{dna['display_font']}', serif;
+  --font-body: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+}}
+```
 
 ## Accent fonts — DECORATIVE only (NOT the hero h1, NOT body text)
 
@@ -487,20 +611,18 @@ DNA governs accent + voice + signature decorations layered on top.
 The Resolved Industry Intelligence palette is a starting point — adapt its hex
 values to fit this posture. Apply the accent colors to: section backgrounds
 (alternating dark/accent below the hero), CTA fills (the secondary glass CTA
-stays glass), pull-quote rules, stat number color, signature decorations. The
-HERO section background stays `bg-black` regardless of palette — the video
-provides the visual.
+stays glass), pull-quote rules, stat number color, signature decorations. Use
+`var(--color-bg)` as the page background and `var(--color-accent)` for primary
+interactive elements.
 
-## Decorative hero accents (layer on the foundation video hero)
+## Hero gradient composition (layer on the foundation AnimatedHeading)
 
 {dna['hero_structure']}
 
-If the description above says "no video" or "no image in hero," IGNORE that
-clause — the foundation video hero is mandatory. Take the OTHER elements
-(typographic treatment of the headline, optional right-column meta, custom CTA
-shapes, signature corner marks) and layer them on the foundation. The
-right-column tag in the hero is a perfect home for DNA-flavored accent
-typography.
+The hero uses a CSS gradient mesh built from this DNA's `--color-bg` and
+`--color-accent-glow` tokens — no external video. DNA's hero structure
+describes the gradient composition and any accent elements. The
+AnimatedHeading + FadeIn cascade runs inside this gradient canvas.
 
 ## Motion
 
@@ -533,7 +655,7 @@ itself stays the foundation pattern.
 
 If any of the above appear elsewhere in this prompt as suggestions for sections
 BELOW the hero, ignore those suggestions. The hero foundation is exempt — its
-required elements (background video, AnimatedHeading, FadeIn, Inter h1, no
+required elements (CSS gradient mesh, AnimatedHeading, FadeIn, Inter h1, no
 overlay) override the DNA's forbiddens for the hero only.
 
 # ============================================================

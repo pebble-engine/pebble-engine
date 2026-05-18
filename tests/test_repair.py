@@ -66,6 +66,20 @@ def _write_foundation_files(site: Path) -> None:
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
     )
+    (site / "components" / "ui" / "GrainOverlay.tsx").write_text(
+        '"use client";\n'
+        'export function GrainOverlay() {\n'
+        '  return (\n'
+        '    <div className="fixed inset-0 pointer-events-none z-50"\n'
+        '      style={{ mixBlendMode: "overlay", opacity: 0.03 }} aria-hidden="true">\n'
+        '      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">\n'
+        '        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.65" /></filter>\n'
+        '        <rect width="100%" height="100%" filter="url(#grain)" />\n'
+        '      </svg>\n'
+        '    </div>\n'
+        '  );\n'
+        '}'
+    )
     # Navbar — liquid-glass chip (FOUNDATION — eval `navbar_present` enforces).
     (site / "components" / "layout").mkdir(parents=True, exist_ok=True)
     (site / "components" / "layout" / "Navbar.tsx").write_text(
@@ -165,12 +179,15 @@ def _write_foundation_files(site: Path) -> None:
 
 
 def _write_minimal_package_json(site: Path) -> None:
-    """Minimal package.json that satisfies resend_in_dependencies. Use this
-    alongside _write_foundation_files in inline fixtures that need the
-    contact-form scaffold to pass evals."""
+    """Minimal package.json that satisfies resend_in_dependencies and
+    framer_motion_in_dependencies. Use this alongside _write_foundation_files
+    in inline fixtures that need the contact-form scaffold to pass evals."""
     (site / "package.json").write_text(json.dumps({
         "name": "x",
-        "dependencies": {"next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0"},
+        "dependencies": {
+            "next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0",
+            "framer-motion": "^11.0.0",
+        },
     }))
 
 
@@ -224,7 +241,8 @@ def broken_build(tmp_path: Path) -> Path:
     from pebble.plan import build_pebble_plan as _bpp
     (d / "plan.json").write_text(json.dumps(_bpp(broken_brief), indent=2))
 
-    (site / "package.json").write_text(json.dumps({"name":"broken","dependencies":{"resend":"^4.0.0"}}))
+    (site / "package.json").write_text(json.dumps({"name":"broken","dependencies":{
+        "resend":"^4.0.0","framer-motion":"^11.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
@@ -246,6 +264,7 @@ def broken_build(tmp_path: Path) -> Path:
     )
     # Intentionally NO app/page.tsx → required_files_present + hero_has_h1 fail.
     (site / "app" / "globals.css").write_text(
+        ":root { --color-bg: #0A0A0A; --color-accent: #FF3A1F; }\n"
         "body { font-family: var(--font-inter), Inter, sans-serif; height: 100dvh; }\n"
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
         "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
@@ -280,6 +299,20 @@ def broken_build(tmp_path: Path) -> Path:
     )
     (site / "components" / "ui" / "FadeIn.tsx").write_text(
         '"use client";\nexport function FadeIn({children}:{children:any}){return <div>{children}</div>;}'
+    )
+    (site / "components" / "ui" / "GrainOverlay.tsx").write_text(
+        '"use client";\n'
+        'export function GrainOverlay() {\n'
+        '  return (\n'
+        '    <div className="fixed inset-0 pointer-events-none z-50"\n'
+        '      style={{ mixBlendMode: "overlay", opacity: 0.03 }} aria-hidden="true">\n'
+        '      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">\n'
+        '        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.65" /></filter>\n'
+        '        <rect width="100%" height="100%" filter="url(#grain)" />\n'
+        '      </svg>\n'
+        '    </div>\n'
+        '  );\n'
+        '}'
     )
     # Footer scaffold so footer_lists_all_pages doesn't show up in the
     # broken_build's failure set — keep this fixture's intentional failures
@@ -484,7 +517,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         "phone": "(212) 234-9876",
         "_design_dna": "swiss_magazine",
     }))
-    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0"}}))
+    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0","framer-motion":"^11.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
     }))
@@ -512,6 +545,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
         'export default function P() { return <main><Hero /><h1>(212) 234-9876 Cormorant Garamond</h1></main>; }'
     )
     (site / "app" / "globals.css").write_text(
+        ":root { --color-bg: #0A0A0A; --color-accent: #FF3A1F; }\n"
         "body { font-family: var(--font-inter), Inter, 'Cormorant Garamond', sans-serif; height: 100dvh; }\n"
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
         "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"
@@ -841,7 +875,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         "business_name": "X", "business_type": "y",
         "phone": "(212) 234-9876", "_design_dna": "swiss_magazine",
     }))
-    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0"}}))
+    (site / "package.json").write_text(json.dumps({"name":"x","dependencies":{"resend":"^4.0.0","framer-motion":"^11.0.0"}}))
     (site / "tsconfig.json").write_text(json.dumps({"compilerOptions": {"paths": {"@/*": ["./*"]}}}))
     (site / "tailwind.config.ts").write_text("export default { theme: { extend: { fontFamily: { sans: ['var(--font-inter)', 'Inter'], display: ['Cormorant Garamond'] } } } }")
     (site / "postcss.config.js").write_text("module.exports = {}")
@@ -865,6 +899,7 @@ def test_repair_writes_history_even_when_baseline_passes(tmp_path):
         'export default function P() { return <main><Hero /><h1>(212) 234-9876 Cormorant Garamond</h1></main>; }'
     )
     (site / "app" / "globals.css").write_text(
+        ":root { --color-bg: #0A0A0A; --color-accent: #FF3A1F; }\n"
         "body { font-family: var(--font-inter), Inter, 'Cormorant Garamond', sans-serif; height: 100dvh; }\n"
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
         "@media (prefers-reduced-motion: reduce) { * { transition-duration: 0.01ms !important; } }\n"

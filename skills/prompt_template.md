@@ -71,49 +71,50 @@ The Design DNA block at the top of this prompt names this build's aesthetic iden
 
 ### Homepage — Default Section Structure (override per DNA)
 
-**Section 1: Hero — FOUNDATION (MANDATORY — overrides all DNA hero variants)**
+**Section 1: Hero — CINEMATIC GRADIENT MESH (MANDATORY — overrides all DNA hero variants)**
 
-This hero is the engine's universal foundation. Every build uses this exact structure. The Design DNA layers accent color, copy voice, and signature decorative moves on TOP of this structure but does not redefine the structure itself. When a DNA card's hero_structure description conflicts with what follows, the foundation wins.
+This hero is the engine's universal foundation. Every build uses this exact structure. The Design DNA provides the `:root {{}}` CSS token values (see the DNA block at the very top of this prompt) that drive the gradient mesh palette — specifically `--color-bg`, `--color-accent-glow`, and `--color-accent-subtle`. There is **NO `<video>` tag**, **NO Pexels**, **NO external media** in the hero.
 
 **Visual layout:**
-- `<section>` is `relative min-h-[100dvh] overflow-hidden bg-black` (always a dark base — text is always light over the video)
-- Full-bleed `<video>` is `absolute inset-0 w-full h-full object-cover`, with attributes `autoPlay muted loop playsInline` (all four, always) AND a `poster="…"` attribute (MANDATORY — the eval `hero_video_has_poster` enforces this)
-- **CRITICAL: NO dark overlay on the video.** No `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent layer above the video. The video plays raw. The chosen Pexels video must already have inherent darkness/contrast where text sits. Legibility is provided by `textShadow` on the headline and subhead (built into `AnimatedHeading` and mandated on the subhead `<p>`), NOT by a background dimming layer.
-- Video `src` is `/videos/hero.mp4` when the post-build chain has localized the Pexels video (preferred); otherwise the Pexels CDN URL is the fallback. The `poster` attribute should reference a still image — use one of the Pexels image URLs from Section 8b, or a static path like `/images/hero-poster.jpg`. The poster paints instantly while the video is loading, so it MUST visually match the chosen video (same mood, similar darkness profile) — otherwise the first 100-300 ms look like a different page.
-- **The `<section>` itself MUST be `flex flex-col`** in addition to `relative min-h-[100dvh] overflow-hidden bg-black`. Without `flex flex-col` on the section, the inner content's `justify-end` has nothing to push against and the hero text ends up top-aligned. This is the #1 visual regression in foundation builds — copy the exact classlist.
-- **Inner content container** sits at the BOTTOM of the viewport via `flex-1 flex flex-col justify-end` (use `flex-1`, NOT `h-full`): `relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16 text-white`. The `flex-1` is required so the container expands to fill the section's flex column space; `justify-end` then pushes the grid to the bottom edge.
+- `<section>` is `relative min-h-[100dvh] overflow-hidden flex flex-col` with `style={{{{ background: "var(--color-bg)" }}}}` — NOT `bg-black`. Using the CSS variable means the post-gen editor can swap palettes by patching only `globals.css`.
+- **Gradient mesh blobs** — two or three absolutely-positioned `<div>` elements with `pointer-events-none` and `aria-hidden="true"`. Use `background: radial-gradient(circle at center, var(--color-accent-glow) 0%, transparent 65%)` and `filter: blur(80px)` (primary blob, ~600–800px square, upper-right) or `filter: blur(60px)` (secondary blob, ~400px, lower-left). This ambient light bloom is what gives each DNA card its visual fingerprint — do NOT skip the blobs.
+- **`GrainOverlay`** is a singleton in `app/layout.tsx` as a `fixed` layer covering the entire app. **Do NOT add `GrainOverlay` inside `Hero.tsx`.** (See Code Pattern 9.)
+- **The `<section>` MUST be `flex flex-col`** — without it, the inner content's `justify-end` has nothing to push against and the hero text ends up top-aligned. This is the #1 visual regression — copy the exact classlist.
+- **Inner content container** sits at the BOTTOM of the viewport via `flex-1 flex flex-col justify-end` (use `flex-1`, NOT `h-full`): `relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16` with `style={{{{ color: "var(--color-text-primary)" }}}}` — do NOT hardcode `text-white`.
 - On large screens, content uses a 2-column grid: `lg:grid lg:grid-cols-2 lg:items-end gap-8`
 
 **Left column — primary content (vertical order):**
-1. `<AnimatedHeading text="line one\nline two" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4" />` — the h1 with per-character entrance animation. Two lines separated by `\n`. Use the brand's value prop in two beats — example: `"Shaping tomorrow\nwith vision and action."` for a VC firm, `"Roasted slow.\nServed fresh."` for a coffee roaster. **THE HEADING IS THE H1 — never a styled div.**
-2. `<FadeIn delay={{800}} duration={{1000}}>` wrapping `<p className="text-base md:text-lg text-gray-300 mb-5" style={{{{ textShadow: "0 2px 16px rgba(0,0,0,0.5)" }}}}>…subhead sentence…</p>` — one sentence naming the outcome the visitor gets. The inline `textShadow` is MANDATORY; the foundation has no dark overlay above the video, so the subhead carries its own legibility scaffolding. The eval `hero_text_has_legibility_safeguard` enforces this.
-3. `<FadeIn delay={{1200}} duration={{1000}}>` wrapping `<div className="flex flex-wrap gap-4">` containing two CTAs. Both CTAs MUST include the focus-visible utility chain `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` so keyboard users see a visible focus ring against the liquid-glass / video surface. The eval `interactive_elements_have_focus_visible` enforces this on hero CTAs, navbar links, and the Call Us pill.
-   - Primary: white pill — `bg-white text-black px-8 py-3 rounded-lg font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` — links to `tel:[BUSINESS PHONE]` (or `#contact` if the brief lacks a phone)
-   - Secondary: glass — `liquid-glass border border-white/20 text-white px-8 py-3 rounded-lg font-medium hover:bg-white hover:text-black transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` — links to `/services` or another primary route
+1. `<AnimatedHeading text="line one\nline two" className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4" />` — the h1 with per-character entrance animation. Two lines separated by `\n`. Use the brand's value prop in two beats. **THE HEADING IS THE H1 — never a styled div.** Inter always (the DNA's display_font is for accent use only). `textShadow` is built into the component.
+2. `<FadeIn delay={{800}} duration={{1000}}>` wrapping `<p className="text-base md:text-lg mb-5" style={{{{ color: "var(--color-text-secondary)" }}}}>…subhead sentence…</p>` — one sentence naming the outcome the visitor gets. CSS token, not hardcoded `text-gray-300`.
+3. `<FadeIn delay={{1200}} duration={{1000}}>` wrapping `<div className="flex flex-wrap gap-4">` containing two CTAs. Both CTAs MUST include the focus-visible utility chain `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent` so keyboard users see a visible focus ring. The eval `interactive_elements_have_focus_visible` enforces this.
+   - Primary: `<MagneticButton href="tel:[BUSINESS PHONE]">Get Started</MagneticButton>` (see Code Pattern 12) — uses `var(--color-accent)` for background via inline style. Substitute action verb per industry.
+   - Secondary: glass pill — `liquid-glass border border-white/20 px-8 py-3 rounded-lg font-medium hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent` with `style={{{{ color: "var(--color-text-primary)" }}}}` — links to `/services` or another primary route
 
-**Right column — optional brand tag (`hidden lg:flex items-end justify-start lg:justify-end`):**
-- `<FadeIn delay={{1400}} duration={{1000}}>` wrapping a `liquid-glass border border-white/20 px-6 py-3 rounded-xl` card
-- Inside: `<p className="text-lg md:text-xl lg:text-2xl font-light">Three. Short. Words.</p>` — three or four short phrases summarizing the business posture. Example: "Roasted. Direct. Local." or "Plumbing · HVAC · Electrical"
+**Right column — optional brand tag (`hidden lg:flex items-end justify-end`):**
+- `<FadeIn delay={{1400}} duration={{1000}}>` wrapping `<GlassCard className="px-6 py-3">` (see Code Pattern 10)
+- Inside: `<p className="text-lg md:text-xl lg:text-2xl font-light" style={{{{ color: "var(--color-text-primary)" }}}}>Three. Short. Words.</p>` — three or four short phrases summarizing the business posture. Example: "Roasted. Direct. Local." or "Plumbing · HVAC · Electrical"
 
 **Navbar — liquid-glass chip floating at the top:**
 - Outer wrapper: `absolute top-0 inset-x-0 z-50 px-6 md:px-12 lg:px-16 pt-6`
-- Inner navbar element: `<nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between text-white">`
+- Inner navbar element: `<nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between" style={{{{ color: "var(--color-text-primary)" }}}}>` 
 - Left: logo wordmark in `<Link href="/" className="text-2xl font-semibold tracking-tight">…business name…</Link>`
-- Center (`hidden md:flex gap-8 text-sm`): nav links — hover transitions to `text-gray-300`
+- Center (`hidden md:flex gap-8 text-sm`): nav links — hover transitions to reduced opacity
 - Right: primary CTA — `<a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">Call Us</a>`
 
 **Accessibility (mandatory):**
 - `app/globals.css` includes `@media (prefers-reduced-motion: reduce)` that disables transitions globally
 - The `AnimatedHeading` component checks `prefers-reduced-motion` at mount and renders all characters at final state immediately when set
-- Video has `muted` (iOS Safari blocks unmuted autoplay) and no `controls`
-- Hero h1 is a real `<h1>` tag (not a styled `<div>`)
+- Gradient mesh blobs have `aria-hidden="true"` and `pointer-events-none` — they are pure decoration
+- Hero h1 is a real `<h1>` tag via `AnimatedHeading` (not a styled `<div>`)
 
 DO NOT do any of the following, regardless of DNA:
-- A plain white centered hero with only CTA buttons and no headline
-- A flat-color hero with no background video
-- A dark overlay on top of the video (no `bg-black/...`, no gradients, nothing dimming the video)
-- The video set up as `<source>` without `autoPlay muted loop playsInline` on the `<video>` itself
-- Skipping the `AnimatedHeading` and `FadeIn` components in favor of inline GSAP timelines on the hero
+- A `<video>` tag anywhere in the hero — the foundation uses CSS gradient mesh only
+- External CDN URLs (Pexels, Unsplash, Picsum) in the hero — no external media dependencies
+- Hardcoded hex colors (`bg-[#0A0A0A]`, `text-[#ffffff]`, `border-[#FF3A1F]`) — use CSS variable tokens exclusively
+- `bg-black` or `bg-gray-900` as the hero background — use `style={{{{ background: "var(--color-bg)" }}}}` so palettes are swappable
+- A flat dark background with no gradient blobs — the radial bloom IS the hero's visual identity
+- A semi-transparent overlay on the gradient mesh (no `bg-black/40`, no dimming layer)
+- Skipping `AnimatedHeading` and `FadeIn` in favor of raw Framer Motion or GSAP on the hero h1
 - Using a `display_font` from the DNA as the h1 typeface — the h1 is always Inter (the DNA's display_font is reserved for accent / decorative uses elsewhere on the page)
 
 **Section 2: Trust Bar — Counting Stats**
@@ -225,6 +226,7 @@ In `app/layout.tsx`:
 import {{ Inter }} from "next/font/google";
 import type {{ Metadata }} from "next";
 import {{ Footer }} from "@/components/layout/Footer";
+import {{ GrainOverlay }} from "@/components/ui/GrainOverlay";
 import "./globals.css";
 
 const inter = Inter({{
@@ -260,13 +262,9 @@ export const metadata: Metadata = {{
 export default function RootLayout({{ children }}: {{ children: React.ReactNode }}) {{
   return (
     <html lang="en" className={{inter.variable}}>
-      <head>
-        {{/* MANDATORY: preload the hero poster image so the first paint lands
-            before JS hydrates. Eval `perf_budget_or_lighter` will fail without
-            a <link rel="preload"> OR an <Image priority> somewhere. */}}
-        <link rel="preload" as="image" href="/images/hero-poster.jpg" />
-      </head>
       <body className={{`${{inter.className}} antialiased`}}>
+        {{/* GrainOverlay is a fixed singleton — renders over every page including the hero. */}}
+        <GrainOverlay />
         {{children}}
         <Footer />
       </body>
@@ -294,17 +292,43 @@ const config: Config = {{
 export default config;
 ```
 
-In `app/globals.css` (above the Tailwind directives):
+In `app/globals.css` — the FIRST thing in the file, BEFORE the Tailwind directives and BEFORE `.liquid-glass`:
+
+**Step 1:** Copy the `:root {{}}` block verbatim from the **DESIGN DNA** section at the very top of this prompt. Those values are this build's design tokens — every color, surface, border, and blur in every component derives from them. Never hardcode a hex value in a component.
+
+**Step 2:** Add the standard body and motion rules below the `:root` block.
 
 ```css
+/* === DESIGN TOKENS — copy :root {{}} from the DNA block at top of prompt === */
+:root {{
+  --color-bg:             #0A0A0A;             /* actual values come from DNA */
+  --color-surface-1:      rgba(255,255,255,0.04);
+  --color-surface-2:      rgba(255,255,255,0.08);
+  --color-border:         rgba(255,255,255,0.08);
+  --color-border-bright:  rgba(255,255,255,0.18);
+  --color-text-primary:   rgba(255,255,255,0.92);
+  --color-text-secondary: rgba(255,255,255,0.52);
+  --color-text-muted:     rgba(255,255,255,0.32);
+  --color-accent:         #FF3A1F;
+  --color-accent-glow:    rgba(255,58,31,0.20);
+  --color-accent-subtle:  rgba(255,58,31,0.08);
+  --glass-blur:           12px;
+  --font-display: 'Unbounded', serif;           /* accent font from DNA */
+  --font-body: var(--font-inter), 'Inter', ui-sans-serif, system-ui, sans-serif;
+}}
+
 body {{
   font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text-primary);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }}
 ```
 
-This is non-negotiable. Every Tailwind `font-sans` usage picks up Inter automatically. The DNA's display_font, when used, is loaded as a SECOND font via `next/font/google` (or `<link>` in head for non-Google fonts) and applied via its own utility class — never replacing Inter as the default.
+The values shown above are illustrative. The DESIGN DNA block at the top of this prompt replaces them with personality-specific values. The variable NAMES are always the same — `--color-bg`, `--color-accent`, etc. — every component uses them, so the post-gen palette editor can swap an entire build's visual identity by patching only this `:root` block.
+
+This is non-negotiable. Every Tailwind `font-sans` usage picks up Inter automatically. The DNA's display_font, when used, is loaded as a SECOND font via `next/font/google` and applied via its own utility class (e.g. `font-display`) — never replacing Inter as the default body/heading typeface.
 
 **Schema.org JSON-LD — MANDATORY GLOBAL FOUNDATION:**
 
@@ -634,25 +658,66 @@ In `app/globals.css`:
 
 Both `-webkit-mask-composite: xor` and `mask-composite: exclude` are required — first for Safari, second for spec-compliant browsers. The `border-radius: inherit` line means the gradient border follows whatever `rounded-*` class the parent has (rounded-xl on the navbar, rounded-xl on the hero tag, etc.).
 
-#### 3. Clip-Path Image Reveal
+#### 3. ScrollReveal — Framer Motion whileInView (FOUNDATION)
+
+**The standard below-fold entrance pattern.** Every service card, stat block, testimonial, and content section uses this component to scroll-reveal. It replaces manual GSAP ScrollTrigger setups — more declarative, React-idiomatic, and LLM-predictable.
 
 ```tsx
-useGSAP(() => {{
-  gsap.utils.toArray<HTMLElement>(".reveal-image").forEach((img) => {{
-    gsap.fromTo(img,
-      {{ clipPath: "inset(0 100% 0 0)" }},
-      {{
-        clipPath: "inset(0 0% 0 0)",
-        duration: 1.1,
-        ease: "expo.out",
-        scrollTrigger: {{ trigger: img, start: "top 78%" }},
-      }}
-    )
-  }})
-}})
+// components/ui/ScrollReveal.tsx
+"use client";
+import {{ motion }} from "framer-motion";
+import {{ ReactNode }} from "react";
+
+type Direction = "up" | "down" | "left" | "right";
+
+type Props = {{
+  children: ReactNode;
+  direction?: Direction;
+  delay?: number;       // seconds (Framer uses seconds, not ms)
+  duration?: number;    // seconds; default 0.7
+  className?: string;
+}};
+
+const initial: Record<Direction, object> = {{
+  up:    {{ opacity: 0, y: 40 }},
+  down:  {{ opacity: 0, y: -40 }},
+  left:  {{ opacity: 0, x: 40 }},
+  right: {{ opacity: 0, x: -40 }},
+}};
+
+export function ScrollReveal({{ children, direction = "up", delay = 0, duration = 0.7, className }}: Props) {{
+  return (
+    <motion.div
+      initial={{initial[direction]}}
+      whileInView={{{{ opacity: 1, x: 0, y: 0 }}}}
+      viewport={{{{ once: true, margin: "-80px" }}}}
+      transition={{{{ duration, ease: [0.16, 1, 0.3, 1], delay }}}}
+      className={{className}}
+    >
+      {{children}}
+    </motion.div>
+  );
+}}
 ```
 
-Add `className="reveal-image"` to every `<Image>` that should reveal on scroll.
+Usage — wrap any below-fold element:
+
+```tsx
+import {{ ScrollReveal }} from "@/components/ui/ScrollReveal";
+
+<ScrollReveal direction="up" delay={{0.1}}>
+  <GlassCard>…</GlassCard>
+</ScrollReveal>
+
+// Staggered grid — increment delay by 0.1s per item
+{{services.map((s, i) => (
+  <ScrollReveal key={{s.id}} direction="up" delay={{i * 0.1}}>
+    <div>…</div>
+  </ScrollReveal>
+))}}
+```
+
+**Important:** For section images, wrap the `<Image>` in a `<div>` first (next/image does not forward refs), then wrap that div in `<ScrollReveal>`. The `ScrollReveal` component is the reveal wrapper — never put it directly on `<Image>`.
 
 #### 4. Counting Stats
 
@@ -940,6 +1005,350 @@ The `<a href="mailto:...">` / `<a href="tel:...">` links elsewhere on the site r
 
 ---
 
+#### 9. GrainOverlay — Fixed Singleton (FOUNDATION)
+
+A subtle SVG film-grain layer that sits above every page as a `fixed` element. Placed once in `app/layout.tsx` — never repeated inside individual components. At `opacity: 0.03` with `mix-blend-mode: overlay`, it adds textural depth to the gradient mesh without visually competing with content.
+
+```tsx
+// components/ui/GrainOverlay.tsx
+export function GrainOverlay() {{
+  return (
+    <div
+      className="fixed inset-0 pointer-events-none z-50"
+      style={{{{ mixBlendMode: "overlay", opacity: 0.03 }}}}
+      aria-hidden="true"
+    >
+      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+        <filter id="grain">
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.65"
+            numOctaves="3"
+            stitchTiles="stitch"
+          />
+        </filter>
+        <rect width="100%" height="100%" filter="url(#grain)" />
+      </svg>
+    </div>
+  );
+}}
+```
+
+No `"use client"` needed — this component has no hooks or state. It renders server-side fine. The `z-50` sits above content but below any modal overlays the build might add.
+
+---
+
+#### 10. GlassCard — Multi-Layer Glassmorphism
+
+The standard card/panel component. Uses CSS variables for ALL colors so the post-gen editor can swap palettes. Three variants: `elevated` (default, with shadow), `flat` (no shadow), `bordered` (brighter border).
+
+```tsx
+// components/ui/GlassCard.tsx
+import {{ ReactNode }} from "react";
+import {{ cn }} from "@/lib/utils";
+
+type Variant = "elevated" | "flat" | "bordered";
+
+type Props = {{
+  children: ReactNode;
+  variant?: Variant;
+  className?: string;
+}};
+
+const variantClass: Record<Variant, string> = {{
+  elevated: "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+  flat:     "shadow-none",
+  bordered: "",
+}};
+
+export function GlassCard({{ children, variant = "elevated", className }}: Props) {{
+  const borderStyle =
+    variant === "bordered"
+      ? "1px solid var(--color-border-bright)"
+      : "1px solid var(--color-border)";
+
+  return (
+    <div
+      className={{cn("rounded-2xl overflow-hidden", variantClass[variant], className)}}
+      style={{{{
+        background:          "var(--color-surface-1)",
+        backdropFilter:      "blur(var(--glass-blur))",
+        WebkitBackdropFilter:"blur(var(--glass-blur))",
+        border:              borderStyle,
+      }}}}
+    >
+      {{children}}
+    </div>
+  );
+}}
+```
+
+Usage: `<GlassCard variant="elevated" className="p-6">…</GlassCard>`
+
+---
+
+#### 11. BentoGrid — Asymmetric Layout System
+
+CSS Grid with a span system for asymmetric bento-box layouts. Use for services overviews, feature showcases, and about-section highlights. Each item declares its span: `default` (1×1), `wide` (2×1), `tall` (1×2), `full` (2×2).
+
+```tsx
+// components/ui/BentoGrid.tsx
+import {{ ReactNode }} from "react";
+import {{ cn }} from "@/lib/utils";
+
+type Span = "default" | "wide" | "tall" | "full";
+
+const spanClass: Record<Span, string> = {{
+  default: "col-span-1 row-span-1",
+  wide:    "col-span-2 row-span-1",
+  tall:    "col-span-1 row-span-2",
+  full:    "col-span-2 row-span-2",
+}};
+
+export function BentoGrid({{ children, className }}: {{ children: ReactNode; className?: string }}) {{
+  return (
+    <div className={{cn("grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 auto-rows-[260px] gap-4", className)}}>
+      {{children}}
+    </div>
+  );
+}}
+
+export function BentoItem({{
+  children,
+  span = "default",
+  className,
+}}: {{
+  children: ReactNode;
+  span?: Span;
+  className?: string;
+}}) {{
+  return (
+    <div
+      className={{cn(
+        "rounded-2xl overflow-hidden p-6 flex flex-col justify-between",
+        spanClass[span],
+        className,
+      )}}
+      style={{{{
+        background:          "var(--color-surface-1)",
+        backdropFilter:      "blur(var(--glass-blur))",
+        WebkitBackdropFilter:"blur(var(--glass-blur))",
+        border:              "1px solid var(--color-border)",
+      }}}}
+    >
+      {{children}}
+    </div>
+  );
+}}
+```
+
+Usage: `<BentoGrid><BentoItem span="wide">…</BentoItem><BentoItem>…</BentoItem></BentoGrid>`
+
+---
+
+#### 12. MagneticButton — Framer Motion Hover (FOUNDATION — replaces plain white pill CTA)
+
+The primary CTA throughout the site. On hover, the button body follows the cursor with a spring-physics offset. Uses `var(--color-accent)` for fill so the palette editor can swap it.
+
+```tsx
+// components/ui/MagneticButton.tsx
+"use client";
+import {{ ReactNode, useRef }} from "react";
+import {{ motion, useMotionValue, useSpring }} from "framer-motion";
+import {{ cn }} from "@/lib/utils";
+
+type Props = {{
+  children: ReactNode;
+  href?: string;
+  onClick?: () => void;
+  className?: string;
+}};
+
+export function MagneticButton({{ children, href, onClick, className }}: Props) {{
+  const ref = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const springX = useSpring(x, {{ stiffness: 150, damping: 15 }});
+  const springY = useSpring(y, {{ stiffness: 150, damping: 15 }});
+
+  const handleMove = (e: React.MouseEvent) => {{
+    if (!ref.current) return;
+    const r = ref.current.getBoundingClientRect();
+    x.set((e.clientX - r.left - r.width  / 2) * 0.35);
+    y.set((e.clientY - r.top  - r.height / 2) * 0.35);
+  }};
+  const handleLeave = () => {{ x.set(0); y.set(0); }};
+
+  const inner = (
+    <span
+      className={{cn(
+        "inline-flex items-center px-8 py-3 rounded-full font-medium transition-opacity hover:opacity-90",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
+        className,
+      )}}
+      style={{{{ background: "var(--color-accent)", color: "#fff" }}}}
+    >
+      {{children}}
+    </span>
+  );
+
+  return (
+    <motion.div
+      ref={{ref}}
+      onMouseMove={{handleMove}}
+      onMouseLeave={{handleLeave}}
+      style={{{{ x: springX, y: springY }}}}
+      className="inline-block"
+    >
+      {{href ? <a href={{href}}>{{inner}}</a> : <button onClick={{onClick}}>{{inner}}</button>}}
+    </motion.div>
+  );
+}}
+```
+
+Usage: `<MagneticButton href="tel:[BUSINESS PHONE]">Get Started</MagneticButton>`
+
+---
+
+#### 13. SectionHeader — Consistent Section Titling
+
+Standardizes the eyebrow / heading / subheading pattern used at the top of every section. Drives `h2` production consistently, satisfying the heading-order eval.
+
+```tsx
+// components/ui/SectionHeader.tsx
+import {{ cn }} from "@/lib/utils";
+
+type Props = {{
+  eyebrow?: string;   // e.g. "Our Services"
+  heading: string;    // the h2
+  subheading?: string;
+  align?: "left" | "center";
+  className?: string;
+}};
+
+export function SectionHeader({{ eyebrow, heading, subheading, align = "center", className }}: Props) {{
+  return (
+    <div className={{cn("mb-12 md:mb-16", align === "center" && "text-center", className)}}>
+      {{eyebrow && (
+        <p
+          className="text-xs font-semibold uppercase tracking-widest mb-3"
+          style={{{{ color: "var(--color-accent)" }}}}
+        >
+          {{eyebrow}}
+        </p>
+      )}}
+      <h2
+        className="text-3xl md:text-4xl lg:text-5xl font-normal mb-4"
+        style={{{{ color: "var(--color-text-primary)" }}}}
+      >
+        {{heading}}
+      </h2>
+      {{subheading && (
+        <p
+          className="text-lg max-w-2xl mx-auto"
+          style={{{{ color: "var(--color-text-secondary)" }}}}
+        >
+          {{subheading}}
+        </p>
+      )}}
+    </div>
+  );
+}}
+```
+
+Usage: `<SectionHeader eyebrow="What We Offer" heading="Services Built for Real Business" subheading="…" />`
+
+---
+
+#### 14. CinematicHero — Gradient Mesh Hero Reference Implementation
+
+The concrete reference for `components/sections/Hero.tsx`. Copy and adapt per build — replace placeholder text with actual business content, adjust blob positions per DNA posture.
+
+```tsx
+// components/sections/Hero.tsx
+import {{ AnimatedHeading }} from "@/components/ui/AnimatedHeading";
+import {{ FadeIn }} from "@/components/ui/FadeIn";
+import {{ GlassCard }} from "@/components/ui/GlassCard";
+import {{ MagneticButton }} from "@/components/ui/MagneticButton";
+import {{ Navbar }} from "@/components/layout/Navbar";
+
+export function Hero() {{
+  return (
+    <section
+      className="relative min-h-[100dvh] overflow-hidden flex flex-col"
+      style={{{{ background: "var(--color-bg)" }}}}
+    >
+      {{/* === Gradient mesh blobs — adapt color to DNA tokens === */}}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute w-[700px] h-[700px] rounded-full"
+          style={{{{
+            top: "-10%", left: "55%",
+            background: "radial-gradient(circle at center, var(--color-accent-glow) 0%, transparent 65%)",
+            filter: "blur(80px)",
+          }}}}
+        />
+        <div
+          className="absolute w-[450px] h-[450px] rounded-full"
+          style={{{{
+            top: "45%", left: "-8%",
+            background: "radial-gradient(circle at center, var(--color-accent-subtle) 0%, transparent 70%)",
+            filter: "blur(60px)",
+          }}}}
+        />
+      </div>
+
+      {{/* === Navbar — absolute so it sits over the hero === */}}
+      <Navbar businessName="{{Business Name}}" />
+
+      {{/* === Content — bottom-anchored two-column layout === */}}
+      <div
+        className="relative z-10 flex-1 flex flex-col justify-end px-6 md:px-12 lg:px-16 pb-12 lg:pb-16"
+        style={{{{ color: "var(--color-text-primary)" }}}}
+      >
+        <div className="lg:grid lg:grid-cols-2 lg:items-end gap-8">
+          {{/* Left column */}}
+          <div>
+            <AnimatedHeading
+              text={{"{{"}}Headline line one\nLine two"}}
+              className="text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-normal mb-4"
+            />
+            <FadeIn delay={{800}} duration={{1000}}>
+              <p className="text-base md:text-lg mb-5" style={{{{ color: "var(--color-text-secondary)" }}}}>
+                One sentence naming the outcome the visitor gets.
+              </p>
+            </FadeIn>
+            <FadeIn delay={{1200}} duration={{1000}}>
+              <div className="flex flex-wrap gap-4">
+                <MagneticButton href="tel:[BUSINESS PHONE]">Get Started</MagneticButton>
+                <a
+                  href="/services"
+                  className="liquid-glass border border-white/20 px-8 py-3 rounded-lg font-medium hover:opacity-80 transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+                  style={{{{ color: "var(--color-text-primary)" }}}}
+                >
+                  Explore
+                </a>
+              </div>
+            </FadeIn>
+          </div>
+
+          {{/* Right column — optional brand tag (desktop only) */}}
+          <FadeIn delay={{1400}} duration={{1000}} className="hidden lg:flex items-end justify-end">
+            <GlassCard className="px-6 py-3">
+              <p className="text-lg md:text-xl lg:text-2xl font-light" style={{{{ color: "var(--color-text-primary)" }}}}>
+                Three. Short. Words.
+              </p>
+            </GlassCard>
+          </FadeIn>
+        </div>
+      </div>
+    </section>
+  );
+}}
+```
+
+---
+
 ### Working CTAs — Zero Dead Links
 
 | CTA | Implementation |
@@ -954,23 +1363,26 @@ The `<a href="mailto:...">` / `<a href="tel:...">` links elsewhere on the site r
 
 ### Image Usage
 
-Section 8b provides Pexels photo URLs. Use `next/image` — never raw `<img>`:
+The hero uses a CSS gradient mesh background — no external photo URLs are injected by default.
+When `PEBBLE_USE_IMAGEN=true`, Imagen 4 generates `/images/<slot>.jpg` files after the build.
+In that case, use `next/image` with local paths — never raw `<img>`:
 
 ```tsx
 import Image from "next/image"
 
 <div className="relative overflow-hidden">
   <Image
-    src="https://images.pexels.com/photos/..."
+    src="/images/hero.jpg"
     alt="descriptive alt text"
     fill
     className="object-cover reveal-image"
-    priority={{false}}
+    priority
   />
 </div>
 ```
 
 Hero image only: add `priority` prop. All others: lazy load (default).
+If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, animated gradients, or `bg-black`).
 
 ### Delivery Checklist
 
@@ -979,26 +1391,28 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] `Inter` loaded via `next/font/google` (weights 300/400/500/600) in `app/layout.tsx`
 - [ ] `tailwind.config.ts` `fontFamily.sans` extended with `var(--font-inter)` + `Inter`
 - [ ] `app/globals.css` `body` rule sets `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` + `-webkit-font-smoothing: antialiased`
+- [ ] `app/globals.css` MUST begin with the `:root {{}}` CSS token block copied verbatim from the DESIGN DNA section at the top of this prompt. All 12 `--color-*` custom properties plus `--glass-blur`, `--font-display`, and `--font-body` must be present. — eval `design_tokens_defined`
+- [ ] No hardcoded hex color utilities anywhere in `app/` or `components/`: no `bg-[#...]`, `text-[#...]`, `border-[#...]`. Use `var(--color-*)` in inline `style` props, or Tailwind utilities that don't encode a specific hex. — eval `no_hardcoded_color_utilities`
+- [ ] `components/ui/GrainOverlay.tsx` present — the SVG `feTurbulence` grain singleton. Rendered once in `app/layout.tsx` as a `fixed` layer; NOT inside `Hero.tsx` or any other page component.
 - [ ] `components/ui/AnimatedHeading.tsx` present, verbatim from Code Pattern 1
 - [ ] `components/ui/FadeIn.tsx` present, verbatim from Code Pattern 1
+- [ ] `components/ui/ScrollReveal.tsx` present — Framer Motion `whileInView` wrapper, verbatim from Code Pattern 3
+- [ ] `components/ui/GlassCard.tsx` present — multi-layer glassmorphism with variant system, from Code Pattern 10
+- [ ] `components/ui/MagneticButton.tsx` present — Framer Motion magnetic hover CTA, from Code Pattern 12
 - [ ] `.liquid-glass` class in `app/globals.css` with `::before` mask-composite gradient border
 - [ ] `components/layout/Navbar.tsx` uses `liquid-glass rounded-xl` chip pattern from Code Pattern 2
-- [ ] `components/sections/Hero.tsx` composes AnimatedHeading + FadeIn + full-bleed `<video autoPlay muted loop playsInline>` with NO overlay
-- [ ] Hero section is `min-h-[100dvh]`, `bg-black`, content `flex justify-end` at bottom
+- [ ] `components/sections/Hero.tsx` composes AnimatedHeading + FadeIn + CSS gradient mesh blobs — NO `<video>` tag, NO external image URLs
+- [ ] Hero section is `min-h-[100dvh]`, `flex flex-col`, background via `style={{{{ background: "var(--color-bg)" }}}}`; content `flex-1 flex flex-col justify-end` at bottom
 - [ ] Hero h1 uses `AnimatedHeading` with `\n` line break and `letterSpacing: '-0.04em'`
-- [ ] Subhead in `FadeIn delay={{800}}`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
+- [ ] Subhead in `FadeIn delay={{800}}` with `color: var(--color-text-secondary)`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
 - [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
-- [ ] `components/ui/AnimatedHeading.tsx`, `components/ui/FadeIn.tsx`, and `components/forms/ContactForm.tsx` MUST each have `"use client";` at the top — they use React hooks (`useEffect`, `useState`, `useActionState`, `useFormStatus`) which are forbidden in Server Components. Missing this directive causes a Next.js runtime crash. — eval `client_components_have_directive`
+- [ ] `components/ui/AnimatedHeading.tsx`, `components/ui/FadeIn.tsx`, `components/ui/ScrollReveal.tsx`, `components/ui/MagneticButton.tsx`, and `components/forms/ContactForm.tsx` MUST each have `"use client";` at the top — they use React hooks which are forbidden in Server Components. Missing this directive causes a Next.js runtime crash. — eval `client_components_have_directive`
 - [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`
 - [ ] Every `<a>` and `<button>` with a `className` in the navbar + hero CTAs includes the `focus-visible:` utility chain — eval `interactive_elements_have_focus_visible`
 - [ ] Every `<input>`, `<textarea>`, `<select>` has EITHER `aria-label="..."` OR an associated `<label htmlFor="...">` — eval `a11y_static_audit`. Icon-only `<button>` and `<a>/<Link>` elements also need `aria-label` or `title`. Placeholder text alone is NOT sufficient.
 - [ ] Heading levels are strictly sequential: `h1` = page title (one per page), `h2` = section/group headings within the page (e.g. "What We Offer", "Our Values", "Questions & Answers"), `h3` = card/item titles within a section. The most common failure: inner pages jump h1 → h3 and omit h2 entirely. Every section that groups multiple h3 cards MUST have an h2 above it. — eval `a11y_static_audit`
-- [ ] Hero `<video>` element includes a `poster="..."` attribute — eval `hero_video_has_poster`
-- [ ] Hero h1 and subhead carry `textShadow` (inline `style` or Tailwind `drop-shadow-*`) for legibility against the un-overlaid video — eval `hero_text_has_legibility_safeguard`
 
 **FOUNDATION perf + conversion + mobile (May 2026 NLM research addendum):**
-- [ ] Hero `<video>` element includes a `preload=` attribute (`preload="metadata"` is the default recommendation; `preload="auto"` also acceptable). Without it, browser defaults drift and LCP regresses. — eval `perf_budget_or_lighter`
-- [ ] `app/layout.tsx` `<head>` includes a `<link rel="preload" as="image" href="/images/hero-poster.jpg" />` (OR the hero renders the poster via `<Image priority>`) so the first paint lands before JS hydrates. — eval `perf_budget_or_lighter`
 - [ ] Any hand-rolled `@font-face` block in `app/globals.css` (or any CSS) MUST declare `font-display: swap` (or `optional` / `fallback`). FOIT hides text for up to 3s on slow connections. `next/font/google` already handles this — only flag hand-rolled @font-face. — eval `perf_budget_or_lighter`
 - [ ] If `three` or any `@react-three/*` package is used, import it via `next/dynamic({{ ssr: false }})` in `app/page.tsx`. Static imports of these ~700kb libs block first paint. — eval `perf_budget_or_lighter`
 - [ ] Any raw `<img>` (use `next/image` instead — but defense in depth) MUST declare both `width` and `height` attributes so layout doesn't shift when the image loads. — eval `perf_budget_or_lighter`
@@ -1012,7 +1426,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 - [ ] Trust bar: counting stats with `data-target` + GSAP textContent
 - [ ] Services: full-bleed vertical alternating sections — NEVER 3-column card grid, NEVER horizontal scroll
 - [ ] Social proof: dark section, one large quote
-- [ ] All section images: `next/image` + clip-path reveal on scroll
+- [ ] All below-fold content: wrapped in `<ScrollReveal>` (Code Pattern 3) for Framer Motion `whileInView` entrance. Wrap a `<div>` around `<Image>` first — `next/image` does not forward refs.
 
 **LINKS, FORMS, COPY:**
 - [ ] All phone CTAs: `href="tel:..."` — zero `href="#"` links
@@ -1081,15 +1495,9 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 ---
 
-## 8b. Placeholder Images (Pexels / Picsum)
+## 8b. Hero Imagery Notes
 
 {images_block}
-
----
-
-## 8c. Hero Video (Pexels Video API)
-
-{hero_video_block}
 
 ---
 
@@ -1102,17 +1510,22 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 
 | Check | Required |
 |---|---|
+| CSS token layer | `app/globals.css :root {{}}` contains all 12 `--color-*` variables + `--glass-blur` + `--font-display` + `--font-body`, copied verbatim from the DNA block |
+| No hardcoded colors | Zero `bg-[#...]`, `text-[#...]`, `border-[#...]` utilities anywhere — use `var(--color-*)` in `style` props |
+| GrainOverlay | `components/ui/GrainOverlay.tsx` exists; imported and rendered once in `app/layout.tsx` — NOT inside `Hero.tsx` |
 | Inter global | `Inter` loaded via `next/font/google` with weights 300/400/500/600 in `app/layout.tsx`; Tailwind `fontFamily.sans` extends to use it |
-| `body` font-family | `var(--font-inter)` (or `Inter`) in `app/globals.css` `body` rule; `-webkit-font-smoothing: antialiased` + `-moz-osx-font-smoothing: grayscale` |
+| `body` font-family | `var(--font-inter)` (or `Inter`) in `app/globals.css` `body` rule; `background: var(--color-bg)`, `-webkit-font-smoothing: antialiased` |
 | AnimatedHeading component | `components/ui/AnimatedHeading.tsx` exists with the exact per-char animation logic from Code Pattern 1, used as the hero h1 |
-| FadeIn component | `components/ui/FadeIn.tsx` exists, used for the hero subhead (delay 800), CTA row (delay 1200), and right-column tag (delay 1400) |
+| FadeIn component | `components/ui/FadeIn.tsx` exists, used for the hero subhead (delay 800ms), CTA row (delay 1200ms), and right-column tag (delay 1400ms) |
+| ScrollReveal component | `components/ui/ScrollReveal.tsx` exists — Framer Motion `whileInView` wrapper used for all below-fold entrances |
+| GlassCard component | `components/ui/GlassCard.tsx` exists — used in hero right-column tag and throughout the build |
+| MagneticButton component | `components/ui/MagneticButton.tsx` exists — used as primary CTA in hero and high-impact sections |
 | Liquid-glass utility | `.liquid-glass` class in `app/globals.css` with `backdrop-filter: blur(4px)` + `::before` gradient stroke via `mask-composite` |
 | Navbar | Liquid-glass rounded chip at top with `px-6 md:px-12 lg:px-16 pt-6` outer wrapper — NOT a full-width blur bar |
-| Hero structure | `min-h-[100dvh]` section, `bg-black`, full-bleed `<video autoPlay muted loop playsInline>` with `object-cover`, content `flex justify-end` at bottom |
-| Hero video overlay | **ZERO dark overlay** — no `bg-black/40`, no `bg-gradient-to-b from-black/...`, no semi-transparent div above the video. The video plays raw. |
+| Hero structure | `min-h-[100dvh] flex flex-col` section, `style={{{{ background: "var(--color-bg)" }}}}`, gradient mesh blobs with `var(--color-accent-glow)`, NO `<video>` |
 | Hero h1 | Real `<h1>` tag, set via `AnimatedHeading`, sized `text-4xl md:text-5xl lg:text-6xl xl:text-7xl`, `font-normal`, `letterSpacing: '-0.04em'` |
-| Hero CTAs | Primary white pill + secondary liquid-glass pill, both wrapped in a FadeIn at 1200ms |
-| Right column tag | Optional liquid-glass card with three short words; FadeIn at 1400ms; `hidden lg:flex` |
+| Hero CTAs | Primary `<MagneticButton>` + secondary liquid-glass pill, both wrapped in a FadeIn at 1200ms |
+| Right column tag | `<GlassCard>` with three short words; FadeIn at 1400ms; `hidden lg:flex` |
 | DNA display_font scope | If used at all, ONLY in accent decorations (pull-quotes, drop caps, stat numbers, optional hero tag) — NEVER the hero h1, NEVER `body` default |
 
 **MOTION + ACCESSIBILITY:**
@@ -1127,8 +1540,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Form input labels | Every `<input>` / `<textarea>` / `<select>` has `aria-label="..."` OR an associated `<label htmlFor="...">`. Placeholder text does NOT count. |
 | Icon-only interactives | Any `<button>` or `<a>` whose sole child is an icon component (e.g. `<X />`, `<ChevronRight />`) needs `aria-label="..."` or `title="..."` |
 | Heading order | Strictly sequential: h1 = page title, h2 = section heading, h3 = card/item heading. Inner pages must NOT jump h1 → h3 — each group of h3 cards needs an h2 above it. — eval `a11y_static_audit` |
-| Hero text legibility | `textShadow` on hero h1 (built into AnimatedHeading) AND on hero subhead `<p>` (inline `style`). Foundation has no dark overlay, so text carries its own shadow. |
-| Hero video poster | `<video>` element has a `poster="..."` attribute. Painted instantly while the video loads — should visually match the chosen video (mood / darkness). |
+| Hero text legibility | `textShadow` built into `AnimatedHeading` for the h1. Subhead uses `color: var(--color-text-secondary)` which is already low-opacity against the dark `--color-bg` — sufficient contrast without a shadow. |
 
 **ANTI-SLOP + CONTENT:**
 
@@ -1147,7 +1559,7 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | Services layout | Full-bleed vertical alternating sections — NEVER 3-column card grid, NEVER horizontal scroll |
 | Stats | GSAP counting numbers — never static text |
 | Social proof | Dark section, large single quote — never a carousel of small cards |
-| Section images | Clip-path reveal on scroll (wrapper div, not on `<Image>`) |
+| Section images | `<ScrollReveal>` wrapper from Code Pattern 3. Wrap a `<div>` around `<Image>` first — next/image does not forward refs. |
 | Services CTA | Phone (`href="tel:[BUSINESS PHONE]"`) and contact route — zero `href="#"` |
 
 **TOOLING + SAFETY:**
@@ -1157,8 +1569,8 @@ Hero image only: add `priority` prop. All others: lazy load (default).
 | **GSAP SplitText** | **NEVER import `gsap/SplitText`** — paid Club plugin, crashes on free GSAP. The hero uses `AnimatedHeading` instead (Code Pattern 1). |
 | **`next/image` refs** | **NEVER attach a `ref` directly to `<Image>`** — Next's Image component does not forward refs. Always wrap in a `<div ref={{...}}>` and animate the wrapper. |
 | Images | `next/image` everywhere — never raw `<img>` |
-| Video | `autoPlay muted loop playsInline` — always all four attributes |
-| Hero video src | Use `/videos/hero.mp4` (local) when provided — Pexels CDN URL only as fallback |
+| Hero background | CSS gradient mesh only — NO `<video>`, NO external CDN URLs, NO `bg-black` (use `var(--color-bg)`) |
+| Hardcoded colors | NEVER `bg-[#...]`, `text-[#...]` utilities — always `var(--color-*)` in inline `style` props |
 | Form | Real Next.js Server Action calling Resend (see Code Pattern 8) — `useActionState` on the client, `"use server"` on the action |
 | Input font | Minimum `font-size: 16px` — prevents iOS zoom |
 | Safe area | `env(safe-area-inset-*)` in globals.css |
@@ -1204,11 +1616,16 @@ would fail at compile time):
 The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` heading AND the `vercel.json` exists. The user owns the deployed site (their own Vercel project, their own domain, no Pebble lock-in).
 - `content/site.ts`, `content/sections.ts`, `content/services.ts`, `content/faqs.ts`, `content/testimonials.ts`
 - **FOUNDATION COMPONENTS (mandatory — eval suite verifies presence):**
+  - `components/ui/GrainOverlay.tsx` — fixed SVG grain singleton, verbatim from Code Pattern 9. Rendered in `app/layout.tsx`, nowhere else.
   - `components/ui/AnimatedHeading.tsx` — per-character hero h1 entrance, verbatim from Code Pattern 1 (must include sr-only span + aria-hidden wrapper + textShadow)
   - `components/ui/FadeIn.tsx` — opacity transition wrapper, verbatim from Code Pattern 1
+  - `components/ui/ScrollReveal.tsx` — Framer Motion `whileInView` wrapper, verbatim from Code Pattern 3
+  - `components/ui/GlassCard.tsx` — multi-layer glassmorphism card, verbatim from Code Pattern 10
+  - `components/ui/MagneticButton.tsx` — Framer Motion magnetic CTA, verbatim from Code Pattern 12
+  - `components/ui/SectionHeader.tsx` — eyebrow / h2 / subheading component, verbatim from Code Pattern 13
   - `components/layout/Navbar.tsx` — liquid-glass chip from Code Pattern 2 (with focus-visible utilities on all links)
   - `components/layout/Footer.tsx` — 3-column sitemap-bearing footer from Section 8 above (every page in this build appears as a Next.js Link in the sitemap column; eval `footer_lists_all_pages` enforces this)
-  - `components/sections/Hero.tsx` — composes AnimatedHeading + FadeIn + video bg, imported by `app/page.tsx`
+  - `components/sections/Hero.tsx` — CSS gradient mesh hero from Code Pattern 14 (AnimatedHeading + FadeIn + GlassCard + MagneticButton + gradient blobs; NO `<video>`)
   - `components/forms/ContactForm.tsx` — Server Action + Resend client form, verbatim from Code Pattern 8
   - `app/actions/contact.ts` — Server Action that calls Resend, verbatim from Code Pattern 8
   - `lib/email.ts` — Resend client wrapper (server-only), verbatim from Code Pattern 8
@@ -1218,7 +1635,7 @@ The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` hea
 - `config/brand.config.ts`, `config/motion.config.ts`
 - `next.config.mjs` (NOT `.ts` — and the file body must be PLAIN JS, not TypeScript: `/** @type {{import('next').NextConfig}} */` JSDoc, no `import type`, no `: NextConfig` annotation)
 - `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
-- `app/globals.css` — must contain the `.liquid-glass` class (Code Pattern 2b) AND a `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif`
+- `app/globals.css` — must begin with the `:root {{}}` CSS token block (all 12 `--color-*` + `--glass-blur` + fonts), then `.liquid-glass` (Code Pattern 2b), then `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` and `background: var(--color-bg)`
 - `postcss.config.js`, `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
 - `app/icon.svg` — branded favicon via Next.js App Router file convention; Next.js auto-generates the `<link rel="icon">` tag — no `metadata.icons` config needed. Use a simple SVG with the business initial or a relevant icon shape. Eval `favicon_defined` verifies this file exists.
 - `app/sitemap.ts` — Next.js dynamic sitemap export. Must return an array of `{{ url, lastModified }}` entries covering every page generated in this build. Eval `sitemap_and_robots_present` verifies.

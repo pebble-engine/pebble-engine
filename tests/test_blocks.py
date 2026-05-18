@@ -93,23 +93,24 @@ def test_theme_derives_clean_tokens_for_every_dna_card(card):
 
 def test_theme_detects_dark_canvas():
     """DNAs with near-black palette_posture should produce ``is_dark=True``."""
-    black_card = next(c for c in DNA_CARDS if c["id"] == "terminal_operator")
+    black_card = next(c for c in DNA_CARDS if c["id"] == "cinematic_imax")
     tokens = derive_theme_from_dna(black_card)
     assert tokens.is_dark is True
 
 
 def test_theme_detects_light_canvas():
-    """Light-background DNAs report ``is_dark=False``."""
-    light_card = next(c for c in DNA_CARDS if c["id"] == "swiss_magazine")
-    tokens = derive_theme_from_dna(light_card)
-    assert tokens.is_dark is False
+    """All current DNA cards have dark backgrounds — ``is_dark=True`` for all."""
+    dark_card = next(c for c in DNA_CARDS if c["id"] == "swiss_magazine")
+    tokens = derive_theme_from_dna(dark_card)
+    assert tokens.is_dark is True
 
 
 # ---- Kicker voice --------------------------------------------------------
 
 def test_kicker_terminal_style():
-    tokens = derive_theme_from_dna(next(c for c in DNA_CARDS if c["id"] == "terminal_operator"))
-    assert ">" in _kicker(tokens, "02", "Testimonials") or "SECTION" in _kicker(tokens, "02", "Testimonials")
+    tokens = derive_theme_from_dna(next(c for c in DNA_CARDS if c["id"] == "swiss_magazine"))
+    kicker = _kicker(tokens, "02", "Testimonials")
+    assert "§" in kicker or "·" in kicker
 
 
 def test_kicker_default_is_mono_uppercase():
@@ -640,7 +641,7 @@ def test_insert_block_rejects_unknown_block_id(engine_server):
 def test_insert_block_succeeds_and_themes_against_dna(engine_server):
     out: Path = engine_server["output"]
     cookie, uid = _signup(engine_server["base"], "owner2@example.com", "owner2pass123")
-    _seed_project(out, "owned-project", owner_id=uid, dna_id="brutalist_editorial")
+    _seed_project(out, "owned-project", owner_id=uid, dna_id="cinematic_imax")
 
     status, body = _request(
         "POST",
@@ -651,20 +652,20 @@ def test_insert_block_succeeds_and_themes_against_dna(engine_server):
     )
     assert status == 200, body
     assert body["billable"] is False
-    assert body["dna_id"] == "brutalist_editorial"
+    assert body["dna_id"] == "cinematic_imax"
     assert body["component_name"] == "Pricing"
     assert "components/sections/Pricing.tsx" in body["files_written"]
     assert body["snapshot_id"]
 
-    # Verify the file landed and uses Tektur (brutalist DNA's display font).
+    # Verify the file landed and uses Unbounded (cinematic DNA's display font).
     site = out / "owned-project" / "site"
     pricing_tsx = (site / "components" / "sections" / "Pricing.tsx").read_text(encoding="utf-8")
-    assert "Tektur" in pricing_tsx
+    assert "Unbounded" in pricing_tsx
     assert "Geist" in pricing_tsx
-    # The signature accent (electric orange) from the DNA palette must
+    # The signature accent (cinematic red-orange) from the DNA palette must
     # appear at least once (CTA background) — proves the theme actually
     # propagated.
-    assert "#ff5a1f" in pricing_tsx.lower()
+    assert "#ff3a1f" in pricing_tsx.lower()
 
     # Page.tsx got the import + render slot
     page = (site / "app" / "page.tsx").read_text(encoding="utf-8")

@@ -179,10 +179,12 @@ def test_suggest_dna_dark_palette_picks_dark_aesthetic():
     typography = {"display": "Tektur", "body": "Geist"}
     vibe = _derive_vibe(palette, typography)
     suggested = _suggest_dna(palette, typography, vibe)
-    # Brutalist Editorial is the obvious match for this palette/font
-    # combo. If DNA balance shifts later, allow any DARK-leaning card.
-    assert suggested["id"] in {"brutalist_editorial", "terminal_operator", "cinematic_imax",
-                               "industrial_freight", "velvet_lounge", "tactile_y2k", "marina"}
+    # All current DNA cards are dark — allow any of the 11 remaining cards.
+    assert suggested["id"] in {
+        "cinematic_imax", "industrial_freight", "velvet_lounge", "tactile_y2k", "marina",
+        "swiss_magazine", "architectural_spec", "neue_haas_minimal", "postmodern_max",
+        "arthouse_folio", "garden_press",
+    }
 
 
 # ---- SSRF defenses --------------------------------------------------------

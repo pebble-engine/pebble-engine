@@ -251,11 +251,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // Allow external image domains for placeholder images.
+    // Allow external image domains used by the client's CDN or Imagen output.
     // Add the client's CDN/host here before launch.
     remotePatterns: [
-      { protocol: "https", hostname: "images.pexels.com" },
-      { protocol: "https", hostname: "picsum.photos" },
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },

@@ -106,9 +106,8 @@ Key matched + entry are surfaced to `brief.json` as `_industry_intel_key` and in
 | `PEBBLE_MODEL` | Optional override. Defaults: `gemini-2.5-flash`, `claude-opus-4-7`. |
 | `GOOGLE_API_KEY` | Required when provider is gemini. [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
 | `ANTHROPIC_API_KEY` | Required when provider is anthropic. [console.anthropic.com](https://console.anthropic.com/settings/keys) |
-| `PEXELS_API_KEY` | Hero photos + Pexels Video API. Falls back to Picsum if missing. |
 | `FIGMA_ACCESS_TOKEN` | Optional. Pulls metadata when the brief includes a Figma URL. |
-| `PEBBLE_USE_IMAGEN` | `true` to swap Pexels stills with Imagen 4 generations after the LLM call. |
+| `PEBBLE_USE_IMAGEN` | `true` to generate Imagen 4 images after the LLM call (written to `public/images/`). |
 | `PEBBLE_AUTO_RUN` | `true` to run `npm install`, `next dev`, and Playwright screenshots after build. |
 | `PEBBLE_AUTO_REPAIR` | `true` to run `pebble.evals` after every full build; if any check fails, the engine asks the LLM to fix the named failures and re-evals (up to 2 rounds). Off by default — adds 10-30 s and another LLM round-trip per failing build. |
 

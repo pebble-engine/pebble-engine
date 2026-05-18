@@ -125,7 +125,6 @@ def test_build_prompt_renders_with_minimal_inputs():
     _, intel = pebble_engine.resolve_industry_intel("plumbing")
     prompt = pebble_engine.build_prompt(
         answers, ds_text="", notes=[], research_text="",
-        images={"hero": "https://images.pexels.com/example.jpg"},
         industry_intel=intel,
     )
     assert len(prompt) > 5000, "prompt suspiciously short"
@@ -472,9 +471,8 @@ def test_build_route_module_imports_and_hoists_engine_symbols():
         "MAX_REQUEST_BYTES", "OUTPUT_DIR", "_DNA_OK",
         "FILE_FORMAT_INSTRUCTION", "LITE_FILE_FORMAT_INSTRUCTION",
         "_slugify", "validate_build_payload", "build_ui_query",
-        "build_prompt", "audit_design_system", "get_pexels_images",
-        "get_placeholder_images", "get_pexels_hero_video",
-        "localize_pexels_video", "figma_file_summary", "parse_files",
+        "build_prompt", "audit_design_system",
+        "figma_file_summary", "parse_files",
         "apply_imagen_to_site", "post_build_run_dev_server",
         "post_build_screenshots", "generate_design_system", "pick_random_dna",
     ]

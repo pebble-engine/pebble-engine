@@ -28,11 +28,12 @@ from pebble.plan import build_pebble_plan
 
 @pytest.fixture
 def good_build(tmp_path: Path) -> Path:
-    """Synthetic build matching the May 2026 foundation (VEX-style hero).
+    """Synthetic build matching the May 2026 cinematic foundation.
 
     Passes every static check including the new FOUNDATION checks:
     Inter via next/font/google, AnimatedHeading + FadeIn components,
-    liquid-glass class, video hero with no overlay, prefers-reduced-motion.
+    liquid-glass class, CSS gradient mesh hero (no video), GrainOverlay,
+    framer-motion dependency, :root CSS token block, prefers-reduced-motion.
     """
     d = tmp_path / "good-build"
     site = d / "site"
@@ -65,7 +66,10 @@ def good_build(tmp_path: Path) -> Path:
 
     (site / "package.json").write_text(json.dumps({
         "name": "good",
-        "dependencies": {"next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0"},
+        "dependencies": {
+            "next": "^15.0.0", "react": "^19.0.0", "resend": "^4.0.0",
+            "framer-motion": "^11.0.0",
+        },
     }))
     (site / "tsconfig.json").write_text(json.dumps({
         "compilerOptions": {"paths": {"@/*": ["./*"]}}
@@ -113,6 +117,8 @@ def good_build(tmp_path: Path) -> Path:
         '}'
     )
     (site / "app" / "globals.css").write_text(
+        ":root { --color-bg: #0A0A0A; --color-accent: #FF3A1F; "
+        "--color-accent-glow: rgba(255,58,31,0.20); --glass-blur: 12px; }\n"
         "body { font-family: var(--font-inter), Inter, sans-serif; "
         "-webkit-font-smoothing: antialiased; height: 100dvh; }\n"
         ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
@@ -123,8 +129,12 @@ def good_build(tmp_path: Path) -> Path:
         'import { FadeIn } from "@/components/ui/FadeIn";\n'
         'export function Hero() {\n'
         '  return (\n'
-        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden bg-black">\n'
-        '      <video autoPlay muted loop playsInline preload="metadata" className="absolute inset-0 w-full h-full object-cover" src="/videos/hero.mp4" poster="/images/hero-poster.jpg" />\n'
+        '    <section className="relative min-h-[100dvh] md:min-h-screen lg:min-h-[100dvh] overflow-hidden"\n'
+        '      style={{ background: "var(--color-bg)" }}>\n'
+        '      <div className="absolute inset-0 pointer-events-none">\n'
+        '        <div className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl opacity-20"\n'
+        '          style={{ background: "var(--color-accent-glow)" }} />\n'
+        '      </div>\n'
         '      <AnimatedHeading text={"Hello\\nworld."} className="text-7xl text-white" />\n'
         '      <FadeIn delay={800}><p>(212) 234-9876</p></FadeIn>\n'
         '      <a href="/contact" className="bg-white text-black px-6 py-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">Get Started</a>\n'
@@ -147,6 +157,20 @@ def good_build(tmp_path: Path) -> Path:
         '"use client";\n'
         'export function FadeIn({ children, delay = 0 }: { children: any; delay?: number }) {\n'
         '  return <div style={{ opacity: 1, transitionDelay: `${delay}ms` }}>{children}</div>;\n'
+        '}'
+    )
+    (site / "components" / "ui" / "GrainOverlay.tsx").write_text(
+        '"use client";\n'
+        'export function GrainOverlay() {\n'
+        '  return (\n'
+        '    <div className="fixed inset-0 pointer-events-none z-50"\n'
+        '      style={{ mixBlendMode: "overlay", opacity: 0.03 }} aria-hidden="true">\n'
+        '      <svg className="w-full h-full" xmlns="http://www.w3.org/2000/svg">\n'
+        '        <filter id="grain"><feTurbulence type="fractalNoise" baseFrequency="0.65" /></filter>\n'
+        '        <rect width="100%" height="100%" filter="url(#grain)" />\n'
+        '      </svg>\n'
+        '    </div>\n'
+        '  );\n'
         '}'
     )
     (site / ".gitignore").write_text("node_modules/\n.next/\n")
@@ -1739,7 +1763,7 @@ def test_client_components_skips_when_file_absent(good_build):
 # ---------------------------------------------------------------------------
 
 def test_perf_budget_passes_on_good_build(good_build):
-    """Fixture provides preload=metadata on hero <video> + preload link in
+    """Fixture has CSS gradient mesh hero (no video) + preload link in
     layout + no raw <img> + no @font-face + no static three import. Should
     pass every heuristic."""
     ctx = BuildContext.load(good_build)
@@ -2558,3 +2582,94 @@ def test_contact_form_has_inputs_skips_when_no_site(tmp_path):
     (tmp_path / "no-site").mkdir()
     ctx = BuildContext.load(tmp_path / "no-site")
     assert checks.contact_form_has_inputs(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 49. design_tokens_defined — cinematic CSS token layer
+# ---------------------------------------------------------------------------
+
+def test_design_tokens_defined_passes_for_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.design_tokens_defined(ctx).status == "pass"
+
+
+def test_design_tokens_defined_fails_when_root_missing(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        "body { font-family: Inter; }\n"
+        ".liquid-glass { background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); }\n"
+    )
+    r = checks.design_tokens_defined(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "--color-bg" in r.message
+
+
+def test_design_tokens_defined_fails_when_root_present_but_no_color_bg(good_build):
+    (good_build / "site" / "app" / "globals.css").write_text(
+        ":root { --font-display: 'Unbounded'; }\n"
+        "body { color: white; }\n"
+    )
+    r = checks.design_tokens_defined(BuildContext.load(good_build))
+    assert r.status == "fail"
+
+
+def test_design_tokens_defined_skips_when_no_css(good_build):
+    (good_build / "site" / "app" / "globals.css").unlink()
+    ctx = BuildContext.load(good_build)
+    assert checks.design_tokens_defined(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 50. grain_overlay_present — cinematic grain layer
+# ---------------------------------------------------------------------------
+
+def test_grain_overlay_present_passes_for_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.grain_overlay_present(ctx).status == "pass"
+
+
+def test_grain_overlay_present_fails_when_file_missing(good_build):
+    (good_build / "site" / "components" / "ui" / "GrainOverlay.tsx").unlink()
+    r = checks.grain_overlay_present(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "GrainOverlay" in r.message
+
+
+def test_grain_overlay_present_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.grain_overlay_present(ctx).status == "skip"
+
+
+# ---------------------------------------------------------------------------
+# 51. framer_motion_in_dependencies — framer-motion package check
+# ---------------------------------------------------------------------------
+
+def test_framer_motion_in_dependencies_passes_for_good_build(good_build):
+    ctx = BuildContext.load(good_build)
+    assert checks.framer_motion_in_dependencies(ctx).status == "pass"
+
+
+def test_framer_motion_in_dependencies_fails_when_missing(good_build):
+    pkg = good_build / "site" / "package.json"
+    data = json.loads(pkg.read_text())
+    data["dependencies"].pop("framer-motion", None)
+    pkg.write_text(json.dumps(data))
+    r = checks.framer_motion_in_dependencies(BuildContext.load(good_build))
+    assert r.status == "fail"
+    assert "framer-motion" in r.message
+
+
+def test_framer_motion_in_dependencies_passes_in_dev_dependencies(good_build):
+    pkg = good_build / "site" / "package.json"
+    data = json.loads(pkg.read_text())
+    fm_ver = data["dependencies"].pop("framer-motion")
+    data.setdefault("devDependencies", {})["framer-motion"] = fm_ver
+    pkg.write_text(json.dumps(data))
+    ctx = BuildContext.load(good_build)
+    assert checks.framer_motion_in_dependencies(ctx).status == "pass"
+
+
+def test_framer_motion_in_dependencies_skips_when_no_site(tmp_path):
+    (tmp_path / "no-site").mkdir()
+    ctx = BuildContext.load(tmp_path / "no-site")
+    assert checks.framer_motion_in_dependencies(ctx).status == "skip"

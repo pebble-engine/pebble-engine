@@ -67,9 +67,11 @@ def test_wedding_brief_prefers_editorial_or_lifestyle():
 
 
 def test_software_brief_prefers_tech_dnas():
-    """Mean is ~351/500; threshold 320 = mean - 3 SD allows statistical noise."""
+    """Both remaining tech-affinity cards (neue_haas_minimal + swiss_magazine)
+    should dominate software briefs. With only 2 affinity matches they capture
+    nearly all 500 rolls."""
     rolls = [pick_dna_for_brief(_software_brief())["id"] for _ in range(500)]
-    suitable = {"brutalist_editorial", "terminal_operator", "neue_haas_minimal"}
+    suitable = {"neue_haas_minimal", "swiss_magazine"}
     suitable_count = sum(1 for r in rolls if r in suitable)
     assert suitable_count >= 320, (
         f"tech DNAs should dominate software briefs; got {suitable_count}/500"

@@ -284,276 +284,8 @@ def validate_build_payload(answers):
 
 
 # --------------------------------------------------------------------------
-# IMAGE SOURCING SYSTEM
-# Primary:  Pexels API (keyword-relevant, requires PEXELS_API_KEY in .env)
-# Fallback: Picsum Photos (seed-based, no key needed, generic photos)
-# --------------------------------------------------------------------------
-
-# Maps industry keywords → (main scene query, people/team query)
-_PEXELS_QUERIES: dict[str, tuple[str, str]] = {
-    # Home services
-    "plumbing":          ("plumber pipe repair bathroom",        "plumber technician worker"),
-    "electrician":       ("electrical wiring installation",      "electrician worker professional"),
-    "electrical":        ("electrical wiring installation",      "electrician worker professional"),
-    "hvac":              ("air conditioning heating system",     "hvac technician professional"),
-    "roofing":           ("roof shingles construction",          "roofer contractor worker"),
-    "landscaping":       ("garden landscape lawn design",        "landscaper gardener worker"),
-    "cleaning":          ("clean modern interior spotless",      "cleaning service professional"),
-    "painting":          ("interior painting home",              "painter contractor worker"),
-    "general contractor":("home renovation construction",        "contractor builder worker"),
-    "construction":      ("construction building site",          "construction worker builder"),
-    "moving":            ("moving boxes relocation truck",       "movers professional team"),
-    "pest control":      ("clean pest free home interior",       "pest control technician"),
-    "pool":              ("swimming pool luxury backyard",       "pool technician professional"),
-    "fence":             ("fence installation backyard",         "fence contractor worker"),
-    "flooring":          ("hardwood floor installation",         "flooring contractor worker"),
-    # Health & wellness
-    "yoga":              ("yoga studio peaceful zen",            "yoga instructor class"),
-    "fitness":           ("gym equipment modern workout",        "personal trainer coaching"),
-    "personal trainer":  ("fitness training gym",               "personal trainer athlete"),
-    "wellness":          ("spa wellness relaxing retreat",       "wellness therapist professional"),
-    "spa":               ("luxury spa interior serene",          "spa therapist massage"),
-    "massage":           ("massage therapy room calm",           "massage therapist professional"),
-    "chiropractic":      ("chiropractic clinic office",          "chiropractor patient treatment"),
-    "physical therapy":  ("physical therapy rehabilitation",     "physical therapist patient"),
-    # Medical & dental
-    "dentist":           ("dental office clinic modern",         "dentist patient professional"),
-    "dental":            ("dental office clinic modern",         "dentist professional"),
-    "doctor":            ("medical clinic office modern",        "doctor patient professional"),
-    "optometry":         ("eye care clinic optical",             "optometrist professional"),
-    "veterinary":        ("veterinary clinic pet care",          "veterinarian pet owner"),
-    "vet":               ("veterinary animal clinic",            "veterinarian professional"),
-    # Mental health
-    "therapist":         ("therapy office calm peaceful",        "therapist counselor professional"),
-    "counseling":        ("counseling therapy office serene",    "counselor therapist"),
-    "psychology":        ("psychology office calm neutral",      "psychologist professional"),
-    # Beauty
-    "hair salon":        ("hair salon interior modern",          "hairstylist client beauty"),
-    "salon":             ("beauty salon interior modern",        "hairstylist beautician professional"),
-    "barbershop":        ("barbershop interior classic",         "barber client professional"),
-    "nail":              ("nail salon manicure art",             "nail technician client"),
-    "makeup":            ("makeup artist studio beauty",         "makeup artist professional"),
-    # Food & beverage
-    "restaurant":        ("restaurant interior fine dining",     "chef server professional"),
-    "cafe":              ("coffee shop cafe interior cozy",      "barista coffee professional"),
-    "coffee":            ("coffee shop cafe cozy interior",      "barista professional"),
-    "bakery":            ("bakery fresh bread pastry",           "baker pastry chef"),
-    "bar":               ("cocktail bar lounge interior",        "bartender mixologist"),
-    "catering":          ("catering food event elegant",         "catering chef professional"),
-    # Professional services
-    "law":               ("law office modern professional",      "lawyer attorney professional"),
-    "attorney":          ("law firm office professional",        "attorney professional"),
-    "accounting":        ("accounting office finance modern",    "accountant professional"),
-    "financial":         ("financial planning office",           "financial advisor professional"),
-    "insurance":         ("professional office business",        "insurance agent professional"),
-    "real estate":       ("luxury modern home interior",         "real estate agent professional"),
-    # Tech & creative
-    "tech":              ("technology startup office modern",    "software developer team"),
-    "software":          ("software development modern office",  "developer programmer team"),
-    "saas":              ("modern tech office startup",          "software team professional"),
-    "agency":            ("creative agency studio modern",       "design team professional"),
-    "marketing":         ("marketing creative office",           "marketing team professional"),
-    "web design":        ("design studio creative workspace",    "designer professional"),
-    "photography":       ("photography studio camera equipment", "photographer professional"),
-    # Events & lifestyle
-    "wedding":           ("wedding ceremony elegant venue",      "wedding couple celebration"),
-    "event":             ("event venue elegant setup",           "event planner professional"),
-    # Education & childcare
-    "childcare":         ("daycare children bright classroom",   "childcare teacher professional"),
-    "education":         ("classroom school learning bright",    "teacher student professional"),
-    "tutoring":          ("tutoring study desk learning",        "tutor student"),
-    # Pet services
-    "pet grooming":      ("pet grooming salon dog",              "pet groomer professional"),
-    "dog training":      ("dog training obedience outdoor",      "dog trainer professional"),
-    # Auto
-    "auto repair":       ("auto repair shop garage clean",       "mechanic car professional"),
-    "car wash":          ("car wash clean shiny auto",           "car wash professional"),
-}
-
-
-def _pexels_queries_for_industry(industry: str) -> tuple[str, str]:
-    ind = industry.lower()
-    for key, queries in _PEXELS_QUERIES.items():
-        if key in ind:
-            return queries
-    safe = re.sub(r"[^a-z0-9 ]", " ", ind).strip()
-    return (f"{safe} professional business", f"{safe} professional team")
-
-
-def get_placeholder_images(industry: str, image_count: int = 8) -> dict[str, str]:
-    """Picsum Photos fallback — seed-based, no API key, generic photos."""
-    slug = _slugify(industry)
-    return {
-        "hero":      f"https://picsum.photos/seed/{slug}-hero/1600/900",
-        "service_1": f"https://picsum.photos/seed/{slug}-svc1/800/600",
-        "service_2": f"https://picsum.photos/seed/{slug}-svc2/800/600",
-        "service_3": f"https://picsum.photos/seed/{slug}-svc3/800/600",
-        "team_1":    f"https://picsum.photos/seed/{slug}-team1/600/600",
-        "team_2":    f"https://picsum.photos/seed/{slug}-team2/600/600",
-        "gallery_1": f"https://picsum.photos/seed/{slug}-gal1/800/600",
-        "gallery_2": f"https://picsum.photos/seed/{slug}-gal2/800/600",
-    }
-
-
-def get_pexels_images(industry: str, api_key: str) -> dict[str, str]:
-    """
-    Fetch industry-relevant images from Pexels API.
-    Makes 2 requests: one landscape query for scenes, one portrait for team.
-    Falls back to Picsum per-slot on any individual failure.
-    """
-    fallback = get_placeholder_images(industry)
-    main_q, people_q = _pexels_queries_for_industry(industry)
-
-    def _fetch(query: str, orientation: str, count: int) -> list[str]:
-        params = urllib.parse.urlencode({
-            "query": query,
-            "per_page": max(count + 5, 15),
-            "orientation": orientation,
-        })
-        req = urllib.request.Request(
-            f"https://api.pexels.com/v1/search?{params}",
-            headers={"Authorization": api_key, "User-Agent": "Mozilla/5.0"},
-        )
-        with urllib.request.urlopen(req, timeout=8) as resp:
-            data = json.loads(resp.read())
-        urls, seen = [], set()
-        for photo in data.get("photos", []):
-            pid = photo["id"]
-            if pid in seen:
-                continue
-            seen.add(pid)
-            src = photo["src"]
-            urls.append(src.get("large2x") or src.get("large") or src["original"])
-            if len(urls) >= count:
-                break
-        return urls
-
-    images: dict[str, str] = {}
-
-    try:
-        scene = _fetch(main_q, "landscape", 6)
-        keys = ["hero", "service_1", "service_2", "service_3", "gallery_1", "gallery_2"]
-        for i, key in enumerate(keys):
-            images[key] = scene[i] if i < len(scene) else fallback[key]
-    except Exception as e:
-        log.warning("Pexels scene query failed (%r) — using Picsum fallback for scene slots", e)
-        for key in ["hero", "service_1", "service_2", "service_3", "gallery_1", "gallery_2"]:
-            images[key] = fallback[key]
-
-    try:
-        people = _fetch(people_q, "portrait", 2)
-        images["team_1"] = people[0] if len(people) > 0 else fallback["team_1"]
-        images["team_2"] = people[1] if len(people) > 1 else fallback["team_2"]
-    except Exception as e:
-        log.warning("Pexels people query failed (%r) — using Picsum fallback for team slots", e)
-        images["team_1"] = fallback["team_1"]
-        images["team_2"] = fallback["team_2"]
-
-    return images
-
-
-# Keep old name as alias so any external callers don't break
-get_unsplash_images = get_placeholder_images
-
-
-# --------------------------------------------------------------------------
-# PEXELS VIDEO API — hero looping video backgrounds
-# --------------------------------------------------------------------------
-
-def localize_pexels_video(site_dir: Path, pexels_url: str, max_bytes: int = 40 * 1024 * 1024) -> dict:
-    """Download a Pexels CDN video to `site_dir/public/videos/hero.mp4`, then
-    replace every occurrence of the original URL with `/videos/hero.mp4` across
-    all generated files. Eliminates the CORS/playback issue that hits some
-    browsers when `<video>` streams cross-origin from videos.pexels.com.
-
-    Returns {"downloaded": bool, "files_touched": int, "size_bytes": int, "error": str?}.
-    Soft-fails: any exception is captured and reported, no crash.
-    """
-    result = {"downloaded": False, "files_touched": 0, "size_bytes": 0}
-    if not pexels_url or "pexels.com" not in pexels_url:
-        return result
-
-    dest = site_dir / "public" / "videos" / "hero.mp4"
-    try:
-        dest.parent.mkdir(parents=True, exist_ok=True)
-        req = urllib.request.Request(pexels_url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=45) as resp:
-            data = resp.read(max_bytes + 1)
-        if len(data) > max_bytes:
-            result["error"] = f"video > {max_bytes // (1024*1024)}MB, keeping CDN URL"
-            return result
-        dest.write_bytes(data)
-        result["downloaded"] = True
-        result["size_bytes"] = len(data)
-        size_mb = len(data) / (1024 * 1024)
-        log.info("Pexels video → %s (%.1fMB)", dest.relative_to(site_dir), size_mb)
-    except Exception as e:
-        result["error"] = f"{type(e).__name__}: {e}"
-        return result
-
-    # Replace the Pexels URL with the local path across every generated file
-    try:
-        result["files_touched"] = replace_urls_in_site(site_dir, {pexels_url: "/videos/hero.mp4"})
-    except Exception as e:
-        result["error"] = f"URL replace: {type(e).__name__}: {e}"
-    return result
-
-
-def get_pexels_hero_video(video_keyword: str, api_key: str) -> Optional[str]:
-    """Fetch a single landscape hero video URL from Pexels Video API.
-
-    Returns the best-fit MP4 URL or None on any failure. Prefers HD landscape
-    at 1920x1080 if available, else falls back to the largest landscape file.
-    """
-    if not video_keyword or not api_key:
-        return None
-
-    params = urllib.parse.urlencode({
-        "query": video_keyword,
-        "per_page": 10,
-        "orientation": "landscape",
-        "size": "medium",
-    })
-    req = urllib.request.Request(
-        f"https://api.pexels.com/videos/search?{params}",
-        headers={"Authorization": api_key, "User-Agent": "Mozilla/5.0"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read())
-    except Exception as e:
-        log.warning("Pexels video query failed (%r)", e)
-        return None
-
-    videos = data.get("videos", []) or []
-    if not videos:
-        return None
-
-    # Pick the first video, then choose the best HD landscape file
-    for vid in videos:
-        files = vid.get("video_files", []) or []
-        # Prefer 1920x1080 mp4
-        for f in files:
-            if (f.get("file_type") == "video/mp4"
-                    and f.get("width") == 1920
-                    and f.get("height") == 1080):
-                return f.get("link")
-        # Else: largest landscape mp4 under 4MB-equivalent quality
-        landscape = [
-            f for f in files
-            if f.get("file_type") == "video/mp4"
-            and (f.get("width") or 0) >= (f.get("height") or 0)
-        ]
-        if landscape:
-            landscape.sort(key=lambda f: f.get("width", 0), reverse=True)
-            return landscape[0].get("link")
-
-    return None
-
-
-# --------------------------------------------------------------------------
 # GEMINI IMAGEN — AI image generation
-# Replaces Pexels placeholders with industry-specific generated images.
+# Generates industry-specific images when PEBBLE_USE_IMAGEN=true.
 # No faces visible; back-view or no-people compositions only.
 # --------------------------------------------------------------------------
 
@@ -657,10 +389,9 @@ def replace_urls_in_site(site_dir: Path, url_map: dict[str, str]) -> int:
     return touched_files
 
 
-def apply_imagen_to_site(industry: str, site_dir: Path, pexels_images: dict[str, str]) -> tuple[dict[str, str], int]:
-    """Generate Imagen images for the standard slots, write them under
-    `site_dir/public/images/`, then replace the matching Pexels URLs across
-    all generated files with the new local paths.
+def apply_imagen_to_site(industry: str, site_dir: Path) -> tuple[dict[str, str], int]:
+    """Generate Imagen images for the standard slots and write them under
+    `site_dir/public/images/`.
 
     Returns (generated_slot_to_path_map, files_touched).
     Gated on PEBBLE_USE_IMAGEN=true (defaults off to avoid surprise costs).
@@ -670,18 +401,14 @@ def apply_imagen_to_site(industry: str, site_dir: Path, pexels_images: dict[str,
         return {}, 0
     if not industry:
         return {}, 0
-    slots = list(pexels_images.keys()) if pexels_images else [
-        "hero", "service_1", "service_2", "service_3",
-        "team_1", "team_2", "gallery_1", "gallery_2",
-    ]
+    slots = ["hero", "service_1", "service_2", "service_3",
+             "team_1", "team_2", "gallery_1", "gallery_2"]
     generated = generate_imagen_images(industry, site_dir, slots=slots)
     if not generated:
         return {}, 0
-    url_map: dict[str, str] = {}
-    for slot, pexels_url in (pexels_images or {}).items():
-        local = generated.get(slot)
-        if pexels_url and local:
-            url_map[pexels_url] = local
+    # Replace any placeholder paths already in the generated files with
+    # the Imagen-generated local paths (e.g. /images/hero.jpg).
+    url_map = {f"/images/{slot}.jpg": path for slot, path in generated.items()}
     touched = replace_urls_in_site(site_dir, url_map)
     return generated, touched
 
@@ -927,9 +654,7 @@ def build_prompt(
     ds_text: str,
     notes: list[tuple[str, str]],
     research_text: str = "",
-    images: dict[str, str] = None,
     industry_intel: Optional[dict] = None,
-    hero_video_url: Optional[str] = None,
     design_reference: Optional[dict] = None,
     design_dna: Optional[dict] = None,
     language: Optional[str] = None,
@@ -1013,20 +738,6 @@ Extract and synthesize across all references:
     # in industries.json. See pebble.industry.PAGE_CATALOG for the 11 page
     # types + 3 universal extras (FAQ, Privacy, Terms).
     pages_block = build_pages_block(industry_intel)
-
-    # Hero video block (Pexels Video API, when industry intel says hero_type=video)
-    if hero_video_url:
-        hero_video_block = (
-            f"\n**Pexels hero video URL (drop-in for `<video src=...>`):**\n\n"
-            f"`{hero_video_url}`\n\n"
-            "Use this exact URL in the hero `<video autoPlay muted loop playsInline>` element. "
-            "Add a still-frame poster from the Pexels image set in Section 8b. "
-            "Add `video: { remotePatterns: [{ protocol: 'https', hostname: 'videos.pexels.com' }] }` is NOT needed — "
-            "the URL is served directly by the `<video>` element, not `next/image`. "
-            "Just allow `videos.pexels.com` in any CSP if you set one."
-        )
-    else:
-        hero_video_block = "\n*(No Pexels hero video resolved. If Industry Intelligence specifies `hero_type: video`, fall back to a full-bleed Pexels image with `parallax-bg`.)*\n"
 
     # Design reference block (Figma file URL or uploaded screenshot)
     if design_reference and (design_reference.get("figma_url") or design_reference.get("image_count")):
@@ -1161,25 +872,14 @@ Extract and synthesize across all references:
     else:
         research_block = "\n*(Industry research unavailable -- rely on Business Intelligence skill defaults above.)*\n"
 
-    # Images block
-    if images:
-        uses_pexels = any("pexels.com" in url for url in images.values())
-        source_label = "Pexels industry-relevant photos" if uses_pexels else "Picsum Photos"
-        image_lines = [f"**Use these {source_label} as placeholder images in your build:**\n"]
-        for label, url in images.items():
-            clean_label = label.replace("_", " ").title()
-            image_lines.append(f"- **{clean_label}:** `{url}`")
-        image_lines.append("\n**Important:**")
-        image_lines.append("- Use these exact URLs in `next/image` `src` props — never raw `<img>` tags")
-        image_lines.append("- Do NOT use local paths like `/images/hero.jpg`")
-        image_lines.append("- Add `priority` only to the hero image; all others lazy-load by default")
-        image_lines.append("- Document all images in TODO_ASSETS.md so client knows to replace with real photos")
-        image_lines.append("- Add descriptive alt text for each image")
-        if uses_pexels:
-            image_lines.append("- **next.config.ts**: `images.pexels.com` MUST be in `remotePatterns` or `next/image` will throw — see Stack skill for the complete config")
-        images_block = "\n".join(image_lines)
-    else:
-        images_block = "\n*(No placeholder images available -- use descriptive alt text with empty src, or use Unsplash source URLs.)*\n"
+    # Hero uses a CSS gradient mesh — no external image sourcing needed.
+    # Imagen 4 (PEBBLE_USE_IMAGEN=true) generates /images/<slot>.jpg locally after build.
+    images_block = (
+        "\n*(Hero imagery uses a CSS gradient mesh — no external photo URLs needed. "
+        "If PEBBLE_USE_IMAGEN=true, Imagen 4 will generate `/images/hero.jpg` etc. after build. "
+        "Use `next/image` with local paths like `/images/hero.jpg` only when PEBBLE_USE_IMAGEN is active; "
+        "otherwise skip image elements or use CSS backgrounds in the hero.)*\n"
+    )
 
     # Real contact info, or visible placeholders when blank
     phone   = (answers.get("phone")   or "[BUSINESS PHONE]").strip() or "[BUSINESS PHONE]"
@@ -1213,7 +913,6 @@ Extract and synthesize across all references:
         industry_research_block=research_block,
         design_system_block=ds_block,
         images_block=images_block,
-        hero_video_block=hero_video_block,
         anti_slop_block=anti_slop_block,
     )
 
@@ -1426,7 +1125,7 @@ Use `splitWords(el)` wherever the full brief specifies `SplitText`. Animate `.sw
 **Strict rules:**
 - One `<pebble-file path="index.html">` block. Nothing else.
 - All CSS in `<style>` in `<head>`. All JS in `<script>` before `</body>`.
-- No local file references — use the Pexels/Picsum URLs from Section 8b directly in `src` and `style="background-image:url(...)"`.
+- Hero uses a CSS gradient mesh background — no external image URLs needed unless PEBBLE_USE_IMAGEN is active.
 - Every section from the brief's homepage structure must be present and complete.
 - Complete. No TODOs. No stubs. No placeholder comments like `// add animation here`.
 - Hero must have a large `<h1>` visible on load — never a blank hero.

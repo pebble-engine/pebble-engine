@@ -20,8 +20,6 @@ import sys
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
-
 from pebble.log import log
 from pebble.engagement import log_event as _log_engagement
 from pebble.industry import resolve_industry_intel, research_industry
@@ -170,10 +168,6 @@ def run_build(handler, generate: bool) -> None:
     build_ui_query = pe.build_ui_query
     build_prompt = pe.build_prompt
     audit_design_system = pe.audit_design_system
-    get_pexels_images = pe.get_pexels_images
-    get_placeholder_images = pe.get_placeholder_images
-    get_pexels_hero_video = pe.get_pexels_hero_video
-    localize_pexels_video = pe.localize_pexels_video
     figma_file_summary = pe.figma_file_summary
     parse_files = pe.parse_files
     apply_imagen_to_site = pe.apply_imagen_to_site
@@ -245,34 +239,6 @@ def run_build(handler, generate: bool) -> None:
             log.warning("Industry research failed: %s", e)
             research_text = ""
 
-    # Fetch placeholder images (Pexels if key present, else Picsum)
-    images: dict = {}
-    if business_type:
-        try:
-            _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
-            if _pexels_key:
-                log.info("Fetching industry photos from Pexels...")
-                images = get_pexels_images(business_type, _pexels_key)
-            else:
-                images = get_placeholder_images(business_type)
-        except Exception as e:
-            log.warning("Image fetching failed: %s", e)
-            images = get_placeholder_images(business_type)
-
-    # Hero video (Pexels Video API) — only when industry intel says hero_type=video
-    hero_video_url: Optional[str] = None
-    if industry_intel and industry_intel.get("hero_type") == "video":
-        _pexels_key = os.environ.get("PEXELS_API_KEY", "").strip()
-        video_keyword = industry_intel.get("video_keyword", "") or business_type
-        if _pexels_key and video_keyword:
-            try:
-                log.info("Fetching Pexels hero video for '%s'...", video_keyword)
-                hero_video_url = get_pexels_hero_video(video_keyword, _pexels_key)
-                if hero_video_url:
-                    log.info("Pexels video resolved: %s...", hero_video_url[:80])
-            except Exception as e:
-                log.warning("Pexels video fetch failed: %s", e)
-
     # Design reference (Figma URL — uploaded image attachments come via the payload)
     design_reference: dict = {}
     figma_url = (answers.get("figma_url") or "").strip()
@@ -312,9 +278,8 @@ def run_build(handler, generate: bool) -> None:
 
     notes = audit_design_system(ds_text) if ds_text else []
     prompt = build_prompt(
-        answers, ds_text, notes, research_text, images,
+        answers, ds_text, notes, research_text,
         industry_intel=industry_intel,
-        hero_video_url=hero_video_url,
         design_reference=design_reference or None,
         design_dna=design_dna,
         language=answers.get("_language", "en"),
@@ -375,7 +340,7 @@ def run_build(handler, generate: bool) -> None:
                 "4. All animations use GSAP + ScrollTrigger from CDN. Lenis for smooth scroll.\n"
                 "5. Use splitWords() helper (defined in the brief) instead of SplitText.\n"
                 "6. `gsap.registerPlugin(ScrollTrigger)` at top of <script>.\n"
-                "7. All image src values: use the Pexels/Picsum URLs from the brief — never local paths.\n"
+                "7. Hero uses a CSS gradient mesh background — no external image URLs needed unless PEBBLE_USE_IMAGEN=true.\n"
                 "8. All phone CTAs: href=\"tel:...\". All inputs: font-size minimum 16px.\n"
                 "9. No scroll-behavior: smooth in CSS.\n"
                 "10. No fake testimonials. No invented contact info — use [BUSINESS PHONE] etc.\n\n"
@@ -512,21 +477,12 @@ def run_build(handler, generate: bool) -> None:
     # ---- POST-BUILD CHAIN ----
     # Each step degrades gracefully: failure does not block the response.
 
-    # Pexels video → local /public/videos/hero.mp4
-    # Eliminates CORS/playback issues with cross-origin <video> from videos.pexels.com.
-    pexels_video_results: dict = {"downloaded": False, "files_touched": 0}
-    if hero_video_url and "pexels.com" in hero_video_url:
-        try:
-            pexels_video_results = localize_pexels_video(site_dir, hero_video_url)
-        except Exception as e:
-            pexels_video_results["error"] = f"{type(e).__name__}: {e}"
-
     imagen_results: dict = {"generated": {}, "files_touched": 0, "enabled": False}
     try:
         imagen_enabled = os.environ.get("PEBBLE_USE_IMAGEN", "").strip().lower() in {"1", "true", "yes", "on"}
         imagen_results["enabled"] = imagen_enabled
         if imagen_enabled and business_type:
-            generated, touched = apply_imagen_to_site(business_type, site_dir, images or {})
+            generated, touched = apply_imagen_to_site(business_type, site_dir)
             imagen_results["generated"] = generated
             imagen_results["files_touched"] = touched
     except Exception as e:
@@ -588,8 +544,6 @@ def run_build(handler, generate: bool) -> None:
         "elapsed_seconds": round(elapsed, 1),
         "model": client.model,
         "industry_intel_key": industry_key,
-        "hero_video_url": hero_video_url,
-        "pexels_video":  pexels_video_results,
         "imagen": imagen_results,
         "dev_server": server_info,
         "screenshots": screenshot_info,

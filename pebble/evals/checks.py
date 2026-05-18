@@ -3796,6 +3796,106 @@ def contact_form_has_inputs(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 39. design_tokens_defined — FOUNDATION (cinematic system, May 2026)
+# ---------------------------------------------------------------------------
+
+_ROOT_CSS_TOKEN_RE = re.compile(
+    r":root\s*\{[^}]*--color-bg\b",
+    re.IGNORECASE | re.DOTALL,
+)
+
+
+@check_metadata(static_files=("app/globals.css",))
+def design_tokens_defined(ctx: BuildContext) -> CheckResult:
+    """globals.css must open with a :root {} CSS token block defining --color-bg.
+
+    The cinematic system moves ALL colors to CSS custom properties so DNA themes
+    can be swapped without touching component files. Presence of --color-bg in a
+    :root block implies the full token layer (--color-accent, --color-surface-*,
+    --glass-blur, etc.) was emitted from the DNA block prepended at build time.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("design_tokens_defined", "skip", "no site directory")
+    css = ctx.site_dir / "app" / "globals.css"
+    if not css.exists():
+        return CheckResult("design_tokens_defined", "skip", "no app/globals.css")
+    text = css.read_text(encoding="utf-8", errors="ignore")
+    if _ROOT_CSS_TOKEN_RE.search(text):
+        return CheckResult(
+            "design_tokens_defined", "pass",
+            ":root { --color-bg } token block found in app/globals.css",
+        )
+    return CheckResult(
+        "design_tokens_defined", "fail",
+        "app/globals.css has no :root { --color-bg } block — DNA color tokens missing",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 40. grain_overlay_present — FOUNDATION (cinematic system, May 2026)
+# ---------------------------------------------------------------------------
+
+
+@check_metadata(static_files=("components/ui/GrainOverlay.tsx",))
+def grain_overlay_present(ctx: BuildContext) -> CheckResult:
+    """components/ui/GrainOverlay.tsx must exist.
+
+    GrainOverlay is a fixed SVG feTurbulence grain layer injected once in
+    app/layout.tsx. Without it the flat CSS gradient mesh reads as synthetic.
+    The grain adds organic depth at near-zero rendering cost.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("grain_overlay_present", "skip", "no site directory")
+    grain = ctx.site_dir / "components" / "ui" / "GrainOverlay.tsx"
+    if grain.exists():
+        return CheckResult("grain_overlay_present", "pass", "GrainOverlay.tsx present")
+    return CheckResult(
+        "grain_overlay_present", "fail",
+        "components/ui/GrainOverlay.tsx missing — cinematic grain layer required",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 41. framer_motion_in_dependencies — FOUNDATION (cinematic system, May 2026)
+# ---------------------------------------------------------------------------
+
+
+@check_metadata(static_files=("package.json",))
+def framer_motion_in_dependencies(ctx: BuildContext) -> CheckResult:
+    """package.json must declare framer-motion as a dependency.
+
+    The cinematic system's ScrollReveal and MagneticButton components import
+    from framer-motion. A missing declaration causes npm install failures on
+    first deploy — same class of regression as the Ironwood react-icons
+    incident (May 2026).
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("framer_motion_in_dependencies", "skip", "no site directory")
+    pkg = ctx.site_dir / "package.json"
+    if not pkg.exists():
+        return CheckResult("framer_motion_in_dependencies", "fail", "package.json missing")
+    text = pkg.read_text(encoding="utf-8", errors="ignore")
+    clean = _JSONC_COMMENT_RE.sub("", text)
+    try:
+        data = json.loads(clean)
+    except json.JSONDecodeError as e:
+        return CheckResult(
+            "framer_motion_in_dependencies", "fail",
+            f"package.json is invalid JSON: {e}",
+        )
+    deps = {**data.get("dependencies", {}), **data.get("devDependencies", {})}
+    if "framer-motion" in deps:
+        return CheckResult(
+            "framer_motion_in_dependencies", "pass",
+            f"framer-motion {deps['framer-motion']} declared in dependencies",
+        )
+    return CheckResult(
+        "framer_motion_in_dependencies", "fail",
+        "package.json missing framer-motion — ScrollReveal and MagneticButton require it",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -3814,10 +3914,8 @@ ALL_CHECKS = [
     layout_is_server_component,
     scroll_trigger_ssr_safe,
     no_css_smooth_scroll,
-    # FOUNDATION checks (May 2026 overhaul — VEX-spec hero pattern)
+    # FOUNDATION checks (May 2026 overhaul — cinematic hero pattern)
     hero_uses_animated_heading,
-    hero_uses_background_video,
-    no_dark_overlay_on_hero_video,
     inter_font_global,
     inter_font_applied,
     liquid_glass_class_present,
@@ -3828,7 +3926,6 @@ ALL_CHECKS = [
     animated_heading_screen_reader_safe,
     interactive_elements_have_focus_visible,
     hero_text_has_legibility_safeguard,
-    hero_video_has_poster,
     # FOUNDATION functionality (May 2026 Base44/Lovable competitive addendum)
     navbar_present,
     contact_form_uses_server_action,
@@ -3860,6 +3957,10 @@ ALL_CHECKS = [
     # FOUNDATION completeness — all four navigable pages + working form
     foundation_pages_present,
     contact_form_has_inputs,
+    # FOUNDATION cinematic system (May 2026 pivot — CSS token layer + grain)
+    design_tokens_defined,
+    grain_overlay_present,
+    framer_motion_in_dependencies,
     site_compiles,
 ]
 
