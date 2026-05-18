@@ -29,7 +29,7 @@ from pebble.auth_admin import (
     validate_access_token,
 )
 from pebble.log import log
-from pebble.security import RateLimiter, client_ip as _client_ip
+from pebble.security import RateLimiter, client_ip as _client_ip, safe_user_id as _safe_uid
 
 
 _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
@@ -55,7 +55,10 @@ def _output_dir() -> Path:
 
 
 def _pending_deletion_path(user_id: str) -> Path:
-    return _output_dir() / ".users" / user_id / "pending_deletion.json"
+    safe = _safe_uid(user_id)
+    if not safe:
+        raise ValueError(f"invalid user_id: {user_id!r}")
+    return _output_dir() / ".users" / safe / "pending_deletion.json"
 
 
 def _cooling_days() -> int:

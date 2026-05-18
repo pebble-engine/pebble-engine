@@ -10,6 +10,7 @@ Routes:
 """
 from __future__ import annotations
 
+import hmac
 import os
 
 from pebble.log import log
@@ -27,7 +28,7 @@ def _check_key(handler) -> bool:
         handler._json(503, {"error": "PEBBLE_INTERNAL_KEY not configured"})
         return False
     provided = (handler.headers.get("X-Internal-Key") or "").strip()
-    if not provided or provided != expected:
+    if not provided or not hmac.compare_digest(provided, expected):
         handler._json(401, {"error": "unauthorized"})
         return False
     return True
