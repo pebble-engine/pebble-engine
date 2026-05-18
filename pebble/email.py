@@ -535,4 +535,8 @@ __all__ = [
     "send_password_reset_async",
     "render_welcome",
     "render_password_reset",
+    # Shared rendering utilities used by sibling email modules.
+    "_engine_output_dir",
+    "_base_url",
+    "_escape_html",
 ]

@@ -148,6 +148,9 @@ def route_get(handler) -> None:
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
+        elif handler.path == "/api/internal/process-email-drip":
+            from pebble.server.internal import run_process_email_drip
+            run_process_email_drip(handler)
         elif handler.path.startswith("/dist/"):
             handler._handle_serve_dist()
         elif handler.path.startswith("/preview/"):

@@ -200,14 +200,25 @@ def run_build(handler, generate: bool) -> None:
     if "_created_at" not in answers:
         answers["_created_at"] = datetime.now().isoformat()
 
-    # Stamp the owner if the request carries a session cookie. Anonymous
-    # generation still works (current MVP behavior); auth-enabled users
-    # get their projects scoped on the dashboard.
+    # Resolve caller identity — v3 (Supabase Bearer JWT) takes priority
+    # because it also carries the email needed for the drip sequence.
+    # Legacy cookie session is the fallback for dev/test paths.
+    user_email: str = ""
     try:
-        from pebble.server.auth import current_user_id
-        owner = current_user_id(handler)
-        if owner:
-            answers["_user_id"] = owner
+        raw_auth = (handler.headers.get("Authorization") or "").strip()
+        if raw_auth.lower().startswith("bearer "):
+            from pebble import auth_admin
+            token = raw_auth[7:].strip()
+            if token and auth_admin.is_configured():
+                user_data = auth_admin.validate_access_token(token)
+                if isinstance(user_data, dict) and user_data.get("id"):
+                    answers["_user_id"] = user_data["id"]
+                    user_email = (user_data.get("email") or "").strip()
+        if not answers.get("_user_id"):
+            from pebble.server.auth import current_user_id
+            owner = current_user_id(handler)
+            if owner:
+                answers["_user_id"] = owner
     except Exception as e:
         log.warning("user id resolution failed: %s", e)
 
@@ -553,3 +564,17 @@ def run_build(handler, generate: bool) -> None:
     # (above this point any error short-circuits with a non-200 + return).
     # NEVER pass slug / business_type / industry / DNA — just the event name.
     _log_engagement(answers.get("_user_id"), "build_completed")
+
+    # Post-first-build email drip (Ch 11.6). schedule_drip() is idempotent —
+    # it no-ops if the drip file already exists, so rebuilds don't reset the
+    # clock. Only fires for authenticated users whose email we resolved above.
+    if answers.get("_user_id") and user_email:
+        try:
+            from pebble.email_drip import schedule_drip
+            schedule_drip(
+                user_id=answers["_user_id"],
+                email=user_email,
+                slug=slug,
+            )
+        except Exception as e:
+            log.warning("email drip schedule failed: %s", e)

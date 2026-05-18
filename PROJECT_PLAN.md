@@ -328,8 +328,16 @@ Long-term: migrate the runtime from `STRIPE_SECRET_KEY` (sk_test_) to a least-pr
 [x] 11.4  First-build success screen with preview + clear next steps
           → edit-phase.tsx (workspace lands here after draft completes)
 [x] 11.5  In-app help drawer (a8ca39e — /help with topic sections + intake tooltips)
-[ ] 11.6  Email sequence after first build (day 1, 3, 7 — gentle nudges)
-          ← OPEN. Needs scheduling infra decision: cron-via-Hermes vs Resend Sequences.
+[x] 11.6  Email sequence after first build (day 1, 3, 7 — gentle nudges)
+          Shipped 2026-05-18. pebble/email_drip.py — file-based drip schedule
+          (output/.users/<uid>/email_drip.json). schedule_drip() called on
+          every successful /api/generate for authenticated Supabase users;
+          idempotent (first build only). process_due() fires due emails via
+          pebble.email and marks sent_at atomically. Endpoint:
+          GET /api/internal/process-email-drip (X-Internal-Key gated).
+          Windows scheduled task: see .env.example PEBBLE_INTERNAL_KEY block.
+          Marc's action: generate PEBBLE_INTERNAL_KEY, add to .env, create
+          the schtasks task from the paste-ready command in .env.example.
 ```
 
 ## Chapter 12 — Launch (Weeks 15-16)
