@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { safeRedirect } from "@/lib/safe-redirect";
 
 export default function SignupPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+      <SignupForm />
+    </Suspense>
+  );
+}
+
+function SignupForm() {
   const router = useRouter();
+  const params = useSearchParams();
   const { signUp, signInWithGoogle, signInWithGithub } = useAuth();
   const [firstName, setFirstName] = useState("");
   const [email, setEmail] = useState("");
@@ -18,6 +28,8 @@ export default function SignupPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | "github" | null>(null);
+
+  const redirect = safeRedirect(params.get("redirect"));
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,7 +45,7 @@ export default function SignupPage() {
     setSubmitting(true);
     try {
       await signUp(email, password, firstName.trim() || undefined);
-      router.push("/workspace");
+      router.push(redirect);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-up failed.");
       setSubmitting(false);
@@ -182,7 +194,10 @@ export default function SignupPage() {
 
           <p className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-foreground hover:text-primary transition-colors">
+            <Link
+              href={redirect !== "/workspace" ? `/login?redirect=${encodeURIComponent(redirect)}` : "/login"}
+              className="font-medium text-foreground hover:text-primary transition-colors"
+            >
               Sign in
             </Link>
           </p>
