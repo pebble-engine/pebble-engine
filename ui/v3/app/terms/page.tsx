@@ -1,35 +1,26 @@
 import Link from "next/link";
+import { MarketingShell, MarketingProse } from "@/components/marketing-shell";
 
 const EFFECTIVE_DATE = "May 18, 2026";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-16">
-        {/* Back link */}
-        <div className="mb-10">
-          <Link
-            href="/landing"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Pebble
-          </Link>
-        </div>
-
-        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground mb-2">
+    <MarketingShell>
+      <MarketingProse>
+        <h1 className="text-4xl font-semibold tracking-tight text-[#1a1a1a] mb-2">
           Terms of Service
         </h1>
-        <p className="text-sm text-muted-foreground mb-12">Effective {EFFECTIVE_DATE}</p>
+        <p className="text-sm text-[#1a1a1a]/55 mb-12">Effective {EFFECTIVE_DATE}</p>
 
-        <div className="space-y-10 text-base leading-relaxed text-foreground/80">
+        <div className="space-y-10 text-base leading-relaxed text-[#1a1a1a]/75">
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               1. About Pebble
             </h2>
             <p>
               Pebble Engine (&ldquo;Pebble&rdquo;, &ldquo;we&rdquo;, &ldquo;us&rdquo;) provides
               an AI-powered website builder at{" "}
-              <a href="https://pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+              <a href="https://pebbleapp.ai" className="underline hover:text-[#1a1a1a] transition-colors">
                 pebbleapp.ai
               </a>
               . By creating an account or using our services, you agree to these Terms.
@@ -37,14 +28,14 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               2. Your account
             </h2>
             <p>
               You must provide a valid email address and keep your account credentials secure. You
               are responsible for all activity that occurs under your account. Notify us immediately
               at{" "}
-              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+              <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                 web@getpebble.net
               </a>{" "}
               if you suspect unauthorised access.
@@ -52,47 +43,47 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               3. Plans, billing, and trial
             </h2>
             <div className="space-y-4">
               <div>
-                <p className="font-medium text-foreground">Free tier</p>
+                <p className="font-medium text-[#1a1a1a]">Free tier</p>
                 <p>
                   Free accounts may publish up to 2 sites. The builder and all editing tools are
                   fully available. No payment is required to start.
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Paid plans</p>
+                <p className="font-medium text-[#1a1a1a]">Paid plans</p>
                 <p>
                   Starter ($29/month) and Pro ($59/month) subscriptions unlock unlimited published
                   sites and additional features. Prices are in USD and charged monthly.
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Free trial</p>
+                <p className="font-medium text-[#1a1a1a]">Free trial</p>
                 <p>
                   When offered, a free trial period lets you use a paid plan before your card is
                   charged. You can cancel during the trial with no charge.
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Cancellation</p>
+                <p className="font-medium text-[#1a1a1a]">Cancellation</p>
                 <p>
                   Cancel your subscription at any time via{" "}
-                  <Link href="/settings" className="underline hover:text-foreground transition-colors">
+                  <Link href="/settings" className="underline hover:text-[#1a1a1a] transition-colors">
                     Settings → Billing
                   </Link>
                   . Your plan remains active until the end of the current billing period.
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Refunds</p>
+                <p className="font-medium text-[#1a1a1a]">Refunds</p>
                 <p>
                   We offer a no-questions-asked refund within 7 days of your first charge on a new
                   subscription. Email{" "}
-                  <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+                  <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                     web@getpebble.net
                   </a>{" "}
                   with your account email to request one.
@@ -102,7 +93,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               4. What you can build
             </h2>
             <p className="mb-3">
@@ -123,7 +114,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               5. Your content and intellectual property
             </h2>
             <p>
@@ -142,7 +133,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               6. Service availability
             </h2>
             <p>
@@ -157,7 +148,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               7. Limitation of liability
             </h2>
             <p>
@@ -173,7 +164,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               8. Disclaimer of warranties
             </h2>
             <p>
@@ -184,14 +175,14 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               9. Account deletion
             </h2>
             <p>
               You can delete your account at any time from Settings. Deletion requests enter a
               14-day cooling-off period, after which your account and all associated data are
               permanently removed. See our{" "}
-              <Link href="/privacy" className="underline hover:text-foreground transition-colors">
+              <Link href="/privacy" className="underline hover:text-[#1a1a1a] transition-colors">
                 Privacy Policy
               </Link>{" "}
               for details.
@@ -199,7 +190,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               10. Changes to these Terms
             </h2>
             <p>
@@ -210,7 +201,7 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               11. Governing law
             </h2>
             <p>
@@ -220,12 +211,12 @@ export default function TermsPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               12. Contact
             </h2>
             <p>
               Pebble Engine &mdash;{" "}
-              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+              <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                 web@getpebble.net
               </a>
             </p>
@@ -233,18 +224,18 @@ export default function TermsPage() {
         </div>
 
         {/* Footer links */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-5 text-sm text-muted-foreground">
-          <Link href="/privacy" className="hover:text-foreground transition-colors">
+        <div className="mt-16 pt-8 border-t border-stone-200 flex flex-wrap gap-5 text-sm text-[#1a1a1a]/55">
+          <Link href="/privacy" className="hover:text-[#1a1a1a] transition-colors">
             Privacy Policy
           </Link>
-          <Link href="/landing" className="hover:text-foreground transition-colors">
+          <Link href="/" className="hover:text-[#1a1a1a] transition-colors">
             Back to Pebble
           </Link>
-          <a href="mailto:web@getpebble.net" className="hover:text-foreground transition-colors">
+          <a href="mailto:web@getpebble.net" className="hover:text-[#1a1a1a] transition-colors">
             web@getpebble.net
           </a>
         </div>
-      </div>
-    </div>
+      </MarketingProse>
+    </MarketingShell>
   );
 }

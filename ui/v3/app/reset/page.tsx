@@ -5,8 +5,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, ShieldCheck } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
+import { MarketingShell, MarketingCard } from "@/components/marketing-shell";
 
 /**
  * Password reset confirm. The user arrives here by clicking the link
@@ -14,32 +14,21 @@ import { createClient } from "@/lib/supabase/client";
  * fragment with the recovery tokens; the browser client auto-detects
  * it on mount and creates a short-lived session. Once that session
  * exists, we can call `supabase.auth.updateUser({ password })`.
- *
- * If the user lands here without a recovery session (clicked the link
- * twice, link expired, etc.), we show a clear "request a new link"
- * fallback instead of leaving them confused.
  */
 export default function ResetPage() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-5">
-        <Link href="/landing" className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Pebble.
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md space-y-7"
-        >
+    <MarketingShell>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md"
+      >
+        <MarketingCard>
           <ResetForm />
-        </motion.div>
-      </main>
-    </div>
+        </MarketingCard>
+      </motion.div>
+    </MarketingShell>
   );
 }
 
@@ -52,10 +41,6 @@ function ResetForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Supabase listens for the PASSWORD_RECOVERY event when the recovery
-  // tokens are parsed from the URL hash. If we see a session by the
-  // time the effect runs, we're good; if not, we surface the "request
-  // a new link" fallback.
   useEffect(() => {
     let cancelled = false;
     supabase.auth.getSession().then(({ data }) => {
@@ -98,17 +83,20 @@ function ResetForm() {
   }
 
   if (ready === "checking") {
-    return <p className="text-muted-foreground text-center">Loading reset link…</p>;
+    return <p className="text-[#1a1a1a]/55 text-center text-sm">Loading reset link…</p>;
   }
 
   if (ready === "no-session") {
     return (
       <div className="text-center space-y-4">
-        <p className="font-display text-2xl text-foreground">Reset link expired or already used.</p>
-        <p className="text-muted-foreground">
+        <p className="text-2xl font-semibold">Reset link expired or already used.</p>
+        <p className="text-sm text-[#1a1a1a]/65">
           Open the link from your latest reset email, or request a new one.
         </p>
-        <Link href="/forgot" className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary">
+        <Link
+          href="/forgot"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#3054ff] hover:underline"
+        >
           Request a new link <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -118,20 +106,18 @@ function ResetForm() {
   return (
     <>
       <div className="space-y-2 text-center">
-        <div className="w-14 h-14 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center mb-3">
+        <div className="w-14 h-14 rounded-full bg-[#3054ff]/10 text-[#3054ff] mx-auto flex items-center justify-center mb-3">
           <ShieldCheck className="w-6 h-6" />
         </div>
-        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
-          Pick a new password
-        </h1>
-        <p className="text-muted-foreground">
+        <h1 className="text-3xl font-semibold tracking-tight">Pick a new password</h1>
+        <p className="text-sm text-[#1a1a1a]/65">
           At least 8 characters. After saving, we&apos;ll sign you in.
         </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <label htmlFor="password" className="text-sm font-medium text-foreground">New password</label>
+          <label htmlFor="password" className="text-sm font-medium text-[#1a1a1a]">New password</label>
           <input
             id="password"
             type="password"
@@ -139,13 +125,13 @@ function ResetForm() {
             autoComplete="new-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="At least 8 characters"
+            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-[#1a1a1a] placeholder:text-[#1a1a1a]/35 focus:outline-none focus:ring-2 focus:ring-[#3054ff]/40 focus:border-[#3054ff]"
           />
         </div>
 
         <div className="space-y-1.5">
-          <label htmlFor="confirm" className="text-sm font-medium text-foreground">Confirm</label>
+          <label htmlFor="confirm" className="text-sm font-medium text-[#1a1a1a]">Confirm</label>
           <input
             id="confirm"
             type="password"
@@ -153,17 +139,17 @@ function ResetForm() {
             autoComplete="new-password"
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            className="w-full rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
             placeholder="Same one again"
+            className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-[#1a1a1a] placeholder:text-[#1a1a1a]/35 focus:outline-none focus:ring-2 focus:ring-[#3054ff]/40 focus:border-[#3054ff]"
           />
         </div>
 
-        {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
           disabled={submitting}
-          className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-[var(--shadow-1)] transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+          className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#3054ff] hover:bg-[#2040e0] px-6 py-3 text-base font-medium text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {submitting ? (
             <>

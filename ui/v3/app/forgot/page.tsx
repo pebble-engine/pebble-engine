@@ -4,8 +4,8 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { createClient } from "@/lib/supabase/client";
+import { MarketingShell, MarketingCard } from "@/components/marketing-shell";
 
 export default function ForgotPage() {
   const supabase = useMemo(() => createClient(), []);
@@ -18,8 +18,8 @@ export default function ForgotPage() {
     setSubmitting(true);
     try {
       // Don't surface "no such email" errors back to the user — they
-      // become an enumeration oracle. Either way we show the "check
-      // your inbox" state. Supabase already de-noises this on its end.
+      // become an enumeration oracle. Show the same "check your inbox"
+      // state regardless.
       await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset`,
       });
@@ -30,36 +30,27 @@ export default function ForgotPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-5">
-        <Link href="/landing" className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Pebble.
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md space-y-7"
-        >
+    <MarketingShell>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md"
+      >
+        <MarketingCard>
           {sent ? (
             <div className="text-center space-y-5">
-              <div className="w-14 h-14 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
+              <div className="w-14 h-14 rounded-full bg-[#3054ff]/10 text-[#3054ff] mx-auto flex items-center justify-center">
                 <Mail className="w-6 h-6" />
               </div>
-              <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-                Check your inbox.
-              </h1>
-              <p className="text-muted-foreground">
-                If <span className="font-mono text-foreground">{email}</span> is on file, we sent a reset link.
+              <h1 className="text-3xl font-semibold tracking-tight">Check your inbox.</h1>
+              <p className="text-sm text-[#1a1a1a]/65">
+                If <span className="font-mono text-[#1a1a1a]">{email}</span> is on file, we sent a reset link.
                 It expires in an hour.
               </p>
               <Link
                 href="/login"
-                className="inline-flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary"
+                className="inline-flex items-center gap-2 text-sm font-medium text-[#3054ff] hover:underline"
               >
                 Back to sign-in <ArrowRight className="w-4 h-4" />
               </Link>
@@ -67,17 +58,15 @@ export default function ForgotPage() {
           ) : (
             <>
               <div className="space-y-2 text-center">
-                <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
-                  Reset your password
-                </h1>
-                <p className="text-muted-foreground">
+                <h1 className="text-3xl font-semibold tracking-tight">Reset your password</h1>
+                <p className="text-sm text-[#1a1a1a]/65">
                   Type the email you signed up with — we&apos;ll send you a one-time link.
                 </p>
               </div>
 
               <form onSubmit={onSubmit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="email" className="text-sm font-medium text-foreground">Email</label>
+                  <label htmlFor="email" className="text-sm font-medium text-[#1a1a1a]">Email</label>
                   <input
                     id="email"
                     type="email"
@@ -85,15 +74,15 @@ export default function ForgotPage() {
                     autoComplete="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="you@example.com"
+                    className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-[#1a1a1a] placeholder:text-[#1a1a1a]/35 focus:outline-none focus:ring-2 focus:ring-[#3054ff]/40 focus:border-[#3054ff]"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={submitting || !email.trim()}
-                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-[var(--shadow-1)] transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+                  className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#3054ff] hover:bg-[#2040e0] px-6 py-3 text-base font-medium text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {submitting ? (
                     <>
@@ -108,16 +97,16 @@ export default function ForgotPage() {
                 </button>
               </form>
 
-              <p className="text-center text-sm text-muted-foreground">
+              <p className="text-center text-sm text-[#1a1a1a]/65">
                 Remembered it?{" "}
-                <Link href="/login" className="font-medium text-foreground hover:text-primary transition-colors">
+                <Link href="/login" className="font-medium text-[#3054ff] hover:underline">
                   Sign in
                 </Link>
               </p>
             </>
           )}
-        </motion.div>
-      </main>
-    </div>
+        </MarketingCard>
+      </motion.div>
+    </MarketingShell>
   );
 }

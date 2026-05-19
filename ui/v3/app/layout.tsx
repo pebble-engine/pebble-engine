@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Literata, JetBrains_Mono } from "next/font/google";
+import { Inter, Literata, JetBrains_Mono, Instrument_Sans, Instrument_Serif } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
@@ -23,6 +23,19 @@ const jetbrainsMono = JetBrains_Mono({
   weight: ["400"],
 });
 
+const instrumentSans = Instrument_Sans({
+  variable: "--font-instrument-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const instrumentSerif = Instrument_Serif({
+  variable: "--font-instrument-serif",
+  subsets: ["latin"],
+  weight: ["400"],
+  style: ["normal", "italic"],
+});
+
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://pebbleapp.ai"),
   title: "Pebble",
@@ -31,15 +44,20 @@ export const metadata: Metadata = {
 
 // Inline script applies the user's stored theme before the page paints,
 // so a dark-mode user doesn't see a flash of light theme on load.
+//
+// As of the 2026-05-18 marketing-shell redesign the app DEFAULTS to dark
+// mode — the landing is dark cinematic and the post-auth surfaces should
+// feel like the same family. Users who explicitly chose light still get
+// light (their localStorage preference wins).
 const THEME_INIT_SCRIPT = `
 (function() {
   try {
     var stored = localStorage.getItem('pebble.theme');
-    var theme = stored === 'dark' || stored === 'light'
-      ? stored
-      : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    var theme = stored === 'dark' || stored === 'light' ? stored : 'dark';
     if (theme === 'dark') document.documentElement.classList.add('dark');
-  } catch (e) {}
+  } catch (e) {
+    document.documentElement.classList.add('dark');
+  }
 })();
 `;
 
@@ -51,7 +69,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${literata.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${literata.variable} ${jetbrainsMono.variable} ${instrumentSans.variable} ${instrumentSerif.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

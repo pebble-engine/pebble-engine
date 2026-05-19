@@ -289,6 +289,21 @@ def validate_build_payload(answers):
 # No faces visible; back-view or no-people compositions only.
 # --------------------------------------------------------------------------
 
+# Where each image slot is saved on disk (relative to public/), matching the
+# conventions in skills/stack/SKILL.md so LLM-emitted <Image src=...> paths
+# line up with the actual files. If you add a slot, add its path here too.
+_SLOT_TO_PATH: dict[str, str] = {
+    "hero":      "images/hero/hero.jpg",
+    "service_1": "images/services/service-1.jpg",
+    "service_2": "images/services/service-2.jpg",
+    "service_3": "images/services/service-3.jpg",
+    "team_1":    "images/about/team-1.jpg",
+    "team_2":    "images/about/team-2.jpg",
+    "gallery_1": "images/gallery/01.jpg",
+    "gallery_2": "images/gallery/02.jpg",
+}
+
+
 def _imagen_prompt(industry: str, slot: str) -> str:
     """Build an industry-aware Imagen prompt for a given image slot."""
     slot_contexts = {
@@ -351,10 +366,14 @@ def generate_imagen_images(industry: str, output_dir: Path, slots: list[str] = N
             if not response.generated_images:
                 continue
             img_bytes = response.generated_images[0].image.image_bytes
-            slot_filename = f"{slot}.jpg"
-            (images_dir / slot_filename).write_bytes(img_bytes)
-            results[slot] = f"/images/{slot_filename}"
-            log.info("Imagen: %s → %s", slot, slot_filename)
+            # Save at the Stack-Skill-conventional path (subfolder + hyphenated
+            # filename) so the LLM-generated <Image src="..."> tags resolve.
+            rel_path = _SLOT_TO_PATH.get(slot, f"images/{slot}.jpg")
+            dest = output_dir / "public" / rel_path
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(img_bytes)
+            results[slot] = "/" + rel_path
+            log.info("Imagen: %s → %s", slot, rel_path)
         except Exception as e:
             # Skip the slot but keep going
             log.warning("Imagen: %s failed (%s: %s)", slot, type(e).__name__, e)
@@ -406,9 +425,15 @@ def apply_imagen_to_site(industry: str, site_dir: Path) -> tuple[dict[str, str],
     generated = generate_imagen_images(industry, site_dir, slots=slots)
     if not generated:
         return {}, 0
-    # Replace any placeholder paths already in the generated files with
-    # the Imagen-generated local paths (e.g. /images/hero.jpg).
-    url_map = {f"/images/{slot}.jpg": path for slot, path in generated.items()}
+    # Safety net: if the LLM emitted the legacy flat path (`/images/hero.jpg`,
+    # `/images/service_1.jpg`) from the old prompt convention, rewrite to the
+    # new subfolder path so the image actually loads. Identity entries are
+    # skipped so we don't no-op replace correct paths.
+    url_map = {}
+    for slot, new_path in generated.items():
+        legacy = f"/images/{slot}.jpg"
+        if legacy != new_path:
+            url_map[legacy] = new_path
     touched = replace_urls_in_site(site_dir, url_map)
     return generated, touched
 
@@ -873,12 +898,15 @@ Extract and synthesize across all references:
         research_block = "\n*(Industry research unavailable -- rely on Business Intelligence skill defaults above.)*\n"
 
     # Hero uses a CSS gradient mesh — no external image sourcing needed.
-    # Imagen 4 (PEBBLE_USE_IMAGEN=true) generates /images/<slot>.jpg locally after build.
+    # Imagen 4 (PEBBLE_USE_IMAGEN=true) generates images at the Stack-Skill
+    # paths (subfolders + hyphens) so LLM <Image> tags resolve correctly.
     images_block = (
         "\n*(Hero imagery uses a CSS gradient mesh — no external photo URLs needed. "
-        "If PEBBLE_USE_IMAGEN=true, Imagen 4 will generate `/images/hero.jpg` etc. after build. "
-        "Use `next/image` with local paths like `/images/hero.jpg` only when PEBBLE_USE_IMAGEN is active; "
-        "otherwise skip image elements or use CSS backgrounds in the hero.)*\n"
+        "If PEBBLE_USE_IMAGEN=true, Imagen 4 will generate images at the Stack-Skill paths "
+        "(`/images/hero/hero.jpg`, `/images/services/service-1.jpg`, `/images/about/team-1.jpg`, "
+        "`/images/gallery/01.jpg`, etc.) after build. Use `next/image` with these exact paths "
+        "only when PEBBLE_USE_IMAGEN is active; otherwise skip image elements or use CSS "
+        "backgrounds in the hero.)*\n"
     )
 
     # Real contact info, or visible placeholders when blank

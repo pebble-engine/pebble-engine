@@ -25,7 +25,13 @@ from typing import Iterator
 from pebble.server.build import run_build
 from pebble.server.shim import make_shim
 
-_TIMEOUT_S = 180  # seconds before we give up waiting for the next event
+_TIMEOUT_S = 300  # seconds before we give up waiting for the next event
+                  # The LLM full-site generation can be silent for 2-4 minutes
+                  # on complex prompts; 180s was too tight and produced
+                  # spurious "build timed out" errors after files were already
+                  # written. Raised to 300s as a quick win — long term, emit
+                  # a heartbeat from the LLM client during streaming so this
+                  # never trips on a slow gen that's actually making progress.
 
 
 def build_stream_generator(

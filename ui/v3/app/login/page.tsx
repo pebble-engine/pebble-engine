@@ -6,15 +6,12 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { safeRedirect } from "@/lib/safe-redirect";
+import { MarketingShell, MarketingCard } from "@/components/marketing-shell";
 
 export default function LoginPage() {
-  // useSearchParams needs a Suspense boundary in Next.js 16. The inner
-  // form is what actually reads the params; the outer page just provides
-  // the fallback shell.
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-screen bg-black" />}>
       <LoginForm />
     </Suspense>
   );
@@ -33,11 +30,9 @@ function LoginForm() {
   // Bounce destination — preserved across the middleware redirect.
   // safeRedirect rejects absolute URLs / protocol-relative variants so
   // a crafted ?redirect=https://evil.com can't turn a successful sign-in
-  // into an off-site bounce. Without this, `router.push("https://evil.com")`
-  // does a full navigation — the classic post-auth open-redirect phish.
+  // into an off-site bounce.
   const redirect = safeRedirect(params.get("redirect"));
 
-  // Surface callback errors that came back from /auth/callback.
   useEffect(() => {
     if (params.get("error") === "auth_callback_failed") {
       setError("Sign-in didn't complete. Please try again.");
@@ -63,7 +58,6 @@ function LoginForm() {
     try {
       if (provider === "google") await signInWithGoogle();
       else await signInWithGithub();
-      // Navigating to provider — no state to reset.
     } catch (e) {
       setError(e instanceof Error ? e.message : `${provider} sign-in failed.`);
       setOauthBusy(null);
@@ -71,26 +65,17 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <header className="flex items-center justify-between px-6 py-5">
-        <Link href="/landing" className="font-display text-2xl font-bold tracking-tight text-foreground">
-          Pebble.
-        </Link>
-        <ThemeToggle />
-      </header>
-
-      <main className="flex-1 flex items-center justify-center px-6 py-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md space-y-6"
-        >
+    <MarketingShell>
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md"
+      >
+        <MarketingCard>
           <div className="space-y-2 text-center">
-            <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
-              Welcome back
-            </h1>
-            <p className="text-muted-foreground">Sign in to your Pebble account.</p>
+            <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+            <p className="text-sm text-[#1a1a1a]/65">Sign in to your Pebble account.</p>
           </div>
 
           <div className="space-y-2">
@@ -108,49 +93,40 @@ function LoginForm() {
             />
           </div>
 
-          <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-muted-foreground">
-            <span className="h-px flex-1 bg-border" />
+          <div className="flex items-center gap-3 text-xs uppercase tracking-widest text-[#1a1a1a]/45">
+            <span className="h-px flex-1 bg-stone-200" />
             or with email
-            <span className="h-px flex-1 bg-border" />
+            <span className="h-px flex-1 bg-stone-200" />
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label htmlFor="email" className="text-sm font-medium text-foreground">Email</label>
-              <input
-                id="email"
-                type="email"
-                required
-                autoComplete="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="you@example.com"
-              />
-            </div>
+            <Field
+              id="email"
+              label="Email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(v) => setEmail(v)}
+              placeholder="you@example.com"
+            />
+            <Field
+              id="password"
+              label="Password"
+              type="password"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(v) => setPassword(v)}
+              placeholder="Your password"
+            />
 
-            <div className="space-y-1.5">
-              <label htmlFor="password" className="text-sm font-medium text-foreground">Password</label>
-              <input
-                id="password"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full rounded-xl border border-border bg-card px-4 py-3 text-base text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                placeholder="Your password"
-              />
-            </div>
-
-            {error && (
-              <p role="alert" className="text-sm text-destructive">{error}</p>
-            )}
+            {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
 
             <button
               type="submit"
               disabled={submitting || oauthBusy !== null}
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3.5 text-base font-medium text-primary-foreground shadow-[var(--shadow-1)] transition-transform hover:scale-[1.01] active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed"
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#3054ff] hover:bg-[#2040e0] px-6 py-3 text-base font-medium text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>
@@ -165,32 +141,63 @@ function LoginForm() {
             </button>
           </form>
 
-          <p className="text-center text-sm text-muted-foreground">
+          <p className="text-center text-sm text-[#1a1a1a]/65">
             New to Pebble?{" "}
-            <Link href="/signup" className="font-medium text-foreground hover:text-primary transition-colors">
+            <Link href="/signup" className="font-medium text-[#3054ff] hover:underline">
               Create an account
             </Link>
           </p>
 
-          <p className="text-center text-xs text-muted-foreground">
-            <Link href="/forgot" className="hover:text-foreground transition-colors">
+          <p className="text-center text-xs text-[#1a1a1a]/45">
+            <Link href="/forgot" className="hover:text-[#1a1a1a] transition-colors">
               Forgot your password?
             </Link>
           </p>
 
-          <p className="text-center text-xs text-muted-foreground">
+          <p className="text-center text-xs text-[#1a1a1a]/45 leading-relaxed">
             By signing in you agree to our{" "}
-            <Link href="/terms" className="underline hover:text-foreground transition-colors">Terms</Link>
+            <Link href="/terms"   className="underline hover:text-[#1a1a1a]">Terms</Link>
             {" "}and{" "}
-            <Link href="/privacy" className="underline hover:text-foreground transition-colors">Privacy Policy</Link>.
+            <Link href="/privacy" className="underline hover:text-[#1a1a1a]">Privacy Policy</Link>.
           </p>
-        </motion.div>
-      </main>
-    </div>
+        </MarketingCard>
+      </motion.div>
+    </MarketingShell>
   );
 }
 
 // ---------------------------------------------------------------------------
+
+function Field({
+  id, label, type, required, autoComplete, value, onChange, placeholder, minLength,
+}: {
+  id: string;
+  label: string;
+  type: string;
+  required?: boolean;
+  autoComplete?: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  minLength?: number;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-[#1a1a1a]">{label}</label>
+      <input
+        id={id}
+        type={type}
+        required={required}
+        autoComplete={autoComplete}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        minLength={minLength}
+        className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-base text-[#1a1a1a] placeholder:text-[#1a1a1a]/35 focus:outline-none focus:ring-2 focus:ring-[#3054ff]/40 focus:border-[#3054ff]"
+      />
+    </div>
+  );
+}
 
 function OAuthButton({
   provider, busy, disabled, onClick,
@@ -206,7 +213,7 @@ function OAuthButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-border bg-card px-5 py-3 text-base font-medium text-foreground transition-colors hover:bg-accent disabled:opacity-60 disabled:cursor-not-allowed"
+      className="inline-flex w-full items-center justify-center gap-3 rounded-xl border border-stone-200 bg-stone-50 hover:bg-stone-100 px-5 py-3 text-base font-medium text-[#1a1a1a] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
     >
       {busy ? (
         <Loader2 className="h-5 w-5 animate-spin" />

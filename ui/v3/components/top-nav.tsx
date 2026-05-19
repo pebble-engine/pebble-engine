@@ -28,22 +28,24 @@ export function TopNav({
   return (
     <header
       style={{ viewTransitionName: "top-nav" }}
-      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-border bg-background/80 backdrop-blur"
+      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-instrument-sans)]"
     >
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-4">
         <Link
           href="/"
-          className={`${interactions.link} ${type.display.m} text-accent-foreground hover:text-primary`}
+          className="inline-flex items-center px-3 py-1.5 rounded-full bg-stone-900/40 backdrop-blur-xl border border-white/15 text-lg font-semibold"
         >
-          Pebble.
+          <span className="bg-gradient-to-b from-white via-white to-[#b4c0ff] bg-clip-text text-transparent">
+            Pebble.
+          </span>
         </Link>
         {projectName && (
           <>
-            <div className="h-6 w-px bg-border" />
+            <div className="h-5 w-px bg-white/15" />
             <motion.span
               layoutId="project-name"
               style={{ viewTransitionName: "project-name" }}
-              className={`${type.heading.s} text-foreground`}
+              className="text-base font-medium text-white/85"
             >
               {projectName}
             </motion.span>

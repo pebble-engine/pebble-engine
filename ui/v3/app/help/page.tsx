@@ -178,7 +178,7 @@ export default function HelpPage() {
               and we&apos;ll get back to you.
             </p>
             <p className="text-xs text-muted-foreground">
-              <Link href="/landing" className="hover:text-foreground">Back to the landing page</Link>
+              <Link href="/" className="hover:text-foreground">Back to the landing page</Link>
               {"  ·  "}
               <Link href="/" className="hover:text-foreground">Start a new site</Link>
             </p>

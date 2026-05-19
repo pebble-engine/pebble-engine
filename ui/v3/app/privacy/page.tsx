@@ -1,39 +1,30 @@
 import Link from "next/link";
+import { MarketingShell, MarketingProse } from "@/components/marketing-shell";
 
 const EFFECTIVE_DATE = "May 18, 2026";
 
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-6 py-16">
-        {/* Back link */}
-        <div className="mb-10">
-          <Link
-            href="/landing"
-            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-          >
-            ← Back to Pebble
-          </Link>
-        </div>
-
-        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground mb-2">
+    <MarketingShell>
+      <MarketingProse>
+        <h1 className="text-4xl font-semibold tracking-tight text-[#1a1a1a] mb-2">
           Privacy Policy
         </h1>
-        <p className="text-sm text-muted-foreground mb-12">Effective {EFFECTIVE_DATE}</p>
+        <p className="text-sm text-[#1a1a1a]/55 mb-12">Effective {EFFECTIVE_DATE}</p>
 
-        <div className="space-y-10 text-base leading-relaxed text-foreground/80">
+        <div className="space-y-10 text-base leading-relaxed text-[#1a1a1a]/75">
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               1. Who we are
             </h2>
             <p>
               Pebble Engine (&ldquo;Pebble&rdquo;, &ldquo;we&rdquo;, &ldquo;our&rdquo;) operates
               the website-building platform at{" "}
-              <a href="https://pebbleapp.ai" className="underline hover:text-foreground transition-colors">
+              <a href="https://pebbleapp.ai" className="underline hover:text-[#1a1a1a] transition-colors">
                 pebbleapp.ai
               </a>{" "}
               and its associated services. Questions:{" "}
-              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+              <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                 web@getpebble.net
               </a>
               .
@@ -41,12 +32,12 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               2. What we collect and why
             </h2>
             <div className="space-y-4">
               <div>
-                <p className="font-medium text-foreground">Account information</p>
+                <p className="font-medium text-[#1a1a1a]">Account information</p>
                 <p>
                   When you sign up, we collect your email address and, optionally, your first name
                   and display name. Your password is hashed by Supabase — we never see it in
@@ -54,7 +45,7 @@ export default function PrivacyPage() {
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Questionnaire answers</p>
+                <p className="font-medium text-[#1a1a1a]">Questionnaire answers</p>
                 <p>
                   To build your site, we collect the information you enter into the Pebble
                   questionnaire (business name, industry, services, tone preferences, etc.). This
@@ -62,7 +53,7 @@ export default function PrivacyPage() {
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Billing information</p>
+                <p className="font-medium text-[#1a1a1a]">Billing information</p>
                 <p>
                   If you subscribe to a paid plan, your payment is
                   processed by Stripe. We never see or store your full card number. We do store your
@@ -70,7 +61,7 @@ export default function PrivacyPage() {
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Usage events</p>
+                <p className="font-medium text-[#1a1a1a]">Usage events</p>
                 <p>
                   We record product-level events (e.g., &ldquo;site built&rdquo;,
                   &ldquo;site published&rdquo;) to understand how the product is used. These events
@@ -79,7 +70,7 @@ export default function PrivacyPage() {
                 </p>
               </div>
               <div>
-                <p className="font-medium text-foreground">Email communications</p>
+                <p className="font-medium text-[#1a1a1a]">Email communications</p>
                 <p>
                   After your first successful build, we send a short welcome sequence (day 1, 3,
                   and 7) with tips and encouragement. You can reply to any email to unsubscribe from
@@ -90,7 +81,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               3. Third-party services
             </h2>
             <p className="mb-3">
@@ -123,7 +114,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               4. Your generated sites
             </h2>
             <p>
@@ -140,7 +131,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               5. Cookies and local storage
             </h2>
             <p>
@@ -150,13 +141,13 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               6. Data retention and deletion
             </h2>
             <p>
               We keep your data for as long as your account is active. You can delete your account
               at any time from{" "}
-              <Link href="/settings" className="underline hover:text-foreground transition-colors">
+              <Link href="/settings" className="underline hover:text-[#1a1a1a] transition-colors">
                 Settings → Account
               </Link>
               . Deletion requests enter a 14-day cooling-off period, after which your account, site
@@ -166,7 +157,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               7. Your rights (GDPR / CCPA)
             </h2>
             <p className="mb-3">
@@ -181,7 +172,7 @@ export default function PrivacyPage() {
             </ul>
             <p className="mt-3">
               Email{" "}
-              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+              <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                 web@getpebble.net
               </a>{" "}
               to exercise any of these rights. Account deletion is self-serve via Settings.
@@ -189,7 +180,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               8. Security
             </h2>
             <p>
@@ -200,7 +191,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               9. Children
             </h2>
             <p>
@@ -210,7 +201,7 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               10. Changes to this policy
             </h2>
             <p>
@@ -221,12 +212,12 @@ export default function PrivacyPage() {
           </section>
 
           <section>
-            <h2 className="font-display text-xl font-semibold text-foreground mb-3">
+            <h2 className="text-xl font-semibold text-[#1a1a1a] mb-3">
               11. Contact
             </h2>
             <p>
               Pebble Engine &mdash;{" "}
-              <a href="mailto:web@getpebble.net" className="underline hover:text-foreground transition-colors">
+              <a href="mailto:web@getpebble.net" className="underline hover:text-[#1a1a1a] transition-colors">
                 web@getpebble.net
               </a>
             </p>
@@ -234,18 +225,18 @@ export default function PrivacyPage() {
         </div>
 
         {/* Footer links */}
-        <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-5 text-sm text-muted-foreground">
-          <Link href="/terms" className="hover:text-foreground transition-colors">
+        <div className="mt-16 pt-8 border-t border-stone-200 flex flex-wrap gap-5 text-sm text-[#1a1a1a]/55">
+          <Link href="/terms" className="hover:text-[#1a1a1a] transition-colors">
             Terms of Service
           </Link>
-          <Link href="/landing" className="hover:text-foreground transition-colors">
+          <Link href="/" className="hover:text-[#1a1a1a] transition-colors">
             Back to Pebble
           </Link>
-          <a href="mailto:web@getpebble.net" className="hover:text-foreground transition-colors">
+          <a href="mailto:web@getpebble.net" className="hover:text-[#1a1a1a] transition-colors">
             web@getpebble.net
           </a>
         </div>
-      </div>
-    </div>
+      </MarketingProse>
+    </MarketingShell>
   );
 }

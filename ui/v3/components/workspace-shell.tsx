@@ -250,16 +250,20 @@ export function WorkspaceShell() {
       </motion.div>
     ) : null;
 
+  const isWelcome = phase === "welcome";
+
   return (
     // reducedMotion="user" makes framer-motion respect the OS prefers-reduced-motion
     // preference for animations that bypass the Variants path — most importantly,
     // the layoutId/shared-element morphs that withReducedMotion() can't reach.
     <MotionConfig reducedMotion="user">
-    <div className="min-h-screen flex flex-col">
-      {/* TopNav persists across all phase changes. */}
-      <TopNav projectName={projectName} rightSlot={topNavRightSlot} />
+    <div className={`min-h-screen flex flex-col ${isWelcome ? "bg-black" : ""}`}>
+      {/* TopNav persists across all phase changes — but the welcome phase
+          owns its own full-bleed dark canvas (and renders the Pebble logo
+          itself, fading in after Start Building Free is clicked). */}
+      {!isWelcome && <TopNav projectName={projectName} rightSlot={topNavRightSlot} />}
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className={`flex flex-1 ${isWelcome ? "bg-black" : "overflow-hidden"}`}>
         {/* Rail is persistent — visible state animates instead of mounting/unmounting.
             On welcome the rail's width and opacity collapse to 0 so it visually
             disappears but stays in the DOM, preserving its layoutId children for
@@ -273,7 +277,9 @@ export function WorkspaceShell() {
             opacity: showLeftRail ? 1   : 0,
           }}
           transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-          className="flex flex-col gap-1 p-4 bg-card border-r border-border overflow-hidden shrink-0"
+          className={`flex flex-col gap-1 p-4 overflow-hidden shrink-0 ${
+            showLeftRail ? "bg-card border-r border-border" : ""
+          }`}
         >
           <div className="mb-6 px-1">
             <h2 className={`${type.heading.m} text-primary`}>Your Build Plan</h2>
@@ -315,7 +321,7 @@ export function WorkspaceShell() {
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="flex-1 flex flex-col overflow-hidden"
+            className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}
           >
             {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
             {phase === "design"  && (
