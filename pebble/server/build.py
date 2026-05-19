@@ -98,6 +98,8 @@ def run_plan(handler) -> None:
     validate_build_payload = pe.validate_build_payload
     pick_random_dna     = pe.pick_random_dna
     pick_dna_by_id      = pe.pick_dna_by_id
+    _LAYOUT_DNA_OK      = getattr(pe, "_LAYOUT_DNA_OK", False)
+    _pick_layout        = getattr(pe, "pick_layout_for_brief", None)
 
     ip = client_ip(handler)
     if not plan_limiter.allow(ip or ""):
@@ -134,6 +136,16 @@ def run_plan(handler) -> None:
         except Exception as e:
             log.warning("industry intel resolution failed: %s", e)
 
+    # Layout DNA for plan preview
+    if _LAYOUT_DNA_OK and _pick_layout:
+        try:
+            creative_direction = (answers.get("creative_direction") or "").strip()
+            layout_dna = _pick_layout(answers, creative_direction=creative_direction)
+            if layout_dna:
+                answers["_layout_dna_id"] = layout_dna["id"]
+        except Exception as e:
+            log.warning("Layout DNA selection (plan) failed: %s", e)
+
     design_dna = _select_dna(answers, pick_random_dna, pick_dna_by_id)
     if design_dna:
         answers["_design_dna"] = design_dna.get("id")
@@ -150,9 +162,10 @@ def run_plan(handler) -> None:
 
     plan = build_pebble_plan(answers, industry_intel, design_dna)
     handler._json(200, {
-        "plan":         plan,
-        "industry_key": industry_key,
-        "dna_id":       design_dna.get("id") if design_dna else None,
+        "plan":           plan,
+        "industry_key":   industry_key,
+        "dna_id":         design_dna.get("id") if design_dna else None,
+        "layout_dna_id":  answers.get("_layout_dna_id"),
     })
 
 
@@ -192,6 +205,8 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     post_build_screenshots = pe.post_build_screenshots
     generate_design_system = pe.generate_design_system  # None when degraded
     pick_random_dna = pe.pick_random_dna                # None when DNA module missing
+    _LAYOUT_DNA_OK  = getattr(pe, "_LAYOUT_DNA_OK", False)
+    _pick_layout    = getattr(pe, "pick_layout_for_brief", None)
 
     ip = client_ip(handler)
     if generate and not generate_limiter.allow(ip or ""):
@@ -286,9 +301,26 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         design_reference["image_count"] = len(attachments)
         design_reference["_raw_attachments"] = attachments
 
-    # Style DNA — random per-build aesthetic personality. Same business +
-    # same industry generates a different-looking site each time because the
-    # DNA dictates fonts, hero structure, motion, and layout posture.
+    # Layout DNA — structural architecture (hero type, nav, section flow).
+    # Picked first so the style DNA can be chosen knowing the layout context.
+    # Honors `_layout_dna_id` pinned in the brief (e.g. from Plan-review UI).
+    layout_dna = None
+    if _LAYOUT_DNA_OK and _pick_layout:
+        try:
+            creative_direction = (answers.get("creative_direction") or "").strip()
+            layout_dna = _pick_layout(answers, creative_direction=creative_direction)
+            if layout_dna:
+                answers["_layout_dna"]    = layout_dna          # full card — used by build_prompt
+                answers["_layout_dna_id"] = layout_dna["id"]
+                log.info("Layout DNA: %s (%s)", layout_dna["label"], layout_dna["id"])
+        except Exception as e:
+            log.warning("Layout DNA selection failed: %s", e)
+    _emit("layout", {
+        "layout_id":    layout_dna.get("id", "")    if layout_dna else "gradient_mesh",
+        "layout_label": layout_dna.get("label", "") if layout_dna else "Gradient Mesh",
+    })
+
+    # Style DNA — visual surface (colors, fonts, motion, signature moves).
     # Honors `_design_dna_id` in the brief when the Plan-review UI has
     # already locked in a style.
     design_dna = None
@@ -296,7 +328,7 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         design_dna = _select_dna(answers, pick_random_dna, pe.pick_dna_by_id)
         if design_dna:
             answers["_design_dna"] = design_dna["id"]
-            log.info("Design DNA: %s (%s)", design_dna['label'], design_dna['id'])
+            log.info("Style DNA: %s (%s)", design_dna['label'], design_dna['id'])
     _emit("style", {
         "dna_label": design_dna.get("label", "") if design_dna else "",
         "dna_id":    design_dna.get("id", "")    if design_dna else "",

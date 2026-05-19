@@ -939,11 +939,27 @@ _LIQUID_GLASS_CLASS_RE = re.compile(
 @check_metadata(static_files=("app/globals.css",))
 def liquid_glass_class_present(ctx: BuildContext) -> CheckResult:
     """`.liquid-glass` class with `backdrop-filter: blur(...)` must exist in
-    `app/globals.css`. The class is used by the navbar chip, the hero's
-    right-column tag, the secondary CTA, and other premium-glass surfaces.
+    `app/globals.css` for layouts that use the liquid-glass chip navbar.
+
+    LAYOUT DNA AWARENESS: layouts that explicitly use a different nav pattern
+    (fixed_top, sticky_chapter, terminal_prompt_nav, etc.) do not require the
+    .liquid-glass class. When one of these layouts is active, the check skips.
     """
     if not ctx.site_dir.exists():
         return CheckResult("liquid_glass_class_present", "skip", "no site directory")
+
+    # Layouts that deliberately don't use liquid-glass
+    _NO_LIQUID_GLASS_LAYOUTS = {
+        "split_screen", "magazine_scroll", "manifesto", "terminal",
+        "weather_report", "chat_log", "index_card", "gallery_first",
+    }
+    layout_id = (ctx.brief.get("_layout_dna_id") or "gradient_mesh").strip()
+    if layout_id in _NO_LIQUID_GLASS_LAYOUTS:
+        return CheckResult(
+            "liquid_glass_class_present", "skip",
+            f"layout DNA '{layout_id}' uses a different nav pattern — .liquid-glass not required",
+        )
+
     css_path = ctx.site_dir / "app" / "globals.css"
     if not css_path.exists():
         return CheckResult("liquid_glass_class_present", "fail", "app/globals.css missing")
@@ -3520,9 +3536,26 @@ def hero_uses_animated_heading(ctx: BuildContext) -> CheckResult:
 
     Checks `components/sections/Hero.tsx` first; falls back to `app/page.tsx`
     in case the LLM inlines the hero there.
+
+    LAYOUT DNA AWARENESS: layouts that deliberately use a plain <h1> (split_screen,
+    magazine_scroll, manifesto, terminal, weather_report, chat_log, index_card,
+    gallery_first, single_screen) set use_animated_heading=False. When the brief
+    carries one of these layout ids, the check skips — the plain <h1> IS correct.
     """
     if not ctx.site_dir.exists():
         return CheckResult("hero_uses_animated_heading", "skip", "no site directory")
+
+    # Layouts where a plain <h1> is the correct structural choice.
+    _NO_ANIMATED_HEADING_LAYOUTS = {
+        "split_screen", "magazine_scroll", "manifesto", "terminal",
+        "weather_report", "chat_log", "index_card", "gallery_first", "single_screen",
+    }
+    layout_id = (ctx.brief.get("_layout_dna_id") or "gradient_mesh").strip()
+    if layout_id in _NO_ANIMATED_HEADING_LAYOUTS:
+        return CheckResult(
+            "hero_uses_animated_heading", "skip",
+            f"layout DNA '{layout_id}' uses a plain <h1> by design — AnimatedHeading not required",
+        )
 
     for rel in ("components/sections/Hero.tsx", "app/page.tsx"):
         p = ctx.site_dir / rel
@@ -3838,14 +3871,29 @@ def design_tokens_defined(ctx: BuildContext) -> CheckResult:
 
 @check_metadata(static_files=("components/ui/GrainOverlay.tsx",))
 def grain_overlay_present(ctx: BuildContext) -> CheckResult:
-    """components/ui/GrainOverlay.tsx must exist.
+    """components/ui/GrainOverlay.tsx must exist for layouts that use grain.
 
     GrainOverlay is a fixed SVG feTurbulence grain layer injected once in
-    app/layout.tsx. Without it the flat CSS gradient mesh reads as synthetic.
-    The grain adds organic depth at near-zero rendering cost.
+    app/layout.tsx. The gradient_mesh and single_screen layouts require it.
+
+    LAYOUT DNA AWARENESS: layouts that don't use gradient backgrounds (terminal,
+    chat_log, index_card, magazine_scroll, manifesto, weather_report) deliberately
+    omit GrainOverlay — grain on a flat-background site looks like a rendering bug.
     """
     if not ctx.site_dir.exists():
         return CheckResult("grain_overlay_present", "skip", "no site directory")
+
+    _NO_GRAIN_LAYOUTS = {
+        "terminal", "chat_log", "index_card", "magazine_scroll",
+        "manifesto", "weather_report",
+    }
+    layout_id = (ctx.brief.get("_layout_dna_id") or "gradient_mesh").strip()
+    if layout_id in _NO_GRAIN_LAYOUTS:
+        return CheckResult(
+            "grain_overlay_present", "skip",
+            f"layout DNA '{layout_id}' omits GrainOverlay by design",
+        )
+
     grain = ctx.site_dir / "components" / "ui" / "GrainOverlay.tsx"
     if grain.exists():
         return CheckResult("grain_overlay_present", "pass", "GrainOverlay.tsx present")
@@ -3909,12 +3957,28 @@ _GRADIENT_MESH_RE = re.compile(
 def hero_uses_gradient_mesh(ctx: BuildContext) -> CheckResult:
     """Hero.tsx must use a CSS gradient mesh (--color-accent-glow or conic/radial-gradient).
 
-    The cinematic system requires every hero to use a CSS gradient mesh rather
-    than a flat background color. Flat heroes kill the DNA's atmospheric depth
-    and are a sign the LLM ignored the DNA block entirely.
+    The cinematic system requires the gradient_mesh layout to use an ambient-light
+    blob background. Flat heroes kill the DNA's atmospheric depth.
+
+    LAYOUT DNA AWARENESS: layouts whose hero_type is NOT gradient_mesh legitimately
+    use a different background treatment (split-screen photo, pure type, masonry
+    grid, terminal prompt). When one of those layouts is active, this check skips.
     """
     if not ctx.site_dir.exists():
         return CheckResult("hero_uses_gradient_mesh", "skip", "no site directory")
+
+    # Non-gradient-mesh layouts by design
+    _NON_GRADIENT_LAYOUTS = {
+        "split_screen", "magazine_scroll", "manifesto", "terminal",
+        "weather_report", "chat_log", "index_card", "gallery_first", "single_screen",
+    }
+    layout_id = (ctx.brief.get("_layout_dna_id") or "gradient_mesh").strip()
+    if layout_id in _NON_GRADIENT_LAYOUTS:
+        return CheckResult(
+            "hero_uses_gradient_mesh", "skip",
+            f"layout DNA '{layout_id}' uses a non-mesh hero by design — gradient mesh not required",
+        )
+
     hero = ctx.site_dir / "components" / "sections" / "Hero.tsx"
     if not hero.exists():
         return CheckResult("hero_uses_gradient_mesh", "skip", "Hero.tsx not found")

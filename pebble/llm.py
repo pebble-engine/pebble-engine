@@ -6,6 +6,16 @@ without callers caring.
 
 Streaming is mandatory for Anthropic (prompts >10min would otherwise 400).
 Gemini's non-streaming endpoint is fine at the prompt sizes we hit.
+
+Prompt caching strategy (Anthropic only):
+    The system prompt in this project is ~32k tokens and is static across
+    builds (same PROMPT.md template rendered identically for each call).
+    We pass it as a content block with cache_control={"type": "ephemeral"}
+    so Anthropic caches the prefix after the first request.
+    Cache hits are billed at ~10% of the normal input rate, reducing
+    per-build costs by 70-80% on the system-prompt tokens.
+    The streaming path uses the same block form — Anthropic requires the
+    list form (not a bare string) to apply cache_control.
 """
 from __future__ import annotations
 import os
@@ -128,6 +138,19 @@ class AnthropicClient:
             else:
                 messages = [{"role": "user", "content": user}]
 
+            # Build the system param with prompt caching when a system prompt
+            # is provided.  Passing system as a list of content blocks with
+            # cache_control instructs Anthropic to cache the prefix, billing
+            # subsequent cache hits at ~10% of the normal input token rate.
+            # If system is empty/None we omit the param entirely to avoid an
+            # API error (the SDK treats anthropic.NOT_GIVEN as "don't send").
+            from anthropic import NOT_GIVEN  # local import keeps top-level clean
+            if system:
+                system_param = [{"type": "text", "text": system,
+                                 "cache_control": {"type": "ephemeral"}}]
+            else:
+                system_param = NOT_GIVEN
+
             # Streaming is required for requests that could exceed 10 minutes —
             # our prompt + 32k max_tokens trips that threshold. We collect the
             # stream into a single string so the caller still sees a sync return.
@@ -135,7 +158,7 @@ class AnthropicClient:
             with self.client.messages.stream(
                 model=self.model,
                 max_tokens=max_tokens,
-                system=system,
+                system=system_param,
                 messages=messages,
             ) as stream:
                 for chunk in stream.text_stream:
@@ -151,9 +174,11 @@ def get_llm_client() -> tuple[Optional[object], str]:
     """Return (client, reason). Client is None if unavailable; reason explains why.
 
     Provider priority:
-        PEBBLE_PROVIDER=gemini     -> GeminiClient (default if key present)
         PEBBLE_PROVIDER=anthropic  -> AnthropicClient
-        (unset)                    -> try Gemini first, fall back to Anthropic
+        PEBBLE_PROVIDER=gemini     -> GeminiClient
+        (unset)                    -> try Anthropic first if ANTHROPIC_API_KEY is set,
+                                      then fall back to Gemini
+        (unset, no Anthropic key)  -> try Gemini
     """
     provider = os.environ.get("PEBBLE_PROVIDER", "").strip().lower()
 
@@ -170,7 +195,30 @@ def get_llm_client() -> tuple[Optional[object], str]:
         except LLMError as e:
             return None, str(e)
 
-    # -- Gemini (explicit or default) --
+    # -- Explicit Gemini request --
+    if provider == "gemini":
+        gemini_key = os.environ.get("GOOGLE_API_KEY", "").strip() or os.environ.get("GEMINI_API_KEY", "").strip()
+        if not gemini_key:
+            return None, "GOOGLE_API_KEY not set (PEBBLE_PROVIDER=gemini)"
+        if not _GOOGLE_OK:
+            return None, "google-genai package not installed (run: pip install google-genai)"
+        model = os.environ.get("PEBBLE_MODEL", _GEMINI_DEFAULT_MODEL).strip() or _GEMINI_DEFAULT_MODEL
+        try:
+            return GeminiClient(api_key=gemini_key, model=model), "ok"
+        except LLMError as e:
+            return None, str(e)
+
+    # -- Auto-detect: Anthropic first (faster, more instruction-following) --
+    if _ANTHROPIC_OK:
+        key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+        if key:
+            model = os.environ.get("PEBBLE_MODEL", _ANTHROPIC_DEFAULT_MODEL).strip() or _ANTHROPIC_DEFAULT_MODEL
+            try:
+                return AnthropicClient(api_key=key, model=model), "ok"
+            except LLMError as e:
+                return None, str(e)
+
+    # -- Fall back to Gemini if no Anthropic key --
     gemini_key = os.environ.get("GOOGLE_API_KEY", "").strip() or os.environ.get("GEMINI_API_KEY", "").strip()
     if gemini_key and _GOOGLE_OK:
         model = os.environ.get("PEBBLE_MODEL", _GEMINI_DEFAULT_MODEL).strip() or _GEMINI_DEFAULT_MODEL
@@ -179,22 +227,11 @@ def get_llm_client() -> tuple[Optional[object], str]:
         except LLMError as e:
             return None, str(e)
 
-    # -- Fall back to Anthropic if Gemini key isn't set --
-    if provider != "gemini":
-        if _ANTHROPIC_OK:
-            key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-            if key:
-                model = os.environ.get("PEBBLE_MODEL", _ANTHROPIC_DEFAULT_MODEL).strip() or _ANTHROPIC_DEFAULT_MODEL
-                try:
-                    return AnthropicClient(api_key=key, model=model), "ok"
-                except LLMError as e:
-                    return None, str(e)
-
     # -- Nothing configured --
     if not _GOOGLE_OK and not _ANTHROPIC_OK:
         return None, "no LLM package installed (run: pip install -r requirements.txt)"
-    if not gemini_key:
-        return None, "GOOGLE_API_KEY not set -- add it to .env (or set PEBBLE_PROVIDER=anthropic)"
+    if not os.environ.get("ANTHROPIC_API_KEY", "").strip() and not gemini_key:
+        return None, "no API key set -- add ANTHROPIC_API_KEY or GOOGLE_API_KEY to .env"
     return None, "LLM not configured"
 
 

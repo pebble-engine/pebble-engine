@@ -52,28 +52,45 @@ These values were computed from the Industry Intelligence above + the quiz answe
 
 ---
 
-## 2. MANDATORY OUTPUT STRUCTURE
+## 2. OUTPUT STRUCTURE
 
-The Design DNA block at the top of this prompt names this build's aesthetic identity (Swiss Magazine, Brutalist Editorial, Terminal Operator, Cinematic IMAX, etc.). The structure below is a **fallback default** — when the DNA describes a different hero structure, motion intensity, or section pattern, the DNA wins. The constants below (page list, full pages, no card grids, headline presence) still apply.
+**READ THE LAYOUT DNA BLOCK AT THE TOP OF THIS PROMPT FIRST.**
+
+The Layout DNA block defines this build's structural architecture — hero type, nav
+pattern, section flow, and which foundation components to use. The section below
+is the **gradient_mesh fallback** — it applies ONLY when no Layout DNA block is
+present, or when the Layout DNA id is `gradient_mesh`.
+
+If a Layout DNA block is present and its id is NOT `gradient_mesh`:
+- Follow the Layout DNA's `hero_structure` exactly for the hero
+- Follow the Layout DNA's `nav_structure` for the navbar
+- Respect the Layout DNA's component table (AnimatedHeading, FadeIn, liquid-glass, GrainOverlay)
+- Use the Layout DNA's `section_flow` for homepage section order
+- The Style DNA block (colors, fonts, tokens) still applies — paint the surface with Style DNA on top of the Layout DNA structure
 
 ### Required Pages
 
 **FOUNDATION PAGES (every build, always):**
 
-1. **Homepage** (`app/page.tsx`) — landing page, full of life, follows the DNA's posture
-2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a generic card grid
+1. **Homepage** (`app/page.tsx`) — landing page, follows the Layout DNA's structure
+2. **Services** (`app/services/page.tsx`) — full-bleed alternating layout, NOT a generic card grid (unless Layout DNA specifies otherwise)
 3. **About** (`app/about/page.tsx`) — editorial story
 4. **Contact** (`app/contact/page.tsx`) — REAL working form (Server Action + Resend SDK — see Code Pattern 8). NOT an `onSubmit` with a hardcoded success state. The form posts to a Next.js Server Action, which calls `resend.emails.send(...)` and returns `{{ ok: true | false, error?: string }}`. When `RESEND_API_KEY` is unset (development without keys), the Server Action returns `{{ ok: true }}` without sending — the eval and the UX still flow cleanly. Map embed below the form.
+
+> **Exception:** Layout DNA `single_screen` renders the entire site in `app/page.tsx`
+> with anchor navigation — no sub-routes. When this layout is active, skip the
+> individual page files and put all content in the homepage.
 
 **INDUSTRY-AWARE PAGES (rendered dynamically per build):**
 
 {pages_block}
 
-### Homepage — Default Section Structure (override per DNA)
+### Homepage — Gradient Mesh Structure (DEFAULT — used when Layout DNA is `gradient_mesh` or absent)
 
-**Section 1: Hero — CINEMATIC GRADIENT MESH (MANDATORY — overrides all DNA hero variants)**
+**Section 1: Hero — GRADIENT MESH HERO**
 
-This hero is the engine's universal foundation. Every build uses this exact structure. The Design DNA provides the `:root {{}}` CSS token values (see the DNA block at the very top of this prompt) that drive the gradient mesh palette — specifically `--color-bg`, `--color-accent-glow`, and `--color-accent-subtle`. There is **NO `<video>` tag**, **NO Pexels**, **NO external media** in the hero.
+The Design DNA provides the `:root {{}}` CSS token values that drive the gradient
+mesh palette. There is **NO `<video>` tag**, **NO Pexels**, **NO external media** in the hero.
 
 **Visual layout:**
 - `<section>` is `relative min-h-[100dvh] overflow-hidden flex flex-col` with `style={{{{ background: "var(--color-bg)" }}}}` — NOT `bg-black`. Using the CSS variable means the post-gen editor can swap palettes by patching only `globals.css`.
@@ -94,28 +111,27 @@ This hero is the engine's universal foundation. Every build uses this exact stru
 - `<FadeIn delay={{1400}} duration={{1000}}>` wrapping `<GlassCard className="px-6 py-3">` (see Code Pattern 10)
 - Inside: `<p className="text-lg md:text-xl lg:text-2xl font-light" style={{{{ color: "var(--color-text-primary)" }}}}>Three. Short. Words.</p>` — three or four short phrases summarizing the business posture. Example: "Roasted. Direct. Local." or "Plumbing · HVAC · Electrical"
 
-**Navbar — liquid-glass chip floating at the top:**
+**Navbar — liquid-glass chip floating at the top (gradient_mesh default only):**
 - Outer wrapper: `absolute top-0 inset-x-0 z-50 px-6 md:px-12 lg:px-16 pt-6`
 - Inner navbar element: `<nav className="liquid-glass rounded-xl px-4 py-2 flex items-center justify-between" style={{{{ color: "var(--color-text-primary)" }}}}>` 
 - Left: logo wordmark in `<Link href="/" className="text-2xl font-semibold tracking-tight">…business name…</Link>`
 - Center (`hidden md:flex gap-8 text-sm`): nav links — hover transitions to reduced opacity
 - Right: primary CTA — `<a href="tel:[BUSINESS PHONE]" className="bg-white text-black px-6 py-2 rounded-lg text-sm font-medium hover:bg-gray-100">Call Us</a>`
 
-**Accessibility (mandatory):**
+**Accessibility (always required, regardless of Layout DNA):**
 - `app/globals.css` includes `@media (prefers-reduced-motion: reduce)` that disables transitions globally
-- The `AnimatedHeading` component checks `prefers-reduced-motion` at mount and renders all characters at final state immediately when set
-- Gradient mesh blobs have `aria-hidden="true"` and `pointer-events-none` — they are pure decoration
-- Hero h1 is a real `<h1>` tag via `AnimatedHeading` (not a styled `<div>`)
+- When `AnimatedHeading` IS used: it checks `prefers-reduced-motion` at mount and renders all characters at final state immediately when set
+- When `AnimatedHeading` is NOT used (per Layout DNA): the plain `<h1>` still needs `textShadow` for legibility
+- Gradient mesh blobs (when present) have `aria-hidden="true"` and `pointer-events-none`
+- Hero h1 is always a real `<h1>` tag — never a styled `<div>`
+- All interactive elements carry `focus-visible:` ring utilities
 
-DO NOT do any of the following, regardless of DNA:
-- A `<video>` tag anywhere in the hero — the foundation uses CSS gradient mesh only
+**Universal DO NOTs (apply regardless of Layout DNA):**
+- A `<video>` tag in the hero — the engine does not use hero video
 - External CDN URLs (Pexels, Unsplash, Picsum) in the hero — no external media dependencies
-- Hardcoded hex colors (`bg-[#0A0A0A]`, `text-[#ffffff]`, `border-[#FF3A1F]`) — use CSS variable tokens exclusively
-- `bg-black` or `bg-gray-900` as the hero background — use `style={{{{ background: "var(--color-bg)" }}}}` so palettes are swappable
-- A flat dark background with no gradient blobs — the radial bloom IS the hero's visual identity
-- A semi-transparent overlay on the gradient mesh (no `bg-black/40`, no dimming layer)
-- Skipping `AnimatedHeading` and `FadeIn` in favor of raw Framer Motion or GSAP on the hero h1
-- Using a `display_font` from the DNA as the h1 typeface — the h1 is always Inter (the DNA's display_font is reserved for accent / decorative uses elsewhere on the page)
+- Hardcoded hex colors anywhere — use CSS variable tokens exclusively (`var(--color-bg)`, `var(--color-accent)`, etc.)
+- `bg-black` or `bg-gray-900` — use `style={{{{ background: "var(--color-bg)" }}}}`
+- Using a `display_font` from the Style DNA as the h1 typeface — h1 is always Inter regardless of Layout or Style DNA
 
 **Section 2: Trust Bar — Counting Stats**
 - Dark or brand-accent background strip — NOT white
@@ -179,8 +195,12 @@ Bottom strip below the 3 columns: `border-t border-white/10 mt-12 pt-6 text-xs t
 
 The eval `footer_lists_all_pages` parses the footer file and FAILS the build if any page declared in `plan.json` is missing from the sitemap column. Don't ship a footer without the sitemap.
 
-### Navigation — Animated Header
+### Navigation
 
+> **If a Layout DNA block is present:** follow its `nav_structure` exactly.
+> The patterns below apply to the `gradient_mesh` default only, or when no Layout DNA specifies otherwise.
+
+**gradient_mesh default nav** (liquid-glass floating chip):
 - Fixed position, `className="navbar"` on `<header>` (required for animation below)
 - Logo left · nav links center · phone CTA right
 - Mobile: hamburger → fullscreen overlay with staggered link reveals
@@ -424,11 +444,15 @@ The eval `sitemap_and_robots_present` verifies both files exist and each has a d
 
 ### CINEMATIC CODE PATTERNS — Implement Verbatim
 
-#### 1. Hero Entrance — AnimatedHeading + FadeIn Components (FOUNDATION)
+#### 1. Hero Entrance — AnimatedHeading + FadeIn Components
 
-**Two reusable client components that compose every hero.** Both go in `components/ui/`. Both are required artifacts — the eval suite verifies their presence. The hero h1 uses `AnimatedHeading`; the subhead, CTA row, and right-column tag each wrap in `FadeIn` with cascading delays (800ms → 1200ms → 1400ms).
+**These components go in `components/ui/`.** Whether to USE them in the hero depends on the Layout DNA:
 
-These are NOT optional. Do NOT replace them with a GSAP timeline or framer-motion equivalent. The components must exist at the exact paths below.
+- Layout DNA table says `AnimatedHeading ✅ YES` → use `<AnimatedHeading>` for the hero h1
+- Layout DNA table says `AnimatedHeading ❌ NO` → use a plain `<h1>` tag with Inter font; still include the component file so the eval suite does not fail on its absence, but do NOT mount it in the hero
+- `FadeIn` follows the same rule from the Layout DNA's `FadeIn cascade` row
+
+**Regardless of Layout DNA, the component files MUST EXIST at `components/ui/AnimatedHeading.tsx` and `components/ui/FadeIn.tsx`** — the eval suite checks for file presence. The Layout DNA controls whether they are used in the hero, not whether they are written.
 
 ##### `components/ui/AnimatedHeading.tsx`
 
@@ -1400,11 +1424,11 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 - [ ] `components/ui/GlassCard.tsx` present — multi-layer glassmorphism with variant system, from Code Pattern 10
 - [ ] `components/ui/MagneticButton.tsx` present — Framer Motion magnetic hover CTA, from Code Pattern 12
 - [ ] `.liquid-glass` class in `app/globals.css` with `::before` mask-composite gradient border
-- [ ] `components/layout/Navbar.tsx` uses `liquid-glass rounded-xl` chip pattern from Code Pattern 2
-- [ ] `components/sections/Hero.tsx` composes AnimatedHeading + FadeIn + CSS gradient mesh blobs — NO `<video>` tag, NO external image URLs
-- [ ] Hero section is `min-h-[100dvh]`, `flex flex-col`, background via `style={{{{ background: "var(--color-bg)" }}}}`; content `flex-1 flex flex-col justify-end` at bottom
-- [ ] Hero h1 uses `AnimatedHeading` with `\n` line break and `letterSpacing: '-0.04em'`
-- [ ] Subhead in `FadeIn delay={{800}}` with `color: var(--color-text-secondary)`, CTAs in `FadeIn delay={{1200}}`, optional right-tag in `FadeIn delay={{1400}}`
+- [ ] `components/layout/Navbar.tsx` — pattern per Layout DNA: liquid-glass chip for `gradient_mesh`, or the nav_structure described in the Layout DNA block
+- [ ] `components/sections/Hero.tsx` — structure per Layout DNA; NO `<video>` tag, NO external image URLs; for `gradient_mesh` layout: composes AnimatedHeading + FadeIn + CSS gradient mesh blobs
+- [ ] Hero section has `style={{{{ background: "var(--color-bg)" }}}}` on its container — every layout uses CSS tokens for background
+- [ ] Hero h1 is a semantic `<h1>` tag in EVERY layout — AnimatedHeading when Layout DNA uses it, plain `<h1>` otherwise
+- [ ] When AnimatedHeading IS used: `\n` line break, `letterSpacing: '-0.04em'`, subhead in FadeIn delay={{800}}, CTAs delay={{1200}}, right-tag delay={{1400}}
 - [ ] `prefers-reduced-motion` media query in globals.css (transition + animation duration to 0.01ms)
 - [ ] `components/ui/AnimatedHeading.tsx`, `components/ui/FadeIn.tsx`, `components/ui/ScrollReveal.tsx`, `components/ui/MagneticButton.tsx`, and `components/forms/ContactForm.tsx` MUST each have `"use client";` at the top — they use React hooks which are forbidden in Server Components. Missing this directive causes a Next.js runtime crash. — eval `client_components_have_directive`
 - [ ] `AnimatedHeading.tsx` includes BOTH `<span className="sr-only">` (full text for screen readers) AND `<span aria-hidden="true">` (decorative char animation) — eval `animated_heading_screen_reader_safe`

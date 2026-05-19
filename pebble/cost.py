@@ -47,11 +47,20 @@ _RATE_CARD: dict[str, tuple[float, float]] = {
     "gemini-3.0-pro":         (1.25, 5.00),
     "gemini-1.5-pro":         (1.25, 5.00),
     "gemini-1.5-flash":       (0.075, 0.30),
-    # Anthropic family
+    "gemini-2.5-flash":       (0.075, 0.30),
+    # Anthropic family — standard (uncached) rates
     "claude-opus-4-7":     (15.0, 75.0),
     "claude-opus-4-6":     (15.0, 75.0),
     "claude-sonnet-4-6":   (3.0,  15.0),
+    "claude-sonnet-4-7":   (3.0,  15.0),
     "claude-haiku-4-5":    (0.80, 4.00),
+    # Anthropic cached-read rates (~10% of normal input rate).
+    # Use these when actual usage.cache_read_input_tokens is available from
+    # the API response — the Anthropic response object exposes
+    # usage.cache_read_input_tokens and usage.cache_creation_input_tokens
+    # which can replace this heuristic for more accurate billing estimates.
+    "claude-sonnet-4-6-cached": (0.30, 15.0),
+    "claude-sonnet-4-7-cached": (0.30, 15.0),
     # Default fallback
     "_unknown":            (5.0, 15.0),
 }
@@ -96,6 +105,17 @@ def estimate_cost(
     record the result on EVERY build so we have a longitudinal series we
     can inspect later — "how much does the average bakery site cost to
     build?" becomes answerable from a directory of build_meta.json files.
+
+    For Anthropic calls the actual response object contains richer usage data:
+        response_obj.usage.cache_read_input_tokens    — billed at ~10% input rate
+        response_obj.usage.cache_creation_input_tokens — billed at ~125% input rate
+        response_obj.usage.input_tokens               — uncached input tokens
+
+    Callers that have access to the raw Anthropic response can compute a more
+    accurate cost by splitting those three buckets and applying the appropriate
+    rate for each (see ``_RATE_CARD`` for the ``-cached`` entries).  This
+    function's chars/4 heuristic remains the fallback when the raw response is
+    not available (e.g. after a Gemini call).
     """
     in_tok = estimate_tokens(prompt)
     out_tok = estimate_tokens(response)

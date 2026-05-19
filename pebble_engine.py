@@ -93,6 +93,20 @@ except Exception:
     build_dna_block = None
     _DNA_OK = False
 
+# Layout DNA — structural architecture picker. Lives in pebble/layout_dna.py.
+try:
+    from pebble.layout_dna import (  # type: ignore
+        pick_layout_for_brief,
+        pick_layout_by_id,
+        build_layout_block,
+    )
+    _LAYOUT_DNA_OK = True
+except Exception:
+    pick_layout_for_brief = None  # type: ignore
+    pick_layout_by_id = None       # type: ignore
+    build_layout_block = None      # type: ignore
+    _LAYOUT_DNA_OK = False
+
 try:
     from anthropic import Anthropic  # type: ignore
     _ANTHROPIC_OK = True
@@ -188,9 +202,13 @@ _STRING_LIMITS = {
     "reference_url":     1000,
     "reference_url_2":   1000,
     "reference_url_3":   1000,
-    "extra_context":     10000,
-    "visitor_action":    5000,
-    "output_mode":       50,
+    "extra_context":        10000,
+    "visitor_action":       5000,
+    "output_mode":          50,
+    # Free-text creative direction — injected at top of prompt with override priority.
+    # 500 chars is enough for "make it minimal and photo-heavy, feels like a Kinfolk
+    # magazine" without opening an injection vector.
+    "creative_direction":   500,
 }
 
 
@@ -955,15 +973,46 @@ Extract and synthesize across all references:
         log.warning("language block render failed: %s", e)
         lang_prefix = ""
 
-    # Prepend the Design DNA block (if any) so it sits at the very top of the
-    # prompt with override priority. The LLM reads top-down; an OVERRIDE-framed
-    # block at line 1 beats Fraunces/Inter mentions buried 1000 lines deeper.
+    # Build the prompt prefix in priority order (highest priority first):
+    #   1. creative_direction block — user's own words, absolute top priority
+    #   2. Layout DNA block — structural architecture (hero type, nav, section flow)
+    #   3. Style DNA block  — visual surface (colors, fonts, motion)
+    #   4. Language prefix  — non-English locale override
+    # The LLM reads top-down; instructions at line 1 beat buried ones.
+    prefix = ""
+
+    creative_direction = (answers.get("creative_direction") or "").strip()
+    if creative_direction:
+        prefix += (
+            "# ============================================================\n"
+            "# USER'S OWN WORDS — read first, let this shape every decision\n"
+            "# ============================================================\n\n"
+            "The business owner wrote this directly. Treat it as the single\n"
+            "highest-priority input. If it conflicts with the Layout DNA or\n"
+            "Style DNA below, the user's own words win. If they ask for\n"
+            "something specific (a certain feel, a particular section, a\n"
+            "layout they liked), honor it precisely.\n\n"
+            f"> {creative_direction}\n\n"
+            "# ============================================================\n"
+            "# (end User Direction — Layout DNA follows)\n"
+            "# ============================================================\n\n"
+        )
+
+    if _LAYOUT_DNA_OK and build_layout_block:
+        layout_dna_card = answers.get("_layout_dna")
+        if layout_dna_card and isinstance(layout_dna_card, dict):
+            try:
+                prefix += build_layout_block(layout_dna_card)
+            except Exception as e:
+                log.warning("Layout DNA block render failed: %s", e)
+
     if design_dna and build_dna_block:
         try:
-            return build_dna_block(design_dna) + lang_prefix + rendered
+            prefix += build_dna_block(design_dna)
         except Exception as e:
-            log.warning("DNA block render failed: %s", e)
-    return lang_prefix + rendered
+            log.warning("Style DNA block render failed: %s", e)
+
+    return prefix + lang_prefix + rendered
 
 
 # --------------------------------------------------------------------------
