@@ -13,6 +13,7 @@ import {
   getBrief,
 } from "@/lib/state";
 import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createCheckoutSession, fetchSubscription, type SubscriptionState } from "@/lib/api";
 
@@ -536,7 +537,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             {STEPS.map((step) => (
               <div key={step.title} className="p-8 rounded-2xl bg-white border border-stone-200">
                 <step.Icon className="w-8 h-8 text-[#3054ff] mb-6" />
-                <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
+                <h3 className={`${type.heading.l} mb-3`}>{step.title}</h3>
                 <p className="text-[#1a1a1a]/65 leading-relaxed">{step.body}</p>
               </div>
             ))}
@@ -570,7 +571,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 key={dna.label}
                 className="p-6 rounded-xl bg-white border border-stone-200 hover:border-[#3054ff]/40 transition-colors"
               >
-                <h3 className="text-base font-semibold mb-2">{dna.label}</h3>
+                <h3 className={`${type.heading.s} mb-2`}>{dna.label}</h3>
                 <p className="text-sm text-[#1a1a1a]/60 leading-relaxed">{dna.feel}</p>
               </div>
             ))}

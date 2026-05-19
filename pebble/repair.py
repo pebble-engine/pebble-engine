@@ -73,8 +73,13 @@ REPAIR_SYSTEM = (
     "1. Output ONLY <pebble-file> blocks and/or <pebble-delete/> tags. No "
     "preamble. No plan. First char is `<`.\n"
     "2. Every emitted file must be complete. Zero TODOs. Zero stubs.\n"
-    "3. Honor the existing Design DNA — fonts, hero structure, motion language. "
-    "Do not substitute defaults like Inter/Fraunces.\n"
+    "3. Honor the existing DNA — do not substitute defaults.\n"
+    "   • Layout DNA controls hero architecture, nav pattern, and section flow. "
+    "If a Layout DNA id is provided in the brief, its hero_structure and "
+    "nav_structure are authoritative. Do not add gradient_mesh blobs or "
+    "animated-heading hero to a layout that doesn't call for them.\n"
+    "   • Style DNA controls typography, colour palette, and motion language. "
+    "Do not substitute Inter/Fraunces for the chosen DNA font stack.\n"
     "4. Anti-slop rules still apply: no fake testimonials, no invented phone "
     "numbers, real headlines.\n"
     "5. iOS rules still apply: 100dvh not 100vh, all autoplay video has "
@@ -83,8 +88,10 @@ REPAIR_SYSTEM = (
     "paths {\"@/*\": [\"./*\"]}, next.config.mjs only, no site/src/.\n"
     "7. Server/Client Component boundary: app/layout.tsx MUST NOT have "
     "\"use client\" (it must be a Server Component so metadata/viewport work). "
-    "Components that use React hooks (AnimatedHeading, FadeIn, ContactForm) "
-    "MUST begin with \"use client\".\n"
+    "ContactForm MUST begin with \"use client\". "
+    "AnimatedHeading and FadeIn MUST begin with \"use client\" when they are "
+    "present — but their presence is conditional on the Layout DNA card. "
+    "Do not add them back if the Layout DNA doesn't call for them.\n"
     "8. No hardcoded localhost URLs: never write http://localhost:... or "
     "http://127.0.0.1:... in app/, components/, or lib/. Use relative paths "
     "(/api/...) or process.env.NEXT_PUBLIC_* for all API references. "
@@ -125,12 +132,23 @@ def build_repair_prompt(ctx: BuildContext, failed: list[CheckResult]) -> str:
     )
     parts.append("## BRIEF (unchanged)\n```json\n" + brief_json + "\n```\n")
 
+    layout_dna_id = ctx.brief.get("_layout_dna_id", "")
+    if layout_dna_id:
+        parts.append(
+            f"## LAYOUT DNA: {layout_dna_id}\n"
+            "This build uses the **Layout DNA** structural archetype above. "
+            "Its hero_structure, nav_pattern, and section_flow are authoritative. "
+            "Do NOT add gradient_mesh blobs, AnimatedHeading hero h1, or "
+            "liquid-glass nav chip patterns unless this layout's card explicitly "
+            "includes them. Fix only the listed failures — preserve structure.\n"
+        )
+
     dna_id = ctx.brief.get("_design_dna", "")
     if dna_id:
         parts.append(
-            f"## DESIGN DNA: {dna_id}\n"
-            "The DNA card chosen for this build is the highest authority on visual "
-            "choices — fonts, hero structure, motion. Honor it. Do not substitute.\n"
+            f"## STYLE DNA: {dna_id}\n"
+            "The Style DNA card chosen for this build governs visual surface — "
+            "colours, typography, motion language. Honor it. Do not substitute.\n"
         )
 
     parts.append("## FAILURES TO FIX\n")

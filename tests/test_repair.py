@@ -930,7 +930,10 @@ def test_repair_raises_when_build_missing(tmp_path):
 # ---------------------------------------------------------------------------
 
 def test_repair_system_mentions_anti_slop_and_dna():
-    assert "Design DNA" in REPAIR_SYSTEM
+    # Guard against accidentally wiping the system prompt.
+    # "Design DNA" was renamed to "Style DNA" / "Layout DNA" in the Layout DNA refactor.
+    assert "Style DNA" in REPAIR_SYSTEM
+    assert "Layout DNA" in REPAIR_SYSTEM
     assert "<pebble-file" in REPAIR_SYSTEM
     assert "TODOs" in REPAIR_SYSTEM
 
