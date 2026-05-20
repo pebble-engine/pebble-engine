@@ -442,10 +442,13 @@ export interface PromptInputBoxProps {
   isLoading?: boolean;
   placeholder?: string;
   className?: string;
+  /** Forward to the inner <textarea>. Used by welcome-phase so the prompt
+   *  has focus the moment the hero reveals, ready for the user to type. */
+  autoFocus?: boolean;
 }
 
 export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxProps>(function PromptInputBox(
-  { onSend = () => {}, isLoading = false, placeholder = "Tell me in your own words. I'll handle the technical parts.", className },
+  { onSend = () => {}, isLoading = false, placeholder = "Tell me in your own words. I'll handle the technical parts.", className, autoFocus = false },
   ref,
 ) {
   useInjectedStyles();
@@ -576,6 +579,7 @@ export const PromptInputBox = React.forwardRef<HTMLDivElement, PromptInputBoxPro
               showPlan ? "I'll ask a few quick questions first..." : showBrand ? "Describe the visual mood..." : placeholder
             }
             className="text-base"
+            autoFocus={autoFocus}
           />
         </div>
 
