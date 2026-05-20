@@ -80,6 +80,7 @@ STACK_RULES_DIET = """
 - **File tree:** `app/` (page routes + layout.tsx + globals.css + actions/) · `components/` (Hero, Nav, Footer, ContactForm, ui/) · `lib/` (email.ts, utils, etc.) · `public/` (.gitkeep in images/hero, images/about, images/services, images/gallery, images/logos, images/og, videos, fonts).
 - **Server vs Client boundary:** `app/layout.tsx` is a Server Component (must NOT start with `"use client"`). ContactForm + any component using `useState`/`useEffect` MUST start with `"use client"`.
 - **Forms USE Server Actions** (`app/actions/contact.ts` calling Resend), not API routes.
+- **`next/font/google` config: weight and axes are mutually exclusive.** Either pick specific weights (`weight: ["400", "500", "600"]` — no axes property) OR opt into a variable font with axes (`weight: "variable", axes: [...]`). NEVER pass both. The Next.js font loader throws "Axes can only be defined for variable fonts when the weight property is nonexistent or set to `variable`" at build time if you do.
 """
 
 

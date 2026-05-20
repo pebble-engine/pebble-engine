@@ -232,6 +232,24 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         handler._json(400, err); return
 
     slug = _slugify(answers.get("business_name", "untitled"))
+    # Phase 15f (2026-05-20): if a next dev is actively serving this slug,
+    # auto-suffix the rebuild so the previous preview keeps running on its
+    # current port and the new build gets its own directory + dev server.
+    # Prevents the "mid-overwrite kills the running preview" failure mode
+    # Marc hit when rebuilding the same brief.
+    try:
+        from pebble.server.dev_registry import get_url as _get_dev_url
+        if _get_dev_url(slug):
+            base = slug
+            n = 2
+            while _get_dev_url(f"{base}-{n}"):
+                n += 1
+            slug = f"{base}-{n}"
+            log.info("[build] auto-suffix: %r is already serving; using %r", base, slug)
+    except Exception:
+        # If dev_registry is unavailable, fall back to raw slug behavior
+        # (overwrite — same as before Phase 15f). Soft-fail.
+        pass
     answers["_slug"] = slug
     _emit("started", {"slug": slug})
     if "_created_at" not in answers:

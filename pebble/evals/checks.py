@@ -3993,6 +3993,163 @@ def hero_uses_gradient_mesh(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# next_js_static_check (Phase 16a, 2026-05-20)
+#
+# Static-analysis pass for the top 8 Next.js compile-time gotchas that
+# our other (more focused) checks don't catch. Caught the wild
+# `next/font` axes+weight collision in Marc's 2026-05-20 mechanic build
+# which had passed all other static evals but failed `next dev`.
+#
+# Repair loop is wired into this — when a check fails, the repair
+# prompt names the offending file + the exact rule violated, and the
+# LLM rewrites it.
+# ---------------------------------------------------------------------------
+
+_NEXTJS_FONT_AXES_WEIGHT_RE = re.compile(
+    r"(?ms)"
+    r"(?:Inter|Fraunces|Roboto|Source_Sans|Poppins|Manrope|Plus_Jakarta|Open_Sans"
+    r"|Outfit|Geist|Geist_Mono|Lato|Montserrat|Raleway|Nunito|Quicksand"
+    r"|IBM_Plex_Mono|JetBrains_Mono|Fira_Code|Space_Mono|Space_Grotesk"
+    r"|Roboto_Mono|Roboto_Slab|Cormorant|Libre|Playfair|EB_Garamond"
+    r"|Marcellus|Crimson|Lora|Merriweather|Anton|Bebas_Neue|Unbounded"
+    r"|Instrument_Sans|Instrument_Serif|Literata|Syne|DM_Sans|DM_Mono)\("
+    r"\s*\{[^}]*?"
+    r"(?:weight\s*:\s*\[[^\]]*\][^}]*axes\s*:|axes\s*:\s*\[[^\]]*\][^}]*weight\s*:\s*\[)"
+)
+
+_SCROLLTRIGGER_MODULE_RE = re.compile(
+    r"(?m)^\s*ScrollTrigger\.(?:normalizeScroll|config)\s*\("
+)
+
+_NEXT_HEAD_IMPORT_RE = re.compile(r"""import\s+\w+\s+from\s+["']next/head["']""")
+_NEXT_ROUTER_IMPORT_RE = re.compile(r"""from\s+["']next/router["']""")
+_USE_CLIENT_IN_LAYOUT_RE = re.compile(r'^\s*[\'"]use client[\'"]')
+
+
+@check_metadata(details_file_key="files")
+def next_js_static_check(ctx: BuildContext) -> CheckResult:
+    """Catches the top Next.js compile-time gotchas via static analysis.
+
+    Pebble's other evals are MOSTLY orthogonal (presence checks,
+    file-structure checks, prop conventions). This eval is the catchall
+    for syntactic combinations that ARE legal individually but blow up
+    at ``next dev`` compile time.
+
+    Currently catches:
+      1. ``next/font`` weight+axes collision  (caught 2026-05-20)
+      2. ``ScrollTrigger.normalizeScroll(true)`` or ``.config(...)`` at
+         module level (SSR crash — must be inside useEffect)
+      3. ``app/layout.tsx`` starting with ``"use client"`` (Server Component
+         requirement)
+      4. ``import Head from "next/head"`` (Pages Router pattern; App Router
+         uses ``export const metadata``)
+      5. ``from "next/router"`` (Pages Router pattern; App Router uses
+         ``next/navigation``)
+
+    Each failure carries the offending file in ``details["files"]`` so the
+    repair loop knows what to embed in the focused repair prompt.
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("next_js_static_check", "skip", "no site directory")
+
+    issues: list[str] = []
+    files_with_issues: list[str] = []
+
+    # Scan a bounded set of files. We focus on app/ + components/ + lib/
+    # — these are the surfaces where these patterns appear. Skip
+    # node_modules, .next, public/.
+    for sub in ("app", "components", "lib"):
+        root = ctx.site_dir / sub
+        if not root.exists():
+            continue
+        for p in root.rglob("*.tsx"):
+            try:
+                src = p.read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            rel = str(p.relative_to(ctx.site_dir)).replace("\\", "/")
+
+            # 1. next/font weight+axes collision
+            if _NEXTJS_FONT_AXES_WEIGHT_RE.search(src):
+                issues.append(
+                    f"{rel}: next/font import has BOTH `weight: [...]` and `axes: [...]` "
+                    "— Next.js rejects this. Pick one: specific weights (omit axes) OR "
+                    'variable font (weight: "variable", keep axes).'
+                )
+                if rel not in files_with_issues:
+                    files_with_issues.append(rel)
+
+            # 2. ScrollTrigger at module level (not in useEffect)
+            if _SCROLLTRIGGER_MODULE_RE.search(src):
+                # Sanity: only flag if it's actually OUTSIDE a function
+                # body. Cheap check: look for `useEffect(` before the
+                # offending line — if absent earlier in the file, it's
+                # module-level.
+                lines = src.splitlines()
+                for i, line in enumerate(lines):
+                    if _SCROLLTRIGGER_MODULE_RE.match(line):
+                        # Search backwards for a useEffect that would contain this
+                        in_use_effect = False
+                        depth = 0
+                        for j in range(i - 1, -1, -1):
+                            depth += lines[j].count("{") - lines[j].count("}")
+                            if depth > 0 and "useEffect" in lines[j]:
+                                in_use_effect = True
+                                break
+                            if depth < 0:
+                                break
+                        if not in_use_effect:
+                            issues.append(
+                                f"{rel}:{i+1}: ScrollTrigger.normalizeScroll/config "
+                                "called at module level — must be inside useEffect (touches `window`)."
+                            )
+                            if rel not in files_with_issues:
+                                files_with_issues.append(rel)
+                            break
+
+            # 3. app/layout.tsx starting with "use client"
+            if rel == "app/layout.tsx" and _USE_CLIENT_IN_LAYOUT_RE.match(src):
+                issues.append(
+                    f"{rel}: starts with \"use client\". app/layout.tsx MUST be a "
+                    "Server Component (so metadata + viewport exports work). Remove the directive."
+                )
+                if rel not in files_with_issues:
+                    files_with_issues.append(rel)
+
+            # 4. next/head import (Pages Router pattern)
+            if _NEXT_HEAD_IMPORT_RE.search(src):
+                issues.append(
+                    f"{rel}: imports from 'next/head' — App Router uses "
+                    "`export const metadata` in layout.tsx / page.tsx instead. "
+                    "Remove the import."
+                )
+                if rel not in files_with_issues:
+                    files_with_issues.append(rel)
+
+            # 5. next/router import (Pages Router; App Router uses next/navigation)
+            if _NEXT_ROUTER_IMPORT_RE.search(src):
+                issues.append(
+                    f"{rel}: imports from 'next/router' — App Router uses "
+                    "'next/navigation' (useRouter, usePathname, useSearchParams). "
+                    "Swap the import."
+                )
+                if rel not in files_with_issues:
+                    files_with_issues.append(rel)
+
+    if not issues:
+        return CheckResult(
+            "next_js_static_check", "pass",
+            "no Next.js compile-time gotchas detected",
+        )
+    return CheckResult(
+        "next_js_static_check", "fail",
+        f"{len(issues)} Next.js gotcha(s): " + " | ".join(issues[:3])
+        + (f" (+{len(issues)-3} more)" if len(issues) > 3 else ""),
+        details={"issues": issues, "files": files_with_issues},
+    )
+
+
+# ---------------------------------------------------------------------------
 # Registry — order matters for report layout; site_compiles last because slow
 # ---------------------------------------------------------------------------
 
@@ -4059,6 +4216,10 @@ ALL_CHECKS = [
     grain_overlay_present,
     framer_motion_in_dependencies,
     hero_uses_gradient_mesh,
+    # Phase 16a (2026-05-20) — top 5 Next.js compile-time gotchas the
+    # other (more focused) static evals don't catch. Caught 2026-05-20
+    # `next/font` weight+axes collision in Marc's mechanic build.
+    next_js_static_check,
     site_compiles,
 ]
 
