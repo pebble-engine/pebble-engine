@@ -25,7 +25,6 @@ import {
   ArrowRight,
   type LucideIcon,
 } from "lucide-react";
-import { DnaPreview } from "@/components/dna-preview";
 import { LanguagePicker } from "@/components/language-picker";
 import { patchBrief, guessIndustryFromIdea, getBrief } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
@@ -158,9 +157,12 @@ export function IdeaPhase({ onAdvance }: Props) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Live DNA preview chip strip — the structural differentiator.
-          Persists the chosen DNA id into the brief via `_design_dna_id`. */}
-      <DnaPreview />
+      {/* 2026-05-19: DnaPreview pill removed from Idea phase. The DNA is
+          decided silently by the engine from brief + creative_direction +
+          industry affinity; the user's first deliberate look at the chosen
+          style is on the Plan phase ("Visual style" card). Marc: "Minimal
+          distractions — no try-another button pulling people away from
+          the current question." */}
 
       <div className="flex justify-center pt-6">
         <div className="flex gap-3">
@@ -225,26 +227,41 @@ export function IdeaPhase({ onAdvance }: Props) {
                         visible: { opacity: 1, y: 0, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } },
                       }}
                       onClick={() => toggleChip(chip.id)}
-                      whileTap={{ scale: 0.96 }}
-                      className={`${interactions.chip} relative flex flex-col items-center justify-center gap-3 p-6 rounded-xl ${
+                      whileTap={{ scale: 0.98 }}
+                      whileHover={{ y: -2 }}
+                      transition={{ duration: 0.18, ease: EASE_QUIET }}
+                      className={`group relative flex flex-col items-start justify-end gap-5 p-5 min-h-[140px] rounded-lg overflow-hidden transition-colors duration-200 ${
                         isSelected
-                          ? "bg-secondary/15 border border-secondary text-foreground"
-                          : "bg-card border border-border text-foreground"
+                          ? "bg-foreground/[0.06] ring-1 ring-foreground text-foreground"
+                          : "bg-transparent ring-1 ring-border hover:ring-foreground/40 text-foreground"
                       }`}
                     >
-                      <chip.Icon className={`w-6 h-6 ${isSelected ? "text-secondary" : "text-muted-foreground"}`} />
-                      <span className={type.label}>{chip.label}</span>
+                      {/* Top-left icon — small, restrained. Becomes brighter when selected. */}
+                      <chip.Icon
+                        className={`w-5 h-5 transition-colors duration-200 ${
+                          isSelected ? "text-foreground" : "text-muted-foreground group-hover:text-foreground/80"
+                        }`}
+                        aria-hidden
+                      />
+
+                      {/* Label — bottom-left, deliberate weight, left-aligned reads more editorial. */}
+                      <span className={`${type.heading.s} text-left leading-tight`}>
+                        {chip.label}
+                      </span>
+
+                      {/* Selection indicator: a hairline accent on the LEFT edge,
+                          not a badge in the corner. Reads as "this is committed"
+                          rather than "this is a form input." */}
                       <AnimatePresence>
                         {isSelected && (
                           <motion.span
-                            initial={{ scale: 0, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            exit={{ scale: 0, opacity: 0 }}
+                            initial={{ scaleY: 0, opacity: 0 }}
+                            animate={{ scaleY: 1, opacity: 1 }}
+                            exit={{ scaleY: 0, opacity: 0 }}
                             transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
-                            className="absolute top-2 right-2 w-5 h-5 bg-secondary rounded-full flex items-center justify-center text-xs text-white"
-                          >
-                            ✓
-                          </motion.span>
+                            className="absolute left-0 top-3 bottom-3 w-[2px] bg-foreground rounded-full origin-center"
+                            aria-hidden
+                          />
                         )}
                       </AnimatePresence>
                     </motion.button>
@@ -258,17 +275,19 @@ export function IdeaPhase({ onAdvance }: Props) {
             {/* Creative direction — free-text aesthetic hint. Shapes the
                 Layout DNA pick (keyword-classified server-side) AND gets
                 injected as the top-priority block in the build prompt.
-                Optional — most users will leave this blank and let the
-                DNA pickers do their thing. Power users can override. */}
+                Placeholder examples lean PLAIN-ENGLISH on purpose — most
+                Pebble users don't speak designer ("editorial magazine
+                spread" is opaque). Use feeling-based examples that map
+                to real businesses the user already knows. */}
             <div>
               <label htmlFor="creative_direction" className={`block ${type.label} text-muted-foreground mb-2`}>
-                How should it feel? <span className="text-muted-foreground/60">(optional — shapes the look)</span>
+                How should your site feel? <span className="text-muted-foreground/60">(optional)</span>
               </label>
               <textarea
                 id="creative_direction"
                 defaultValue={(brief.creative_direction as string) || ""}
                 onBlur={(e) => patchBrief({ creative_direction: e.target.value.trim().slice(0, 500) })}
-                placeholder="e.g. 'minimalist, just bold type — no photos' · 'terminal hacker aesthetic' · 'dashboard with open-now status' · 'editorial magazine spread'"
+                placeholder="e.g. warm and friendly, like a neighborhood cafe"
                 rows={2}
                 maxLength={500}
                 className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
@@ -277,13 +296,13 @@ export function IdeaPhase({ onAdvance }: Props) {
 
             <div>
               <label htmlFor="notes_freeform" className={`block ${type.label} text-muted-foreground mb-2`}>
-                Anything I should know that the questions missed?
+                Anything else we should know? <span className="text-muted-foreground/60">(optional)</span>
               </label>
               <textarea
                 id="notes_freeform"
                 defaultValue={(brief.notes_freeform as string) || ""}
                 onBlur={(e) => patchBrief({ notes_freeform: e.target.value })}
-                placeholder="Optional but powerful. Add anything — constraints, brand colors, examples of sites you love, deal-breakers, whatever the chips couldn't capture."
+                placeholder="Example: your business hours, brand colors you already use, a website you love, things you want to avoid. Whatever helps."
                 rows={3}
                 className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
               />

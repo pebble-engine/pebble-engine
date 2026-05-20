@@ -42,6 +42,31 @@ type ThinkingStep = {
   detail: string;
 };
 
+/** Format elapsed seconds as "0:42" / "2:15" — same shape as a stopwatch. */
+function formatElapsed(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
+
+/** Build-specific "did you know?" facts. Each receives the build context
+ *  pulled from SSE events and returns a one-line message. Returns null
+ *  if the fact needs data we don't yet have — caller filters those out
+ *  so the rotation stays smooth. */
+type BuildCtx = { dna?: string; layout?: string; model?: string; industry?: string };
+const FACTS: Array<(c: BuildCtx) => string | null> = [
+  (c) => c.dna ? `Pebble picked ${c.dna} for your visual personality — one of 13 hand-tuned styles.` : null,
+  (c) => c.layout ? `Your structural shape is ${c.layout} — selected from 10 architecture options.` : null,
+  (c) => c.industry ? `Using a hand-written reference brief for ${c.industry} businesses to ground the copy.` : null,
+  (c) => c.model ? `Writing your copy with ${c.model.replace("claude-", "Claude ").replace("gemini-", "Gemini ")} — prompt caching keeps cost down.` : null,
+  () => `Every site Pebble builds is a real Next.js project. Every line of code is yours.`,
+  () => `Pebble runs 32 quality checks before you see the draft.`,
+  () => `Stock photos shown are placeholders — swap them with your own in one click.`,
+  () => `Your site is mobile-ready by default. We test every layout at 375px before shipping.`,
+  () => `You'll own your domain, your code, and your customer list. No vendor lock-in.`,
+  () => `The whole site loads on a 3G connection in under 2 seconds.`,
+];
+
 const STEPS: ThinkingStep[] = [
   { id: "industry", Icon: Search,       label: "Reading your industry",  detail: "Looking up what websites for your type of business usually include." },
   { id: "style",    Icon: Palette,      label: "Choosing a style",       detail: "Picking a visual style that matches the feeling you chose." },
@@ -70,10 +95,89 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
   const [readyPulsing, setReadyPulsing] = useState(false);
+  const [elapsedSec, setElapsedSec] = useState(0);
+  const [factIdx, setFactIdx] = useState(0);
+  const [buildContext, setBuildContext] = useState<{ dna?: string; layout?: string; model?: string; industry?: string }>({});
+  // Phase A.5: preview_ready event surfaces a URL the user can open
+  // BEFORE the build finishes — homepage is on disk, inner pages still
+  // streaming in. Engine emits this once per build.
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewReadyAt, setPreviewReadyAt] = useState<number | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
+  const startTsRef = useRef<number>(Date.now());
+  const notifiedRef = useRef(false);
 
   const safeDropletPulse = useMemo(() => withReducedMotion(dropletPulse), []);
   const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
+
+  // Elapsed-time ticker. Increments once per second from mount until `done`
+  // or `error` fires. Lets the user see at-a-glance how long they've been
+  // waiting — also feeds the soft estimate ("~90s left").
+  useEffect(() => {
+    startTsRef.current = Date.now();
+    const id = setInterval(() => {
+      setElapsedSec(Math.floor((Date.now() - startTsRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  // Tab title — shows status from another tab so the user can keep
+  // working elsewhere and see when the build is done. Resets on unmount
+  // so other phases get the default Pebble title back.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const original = document.title;
+    if (done) {
+      document.title = "✓ Your site is ready — Pebble";
+    } else if (error) {
+      document.title = "⚠ Build needs attention — Pebble";
+    } else {
+      const tick = elapsedSec % 4;
+      const dots = ".".repeat(tick === 0 ? 0 : tick);
+      document.title = `Pebble is building${dots}`;
+    }
+    return () => {
+      document.title = original;
+    };
+  }, [done, error, elapsedSec]);
+
+  // Browser notification — asked-for once when the user lands on draft
+  // (so they can switch tabs immediately), fired when `done` flips true.
+  // Silent failure if the user denies permission; the in-page UI still
+  // works. We only fire if the tab is HIDDEN — no point pinging a user
+  // who's already looking at the page.
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission === "default") {
+      Notification.requestPermission().catch(() => { /* user dismissed; fine. */ });
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!done || notifiedRef.current) return;
+    notifiedRef.current = true;
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    if (!document.hidden) return; // user is already looking — skip
+    try {
+      new Notification("Your Pebble site is ready", {
+        body: "Click to come back and see your draft.",
+        icon: "/favicon.ico",
+        tag: "pebble-build-done",
+      });
+    } catch {
+      /* notification creation can throw on some browsers — silent ok */
+    }
+  }, [done]);
+
+  // Rotate the "Did you know?" facts every 7 seconds so a user staring
+  // at the page during the wait gets fresh micro-content instead of one
+  // stale line. Pauses on `done` so the last fact stays visible.
+  useEffect(() => {
+    if (done || error) return;
+    const id = setInterval(() => setFactIdx((i) => i + 1), 7000);
+    return () => clearInterval(id);
+  }, [done, error]);
 
   // Auto-scroll the build feed when new lines arrive.
   useEffect(() => {
@@ -90,47 +194,91 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
     const appendLog = (text: string, tone: LogLine["tone"]) =>
       setLogLines((prev) => [...prev, { ts: new Date().toLocaleTimeString(), text, tone }]);
 
+    // Engine event names → human-readable build feed lines. Keeps the
+    // terminal-style feed (Marc loves it) but the COPY reads like a
+    // person describing their work, not raw event keys.
     switch (latest.type) {
       case "started":
-        appendLog(`pebble.engine — build for "${latest.data.slug}"`, "step");
+        appendLog(`Starting your build…`, "step");
         setActiveIdx(0);
         break;
       case "industry":
         appendLog(
           latest.data.key
-            ? `✓ industry intel ready (${latest.data.key})`
-            : `✓ industry intel ready`,
+            ? `Reading the playbook for ${String(latest.data.key).replace(/_/g, " ")}.`
+            : `Reading the playbook for your industry.`,
           "ok",
         );
+        if (latest.data.key) {
+          setBuildContext((c) => ({ ...c, industry: String(latest.data.key).replace(/_/g, " ") }));
+        }
+        setActiveIdx(1);
+        break;
+      case "layout":
+        if (latest.data.layout_label) {
+          appendLog(`Picked your structural style: ${latest.data.layout_label}.`, "ok");
+          setBuildContext((c) => ({ ...c, layout: String(latest.data.layout_label) }));
+        }
         setActiveIdx(1);
         break;
       case "style":
-        appendLog(
-          latest.data.dna_label
-            ? `✓ DNA selected — ${latest.data.dna_label}`
-            : `✓ style DNA selected`,
-          "ok",
-        );
+        if (latest.data.dna_label) {
+          appendLog(`Locked in the visual personality: ${latest.data.dna_label}.`, "ok");
+          setBuildContext((c) => ({ ...c, dna: String(latest.data.dna_label) }));
+        } else {
+          appendLog(`Locked in the visual personality.`, "ok");
+        }
         setActiveIdx(1);
         break;
       case "generating":
-        appendLog(`calling ${latest.data.model} for full-site generation...`, "step");
+        appendLog(`Writing your site — copy, layout, sections, code.`, "step");
+        if (latest.data.model) setBuildContext((c) => ({ ...c, model: String(latest.data.model) }));
         setActiveIdx(2);
         break;
+      case "file":
+        // Phase 13a — streaming live feed. Each <pebble-file> block
+        // emits one event as it finishes streaming in from the LLM.
+        // Shows the user real-time file generation instead of a 2-10
+        // minute blank wait. Keep activeIdx at 2 ("Writing pages") —
+        // we're still in that phase.
+        if (latest.data.name) {
+          appendLog(`+ ${latest.data.name}`, "ok");
+        }
+        break;
+      case "preview_ready":
+        // Phase A.5 — foundation files are on disk. User can open the
+        // preview NOW even though inner pages are still streaming in.
+        // This is the killer UX move: ~60-90s to clickable preview vs
+        // 8-10 min of blind waiting. Fire ONCE per build.
+        if (latest.data.url && !previewUrl) {
+          setPreviewUrl(latest.data.url);
+          setPreviewReadyAt(elapsedSec);
+          appendLog(`✓ Preview ready — open in a new tab while we finish the rest`, "step");
+        }
+        break;
       case "writing":
-        appendLog(`✓ ${latest.data.file_count} files written`, "ok");
+        appendLog(
+          latest.data.file_count
+            ? `Saved ${latest.data.file_count} files to your project.`
+            : `Saving files to your project.`,
+          "ok",
+        );
         setActiveIdx(4);
         break;
       case "evaluating":
-        appendLog(`running eval suite — quality checks...`, "step");
+        appendLog(`Running 32 quality checks before you see it.`, "step");
         setActiveIdx(4);
         break;
       case "done":
-        appendLog(`✓ draft ready — handing back to workspace`, "ok");
+        appendLog(`Done. Your draft is ready to view.`, "ok");
         setActiveIdx(STEPS.length - 1);
         break;
       case "error":
-        appendLog(`ERROR: ${latest.data.error}`, "info");
+        // Don't leak raw provider error strings (e.g. credit-balance
+        // messages) — generalize so the user sees something graceful.
+        // The full error string is still surfaced in the red banner
+        // below if it's set on the props.
+        appendLog(`Something went wrong on this step. Trying to recover…`, "info");
         break;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -198,14 +346,59 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
           variants={safeFadeUp}
           className={`${type.display.m} text-foreground`}
         >
-          Pebble is building your draft.
+          Hang out while Pebble builds your masterpiece.
         </motion.h1>
         <motion.p
           variants={safeFadeUp}
-          className={`${type.body.s} text-muted-foreground mt-2`}
+          className={`${type.body.s} text-muted-foreground mt-2 max-w-md mx-auto`}
         >
-          Usually 2–3 minutes. Feel free to keep this window open.
+          You can switch to another tab — we'll ping you when it's ready. Usually 2–3 minutes.
         </motion.p>
+        <motion.div
+          variants={safeFadeUp}
+          className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/60"
+        >
+          <span
+            className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse"
+            aria-hidden
+          />
+          <span className={`${type.mono} text-muted-foreground`}>
+            {done ? `Finished in ${formatElapsed(elapsedSec)}` : `Building — ${formatElapsed(elapsedSec)}`}
+          </span>
+        </motion.div>
+
+        {/* Phase A.5 — preview-ready CTA. Surfaces the moment the
+            foundation files are on disk (~60-90s into the build) so the
+            user can open the homepage in a new tab while inner pages
+            continue streaming. The biggest perceived-time win in the
+            whole build flow. */}
+        <AnimatePresence>
+          {previewUrl && !done && (
+            <motion.a
+              key="preview-cta"
+              href={previewUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              initial={{ opacity: 0, y: 12, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+              className="mt-5 mx-auto inline-flex items-center gap-3 px-6 py-3 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors group"
+            >
+              <span className={`${type.label}`}>
+                View your homepage now
+              </span>
+              <span className={`${type.mono} text-background/70 group-hover:text-background/90 transition-colors`}>
+                opens in new tab →
+              </span>
+            </motion.a>
+          )}
+        </AnimatePresence>
+        {previewUrl && !done && previewReadyAt !== null && (
+          <p className={`${type.mono} text-muted-foreground/70 mt-2`}>
+            ready at {formatElapsed(previewReadyAt)} — inner pages still streaming in
+          </p>
+        )}
       </motion.section>
 
       {/* Macro checklist — high-level "where are we" */}
@@ -329,6 +522,48 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
             ))}
           </AnimatePresence>
         </div>
+      </motion.section>
+
+      {/* Rotating "Did you know?" card — the engagement honey. Pulls
+          build-specific facts (DNA/layout/industry) when those events
+          have fired; falls back to general Pebble facts before that.
+          Rotates every 7s while building. Pauses on done/error. */}
+      <motion.section
+        variants={safeFadeUp}
+        initial="hidden"
+        animate="visible"
+        transition={{ delay: 1.2, duration: STANDARD_S, ease: EASE_CINEMATIC }}
+        className="w-full max-w-2xl mt-6"
+      >
+        {(() => {
+          // Filter facts to ones whose data is available, then pick by
+          // the rotating index. If no facts are available yet (very early
+          // in the build), show nothing — better than a half-baked fact.
+          const available = FACTS
+            .map((f) => f(buildContext))
+            .filter((s): s is string => !!s);
+          if (available.length === 0) return null;
+          const current = available[factIdx % available.length];
+          return (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={current}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
+                className="rounded-xl border border-border bg-card/40 px-5 py-4 backdrop-blur-sm"
+              >
+                <p className={`${type.mono} text-muted-foreground mb-1`}>
+                  While we work
+                </p>
+                <p className={`${type.body.s} text-foreground leading-relaxed`}>
+                  {current}
+                </p>
+              </motion.div>
+            </AnimatePresence>
+          );
+        })()}
       </motion.section>
 
       <AnimatePresence>

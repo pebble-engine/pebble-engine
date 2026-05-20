@@ -96,8 +96,16 @@ async function deleteJSON<T>(path: string): Promise<T> {
 export type SSEEvent =
   | { type: "started";    data: { slug: string } }
   | { type: "industry";   data: { key: string | null } }
+  | { type: "layout";     data: { layout_id: string; layout_label: string } }
   | { type: "style";      data: { dna_label: string; dna_id: string } }
   | { type: "generating"; data: { model: string; max_tokens: number } }
+  // Streaming mode (Phase 13a): one `file` event per <pebble-file> block
+  // as it completes streaming in from the LLM. Index is 1-based.
+  | { type: "file";       data: { name: string; index: number } }
+  // Phase A.5 (2026-05-19): foundation files are on disk — preview can
+  // render NOW even though inner pages are still streaming. Fires ONCE
+  // per build, the moment the foundation file set is complete.
+  | { type: "preview_ready"; data: { slug: string; url: string } }
   | { type: "writing";    data: { file_count: number } }
   | { type: "evaluating"; data: Record<string, never> }
   | { type: "done";       data: GenerateResponse }

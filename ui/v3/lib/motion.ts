@@ -77,9 +77,27 @@ export const fadeUp: Variants = {
  *  motion in the app; exit is shorter + uses the quieter curve so users
  *  don't feel like they're waiting between phases. */
 export const phaseVariants: Variants = {
-  hidden:  { opacity: 0, y: 12 },
-  visible: { opacity: 1, y: 0, transition: { duration: STANDARD_S, ease: EASE_CINEMATIC } },
-  exit:    { opacity: 0, y: -8, transition: { duration: SHORT_S, ease: EASE_QUIET } },
+  // 2026-05-19 cinematic pass: each phase enters with a slight depth-step
+  // (1.005 scale + 24px lift + 6px blur fading to 0) over SLOW. Reads as
+  // "the camera is pushing in" rather than "a page loaded." Exit is the
+  // mirror: drop back a touch, blur slightly. The whole transition runs
+  // ~700ms in, ~280ms out — long enough to feel deliberate, short enough
+  // not to annoy. Marc: "building up to something huge."
+  hidden:  { opacity: 0, y: 24, scale: 0.995, filter: "blur(6px)" },
+  visible: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    filter: "blur(0px)",
+    transition: { duration: SLOW_S, ease: EASE_CINEMATIC },
+  },
+  exit: {
+    opacity: 0,
+    y: -12,
+    scale: 0.995,
+    filter: "blur(4px)",
+    transition: { duration: STANDARD_S, ease: EASE_QUIET },
+  },
 };
 
 /** Staggered fade-in for rail items. Use as the parent variant; child

@@ -53,9 +53,17 @@
   --color-input: var(--border-1);
   --color-ring: var(--accent-1);
 
-  /* Typography */
-  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-literata), Georgia, serif;
+  /* Typography
+     2026-05-19: Workspace fonts now match the landing body sections —
+     Instrument Sans for body, Instrument Serif for display headlines.
+     The landing's welcome-phase wraps its content in
+     font-[family-name:var(--font-instrument-sans)] explicitly; here we
+     route the design-system tokens to the same families so every
+     workspace surface inherits the same voice without per-component
+     overrides. Inter and Literata stay loaded (still referenced by a
+     few legacy components and the auto-generated sites). */
+  --font-sans: var(--font-instrument-sans), var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-instrument-serif), var(--font-literata), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Radius */
@@ -74,16 +82,47 @@
   --shadow-1:  0 8px 30px rgba(31, 29, 26, 0.08);
 }
 
-/* Dark theme — toggled by adding .dark to <html>. */
+/* Dark theme — toggled by adding .dark to <html>.
+   2026-05-19 monochrome pass: pure neutral palette across the workspace.
+   No warm undertones, no brand teal, no sage selection feedback. Only
+   black, white, and true grays. Marc's "make the workspace look like
+   the landing hero" pass. The landing hero (welcome-phase.tsx) already
+   used #0a0a0a / #000 / white explicitly, so this aligns the tokens
+   with what's painted there. */
 .dark {
-  --surface-0: #14110d;            /* almost black, warm undertone */
-  --surface-1: #1f1d1a;            /* charcoal */
-  --surface-2: #2a2722;            /* slightly lifted card surface */
-  --text-1:    var(--color-sand);  /* paper-light primary */
-  --text-2:    #b8b1a4;            /* warm dim text */
-  --border-1:  #3a342c;
-  --accent-1:  #6ea8b6;            /* lifted river — readable on dark */
-  --shadow-1:  0 8px 30px rgba(0, 0, 0, 0.5);
+  --surface-0: #0a0a0a;            /* page background — true near-black */
+  --surface-1: #141414;            /* cards, panels — one step up */
+  --surface-2: #1f1f1f;            /* hovers, accent fills */
+  --text-1:    #fafafa;            /* primary text — near-white (not pure for AA) */
+  --text-2:    #8a8a8a;            /* secondary — neutral 50% gray */
+  --border-1:  #2a2a2a;            /* subtle neutral border */
+  --accent-1:  #fafafa;            /* PRIMARY accent inverts to white on dark — buttons render as white-on-black */
+  --shadow-1:  0 8px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* Override the shadcn semantic tokens INSIDE dark mode so secondary +
+   ring also become neutral white-on-black rather than the brand sage.
+   This is what makes selected chips render with a white outline instead
+   of the sage-green tint we had before. */
+.dark {
+  --color-secondary:            #fafafa;
+  --color-secondary-foreground: #0a0a0a;
+  --color-ring:                 #fafafa;
+  --color-destructive:          #ff6b6b;
+  --color-destructive-foreground: #0a0a0a;
+}
+
+/* Override the brand-color tokens inside dark mode so the few
+   components that reference --color-river / --color-sage DIRECTLY
+   (idea-phase progress dots, draft-phase indicators, pebble-ripple)
+   cascade to monochrome without per-component edits. Light mode
+   keeps the brand colors. */
+.dark {
+  --color-river: #fafafa;          /* was teal — now white */
+  --color-sage:  #8a8a8a;          /* was green  — now neutral gray */
+  --color-spark: #fafafa;          /* was orange — now white */
+  --color-earth: #8a8a8a;          /* was olive  — now neutral gray */
+  --color-pebble: #2a2a2a;         /* was warm beige — now dark border-gray */
 }
 
 /* Base */
@@ -122,7 +161,19 @@ body {
   background: var(--color-sage);
   border-radius: 42% 58% 70% 30% / 45% 45% 55% 55%;
   opacity: 0.2;
-  animation: pebble-pulse 3s ease-in-out infinite;
+}
+
+/* 2026-05-19 fix: only run the breathing pulse for users who haven't
+   asked the OS to reduce motion. The global @media reduce-motion
+   override sets animation-duration: 0.01ms !important, but combined
+   with `infinite` that re-runs the keyframe ~100k times per second
+   which manifests as a visible flicker on some Windows browsers.
+   Gate the animation on the no-preference query so reduced-motion
+   users get a SOLID blob with no flicker. */
+@media (prefers-reduced-motion: no-preference) {
+  .pebble-ripple::before {
+    animation: pebble-pulse 3s ease-in-out infinite;
+  }
 }
 
 /* Active step glow ring — draft phase macro checklist. Disabled when the

@@ -45,10 +45,11 @@ export const metadata: Metadata = {
 // Inline script applies the user's stored theme before the page paints,
 // so a dark-mode user doesn't see a flash of light theme on load.
 //
-// As of the 2026-05-18 marketing-shell redesign the app DEFAULTS to dark
-// mode — the landing is dark cinematic and the post-auth surfaces should
-// feel like the same family. Users who explicitly chose light still get
-// light (their localStorage preference wins).
+// 2026-05-19 second pass: app DEFAULTS to DARK and the dark theme is now
+// pure neutral (true black background, white text, neutral grays). The
+// landing hero, the workspace, and the marketing body share one mono
+// identity. Light mode still exists for accessibility / user preference
+// but is no longer the auto default.
 const THEME_INIT_SCRIPT = `
 (function() {
   try {
