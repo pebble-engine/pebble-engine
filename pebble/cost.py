@@ -61,6 +61,35 @@ _RATE_CARD: dict[str, tuple[float, float]] = {
     # which can replace this heuristic for more accurate billing estimates.
     "claude-sonnet-4-6-cached": (0.30, 15.0),
     "claude-sonnet-4-7-cached": (0.30, 15.0),
+    # OpenRouter family — rates fetched live from openrouter.ai/api/v1/models
+    # on 2026-05-19. OpenRouter passes-through the upstream provider's pricing
+    # plus a small routing margin. Convert per-token → per-million-tokens
+    # (multiply the API number by 1_000_000).
+    #
+    # Qwen3.6 series (April 2026 generation — current flagship):
+    "qwen/qwen3.6-plus-04-02":         (0.325, 1.95),   # default — 1M context
+    "qwen/qwen3.6-max-preview-20260420":(1.04, 6.24),    # biggest, 262K context
+    "qwen/qwen3.6-flash":              (0.19, 1.13),    # fastest/cheapest 1M-context
+    "qwen/qwen3.6-27b-20260422":       (0.32, 3.20),
+    "qwen/qwen3.6-35b-a3b-20260415":   (0.15, 1.00),
+    # Qwen3.5 (prior generation, kept for back-compat):
+    "qwen/qwen3.5-plus-20260420":      (0.30, 1.80),
+    "qwen/qwen3.5-flash-20260224":     (0.065, 0.26),
+    "qwen/qwen3.5-122b-a10b-20260224": (0.26, 2.08),
+    "qwen/qwen3.5-35b-a3b-20260224":   (0.139, 1.00),
+    "qwen/qwen3.5-27b-20260224":       (0.195, 1.56),
+    "qwen/qwen3.5-9b-20260310":        (0.04, 0.15),
+    # Qwen3 (older, still on OpenRouter):
+    "qwen/qwen3-72b-instruct":         (0.30, 0.90),
+    "qwen/qwen3-235b-a22b":            (0.55, 2.20),
+    "qwen/qwen3-32b":                  (0.20, 0.60),
+    "qwen/qwen-plus":                  (0.40, 1.20),
+    "qwen/qwen-turbo":                 (0.05, 0.20),
+    "qwen/qwen-max":                   (1.60, 6.40),
+    # Other vendors via OpenRouter:
+    "deepseek/deepseek-chat":          (0.27, 1.10),
+    "deepseek/deepseek-coder":         (0.27, 1.10),
+    "meta-llama/llama-3.3-70b-instruct": (0.30, 0.90),
     # Default fallback
     "_unknown":            (5.0, 15.0),
 }

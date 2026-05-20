@@ -18,8 +18,9 @@ Prompt caching strategy (Anthropic only):
     list form (not a bare string) to apply cache_control.
 """
 from __future__ import annotations
+import json
 import os
-from typing import Optional
+from typing import Iterator, Optional
 
 
 # ---- Optional provider SDKs (import-guarded so the engine still runs
@@ -47,8 +48,20 @@ except Exception:
 # Pinned, not aliased. Aliases like `gemini-flash-latest` would silently
 # upgrade across model deprecations and surprise the user. When Google
 # retires this, we want the build to fail loudly so we update intentionally.
-_GEMINI_DEFAULT_MODEL    = "gemini-2.5-flash"
-_ANTHROPIC_DEFAULT_MODEL = "claude-sonnet-4-6"
+_GEMINI_DEFAULT_MODEL     = "gemini-2.5-flash"
+_ANTHROPIC_DEFAULT_MODEL  = "claude-sonnet-4-6"
+# OpenRouter is the "many models behind one API" provider. Default to
+# Qwen 3.6 Plus (Alibaba's April-2026 flagship "Plus" tier in the Qwen3.6
+# series). 1M context window — fits Pebble's full prompt (seed brief +
+# Layout DNA + Style DNA + research) without splitting. ~7-9x cheaper
+# than Sonnet 4.6 on output, comparable instruction-following.
+#
+# Override via PEBBLE_MODEL=... to test alternatives:
+#   qwen/qwen3.6-max-preview-20260420 → bigger but pricier ($1.04/$6.24)
+#   qwen/qwen3.6-flash                → cheaper still ($0.19/$1.13), 1M ctx
+#   qwen/qwen3.5-plus-20260420        → prior generation Plus
+#   deepseek/deepseek-chat            → strong code, different vendor
+_OPENROUTER_DEFAULT_MODEL = "qwen/qwen3.6-plus-04-02"
 
 
 # ---- Errors -------------------------------------------------------------
@@ -168,6 +181,213 @@ class AnthropicClient:
             raise LLMError(f"Anthropic API call failed: {e}")
 
 
+class OpenRouterClient:
+    """Wraps OpenRouter's OpenAI-compatible API. Routes to any model
+    OpenRouter exposes (Qwen, DeepSeek, Llama, etc.) — one integration,
+    many model choices.
+
+    Talks HTTP via httpx (already a transitive dep of anthropic, no extra
+    install). Non-streaming for simplicity; if Qwen outputs start hitting
+    long-prompt timeouts we'll add streaming. OpenRouter's headers
+    `HTTP-Referer` and `X-Title` are optional metadata fields they use
+    for their model leaderboard — provided here for accurate attribution."""
+
+    _BASE_URL = "https://openrouter.ai/api/v1"
+    _PEBBLE_REFERER = "https://pebbleapp.ai"
+    _PEBBLE_TITLE   = "Pebble Engine"
+
+    def __init__(self, api_key: str, model: str):
+        if not api_key:
+            raise LLMError("OPENROUTER_API_KEY is empty")
+        self.api_key = api_key
+        self.model = model
+        self.provider = "openrouter"
+
+    def generate(self, system: str, user: str, max_tokens: int = 16000,
+                 images: Optional[list[dict]] = None) -> str:
+        try:
+            import httpx
+        except ImportError:
+            raise LLMError("httpx not installed (run: pip install httpx)")
+
+        # Build OpenAI-shaped messages. System prompt is a separate message;
+        # user message can be a string OR a content array when images are
+        # attached.
+        messages: list[dict] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+
+        if images:
+            user_content: list[dict] = [{"type": "text", "text": user}]
+            for img in images:
+                media_type = img.get("media_type", "image/png")
+                data = img.get("data", "")
+                user_content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{media_type};base64,{data}"},
+                })
+            messages.append({"role": "user", "content": user_content})
+        else:
+            messages.append({"role": "user", "content": user})
+
+        # Qwen-specific sampling (see generate_stream for rationale).
+        sampling: dict = {}
+        if self.model.startswith("qwen/"):
+            sampling = {
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 40,
+                "min_p": 0.2,
+            }
+
+        try:
+            resp = httpx.post(
+                f"{self._BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": self._PEBBLE_REFERER,
+                    "X-Title": self._PEBBLE_TITLE,
+                },
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    **sampling,
+                },
+                # 10 min — full site generations can take 60-180s
+                # comfortably; pad for slower model + queue depth on
+                # OpenRouter's side.
+                timeout=600.0,
+            )
+            resp.raise_for_status()
+            body = resp.json()
+            return body["choices"][0]["message"]["content"]
+        except httpx.HTTPStatusError as e:
+            # Try to pull the structured error message OpenRouter returns;
+            # fall back to the raw status. Common failures: 402 (credits),
+            # 404 (unknown model), 429 (rate limit), 502 (upstream provider).
+            try:
+                err = e.response.json().get("error", {})
+                msg = err.get("message") or str(e)
+            except Exception:
+                msg = str(e)
+            raise LLMError(f"OpenRouter API call failed (HTTP {e.response.status_code}): {msg}")
+        except httpx.HTTPError as e:
+            raise LLMError(f"OpenRouter network error: {e}")
+        except (KeyError, IndexError, ValueError) as e:
+            raise LLMError(f"OpenRouter response shape unexpected: {e}")
+
+    def generate_stream(self, system: str, user: str, max_tokens: int = 60000,
+                        images: Optional[list[dict]] = None) -> Iterator[str]:
+        """Yield text chunks as they arrive from OpenRouter's streaming
+        endpoint. Same shape as ``generate()`` but with ``stream: true``
+        and the response parsed as SSE.
+
+        Use this when downstream wants to react to partial output (e.g.
+        the engine emits a `file_written` SSE event per complete
+        <pebble-file> block as it streams in). The user perceives the
+        build as 2-3x faster even though total wall time is unchanged.
+
+        Yields plain text chunks. The caller is responsible for buffering
+        and parsing structured content out of the stream.
+        """
+        try:
+            import httpx
+        except ImportError:
+            raise LLMError("httpx not installed (run: pip install httpx)")
+
+        messages: list[dict] = []
+        if system:
+            messages.append({"role": "system", "content": system})
+        if images:
+            user_content: list[dict] = [{"type": "text", "text": user}]
+            for img in images:
+                media_type = img.get("media_type", "image/png")
+                data = img.get("data", "")
+                user_content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:{media_type};base64,{data}"},
+                })
+            messages.append({"role": "user", "content": user_content})
+        else:
+            messages.append({"role": "user", "content": user})
+
+        # Qwen 3.x recommended sampling params per HF Qwen3-Coder-Next card
+        # + the HN-thread fix for the "loop-in-format-thinking" failure mode
+        # (min_p=0.2). Applied only when the model id starts with "qwen/" to
+        # avoid pinning these to non-Qwen routes that might prefer different
+        # defaults (e.g. deepseek/anthropic/llama via OpenRouter).
+        sampling: dict = {}
+        if self.model.startswith("qwen/"):
+            sampling = {
+                "temperature": 1.0,
+                "top_p": 0.95,
+                "top_k": 40,
+                "min_p": 0.2,
+            }
+
+        try:
+            with httpx.stream(
+                "POST",
+                f"{self._BASE_URL}/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": self._PEBBLE_REFERER,
+                    "X-Title": self._PEBBLE_TITLE,
+                },
+                json={
+                    "model": self.model,
+                    "messages": messages,
+                    "max_tokens": max_tokens,
+                    "stream": True,
+                    **sampling,
+                },
+                timeout=900.0,  # match SSE outer timeout
+            ) as resp:
+                if resp.status_code >= 400:
+                    # Read the body to surface the structured error
+                    try:
+                        body_bytes = resp.read()
+                        err_body = json.loads(body_bytes.decode("utf-8")).get("error", {})
+                        msg = err_body.get("message") or f"HTTP {resp.status_code}"
+                    except Exception:
+                        msg = f"HTTP {resp.status_code}"
+                    raise LLMError(
+                        f"OpenRouter streaming call failed (HTTP {resp.status_code}): {msg}"
+                    )
+
+                for raw_line in resp.iter_lines():
+                    if not raw_line:
+                        continue
+                    line = raw_line if isinstance(raw_line, str) else raw_line.decode("utf-8", errors="ignore")
+                    if not line.startswith("data: "):
+                        continue
+                    payload = line[6:].strip()
+                    # OpenRouter follows OpenAI's convention: data: [DONE]
+                    # at end of stream. Stop cleanly without yielding it.
+                    if payload == "[DONE]":
+                        return
+                    try:
+                        event = json.loads(payload)
+                    except json.JSONDecodeError:
+                        # OpenRouter occasionally emits keep-alive comments
+                        # (lines starting with `: `) which iter_lines already
+                        # strips. Anything else that's not valid JSON is
+                        # also non-fatal — skip.
+                        continue
+                    try:
+                        delta = event["choices"][0]["delta"]
+                    except (KeyError, IndexError, TypeError):
+                        continue
+                    chunk = delta.get("content")
+                    if chunk:
+                        yield chunk
+        except httpx.HTTPError as e:
+            raise LLMError(f"OpenRouter network error during stream: {e}")
+
+
 # ---- Provider selector --------------------------------------------------
 
 def get_llm_client() -> tuple[Optional[object], str]:
@@ -176,6 +396,7 @@ def get_llm_client() -> tuple[Optional[object], str]:
     Provider priority:
         PEBBLE_PROVIDER=anthropic  -> AnthropicClient
         PEBBLE_PROVIDER=gemini     -> GeminiClient
+        PEBBLE_PROVIDER=openrouter -> OpenRouterClient (Qwen / DeepSeek / etc.)
         (unset)                    -> try Anthropic first if ANTHROPIC_API_KEY is set,
                                       then fall back to Gemini
         (unset, no Anthropic key)  -> try Gemini
@@ -192,6 +413,17 @@ def get_llm_client() -> tuple[Optional[object], str]:
         model = os.environ.get("PEBBLE_MODEL", _ANTHROPIC_DEFAULT_MODEL).strip() or _ANTHROPIC_DEFAULT_MODEL
         try:
             return AnthropicClient(api_key=key, model=model), "ok"
+        except LLMError as e:
+            return None, str(e)
+
+    # -- Explicit OpenRouter request (Qwen, DeepSeek, Llama, etc.) --
+    if provider == "openrouter":
+        key = os.environ.get("OPENROUTER_API_KEY", "").strip()
+        if not key:
+            return None, "OPENROUTER_API_KEY not set (PEBBLE_PROVIDER=openrouter)"
+        model = os.environ.get("PEBBLE_MODEL", _OPENROUTER_DEFAULT_MODEL).strip() or _OPENROUTER_DEFAULT_MODEL
+        try:
+            return OpenRouterClient(api_key=key, model=model), "ok"
         except LLMError as e:
             return None, str(e)
 
@@ -239,9 +471,11 @@ __all__ = [
     "LLMError",
     "GeminiClient",
     "AnthropicClient",
+    "OpenRouterClient",
     "get_llm_client",
     "_ANTHROPIC_OK",
     "_GOOGLE_OK",
     "_GEMINI_DEFAULT_MODEL",
     "_ANTHROPIC_DEFAULT_MODEL",
+    "_OPENROUTER_DEFAULT_MODEL",
 ]
