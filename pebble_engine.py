@@ -807,8 +807,24 @@ Extract and synthesize across all references:
     else:
         design_reference_block = "*(No design reference provided — Industry Intelligence and Resolved Contract govern.)*"
 
+    # Prompt Diet (Phase 14a, 2026-05-20) — gated by PEBBLE_PROMPT_DIET env var (default ON).
+    # Per Qwen prompting research + audit findings, full SKILL.md injection adds
+    # ~27K tokens of largely-redundant or DNA-contradicting content. Compact diet
+    # versions distill each skill to load-bearing rules only.
+    from pebble.prompt_diet import (
+        diet_enabled,
+        NO_SLOP_DIET,
+        IOS_RULES_DIET,
+        STACK_RULES_DIET,
+        BUSINESS_INTEL_DIET,
+        DESIGN_SYSTEM_DIET,
+    )
+    _DIET_ON = diet_enabled()
+
     # No-slop skill
-    if _NS_SKILL:
+    if _DIET_ON:
+        no_slop_block = NO_SLOP_DIET
+    elif _NS_SKILL:
         # The no-slop skill lists "acceptable display fonts" (Fraunces, Syne, etc.)
         # The Design DNA at the top of this prompt overrides that list — use the DNA's fonts
         # even if they're not on the no-slop list, and DO NOT use no-slop fonts if they
@@ -819,24 +835,43 @@ Extract and synthesize across all references:
         no_slop_block = "\n*(No-slop skill not loaded — apply general quality rules: no 555 phone numbers, no 'Where X meets Y' subtext, no vague superlatives, hero must have visual element.)*\n"
 
     # iOS skill
-    if _IOS_SKILL:
+    if _DIET_ON:
+        ios_skill_block = IOS_RULES_DIET
+    elif _IOS_SKILL:
         ios_skill_block = f"\n\n{_IOS_SKILL.strip()}\n"
     else:
         ios_skill_block = "\n*(iOS skill not loaded -- apply standard iOS Safari fixes: 100dvh, normalizeScroll, muted playsInline video, 16px inputs, safe-area-inset.)*\n"
 
     # Stack skill
-    if _STACK_SKILL:
+    if _DIET_ON:
+        stack_block = STACK_RULES_DIET
+    elif _STACK_SKILL:
         stack_block = f"\n\nRead and follow the Stack Skill below for project structure, dependencies, motion components, and handoff files.\n\n{_STACK_SKILL.strip()}\n"
     else:
         stack_block = "\nNext.js 14 + React 18 + TypeScript + Tailwind CSS v3 + GSAP + Lenis. Follow the project structure in the Stack Skill.\n"
 
     # Business intelligence skill
-    if _BI_SKILL:
+    if _DIET_ON:
+        # Diet also wires the image-sourcing rules in here (no separate
+        # placeholder exists, and BI is the conversion-related block).
+        # The image rules explicitly PERMIT real Unsplash/Pexels URLs —
+        # Pebble's prior prompt accidentally forbade them by saying "no
+        # external URLs", which is why Qwen kept emitting broken
+        # /images/about/owner.jpg placeholders.
+        from pebble.prompt_diet import IMAGE_RULES_DIET
+        bi_block = BUSINESS_INTEL_DIET + "\n" + IMAGE_RULES_DIET
+    elif _BI_SKILL:
         bi_block = f"\n\n{_BI_SKILL.strip()}\n"
     else:
         bi_block = "\n*(Business intelligence skill not loaded -- apply general conversion best practices.)*\n"
 
-    if ds_text:
+    # Diet ON → skip the giant ds_text block entirely. Style DNA + Industry
+    # Intel are authoritative; the ui-ux-pro-max output added ~2.7K tokens of
+    # contradictory Satoshi/General Sans guidance that the engine then had
+    # to override-notice-its-way-around. Replace with a one-line pointer.
+    if _DIET_ON:
+        ds_block = DESIGN_SYSTEM_DIET
+    elif ds_text:
         # The ui-ux-pro-max engine is deterministic: same query -> same Satoshi/
         # General Sans/glassmorphism/blue+orange output every time. That competes
         # with the Design DNA, which is the authoritative visual source for THIS

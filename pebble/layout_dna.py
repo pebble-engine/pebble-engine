@@ -49,8 +49,11 @@ Two-column grid on lg+ screens. Liquid-glass chip in the right column.""",
         "use_liquid_glass_nav": True,
         "use_fade_in_cascade": True,
         "use_grain_overlay": True,
-        "industry_affinity": ["tech", "saas", "software", "agency", "startup", "brand", "marketing", "studio", "consult", "advisory", "finance", "invest"],
-        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "bakery", "florist", "restaurant", "bar", "pub"],
+        # 2026-05-20 re-tune: removed bare "studio" (too broad, pulled photographers/yoga),
+        # "consult"/"advisory"/"finance"/"invest"/"brand" (belong to expertise-led layouts).
+        # Added explicit aversions for trust-based local + relationship businesses.
+        "industry_affinity": ["tech", "saas", "software", "startup", "platform", "app", "product", "ai", "ml", "data", "analytics", "fintech", "crypto", "marketing", "agency"],
+        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "bakery", "florist", "restaurant", "bar", "pub", "salon", "barber", "yoga", "therapy", "counseling", "wedding photographer", "law firm", "law office"],
         "keyword_triggers": ["modern", "sleek", "tech", "product", "startup", "clean gradient", "glow", "ambient"],
         "forbidden": ["flat single-color hero background", "video hero", "image-only hero", "no gradient blobs"],
         "signature_moves": [
@@ -89,8 +92,11 @@ the visual statement.""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": True,
         "use_grain_overlay": False,
-        "industry_affinity": ["real estate", "architect", "interior", "property", "photo", "wedding", "atelier", "fashion", "boutique", "studio"],
-        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "fast food"],
+        # 2026-05-20 re-tune: THE coaching fix — adding coach/coaching/executive coach
+        # so coaches default to split_screen (headshot + value prop) NOT chat_log (Q&A bubbles).
+        # Also added people-based service businesses where headshot+value prop converts.
+        "industry_affinity": ["real estate", "realtor", "architect", "interior", "property", "photo", "wedding", "atelier", "fashion", "boutique", "coach", "coaching", "executive coach", "trainer", "personal trainer", "fitness", "salon", "barber", "hair", "stylist", "therapist", "therapy", "counseling", "yoga", "pilates", "instructor", "agent"],
+        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "fast food", "tow", "locksmith", "emergency"],
         "keyword_triggers": ["editorial", "split", "half", "photo left", "photo right", "newspaper", "magazine layout", "two column hero"],
         "forbidden": ["gradient mesh blobs in hero", "AnimatedHeading in hero h1", "liquid-glass chip nav"],
         "signature_moves": [
@@ -124,8 +130,12 @@ The date/issue/category appears above the headline in mono 11px uppercase
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": False,
         "use_grain_overlay": False,
-        "industry_affinity": ["editorial", "publish", "journal", "media", "writer", "law", "attorney", "consult", "advisory", "gallery", "art", "museum", "foundation"],
-        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "fast food", "bar", "club"],
+        # 2026-05-20 re-tune: added "lawyer"/"legal"/"cpa"/"accountant"/"wealth" — the prestige
+        # professions where long-form editorial sells expertise. Added "coach"/"therapy" as
+        # a secondary path (some prefer editorial frame over chat frame). Dropped bar/club
+        # aversion — craft cocktail bars with editorial chef bios are a real fit.
+        "industry_affinity": ["editorial", "publish", "journal", "media", "writer", "law", "attorney", "lawyer", "legal", "consult", "advisory", "gallery", "art", "museum", "foundation", "cpa", "accountant", "accounting", "coach", "coaching", "therapy", "counseling", "wealth", "advisor", "agency", "creative agency"],
+        "industry_aversion": ["mechanic", "plumb", "hvac", "electrician", "contractor", "fast food", "tow", "locksmith", "emergency", "salon", "barber"],
         "keyword_triggers": ["long form", "editorial", "essay", "magazine", "chapter", "reading experience", "text heavy", "journal", "newsletter"],
         "forbidden": ["AnimatedHeading", "gradient mesh hero", "liquid-glass chip", "card grids", "trust bar with icons"],
         "signature_moves": [
@@ -159,8 +169,11 @@ the point.""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": True,
         "use_grain_overlay": True,
-        "industry_affinity": ["local business", "plumb", "hvac", "electrician", "mechanic", "locksmith", "tow", "delivery", "repair"],
-        "industry_aversion": ["luxury", "fashion", "hotel", "resort", "architect", "editorial"],
+        # 2026-05-20 re-tune: workhorse layout for any small local business where the
+        # customer decision is "are you open, what's your number". Added explicit
+        # café/bakery/barbershop/cleaners so they stop falling through to safe-random.
+        "industry_affinity": ["local business", "plumb", "hvac", "electrician", "mechanic", "locksmith", "tow", "delivery", "repair", "cafe", "coffee shop", "bakery", "deli", "food truck", "barber", "barbershop", "salon", "nail", "tutor", "cleaner", "cleaning", "lawn", "landscap", "pet sitter", "dog walker", "handyman"],
+        "industry_aversion": ["luxury", "fashion", "hotel", "resort", "architect", "editorial", "museum", "gallery", "wedding photographer", "law firm"],
         "keyword_triggers": ["one page", "single page", "everything on one page", "simple", "compact", "quick", "fast"],
         "forbidden": ["separate page routes (app/services/, app/about/ etc.)", "full-viewport hero", "sticky chapter sidebar", "split-screen hero"],
         "signature_moves": [
@@ -197,8 +210,12 @@ next/image with priority={false} except the first two (priority={true}).""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": True,
         "use_grain_overlay": True,
-        "industry_affinity": ["photo", "florist", "baker", "cafe", "wedding", "studio", "art", "gallery", "ceramic", "jewel", "fashion", "restaurant", "food", "hotel"],
-        "industry_aversion": ["mechanic", "plumb", "hvac", "contractor", "software", "saas", "law", "account"],
+        # 2026-05-20 re-tune: removed bare "studio" (overlap). Added "photographer" explicitly.
+        # Added yoga/salon/tattoo/musician — businesses whose Instagram aesthetic IS the pitch.
+        # Tightened bare "account" → "accountant"/"accounting"/"cpa" so it doesn't catch
+        # "key account manager" briefs.
+        "industry_affinity": ["photo", "photographer", "florist", "baker", "bakery", "cafe", "coffee", "wedding", "art", "gallery", "ceramic", "jewel", "fashion", "restaurant", "food", "hotel", "yoga", "pilates", "salon", "barber", "tattoo", "interior", "boutique", "musician", "artist", "designer", "ceramicist", "potter", "chef"],
+        "industry_aversion": ["mechanic", "plumb", "hvac", "contractor", "software", "saas", "law", "accountant", "accounting", "cpa", "tow", "emergency", "locksmith"],
         "keyword_triggers": ["gallery", "portfolio", "photos", "images", "work speaks", "visual", "photography", "masonry"],
         "forbidden": ["AnimatedHeading in hero", "gradient mesh blobs filling hero background", "text-heavy hero", "card grid services"],
         "signature_moves": [
@@ -235,8 +252,12 @@ tag, sr-only fallback for the first visible heading).""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": True,
         "use_grain_overlay": False,
-        "industry_affinity": ["therapy", "coach", "wellness", "counseling", "dental", "medical", "vet", "daycare", "family", "baby", "nutrition", "yoga", "spa", "massage"],
-        "industry_aversion": ["mechanic", "contractor", "plumb", "software", "saas", "law", "invest", "finance"],
+        # 2026-05-20 CORE FIX: removed "coach", "wellness", "yoga", "spa", "family" —
+        # these dragnet keywords caused coach→chat_log and yoga→chat_log misroutes.
+        # chat_log now focused on actual care professions where empathetic Q&A frame
+        # is appropriate (therapy, dental, medical, daycare, elderly care).
+        "industry_affinity": ["therapy", "therapist", "counseling", "counselor", "dental", "dentist", "medical", "doctor", "physician", "clinic", "vet", "veterinarian", "daycare", "preschool", "nanny", "baby", "midwife", "doula", "nutrition", "dietitian", "massage", "elderly care", "home care", "hospice", "rehab", "addiction", "support"],
+        "industry_aversion": ["mechanic", "contractor", "plumb", "software", "saas", "law", "invest", "finance", "agency", "luxury", "fashion", "wedding photographer", "restaurant", "bar"],
         "keyword_triggers": ["conversation", "chat", "friendly", "Q&A", "question and answer", "approachable", "human", "warm"],
         "forbidden": ["AnimatedHeading in hero", "gradient mesh blobs in hero", "liquid-glass chip nav", "stats trust bar", "card grids"],
         "signature_moves": [
@@ -270,8 +291,11 @@ The card stack begins immediately below — this is the main event.""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": False,
         "use_grain_overlay": False,
-        "industry_affinity": ["consult", "advisory", "agency", "design", "legal", "law", "attorney", "account", "tax", "financial", "engineer", "surveyor", "architect"],
-        "industry_aversion": ["bar", "club", "gym", "bakery", "florist", "wedding", "salon", "spa"],
+        # 2026-05-20 re-tune: tightened bare "account" → "accountant"/"accounting"/"cpa".
+        # Added "lawyer" (currently only "attorney" matched). Added aversions for service-
+        # business and food categories where a card stack would feel sterile.
+        "industry_affinity": ["consult", "consultancy", "advisory", "advisor", "agency", "design agency", "legal", "law", "attorney", "lawyer", "accountant", "accounting", "cpa", "tax", "financial planner", "wealth", "engineer", "engineering firm", "surveyor", "architect", "studio", "boutique firm", "freelance"],
+        "industry_aversion": ["bar", "club", "gym", "bakery", "florist", "wedding", "salon", "spa", "mechanic", "plumb", "hvac", "emergency", "restaurant", "cafe"],
         "keyword_triggers": ["cards", "index", "menu", "list", "directory", "simple list", "no fuss", "no frills", "catalogue"],
         "forbidden": ["AnimatedHeading", "gradient mesh blobs", "liquid-glass", "full-viewport hero", "masonry grid", "split-screen"],
         "signature_moves": [
@@ -312,8 +336,12 @@ looks like a command prompt. No AnimatedHeading. No gradient blobs.""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": False,
         "use_grain_overlay": False,
-        "industry_affinity": ["software", "saas", "security", "cyber", "dev", "engineer", "tech", "cloud", "infra", "network", "linux", "open source"],
-        "industry_aversion": ["bakery", "florist", "wedding", "salon", "spa", "yoga", "baby", "daycare", "restaurant", "bar", "cafe"],
+        # 2026-05-20 re-tune: removed bare "tech" and "engineer" (too broad, caught civil
+        # engineers and "fintech" briefs). Added explicit "tech startup", "cybersecurity",
+        # "devops". Expanded aversions to ALL non-technical professions so terminal can't
+        # accidentally pick up a "coach who works with tech founders" brief.
+        "industry_affinity": ["software", "saas", "security", "cyber", "cybersecurity", "dev", "devops", "developer", "tech startup", "cloud", "infra", "infrastructure", "network", "linux", "open source", "api", "platform", "data engineering", "ml ops", "blockchain", "crypto exchange", "hacker", "ctf"],
+        "industry_aversion": ["bakery", "florist", "wedding", "salon", "spa", "yoga", "baby", "daycare", "restaurant", "bar", "cafe", "therapy", "counseling", "coach", "coaching", "law firm", "real estate", "photographer", "hair", "barber", "fashion", "musician", "art", "gallery"],
         "keyword_triggers": ["terminal", "command line", "monospace", "hacker", "cli", "developer", "technical", "green on black", "amber"],
         "forbidden": ["AnimatedHeading", "gradient mesh blobs", "liquid-glass", "any sans-serif font except JetBrains Mono as primary", "card grids with shadows"],
         "signature_moves": [
@@ -352,8 +380,13 @@ Examples:
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": True,
         "use_grain_overlay": False,
-        "industry_affinity": ["agency", "art", "studio", "design", "brand", "photography", "consultant", "advisor", "creative", "filmmaker", "writer", "independent"],
-        "industry_aversion": ["fast food", "contractor", "hvac", "plumb", "tow", "mechanic", "daycare", "bakery"],
+        # 2026-05-20 re-tune: REMOVED "studio", "photography", "consultant", "advisor"
+        # — they pulled portfolio businesses into a no-image manifesto layout (wrong).
+        # Focused on businesses where bold type IS the brand: agencies, brands, artists,
+        # musicians, writers. Dropped "bakery" from aversion — craft bakery manifestos
+        # ("Bread is patience.") actually work beautifully.
+        "industry_affinity": ["agency", "art", "design", "brand", "branding", "creative agency", "filmmaker", "writer", "independent", "musician", "artist", "poet", "luxury", "atelier", "boutique brand", "opinionated"],
+        "industry_aversion": ["fast food", "contractor", "hvac", "plumb", "tow", "mechanic", "daycare", "therapy", "counseling", "dental", "medical", "real estate"],
         "keyword_triggers": ["minimal", "type only", "words", "manifesto", "statement", "typography", "bold text", "clean", "no images"],
         "forbidden": ["AnimatedHeading", "gradient mesh blobs", "liquid-glass chip", "images above the fold", "card grids", "trust badge bars"],
         "signature_moves": [
@@ -399,8 +432,13 @@ the status dot and section headers only.""",
         "use_liquid_glass_nav": False,
         "use_fade_in_cascade": False,
         "use_grain_overlay": False,
-        "industry_affinity": ["mechanic", "automotive", "auto repair", "tow", "plumb", "hvac", "electrician", "contractor", "roof", "landscap", "locksmith", "emergency", "repair", "service"],
-        "industry_aversion": ["luxury", "hotel", "resort", "fashion", "wedding", "editorial", "gallery", "museum", "art"],
+        # 2026-05-20 re-tune: REMOVED bare "service" (was the worst offender — matched
+        # "financial services", "professional services", "advisory services" and forced
+        # dashboard hero on relationship businesses). Replaced with explicit on-call/
+        # dispatch trades. Added aversions for relationship-driven businesses where
+        # "wait time: 45 min" dashboard would feel transactional.
+        "industry_affinity": ["mechanic", "automotive", "auto repair", "tow", "plumb", "plumber", "hvac", "electrician", "contractor", "roofer", "roofing", "landscap", "locksmith", "emergency", "repair", "handyman", "pest control", "garage door", "appliance repair", "junk removal", "moving company", "dispatch", "24/7"],
+        "industry_aversion": ["luxury", "hotel", "resort", "fashion", "wedding", "editorial", "gallery", "museum", "art", "therapy", "coach", "coaching", "law firm", "real estate", "photographer", "designer"],
         "keyword_triggers": ["dashboard", "status", "availability", "hours", "open now", "utility", "service menu", "price list", "no nonsense"],
         "forbidden": ["AnimatedHeading", "gradient mesh blobs", "liquid-glass chip", "full-viewport hero", "masonry gallery", "split-screen hero"],
         "signature_moves": [
