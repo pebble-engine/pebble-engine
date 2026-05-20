@@ -563,6 +563,15 @@ def build_pages_block(entry: Optional[dict]) -> str:
 
     lines.append("")
     lines.append(f"Total pages this build: **{4 + len(all_pages)}**  (4 foundation + {len(all_pages)} above).")
+    lines.append("")
+    lines.append(
+        "**Multi-page requirement (non-negotiable):** Every page above MUST be emitted "
+        "as its own `<pebble-file path=\"app/<route>/page.tsx\">…</pebble-file>` block with "
+        "complete content — not a stub, not a placeholder, not a `<!-- TODO -->` comment. "
+        f"Your response must include {4 + len(all_pages)} page files plus shared components, "
+        "config, and assets. If you would run out of room, prioritize page completeness over "
+        "extra component decoration — every page being real beats a richer homepage with empty inner pages."
+    )
     return "\n".join(lines)
 
 
