@@ -393,11 +393,45 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         })
         return
 
+    # Tier-aware model override (Phase 13c, 2026-05-19).
+    # Free tier → Qwen Flash (fast + cheap). Paid → Qwen Plus (1M ctx,
+    # better quality). Only applies when the active provider is
+    # OpenRouter; Anthropic/Gemini honour PEBBLE_MODEL unchanged so
+    # manual testing isn't disrupted. PEBBLE_MODEL=auto opts INTO the
+    # tier mapping; any other explicit value still wins (lets ops force
+    # a specific Qwen variant for debugging).
+    if getattr(client, "provider", "") == "openrouter":
+        from pebble.server.model_for_plan import (
+            resolve_user_plan, model_for_plan, MODEL_FOR_PAID_TIER, MODEL_FOR_FREE_TIER,
+        )
+        # Treat the default Plus id as "no manual override" so we tier-shift.
+        # Any other PEBBLE_MODEL value (max-preview, flash, deepseek, etc.)
+        # is treated as deliberate and respected.
+        current_model = getattr(client, "model", "")
+        is_default_model = current_model in (MODEL_FOR_PAID_TIER, MODEL_FOR_FREE_TIER)
+        if is_default_model:
+            plan = resolve_user_plan(answers.get("_user_id"))
+            picked = model_for_plan(plan)
+            if picked != current_model:
+                log.info("[build] tier-shifting model: plan=%s, model=%s → %s",
+                         plan, current_model, picked)
+                client.model = picked
+
     try:
         is_lite = answers.get("output_mode") == "lite"
         format_instruction = LITE_FILE_FORMAT_INSTRUCTION if is_lite else FILE_FORMAT_INSTRUCTION
         full_user = prompt + format_instruction
-        _max_tok = 8000 if is_lite else 32000
+        # Provider-aware max_tokens — Qwen 3.6 Plus (OpenRouter default) has
+        # 1M context + comfortable 60k+ output capacity, so we bump the cap
+        # to let multi-page builds (5-7 industry pages + foundation + universal
+        # pages) finish without truncating mid-stream. Anthropic/Gemini stay
+        # at the proven 32k zone for our prompt size — Sonnet's hard ceiling
+        # is ~64k but 32k is where we've validated stability.
+        if is_lite:
+            _max_tok = 8000
+        else:
+            _provider = getattr(client, "provider", "")
+            _max_tok = 60000 if _provider == "openrouter" else 32000
         _emit("generating", {"model": client.model, "max_tokens": _max_tok})
 
         if is_lite:
@@ -448,17 +482,158 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                 "11. Honor the Design DNA's font list. The fonts listed there are the ONLY fonts allowed for this build. Do not substitute Fraunces, Inter, or any other default unless the DNA explicitly names it.\n"
                 "12. Implement at least 3 of the DNA's `signature moves` — these are what make the build feel like its DNA, not a generic site with new fonts.\n\n"
 
+                "LINK HANDLING -- one rule, no ambiguity (added 2026-05-19 to fix unstyled nav anchors):\n"
+                "- Page navigation (nav menu, footer sitemap, in-content links to other pages): "
+                "import Link from \"next/link\" and use <Link href=\"/services\" className=\"...\">. NEVER bare <a href=\"/services\">.\n"
+                "- Phone/email: <a href=\"tel:[BUSINESS PHONE]\" className=\"...\"> and "
+                "<a href=\"mailto:[EMAIL]\" className=\"...\">. NEVER use Link for tel: or mailto:.\n"
+                "- External links: <a href=\"https://...\" target=\"_blank\" rel=\"noopener noreferrer\" className=\"...\">.\n"
+                "- EVERY anchor and Link MUST have explicit Tailwind className with at minimum: text color, "
+                "hover state, and font weight. NEVER emit a className-less <a> or <Link> — that produces "
+                "unstyled browser-default blue underlined links.\n\n"
+
                 "If you are uncertain about any detail not in the brief, make the best decision and build. "
                 "The owner reviews the output. You are not the reviewer."
             )
         t0 = time.time()
         vision_images = (design_reference or {}).get("_raw_attachments") if design_reference else None
-        response = client.generate(
-            system=system,
-            user=full_user,
-            max_tokens=_max_tok,
-            images=vision_images,
+
+        # Phase A.5 (2026-05-19): Incremental file writes during stream.
+        # Files land on disk AS Qwen finishes each <pebble-file> block,
+        # not at the end of the response. Once foundation files
+        # (layout.tsx + page.tsx + globals.css + package.json + next.config.mjs)
+        # exist, we emit a `preview_ready` event so the frontend can
+        # surface a "View live →" button at ~60-90s instead of ~8-10 min.
+        #
+        # We snapshot BEFORE writing anything (preserves rollback target)
+        # and create site_dir up front so the streaming loop can write
+        # without an extra mkdir per file.
+        site_dir = out_dir / "site"
+        try:
+            snapshot_site(slug, reason="generate", source="POST /api/generate (pre-overwrite)")
+        except Exception as snap_err:
+            log.warning("history snapshot failed: %s", snap_err)
+        site_dir.mkdir(exist_ok=True)
+
+        written_incrementally: set[str] = set()
+        preview_emitted = False
+        PREVIEW_REQUIRED = (
+            "app/layout.tsx", "app/page.tsx", "app/globals.css",
+            "package.json", "next.config.mjs",
         )
+
+        # Phase 13f: preview warmup. As soon as package.json lands on disk,
+        # we kick off `npm install` in a background thread. By the time
+        # the LLM stream finishes (~5-8 min), install is usually already
+        # done — so the post-stream next-dev startup only takes ~10-20s
+        # instead of ~90-120s. Total time to preview drops dramatically.
+        from pebble.server.preview_warmup import PreviewWarmup
+        warmup = PreviewWarmup(site_dir)
+
+        def _safe_relative(p: str) -> Optional[str]:
+            """Return the path lstripped + traversal-checked, or None if
+            it would escape site_dir."""
+            s = p.lstrip("/\\")
+            if ".." in Path(s).parts or s.startswith("/"):
+                return None
+            return s
+
+        def _write_one(path: str, content: str) -> None:
+            """Write a single streamed file to disk. Silent on filesystem
+            failure (logged) so a bad path doesn't kill the entire stream.
+
+            Side-effect: kicks off the npm install warmup the moment
+            package.json lands. Idempotent — only the first call starts
+            the install thread."""
+            safe = _safe_relative(path)
+            if safe is None:
+                return
+            full = site_dir / safe
+            try:
+                full.parent.mkdir(parents=True, exist_ok=True)
+                full.write_text(content, encoding="utf-8")
+                written_incrementally.add(safe)
+            except OSError as fs_err:
+                log.warning("incremental write failed for %s: %s", safe, fs_err)
+                return
+            # Trigger early warmup once package.json is on disk.
+            if safe == "package.json" and not warmup.started:
+                warmup.start_install()
+
+        def _check_preview_ready() -> bool:
+            return all((site_dir / f).exists() for f in PREVIEW_REQUIRED)
+
+        # Streaming path — emit a `file` SSE event per complete <pebble-file>
+        # block as it arrives + write to disk + flag preview_ready as soon
+        # as the foundation set is on disk. Falls back to single-shot
+        # generate() if the client doesn't support streaming OR if vision
+        # images are attached.
+        if hasattr(client, "generate_stream") and progress_cb and not vision_images:
+            try:
+                from pebble.streaming_parser import StreamingFileParser
+            except Exception:
+                StreamingFileParser = None  # type: ignore
+            if StreamingFileParser is not None:
+                parser = StreamingFileParser()
+                response_parts: list[str] = []
+                file_index = 0
+                for chunk in client.generate_stream(
+                    system=system,
+                    user=full_user,
+                    max_tokens=_max_tok,
+                ):
+                    response_parts.append(chunk)
+                    parser.feed(chunk)
+                    for path, content in parser.drain():
+                        _write_one(path, content)
+                        file_index += 1
+                        _emit("file", {"name": path, "index": file_index})
+                        # NOTE 2026-05-19: preview_ready emission disabled.
+                        # Foundation files on disk != preview renders, because
+                        # `next dev` for the slug doesn't start until AFTER
+                        # the LLM stream completes (see pebble/postbuild.py).
+                        # Hitting /preview/<slug>/ early returns "Preview
+                        # file not found: index.html" because Next.js source
+                        # needs a running dev server to render.
+                        #
+                        # PROPER FIX (queued as Phase 13f): start npm install
+                        # in a background thread the moment package.json is
+                        # on disk, start next dev as soon as install finishes,
+                        # then fire preview_ready when dev_registry has a URL.
+                        # That gets honest preview at ~120s instead of ~5-8 min
+                        # OR a misleading button at 60s.
+                        if False and not preview_emitted and _check_preview_ready():
+                            preview_emitted = True
+                            _emit("preview_ready", {
+                                "slug": slug,
+                                "url": f"/preview/{slug}/",
+                            })
+                # Best-effort recovery of an unterminated trailing block
+                for path, content in parser.flush_remaining():
+                    _write_one(path, content)
+                    file_index += 1
+                    _emit("file", {"name": path, "index": file_index})
+                    if not preview_emitted and _check_preview_ready():
+                        preview_emitted = True
+                        _emit("preview_ready", {
+                            "slug": slug,
+                            "url": f"/preview/{slug}/",
+                        })
+                response = "".join(response_parts)
+            else:
+                response = client.generate(
+                    system=system,
+                    user=full_user,
+                    max_tokens=_max_tok,
+                    images=vision_images,
+                )
+        else:
+            response = client.generate(
+                system=system,
+                user=full_user,
+                max_tokens=_max_tok,
+                images=vision_images,
+            )
         elapsed = time.time() - t0
     except LLMError as e:
         handler._json(500, {
@@ -495,20 +670,27 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         })
         return
 
+    # site_dir + snapshot already happen above (before streaming) so we
+    # could write incrementally. This loop now only handles files the
+    # streaming parser didn't catch (non-streaming providers, or files
+    # recovered by parse_files but not by StreamingFileParser).
     site_dir = out_dir / "site"
-    # Snapshot the previous build BEFORE overwriting — gives the user a
-    # rollback target even on full regenerations. snapshot_site() is a no-op
-    # when site/ doesn't exist or is empty, so first-time builds skip cleanly.
-    try:
-        snapshot_site(slug, reason="generate", source="POST /api/generate (pre-overwrite)")
-    except Exception as e:
-        log.warning("history snapshot failed: %s", e)
-    site_dir.mkdir(exist_ok=True)
-    written: list[str] = []
+    # If we never streamed (e.g. Gemini/Anthropic path) site_dir still
+    # needs to exist + snapshot still needs to fire.
+    if not written_incrementally:
+        try:
+            snapshot_site(slug, reason="generate", source="POST /api/generate (pre-overwrite)")
+        except Exception as e:
+            log.warning("history snapshot failed: %s", e)
+        site_dir.mkdir(exist_ok=True)
+
+    written: list[str] = list(written_incrementally)  # start from streamed set
     for path, content in files:
         safe = path.lstrip("/\\")
         if ".." in Path(safe).parts or safe.startswith("/"):
             continue
+        if safe in written_incrementally:
+            continue  # already on disk from the streaming loop
         full = site_dir / safe
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
@@ -567,7 +749,19 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     screenshot_info: dict = {"screenshots": [], "errors": []}
     if auto_run_enabled and answers.get("output_mode") != "lite":
         try:
-            server_info.update(post_build_run_dev_server(site_dir))
+            # Phase 13f: prefer the warmup-aware path when we have a warmup
+            # instance (set by the streaming loop earlier). Falls back to
+            # the cold-start path when streaming wasn't used (Gemini /
+            # Anthropic non-streaming).
+            _warmup = locals().get("warmup")
+            if _warmup is not None and _warmup.started:
+                from pebble.server.preview_warmup import start_next_dev_after_install
+                server_info.update(start_next_dev_after_install(site_dir, _warmup))
+                if _warmup.elapsed_seconds is not None:
+                    log.info("[postbuild] npm install was %.1fs (parallel with LLM stream)",
+                             _warmup.elapsed_seconds)
+            else:
+                server_info.update(post_build_run_dev_server(site_dir))
         except Exception as e:
             server_info["errors"].append(f"dev server crashed: {e}")
         if server_info.get("url"):
@@ -576,6 +770,13 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                 _reg_dev(slug, server_info["url"])
             except Exception:
                 pass
+            # Phase A.5: now that next dev is up + registered, surface
+            # preview_ready as the HONEST event the frontend was waiting
+            # for. Frontend hides the button until this fires.
+            _emit("preview_ready", {
+                "slug": slug,
+                "url": f"/preview/{slug}/",
+            })
             try:
                 screenshot_info = post_build_screenshots(server_info["url"], out_dir)
             except Exception as e:
