@@ -9,6 +9,7 @@ export type Brief = Record<string, unknown> & {
   site_functions?: string[];
   brand_tone?: string;
   notes_freeform?: string;        // "anything the questions missed" — Plan-mode free-form input
+  creative_direction?: string;    // free-text aesthetic hint, max 500 chars — keyword-classified into Layout DNA + injected as top-priority block in build prompt
   user_first_name?: string;       // captured at first session for personalized greeting
   design_reference_images?: Array<{ media_type: string; data: string; name?: string }>;
   _industry_intel_key?: string;

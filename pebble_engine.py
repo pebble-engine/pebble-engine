@@ -107,6 +107,20 @@ except Exception:
     build_layout_block = None      # type: ignore
     _LAYOUT_DNA_OK = False
 
+# Seed-brief library — hand-curated reference briefs per top industry.
+# Injected into the prompt as a STYLE/SPECIFICITY anchor (not a template
+# to copy). Highest-leverage first-build accuracy move per NLM review.
+try:
+    from pebble.seed_briefs import (  # type: ignore
+        get_seed_brief,
+        build_seed_brief_block,
+    )
+    _SEED_BRIEFS_OK = True
+except Exception:
+    get_seed_brief = None             # type: ignore
+    build_seed_brief_block = None     # type: ignore
+    _SEED_BRIEFS_OK = False
+
 try:
     from anthropic import Anthropic  # type: ignore
     _ANTHROPIC_OK = True
@@ -997,6 +1011,23 @@ Extract and synthesize across all references:
             "# (end User Direction — Layout DNA follows)\n"
             "# ============================================================\n\n"
         )
+
+    # Seed-brief reference block — hand-curated industry anchor.
+    # Picked by the same industry_key used for industries.json lookup
+    # (set into the brief as `_industry_intel_key` by the build pipeline).
+    # Silent no-op when no seed exists for this industry.
+    if _SEED_BRIEFS_OK and get_seed_brief and build_seed_brief_block:
+        seed_key = (
+            answers.get("_industry_intel_key")
+            or answers.get("_industry_key")  # legacy alt
+            or ""
+        )
+        seed = get_seed_brief(seed_key) if seed_key else None
+        if seed:
+            try:
+                prefix += build_seed_brief_block(seed, industry_key=seed_key)
+            except Exception as e:
+                log.warning("Seed brief block render failed: %s", e)
 
     if _LAYOUT_DNA_OK and build_layout_block:
         layout_dna_card = answers.get("_layout_dna")

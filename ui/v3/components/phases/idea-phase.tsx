@@ -254,19 +254,41 @@ export function IdeaPhase({ onAdvance }: Props) {
             </motion.div>
           </AnimatePresence>
 
-          <div className="mt-10 max-w-2xl mx-auto">
-            <label htmlFor="notes_freeform" className={`block ${type.label} text-muted-foreground mb-2`}>
-              Anything I should know that the questions missed?
-            </label>
-            <textarea
-              id="notes_freeform"
-              defaultValue={(brief.notes_freeform as string) || ""}
-              onBlur={(e) => patchBrief({ notes_freeform: e.target.value })}
-              placeholder="Optional but powerful. Add anything — constraints, brand colors, examples of sites you love, deal-breakers, whatever the chips couldn't capture."
-              rows={3}
-              className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
-            />
-            <LanguagePicker />
+          <div className="mt-10 max-w-2xl mx-auto space-y-5">
+            {/* Creative direction — free-text aesthetic hint. Shapes the
+                Layout DNA pick (keyword-classified server-side) AND gets
+                injected as the top-priority block in the build prompt.
+                Optional — most users will leave this blank and let the
+                DNA pickers do their thing. Power users can override. */}
+            <div>
+              <label htmlFor="creative_direction" className={`block ${type.label} text-muted-foreground mb-2`}>
+                How should it feel? <span className="text-muted-foreground/60">(optional — shapes the look)</span>
+              </label>
+              <textarea
+                id="creative_direction"
+                defaultValue={(brief.creative_direction as string) || ""}
+                onBlur={(e) => patchBrief({ creative_direction: e.target.value.trim().slice(0, 500) })}
+                placeholder="e.g. 'minimalist, just bold type — no photos' · 'terminal hacker aesthetic' · 'dashboard with open-now status' · 'editorial magazine spread'"
+                rows={2}
+                maxLength={500}
+                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="notes_freeform" className={`block ${type.label} text-muted-foreground mb-2`}>
+                Anything I should know that the questions missed?
+              </label>
+              <textarea
+                id="notes_freeform"
+                defaultValue={(brief.notes_freeform as string) || ""}
+                onBlur={(e) => patchBrief({ notes_freeform: e.target.value })}
+                placeholder="Optional but powerful. Add anything — constraints, brand colors, examples of sites you love, deal-breakers, whatever the chips couldn't capture."
+                rows={3}
+                className="w-full bg-card border border-border rounded-xl px-4 py-3 text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <LanguagePicker />
+            </div>
           </div>
         </div>
       </main>

@@ -90,6 +90,37 @@ def test_generic_only_service_does_not_match():
     assert entry is None
 
 
+# ---- 2026-05-19: explicit NLM-cited regression pairs ---------------------
+#
+# NotebookLM's adversarial review of the search-API proposal cited an old
+# project note where "yoga studio" had been documented as matching
+# "tattoo_studio" via the greedy substring. The fix has long landed
+# (_INDUSTRY_GENERIC_WORDS strips "studio"), but pin the EXACT pairings
+# NLM named so anyone reading those notes can trust the codebase reflects
+# the fix, not the bug.
+
+def test_yoga_studio_does_not_match_tattoo_studio():
+    """The smoking-gun pair NLM surfaced. 'yoga studio' must resolve to
+    yoga_studio (exact key match) — not tattoo_studio via the generic
+    'studio' overlap. If yoga_studio is ever removed from industries.json,
+    the result must be None, never tattoo_studio."""
+    key, _ = lookup_industry_intel("yoga studio")
+    assert key != "tattoo_studio", (
+        "yoga studio is greedily matching tattoo_studio — the "
+        "_INDUSTRY_GENERIC_WORDS filter is broken or 'studio' is missing"
+    )
+
+
+def test_pottery_studio_does_not_match_tattoo_studio():
+    """A pottery studio is not in industries.json and shouldn't be
+    silently classified as a tattoo studio. Must return None and let
+    the LLM fallback do its job."""
+    key, _ = lookup_industry_intel("pottery studio")
+    assert key != "tattoo_studio"
+    assert key != "dance_studio"
+    assert key != "yoga_studio"
+
+
 # ---- standard edge cases -------------------------------------------------
 
 def test_empty_input_returns_none():

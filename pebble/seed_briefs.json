@@ -1,0 +1,128 @@
+{
+  "_meta": {
+    "purpose": "Gold-standard reference briefs for top industries. Injected into the LLM prompt as 'here's how a great brief for this industry reads' context. NOT user-facing copy — these are anchors for tone, specificity level, and industry-appropriate language patterns.",
+    "schema": "industry_key -> { business_name, business_type, audience, services_offered, brand_position, brand_tone, trust_signals, copy_voice_notes, cta_hierarchy }",
+    "added": "2026-05-19 NLM-prioritized after first-build accuracy review",
+    "rules": "Keep each brief under 800 chars total. Use realistic but generic business names ('Acme Plumbing' style). NEVER copy real businesses. Trust signals must be industry-honest."
+  },
+
+  "plumbing": {
+    "business_name": "Northridge Plumbing",
+    "business_type": "Plumbing contractor",
+    "audience": "Homeowners in the local service area, especially after-hours emergencies and elderly homeowners who want to talk to a person, not an app.",
+    "services_offered": "Emergency plumbing repair · Drain cleaning & hydro-jetting · Water heater install + repair · Leak detection · Toilet, faucet, garbage disposal repair · Sewer line camera inspection · Re-piping · Sump pumps",
+    "brand_position": "Established, professional, family-owned. Not luxury, not budget — trustworthy middle ground. The plumber your grandma would recommend.",
+    "brand_tone": "Friendly & direct. Warm voice, no industry jargon, phone-number prominent. 'We answer on the first ring' kind of energy.",
+    "trust_signals": "Licensed & insured · Family-owned since [YEAR] · BBB A+ rating · Same-day service available · Upfront pricing — no surprise fees · 24/7 emergency line",
+    "copy_voice_notes": "Lead with reassurance, not service list. Phone number twice (header + hero). Avoid 'world-class' / 'innovative' — say 'we show up' / 'we'll explain everything before we start.' Use real customer pain points: 'water everywhere, kids freaking out, you need us NOW.'",
+    "cta_hierarchy": "Primary: Call Now (with prominent phone number) · Secondary: Book Online · Tertiary: Get Free Estimate"
+  },
+
+  "wedding_photography": {
+    "business_name": "Emma Hart Photography",
+    "business_type": "Wedding & elopement photographer",
+    "audience": "Engaged couples planning weddings 6-18 months out, often planning together. Aesthetic-conscious, on Pinterest, comparing 3-5 photographers.",
+    "services_offered": "Wedding day coverage (6/8/10 hour packages) · Elopement adventures · Engagement sessions · Albums & prints · Second shooter add-on · Bridal portraits · Rehearsal dinner coverage",
+    "brand_position": "Editorial, romantic, story-driven. Premium but warm — not stiff. The photographer who'll cry with you, not just direct you.",
+    "brand_tone": "Warm, evocative, sensory. First-person voice ('I love…', 'we'll…'). Long-form storytelling on every page.",
+    "trust_signals": "[N] weddings photographed · Featured in [publications if real] · Recent couples (with permission) · Insured · Backup gear & shooter · [PROJECT-FIELD: years_experience]",
+    "copy_voice_notes": "Show the work first — gallery before words. Talk about FEELING the day, not gear specs. 'I want you to forget I'm there until you see the photos.' Pricing transparency builds trust — at minimum, starting investment.",
+    "cta_hierarchy": "Primary: Inquire about your date · Secondary: View full portfolio · Tertiary: Read the journal"
+  },
+
+  "coffee_shop": {
+    "business_name": "Bramble & Bean Coffee",
+    "business_type": "Independent coffee shop and roastery",
+    "audience": "Locals walking by, work-from-coffee-shop laptop crowd, parents with strollers, students with finals. Neighborhood, not destination.",
+    "services_offered": "Pour-over & espresso bar · House-roasted single-origin beans · Locally-baked pastries · Light breakfast & lunch menu · Free Wi-Fi & plenty of outlets · Coffee subscription · Whole bean retail · Private event space (after 6pm)",
+    "brand_position": "Genuine neighborhood third place. Quality coffee, not pretentious about it. Where the barista learns your order by week two.",
+    "brand_tone": "Warm, sensory, unpretentious. Talks about FLAVOR not 'craft notes.' Conversational, like you're already a regular.",
+    "trust_signals": "Roasted in-house weekly · Sourced from [origin program if real] · [N] years in [neighborhood] · Featured in [local press] · Compostable cups · Same-day-roasted beans",
+    "copy_voice_notes": "Open with hours + address ABOVE the menu — half the visits are 'are you open right now?' Photos of the SPACE, not just lattes. Mention the dog policy, the Wi-Fi password, the laptops-til-noon rule. Make it feel like Sunday morning.",
+    "cta_hierarchy": "Primary: See today's menu (or 'Today's pour-overs') · Secondary: Hours & directions · Tertiary: Order beans / book the event space"
+  },
+
+  "law_firm": {
+    "business_name": "Harlan & Reed Attorneys",
+    "business_type": "Boutique law firm",
+    "audience": "Individuals facing a specific legal moment — divorce, estate planning, small business formation, personal injury. Anxious, comparing 2-3 firms, want competence + warmth.",
+    "services_offered": "Family law (divorce, custody, mediation) · Estate planning (wills, trusts, probate) · Small business formation & contracts · Personal injury · Free 30-minute consultation",
+    "brand_position": "Boutique, attentive, results-driven. Not a billboard firm. The lawyer who'll actually pick up the phone.",
+    "brand_tone": "Authoritative but human. Conservative typography. Confident without bluster — never 'aggressive litigators' or 'fight for you.'",
+    "trust_signals": "Bar admissions (state + federal) · Years of practice · Notable case outcomes (sanitized if confidential) · Bar association memberships · Free consultation · Sliding-scale options",
+    "copy_voice_notes": "Lead with the situation, not the firm. 'Going through a divorce?' / 'Lost a loved one and don't know where to start?' Specific outcomes beat generic promises. Headshot of the attorney(s) — people hire faces, not logos.",
+    "cta_hierarchy": "Primary: Schedule free consultation · Secondary: Call directly · Tertiary: Learn about [practice area]"
+  },
+
+  "yoga_studio": {
+    "business_name": "Driftwood Yoga",
+    "business_type": "Independent yoga & movement studio",
+    "audience": "Locals 25-65 looking for community + practice. Mix of beginners (intimidated by gyms) and seasoned practitioners. Class card / membership decision.",
+    "services_offered": "Vinyasa flow · Yin & restorative · Beginners' fundamentals · Prenatal yoga · Sound baths · Meditation drop-ins · Workshops & teacher training · Memberships & 10-class cards · Private sessions",
+    "brand_position": "Welcoming, body-neutral, skill-agnostic. Not a hot-yoga-influencer studio. The place where new students feel at home in week one.",
+    "brand_tone": "Warm, plain-spoken, body-positive. NEVER 'lululemon airy' or 'inversions on Instagram.' Specific about beginner welcome.",
+    "trust_signals": "Certified teachers (RYT-200/500) · Years in the neighborhood · Class sizes capped at [N] · Sliding-scale + community classes · Drop-in welcome · Mats provided",
+    "copy_voice_notes": "Lead with the schedule + a 'first class free' offer. Photos should show REAL students of varied bodies — not models in headstands. Mention the noise level, the parking, the changing rooms. 'Yes, you can come if you've never done yoga.'",
+    "cta_hierarchy": "Primary: Book your first class (free or discounted) · Secondary: See class schedule · Tertiary: Buy a class card / membership"
+  },
+
+  "auto_mechanic": {
+    "business_name": "Carver's Auto Service",
+    "business_type": "Independent auto repair shop",
+    "audience": "Local car owners — daily drivers, not collectors. Sick of dealership upsells. Want honest diagnosis, fair price, car back today if possible.",
+    "services_offered": "Diagnostics & check-engine-light · Oil change & tune-ups · Brakes (pads, rotors, calipers) · Tires (mount, balance, alignment) · A/C & heating · Battery, alternator, starter · Pre-purchase inspections · State inspection",
+    "brand_position": "Honest, no-BS, neighborhood shop. The mechanic who'll show you the bad part, not just charge for it.",
+    "brand_tone": "Direct, transparent, slightly blue-collar. Phone-first. 'We'll text you a quote before we touch your car.'",
+    "trust_signals": "ASE-certified technicians · [N] years in business · 12-month/12k-mile warranty on all repairs · Free shuttle to home/work · Same-day on most repairs · Honest no-charge inspections",
+    "copy_voice_notes": "Hours, phone, address ABOVE THE FOLD. 'Open now / closed until [time]' status indicator. Services with starting prices ('Oil change from $45 · Brakes from $189'). Photo of the actual shop + the actual mechanics, not stock photos.",
+    "cta_hierarchy": "Primary: Call or Text for a Quote · Secondary: Book an Appointment Online · Tertiary: Get an Estimate"
+  },
+
+  "restaurant": {
+    "business_name": "Ember & Ash Kitchen",
+    "business_type": "Independent restaurant",
+    "audience": "Locals for date nights, anniversaries, after-work dinners. Foodies on Yelp/Google checking the menu BEFORE deciding. Tourists searching for 'best in [neighborhood].'",
+    "services_offered": "Dinner service (Tue-Sun) · Brunch (weekends) · Private events & buyouts · Catering for offsite events · Gift cards · Wine pairings · Seasonal tasting menu",
+    "brand_position": "Chef-driven, seasonal, ingredient-forward. Not stuffy fine dining, not casual either. The place you bring people you're trying to impress.",
+    "brand_tone": "Sensory, atmospheric, dish-specific. 'Charred octopus, smoked paprika, lemon' — never 'innovative cuisine.'",
+    "trust_signals": "Chef bio + lineage · Sources from [farms/markets] · Featured in [publications] · [N] years on the menu · Reservations recommended · Vegetarian/dietary accommodations",
+    "copy_voice_notes": "MENU IS THE HERO. Photos of FOOD, not the interior shots. Hours + reservation link in the header. Mention dietary accommodations explicitly. Today's specials prominently. Wine list teaser. Address + directions easy to find on mobile.",
+    "cta_hierarchy": "Primary: Make a Reservation · Secondary: See the Menu · Tertiary: Order Online / Buy a Gift Card"
+  },
+
+  "real_estate": {
+    "business_name": "Cara Mendoza Real Estate",
+    "business_type": "Independent real estate agent",
+    "audience": "Buyers (first-time, move-up, downsizing) and sellers in a specific neighborhood. Sellers comparing 3 listing agents. Buyers researching agents on Zillow/realtor.com.",
+    "services_offered": "Listing services for sellers · Buyer representation · First-time homebuyer education · Investor property scouting · Neighborhood market reports · Pre-listing home prep · Staging recommendations",
+    "brand_position": "Hyper-local expert. Not a transactional commission-chaser. The agent who knows which streets get the morning sun.",
+    "brand_tone": "Warm, confident, neighborhood-specific. Talks about LIFE in the home, not 'square footage.' Personal — agents sell themselves first.",
+    "trust_signals": "Years in this market · Recent sales (sanitized) · Average days on market vs. area · Designations (CRS, ABR, SRES) · Recent client testimonials · Local board membership",
+    "copy_voice_notes": "AGENT PHOTO is the hero — buyers/sellers hire faces. Recent sold listings in a gallery. Neighborhood profile pages (more SEO value than a generic 'about'). Personal story — why YOU vs. anyone else. Direct phone number always visible.",
+    "cta_hierarchy": "Primary: Schedule a Consultation · Secondary: Get a Home Value Estimate · Tertiary: Browse Current Listings"
+  },
+
+  "business_consultant": {
+    "business_name": "Aldridge Strategy Group",
+    "business_type": "Boutique business consultant",
+    "audience": "Founders & executives of 10-200 person companies hitting a growth plateau or transition. Researching 3-5 consultants. Want competence + proven methodology, not BS.",
+    "services_offered": "Strategic planning workshops · Operations & process audits · Leadership team coaching · Fractional COO engagements · Quarterly business review facilitation · Custom advisory retainers",
+    "brand_position": "Senior practitioner, not a junior-staffed agency. The consultant who's actually run a company, not just read about it.",
+    "brand_tone": "Confident, specific, jargon-free. 'Here's what works' beats 'thought leadership.' Outcomes over process names.",
+    "trust_signals": "Years in industry · Companies advised · Specific case studies with metrics · Background (operator + advisor) · Speaking engagements · Published writing",
+    "copy_voice_notes": "Lead with a specific problem you solve, not a service list. 'Stuck at $5M ARR and don't know what to fix next?' Case studies with REAL numbers (with permission). Methodology page — show your work. Avoid 'world-class' / 'best-in-class' — say 'I help [specific outcome].'",
+    "cta_hierarchy": "Primary: Book a 30-min discovery call · Secondary: Read case studies · Tertiary: Subscribe to the newsletter"
+  },
+
+  "barbershop": {
+    "business_name": "Hawthorne Barber Co.",
+    "business_type": "Independent barbershop",
+    "audience": "Men 18-65 booking haircuts, beard trims, hot-towel shaves. Loyalty-driven — once they find their barber, they stay. Walk-ins + appointments.",
+    "services_offered": "Haircuts · Beard trims & shaping · Hot-towel straight razor shaves · Kids' cuts · Beard oil & product retail · Memberships (unlimited monthly) · Gift cards",
+    "brand_position": "Classic but modern. Skilled barbers, ritual experience, not a chain. The shop where you don't have to explain what you want twice.",
+    "brand_tone": "Confident, slightly old-world, warm. References to ritual, craft, neighborhood. Photos of the SPACE + the WORK.",
+    "trust_signals": "Years in business · Barber experience/bios · Walk-ins welcome (or appointments preferred) · Member of [barber association] · Local press · Same-day appointments often available",
+    "copy_voice_notes": "Photos of the shop interior (often as important as the haircuts). Barber bios with photo + style specialties. Pricing visible (men hate hidden prices). Hours, location, parking info. Easy online booking — modern barbershops live on Square / Booksy / Squire.",
+    "cta_hierarchy": "Primary: Book Now (online) · Secondary: See pricing / services · Tertiary: Buy a gift card"
+  }
+}
