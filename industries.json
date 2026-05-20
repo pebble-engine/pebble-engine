@@ -2438,5 +2438,39 @@
       "complex corporate jargon",
       "faceless abstract imagery"
     ]
+  },
+  "coach": {
+    "emotion": "clarity, empowerment, trust, relief",
+    "visual_style": "clean editorial, human-centric, spacious",
+    "hero_type": "video",
+    "video_keyword": "professional mentor guiding client conversation",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#2A4B3C",
+      "accent": "#C58B3A",
+      "background": "#F5F2EB"
+    },
+    "tone": "authoritative, empathetic, aspirational, grounded",
+    "key_sections": [
+      "hero",
+      "coaching_philosophy",
+      "signature_programs",
+      "client_transformations",
+      "booking_inquiry"
+    ],
+    "trust_signals": [
+      "certified credentials (ICF or BCC)",
+      "verified client success metrics",
+      "media feature logos",
+      "transparent program pricing",
+      "video testimonials"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_mode_only",
+      "cartoon_illustrations",
+      "hidden_pricing",
+      "autoplay_audio"
+    ]
   }
 }

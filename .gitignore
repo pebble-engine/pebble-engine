@@ -28,3 +28,7 @@ ui/package-lock.json
 Thumbs.db
 .vercel
 .env*.local
+
+# Local-only backups + research bundles (not for git)
+.env.bak-*
+.notebooklm-bundle/
