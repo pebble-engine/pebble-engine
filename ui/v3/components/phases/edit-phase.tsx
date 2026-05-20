@@ -85,14 +85,16 @@ type Props = {
 
 // Chip metadata — the ``billable`` flag drives the green ✨ vs amber 🪙 badge.
 // "Make it friendlier", "More professional", and "Add booking" all rewrite
-// text/structure via the LLM (billable). "Simpler" and "Change colors" are
-// pure regex swaps in CSS/Tailwind config (free).
+// text/structure via the LLM (billable). "Simpler" is a regex tone-down
+// (free). "Magic Palette Shift" is a deterministic palette rotation in the
+// DNA family but BILLABLE — users perceive it as a Magic Restyle and giving
+// it away devalues the DNA system (NLM 2026-05-19 pricing review).
 const REFINE_CHIPS: { id: RefinementId; label: string; Icon: LucideIcon; billable: boolean }[] = [
-  { id: "friendlier",   label: "Make it friendlier",  Icon: Smile,        billable: true  },
-  { id: "professional", label: "More professional",   Icon: Award,        billable: true  },
-  { id: "simpler",      label: "Simpler",             Icon: Sparkles,     billable: false },
-  { id: "colors",       label: "Change colors",       Icon: Palette,      billable: false },
-  { id: "booking",      label: "Add booking",         Icon: CalendarDays, billable: true  },
+  { id: "friendlier",   label: "Make it friendlier",   Icon: Smile,        billable: true  },
+  { id: "professional", label: "More professional",    Icon: Award,        billable: true  },
+  { id: "simpler",      label: "Simpler",              Icon: Sparkles,     billable: false },
+  { id: "colors",       label: "Magic Palette Shift",  Icon: Palette,      billable: true  },
+  { id: "booking",      label: "Add booking",          Icon: CalendarDays, billable: true  },
 ];
 
 

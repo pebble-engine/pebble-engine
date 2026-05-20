@@ -263,7 +263,11 @@ def test_refine_colors_rotates_palette(fake_output):
     h = FakeHandler(body={"slug": slug, "refinement_id": "colors"})
     refine.run_refine(h)
     assert h.status == 200
-    assert h.json_body["billable"] is False
+    # 2026-05-19: "colors" repriced as billable ("Magic Palette Shift").
+    # Mechanical execution but high perceived value — giving it away
+    # devalued the DNA system. Per NLM adversarial pricing review.
+    assert h.json_body["billable"] is True
+    assert h.json_body["kind"] == "deterministic"  # still no LLM call
     new = (fake_output / slug / "site" / "app" / "globals.css").read_text()
     assert "#111111" not in new  # at least one hex should have changed
 

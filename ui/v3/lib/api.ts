@@ -299,7 +299,8 @@ export async function rollback(slug: string, snapshot_id: string): Promise<{ slu
 // ---------- /api/refine (new) ----------------------------------------------
 
 export type RefinementId =
-  | "simpler" | "colors"                    // deterministic, free
+  | "simpler"                               // deterministic, free
+  | "colors"                                // deterministic but BILLABLE — "Magic Palette Shift" (NLM 2026-05-19)
   | "friendlier" | "professional" | "booking"; // LLM-backed, billable
 
 export type RefineResponse = {

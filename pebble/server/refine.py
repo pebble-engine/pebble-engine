@@ -265,6 +265,18 @@ DETERMINISTIC_REFINEMENTS: dict[str, Callable[[Path], dict]] = {
 
 LLM_REFINEMENTS = set(_LLM_REFINE_PROMPTS.keys())
 
+# Free-tier refinements — execution is mechanical AND perceived value is low.
+# The complement (deterministic-but-NOT-free) is the "Magic Restyle" tier:
+# mechanical execution, but the user perceives it as "AI did something visual
+# for me," so giving it away devalues the DNA system (NLM 2026-05-19 review).
+# Today the only such refinement is "colors" (palette rotation in DNA family).
+#
+# "simpler" stays free — it's a regex tone-down, perceived as a minor
+# adjustment, not a Magic Restyle.
+FREE_DETERMINISTIC_REFINEMENTS: frozenset[str] = frozenset({
+    "simpler",
+})
+
 
 def run_refine(handler) -> None:
     """POST /api/refine — body: ``{ slug, refinement_id }``.
@@ -330,7 +342,10 @@ def run_refine(handler) -> None:
                 log.warning("deterministic refinement failed: %s", e)
                 handler._json(500, {"error": f"refinement failed: {e}"}); return
             kind = "deterministic"
-            billable = False
+            # Even mechanical refinements can be metered when the user
+            # perceives them as a "Magic Restyle." See FREE_DETERMINISTIC_REFINEMENTS
+            # docstring for the rationale (NLM 2026-05-19).
+            billable = refinement_id not in FREE_DETERMINISTIC_REFINEMENTS
         elif refinement_id in LLM_REFINEMENTS:
             result = _run_llm_refinement(slug, refinement_id)
             if result.get("error"):
