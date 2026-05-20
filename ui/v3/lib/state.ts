@@ -116,6 +116,46 @@ export function setLastBuild(b: unknown): void {
   localStorage.setItem(KEY_BUILD, JSON.stringify(b));
 }
 
+/**
+ * Wipe the in-progress brief + plan + last-build pointer so the next
+ * /workspace visit gets a clean canvas. Use when the user clicks
+ * "Start a new project" — the questionnaire then opens blank.
+ *
+ * Does NOT touch userProfile or other cross-project preferences.
+ *
+ * 2026-05-20 Phase 15a: added because Marc's 4th rebuild kept landing
+ * on the same "Untitled Project" with prior chips pre-selected. UX gap.
+ */
+export function clearBriefForNewProject(): void {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(KEY_BRIEF);
+  localStorage.removeItem(KEY_PLAN);
+  localStorage.removeItem(KEY_BUILD);
+}
+
+/**
+ * Best-effort derivation of a project name from the user's idea text.
+ * Returns the first sentence (capped at 60 chars) so the user sees a
+ * recognisable name in the workspace top nav AND the build's output dir
+ * gets a useful slug (instead of "untitled-project").
+ *
+ * The user can still edit the name in the top nav after the fact.
+ */
+export function deriveProjectName(ideaText: string): string {
+  if (!ideaText) return "New project";
+  // First sentence break, then strip filler verbs at the start
+  const firstSentence = ideaText
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(/[.!?]/)[0]
+    .trim();
+  // Cap at 60 chars so the slug doesn't get absurd
+  const capped = firstSentence.length > 60
+    ? firstSentence.slice(0, 60).trim() + "…"
+    : firstSentence;
+  return capped || "New project";
+}
+
 // Industry heuristic — quick keyword match used by intake.
 // The engine's industry resolver does the real work via fuzzy match +
 // LLM fallback; this just picks a plausible starting guess.

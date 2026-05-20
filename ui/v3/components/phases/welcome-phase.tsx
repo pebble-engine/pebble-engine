@@ -11,6 +11,7 @@ import {
   getUserProfile,
   getLastBuild,
   getBrief,
+  deriveProjectName,
 } from "@/lib/state";
 import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -362,9 +363,14 @@ export function WelcomePhase({ onAdvance }: Props) {
 
   const handleSend = (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
+    // 2026-05-20 Phase 15a: derive a real business_name from the first
+    // sentence of the idea text instead of hardcoding "Untitled Project".
+    // The user can rename via the top nav later, but the default should
+    // be recognisable (and produce a useful build slug).
+    const derivedName = deriveProjectName(message);
     patchBrief({
       extra_context: message,
-      business_name: "Untitled Project",
+      business_name: derivedName,
       user_first_name: firstName || undefined,
     });
     if (files && files.length > 0) {

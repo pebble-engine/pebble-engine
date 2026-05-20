@@ -162,3 +162,92 @@ def test_diet_on_keeps_load_bearing_content(monkeypatch):
     ]
     for needle in must_contain:
         assert needle in prompt, f"diet dropped critical content: {needle!r}"
+
+
+# ------------------------------------------------------------------ #
+# Phase 15d — strip_verbatim_code_patterns                             #
+# ------------------------------------------------------------------ #
+
+def test_stripper_replaces_code_pattern_1():
+    from pebble.prompt_diet import strip_verbatim_code_patterns
+    src = (
+        "#### 1. Hero Entrance — AnimatedHeading + FadeIn Components\n\n"
+        "##### `components/ui/AnimatedHeading.tsx`\n\n"
+        "```tsx\nexport function AnimatedHeading() {}\n```\n\n"
+        "##### `components/ui/FadeIn.tsx`\n\n"
+        "```tsx\nexport function FadeIn() {}\n```\n\n"
+        "#### 2. Liquid-Glass Navbar\n"
+    )
+    out = strip_verbatim_code_patterns(src)
+    # Heading 1 replaced by short summary
+    assert "AnimatedHeading" in out  # the component is mentioned by name in the summary
+    assert "Layout DNA" in out
+    # The verbatim TSX is gone
+    assert "export function AnimatedHeading() {}" not in out
+    assert "export function FadeIn() {}" not in out
+    # Heading 2 (next ####) is preserved as the boundary
+    assert "#### 2." in out
+
+
+def test_stripper_preserves_kept_patterns():
+    """Code Pattern 2b (CSS utility), 3 (ScrollReveal), 5 (Parallax),
+    7 (Three.js), 8 (Contact form) are NOT in the strip list and must
+    survive intact."""
+    from pebble.prompt_diet import strip_verbatim_code_patterns
+    src = (
+        "#### 2b. Liquid-Glass Utility — globals.css (FOUNDATION)\n\n"
+        "```css\n.liquid-glass { backdrop-filter: blur(12px); }\n```\n\n"
+        "#### 3. ScrollReveal — Framer Motion whileInView (FOUNDATION)\n\n"
+        "Stays in.\n\n"
+        "#### 8. Contact Form — Real Server Action + Resend\n\n"
+        "Stays in.\n\n"
+    )
+    out = strip_verbatim_code_patterns(src)
+    assert "Liquid-Glass Utility" in out
+    assert "backdrop-filter: blur(12px)" in out  # CSS utility survives
+    assert "ScrollReveal" in out
+    assert "Contact Form" in out
+
+
+def test_stripper_idempotent_on_already_stripped():
+    """Calling the stripper twice produces the same output (the summaries
+    don't trigger their own headings to be re-stripped)."""
+    from pebble.prompt_diet import strip_verbatim_code_patterns
+    src = "#### 1. Hero Entrance — long block\n\n...verbatim TSX...\n\n#### 2. Liquid-Glass Navbar\n"
+    once = strip_verbatim_code_patterns(src)
+    twice = strip_verbatim_code_patterns(once)
+    assert once == twice
+
+
+def test_stripper_safe_on_empty_input():
+    from pebble.prompt_diet import strip_verbatim_code_patterns
+    assert strip_verbatim_code_patterns("") == ""
+
+
+def test_stripper_safe_when_no_patterns_present():
+    """A document with none of the stripped headings should return unchanged."""
+    from pebble.prompt_diet import strip_verbatim_code_patterns
+    src = "## Some unrelated heading\n\nSome unrelated content."
+    assert strip_verbatim_code_patterns(src) == src
+
+
+def test_full_diet_on_cuts_substantially_more_with_stripper(monkeypatch):
+    """Validate that adding the stripper cuts MORE tokens beyond the
+    skill-block compact replacements. Net diet ON should now be ≥50%
+    smaller than diet OFF (was ~47% with just compact skills)."""
+    import pebble_engine
+
+    monkeypatch.delenv("PEBBLE_PROMPT_DIET", raising=False)
+    import pebble.prompt_diet
+    importlib.reload(pebble.prompt_diet)
+    prompt_on = pebble_engine.build_prompt(_sample_brief(), ds_text="", notes=[])
+
+    monkeypatch.setenv("PEBBLE_PROMPT_DIET", "false")
+    importlib.reload(pebble.prompt_diet)
+    prompt_off = pebble_engine.build_prompt(_sample_brief(), ds_text="", notes=[])
+
+    pct_cut = 1 - (len(prompt_on) / len(prompt_off))
+    assert pct_cut >= 0.50, (
+        f"diet only cut {pct_cut:.1%}; expected ≥50% after Phase 15d. "
+        f"ON={len(prompt_on)}, OFF={len(prompt_off)}"
+    )

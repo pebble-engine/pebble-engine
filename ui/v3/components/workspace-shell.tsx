@@ -21,6 +21,8 @@ import {
   getLastBuild,
   getPlan,
   setLastBuild,
+  patchBrief,
+  clearBriefForNewProject,
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
@@ -261,7 +263,29 @@ export function WorkspaceShell() {
       {/* TopNav persists across all phase changes — but the welcome phase
           owns its own full-bleed dark canvas (and renders the Pebble logo
           itself, fading in after Start Building Free is clicked). */}
-      {!isWelcome && <TopNav projectName={projectName} rightSlot={topNavRightSlot} />}
+      {!isWelcome && (
+        <TopNav
+          projectName={projectName}
+          rightSlot={topNavRightSlot}
+          onProjectNameChange={(next) => {
+            patchBrief({ business_name: next });
+            // Force re-read so the next render picks up the new name
+            // without waiting for the next phase change.
+            setBrief(getBrief());
+          }}
+          onNewProject={() => {
+            // 2026-05-20 Phase 15a: wipe brief + plan + last build so the
+            // questionnaire opens blank. Navigates to welcome to start
+            // fresh. Doesn't touch user profile or auth.
+            clearBriefForNewProject();
+            setBrief({});
+            setPlan(null);
+            setBuild(null);
+            router.push("/workspace#phase=welcome");
+            setPhase("welcome");
+          }}
+        />
+      )}
 
       <div className={`flex flex-1 ${isWelcome ? "bg-black" : "overflow-hidden"}`}>
         {/* Rail is persistent — visible state animates instead of mounting/unmounting.

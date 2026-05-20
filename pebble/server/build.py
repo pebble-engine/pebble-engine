@@ -577,17 +577,38 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                 parser = StreamingFileParser()
                 response_parts: list[str] = []
                 file_index = 0
+                # Phase 15e: heartbeat events. The SSE outer timeout
+                # (900s) resets every time ANY event reaches the queue,
+                # but if the LLM "warms up" for >900s before emitting
+                # its first <pebble-file> block, the timeout fires
+                # spuriously. Emit a `heartbeat` event every ~5 seconds
+                # of actual streaming so the queue is never silent.
+                # Counts toward `chars_streamed` so the heartbeat carries
+                # real progress info, not just a ping.
+                import time as _t
+                last_heartbeat_at = _t.time()
+                chars_streamed = 0
+                HEARTBEAT_INTERVAL_S = 5.0
                 for chunk in client.generate_stream(
                     system=system,
                     user=full_user,
                     max_tokens=_max_tok,
                 ):
                     response_parts.append(chunk)
+                    chars_streamed += len(chunk)
                     parser.feed(chunk)
                     for path, content in parser.drain():
                         _write_one(path, content)
                         file_index += 1
                         _emit("file", {"name": path, "index": file_index})
+                    # Heartbeat (cheap rate-limited check)
+                    now = _t.time()
+                    if now - last_heartbeat_at >= HEARTBEAT_INTERVAL_S:
+                        last_heartbeat_at = now
+                        _emit("heartbeat", {
+                            "chars_streamed": chars_streamed,
+                            "files_so_far": file_index,
+                        })
                         # NOTE 2026-05-19: preview_ready emission disabled.
                         # Foundation files on disk != preview renders, because
                         # `next dev` for the slug doesn't start until AFTER

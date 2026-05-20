@@ -129,6 +129,151 @@ IMAGE_RULES_DIET = """
 """
 
 
+# ─────────────────────────────────────────────────────────────────────
+# Code Pattern verbatim-block stripper (Phase 15d, 2026-05-20)
+# ─────────────────────────────────────────────────────────────────────
+#
+# Per the audit, 8 of the 14 "Code Pattern" sections in
+# skills/prompt_template.md contain verbatim TSX/CSS code that Qwen treats
+# as copy-paste templates instead of design inspiration. The Layout DNA
+# block already specifies which components apply per layout; the verbatim
+# code blocks contradict that for ~9/10 layouts.
+#
+# Patterns to STRIP (verbatim → one-line description):
+#   1.  Hero Entrance (AnimatedHeading + FadeIn + Hero usage)  — Layout DNA dictates
+#   2.  Liquid-Glass Navbar                                    — Layout DNA dictates
+#   9.  GrainOverlay                                           — 6/10 layouts forbid
+#   10. GlassCard                                              — most layouts don't use
+#   11. BentoGrid                                              — never referenced in any DNA
+#   12. MagneticButton                                         — gradient_mesh-specific
+#   13. SectionHeader                                          — most DNAs don't use
+#   14. CinematicHero                                          — third(!) competing hero spec
+#
+# Patterns to KEEP (load-bearing, eval-enforced, or genuinely useful):
+#   2b. Liquid-Glass CSS utility                               — short, conditional
+#   3.  ScrollReveal                                            — small Framer Motion wrapper
+#   5.  Parallax Background + Image-ref rule                   — known footgun
+#   7.  Three.js Hero (gated by industry intel)                — niche, gated
+#   8.  Contact Form (Server Action + Resend)                  — eval-enforced
+#
+# Net savings: ~5K tokens cut from the template at runtime.
+
+import re
+
+# Headings that mark the START of a stripped section. The matcher finds
+# from this heading up to the next `^#### ` heading (the next Code Pattern)
+# OR the next `^---$` (section break), whichever comes first.
+_STRIP_PATTERNS = [
+    "#### 1. Hero Entrance",
+    "#### 2. Liquid-Glass Navbar",
+    "#### 9. GrainOverlay",
+    "#### 10. GlassCard",
+    "#### 11. BentoGrid",
+    "#### 12. MagneticButton",
+    "#### 13. SectionHeader",
+    "#### 14. CinematicHero",
+]
+
+# One-line replacement summaries (Qwen reads these instead of the verbatim
+# TSX blocks). Each tells the LLM to defer to Layout DNA / Style DNA /
+# foundation requirements without dictating exact code.
+_REPLACEMENT = {
+    "#### 1. Hero Entrance": (
+        "#### 1. Hero h1 + entrance animation\n\n"
+        "**Build per Layout DNA's component table.** If the Layout DNA card "
+        "says `use_animated_heading: True`, build a per-character entrance "
+        "animation component (named `AnimatedHeading`) using framer-motion. "
+        "If `False`, use a plain `<h1>` with Inter font and CSS text-shadow "
+        "for legibility. EITHER WAY the component file `components/ui/"
+        "AnimatedHeading.tsx` must exist (eval-enforced) — even if your "
+        "hero doesn't mount it. Same rule for FadeIn / FadeIn cascade per "
+        "the Layout DNA's `use_fade_in_cascade` flag.\n"
+    ),
+    "#### 2. Liquid-Glass Navbar": (
+        "#### 2. Navbar\n\n"
+        "**Build per Layout DNA's `nav_pattern` + `nav_structure` description.** "
+        "If the DNA says `use_liquid_glass_nav: True`, render a liquid-glass "
+        "rounded chip using the `.liquid-glass` CSS utility (see Code Pattern 2b). "
+        "If False, build the nav pattern the DNA prescribes (utility bar, "
+        "transparent fixed, terminal prompt, etc.). EVERY anchor and `<Link>` "
+        "in the nav MUST have explicit Tailwind className for color + hover "
+        "+ font weight. Never emit a className-less link.\n"
+    ),
+    "#### 9. GrainOverlay": (
+        "#### 9. GrainOverlay (conditional)\n\n"
+        "**Only when Layout DNA says `use_grain_overlay: True`** — render a "
+        "fixed `<div>` in app/layout.tsx with an SVG feTurbulence pattern at "
+        "opacity ~0.04, mix-blend-mode: overlay, pointer-events: none, "
+        "z-index above content but below the nav. Singleton, not per-page. "
+        "When False, omit entirely.\n"
+    ),
+    "#### 10. GlassCard": (
+        "#### 10. GlassCard (conditional)\n\n"
+        "When the build needs a glassmorphism card, use `backdrop-filter: "
+        "blur(var(--glass-blur))`, semi-transparent surface, hairline ring "
+        "in `var(--color-border)`. Skip entirely when the Layout DNA doesn't "
+        "call for glass treatment.\n"
+    ),
+    "#### 11. BentoGrid": (
+        "#### 11. BentoGrid (only if Layout DNA calls for it)\n\n"
+        "Most Layout DNAs don't use bento grids. Build one inline with CSS "
+        "Grid only when the DNA explicitly requests it; otherwise omit.\n"
+    ),
+    "#### 12. MagneticButton": (
+        "#### 12. MagneticButton (conditional)\n\n"
+        "When you build a magnetic-hover CTA, use Framer Motion's `useSpring` "
+        "on x/y translation, dampening ~25, stiffness ~150, rest at 0. Only "
+        "use magnetic hover for layouts where the DNA's signature_moves call "
+        "for it (typically gradient_mesh, cinematic). Plain hover states are "
+        "fine for the rest.\n"
+    ),
+    "#### 13. SectionHeader": (
+        "#### 13. Section headers\n\n"
+        "Style section openings per Layout DNA's voice — magazine_scroll uses "
+        "chapter labels (`Chapter 02 · Services`), terminal uses command-line "
+        "framing (`$ cat services.txt`), weather_report uses status rows, etc. "
+        "Don't impose a single eyebrow+h2+subhead pattern across all DNAs.\n"
+    ),
+    "#### 14. CinematicHero": (
+        "#### 14. Gradient-mesh hero (only when Layout DNA is gradient_mesh)\n\n"
+        "If and only if Layout DNA is `gradient_mesh`, build the full-viewport "
+        "ambient-blob hero with radial-gradient + filter:blur, AnimatedHeading "
+        "anchored to the bottom of the viewport, liquid-glass chip in the "
+        "right column. For all 9 other Layout DNAs, build the hero per that "
+        "DNA's `hero_structure` description instead.\n"
+    ),
+}
+
+
+def strip_verbatim_code_patterns(rendered_prompt: str) -> str:
+    """Replace verbatim Code Pattern code blocks with one-line summaries.
+
+    Runs ONLY when diet is enabled (caller-checked). For each pattern in
+    _STRIP_PATTERNS, find the heading and replace the section content
+    through the next `^#### ` or `^---` boundary with the compact
+    replacement from _REPLACEMENT.
+
+    Safe to call on a prompt that doesn't contain these patterns — the
+    regex just doesn't match and the prompt is returned unchanged.
+
+    The substitution preserves the original `---` section separators so
+    the document structure isn't disrupted.
+    """
+    result = rendered_prompt
+    for heading in _STRIP_PATTERNS:
+        # Match from the heading to (next #### heading) OR (--- on own line)
+        # OR end-of-string, whichever comes first.
+        pattern = re.compile(
+            r"(?ms)^" + re.escape(heading) + r".*?(?=^####\s|^---\s*$|\Z)"
+        )
+        replacement = _REPLACEMENT.get(heading, "")
+        # Add trailing blank line so the document stays well-spaced
+        if not replacement.endswith("\n\n"):
+            replacement = replacement.rstrip() + "\n\n"
+        result = pattern.sub(replacement, result, count=1)
+    return result
+
+
 __all__ = [
     "diet_enabled",
     "NO_SLOP_DIET",
@@ -137,4 +282,5 @@ __all__ = [
     "BUSINESS_INTEL_DIET",
     "DESIGN_SYSTEM_DIET",
     "IMAGE_RULES_DIET",
+    "strip_verbatim_code_patterns",
 ]

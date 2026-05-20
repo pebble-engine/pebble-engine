@@ -52,8 +52,37 @@ function Card({ children, delay = 0, className = "" }: { children: React.ReactNo
 export function PlanPhase({ onBack, onGenerate }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [loading, setLoading] = useState(false);
+  const [rerolling, setRerolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const startedRef = useRef(false);
+
+  /**
+   * Phase 15b — re-pick Layout DNA + Style DNA for the same brief.
+   * Clears the pinned IDs so the engine's pickers re-roll, then refetches
+   * the plan. Lets the user iterate on the look without restarting the
+   * questionnaire from scratch.
+   */
+  const handleRerollDna = async () => {
+    if (rerolling) return;
+    setRerolling(true);
+    setError(null);
+    // Clear the pinned DNA ids so the picker re-rolls
+    patchBrief({ _design_dna_id: undefined, _layout_dna_id: undefined });
+    try {
+      const result = await fetchPlan(getBrief());
+      setPlan(result.plan);
+      patchBrief({
+        _industry_intel_key: result.industry_key || undefined,
+        _design_dna_id: result.dna_id || undefined,
+      });
+      setPlanLocal(result.plan);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(`reroll failed: ${msg}`);
+    } finally {
+      setRerolling(false);
+    }
+  };
 
   useEffect(() => {
     // Use cached plan when present. Otherwise compute it fresh — usually
@@ -172,9 +201,24 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       </Card>
 
       <Card delay={0.25} className="overflow-hidden p-0">
-        <div className="p-6 md:p-8 border-b border-border">
-          <h3 className={`${type.heading.m} text-primary`}>Visual style</h3>
-          <p className="text-xs text-muted-foreground italic mt-1">Inspired by {plan.style.label}</p>
+        <div className="p-6 md:p-8 border-b border-border flex items-start justify-between gap-4">
+          <div>
+            <h3 className={`${type.heading.m} text-primary`}>Visual style</h3>
+            <p className="text-xs text-muted-foreground italic mt-1">Inspired by {plan.style.label}</p>
+          </div>
+          {/* Phase 15b: reroll button — lets the user try a different
+              DNA without restarting the questionnaire. Free (no LLM call;
+              just re-runs the picker + plan computation). */}
+          <button
+            type="button"
+            onClick={handleRerollDna}
+            disabled={rerolling}
+            className={`${interactions.chip} flex-shrink-0 inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground border border-border hover:border-foreground/40 disabled:opacity-50 disabled:cursor-wait`}
+            title="Pick a different visual style for the same answers"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${rerolling ? "animate-pulse" : ""}`} aria-hidden />
+            <span className={type.label}>{rerolling ? "Picking…" : "Try a different style"}</span>
+          </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="p-6 md:p-8 bg-background">

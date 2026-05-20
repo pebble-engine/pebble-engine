@@ -245,6 +245,13 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
           appendLog(`+ ${latest.data.name}`, "ok");
         }
         break;
+      case "heartbeat":
+        // Phase 15e — silent. Server-side keep-alive that resets the
+        // SSE outer timeout during slow LLM warm-up. We don't surface
+        // it in the live feed because it would clutter the UX, but the
+        // data IS useful for debugging (paste into devtools network
+        // tab to see streaming throughput).
+        break;
       case "preview_ready":
         // Phase A.5 — foundation files are on disk. User can open the
         // preview NOW even though inner pages are still streaming in.

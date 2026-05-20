@@ -1078,6 +1078,13 @@ Extract and synthesize across all references:
         except Exception as e:
             log.warning("Style DNA block render failed: %s", e)
 
+    # Phase 15d: when diet is on, strip the verbatim Code Pattern code
+    # blocks from `rendered`. They suffocate Qwen with copy-paste templates
+    # that contradict Layout DNA for 9/10 layouts. ~5K tokens cut.
+    if _DIET_ON:
+        from pebble.prompt_diet import strip_verbatim_code_patterns
+        rendered = strip_verbatim_code_patterns(rendered)
+
     return prefix + lang_prefix + rendered
 
 

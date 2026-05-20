@@ -102,6 +102,11 @@ export type SSEEvent =
   // Streaming mode (Phase 13a): one `file` event per <pebble-file> block
   // as it completes streaming in from the LLM. Index is 1-based.
   | { type: "file";       data: { name: string; index: number } }
+  // Phase 15e (2026-05-20): periodic ping every ~5s during streaming so
+  // the SSE outer timeout never fires on a slow LLM. Carries actual
+  // progress info (chars + file count). Frontend treats as silent —
+  // no UI noise, just keeps the connection alive.
+  | { type: "heartbeat";  data: { chars_streamed: number; files_so_far: number } }
   // Phase A.5 (2026-05-19): foundation files are on disk — preview can
   // render NOW even though inner pages are still streaming. Fires ONCE
   // per build, the moment the foundation file set is complete.
