@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { LifeBuoy, Plus, Pencil } from "lucide-react";
+import { LifeBuoy, Plus, Pencil, Sparkles } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthMenu } from "./auth-menu";
 import { type } from "@/lib/type";
@@ -69,7 +69,7 @@ export function TopNav({
   return (
     <header
       style={{ viewTransitionName: "top-nav" }}
-      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-instrument-sans)]"
+      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)]"
     >
       <div className="flex items-center gap-4">
         <Link
@@ -134,6 +134,14 @@ export function TopNav({
       </div>
       <div className="flex items-center gap-3">
         {rightSlot}
+        <Link
+          href="/templates"
+          title="Browse templates"
+          className={`${interactions.chip} inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white px-2 py-1 rounded-md`}
+        >
+          <Sparkles className="w-3.5 h-3.5" aria-hidden />
+          <span className={type.label}>Templates</span>
+        </Link>
         <Link
           href="/help"
           title="Help"

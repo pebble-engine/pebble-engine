@@ -1,39 +1,45 @@
 import type { Metadata } from "next";
-import { Inter, Literata, JetBrains_Mono, Instrument_Sans, Instrument_Serif } from "next/font/google";
+import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
 import { CommandPalette } from "@/components/command-palette";
 
-const inter = Inter({
-  variable: "--font-inter",
+// Display font — Cormorant (ultra-refined luxury serif).
+// Used for all display.* and heading.* roles. The thin strokes at 96px
+// are genuinely breathtaking; weights 300–700 give full range from
+// whisper-light editorial to bold statement.
+const cormorant = Cormorant({
+  variable: "--font-cormorant",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["300", "400", "500", "600", "700"],
+  style: ["normal", "italic"],
 });
 
-const literata = Literata({
-  variable: "--font-literata",
+// Logo / wordmark font — Cinzel (Roman-inscription luxury serif).
+// Used ONLY for the rotating Pebble wordmark in the nav + footer.
+// Roman proportions, high-contrast strokes, openly luxurious. Distinct
+// from Cormorant so the logo has its own identity apart from headings.
+const cinzel = Cinzel({
+  variable: "--font-cinzel",
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
+  weight: ["400", "600"],
+});
+
+// Body font — Plus Jakarta Sans (geometric humanist sans).
+// Used for all body.*, label, caption, eyebrow, mono-adjacent narration.
+// Widely adopted by premium SaaS (Vercel, Loom, Linear-adjacent tools).
+// Excellent legibility at 11–16px; slightly warmer than Inter.
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: "--font-plus-jakarta-sans",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 const jetbrainsMono = JetBrains_Mono({
   variable: "--font-jetbrains-mono",
   subsets: ["latin"],
   weight: ["400"],
-});
-
-const instrumentSans = Instrument_Sans({
-  variable: "--font-instrument-sans",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
-  subsets: ["latin"],
-  weight: ["400"],
-  style: ["normal", "italic"],
 });
 
 export const metadata: Metadata = {
@@ -70,7 +76,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${literata.variable} ${jetbrainsMono.variable} ${instrumentSans.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

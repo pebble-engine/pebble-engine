@@ -22,6 +22,7 @@
   --color-earth:    #5b6f4a;
   --color-charcoal: #1f1d1a;
   --color-graphite: #5a554e;
+  --color-brand-cta: #3054ff;
 
   /* WCAG-readable deep variants of the accent colors. Used when
      text-spark / text-earth would fall under 4.5:1 against a tinted
@@ -54,16 +55,16 @@
   --color-ring: var(--accent-1);
 
   /* Typography
-     2026-05-19: Workspace fonts now match the landing body sections —
-     Instrument Sans for body, Instrument Serif for display headlines.
-     The landing's welcome-phase wraps its content in
-     font-[family-name:var(--font-instrument-sans)] explicitly; here we
-     route the design-system tokens to the same families so every
-     workspace surface inherits the same voice without per-component
-     overrides. Inter and Literata stay loaded (still referenced by a
-     few legacy components and the auto-generated sites). */
-  --font-sans: var(--font-instrument-sans), var(--font-inter), system-ui, -apple-system, sans-serif;
-  --font-display: var(--font-instrument-serif), var(--font-literata), Georgia, serif;
+     2026-05-21: Font overhaul — Cormorant (luxury serif) for all display
+     and heading roles; Plus Jakarta Sans (premium geometric humanist) for
+     all body, label, caption, and narration roles.
+     --font-display → Cormorant: ultra-refined serifs, stunning at 96px
+     --font-sans    → Plus Jakarta Sans: warm, legible, premium SaaS feel
+     --font-logo    → Cinzel: Roman-inscription luxury serif, ONLY for the
+                      rotating Pebble wordmark in nav + footer */
+  --font-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-logo: var(--font-cinzel), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
   /* Radius */
@@ -80,6 +81,7 @@
   --border-1:  var(--color-pebble);
   --accent-1:  var(--color-river);
   --shadow-1:  0 8px 30px rgba(31, 29, 26, 0.08);
+  --color-brand-cta: #3054ff;
 }
 
 /* Dark theme — toggled by adding .dark to <html>.
@@ -98,6 +100,7 @@
   --border-1:  #2a2a2a;            /* subtle neutral border */
   --accent-1:  #fafafa;            /* PRIMARY accent inverts to white on dark — buttons render as white-on-black */
   --shadow-1:  0 8px 30px rgba(0, 0, 0, 0.6);
+  --color-brand-cta: #4d6fff;
 }
 
 /* Override the shadcn semantic tokens INSIDE dark mode so secondary +

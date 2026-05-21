@@ -13,8 +13,8 @@
  *         {headline}
  *       </h1>
  *
- *   - `font-display` (Literata serif) is reserved for the `display.*`
- *     roles. Headings and body use the default sans (Inter Variable).
+ *   - `font-display` (Cormorant) is reserved for the `display.*` roles.
+ *     Headings and body use Plus Jakarta Sans (`font-sans`).
  *     `font-mono` (JetBrains Mono) only via the `mono` role.
  *
  *   - Sizes anchor to Tailwind defaults (text-xs=12 → text-6xl=60).
@@ -44,5 +44,6 @@ export const type = {
   label:   "text-sm font-medium leading-snug",
   caption: "text-xs leading-normal text-muted-foreground",
   eyebrow: "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
+  badge:   "text-[11px] font-bold uppercase tracking-wider",
   mono:    "font-mono text-xs uppercase tracking-widest",
 } as const;

@@ -37,7 +37,23 @@ import { createCheckoutSession, fetchSubscription, type SubscriptionState } from
  * Start Building Free; then fades in as a glass pill.
  */
 
-const ROTATING_WORDS = ["future", "business", "vision", "path"] as const;
+const ROTATING_WORDS = [
+  "future",   "business", "vision",  "path",
+  "legacy",   "dream",    "brand",   "story",
+  "empire",   "presence", "purpose", "voice",
+] as const;
+
+/** "Pebble" translated into 8 world languages — for the rotating nav + footer wordmark. */
+const PEBBLE_LANGS = [
+  "Pebble",     // English
+  "Guijarro",   // Español
+  "Caillou",    // Français
+  "Kiesel",     // Deutsch
+  "Seixo",      // Português
+  "小石",        // 日本語
+  "자갈",        // 한국어
+  "Ciottolo",   // Italiano
+] as const;
 
 const STEPS = [
   {
@@ -166,9 +182,8 @@ const SECTION_REVEAL = {
   transition: { duration: 0.7, ease: EASE_CINEMATIC },
 } as const;
 
-const darkGradient =
-  "bg-gradient-to-b from-white via-white to-[#b4c0ff] bg-clip-text text-transparent";
-const lightGradient = "text-[#1a1a1a]";
+const darkGradient = "text-white";
+const lightGradient = "text-foreground";
 
 const NAV_ITEMS = [
   { label: "How it works", href: "#how" },
@@ -182,6 +197,68 @@ const shimmerSilverStyle = {
     "linear-gradient(90deg, #9ca3af 0%, #e5e7eb 25%, #ffffff 50%, #e5e7eb 75%, #9ca3af 100%)",
   backgroundSize: "200% auto",
 };
+
+/**
+ * Foreground-aware shimmer for light / dark surfaces (footer, etc.).
+ * Uses CSS custom properties so it resolves to the right tones in each
+ * theme — near-black on sand in light mode, near-white on #0a0a0a in dark.
+ */
+const shimmerForegroundStyle: React.CSSProperties = {
+  backgroundImage:
+    "linear-gradient(90deg, var(--color-muted-foreground) 0%, var(--color-foreground) 40%, var(--color-foreground) 60%, var(--color-muted-foreground) 100%)",
+  backgroundSize: "200% auto",
+};
+
+/**
+ * Cycles through PEBBLE_LANGS with a shimmering gradient clipped to the
+ * text. Usable on both dark (nav) and light (footer) surfaces — just
+ * pass the appropriate shimmerStyle.
+ */
+function RotatingPebbleLogo({
+  shimmerStyle,
+  className = "",
+}: {
+  shimmerStyle: React.CSSProperties;
+  className?: string;
+}) {
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => {
+    const id = setInterval(() => setIdx((i) => (i + 1) % PEBBLE_LANGS.length), 2800);
+    return () => clearInterval(id);
+  }, []);
+
+  return (
+    <MotionConfig reducedMotion="user">
+      {/* aria-label="Pebble" so screen readers always hear the brand name */}
+      <span aria-label="Pebble" className={`relative inline-block font-logo tracking-[0.12em] ${className}`}>
+        {/* invisible max-width anchor — "Guijarro" is the longest word */}
+        <span aria-hidden className="invisible select-none">Guijarro</span>
+        <AnimatePresence mode="wait">
+          <motion.span
+            key={PEBBLE_LANGS[idx]}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{
+              opacity: 1,
+              y: 0,
+              backgroundPosition: ["0% 0%", "200% 0%"],
+            }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{
+              opacity: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+              y:       { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
+              backgroundPosition: { duration: 3.5, repeat: Infinity, ease: "linear" },
+            }}
+            className="absolute left-0 top-0 bg-clip-text text-transparent whitespace-nowrap"
+            style={shimmerStyle}
+          >
+            {PEBBLE_LANGS[idx]}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+    </MotionConfig>
+  );
+}
 
 /**
  * Glassmorphic top nav. Fixed pill at top-center; items use an animated
@@ -200,43 +277,54 @@ function TopNavBar() {
   };
 
   return (
-    <motion.nav
-      initial={{ opacity: 0, y: -16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-      className="fixed top-4 left-1/2 -translate-x-1/2 z-40"
-      aria-label="Page navigation"
-    >
-      <MotionConfig reducedMotion="never">
-        <div className="flex items-center gap-1 pl-4 pr-2 py-1.5 rounded-full bg-stone-900/40 backdrop-blur-xl border border-white/15 shadow-[0_8px_32px_rgba(0,0,0,0.35)]">
-          <Link
-            href="/"
-            onClick={(e) => handleClick(e, "#")}
-            className="px-2 py-1 mr-1 text-lg font-semibold bg-gradient-to-b from-white via-white to-[#b4c0ff] bg-clip-text text-transparent"
-          >
-            Pebble.
-          </Link>
-          <div aria-hidden className="w-px h-5 bg-white/20 mx-1" />
-          {NAV_ITEMS.map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              onClick={(e) => handleClick(e, item.href)}
-              className="px-4 py-2 rounded-full hover:bg-white/10 transition-colors text-sm font-medium"
-            >
-              <motion.span
-                className="bg-clip-text text-transparent"
-                style={shimmerSilverStyle}
-                animate={{ backgroundPosition: ["0% 0%", "200% 0%"] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+    <>
+      {/* ── Top-left: rotating multilingual Pebble wordmark ── */}
+      <motion.div
+        initial={{ opacity: 0, x: -16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-4 left-6 z-40"
+      >
+        <Link
+          href="/"
+          onClick={(e) => handleClick(e, "#")}
+          className="inline-flex items-center"
+        >
+          <RotatingPebbleLogo shimmerStyle={shimmerSilverStyle} className="text-2xl" />
+        </Link>
+      </motion.div>
+
+      {/* ── Center: page-anchor pill (no wordmark) ── */}
+      <motion.nav
+        initial={{ opacity: 0, y: -16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-40"
+        aria-label="Page navigation"
+      >
+        <MotionConfig reducedMotion="user">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]">
+            {NAV_ITEMS.map((item) => (
+              <a
+                key={item.href}
+                href={item.href}
+                onClick={(e) => handleClick(e, item.href)}
+                className="px-5 py-2 rounded-full hover:bg-white/10 transition-colors text-base font-bold"
               >
-                {item.label}
-              </motion.span>
-            </a>
-          ))}
-        </div>
-      </MotionConfig>
-    </motion.nav>
+                <motion.span
+                  className="bg-clip-text text-transparent"
+                  style={shimmerSilverStyle}
+                  animate={{ backgroundPosition: ["0% 0%", "200% 0%"] }}
+                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                >
+                  {item.label}
+                </motion.span>
+              </a>
+            ))}
+          </div>
+        </MotionConfig>
+      </motion.nav>
+    </>
   );
 }
 
@@ -271,6 +359,7 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
   const [stripeLoading, setStripeLoading] = useState<string | null>(null);
   const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
   const [sub, setSub] = useState<SubscriptionState | null | "loading">("loading");
   const { user } = useAuth();
 
@@ -308,11 +397,13 @@ export function WelcomePhase({ onAdvance }: Props) {
     }
     setStripeLoading(tier.name);
     setStripeError(null);
+    setStripeErrorTierId(null);
     try {
       const { url } = await createCheckoutSession(tier.stripePlan);
       window.location.href = url;
     } catch (err) {
       setStripeError(err instanceof Error ? err.message : "Something went wrong. Try again.");
+      setStripeErrorTierId(tier.name);
       setStripeLoading(null);
     }
   };
@@ -383,7 +474,7 @@ export function WelcomePhase({ onAdvance }: Props) {
   };
 
   return (
-    <div className="relative w-full font-[family-name:var(--font-instrument-sans)]">
+    <div className="relative w-full font-[family-name:var(--font-plus-jakarta-sans)]">
       <TopNavBar />
 
       {/* ════════════════════════════════════════════════════════════════
@@ -423,17 +514,27 @@ export function WelcomePhase({ onAdvance }: Props) {
           className={`font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter ${darkGradient}`}
         >
           Let&apos;s build your{" "}
-          <MotionConfig reducedMotion="never">
+          <MotionConfig reducedMotion="user">
             <span className="relative inline-block align-baseline">
-              <span aria-hidden className="invisible">business</span>
+              {/* "presence" is the widest word — sets the reserved slot width */}
+              <span aria-hidden className="invisible">presence</span>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={ROTATING_WORDS[wordIdx]}
                   initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    backgroundPosition: ["0% 0%", "200% 0%"],
+                  }}
                   exit={{ opacity: 0, y: -10 }}
-                  transition={{ duration: 0.5, ease: EASE_CINEMATIC }}
-                  className={`absolute left-0 top-0 ${darkGradient}`}
+                  transition={{
+                    opacity: { duration: 0.5, ease: EASE_CINEMATIC },
+                    y:       { duration: 0.5, ease: EASE_CINEMATIC },
+                    backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
+                  }}
+                  className="absolute left-0 right-0 top-0 text-center bg-clip-text text-transparent"
+                  style={shimmerSilverStyle}
                 >
                   {ROTATING_WORDS[wordIdx]}
                 </motion.span>
@@ -517,7 +618,7 @@ export function WelcomePhase({ onAdvance }: Props) {
       {/* ════════════════════════════════════════════════════════════════
           LIGHT MARKETING BODY — white → soft gray gradient
           ════════════════════════════════════════════════════════════════ */}
-      <div className="relative bg-gradient-to-b from-white via-white to-stone-100 text-[#1a1a1a]">
+      <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
         {/* §2 — From sentence to site. */}
         <section
           id="how"
@@ -528,10 +629,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: sentenceSec.headingY, opacity: sentenceSec.opacity }}
             className="text-center mb-16 space-y-4 will-change-transform"
           >
-            <h2 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lightGradient}`}>
+            <h2 className={`${type.display.l} ${lightGradient}`}>
               From sentence to site.
             </h2>
-            <p className="text-lg text-[#1a1a1a]/65 max-w-xl mx-auto">
+            <p className={`text-lg max-w-xl mx-auto text-muted-foreground`}>
               Three steps from a paragraph about your business to a real, editable website.
             </p>
           </motion.div>
@@ -541,10 +642,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             className="grid grid-cols-1 md:grid-cols-3 gap-6 will-change-transform"
           >
             {STEPS.map((step) => (
-              <div key={step.title} className="p-8 rounded-2xl bg-white border border-stone-200">
+              <div key={step.title} className="p-8 rounded-2xl bg-card border border-border">
                 <step.Icon className="w-8 h-8 text-[#3054ff] mb-6" />
                 <h3 className={`${type.heading.l} mb-3`}>{step.title}</h3>
-                <p className="text-[#1a1a1a]/65 leading-relaxed">{step.body}</p>
+                <p className="text-muted-foreground leading-relaxed">{step.body}</p>
               </div>
             ))}
           </motion.div>
@@ -560,10 +661,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: dnaSec.headingY, opacity: dnaSec.opacity }}
             className="text-center mb-16 space-y-4 will-change-transform"
           >
-            <h2 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lightGradient}`}>
+            <h2 className={`${type.display.l} ${lightGradient}`}>
               The looks Pebble can wear.
             </h2>
-            <p className="text-lg text-[#1a1a1a]/65 max-w-2xl mx-auto">
+            <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
               Every Pebble build picks from an over-specified visual personality — so two sites for the same industry come out feeling like they were made by different studios.
             </p>
           </motion.div>
@@ -575,10 +676,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             {DNAS.map((dna) => (
               <div
                 key={dna.label}
-                className="p-6 rounded-xl bg-white border border-stone-200 hover:border-[#3054ff]/40 transition-colors"
+                className="p-6 rounded-xl bg-card border border-border hover:border-[#3054ff]/40 transition-colors"
               >
                 <h3 className={`${type.heading.s} mb-2`}>{dna.label}</h3>
-                <p className="text-sm text-[#1a1a1a]/60 leading-relaxed">{dna.feel}</p>
+                <p className="text-sm text-muted-foreground leading-relaxed">{dna.feel}</p>
               </div>
             ))}
           </motion.div>
@@ -593,10 +694,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: perfectSec.headingY, opacity: perfectSec.opacity }}
             className="text-center mb-16 space-y-4 will-change-transform"
           >
-            <h2 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lightGradient}`}>
+            <h2 className={`${type.display.l} ${lightGradient}`}>
               Perfect for…
             </h2>
-            <p className="text-lg text-[#1a1a1a]/65 max-w-xl mx-auto">
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
               Pebble routes industry-specific design choices automatically. These are the businesses we&apos;re tuned for today.
             </p>
           </motion.div>
@@ -608,7 +709,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             {BUSINESS_TYPES.map((t) => (
               <span
                 key={t}
-                className="px-5 py-3 rounded-full bg-white border border-stone-200 text-[#1a1a1a]/85 text-sm sm:text-base"
+                className="px-5 py-3 rounded-full bg-card border border-border text-foreground/85 text-sm sm:text-base"
               >
                 {t}
               </span>
@@ -625,10 +726,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: quoteSec.headingY, opacity: quoteSec.opacity }}
             className="space-y-6 will-change-transform"
           >
-            <p className={`font-[family-name:var(--font-instrument-serif)] italic text-3xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
+            <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
               &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
             </p>
-            <footer className="text-sm text-[#1a1a1a]/55">— Pebble, May 2026</footer>
+            <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
           </motion.blockquote>
         </section>
 
@@ -642,15 +743,15 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: pricingSec.headingY, opacity: pricingSec.opacity }}
             className="text-center mb-10 space-y-4 will-change-transform"
           >
-            <h2 className={`text-4xl sm:text-6xl font-semibold tracking-tight ${lightGradient}`}>
+            <h2 className={`${type.display.l} ${lightGradient}`}>
               Simple pricing.
             </h2>
-            <p className="text-lg text-[#1a1a1a]/65 max-w-xl mx-auto">
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
               Start free. Upgrade when you need more sites or a custom domain.
             </p>
 
             {/* Billing toggle — animated thumb slides between Monthly / Yearly. */}
-            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-stone-200/70 border border-stone-200 mt-4">
+            <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border mt-4">
               {(["monthly", "yearly"] as const).map((opt) => (
                 <button
                   key={opt}
@@ -664,7 +765,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                       transition={{ type: "spring", stiffness: 400, damping: 30 }}
                     />
                   )}
-                  <span className={`relative z-10 capitalize ${billing === opt ? "text-[#1a1a1a]" : "text-[#1a1a1a]/55"}`}>
+                  <span className={`relative z-10 capitalize ${billing === opt ? "text-foreground" : "text-muted-foreground/80"}`}>
                     {opt}
                     {opt === "yearly" && (
                       <span className="ml-1.5 text-[10px] font-semibold text-[#3054ff] uppercase tracking-wider">
@@ -681,6 +782,11 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: pricingSec.bodyY, opacity: pricingSec.opacity }}
             className="will-change-transform"
           >
+            {activePlan && (
+              <p className={`${type.mono} text-center text-muted-foreground mb-4`}>
+                You&apos;re currently on the <strong className="text-foreground">{activePlan}</strong> plan
+              </p>
+            )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10 items-stretch">
               {PRICING_TIERS.map((tier) => {
                 const isFree     = tier.monthly === 0;
@@ -706,8 +812,8 @@ export function WelcomePhase({ onAdvance }: Props) {
                     key={tier.name}
                     className={`relative p-6 rounded-2xl flex flex-col transition-transform ${
                       tier.featured
-                        ? "bg-white border-2 border-[#3054ff] shadow-[0_12px_32px_rgba(48,84,255,0.18)] lg:scale-[1.03] lg:-translate-y-2"
-                        : "bg-white border border-stone-200"
+                        ? "bg-card border-2 border-[#3054ff] shadow-[0_12px_32px_rgba(48,84,255,0.18)] lg:scale-[1.03] lg:-translate-y-2"
+                        : "bg-card border border-border"
                     }`}
                   >
                     {tier.featured && (
@@ -716,7 +822,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                       </div>
                     )}
 
-                    <div className="text-xs uppercase tracking-wider text-[#1a1a1a]/55 mb-2">{tier.name}</div>
+                    <div className={`${type.eyebrow} mb-2`}>{tier.name}</div>
 
                     <div className="mb-4">
                       <AnimatePresence mode="wait" initial={false}>
@@ -728,16 +834,16 @@ export function WelcomePhase({ onAdvance }: Props) {
                           transition={{ duration: 0.22, ease: EASE_CINEMATIC }}
                           className="flex items-baseline gap-1"
                         >
-                          <span className="text-3xl font-semibold">{headlinePrice}</span>
-                          {period && <span className="text-sm text-[#1a1a1a]/55">{period}</span>}
+                          <span className={type.display.m}>{headlinePrice}</span>
+                          {period && <span className="text-sm text-muted-foreground/80">{period}</span>}
                         </motion.div>
                       </AnimatePresence>
-                      <div className="text-xs text-[#1a1a1a]/45 mt-1 h-4">{subtext}</div>
+                      <div className="text-xs text-muted-foreground/70 mt-1 h-4">{subtext}</div>
                     </div>
 
-                    <p className="text-sm text-[#1a1a1a]/70 leading-relaxed mb-5">{tier.desc}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed mb-5">{tier.desc}</p>
 
-                    <ul className="space-y-2 text-sm text-[#1a1a1a]/75 mb-4 flex-1">
+                    <ul className="space-y-2 text-sm text-foreground/75 mb-4 flex-1">
                       {tier.highlights.map((f) => (
                         <li key={f} className="flex items-start gap-2">
                           <span className="text-[#3054ff] mt-0.5 shrink-0">✓</span>
@@ -750,7 +856,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                       type="button"
                       onClick={() => toggleTier(tier.name)}
                       aria-expanded={expandedTiers.has(tier.name)}
-                      className="flex items-center justify-center gap-1.5 text-xs font-medium text-[#1a1a1a]/55 hover:text-[#1a1a1a] mb-4 transition-colors"
+                      className="flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground/80 hover:text-foreground mb-4 transition-colors"
                     >
                       {expandedTiers.has(tier.name) ? "Hide all features" : "See all features"}
                       <motion.span
@@ -772,13 +878,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                           transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
                           className="overflow-hidden"
                         >
-                          <div className="space-y-4 pt-2 pb-4 border-t border-stone-200">
+                          <div className="space-y-4 pt-2 pb-4 border-t border-border">
                             {tier.details.map((cat) => (
                               <div key={cat.category}>
-                                <div className="text-[10px] uppercase tracking-wider text-[#1a1a1a]/50 mb-2 mt-3">
+                                <div className="text-[10px] uppercase tracking-wider text-muted-foreground/75 mb-2 mt-3">
                                   {cat.category}
                                 </div>
-                                <ul className="space-y-1.5 text-sm text-[#1a1a1a]/75">
+                                <ul className="space-y-1.5 text-sm text-foreground/75">
                                   {cat.items.map((item) => (
                                     <li key={item} className="flex items-start gap-2">
                                       <span className="text-[#3054ff] mt-0.5 shrink-0">✓</span>
@@ -803,24 +909,36 @@ export function WelcomePhase({ onAdvance }: Props) {
                           : tier.cta;
                       const buttonClass = `block w-full text-center text-sm font-medium py-2.5 rounded-full transition-colors disabled:opacity-60 ${
                         isCurrent
-                          ? "bg-stone-100 hover:bg-stone-200 text-[#1a1a1a]"
+                          ? "bg-muted hover:bg-muted/70 text-foreground"
                           : tier.featured
                             ? "bg-[#3054ff] hover:bg-[#2040e0] text-white"
-                            : "bg-stone-100 hover:bg-stone-200 text-[#1a1a1a]"
+                            : "bg-muted hover:bg-muted/70 text-foreground"
                       }`;
 
                       if (tier.ctaHref) {
-                        return <a href={tier.ctaHref} className={buttonClass}>{label}</a>;
+                        return (
+                          <>
+                            <a href={tier.ctaHref} className={buttonClass}>{label}</a>
+                            {stripeErrorTierId === tier.name && stripeError && (
+                              <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
+                            )}
+                          </>
+                        );
                       }
                       return (
-                        <button
-                          type="button"
-                          onClick={() => handleChoosePlan(tier)}
-                          disabled={isLoading}
-                          className={buttonClass}
-                        >
-                          {label}
-                        </button>
+                        <>
+                          <button
+                            type="button"
+                            onClick={() => handleChoosePlan(tier)}
+                            disabled={isLoading}
+                            className={buttonClass}
+                          >
+                            {label}
+                          </button>
+                          {stripeErrorTierId === tier.name && stripeError && (
+                            <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
+                          )}
+                        </>
                       );
                     })()}
                   </div>
@@ -828,9 +946,6 @@ export function WelcomePhase({ onAdvance }: Props) {
               })}
             </div>
 
-            {stripeError && (
-              <p className="mt-4 text-center text-sm text-red-600">{stripeError}</p>
-            )}
           </motion.div>
         </section>
 
@@ -844,8 +959,8 @@ export function WelcomePhase({ onAdvance }: Props) {
             style={{ y: ctaSec.headingY, opacity: ctaSec.opacity }}
             className="space-y-4 will-change-transform"
           >
-            <p className="text-sm uppercase tracking-wider text-[#1a1a1a]/55">Ready to build?</p>
-            <h2 className={`text-4xl sm:text-6xl font-semibold tracking-tight leading-[1.05] ${lightGradient}`}>
+            <p className={`${type.eyebrow}`}>Ready to build?</p>
+            <h2 className={`${type.display.l} ${lightGradient}`}>
               Tell me what you&apos;re thinking.
             </h2>
           </motion.div>
@@ -859,42 +974,42 @@ export function WelcomePhase({ onAdvance }: Props) {
               placeholder="Example: A site for my new coffee shop — menu, hours, and a way to order pickup."
             />
 
-            <p className="text-sm text-[#1a1a1a]/55">
+            <p className="text-sm text-muted-foreground/80">
               You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
             </p>
           </motion.div>
         </section>
 
         {/* §8 — Footer. */}
-        <footer className="border-t border-stone-200 px-4 py-12">
+        <footer className="border-t border-border px-4 py-12 bg-background">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row justify-between gap-8">
             <div className="space-y-2">
-              <Link href="/" className={`text-xl font-semibold ${lightGradient}`}>
-                Pebble.
+              <Link href="/" className="inline-flex items-center">
+                <RotatingPebbleLogo shimmerStyle={shimmerForegroundStyle} className="text-3xl" />
               </Link>
-              <p className="text-sm text-[#1a1a1a]/55 max-w-xs">
+              <p className="text-sm text-muted-foreground/80 max-w-xs">
                 A website you understand, built with you, not just for you.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-12 text-sm">
               <div className="space-y-3">
-                <div className="text-[#1a1a1a]/45 uppercase tracking-wider text-xs">Product</div>
-                <a href="#pricing" className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Pricing</a>
-                <Link href="/help"    className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Help</Link>
+                <div className={`${type.eyebrow}`}>Product</div>
+                <a href="#pricing" className="block text-muted-foreground hover:text-foreground">Pricing</a>
+                <Link href="/help"    className="block text-muted-foreground hover:text-foreground">Help</Link>
               </div>
               <div className="space-y-3">
-                <div className="text-[#1a1a1a]/45 uppercase tracking-wider text-xs">Legal</div>
-                <Link href="/privacy" className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Privacy</Link>
-                <Link href="/terms"   className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Terms</Link>
+                <div className={`${type.eyebrow}`}>Legal</div>
+                <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
+                <Link href="/terms"   className="block text-muted-foreground hover:text-foreground">Terms</Link>
               </div>
               <div className="space-y-3">
-                <div className="text-[#1a1a1a]/45 uppercase tracking-wider text-xs">Account</div>
-                <Link href="/login"  className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Log in</Link>
-                <Link href="/signup" className="block text-[#1a1a1a]/75 hover:text-[#1a1a1a]">Sign up</Link>
+                <div className={`${type.eyebrow}`}>Account</div>
+                <Link href="/login"  className="block text-muted-foreground hover:text-foreground">Log in</Link>
+                <Link href="/signup" className="block text-muted-foreground hover:text-foreground">Sign up</Link>
               </div>
             </div>
           </div>
-          <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-stone-200/70 text-xs text-[#1a1a1a]/45">
+          <div className="max-w-6xl mx-auto mt-12 pt-8 border-t border-border/70 text-xs text-muted-foreground/70">
             © 2026 Pebble. Made for people who want to actually understand their website.
           </div>
         </footer>
