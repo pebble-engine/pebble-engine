@@ -8,6 +8,7 @@ import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucid
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel";
 import { DetectiveInput } from "@/components/hero/detective-input";
+import { StickyScrollStack, type StackCard } from "@/components/hero/sticky-scroll-stack";
 import {
   patchBrief,
   getUserProfile,
@@ -1138,68 +1139,45 @@ export function WelcomePhase({ onAdvance }: Props) {
           ════════════════════════════════════════════════════════════════ */}
       <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
         {/* §2 — From sentence to site.
-            Phase 40c (2026-05-21) — this is the cinematic moment Marc was
-            asking for. The hero recedes (scale 0.97 + fade 0.6) as the
-            user scrolls; this section then enters with weight:
-            - Heading: scale 0.92 → 1, y 32 → 0, opacity 0 → 1, big spring
-            - Subhead: same shape, 0.12s delay, smaller magnitude
-            - Step cards: stagger 0.1s each, scale 0.95 → 1, y 24 → 0
-            - All viewport-driven via whileInView (fires once when 30% in).
-            The section-tied parallax (sentenceSec) is REMOVED here in
-            favor of the more dramatic whileInView entrance. */}
-        <section
+            Phase 40e (2026-05-21) — sticky-scroll stack. Apple iPad /
+            Linear / Vercel pattern. Section pins to top of viewport
+            while user scrolls; cards stack on top of each other as
+            scroll progresses; section unpins once all cards landed
+            + the "Ready to build?" closer has appeared. Feels like
+            the page is being pulled UP toward the viewer. */}
+        <StickyScrollStack
           id="how"
-          ref={sentenceSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-6xl mx-auto py-16"
-        >
-          {/* Phase 40d — viewport.amount lowered from 0.3 → 0.05 so the
-              entrance fires the moment the section's top crosses into view,
-              not when 30% is already showing. Magnitudes bumped: scale
-              0.92 → 0.82 (more dramatic zoom-in), y 32 → 64, duration 0.9 →
-              1.1s. The user clearly sees the heading LAND with weight
-              instead of just appearing already-there. */}
-          <motion.div
-            initial={{ opacity: 0, y: 64, scale: 0.82 }}
-            whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.05 }}
-            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center mb-16 space-y-4 will-change-transform"
-          >
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              From sentence to site.
-            </h2>
-            <motion.p
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.05 }}
-              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
-              className="text-lg max-w-xl mx-auto text-muted-foreground"
-            >
-              Three steps from a paragraph about your business to a real, editable website.
-            </motion.p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {STEPS.map((step, i) => (
-              <motion.div
-                key={step.title}
-                initial={{ opacity: 0, y: 48, scale: 0.88 }}
-                whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.05 }}
-                transition={{
-                  duration: 0.85,
-                  ease: [0.22, 1, 0.36, 1],
-                  delay: 0.45 + i * 0.15,
+          heading="From sentence to site."
+          subhead="Three steps from a paragraph about your business to a real, editable website."
+          cards={STEPS.map((step, i): StackCard => ({
+            id: step.title,
+            eyebrow: `Step 0${i + 1}`,
+            icon: <step.Icon className="w-9 h-9" />,
+            title: step.title,
+            body: step.body,
+          }))}
+          closer={
+            <div className="text-center space-y-5">
+              <p className={`${type.eyebrow}`}>Ready to build yours?</p>
+              <p className={`${type.heading.m} text-foreground max-w-md mx-auto`}>
+                Three steps. One click to start.
+              </p>
+              <a
+                href="#start"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
                 }}
-                className="p-8 rounded-2xl bg-card border border-border will-change-transform"
+                className="inline-flex items-center gap-3 pl-8 pr-3 py-3 bg-foreground rounded-full text-background font-semibold text-lg hover:bg-foreground/90 transition-colors group"
               >
-                <step.Icon className="w-8 h-8 text-[#3054ff] mb-6" />
-                <h3 className={`${type.heading.l} mb-3`}>{step.title}</h3>
-                <p className="text-muted-foreground leading-relaxed">{step.body}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
+                <span>Start Building Free</span>
+                <span className="w-11 h-11 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
+                  <ArrowRight className="w-5 h-5 text-white" />
+                </span>
+              </a>
+            </div>
+          }
+        />
 
         {/* §3 — DNA showcase. */}
         <section
