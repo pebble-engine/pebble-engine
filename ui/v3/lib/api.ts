@@ -327,6 +327,34 @@ export async function fetchBotMessage(
   return postJSON("/api/bot-message", { intent, context });
 }
 
+// ---------- /api/projects/<slug>/integrity (Phase 36, 2026-05-21) ----------
+//
+// Pre-launch checklist. Runs the curated 10-eval subset against a build
+// and returns row-per-check {id, label, status, message, must_pass} plus
+// a publishable boolean (true when every must_pass row is "pass").
+
+export type IntegrityCheckStatus = "pass" | "fail" | "skip" | "error";
+
+export type IntegrityCheckRow = {
+  id:        string;
+  label:     string;
+  status:    IntegrityCheckStatus;
+  message:   string;
+  must_pass: boolean;
+};
+
+export type IntegrityResponse = {
+  slug:        string;
+  results:     IntegrityCheckRow[];
+  publishable: boolean;
+  passed:      number;
+  total:       number;
+};
+
+export async function checkBuildIntegrity(slug: string): Promise<IntegrityResponse> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/integrity`);
+}
+
 // ---------- /api/brand-extract (Phase 33a/b, 2026-05-21) -------------------
 //
 // URL ingestion: paste a URL, get a partial brief back. Pre-fills the

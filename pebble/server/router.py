@@ -148,6 +148,12 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/analytics")]
             from pebble.server.analytics import run_get_summary
             run_get_summary(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrity"):
+            # Phase 36 (2026-05-21) — curated 10-check pre-launch checklist
+            # for the workspace's publish gate. Owner-gated. Read-only.
+            slug = handler.path[len("/api/projects/"):-len("/integrity")]
+            from pebble.server.integrity import run_integrity_check
+            run_integrity_check(handler, slug)
         elif handler.path == "/api/account/profile":
             from pebble.server.account import run_get_profile
             run_get_profile(handler)
