@@ -443,23 +443,20 @@ export function WelcomePhase({ onAdvance }: Props) {
   // Parallax — document-scroll tied transforms. Blobs move slower than
   // scroll (depth), hero text lifts gently as you leave the hero behind.
   const { scrollY } = useScroll();
-  // Phase 40b (2026-05-21) — Marc reported parallax STILL broken after
-  // Phase 40's 3x softening. Killing the hero's global y-transforms +
-  // blob y-transforms entirely. Reasons:
-  //   1. The new BackgroundCarousel already provides depth — competing
-  //      blob transforms over a moving carousel create visual noise.
-  //   2. heroLift moved the hero text upward as user scrolled, which
-  //      doesn't change the section's layout height (transforms don't),
-  //      so the section below stays in place — the hero just slid up
-  //      *over* the carousel as if floating, breaking the depth illusion.
-  //   3. opacity-only fadeout is cheap and reads as natural transition
-  //      out of the hero. NO geometric transforms.
-  // The per-section parallaxes (already at 60px / 20px from Phase 40)
-  // stay — those are subtle enough to read as intentional.
-  const blobYTop      = useTransform(scrollY, [0, 1000], [0, 0]); // no transform
-  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, 0]); // no transform
-  const heroLift      = useTransform(scrollY, [0, 800],  [0, 0]); // no lift
-  const heroFadeOut   = useTransform(scrollY, [400, 900], [1, 0.85]); // gentle fade only
+  // Phase 40c (2026-05-21) — third pass on hero/scroll motion. Marc
+  // clarified: he WANTS the cinematic parallax moment at the hero →
+  // section-2 boundary. The earlier "broken parallax" report was about
+  // the boundary feeling FLAT, not about jank. So we restore a subtle
+  // "hero recedes" effect (scale 1 → 0.97 + opacity 1 → 0.6) tied to
+  // scroll progress over the first 600px. The §2 section then enters
+  // with weight (see whileInView animations on its heading + cards).
+  // Blobs stay anchored — competing y-transforms over the carousel
+  // were the actual jank source.
+  const blobYTop      = useTransform(scrollY, [0, 1000], [0, 0]);
+  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, 0]);
+  const heroLift      = useTransform(scrollY, [0, 600], [0, -24]);     // gentle recede
+  const heroFadeOut   = useTransform(scrollY, [100, 600], [1, 0.6]);   // recede + fade
+  const heroScale     = useTransform(scrollY, [0, 600], [1, 0.97]);    // backwards-scale cue
 
   // One parallax setup per marketing section.
   const sentenceSec = useParallaxSection();
@@ -799,7 +796,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         />
 
         <motion.div
-          style={{ y: heroLift, opacity: heroFadeOut }}
+          style={{ y: heroLift, opacity: heroFadeOut, scale: heroScale }}
           className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10 will-change-transform"
         >
         <motion.div
@@ -1140,36 +1137,62 @@ export function WelcomePhase({ onAdvance }: Props) {
           LIGHT MARKETING BODY — white → soft gray gradient
           ════════════════════════════════════════════════════════════════ */}
       <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
-        {/* §2 — From sentence to site. */}
+        {/* §2 — From sentence to site.
+            Phase 40c (2026-05-21) — this is the cinematic moment Marc was
+            asking for. The hero recedes (scale 0.97 + fade 0.6) as the
+            user scrolls; this section then enters with weight:
+            - Heading: scale 0.92 → 1, y 32 → 0, opacity 0 → 1, big spring
+            - Subhead: same shape, 0.12s delay, smaller magnitude
+            - Step cards: stagger 0.1s each, scale 0.95 → 1, y 24 → 0
+            - All viewport-driven via whileInView (fires once when 30% in).
+            The section-tied parallax (sentenceSec) is REMOVED here in
+            favor of the more dramatic whileInView entrance. */}
         <section
           id="how"
           ref={sentenceSec.ref}
           className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-6xl mx-auto py-16"
         >
           <motion.div
-            style={{ y: sentenceSec.headingY, opacity: sentenceSec.opacity }}
+            initial={{ opacity: 0, y: 32, scale: 0.92 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.3 }}
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-16 space-y-4 will-change-transform"
           >
             <h2 className={`${type.display.l} ${lightGradient}`}>
               From sentence to site.
             </h2>
-            <p className={`text-lg max-w-xl mx-auto text-muted-foreground`}>
+            <motion.p
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+              className="text-lg max-w-xl mx-auto text-muted-foreground"
+            >
               Three steps from a paragraph about your business to a real, editable website.
-            </p>
+            </motion.p>
           </motion.div>
 
-          <motion.div
-            style={{ y: sentenceSec.bodyY, opacity: sentenceSec.opacity }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 will-change-transform"
-          >
-            {STEPS.map((step) => (
-              <div key={step.title} className="p-8 rounded-2xl bg-card border border-border">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {STEPS.map((step, i) => (
+              <motion.div
+                key={step.title}
+                initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                whileInView={{ opacity: 1, y: 0, scale: 1 }}
+                viewport={{ once: true, amount: 0.25 }}
+                transition={{
+                  duration: 0.7,
+                  ease: [0.22, 1, 0.36, 1],
+                  delay: 0.25 + i * 0.1,
+                }}
+                className="p-8 rounded-2xl bg-card border border-border will-change-transform"
+              >
                 <step.Icon className="w-8 h-8 text-[#3054ff] mb-6" />
                 <h3 className={`${type.heading.l} mb-3`}>{step.title}</h3>
                 <p className="text-muted-foreground leading-relaxed">{step.body}</p>
-              </div>
+              </motion.div>
             ))}
-          </motion.div>
+          </div>
         </section>
 
         {/* §3 — DNA showcase. */}
