@@ -582,7 +582,7 @@ export function WelcomePhase({ onAdvance }: Props) {
       try {
         const defaults = await Promise.race([
           fetchSmartDefaults({ business_type: res.industry || undefined }),
-          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
         ]);
         patchBrief({
           audience:       defaults.audience,
@@ -628,7 +628,7 @@ export function WelcomePhase({ onAdvance }: Props) {
               business_type: res.industry,
               business_name: res.business_name || undefined,
             }),
-            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 8000)),
           ]);
           patchBrief({
             audience:       defaults.audience,
