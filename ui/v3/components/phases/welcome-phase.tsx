@@ -6,6 +6,8 @@ import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
+import { BackgroundCarousel } from "@/components/hero/background-carousel";
+import { DetectiveInput } from "@/components/hero/detective-input";
 import {
   patchBrief,
   getUserProfile,
@@ -314,7 +316,7 @@ function TopNavBar() {
           onClick={(e) => handleClick(e, "#")}
           className="inline-flex items-center"
         >
-          <RotatingPebbleLogo shimmerStyle={shimmerSilverStyle} className="text-2xl" />
+          <RotatingPebbleLogo shimmerStyle={shimmerForegroundStyle} className="text-2xl" />
         </Link>
       </motion.div>
 
@@ -327,17 +329,17 @@ function TopNavBar() {
         aria-label="Page navigation"
       >
         <MotionConfig reducedMotion="user">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-white/5 backdrop-blur-2xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.4),inset_0_1px_0_rgba(255,255,255,0.08)]">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-card/60 backdrop-blur-2xl border border-border shadow-[0_4px_32px_rgba(31,29,26,0.08),inset_0_1px_0_rgba(255,255,255,0.6)]">
             {NAV_ITEMS.map((item) => (
               <a
                 key={item.href}
                 href={item.href}
                 onClick={(e) => handleClick(e, item.href)}
-                className="px-5 py-2 rounded-full hover:bg-white/10 transition-colors text-base font-bold"
+                className="px-5 py-2 rounded-full hover:bg-accent transition-colors text-base font-bold"
               >
                 <motion.span
                   className="bg-clip-text text-transparent"
-                  style={shimmerSilverStyle}
+                  style={shimmerForegroundStyle}
                   animate={{ backgroundPosition: ["0% 0%", "200% 0%"] }}
                   transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
                 >
@@ -366,8 +368,14 @@ function useParallaxSection() {
   });
   return {
     ref,
-    headingY: useTransform(scrollYProgress, [0, 1], [180, -180]),
-    bodyY:    useTransform(scrollYProgress, [0, 1], [60, -60]),
+    // Phase 40 (2026-05-21) — Marc reported parallax "breaking when starting
+    // to scroll down". Root cause was magnitude collisions: 180px heading
+    // lift + 60px body shift + global hero lift + hero fade + dual blob
+    // shifts all firing simultaneously caused jank on fast scroll. Softened
+    // magnitudes by ~3x. Subtle motion still reads as parallax, but the
+    // visual chunking is gone.
+    headingY: useTransform(scrollYProgress, [0, 1], [60, -60]),
+    bodyY:    useTransform(scrollYProgress, [0, 1], [20, -20]),
     opacity:  useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]),
   };
 }
@@ -435,10 +443,15 @@ export function WelcomePhase({ onAdvance }: Props) {
   // Parallax — document-scroll tied transforms. Blobs move slower than
   // scroll (depth), hero text lifts gently as you leave the hero behind.
   const { scrollY } = useScroll();
-  const blobYTop      = useTransform(scrollY, [0, 1000], [0, -180]);
-  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, -300]);
-  const heroLift      = useTransform(scrollY, [0, 800], [0, -120]);
-  const heroFadeOut   = useTransform(scrollY, [200, 700], [1, 0.4]);
+  // Phase 40 (2026-05-21) — softened all four hero transforms ~3x.
+  // The combined load (heroLift + heroFadeOut + 2 blob shifts + per-
+  // section parallax firing immediately after) caused chunky jank on
+  // fast scroll. Subtle 40-100px lifts + opacity 1→0.7 reads as
+  // intentional depth without breaking.
+  const blobYTop      = useTransform(scrollY, [0, 1000], [0, -60]);
+  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, -100]);
+  const heroLift      = useTransform(scrollY, [0, 800], [0, -40]);
+  const heroFadeOut   = useTransform(scrollY, [200, 700], [1, 0.7]);
 
   // One parallax setup per marketing section.
   const sentenceSec = useParallaxSection();
@@ -753,23 +766,28 @@ export function WelcomePhase({ onAdvance }: Props) {
   };
 
   return (
-    <div className="relative w-full font-[family-name:var(--font-plus-jakarta-sans)]">
+    /* Phase 40 (2026-05-21) — light-mode-landing scope forces light tokens
+       even when the user has dark mode set globally. Workspace stays dark;
+       only marketing surfaces use this scope. */
+    <div className="light-mode-landing relative w-full font-[family-name:var(--font-plus-jakarta-sans)] bg-background text-foreground">
       <TopNavBar />
 
       {/* ════════════════════════════════════════════════════════════════
-          DARK HERO
+          LIGHT HERO (cream/sand background, charcoal text)
           ════════════════════════════════════════════════════════════════ */}
-      <section className="relative bg-black text-white overflow-hidden">
-        {/* Decorative blobs — parallax (move slower than scroll). */}
+      <section className="relative bg-background text-foreground overflow-hidden">
+        {/* Background carousel — real Pebble builds, ken-burns parallax */}
+        <BackgroundCarousel />
+        {/* Decorative blobs — softer pastel pulse over the carousel + bg */}
         <motion.div
           aria-hidden
           style={{ y: blobYTop }}
-          className="pointer-events-none absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-blue-900/20 blur-[120px] mix-blend-screen will-change-transform"
+          className="pointer-events-none absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-[#f5d5b8]/40 blur-[120px] will-change-transform"
         />
         <motion.div
           aria-hidden
           style={{ y: blobYBottom }}
-          className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-indigo-900/20 blur-[120px] mix-blend-screen will-change-transform"
+          className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px] will-change-transform"
         />
 
         <motion.div
@@ -782,15 +800,15 @@ export function WelcomePhase({ onAdvance }: Props) {
           transition={{ duration: 0.6 }}
           className="flex items-baseline justify-center gap-2"
         >
-          <span className="text-white/60 text-lg sm:text-xl">welcome to</span>
-          <span className={`text-2xl sm:text-3xl font-semibold ${darkGradient}`}>Pebble.</span>
+          <span className="text-muted-foreground text-lg sm:text-xl">welcome to</span>
+          <span className="text-2xl sm:text-3xl font-semibold text-foreground">Pebble.</span>
         </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, scale: 0.92 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
-          className={`font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter ${darkGradient}`}
+          className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
         >
           Let&apos;s build your{" "}
           <MotionConfig reducedMotion="user">
@@ -813,7 +831,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                     backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
                   }}
                   className="absolute left-0 right-0 top-0 text-center bg-clip-text text-transparent"
-                  style={shimmerSilverStyle}
+                  style={shimmerForegroundStyle}
                 >
                   {ROTATING_WORDS[wordIdx]}
                 </motion.span>
@@ -826,7 +844,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           initial={{ opacity: 0 }}
           animate={{ opacity: 0.75 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-lg sm:text-xl leading-[1.65] text-white max-w-xl"
+          className="text-lg sm:text-xl leading-[1.65] text-foreground max-w-xl"
         >
           One click can change everything.
         </motion.p>
@@ -839,20 +857,44 @@ export function WelcomePhase({ onAdvance }: Props) {
         >
           <AnimatePresence mode="wait" initial={false}>
             {!started ? (
-              <motion.button
+              /* Phase 40 (2026-05-21) — bigger CTA + light-mode treatment.
+                 Charcoal pill with white text + accent arrow circle on a
+                 cream background pops better than white-on-white. Slow
+                 breathing shadow draws the eye without flashing. */
+              <motion.div
                 key="cta"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}
                 transition={{ duration: 0.3, ease: EASE_CINEMATIC }}
-                onClick={handleStartClick}
-                className="group flex items-center gap-3 pl-6 pr-2 py-2 bg-white rounded-full transition-shadow duration-200 hover:shadow-[0_0_20px_rgba(255,255,255,0.3)]"
+                className="flex flex-col items-center gap-3"
               >
-                <span className="font-medium text-lg text-[#1a1a1a]">Start Building Free</span>
-                <span className="w-10 h-10 rounded-full bg-[#3054ff] group-hover:bg-[#2040e0] flex items-center justify-center transition-colors">
-                  <ArrowRight className="w-5 h-5 text-white" />
-                </span>
-              </motion.button>
+                <motion.button
+                  onClick={handleStartClick}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  animate={{
+                    boxShadow: [
+                      "0 8px 28px rgba(31,29,26,0.10)",
+                      "0 12px 40px rgba(48,84,255,0.20)",
+                      "0 8px 28px rgba(31,29,26,0.10)",
+                    ],
+                  }}
+                  transition={{
+                    boxShadow: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
+                    scale:     { duration: 0.18, ease: EASE_CINEMATIC },
+                  }}
+                  className="group flex items-center gap-4 pl-10 pr-3 py-3 bg-foreground rounded-full"
+                >
+                  <span className="font-semibold text-2xl text-background">Start Building Free</span>
+                  <span className="w-14 h-14 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
+                    <ArrowRight className="w-7 h-7 text-white" />
+                  </span>
+                </motion.button>
+                <p className={`${type.caption} text-muted-foreground/80`}>
+                  No credit card needed. One site free.
+                </p>
+              </motion.div>
             ) : awaitingModeChoice ? (
               /* Phase 33d — intent picker. Shown when the user pastes a URL
                  so they can choose whether to extract their own brand info
@@ -865,43 +907,43 @@ export function WelcomePhase({ onAdvance }: Props) {
                 transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
                 className="w-full max-w-xl mx-auto space-y-4"
               >
-                <p className="text-sm text-white/60 text-center truncate">
-                  <span className="text-white/40 mr-1">URL:</span>
-                  <span className="text-white/70">{pendingUrl}</span>
+                <p className="text-sm text-muted-foreground text-center truncate">
+                  <span className="text-muted-foreground/70 mr-1">URL:</span>
+                  <span className="text-foreground/85">{pendingUrl}</span>
                 </p>
-                <p className="text-base text-white/80 text-center font-medium">What would you like to do with this?</p>
+                <p className="text-base text-foreground text-center font-medium">What would you like to do with this?</p>
                 <div className="flex flex-col sm:flex-row gap-3">
                   {/* Primary: brand mode */}
                   <button
                     onClick={() => runExtraction(pendingUrl, "brand", pendingFiles)}
-                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/35 backdrop-blur-xl transition-colors text-left group"
+                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-card hover:bg-accent border border-border hover:border-foreground/30 transition-colors text-left group"
                   >
-                    <span className="w-9 h-9 rounded-full bg-[#3054ff]/80 group-hover:bg-[#3054ff] flex items-center justify-center transition-colors shrink-0">
+                    <span className="w-9 h-9 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors shrink-0">
                       <Rocket className="w-4 h-4 text-white" aria-hidden />
                     </span>
                     <span>
-                      <span className="block text-sm font-semibold text-white">Build this business&apos;s site</span>
-                      <span className="block text-xs text-white/55 mt-0.5">Extract brand + industry info</span>
+                      <span className="block text-sm font-semibold text-foreground">Build this business&apos;s site</span>
+                      <span className="block text-xs text-muted-foreground mt-0.5">Extract brand + industry info</span>
                     </span>
                     <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-[#3054ff] bg-[#3054ff]/10 px-2 py-1 rounded-full shrink-0">Recommended</span>
                   </button>
                   {/* Secondary: inspire mode */}
                   <button
                     onClick={() => runExtraction(pendingUrl, "inspire", pendingFiles)}
-                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/25 backdrop-blur-xl transition-colors text-left group"
+                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-card/60 hover:bg-card border border-border/70 hover:border-border transition-colors text-left group"
                   >
-                    <span className="w-9 h-9 rounded-full bg-white/10 group-hover:bg-white/15 flex items-center justify-center transition-colors shrink-0">
-                      <Sparkles className="w-4 h-4 text-white/70" aria-hidden />
+                    <span className="w-9 h-9 rounded-full bg-muted group-hover:bg-accent flex items-center justify-center transition-colors shrink-0">
+                      <Sparkles className="w-4 h-4 text-muted-foreground" aria-hidden />
                     </span>
                     <span>
-                      <span className="block text-sm font-semibold text-white/90">Inspired by this design</span>
-                      <span className="block text-xs text-white/45 mt-0.5">Match the visual style only</span>
+                      <span className="block text-sm font-semibold text-foreground">Inspired by this design</span>
+                      <span className="block text-xs text-muted-foreground mt-0.5">Match the visual style only</span>
                     </span>
                   </button>
                 </div>
                 <button
                   onClick={() => { setAwaitingModeChoice(false); setPendingUrl(""); }}
-                  className="w-full text-xs text-white/40 hover:text-white/65 text-center transition-colors py-1"
+                  className="w-full text-xs text-muted-foreground hover:text-foreground text-center transition-colors py-1"
                 >
                   Cancel — type something else
                 </button>
@@ -915,25 +957,25 @@ export function WelcomePhase({ onAdvance }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.4, ease: EASE_CINEMATIC }}
-                className="w-full max-w-xl mx-auto p-7 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/15 space-y-5"
+                className="w-full max-w-xl mx-auto p-7 rounded-2xl bg-card backdrop-blur-xl border border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)] space-y-5"
               >
                 <div className="space-y-1">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/40">Matched style</p>
-                  <h3 className="font-display italic text-2xl text-white leading-snug">
+                  <p className={`${type.eyebrow}`}>Matched style</p>
+                  <h3 className="font-display italic text-2xl text-foreground leading-snug">
                     {matchedDnaResult.label}
                   </h3>
-                  <p className="text-sm text-white/70 leading-relaxed">{matchedDnaResult.feel}</p>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{matchedDnaResult.feel}</p>
                 </div>
 
                 {/* Confidence bar */}
                 <div className="space-y-1.5">
-                  <div className="flex justify-between text-xs text-white/40">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>Style match confidence</span>
                     <span>{Math.round(matchedDnaResult.confidence * 100)}%</span>
                   </div>
-                  <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                  <div className="h-1 rounded-full bg-muted overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full bg-white/60"
+                      className="h-full rounded-full bg-foreground/70"
                       initial={{ width: 0 }}
                       animate={{ width: `${Math.round(matchedDnaResult.confidence * 100)}%` }}
                       transition={{ duration: 0.6, ease: EASE_CINEMATIC, delay: 0.2 }}
@@ -941,21 +983,21 @@ export function WelcomePhase({ onAdvance }: Props) {
                   </div>
                 </div>
 
-                <p className="text-[11px] text-white/35 leading-relaxed border-t border-white/10 pt-4">
+                <p className="text-[11px] text-muted-foreground leading-relaxed border-t border-border pt-4">
                   Custom 3D scenes and shaders won&apos;t be replicated — we&apos;ll match the vibe with lighter techniques.
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <button
                     onClick={() => { void applyExtractionAndAdvance(pendingUrl, inspireResult!, pendingFiles, "inspire"); }}
-                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-[#1a1a1a] font-semibold text-sm hover:bg-white/90 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-foreground text-background font-semibold text-sm hover:bg-foreground/90 transition-colors"
                   >
                     Use this style
                     <ArrowRight className="w-4 h-4" aria-hidden />
                   </button>
                   <button
                     onClick={() => { setMatchedDnaResult(null); setInspireResult(null); runExtraction(pendingUrl, "brand", pendingFiles); }}
-                    className="flex-1 text-sm text-white/60 hover:text-white/90 transition-colors px-4 py-3 rounded-xl hover:bg-white/5"
+                    className="flex-1 text-sm text-muted-foreground hover:text-foreground transition-colors px-4 py-3 rounded-xl hover:bg-muted"
                   >
                     Pick a different style
                   </button>
@@ -971,7 +1013,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
                 transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
-                className="w-full max-w-xl mx-auto p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/15 space-y-4"
+                className="w-full max-w-xl mx-auto p-8 rounded-2xl bg-card backdrop-blur-xl border border-border shadow-[0_8px_40px_rgba(0,0,0,0.06)] space-y-4"
                 role="status"
                 aria-live="polite"
               >
@@ -983,29 +1025,29 @@ export function WelcomePhase({ onAdvance }: Props) {
                     <div
                       key={label}
                       className={`flex items-center gap-3 text-base transition-colors ${
-                        status === "done"   ? "text-white/90" :
-                        status === "active" ? "text-white" :
-                        "text-white/30"
+                        status === "done"   ? "text-foreground" :
+                        status === "active" ? "text-foreground" :
+                        "text-muted-foreground/60"
                       }`}
                     >
                       {status === "done" ? (
-                        <Check className="w-5 h-5 text-green-400" aria-hidden />
+                        <Check className="w-5 h-5 text-green-600" aria-hidden />
                       ) : status === "active" ? (
                         <motion.div
                           aria-hidden
-                          className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                          className="w-5 h-5 rounded-full border-2 border-muted-foreground/30 border-t-foreground"
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         />
                       ) : (
-                        <div aria-hidden className="w-5 h-5 rounded-full border border-white/20" />
+                        <div aria-hidden className="w-5 h-5 rounded-full border border-border" />
                       )}
                       <span>{label}</span>
                     </div>
                   );
                 })}
                 {extractError && (
-                  <div className="mt-4 flex items-start gap-2 text-sm text-amber-300/90 pt-4 border-t border-white/10">
+                  <div className="mt-4 flex items-start gap-2 text-sm text-amber-700 pt-4 border-t border-border">
                     <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
                     <span>{extractError}</span>
                   </div>
@@ -1020,15 +1062,28 @@ export function WelcomePhase({ onAdvance }: Props) {
                 transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
                 className="w-full space-y-6"
               >
-                <PromptInputBox
+                {/* Phase 40 — DetectiveInput replaces the generic chat-style
+                    PromptInputBox. Detects URL vs industry phrase vs prose as
+                    the user types and surfaces a status line. No fake "plan/
+                    generate/attach" buttons that other AI builders ship. */}
+                <DetectiveInput
                   autoFocus
-                  onSend={handleSend}
-                  placeholder="Paste your URL or describe your business — e.g. acme.co OR a bakery in Brooklyn that takes online orders."
+                  onSubmit={(value, opts) => {
+                    // Inspire-mode shortcut: if the user clicked "Switch to
+                    // Inspired by this design" inside the input, we skip the
+                    // separate mode-picker step.
+                    if (opts?.inspireMode && looksLikeUrl(value.trim())) {
+                      setPendingUrl(value.trim());
+                      void runExtraction(value.trim(), "inspire");
+                      return;
+                    }
+                    void handleSend(value);
+                  }}
                 />
                 <div className="flex items-center justify-between flex-wrap gap-3 text-sm">
                   <Link
                     href="/migrate"
-                    className="text-white/60 hover:text-white/90 inline-flex items-center gap-2 transition-colors"
+                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 transition-colors"
                   >
                     <span>Already have a site?</span>
                     <span className="font-semibold underline underline-offset-2">Bring it over →</span>
@@ -1040,12 +1095,12 @@ export function WelcomePhase({ onAdvance }: Props) {
                   <button
                     type="button"
                     onClick={() => setBuildIntent((cur) => cur === "business" ? "project" : "business")}
-                    className="inline-flex items-center gap-2 text-white/60 hover:text-white/90 transition-colors"
+                    className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
                     title={buildIntent === "project"
                       ? "Switch back to a business site build (default)"
                       : "Switch to a project / portfolio build — cleaner code, editorial layout, understated CTAs"}
                   >
-                    <span className={`inline-block w-2 h-2 rounded-full transition-colors ${buildIntent === "project" ? "bg-white" : "bg-white/30"}`} aria-hidden />
+                    <span className={`inline-block w-2 h-2 rounded-full transition-colors ${buildIntent === "project" ? "bg-foreground" : "bg-muted-foreground/40"}`} aria-hidden />
                     <span>
                       {buildIntent === "project"
                         ? <>Project mode <span className="underline underline-offset-2 font-semibold">on</span></>
@@ -1063,10 +1118,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0, transition: { delay: 0.3, duration: SHORT_S, ease: EASE_CINEMATIC } }}
             onClick={handleResume}
-            className="group flex items-center gap-2 px-5 py-3 bg-white/5 hover:bg-white/10 border border-white/15 rounded-full text-white/80 hover:text-white text-sm backdrop-blur-sm transition-colors"
+            className="group flex items-center gap-2 px-5 py-3 bg-card hover:bg-accent border border-border rounded-full text-muted-foreground hover:text-foreground text-sm backdrop-blur-sm transition-colors"
           >
             <span>Continue working on</span>
-            <span className="text-white font-medium">{resumeName}</span>
+            <span className="text-foreground font-medium">{resumeName}</span>
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </motion.button>
         )}

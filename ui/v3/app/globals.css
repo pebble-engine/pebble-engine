@@ -128,6 +128,52 @@
   --color-pebble: #2a2a2a;         /* was warm beige — now dark border-gray */
 }
 
+/* Phase 40 (2026-05-21) — Forced light-mode landing scope.
+   Marc's call: the landing page should be light EVEN when the user has
+   dark mode set globally. The workspace stays dark by default; only
+   the marketing surfaces use this scope. Apply via the
+   `.light-mode-landing` class on any wrapper element; every descendant
+   that reads --color-background, --color-foreground, --color-card, etc.
+   resolves to light values regardless of the parent .dark class. */
+.light-mode-landing {
+  --surface-0: var(--color-sand);
+  --surface-1: var(--color-stone);
+  --surface-2: var(--color-mist);
+  --text-1:    var(--color-charcoal);
+  --text-2:    var(--color-graphite);
+  --border-1:  var(--color-pebble);
+  --accent-1:  var(--color-river);
+  --shadow-1:  0 8px 30px rgba(31, 29, 26, 0.08);
+  /* Semantic tokens already alias these via :root; the dark .dark class
+     overrides them. By redeclaring locally we shadow the .dark values
+     for this subtree only. */
+  --color-background:         var(--surface-0);
+  --color-foreground:         var(--text-1);
+  --color-card:               var(--surface-1);
+  --color-card-foreground:    var(--text-1);
+  --color-popover:            var(--surface-1);
+  --color-popover-foreground: var(--text-1);
+  --color-primary:            var(--accent-1);
+  --color-primary-foreground: var(--surface-0);
+  --color-secondary:          var(--color-sage);
+  --color-secondary-foreground: #ffffff;
+  --color-muted:              var(--surface-1);
+  --color-muted-foreground:   var(--text-2);
+  --color-accent:             var(--surface-2);
+  --color-accent-foreground:  var(--text-1);
+  --color-border:             var(--border-1);
+  --color-input:              var(--border-1);
+  --color-ring:               var(--accent-1);
+  /* Restore brand-color tokens that dark mode flattened to monochrome */
+  --color-river:  #205661;
+  --color-sage:   #4b6548;
+  --color-spark:  #c76e3a;
+  --color-earth:  #5b6f4a;
+  --color-pebble: #d8d1c5;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+}
+
 /* Base */
 body {
   background: var(--color-background);
