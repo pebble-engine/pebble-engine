@@ -26,7 +26,7 @@
  * useful for "ready to build" CTAs that transition into the next section.
  */
 
-import { useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { motion, useScroll, useTransform, type MotionValue } from "framer-motion";
 import { type } from "@/lib/type";
 import { ChevronDown } from "lucide-react";
@@ -169,8 +169,17 @@ export function StickyScrollStack({
   className = "",
 }: Props) {
   const ref = useRef<HTMLElement>(null);
+  // Phase 40e fix (2026-05-21) — gate useScroll's target on mount.
+  // Framer Motion throws "Target ref is defined but not hydrated"
+  // when useScroll fires during the SSR-to-CSR handoff before
+  // ref.current is fully attached. By passing `undefined` until after
+  // mount, useScroll falls back to document scroll (harmless — we
+  // ignore the result before mount anyway), then switches to the
+  // section-relative ref once the DOM is ready.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
   const { scrollYProgress } = useScroll({
-    target: ref,
+    target: mounted ? ref : undefined,
     offset: ["start start", "end end"],
   });
 
