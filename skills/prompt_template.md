@@ -243,6 +243,20 @@ The eval `footer_lists_all_pages` parses the footer file and FAILS the build if 
 
 Inter is the engine's universal sans-serif. Every build loads it via `next/font/google` with weights 300, 400, 500, 600. Apply it globally via Tailwind's `font-sans` so every element picks it up automatically. The DNA's `display_font` (Cormorant Garamond, Tektur, etc.) is reserved for ACCENT/decorative use ONLY — pull-quotes, drop caps, stat numbers, the optional right-column hero tag. The hero h1 and the body copy always render in Inter so the page has one consistent reading texture.
 
+**Font import name rule (CRITICAL — prevents TypeScript compile errors):**
+
+`next/font/google` exports families by their EXACT consolidated Google Fonts name with spaces replaced by underscores. Do NOT add subfamily suffixes like "_Display", "_Text", "_Inline", "_Stencil" UNLESS that exact suffix appears in the DNA card's `display_font` value.
+
+Examples — what the DNA says ↔ what to import:
+- DNA: "Big Shoulders" → `import {{ Big_Shoulders }} from "next/font/google"` ✓
+- DNA: "Big Shoulders" → `import {{ Big_Shoulders_Display }} from ...` ✗ (Google consolidated this family — `_Display` doesn't exist)
+- DNA: "Cormorant Garamond" → `import {{ Cormorant_Garamond }} from ...` ✓
+- DNA: "Plus Jakarta Sans" → `import {{ Plus_Jakarta_Sans }} from ...` ✓
+- DNA: "Unbounded" → `import {{ Unbounded }} from ...` ✓
+- DNA: "Inter Tight" → `import {{ Inter_Tight }} from ...` ✓
+
+Rule: take the DNA's `display_font` value as-is, replace spaces with underscores, import THAT. If you're tempted to add a suffix the DNA didn't specify, DON'T — the build will fail with `TS2305: Module 'next/font/google' has no exported member`.
+
 In `app/layout.tsx`:
 
 ```tsx
