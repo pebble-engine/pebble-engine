@@ -91,6 +91,12 @@ def route_get(handler) -> None:
         elif handler.path == "/api/blocks":
             from pebble.server.blocks import run_list_blocks
             run_list_blocks(handler)
+        elif handler.path == "/api/templates":
+            # Phase 31 (2026-05-20) — template gallery list. Powers the
+            # v3 /templates route and the workspace's "Start from template"
+            # picker. Public; no auth needed.
+            from pebble.server.templates_api import run_list_templates
+            run_list_templates(handler)
         elif handler.path == "/api/industries":
             handler._handle_list_industries()
         elif handler.path == "/api/briefs":
@@ -182,6 +188,29 @@ def route_post(handler) -> None:
             handler._handle_migrate()
         elif handler.path == "/api/inspire":
             handler._handle_inspire()
+        elif handler.path == "/api/instantiate-template":
+            # Phase 31 (2026-05-20) — cheap-fast alternative to /api/generate.
+            # Copies a pre-built designer-curated template + runs a focused
+            # content-swap LLM call (~$0.005 on Qwen Flash) to inject the
+            # customer's business name/services. Free-tier-friendly.
+            from pebble.server.templates_api import run_instantiate_template
+            run_instantiate_template(handler)
+        elif handler.path == "/api/bot-message":
+            # Phase 25b (2026-05-20) — bot persona narration. Cheap GPT-4o-mini
+            # call returning short text (greeting / status / suggested chips)
+            # for the workspace to display alongside the build. Webild parity
+            # — closes the "silent spinner" perception gap with warm copy.
+            from pebble.server.bot_message import run_bot_message
+            run_bot_message(handler)
+        elif handler.path == "/api/brand-extract":
+            # Phase 33a/b (2026-05-21) — URL ingestion. Pre-auth endpoint that
+            # turns a pasted URL into a partial brief (business name, industry
+            # guess, palette, logo, hero copy) so the questionnaire can be
+            # pre-filled. Removes the biggest friction step in the funnel —
+            # "describe your business" — by extracting answers instead of
+            # asking for them. Cached 1h per URL.
+            from pebble.server.brand_extract import run_brand_extract
+            run_brand_extract(handler)
         elif handler.path == "/api/publish":
             handler._handle_publish()
         elif handler.path.startswith("/api/forms/") and handler.path.endswith("/upload"):
