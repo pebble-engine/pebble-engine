@@ -43,7 +43,10 @@ import {
   type RefinementId,
   type HistorySnapshot,
   type DevServerInfo,
+  type DiffSummary,
 } from "@/lib/api";
+import { DiffPanel } from "@/components/workspace/diff-panel";
+import { BuildIntegrityChecklist } from "@/components/workspace/build-integrity-checklist";
 
 /**
  * Design phase — the iframe preview + refine chips + visual editor +
@@ -71,6 +74,10 @@ type Toast = {
   message: string;
   snapshotId?: string;
   slug?: string;
+  /** Phase 35 — diff returned by /api/refine + /api/visual-edit. When
+   *  present, the toast renders an inline compact DiffPanel below the
+   *  message line so the user sees exactly what changed. */
+  diff?: DiffSummary | null;
 };
 
 type Props = {
@@ -166,6 +173,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           : `Applied "${refinementId}" — free style tweak ✨`,
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug,
+        diff: result.diff,
       });
     } catch (e) {
       pushToast({
@@ -232,6 +240,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
             : "Text updated. Free tweak ✨",
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug,
+        diff: result.diff,
       });
       setSelected(null);
     } catch (e) {
@@ -270,6 +279,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         message: `Font size ${delta > 0 ? "increased" : "decreased"}. Free tweak ✨`,
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug,
+        diff: result.diff,
       });
     } catch (e) {
       pushToast({
@@ -318,6 +328,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         message: "Color updated. Free tweak ✨",
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug,
+        diff: result.diff,
       });
     } catch (e) {
       pushToast({
@@ -449,6 +460,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           <LaunchSetupPanel
             key="setup"
             plan={plan}
+            slug={build?.slug ?? null}
             onGoLive={onPublish}
           />
         )}
@@ -506,6 +518,15 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
                   </button>
                 )}
               </div>
+              {/* Phase 35 — show the diff inline when we have one. Compact
+                  mode keeps the toast small; users see exactly what touched
+                  ("Updated 3 files across Frontend, Config") without
+                  scrolling or opening another panel. */}
+              {t.kind === "success" && t.diff && t.diff.total_changed > 0 && (
+                <div className="mt-2 pl-7">
+                  <DiffPanel diff={t.diff} mode="compact" />
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -518,7 +539,21 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
 // LaunchSetupPanel — right rail when no element is selected
 // ---------------------------------------------------------------------------
 
-function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLive: () => void }) {
+function LaunchSetupPanel({
+  plan,
+  slug,
+  onGoLive,
+}: {
+  plan: PebblePlan | null;
+  slug: string | null;
+  onGoLive: () => void;
+}) {
+  // Phase 36 — Track publishable from the BuildIntegrityChecklist's onResult.
+  // The Go Live button stays clickable either way; non-publishable just
+  // shows an inline warning the user can acknowledge. Hard-blocking
+  // would make us unable to ship the publish-anyway override path.
+  const [publishable, setPublishable] = useState<boolean | null>(null);
+
   return (
     <motion.aside
       initial={{ opacity: 0, x: 8 }}
@@ -533,6 +568,17 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
           {plan ? `${plan.setup_needs.filter((s) => s.status !== "auto").length} items remaining` : "Loading..."}
         </p>
       </div>
+
+      {/* Phase 36 — Build Integrity checklist. Reuses the existing eval suite
+          via /api/projects/<slug>/integrity. 10 items animate pending → green
+          before publish. Surfaces hidden infra quality as a confidence ritual. */}
+      {slug && (
+        <BuildIntegrityChecklist
+          slug={slug}
+          onResult={(r) => setPublishable(r.publishable)}
+          className="mb-2"
+        />
+      )}
       <div className="space-y-2 flex-1">
         {plan?.setup_needs.map((s, i) => {
           const byId = new Map(plan.setup_needs.map((it) => [it.id, it]));
@@ -576,6 +622,12 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
         })}
       </div>
       <div className="pt-3 mt-auto border-t border-border">
+        {publishable === false && (
+          <p className={`${type.caption} text-amber-300 mb-2 px-1`}>
+            Some integrity checks need attention. You can still publish — the
+            publish dialog has an override path.
+          </p>
+        )}
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onGoLive}
