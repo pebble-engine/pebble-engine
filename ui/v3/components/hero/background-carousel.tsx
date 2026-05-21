@@ -21,7 +21,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { type } from "@/lib/type";
 
 type Slide = {
@@ -57,6 +57,11 @@ export function BackgroundCarousel() {
   const slide = SLIDES[idx];
 
   return (
+    /* Phase 40d (2026-05-21) — override reducedMotion at the carousel
+       level too. The carousel IS the product demo; it should run even
+       when OS-level reduce-motion is on. App/workspace surfaces still
+       respect the user pref. */
+    <MotionConfig reducedMotion="never">
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {/* Slide image (ken-burns scale) */}
       <AnimatePresence mode="sync">
@@ -128,5 +133,6 @@ export function BackgroundCarousel() {
         ))}
       </div>
     </div>
+    </MotionConfig>
   );
 }

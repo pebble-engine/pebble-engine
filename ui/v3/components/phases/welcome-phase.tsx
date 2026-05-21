@@ -255,7 +255,7 @@ function RotatingPebbleLogo({
   }, []);
 
   return (
-    <MotionConfig reducedMotion="user">
+    <MotionConfig reducedMotion="never">
       {/* aria-label="Pebble" so screen readers always hear the brand name */}
       <span aria-label="Pebble" className={`relative inline-block font-logo tracking-[0.12em] ${className}`}>
         {/* invisible max-width anchor — "Guijarro" is the longest word */}
@@ -328,7 +328,7 @@ function TopNavBar() {
         className="fixed top-4 left-1/2 -translate-x-1/2 z-40"
         aria-label="Page navigation"
       >
-        <MotionConfig reducedMotion="user">
+        <MotionConfig reducedMotion="never">
           <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-card/60 backdrop-blur-2xl border border-border shadow-[0_4px_32px_rgba(31,29,26,0.08),inset_0_1px_0_rgba(255,255,255,0.6)]">
             {NAV_ITEMS.map((item) => (
               <a
@@ -816,7 +816,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
         >
           Let&apos;s build your{" "}
-          <MotionConfig reducedMotion="user">
+          <MotionConfig reducedMotion="never">
             <span className="relative inline-block align-baseline">
               {/* "presence" is the widest word — sets the reserved slot width */}
               <span aria-hidden className="invisible">presence</span>
@@ -1152,21 +1152,27 @@ export function WelcomePhase({ onAdvance }: Props) {
           ref={sentenceSec.ref}
           className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-6xl mx-auto py-16"
         >
+          {/* Phase 40d — viewport.amount lowered from 0.3 → 0.05 so the
+              entrance fires the moment the section's top crosses into view,
+              not when 30% is already showing. Magnitudes bumped: scale
+              0.92 → 0.82 (more dramatic zoom-in), y 32 → 64, duration 0.9 →
+              1.1s. The user clearly sees the heading LAND with weight
+              instead of just appearing already-there. */}
           <motion.div
-            initial={{ opacity: 0, y: 32, scale: 0.92 }}
+            initial={{ opacity: 0, y: 64, scale: 0.82 }}
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+            viewport={{ once: true, amount: 0.05 }}
+            transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
             className="text-center mb-16 space-y-4 will-change-transform"
           >
             <h2 className={`${type.display.l} ${lightGradient}`}>
               From sentence to site.
             </h2>
             <motion.p
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.12 }}
+              viewport={{ once: true, amount: 0.05 }}
+              transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
               className="text-lg max-w-xl mx-auto text-muted-foreground"
             >
               Three steps from a paragraph about your business to a real, editable website.
@@ -1177,13 +1183,13 @@ export function WelcomePhase({ onAdvance }: Props) {
             {STEPS.map((step, i) => (
               <motion.div
                 key={step.title}
-                initial={{ opacity: 0, y: 24, scale: 0.95 }}
+                initial={{ opacity: 0, y: 48, scale: 0.88 }}
                 whileInView={{ opacity: 1, y: 0, scale: 1 }}
-                viewport={{ once: true, amount: 0.25 }}
+                viewport={{ once: true, amount: 0.05 }}
                 transition={{
-                  duration: 0.7,
+                  duration: 0.85,
                   ease: [0.22, 1, 0.36, 1],
-                  delay: 0.25 + i * 0.1,
+                  delay: 0.45 + i * 0.15,
                 }}
                 className="p-8 rounded-2xl bg-card border border-border will-change-transform"
               >
