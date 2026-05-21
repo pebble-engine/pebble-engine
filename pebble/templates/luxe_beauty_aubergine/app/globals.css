@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material Design 3 surface tokens — exposed as CSS vars for parity with the DNA palette.
+   Aubergine variant: champagne ivory surfaces, deep aubergine ink, champagne gold tertiary. */
+:root {
+  --md-surface: #FAF7F2;
+  --md-surface-dim: #EBE5DA;
+  --md-surface-variant: #F2EDE3;
+  --md-surface-container-lowest: #FFFFFF;
+  --md-surface-container-low: #F6F2EA;
+  --md-surface-container: #F0EBE0;
+  --md-surface-container-high: #E8E1D3;
+  --md-surface-container-highest: #DED5C4;
+
+  --md-primary: #4A1A4D;
+  --md-primary-container: #7A3D7F;
+
+  --md-secondary: #7A3D7F;
+
+  --md-tertiary: #B8924A;
+  --md-tertiary-container: #E6D2A8;
+
+  --md-on-surface: #1B0F1F;
+  --md-on-surface-variant: #4A3B4F;
+
+  --md-outline: #8A7E92;
+  --md-outline-variant: #D4CFC8;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-body text-on-surface bg-surface antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: rgba(74, 26, 77, 0.20); /* aubergine primary at 20% */
+    color: var(--md-on-surface);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-on-surface;
+    letter-spacing: -0.01em;
+  }
+
+  /* Focus visible — accessible, on-brand ring */
+  :focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Liquid glass card — backdrop-blur with soft inset ivory border */
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.55);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.45);
+    box-shadow:
+      0 4px 32px rgba(27, 15, 31, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  }
+
+  .glass-card-strong {
+    background-color: rgba(255, 255, 255, 0.74);
+    backdrop-filter: saturate(150%) blur(20px);
+    -webkit-backdrop-filter: saturate(150%) blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    box-shadow:
+      0 4px 32px rgba(27, 15, 31, 0.10),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.55);
+  }
+
+  /* Ethereal cloud background — twilight aubergine wash with champagne pools.
+     Mysterious + evening register: deeper shadows, warm gold highlights, never bright. */
+  .ethereal-bg {
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(122, 61, 127, 0.20), transparent 65%),
+      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(184, 146, 74, 0.18), transparent 70%),
+      radial-gradient(ellipse 70% 60% at 50% 90%, rgba(74, 26, 77, 0.10), transparent 70%),
+      linear-gradient(180deg, #FAF7F2 0%, #EBE5DA 100%);
+  }
+
+  .cloud-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 30% 30%, rgba(255, 255, 255, 0.70), transparent 65%),
+      radial-gradient(ellipse 70% 60% at 70% 70%, rgba(122, 61, 127, 0.14), transparent 70%),
+      linear-gradient(180deg, #F6F2EA 0%, #F0EBE0 100%);
+  }
+
+  /* Vapor shadow — long-throw aubergine drop shadow */
+  .vapor-shadow {
+    box-shadow:
+      0 8px 24px rgba(74, 26, 77, 0.10),
+      0 24px 64px rgba(74, 26, 77, 0.14),
+      0 64px 120px rgba(74, 26, 77, 0.12);
+  }
+
+  /* Editorial typography scale */
+  .text-display {
+    @apply font-display text-5xl md:text-6xl lg:text-7xl font-normal italic leading-[1.05];
+  }
+  .text-headline {
+    @apply font-display text-3xl md:text-4xl lg:text-5xl font-normal leading-tight;
+  }
+  .text-title {
+    @apply font-display text-xl md:text-2xl font-normal leading-snug;
+  }
+  .text-body-lg {
+    @apply font-body text-base md:text-lg leading-relaxed text-on-surface-variant;
+  }
+  .text-label {
+    @apply font-body text-xs uppercase tracking-[0.18em] text-on-surface-variant;
+  }
+  .text-button {
+    @apply font-body text-sm font-medium tracking-wide;
+  }
+
+  /* Page container — 1440px max, responsive horizontal margin */
+  .page-container {
+    @apply mx-auto px-page-mobile md:px-page-desktop;
+    max-width: 1440px;
+  }
+}
+
+@layer utilities {
+  /* Sequential animation delays for cascaded reveals */
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+  .delay-400 {
+    animation-delay: 0.4s;
+  }
+}

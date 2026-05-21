@@ -1,0 +1,71 @@
+{
+  "dna_id": "bakery_warm",
+  "vibe_label": "Tactile Y2K Warm-Cream",
+  "source_brand": "Angie's Bakery",
+  "source_industry": "bakery",
+  "applicable_industries": [
+    "bakery",
+    "cafe",
+    "ice cream shop",
+    "florist",
+    "pottery studio",
+    "candle maker",
+    "soap maker",
+    "childrens boutique",
+    "pediatric dentist",
+    "yoga studio",
+    "wellness retreat",
+    "stationery shop",
+    "gift shop",
+    "honey or jam producer"
+  ],
+  "palette": {
+    "bg": "#FDF6EC",
+    "fg": "#1A1A1A",
+    "primary": "#E8590C",
+    "secondary": "#4A6741",
+    "accent": "#C77D4A",
+    "muted": "#9B8A7D",
+    "border": "#E8DDD0",
+    "extras": {
+      "bg_alt": "#FFF4E6",
+      "surface": "#FFFFFF",
+      "primary_soft": "#FF6B35",
+      "text_secondary": "#6B5B4F"
+    }
+  },
+  "fonts": {
+    "display": "Fraunces",
+    "body": "Inter",
+    "accent": null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@300;400;500;600;700&display=swap",
+  "section_flow": [
+    {"id": "navbar", "type": "pill_link_floating", "notes": "Rounded-full link pills with a gradient Order-Now CTA pill on the right; liquid-glass mobile drawer with translucent backdrop blur."},
+    {"id": "hero", "type": "two_column_text_photo_blobs", "notes": "Soft radial-gradient background with two blurry blob shapes pulsing slowly; left side has pill chip + Fraunces 2-line headline + dual button row + rating chip; right is photo card rotated -3deg with floating Est. 1998 badge."},
+    {"id": "features", "type": "three_card_emoji_grid", "notes": "Three rounded-4xl cards on alt-cream background with emoji icons, Fraunces titles, and one-line descriptions."},
+    {"id": "about", "type": "two_column_square_photo_left_story_right", "notes": "Square 1:1 photo with rounded-4xl mask, paired with chip + Fraunces headline and multi-paragraph story copy."},
+    {"id": "gallery", "type": "filterable_masonry_columns", "notes": "All / Bread / Cakes / Pastries chip filters drive a CSS columns masonry; each tile is rounded-3xl with photo + name + category chip."},
+    {"id": "contact", "type": "two_column_info_card_form", "notes": "Left: liquid-glass info card with address/phone/email/hours blocks. Right: surface card with name/email/message form and gradient submit button."},
+    {"id": "footer", "type": "three_column_minimal", "notes": "Brand + Visit Us + Contact columns above a thin border + © line."}
+  ],
+  "hero_signature": "Warm cream FDF6EC background overlaid with three radial-gradient ellipses in primary/accent tones, plus two pulsing blurred blob shapes. The right side photo card is tilted -3deg with a floating white Est. 1998 badge anchored to its bottom-left corner. The headline uses Fraunces serif in 2 lines — black line + primary-soft colored line — with a small uppercase pill above.",
+  "notable_features": [
+    "Tilted hero photo card with floating est-year badge breaking the frame",
+    "Decorative blurred blob shapes with custom blob-bounce keyframe",
+    "Soft SVG noise grain overlay (4% opacity, multiply blend) site-wide",
+    "Filterable masonry gallery using CSS columns + break-inside-avoid",
+    "Liquid-glass info cards with backdrop-blur(16px) saturate(1.8)",
+    "Pill-style nav links with rounded-full pseudo-buttons",
+    "Gradient pill CTAs (135deg primary -> primary-soft) with scale hover",
+    "Emoji-led feature cards (intentionally analog-feeling, not icon)"
+  ],
+  "motion_vocabulary": [
+    "GSAP hero entrance timeline with back.out(1.7) easing on the image",
+    "Scroll-triggered feature card stagger with 100ms delays",
+    "Gallery filter uses GSAP fade+scale transitions on each tile",
+    "Mobile menu burger animates the three bars into an X via rotate + opacity",
+    "blob-bounce keyframe translates blobs -12px and scales 1.02 over 4s loop"
+  ],
+  "tailwind_extras_inline_css": ".liquid-glass (white 65% + blur 16px + saturate 1.8 + soft border), .btn-primary (gradient + scale-on-hover + colored drop-shadow), .btn-secondary (inset border ring), grain-overlay::after using fractalNoise data-URI at 0.04 opacity with multiply blend, CSS custom properties for all 11 color tokens, blob-bounce keyframe."
+}

@@ -1,0 +1,259 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------------
+   HSL token system — vintage-Americana rust + warm-bone theme. Rust orange
+   (#C9501C) on warm-dark (#1A1714) with bone-white (#F4EDE0) type. All
+   Tailwind color tokens resolve through the variables below.
+   ----------------------------------------------------------------------------- */
+:root {
+  --bg: 27 12% 9%;           /* #1A1714 — warm dark */
+  --fg: 38 47% 91%;          /* #F4EDE0 — warm bone */
+  --primary: 19 76% 45%;     /* #C9501C — rust orange (accent and CTA) */
+  --secondary: 21 50% 32%;   /* #7A4528 — deep rust-brown (hover / depth) */
+  --accent: 33 79% 57%;      /* #E89E3C — warm amber (ref-code stamps) */
+  --muted: 38 18% 60%;       /* secondary text */
+  --card: 27 12% 12%;        /* surface 1 — slightly lifted from bg */
+  --border: 25 22% 15%;      /* #2D241D — hairline border */
+  --ring: 19 76% 45%;
+  --input: 27 12% 10%;
+  --card-shadow: 0 2px 18px -4px rgba(0, 0, 0, 0.7);
+
+  /* Hazard stripe color pair — rust + dark rust. Same diagonal pattern, new
+     cultural register (vintage Americana, not industrial caution). */
+  --hazard-rust: #C9501C;
+  --hazard-dark: #2D241D;
+}
+
+/* Base ----------------------------------------------------------------------- */
+* {
+  border-color: hsl(var(--border) / 0.5);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--bg));
+  color: hsl(var(--fg) / 0.92);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.45);
+  color: hsl(var(--fg));
+}
+
+/* Utility components ---------------------------------------------------------- */
+@layer components {
+  /* The signature hazard stripe — 4px fixed-top rust/dark-rust diagonal bar
+     that sits ABOVE the navbar. The vintage-Americana tell. */
+  .hazard-stripe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    z-index: 60;
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--hazard-rust) 0,
+      var(--hazard-rust) 10px,
+      var(--hazard-dark) 10px,
+      var(--hazard-dark) 20px
+    );
+    pointer-events: none;
+  }
+
+  /* Hollow-letter stencil — Bebas Neue display font with text-stroke + transparent
+     fill. Used for every section h2. */
+  .stencil {
+    font-family: var(--font-bebas-neue), system-ui, sans-serif;
+    -webkit-text-stroke: 1px hsl(var(--fg) / 0.92);
+    color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 0.95;
+  }
+
+  /* Filled stencil variant — same font but the fill is on. Used for the brand
+     wordmark and any 'shouting' headline. */
+  .stencil-filled {
+    font-family: var(--font-bebas-neue), system-ui, sans-serif;
+    color: hsl(var(--fg) / 0.92);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 0.95;
+  }
+
+  /* JetBrains Mono ref-code label. The parts-catalog stamp on every section. */
+  .ref-code {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: hsl(var(--fg) / 0.32);
+  }
+
+  .ref-code-accent {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: hsl(var(--accent));
+  }
+
+  /* Amber IMG-REF corner tag on photos. Warm amber + dark stamp — reads like a
+     hand-stencilled lot tag on a body-shop photo. */
+  .img-ref-tag {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    background: hsl(var(--accent));
+    color: var(--hazard-dark);
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+    z-index: 2;
+  }
+
+  /* Glass card — warm bone tint + blur + warm border. Slightly bonier than the
+     industrial sibling so it reads vintage-paper rather than steel. */
+  .glass-card {
+    background: hsl(var(--fg) / 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(var(--fg) / 0.1);
+    box-shadow: var(--card-shadow);
+    transition:
+      border-color 200ms ease,
+      transform 200ms ease;
+  }
+
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  /* Subtle gradient-mesh corner blob. Pair these in opposite corners of the
+     hero for the auto_honest_diag glow — now in rust instead of yellow. */
+  .glow-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(140px);
+    pointer-events: none;
+    opacity: 0.25;
+    background: hsl(var(--primary) / 1);
+    z-index: 0;
+  }
+
+  @media (max-width: 768px) {
+    .glow-blob {
+      opacity: 0.12;
+    }
+  }
+
+  /* btn-primary — rust filled. Depresses on :active for a physical-button
+     feel, per the DNA motion vocabulary. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: hsl(var(--primary));
+    color: hsl(var(--fg));
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1px solid hsl(var(--primary));
+    transition: transform 100ms ease, background 200ms ease, border-color 200ms ease;
+  }
+
+  .btn-primary:hover {
+    background: hsl(var(--secondary));
+    border-color: hsl(var(--secondary));
+  }
+
+  .btn-primary:active {
+    transform: translateY(2px);
+  }
+
+  /* btn-ghost — outlined bone on dark; hover flips to rust. */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    color: hsl(var(--fg) / 0.92);
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1px solid hsl(var(--fg) / 0.32);
+    transition: transform 100ms ease, border-color 200ms ease, color 200ms ease;
+  }
+
+  .btn-ghost:hover {
+    border-color: hsl(var(--primary));
+    color: hsl(var(--primary));
+  }
+
+  .btn-ghost:active {
+    transform: translateY(2px);
+  }
+
+  .text-body {
+    color: hsl(var(--fg) / 0.92);
+  }
+  .text-muted {
+    color: hsl(var(--fg) / 0.52);
+  }
+  .text-subtle {
+    color: hsl(var(--fg) / 0.6);
+  }
+  .text-ghost {
+    color: hsl(var(--fg) / 0.32);
+  }
+}
+
+/* Custom scrollbar — rust thumb on hover -------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--fg) / 0.15);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Reduced motion -------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

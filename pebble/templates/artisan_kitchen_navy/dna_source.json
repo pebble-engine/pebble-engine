@@ -1,0 +1,21 @@
+{
+  "_comment": "Pointer to the DNA this template was derived from. Authoritative copy lives at pebble/templates/dna/bakery_warm.json.",
+  "dna_id": "bakery_warm",
+  "vibe_label": "Tactile Y2K Warm-Cream",
+  "source_brand": "Angie's Bakery",
+  "applicable_industries": [
+    "bakery",
+    "cafe",
+    "restaurant",
+    "deli",
+    "ice cream shop",
+    "florist",
+    "pottery studio",
+    "candle maker",
+    "soap maker",
+    "childrens boutique",
+    "stationery shop",
+    "gift shop",
+    "honey or jam producer"
+  ]
+}

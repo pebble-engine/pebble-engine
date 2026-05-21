@@ -19,6 +19,16 @@ __pycache__/
 ui/node_modules/
 ui/package-lock.json
 
+# Template build artifacts (Phase 31, 2026-05-20) — every pebble/templates/<id>/
+# is a real Next.js project. The customer's instantiated copy installs deps fresh,
+# so the templates' own node_modules/.next/.turbo are NEVER committed.
+pebble/templates/*/node_modules/
+pebble/templates/*/.next/
+pebble/templates/*/.turbo/
+pebble/templates/*/dist/
+pebble/templates/*/next-env.d.ts
+pebble/templates/*/tsconfig.tsbuildinfo
+
 # Claude Code internal
 .claude/
 .superpowers/

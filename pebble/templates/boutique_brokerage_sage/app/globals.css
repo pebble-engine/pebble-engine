@@ -1,0 +1,235 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Hudson Valley sage-bronze tokens — light editorial luxury. Exposed as CSS
+   vars for the load-bearing tricks (mix-blend-difference nav + mix-blend-overlay h1).
+   bg cream, fg charcoal, accent bronze (CTAs), primary deep sage (brand). */
+:root {
+  --bg: #faf8f2;
+  --fg: #1f2421;
+  --accent: #9b7b47;
+  --accent-hover: #8a6c3d;
+  --primary: #4a5840;
+  --primary-hover: #3a4632;
+  --secondary: #6e7a60;
+  --surface: #efede4;
+  --muted: #6e7a60;
+  --border: #e0ddd3;
+  /* On-accent text — used inside bronze CTAs so contrast clears WCAG AA. */
+  --on-accent: #ffffff;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-body text-fg bg-bg antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--fg);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-fg;
+    letter-spacing: -0.02em;
+  }
+
+  /* Focus visible — accessible, on-brand ring */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The signature 2px micro-rounding — sharp slab aesthetic, NOT 8/12/16px. */
+  .cinematic-radius {
+    border-radius: 2px;
+  }
+
+  /* Cinematic-img filter — soft editorial grade tuned for the cream bg.
+     Slight warmth pull + gentle contrast, hover lifts to neutral. */
+  .cinematic-img {
+    filter: contrast(1.02) saturate(0.92) brightness(1);
+    transition: filter 700ms ease, transform 700ms ease;
+  }
+  .group:hover .cinematic-img,
+  .cinematic-img:hover {
+    filter: contrast(1.06) saturate(1) brightness(1.02);
+    transform: scale(1.05);
+  }
+
+  /* Btn-cinematic — bronze filled CTA with ::after gradient overlay +
+     hover translateY lift. Text is white (--on-accent) for contrast. */
+  .btn-cinematic {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    background-color: var(--accent);
+    color: var(--on-accent);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: transform 300ms ease, background-color 300ms ease;
+  }
+  .btn-cinematic::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  .btn-cinematic:hover {
+    transform: translateY(-2px);
+    background-color: var(--accent-hover);
+  }
+  .btn-cinematic:hover::after {
+    opacity: 1;
+  }
+
+  /* Btn-outline — 1px hollow border, fills with fg (charcoal) on hover
+     and inverts text to cream. */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    background-color: transparent;
+    color: var(--fg);
+    border: 1px solid var(--fg);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border-radius: 2px;
+    transition: background-color 300ms ease, color 300ms ease, transform 300ms ease;
+  }
+  .btn-outline:hover {
+    background-color: var(--fg);
+    color: var(--bg);
+    transform: translateY(-2px);
+  }
+
+  /* Editorial typography scale — Unbounded display, slab-tight. */
+  .text-mega {
+    @apply font-display font-black uppercase leading-[0.9] tracking-tighter;
+    font-size: clamp(3.5rem, 11vw, 9rem);
+  }
+  .text-display {
+    @apply font-display font-black uppercase leading-[0.95] tracking-tight;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+  }
+  .text-headline {
+    @apply font-display font-bold uppercase leading-tight tracking-tight;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+  }
+  .text-title {
+    @apply font-display font-bold uppercase leading-snug;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+  }
+  .text-body-lg {
+    @apply font-body text-base md:text-lg leading-relaxed text-muted;
+  }
+  .text-label {
+    @apply font-body text-xs uppercase text-accent;
+    letter-spacing: 0.3em;
+  }
+  .text-eyebrow {
+    @apply font-body text-xs uppercase text-muted;
+    letter-spacing: 0.3em;
+  }
+  .text-button {
+    @apply font-body text-xs font-semibold uppercase tracking-[0.18em];
+  }
+
+  /* Page container — 1440px max, responsive horizontal margin */
+  .page-container {
+    @apply mx-auto px-page-mobile md:px-page-desktop;
+    max-width: 1440px;
+  }
+
+  /* Slab divider — numbered horizontal rule with accent index used between
+     major sections. Renders as a 1px line + accent-colored number plate. */
+  .slab-divider {
+    @apply flex items-center gap-6 text-eyebrow;
+  }
+  .slab-divider::before,
+  .slab-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--border);
+  }
+
+  /* Property card hover lift — used on the listings collection grid. */
+  .property-card {
+    @apply relative block overflow-hidden bg-surface cinematic-radius;
+    transition: transform 500ms ease;
+  }
+  .property-card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@layer utilities {
+  /* Mix-blend tricks — load-bearing for the DNA. */
+  .mix-blend-difference {
+    mix-blend-mode: difference;
+  }
+  .mix-blend-overlay {
+    mix-blend-mode: overlay;
+  }
+  .mix-blend-luminosity {
+    mix-blend-mode: luminosity;
+  }
+
+  /* Sequential animation delays for cascaded reveals */
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+  .delay-400 {
+    animation-delay: 0.4s;
+  }
+}

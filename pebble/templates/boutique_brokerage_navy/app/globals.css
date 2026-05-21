@@ -1,0 +1,229 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Yacht-club Navy + Antique-Brass tokens — 6 colors only, exposed as CSS vars
+   for the load-bearing tricks (mix-blend-difference nav + mix-blend-overlay h1).
+   Deep marine navy ground, warm ivory foreground, brass action color. */
+:root {
+  --bg: #0a1726;
+  --fg: #f5f1e8;
+  --accent: #b8924a;
+  --accent-hover: #9e7a3a;
+  --surface: #1e3a5f;
+  --muted: #7a8b9d;
+  --border: #1a2a40;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-body text-fg bg-bg antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: var(--accent);
+    color: var(--fg);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-fg;
+    letter-spacing: -0.02em;
+  }
+
+  /* Focus visible — accessible, on-brand ring */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* The signature 2px micro-rounding — sharp slab aesthetic, NOT 8/12/16px. */
+  .cinematic-radius {
+    border-radius: 2px;
+  }
+
+  /* Cinematic-img filter — graded-film look applied to every photo.
+     Hover boost engages contrast + brightness + a slow 1.05 scale. */
+  .cinematic-img {
+    filter: contrast(1.1) brightness(0.9);
+    transition: filter 700ms ease, transform 700ms ease;
+  }
+  .group:hover .cinematic-img,
+  .cinematic-img:hover {
+    filter: contrast(1.2) brightness(1);
+    transform: scale(1.05);
+  }
+
+  /* Btn-cinematic — brass-filled CTA with ::after gradient overlay +
+     hover translateY lift. */
+  .btn-cinematic {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    background-color: var(--accent);
+    color: var(--fg);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border-radius: 2px;
+    overflow: hidden;
+    transition: transform 300ms ease, background-color 300ms ease;
+  }
+  .btn-cinematic::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.15) 50%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 300ms ease;
+  }
+  .btn-cinematic:hover {
+    transform: translateY(-2px);
+    background-color: var(--accent-hover);
+  }
+  .btn-cinematic:hover::after {
+    opacity: 1;
+  }
+
+  /* Btn-outline — 1px hollow border, fills white on hover and inverts text. */
+  .btn-outline {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem 2rem;
+    background-color: transparent;
+    color: var(--fg);
+    border: 1px solid var(--fg);
+    font-family: var(--font-inter), system-ui, sans-serif;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    border-radius: 2px;
+    transition: background-color 300ms ease, color 300ms ease, transform 300ms ease;
+  }
+  .btn-outline:hover {
+    background-color: var(--fg);
+    color: var(--bg);
+    transform: translateY(-2px);
+  }
+
+  /* Editorial typography scale — Playfair Display, elegant serif. */
+  .text-mega {
+    @apply font-display font-black leading-[0.9] tracking-tighter;
+    font-size: clamp(3.5rem, 11vw, 9rem);
+  }
+  .text-display {
+    @apply font-display font-black leading-[0.95] tracking-tight;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+  }
+  .text-headline {
+    @apply font-display font-bold leading-tight tracking-tight;
+    font-size: clamp(2rem, 4vw, 3.5rem);
+  }
+  .text-title {
+    @apply font-display font-bold leading-snug;
+    font-size: clamp(1.25rem, 2vw, 1.75rem);
+  }
+  .text-body-lg {
+    @apply font-body text-base md:text-lg leading-relaxed text-muted;
+  }
+  .text-label {
+    @apply font-body text-xs uppercase text-accent;
+    letter-spacing: 0.3em;
+  }
+  .text-eyebrow {
+    @apply font-body text-xs uppercase text-muted;
+    letter-spacing: 0.3em;
+  }
+  .text-button {
+    @apply font-body text-xs font-semibold uppercase tracking-[0.18em];
+  }
+
+  /* Page container — 1440px max, responsive horizontal margin */
+  .page-container {
+    @apply mx-auto px-page-mobile md:px-page-desktop;
+    max-width: 1440px;
+  }
+
+  /* Slab divider — numbered horizontal rule with accent index used between
+     major sections. Renders as a 1px line + accent-colored number plate. */
+  .slab-divider {
+    @apply flex items-center gap-6 text-eyebrow;
+  }
+  .slab-divider::before,
+  .slab-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background-color: var(--border);
+  }
+
+  /* Property card hover lift — used on the listings collection grid. */
+  .property-card {
+    @apply relative block overflow-hidden bg-surface cinematic-radius;
+    transition: transform 500ms ease;
+  }
+  .property-card:hover {
+    transform: translateY(-4px);
+  }
+}
+
+@layer utilities {
+  /* Mix-blend tricks — load-bearing for the DNA. */
+  .mix-blend-difference {
+    mix-blend-mode: difference;
+  }
+  .mix-blend-overlay {
+    mix-blend-mode: overlay;
+  }
+  .mix-blend-luminosity {
+    mix-blend-mode: luminosity;
+  }
+
+  /* Sequential animation delays for cascaded reveals */
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+  .delay-400 {
+    animation-delay: 0.4s;
+  }
+}

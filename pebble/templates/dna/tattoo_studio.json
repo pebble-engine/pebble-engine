@@ -1,0 +1,72 @@
+{
+  "dna_id": "tattoo_studio",
+  "vibe_label": "Gothic Blackletter Gold-Glow",
+  "source_brand": "Bound By Flesh",
+  "source_industry": "custom tattoos",
+  "applicable_industries": [
+    "tattoo studio",
+    "barbershop",
+    "leather workshop",
+    "metal fabrication",
+    "custom motorcycle shop",
+    "speakeasy bar",
+    "whiskey distillery",
+    "cigar lounge",
+    "boxing gym",
+    "vintage clothing",
+    "artisan workshop"
+  ],
+  "palette": {
+    "bg": "#0A0A0A",
+    "fg": "#F5F5F0",
+    "primary": "#C9A84C",
+    "secondary": "#141414",
+    "accent": "#8B0000",
+    "muted": "#6B6B6B",
+    "border": "#2A2A2A",
+    "extras": {
+      "bg_elevated": "#1C1C1C",
+      "bg_card": "#111111",
+      "gold_light": "#D4B96A",
+      "gold_dark": "#A88A3D",
+      "blood_light": "#A01010",
+      "text_secondary": "#A3A3A3"
+    }
+  },
+  "fonts": {
+    "display": "UnifrakturCook",
+    "body": "Source Sans 3",
+    "accent": "Bebas Neue"
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:ital,wght@0,300..900;1,300..900&family=UnifrakturCook:wght@700&display=swap",
+  "section_flow": [
+    {"id": "intro_overlay", "type": "video_intro_tap_to_enter", "notes": "Full-screen black overlay with looping background video and giant blackletter brand logo; tap or press a key to enter the site (uses sessionStorage to remember)."},
+    {"id": "header", "type": "transparent_to_solid_on_scroll", "notes": "Floating header turns dark with backdrop blur after 50px scroll; gold underlines slide in under hover links."},
+    {"id": "hero", "type": "full_bleed_photo_centered_brand", "notes": "Faded tattoo photo background with double gradient masking; giant UnifrakturCook brand name with gold-glow text-shadow plus dual outline+filled gold CTAs."},
+    {"id": "carousel", "type": "three_column_image_carousel", "notes": "THE WORK heading with prev/next arrows, three-image strip with center image gold-bordered + corner brackets; autoplay every 3s with pause-on-hover and touch swipe."},
+    {"id": "wavy_divider", "type": "svg_gold_wavy_lines", "notes": "Decorative double-stroke wavy SVG path in gold + dark gold between sections — scratchy hand-drawn feeling."},
+    {"id": "about", "type": "two_column_portrait_text", "notes": "Aspect 4:5 portrait inside gold-glow border with corner brackets, paired with all-caps Bebas heading and serif body copy."},
+    {"id": "booking_cta", "type": "video_background_centered", "notes": "Looping background video with dark overlay, gold thin top+bottom rules, centered blackletter h2 + filled gold CTA."},
+    {"id": "footer", "type": "four_column_dark", "notes": "Brand wordmark / quick links / contact / studio hours columns above a scratchy gold divider."}
+  ],
+  "hero_signature": "Pitch-black backdrop with a tattoo photo at 40% opacity faded through dual gradients. Giant UnifrakturCook blackletter wordmark glowing gold via multi-layer text-shadow. Statue-of-Liberty SVG icon bounces beside the logo. Dual scroll-reveal CTAs (gold outline + gold filled) below a tracked-out Bebas eyebrow.",
+  "notable_features": [
+    "Click-to-enter intro overlay with looping ambient video and sessionStorage gate",
+    "Hand-illustrated Statue of Liberty SVG mascot that bounces beside the wordmark",
+    "Gold text-glow effect using stacked text-shadow at 20px and 40px",
+    "Gold-border-glow utility (inset shadow + outer shadow + border)",
+    "Animated SVG grain overlay using fractalNoise turbulence stepped at 10fps",
+    "Scratchy gold divider built from a 12-stop linear-gradient simulating uneven ink",
+    "SVG wavy double-line dividers between every major section",
+    "Center-image gold border with four corner brackets in the carousel"
+  ],
+  "motion_vocabulary": [
+    "Scroll-reveal classes (reveal-up / reveal-down / reveal-left / reveal-right / reveal-fade) toggled by IntersectionObserver",
+    "Grain overlay animated through 10-step keyframe translate transforms at 0.5s",
+    "Gold glow text-shadow pulses on the wordmark",
+    "Statue of Liberty torch and figure use independent pulse + bounce keyframes",
+    "Carousel auto-advances every 3s, pauses on hover, swipe-enabled on mobile",
+    "prefers-reduced-motion disables grain overlay and reduces all transitions to 0.01ms"
+  ],
+  "tailwind_extras_inline_css": ".gold-glow (dual-radius box-shadow), .gold-glow-text (stacked text-shadow), .gold-border-glow (inset + outer + 1px gold border), .grain-overlay (fixed fractalNoise SVG bg with stepped translate animation), .scratchy-divider (multi-stop linear-gradient), .scroll-reveal + reveal-up/down/left/right/fade/visible classes. Custom scrollbar with gold hover thumb. Selection color is gold-on-black."
+}

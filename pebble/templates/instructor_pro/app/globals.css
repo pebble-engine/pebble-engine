@@ -1,0 +1,210 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------------
+   Tactical Crimson Gold-Gradient — DNA: training_authority.
+   Single dark theme. HSL custom properties consumed by tailwind tokens.
+   ----------------------------------------------------------------------------- */
+:root {
+  --bg: 0 0% 4%;            /* #0A0A0A */
+  --fg: 60 8% 96%;          /* #F5F5F4 */
+  --primary: 0 0% 4%;       /* #0A0A0A — primary surface is the bg */
+  --secondary: 24 6% 25%;   /* #44403C */
+  --accent: 0 73% 41%;      /* #B91C1C crimson */
+  --accent-light: 0 84% 51%;/* #DC2626 */
+  --accent-warm: 35 91% 38%;/* #D97706 amber */
+  --accent-warm-light: 38 92% 50%; /* #F59E0B */
+  --muted: 30 6% 64%;       /* #A8A29E */
+  --card: 24 9% 11%;        /* #1C1917 */
+  --card-hover: 24 8% 16%;  /* #292524 */
+  --border: 24 8% 16%;      /* #292524 */
+  --ring: 0 73% 41%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--bg));
+  color: hsl(var(--fg));
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: hsl(var(--accent) / 0.35);
+  color: hsl(var(--fg));
+}
+
+/* Utility components ---------------------------------------------------------- */
+@layer components {
+  /* Glassmorphism per DNA notes — backdrop-blur 16px + translucent dark */
+  .glass {
+    background: hsl(var(--card) / 0.8);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid hsl(var(--border));
+  }
+
+  .glass-light {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    border: 1px solid hsl(var(--border) / 0.7);
+  }
+
+  /* The signature gold-gradient text fill from the DNA hero spec
+     (5 stops, dark amber -> bright gold). */
+  .text-gold-gradient {
+    background: linear-gradient(
+      120deg,
+      #92400E 0%,
+      #B45309 22%,
+      #D97706 48%,
+      #F59E0B 72%,
+      #FBBF24 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* 60x3 horizontal gradient accent line — the "tactical-line" rule */
+  .tactical-line {
+    position: relative;
+    display: inline-block;
+  }
+  .tactical-line::before {
+    content: "";
+    position: absolute;
+    left: -76px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 60px;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--accent)) 0%,
+      hsl(var(--accent-warm)) 100%
+    );
+  }
+
+  /* Class card with widening left accent bar */
+  .course-card {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .course-card__bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: hsl(var(--secondary));
+    transition: width 200ms ease, background 200ms ease;
+  }
+  .course-card:hover .course-card__bar {
+    width: 5px;
+    background: hsl(var(--accent));
+  }
+  .course-card--featured {
+    background-image: linear-gradient(
+      135deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--card)) 70%,
+      hsl(var(--accent-warm) / 0.1) 100%
+    );
+  }
+  .course-card--featured .course-card__bar {
+    background: hsl(var(--accent-warm));
+  }
+  .course-card--featured:hover .course-card__bar {
+    background: hsl(var(--accent-warm-light));
+  }
+
+  /* Red shimmer band per DNA — sweeps across CTA strips */
+  .shimmer-band {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+  .shimmer-band::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      hsl(var(--accent) / 0.08) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    animation: shimmer-band 3s linear infinite;
+    pointer-events: none;
+  }
+
+  /* Subtle gold glow ring — credentials card */
+  .glow-credentials {
+    box-shadow:
+      0 0 0 1px hsl(var(--border)),
+      0 0 36px -4px hsl(var(--accent-warm) / 0.18),
+      0 16px 48px -12px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Dotted radial overlay for the mission section */
+  .radial-dots {
+    background-image: radial-gradient(
+      hsl(var(--accent) / 0.15) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  .text-body {
+    color: hsl(var(--fg) / 0.86);
+  }
+  .text-muted {
+    color: hsl(var(--muted));
+  }
+  .text-subtle {
+    color: hsl(var(--fg) / 0.6);
+  }
+  .text-ghost {
+    color: hsl(var(--fg) / 0.4);
+  }
+}
+
+/* Custom scrollbar — red thumb hover per DNA notes ---------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--secondary));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent));
+}
+
+/* Reduced motion -------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

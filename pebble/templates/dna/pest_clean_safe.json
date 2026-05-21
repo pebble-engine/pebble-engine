@@ -1,0 +1,86 @@
+{
+  "dna_id": "pest_clean_safe",
+  "vibe_label": "Glow Emerald Dual-Theme",
+  "source_brand": "Squito Pest Control",
+  "source_industry": "pest control",
+  "applicable_industries": [
+    "pest control",
+    "lawn care",
+    "landscaping",
+    "tree service",
+    "carpet cleaning",
+    "house cleaning",
+    "pressure washing",
+    "HVAC",
+    "plumbing",
+    "electrician",
+    "solar installer",
+    "junk removal",
+    "moving company",
+    "home inspection",
+    "mold remediation"
+  ],
+  "palette": {
+    "bg": "#0a0a0a",
+    "fg": "#ffffff",
+    "primary": "#22c55e",
+    "secondary": "#16a34a",
+    "accent": "#34d399",
+    "muted": "#a8a29e",
+    "border": "#212121",
+    "extras": {
+      "card": "#121212",
+      "input": "#1c1c1c",
+      "ring": "#22c55e",
+      "light_bg": "#ece3d2",
+      "light_fg": "#1a1a1a",
+      "light_card": "#ffffff",
+      "light_border": "#d9cfb8"
+    }
+  },
+  "fonts": {
+    "display": "Outfit",
+    "body": "Inter",
+    "accent": null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap",
+  "section_flow": [
+    {"id": "navbar", "type": "glass_with_theme_toggle_and_call_chip", "notes": "Transparent->blurred-on-scroll header with theme toggle (moon/sun), an animated call-now chip (shimmer sweep + ring + 'Call Now' label above the phone number), and an emerald BOOK NOW pill CTA. Hamburger drawer with full-screen translucent overlay."},
+    {"id": "hero", "type": "image_bg_with_orbs_and_rating_chip", "notes": "Background photo with 75-90% dark overlay + three blurred green/teal glow orbs absolutely-positioned. Primary 'Get Protected' shimmer-sweep pill above the headline. H1: 'Smart. Safe.' white + 'Pest Control.' in emerald gradient-text. Rotating subline word cycles through pest names. Below: AI Pest Identifier + Call buttons, 5-star rating chip, and three checkmark trust badges (No Contracts / Same-Day / Pet & Family Safe)."},
+    {"id": "ticker", "type": "infinite_marquee_pest_names", "notes": "Continuous-loop 35s linear marquee of pest names (Mosquitoes / Ticks / Ants / Rodents / Termites / Roaches / Spiders), each with a small emerald dot bullet."},
+    {"id": "services", "type": "three_column_glass_icon_cards", "notes": "Residential / Commercial / Mosquito-and-Tick cards with rounded-2xl glass surface, icon-in-tinted-square, title, paragraph, and animated arrow-arrow CTA link."},
+    {"id": "stats", "type": "three_column_count_up_with_guarantee_chip", "notes": "1000+ served / 5.0 rating / 10+ years counters on radial-glow background, with a giant '100% Satisfaction Guaranteed' shimmer chip below."},
+    {"id": "plans", "type": "three_column_pricing_glass_cards", "notes": "Essential / Premium / Ultimate plans with monthly pricing, bullet-check feature list, primary CTA. Middle plan is highlighted."},
+    {"id": "service_area", "type": "map_with_town_chip_list", "notes": "Nassau & Suffolk service area visualization with chips for each town."},
+    {"id": "reviews", "type": "animated_review_marquee", "notes": "Continuous-scroll review carousel."},
+    {"id": "comparison_slider", "type": "before_after_drag_slider", "notes": "Touch-friendly draggable comparison of Squito's multi-zone perimeter vs competitor foundation-only — 16:10 aspect."},
+    {"id": "pest_identifier_modal", "type": "ai_simulator_overlay", "notes": "Modal launched from hero CTA: upload an image OR click sample presets (Deer Tick, Asian Tiger Mosquito, Subterranean Termite, Cellar Spider) -> show risk assessment + confidence score."},
+    {"id": "booking_wizard_modal", "type": "multi_step_subscription_flow", "notes": "Multi-step wizard with real-time price calc, add-ons (Mosquito & Tick, Termite Monitoring), and a promo code validator (GOSQUITO)."},
+    {"id": "faq", "type": "accordion_list", "notes": "Standard FAQ accordion."},
+    {"id": "footer", "type": "multi_column_brand_links", "notes": "Brand + columns + social icons + © line."}
+  ],
+  "hero_signature": "Dark photo background dimmed via two stacked rgba overlays. Three blurred glow orbs in green/teal sit absolutely behind the content (auto-hidden on mobile). The CTA appears ABOVE the H1 — a shimmer-swept emerald pill. H1 stacks 'Smart. Safe.' (white with crisp text-shadow) + 'Pest Control.' (green gradient-text). The subline rotates the pest noun dynamically. A rating chip with five filled amber stars + green checkmark trust badges complete the proof scaffold.",
+  "notable_features": [
+    "Dual-theme support: dark (showroom black) AND light (cream/sand) controlled by data-theme attribute + CSS HSL variables",
+    "Theme toggle in nav with moon/sun icon swap (mobile version too)",
+    "AI Pest Identifier simulator modal (file upload + preset samples + confidence scores)",
+    "Multi-step booking wizard with live price calculation + promo code engine",
+    "Before/After drag-handle comparison slider (touch + mouse)",
+    "Animated infinite marquee of pest names + reviews",
+    "Glow orbs (blur 140px, 800px circles, mobile-disabled)",
+    "Shimmer sweep animation on CTAs (translateX gradient over 700ms)",
+    "Count-up stat counters fed by IntersectionObserver",
+    "Rotating word in hero subline (pest name cycles every few seconds)",
+    "SVG fractalNoise grain overlay (3.5% opacity, overlay blend mode)"
+  ],
+  "motion_vocabulary": [
+    "ticker-scroll keyframe (35s linear infinite) for marquee",
+    "shimmer translateX keyframe sweeping inner light bar on hover",
+    "spin-slow 3s linear infinite",
+    "Glass card hover: border-color shift + translateY(-4px)",
+    "Theme transition (300ms cubic-bezier on background-color / border / color / fill)",
+    "Pulse animation on accent ring around logo",
+    "Mobile drawer slides in via translate-x"
+  ],
+  "tailwind_extras_inline_css": "HSL custom-property color system with darkMode 'class' + data-theme switching (full dark vs warm cream-sand light palette). .glass-card with HSL card + border + variable card-shadow (heavier in light mode). .glow-orb (absolute, blur 140px, mobile-hidden). .gradient-text (3-stop linear-clip-text). .text-body / .text-muted / .text-subtle / .text-ghost tier with per-theme alpha. .bg-tint-5 through 25 token system. Custom scrollbar (emerald in dark, neutral in light). SVG noise overlay with theme-aware filter:invert."
+}

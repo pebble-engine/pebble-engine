@@ -1,0 +1,255 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------------
+   HSL token system — single dark industrial theme. Yellow accent (#FFD200) on
+   near-black (#1A1A1A). All Tailwind color tokens resolve through the
+   variables below.
+   ----------------------------------------------------------------------------- */
+:root {
+  --bg: 0 0% 10%;            /* #1A1A1A — near-black */
+  --fg: 38 17% 89%;          /* warm bone-white at ~92% alpha effective */
+  --primary: 51 100% 50%;    /* #FFD200 — hazard yellow (accent and CTA) */
+  --secondary: 51 100% 44%;  /* darker yellow on hover */
+  --accent: 51 100% 50%;     /* same as primary — the yellow is the accent */
+  --muted: 38 14% 60%;       /* secondary text */
+  --card: 0 0% 13%;          /* surface 1 — slightly lifted from bg */
+  --border: 0 0% 100%;       /* used at /10 etc. for hairlines */
+  --ring: 51 100% 50%;
+  --input: 0 0% 11%;
+  --card-shadow: 0 2px 18px -4px rgba(0, 0, 0, 0.6);
+
+  /* Hazard stripe color pair */
+  --hazard-yellow: #FFD200;
+  --hazard-dark: #1A1A1A;
+}
+
+/* Base ----------------------------------------------------------------------- */
+* {
+  border-color: hsl(var(--border) / 0.08);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--bg));
+  color: hsl(var(--fg) / 0.92);
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.4);
+  color: hsl(var(--bg));
+}
+
+/* Utility components ---------------------------------------------------------- */
+@layer components {
+  /* The signature hazard stripe — 4px fixed-top yellow/black diagonal bar that
+     sits ABOVE the navbar. The industrial tell. */
+  .hazard-stripe {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    z-index: 60;
+    background-image: repeating-linear-gradient(
+      45deg,
+      var(--hazard-yellow) 0,
+      var(--hazard-yellow) 10px,
+      var(--hazard-dark) 10px,
+      var(--hazard-dark) 20px
+    );
+    pointer-events: none;
+  }
+
+  /* Hollow-letter stencil — Anton display font with text-stroke + transparent
+     fill. Used for every section h2. */
+  .stencil {
+    font-family: var(--font-anton), system-ui, sans-serif;
+    -webkit-text-stroke: 1px hsl(var(--fg) / 0.92);
+    color: transparent;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 0.95;
+  }
+
+  /* Filled stencil variant — same font but the fill is on. Used for the brand
+     wordmark and any 'shouting' headline. */
+  .stencil-filled {
+    font-family: var(--font-anton), system-ui, sans-serif;
+    color: hsl(var(--fg) / 0.92);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    line-height: 0.95;
+  }
+
+  /* JetBrains Mono ref-code label. The parts-catalog stamp on every section. */
+  .ref-code {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: hsl(var(--fg) / 0.32);
+  }
+
+  .ref-code-accent {
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: hsl(var(--primary));
+  }
+
+  /* Yellow IMG-REF corner tag on photos. */
+  .img-ref-tag {
+    position: absolute;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    background: var(--hazard-yellow);
+    color: var(--hazard-dark);
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.25rem 0.5rem;
+    line-height: 1;
+    z-index: 2;
+  }
+
+  /* Glass card — 4% white tint + blur + 10% white border. Subtle, industrial. */
+  .glass-card {
+    background: hsl(0 0% 100% / 0.04);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid hsl(0 0% 100% / 0.1);
+    box-shadow: var(--card-shadow);
+    transition:
+      border-color 200ms ease,
+      transform 200ms ease;
+  }
+
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.4);
+  }
+
+  /* Subtle gradient-mesh corner blob. Pair these in opposite corners of the
+     hero for the auto_honest_diag glow. */
+  .glow-blob {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(140px);
+    pointer-events: none;
+    opacity: 0.2;
+    background: hsl(var(--primary) / 1);
+    z-index: 0;
+  }
+
+  @media (max-width: 768px) {
+    .glow-blob {
+      opacity: 0.1;
+    }
+  }
+
+  /* btn-primary — yellow filled. Depresses on :active for a physical-button
+     feel, per the DNA motion vocabulary. */
+  .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: var(--hazard-yellow);
+    color: var(--hazard-dark);
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1px solid var(--hazard-yellow);
+    transition: transform 100ms ease, background 200ms ease;
+  }
+
+  .btn-primary:hover {
+    background: hsl(var(--secondary));
+  }
+
+  .btn-primary:active {
+    transform: translateY(2px);
+  }
+
+  /* btn-ghost — outlined yellow on dark. */
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1.5rem;
+    background: transparent;
+    color: hsl(var(--fg) / 0.92);
+    font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    border: 1px solid hsl(var(--fg) / 0.32);
+    transition: transform 100ms ease, border-color 200ms ease, color 200ms ease;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--hazard-yellow);
+    color: var(--hazard-yellow);
+  }
+
+  .btn-ghost:active {
+    transform: translateY(2px);
+  }
+
+  .text-body {
+    color: hsl(var(--fg) / 0.92);
+  }
+  .text-muted {
+    color: hsl(var(--fg) / 0.52);
+  }
+  .text-subtle {
+    color: hsl(var(--fg) / 0.6);
+  }
+  .text-ghost {
+    color: hsl(var(--fg) / 0.32);
+  }
+}
+
+/* Custom scrollbar — yellow thumb on hover -------------------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--fg) / 0.15);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Reduced motion -------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

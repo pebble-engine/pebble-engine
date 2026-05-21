@@ -1,0 +1,76 @@
+{
+  "dna_id": "real_estate_luxury",
+  "vibe_label": "Cinematic IMAX Vermilion-Slab",
+  "source_brand": "Onyx Properties",
+  "source_industry": "luxury real estate",
+  "applicable_industries": [
+    "luxury real estate",
+    "real estate brokerage",
+    "high-end interior design",
+    "architecture firm",
+    "luxury yacht brokerage",
+    "private aviation",
+    "wealth management",
+    "private equity",
+    "art gallery",
+    "auction house",
+    "watchmaker / horology",
+    "high-end concierge service",
+    "luxury car dealership"
+  ],
+  "palette": {
+    "bg": "#0A0A0A",
+    "fg": "#FFFFFF",
+    "primary": "#0A0A0A",
+    "secondary": "#A0A0A0",
+    "accent": "#FF3A1F",
+    "muted": "#A0A0A0",
+    "border": "#2A2A2A",
+    "extras": {
+      "surface": "#141414",
+      "accent_hover": "#E02E16",
+      "text_secondary": "#A0A0A0"
+    }
+  },
+  "fonts": {
+    "display": "Unbounded",
+    "body": "Inter",
+    "accent": null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Unbounded:wght@400;700;900&display=swap",
+  "section_flow": [
+    {"id": "nav", "type": "mix_blend_difference_floating", "notes": "Floating nav with mix-blend-difference so logo + links invert against any background. 8x8 vermilion square logo mark + 'Onyx' wordmark in Unbounded Black tracking-tighter. Mobile clip-path circle reveal menu."},
+    {"id": "hero", "type": "full_bleed_image_centered_huge_type", "notes": "Full-screen luxury mansion image with cinematic-img filter (contrast 1.1 + brightness 0.9) + 60% black overlay. Vermilion eyebrow with letter-spacing 0.3em above an enormous 'FIND YOUR EMPIRE' Unbounded Black headline rendered with mix-blend-overlay. Two CTAs: vermilion filled btn-cinematic + outlined btn-outline."},
+    {"id": "scroll_indicator", "type": "thin_vertical_line_progress", "notes": "1px vertical line with a vermilion bar that drops as you scroll — driven by ScrollTrigger scrub."},
+    {"id": "intro_stats", "type": "two_col_split_text_2x2_stat_grid", "notes": "Left: 'PRECISION TERRITORY.' Unbounded headline with vermilion underline + paragraph. Right: 2x2 grid of stat cards on dark surface with thin border. $2.4B / 140+ / 98% / 24h."},
+    {"id": "listings", "type": "three_col_aspect_4_5_property_cards", "notes": "'FEATURED COLLECTION' headline (second line vermilion) with 'View All Inventory' outline CTA top-right. Three property cards with aspect-4/5 images + cinematic-img filter, bottom gradient mask, 'Exclusive' or 'New' badge, then below: 'BEDS // BATHS' (vermilion // dividers) and bold Unbounded price."},
+    {"id": "agent_pinned", "type": "sticky_split_screen_image_text", "notes": "Sticky full-height split: left half is agent portrait with bg-fade gradient; right half is dark pinned content panel with eyebrow + 'ALEX STONE' headline + long paragraph + Years/Awards stat pair."},
+    {"id": "contact", "type": "centered_form_grid_2x", "notes": "Confidential inquiries pill border, gigantic 'SECURE YOUR ACQUISITION' headline, then 2-col form: name / email / phone / target market inputs + full-width textarea + full-width 'INITIATE INQUIRY' filled vermilion CTA. All placeholders uppercase tracking-widest."},
+    {"id": "footer", "type": "three_part_horizontal", "notes": "Logo mark + brand on the left, terms/privacy/accessibility links center, © line right — all on the dark surface band."}
+  ],
+  "hero_signature": "Full-screen luxury mansion image rendered with contrast 1.1 + brightness 0.9 filter and a 60% black overlay. A vermilion (#FF3A1F) eyebrow with extreme letter-spacing 0.3em sits above the colossal 'FIND YOUR EMPIRE' headline — two lines of Unbounded Black at text-9xl with tracking-tighter and mix-blend-overlay. Below: vermilion filled btn-cinematic CTA next to a hollow outline CTA. A 'SCROLL' indicator with a 1px vertical hairline + vermilion bar marks bottom-center.",
+  "notable_features": [
+    "Cinematic 2px micro-rounding ('.cinematic-radius') instead of typical 8-16px rounding — sharp slab aesthetic",
+    "mix-blend-difference on the nav so logo+links invert through any background imagery",
+    "mix-blend-overlay on the H1 so the title interacts with the photo behind it",
+    "cinematic-img filter (contrast 1.1 + brightness 0.9) applied to all photography for a graded-film look",
+    "Vermilion (#FF3A1F) as the only saturated accent — used very sparingly",
+    "Lenis smooth scroll integration (1.4s duration custom easing)",
+    "GSAP ScrollTrigger with .reveal-left / .reveal-right / .listing-card / .reveal-agent classes",
+    "Pinned sticky agent section that holds the viewport then releases",
+    "Clip-path circle menu reveal animation (mobile overlay)",
+    "btn-cinematic with ::after gradient overlay + translateY(-2px) hover",
+    "Uppercase form placeholders with letter-spacing 0.05em",
+    "Property card markup style: '5 BEDS // 6 BATHS' with vermilion // as divider, then Unbounded price"
+  ],
+  "motion_vocabulary": [
+    "GSAP hero entrance timeline (eyebrow -> title -> CTAs staggered with -0.5/-0.6 overlap)",
+    "ScrollTrigger scrub for the vertical scroll-indicator vermilion bar",
+    "Listing card stagger reveal (0.15s between cards)",
+    "Sticky agent pin via position:sticky top:0 h:100vh",
+    "Clip-path circle expand for mobile menu (0% -> 150% at top-right anchor)",
+    "Cinematic-img hover: contrast 1.2 + brightness 1 + scale 1.05 over 700ms",
+    "btn-cinematic hover lift -2px + ::after gradient fade-in"
+  ],
+  "tailwind_extras_inline_css": "Tight token system with 6 colors only. .cinematic-radius (border-radius 2px - the signature sharp edge). .reveal-mask helper (clip-path inset 0 0 100% 0). .btn-cinematic + ::after gradient overlay + hover translateY. .btn-outline (1px border, fills white on hover and inverts text). .menu-overlay clip-path circle reveal with cubic-bezier(0.77, 0, 0.175, 1) 800ms. .cinematic-img filter (contrast + brightness with hover boost). Note: mix-blend-difference nav + mix-blend-overlay h1 is the load-bearing trick."
+}

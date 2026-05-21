@@ -1,0 +1,162 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Material Design 3 surface tokens — exposed as CSS vars for parity with the DNA palette. */
+:root {
+  --md-surface: #fdf2f8;
+  --md-surface-dim: #f4d5e3;
+  --md-surface-variant: #f8dde9;
+  --md-surface-container-lowest: #ffffff;
+  --md-surface-container-low: #fde7f1;
+  --md-surface-container: #fbdde9;
+  --md-surface-container-high: #f9d2e2;
+  --md-surface-container-highest: #f6c8db;
+
+  --md-primary: #ec4899;
+  --md-primary-container: #fbcfe8;
+
+  --md-secondary: #f9a8d4;
+
+  --md-tertiary: #8b5cf6;
+  --md-tertiary-container: #ddd6fe;
+
+  --md-on-surface: #831843;
+  --md-on-surface-variant: #9d2f5a;
+
+  --md-outline: #c97aa0;
+  --md-outline-variant: #fbcfe8;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply font-body text-on-surface bg-surface antialiased;
+    font-feature-settings: "ss01", "cv11";
+  }
+
+  ::selection {
+    background-color: rgba(139, 92, 246, 0.18); /* lavender tertiary tint */
+    color: var(--md-on-surface);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display text-on-surface;
+    letter-spacing: -0.01em;
+  }
+
+  /* Focus visible — accessible, on-brand ring */
+  :focus-visible {
+    outline: 2px solid var(--md-primary);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  /* prefers-reduced-motion */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer components {
+  /* Liquid glass card — backdrop-blur with soft inset white border */
+  .glass-card {
+    background-color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: saturate(140%) blur(16px);
+    -webkit-backdrop-filter: saturate(140%) blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    box-shadow:
+      0 4px 32px rgba(131, 24, 67, 0.06),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+  }
+
+  .glass-card-strong {
+    background-color: rgba(255, 255, 255, 0.78);
+    backdrop-filter: saturate(150%) blur(20px);
+    -webkit-backdrop-filter: saturate(150%) blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    box-shadow:
+      0 4px 32px rgba(131, 24, 67, 0.08),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.6);
+  }
+
+  /* Ethereal cloud background — soft rose gradient with low-opacity light pools */
+  .ethereal-bg {
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 20%, rgba(251, 207, 232, 0.55), transparent 65%),
+      radial-gradient(ellipse 50% 60% at 80% 30%, rgba(255, 255, 255, 0.55), transparent 70%),
+      radial-gradient(ellipse 70% 60% at 50% 90%, rgba(249, 168, 212, 0.40), transparent 70%),
+      linear-gradient(180deg, #fdf2f8 0%, #f9d2e2 100%);
+  }
+
+  .cloud-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 30% 30%, rgba(255, 255, 255, 0.75), transparent 65%),
+      radial-gradient(ellipse 70% 60% at 70% 70%, rgba(251, 207, 232, 0.45), transparent 70%),
+      linear-gradient(180deg, #fde7f1 0%, #fbdde9 100%);
+  }
+
+  /* Vapor shadow — long-throw colored drop shadow */
+  .vapor-shadow {
+    box-shadow:
+      0 8px 24px rgba(236, 72, 153, 0.08),
+      0 24px 64px rgba(236, 72, 153, 0.12),
+      0 64px 120px rgba(236, 72, 153, 0.1);
+  }
+
+  /* Editorial typography scale */
+  .text-display {
+    @apply font-display text-5xl md:text-6xl lg:text-7xl font-normal italic leading-[1.05];
+  }
+  .text-headline {
+    @apply font-display text-3xl md:text-4xl lg:text-5xl font-normal leading-tight;
+  }
+  .text-title {
+    @apply font-display text-xl md:text-2xl font-normal leading-snug;
+  }
+  .text-body-lg {
+    @apply font-body text-base md:text-lg leading-relaxed text-on-surface-variant;
+  }
+  .text-label {
+    @apply font-body text-xs uppercase tracking-[0.18em] text-on-surface-variant;
+  }
+  .text-button {
+    @apply font-body text-sm font-medium tracking-wide;
+  }
+
+  /* Page container — 1440px max, responsive horizontal margin */
+  .page-container {
+    @apply mx-auto px-page-mobile md:px-page-desktop;
+    max-width: 1440px;
+  }
+}
+
+@layer utilities {
+  /* Sequential animation delays for cascaded reveals */
+  .delay-100 {
+    animation-delay: 0.1s;
+  }
+  .delay-200 {
+    animation-delay: 0.2s;
+  }
+  .delay-300 {
+    animation-delay: 0.3s;
+  }
+  .delay-400 {
+    animation-delay: 0.4s;
+  }
+}

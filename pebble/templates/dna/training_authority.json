@@ -1,0 +1,79 @@
+{
+  "dna_id": "training_authority",
+  "vibe_label": "Tactical Crimson Gold-Gradient",
+  "source_brand": "Pestana Firearms Training",
+  "source_industry": "firearms training",
+  "applicable_industries": [
+    "firearms training",
+    "martial arts dojo",
+    "personal trainer",
+    "executive coach",
+    "security consultant",
+    "tactical training",
+    "police academy or auxiliary",
+    "first responder training",
+    "boxing gym",
+    "MMA gym",
+    "krav maga studio",
+    "shooting range",
+    "outdoor adventure guide"
+  ],
+  "palette": {
+    "bg": "#0A0A0A",
+    "fg": "#F5F5F4",
+    "primary": "#0A0A0A",
+    "secondary": "#44403C",
+    "accent": "#B91C1C",
+    "muted": "#A8A29E",
+    "border": "#292524",
+    "extras": {
+      "primary_light": "#1C1917",
+      "accent_light": "#DC2626",
+      "accent_warm": "#D97706",
+      "accent_warm_light": "#F59E0B",
+      "card": "#1C1917",
+      "card_hover": "#292524",
+      "glass": "rgba(28, 25, 23, 0.8)",
+      "glass_light": "rgba(28, 25, 23, 0.6)"
+    }
+  },
+  "fonts": {
+    "display": "Outfit",
+    "body": "DM Sans",
+    "accent": null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Outfit:wght@400;500;600;700;800;900&display=swap",
+  "section_flow": [
+    {"id": "intro_overlay", "type": "video_intro_with_skip", "notes": "Full-screen black overlay with hidden video and SKIP button at bottom right; viewport-responsive source switching."},
+    {"id": "header", "type": "transparent_with_pill_cta", "notes": "Glassmorphism header with pill-shaped nav links highlighted in red-tinted bg; bold SIGN UP CTA at the right; animated 3-bar hamburger on mobile."},
+    {"id": "hero", "type": "full_bleed_video_centered", "notes": "Autoplay-loop muted hero video with double-gradient masking; tracked eyebrow pill (animated dot + EST. 2021 — NRA CERTIFIED), giant 4-line Outfit black headline with middle line in gold-gradient text fill, all-caps Outfit tagline, dual CTAs."},
+    {"id": "carousel", "type": "single_image_slider_with_dots", "notes": "Training Gallery with prev/next arrow buttons, slide-counter badge, dot indicators below; rounded-2xl frame with dark gradient overlay."},
+    {"id": "stats", "type": "four_column_counter", "notes": "500+ students / 12+ courses / 3+ years / 100% NRA in giant Outfit-black numerals — counts up on scroll into view."},
+    {"id": "instructor_about", "type": "two_column_portrait_glass_credentials", "notes": "4:5 instructor portrait with gradient bottom mask; floating glassmorphism credentials card overlaps the corner with red-pulse dot + bulleted list."},
+    {"id": "mission", "type": "centered_blockquote_with_radial_dots", "notes": "Dotted-radial pattern background with logo at top, accent eyebrow, oversized quote SVG mark behind a blockquote, gradient hairline divider, narrative paragraph."},
+    {"id": "legal_ccw", "type": "two_column_text_card_callout", "notes": "Legal news context column with external links beside a gold-tinted callout card with circular badge icon + CTA."},
+    {"id": "discount_banner", "type": "centered_glass_offer_card", "notes": "Glass card with shield icon + heading + paragraph + email CTA, on red shimmer-animated background gradient."},
+    {"id": "classes_grid", "type": "three_column_class_cards", "notes": "NRA + Non-NRA class card grids with a 4px left bar that turns red/gold on hover; featured cards get a gold gradient + amber bar."},
+    {"id": "footer", "type": "four_column_with_socials", "notes": "Brand + quick links + contact + social icon grid; Outfit headings with letter-spacing 0.15em; bottom credits with terms link."}
+  ],
+  "hero_signature": "Full-bleed looping range video under two stacked gradients (black -> background bottom, black sides). Eyebrow pill has a live red pulse dot. The h1 is four lines of Outfit Black, middle line rendered with text-gold-gradient (5-stop linear from dark amber through bright gold). The tagline is all-caps DM Sans with 0.12em tracking. Dual CTAs are pill-buttons with scale-1.02 hover.",
+  "notable_features": [
+    "Page-router single-file SPA with multiple hidden views (home, classes, schedule, range, gallery, contact, terms)",
+    "Gold-gradient text-fill on h1 fragment using -webkit-background-clip:text and 5 color stops",
+    "Glassmorphism with backdrop-blur(16px) and translucent dark fill",
+    "Animated red-tinted shimmer band sweeping across CTA sections",
+    "Class cards with 4px left accent bar that widens to 5px and changes color on hover",
+    "Featured class card variant with subtle amber gradient + amber bar (vs default gray)",
+    "Floating credentials card with pulsing red status dot",
+    "Animated stat counters that count up via IntersectionObserver",
+    "Dotted radial-gradient overlay pattern on mission section"
+  ],
+  "motion_vocabulary": [
+    "reveal-item with data-anim (fade-up / fade-left / fade-right / scale) and data-delay attributes driven by IntersectionObserver",
+    "Hero stagger uses CSS keyframes (fadeInUp / fadeInLeft / fadeInRight / scaleIn) at 0.8s ease-out",
+    "Shimmer keyframe sweeps a red 8%-tinted gradient at 3s linear infinite",
+    "Subtle gold glow box-shadow on credential card",
+    "prefers-reduced-motion disables all animation"
+  ],
+  "tailwind_extras_inline_css": ".glass + .glass-light (backdrop-blur with translucent dark fill and faint border), .text-gold-gradient (5-stop background-clip text fill), .tactical-line::before (3px x 60px horizontal gradient accent rule), .class-card with __bar + featured modifier (left accent bar that widens on hover), .animate-shimmer + .animate-subtle-glow + .animate-page-fade utility classes. Custom scrollbar with red thumb hover."
+}

@@ -1,0 +1,187 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* -----------------------------------------------------------------------------
+   Dual-theme HSL token system. `light` is default (warm cream paper); the
+   ThemeToggle adds `data-theme="dark"` to <html> to flip to the deep-forest
+   night palette. All Tailwind color tokens resolve through the variables below.
+   ----------------------------------------------------------------------------- */
+:root,
+:root[data-theme="light"] {
+  /* Light theme (default) — warm cream paper, forest ink, emerald + gold */
+  --bg: 44 41% 96%;       /* #FAF8F1 — warm cream paper */
+  --fg: 120 13% 20%;      /* #2D3A2D — forest ink */
+  --primary: 160 94% 30%; /* #059669 — deep emerald */
+  --secondary: 120 13% 28%;/* #3F5240 — mid forest for secondary surfaces */
+  --accent: 41 96% 41%;   /* #CA8A04 — warm gold */
+  --muted: 30 12% 42%;    /* #7A6E5A — soft warm-grey */
+  --card: 44 50% 99%;     /* #FDFCF7 — slightly brighter than bg */
+  --border: 38 31% 86%;   /* #E8E0D0 — soft beige */
+  --ring: 160 94% 30%;    /* #059669 */
+  --input: 44 50% 99%;    /* #FDFCF7 */
+  --card-shadow: 0 6px 24px -6px rgba(60, 50, 30, 0.18);
+  --grain-invert: 1;
+}
+
+:root[data-theme="dark"] {
+  /* Dark theme — deep forest night with the same emerald + gold accents */
+  --bg: 82 19% 12%;       /* #1F2419 — deep forest night */
+  --fg: 44 41% 96%;       /* #FAF8F1 — cream */
+  --primary: 160 94% 30%; /* #059669 — deep emerald (held) */
+  --secondary: 120 13% 28%;/* #3F5240 — mid forest */
+  --accent: 41 96% 41%;   /* #CA8A04 — warm gold (held) */
+  --muted: 38 12% 64%;    /* warm cream-grey */
+  --card: 82 19% 16%;     /* slightly lighter than bg */
+  --border: 82 14% 22%;   /* forest border */
+  --ring: 160 94% 30%;
+  --input: 82 19% 16%;
+  --card-shadow: 0 2px 18px -4px rgba(0, 0, 0, 0.5);
+  --grain-invert: 0;
+}
+
+/* Base ----------------------------------------------------------------------- */
+* {
+  border-color: hsl(var(--border));
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: hsl(var(--bg));
+  color: hsl(var(--fg));
+  font-feature-settings: "ss01", "cv11";
+  -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    color 300ms cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+::selection {
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--fg));
+}
+
+/* Utility components ---------------------------------------------------------- */
+@layer components {
+  .glass-card {
+    background: hsl(var(--card) / 0.6);
+    backdrop-filter: blur(12px) saturate(150%);
+    -webkit-backdrop-filter: blur(12px) saturate(150%);
+    border: 1px solid hsl(var(--border));
+    box-shadow: var(--card-shadow);
+    transition:
+      border-color 200ms ease,
+      transform 200ms ease,
+      box-shadow 200ms ease;
+  }
+
+  .glass-card:hover {
+    border-color: hsl(var(--primary) / 0.4);
+    transform: translateY(-4px);
+  }
+
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--accent)) 50%,
+      hsl(var(--secondary)) 100%
+    );
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+
+  .text-body {
+    color: hsl(var(--fg) / 0.9);
+  }
+  .text-muted {
+    color: hsl(var(--muted));
+  }
+  .text-subtle {
+    color: hsl(var(--fg) / 0.6);
+  }
+  .text-ghost {
+    color: hsl(var(--fg) / 0.4);
+  }
+
+  .glow-orb {
+    position: absolute;
+    border-radius: 9999px;
+    filter: blur(140px);
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+  }
+
+  @media (max-width: 768px) {
+    .glow-orb {
+      display: none;
+    }
+  }
+
+  .shimmer-sweep {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  .shimmer-sweep::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      105deg,
+      transparent 30%,
+      hsl(0 0% 100% / 0.25) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    animation: shimmer-sweep 2.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  /* SVG fractalNoise grain overlay at ~3% opacity (theme-aware via invert) */
+  .grain-overlay {
+    pointer-events: none;
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    opacity: 0.035;
+    mix-blend-mode: overlay;
+    filter: invert(var(--grain-invert));
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/></svg>");
+  }
+}
+
+/* Custom scrollbar (subtle emerald in both themes) ---------------------------- */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: hsl(var(--bg));
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--primary) / 0.4);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary) / 0.7);
+}
+
+/* Reduced motion -------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,929 @@
+{
+  "schema_version": "1.0",
+  "_comment": "Template registry \u2014 Phase 31. Each entry points to a tokenized Next.js project in pebble/templates/<id>/ that we can instantiate for customers via a focused content-swap LLM call (~$0.005). DNA inspiration drawn from Marc's client HTMLs but every shipped template is an original brand. See pebble/templates/dna/<source_dna>.json for the design language each template inherits.",
+  "templates": [
+    {
+      "id": "service_pro",
+      "directory": "pebble/templates/service_pro",
+      "name": "Coastal Pro Services",
+      "tagline": "Premium services. No contracts. Pet & family safe.",
+      "vibe": "Glow Emerald Dual-Theme",
+      "source_dna": "pest_clean_safe",
+      "applicable_industries": [
+        "pest control",
+        "lawn care",
+        "landscaping",
+        "tree service",
+        "carpet cleaning",
+        "house cleaning",
+        "pressure washing",
+        "HVAC",
+        "plumbing",
+        "electrician",
+        "solar installer",
+        "junk removal",
+        "moving company",
+        "home inspection",
+        "mold remediation"
+      ],
+      "preview_image": "/templates-preview/service_pro.png",
+      "color_swatches": [
+        "#0a0a0a",
+        "#22c55e",
+        "#34d399",
+        "#ece3d2"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "Inter"
+      },
+      "best_for": "Service-industry businesses where the buyer wants TRUST + AVAILABILITY signals (no-contracts, same-day, pet-safe). Dark default with optional light theme toggle.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3062",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "luxe_beauty",
+      "directory": "pebble/templates/luxe_beauty",
+      "name": "Maison Lume",
+      "tagline": "Ethereal beauty. Meticulously crafted.",
+      "vibe": "Editorial Mint Ethereal-Cloud",
+      "source_dna": "beauty_ethereal",
+      "applicable_industries": [
+        "beauty supply",
+        "cosmetics brand",
+        "haircare brand",
+        "skincare brand",
+        "spa",
+        "wellness retreat",
+        "luxury retail",
+        "jewelry brand",
+        "fashion boutique",
+        "nail salon",
+        "lash studio",
+        "barre studio",
+        "pilates studio",
+        "florist (luxury)",
+        "perfume / fragrance brand",
+        "natural beauty product line"
+      ],
+      "preview_image": "/templates-preview/luxe_beauty.png",
+      "color_swatches": [
+        "#e8fdfe",
+        "#3c6569",
+        "#94483f",
+        "#a7d2d6"
+      ],
+      "fonts": {
+        "display": "Bodoni Moda",
+        "body": "Manrope",
+        "accent": "Pinyon Script"
+      },
+      "best_for": "Premium-tier beauty, wellness, and editorial-luxury brands. Light cream/mint surfaces. Generous whitespace. Magazine-style asymmetric layouts.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3063",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Shop",
+          "path": "/shop"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "artisan_kitchen",
+      "directory": "pebble/templates/artisan_kitchen",
+      "name": "Maple & Hearth",
+      "tagline": "Warm, tactile, baked daily.",
+      "vibe": "Tactile Y2K Warm-Cream",
+      "source_dna": "bakery_warm",
+      "applicable_industries": [
+        "bakery",
+        "cafe",
+        "coffee shop",
+        "restaurant",
+        "deli",
+        "ice cream shop",
+        "florist",
+        "pottery studio",
+        "candle maker",
+        "soap maker",
+        "children's boutique",
+        "yoga studio",
+        "wellness retreat",
+        "stationery shop",
+        "gift shop",
+        "honey or jam producer"
+      ],
+      "preview_image": "/templates-preview/artisan_kitchen.png",
+      "color_swatches": [
+        "#FDF6EC",
+        "#1A1A1A",
+        "#E8590C",
+        "#4A6741"
+      ],
+      "fonts": {
+        "display": "Fraunces",
+        "body": "Inter"
+      },
+      "best_for": "Warm, tactile brands where the product is craft \u2014 bakery, caf\u00e9, restaurant, deli, florist. Tilted-photo Y2K cream palette with filterable menu / catalog section.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3065",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Menu",
+          "path": "/menu"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "instructor_pro",
+      "directory": "pebble/templates/instructor_pro",
+      "name": "Stratford Tactical Academy",
+      "tagline": "Authority. Discipline. Outcomes.",
+      "vibe": "Tactical Crimson Gold-Gradient",
+      "source_dna": "training_authority",
+      "applicable_industries": [
+        "firearms training",
+        "martial arts dojo",
+        "personal trainer",
+        "executive coach",
+        "security consultant",
+        "tactical training",
+        "police academy or auxiliary",
+        "first responder training",
+        "boxing gym",
+        "MMA gym",
+        "krav maga studio",
+        "shooting range",
+        "outdoor adventure guide"
+      ],
+      "preview_image": "/templates-preview/instructor_pro.png",
+      "color_swatches": [
+        "#0A0A0A",
+        "#B91C1C",
+        "#F5F5F4",
+        "#44403C"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "DM Sans"
+      },
+      "best_for": "Authority instructor brands \u2014 trainer, dojo, coach, security consultant. Tactical crimson + gold-gradient with full-bleed video hero and animated stats.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3066",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Classes",
+          "path": "/classes"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "ink_studio",
+      "directory": "pebble/templates/ink_studio",
+      "name": "Inkhouse Atelier",
+      "tagline": "Dark mood. Gold glow. Blackletter craft.",
+      "vibe": "Gothic Blackletter Gold-Glow",
+      "source_dna": "tattoo_studio",
+      "applicable_industries": [
+        "tattoo studio",
+        "barbershop",
+        "leather workshop",
+        "metal fabrication",
+        "custom motorcycle shop",
+        "speakeasy bar",
+        "whiskey distillery",
+        "cigar lounge",
+        "boxing gym",
+        "vintage clothing",
+        "artisan workshop",
+        "music artist portfolio",
+        "photographer (dark editorial)"
+      ],
+      "preview_image": "/templates-preview/ink_studio.png",
+      "color_swatches": [
+        "#0A0A0A",
+        "#C9A84C",
+        "#F5F5F0",
+        "#141414"
+      ],
+      "fonts": {
+        "display": "UnifrakturCook",
+        "body": "Source Sans 3",
+        "accent": "Bebas Neue"
+      },
+      "best_for": "Dramatic dark personal-brand portfolios where the work is the product. Blackletter wordmarks, gold accents, corner-bracket photo frames. Tattoo, music, motorcycle, leather craft, whiskey.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3064",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "boutique_brokerage",
+      "directory": "pebble/templates/boutique_brokerage",
+      "name": "Beacon & Bay Realty",
+      "tagline": "Quietly negotiated. Cinematically presented.",
+      "vibe": "Cinematic IMAX Vermilion-Slab",
+      "source_dna": "real_estate_luxury",
+      "applicable_industries": [
+        "luxury real estate",
+        "boutique brokerage",
+        "real estate agent (urban luxury)",
+        "real estate developer",
+        "architecture firm",
+        "interior design studio",
+        "luxury vacation rentals",
+        "estate planning attorney",
+        "luxury yacht broker",
+        "private aviation",
+        "luxury auction house",
+        "wealth management"
+      ],
+      "preview_image": "/templates-preview/boutique_brokerage.png",
+      "color_swatches": [
+        "#0A0A0A",
+        "#DC2626",
+        "#F5F5F4",
+        "#1F1F1F"
+      ],
+      "fonts": {
+        "display": "Unbounded",
+        "body": "Inter"
+      },
+      "best_for": "Urban luxury real estate + adjacent high-touch brokerages. Cinematic vermilion-slab editorial, mix-blend-difference navbar, photo-grid hero, numbered slab dividers.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3067",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Listings",
+          "path": "/listings"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "honest_garage",
+      "directory": "pebble/templates/honest_garage",
+      "name": "Honest Axle Auto",
+      "tagline": "Diagnose. Fix. Done.",
+      "vibe": "Industrial Hazard-Stripe Stencil",
+      "source_dna": "auto_honest_diag",
+      "applicable_industries": [
+        "auto repair",
+        "mechanic shop",
+        "tire shop",
+        "transmission specialist",
+        "diesel mechanic",
+        "fleet maintenance",
+        "motorcycle repair",
+        "RV repair",
+        "auto body shop",
+        "muffler shop",
+        "oil change service",
+        "brake specialist",
+        "small-engine repair",
+        "marine engine repair"
+      ],
+      "preview_image": "/templates-preview/honest_garage.png",
+      "color_swatches": [
+        "#1A1A1A",
+        "#FFD200",
+        "#F5F5F0",
+        "#2D241D"
+      ],
+      "fonts": {
+        "display": "Anton",
+        "body": "Inter",
+        "accent": "JetBrains Mono"
+      },
+      "best_for": "Honest, blue-collar service brands where the work is straightforward and the customer wants no-BS pricing. Hazard-stripe accents, Anton stencil headings, JetBrains Mono ref-codes.",
+      "tier": "free",
+      "preview_url": "http://127.0.0.1:3068",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "service_pro_navy",
+      "directory": "pebble/templates/service_pro_navy",
+      "name": "Meridian Service Co",
+      "tagline": "Professional. Precise. Insured.",
+      "vibe": "Corporate Navy + Slate",
+      "source_dna": "pest_clean_safe",
+      "applicable_industries": [
+        "pest control",
+        "lawn care",
+        "landscaping",
+        "tree service",
+        "carpet cleaning",
+        "house cleaning",
+        "pressure washing",
+        "HVAC",
+        "plumbing",
+        "electrician",
+        "solar installer",
+        "junk removal",
+        "moving company",
+        "home inspection",
+        "mold remediation"
+      ],
+      "preview_image": "/templates-preview/service_pro_navy.png",
+      "color_swatches": [
+        "#020617",
+        "#0F172A",
+        "#0369A1",
+        "#F8FAFC"
+      ],
+      "fonts": {
+        "display": "IBM Plex Sans",
+        "body": "IBM Plex Sans"
+      },
+      "best_for": "B2B / corporate service providers \u2014 bonded, insured, white-collar trades.",
+      "tier": "free"
+    },
+    {
+      "id": "service_pro_cream",
+      "directory": "pebble/templates/service_pro_cream",
+      "name": "Magnolia Home & Garden",
+      "tagline": "Honest service. Grown locally.",
+      "vibe": "Warm Cream + Forest Emerald",
+      "source_dna": "pest_clean_safe",
+      "applicable_industries": [
+        "pest control",
+        "lawn care",
+        "landscaping",
+        "tree service",
+        "carpet cleaning",
+        "house cleaning",
+        "pressure washing",
+        "HVAC",
+        "plumbing",
+        "electrician",
+        "solar installer",
+        "junk removal",
+        "moving company",
+        "home inspection",
+        "mold remediation"
+      ],
+      "preview_image": "/templates-preview/service_pro_cream.png",
+      "color_swatches": [
+        "#FAF8F1",
+        "#059669",
+        "#CA8A04",
+        "#2D3A2D"
+      ],
+      "fonts": {
+        "display": "Lora",
+        "body": "Raleway"
+      },
+      "best_for": "Landscaping, lawn care, garden services \u2014 warm, organic, light-mode native.",
+      "tier": "free"
+    },
+    {
+      "id": "luxe_beauty_rose",
+      "directory": "pebble/templates/luxe_beauty_rose",
+      "name": "Rose & Veil Apothecary",
+      "tagline": "Warm luxury. Made with care.",
+      "vibe": "Warm Rose + Lavender",
+      "source_dna": "beauty_ethereal",
+      "applicable_industries": [
+        "beauty supply",
+        "cosmetics brand",
+        "haircare brand",
+        "skincare brand",
+        "spa",
+        "wellness retreat",
+        "luxury retail",
+        "jewelry brand",
+        "fashion boutique",
+        "nail salon",
+        "lash studio",
+        "barre studio",
+        "pilates studio",
+        "florist (luxury)",
+        "perfume / fragrance brand",
+        "natural beauty product line"
+      ],
+      "preview_image": "/templates-preview/luxe_beauty_rose.png",
+      "color_swatches": [
+        "#FDF2F8",
+        "#EC4899",
+        "#8B5CF6",
+        "#831843"
+      ],
+      "fonts": {
+        "display": "Great Vibes",
+        "body": "Cormorant Infant",
+        "accent": "Pinyon Script"
+      },
+      "best_for": "Warm, feminine beauty + spa brands. Inviting, intimate, premium.",
+      "tier": "free"
+    },
+    {
+      "id": "luxe_beauty_aubergine",
+      "directory": "pebble/templates/luxe_beauty_aubergine",
+      "name": "Atelier Vesper",
+      "tagline": "Twilight rituals. Crafted in shadow.",
+      "vibe": "Deep Aubergine + Champagne",
+      "source_dna": "beauty_ethereal",
+      "applicable_industries": [
+        "beauty supply",
+        "cosmetics brand",
+        "haircare brand",
+        "skincare brand",
+        "spa",
+        "wellness retreat",
+        "luxury retail",
+        "jewelry brand",
+        "fashion boutique",
+        "nail salon",
+        "lash studio",
+        "barre studio",
+        "pilates studio",
+        "florist (luxury)",
+        "perfume / fragrance brand",
+        "natural beauty product line"
+      ],
+      "preview_image": "/templates-preview/luxe_beauty_aubergine.png",
+      "color_swatches": [
+        "#FAF7F2",
+        "#4A1A4D",
+        "#B8924A",
+        "#1B0F1F"
+      ],
+      "fonts": {
+        "display": "Poiret One",
+        "body": "Didact Gothic",
+        "accent": "Pinyon Script"
+      },
+      "best_for": "Mysterious, evening-luxury brands \u2014 perfume, jewelry, premium skincare.",
+      "tier": "free"
+    },
+    {
+      "id": "ink_studio_oxblood",
+      "directory": "pebble/templates/ink_studio_oxblood",
+      "name": "Cathedral Ink Society",
+      "tagline": "Carved in Tradition. Worn With Honor.",
+      "vibe": "Warm Gothic Oxblood + Parchment",
+      "source_dna": "tattoo_studio",
+      "applicable_industries": [
+        "tattoo studio",
+        "barbershop",
+        "leather workshop",
+        "metal fabrication",
+        "custom motorcycle shop",
+        "speakeasy bar",
+        "whiskey distillery",
+        "cigar lounge",
+        "boxing gym",
+        "vintage clothing",
+        "artisan workshop",
+        "music artist portfolio",
+        "photographer (dark editorial)"
+      ],
+      "preview_image": "/templates-preview/ink_studio_oxblood.png",
+      "color_swatches": [
+        "#1A0E0E",
+        "#8B1A1A",
+        "#B8924A",
+        "#F3E9D7"
+      ],
+      "fonts": {
+        "display": "EB Garamond",
+        "body": "Crimson Text",
+        "accent": "Bebas Neue"
+      },
+      "best_for": "Old-world craft brands \u2014 tattoo, leather, whiskey, cigar lounge, vintage.",
+      "tier": "free"
+    },
+    {
+      "id": "ink_studio_steel",
+      "directory": "pebble/templates/ink_studio_steel",
+      "name": "Vault Iron Studio",
+      "tagline": "Forged in detail. Built to last.",
+      "vibe": "Cold Industrial Steel + Brass",
+      "source_dna": "tattoo_studio",
+      "applicable_industries": [
+        "tattoo studio",
+        "barbershop",
+        "leather workshop",
+        "metal fabrication",
+        "custom motorcycle shop",
+        "speakeasy bar",
+        "whiskey distillery",
+        "cigar lounge",
+        "boxing gym",
+        "vintage clothing",
+        "artisan workshop",
+        "music artist portfolio",
+        "photographer (dark editorial)"
+      ],
+      "preview_image": "/templates-preview/ink_studio_steel.png",
+      "color_swatches": [
+        "#0E1014",
+        "#A8B0BD",
+        "#C0B47A",
+        "#E8E6E0"
+      ],
+      "fonts": {
+        "display": "Syncopate",
+        "body": "Space Mono",
+        "accent": "Bebas Neue"
+      },
+      "best_for": "Workshop / fabrication / metal craft \u2014 industrial precision, dark mood.",
+      "tier": "free"
+    },
+    {
+      "id": "artisan_kitchen_navy",
+      "directory": "pebble/templates/artisan_kitchen_navy",
+      "name": "Harbor Light Coffee",
+      "tagline": "Roasted by hand. Served by the harbor.",
+      "vibe": "Coastal Navy + Amber",
+      "source_dna": "bakery_warm",
+      "applicable_industries": [
+        "bakery",
+        "cafe",
+        "coffee shop",
+        "restaurant",
+        "deli",
+        "ice cream shop",
+        "florist",
+        "pottery studio",
+        "candle maker",
+        "soap maker",
+        "children's boutique",
+        "yoga studio",
+        "wellness retreat",
+        "stationery shop",
+        "gift shop",
+        "honey or jam producer"
+      ],
+      "preview_image": "/templates-preview/artisan_kitchen_navy.png",
+      "color_swatches": [
+        "#FAF6EE",
+        "#0F2B3D",
+        "#F59E0B",
+        "#1E3A8A"
+      ],
+      "fonts": {
+        "display": "Playfair Display SC",
+        "body": "Karla"
+      },
+      "best_for": "Coastal coffee shops + light cafes. Cream + navy + warm amber.",
+      "tier": "free"
+    },
+    {
+      "id": "artisan_kitchen_olive",
+      "directory": "pebble/templates/artisan_kitchen_olive",
+      "name": "Olive Tree Trattoria",
+      "tagline": "Slow food. Long lunches. Tradition.",
+      "vibe": "Deep Olive + Honey + Terracotta",
+      "source_dna": "bakery_warm",
+      "applicable_industries": [
+        "bakery",
+        "cafe",
+        "coffee shop",
+        "restaurant",
+        "deli",
+        "ice cream shop",
+        "florist",
+        "pottery studio",
+        "candle maker",
+        "soap maker",
+        "children's boutique",
+        "yoga studio",
+        "wellness retreat",
+        "stationery shop",
+        "gift shop",
+        "honey or jam producer"
+      ],
+      "preview_image": "/templates-preview/artisan_kitchen_olive.png",
+      "color_swatches": [
+        "#F7F2E8",
+        "#4F5D2F",
+        "#C8943C",
+        "#A03A28"
+      ],
+      "fonts": {
+        "display": "Abril Fatface",
+        "body": "Merriweather"
+      },
+      "best_for": "Mediterranean / Italian / trattoria \u2014 slow food + olive-oil-warm hospitality.",
+      "tier": "free"
+    },
+    {
+      "id": "instructor_pro_navy",
+      "directory": "pebble/templates/instructor_pro_navy",
+      "name": "Veridian Executive Coaching",
+      "tagline": "Clarity. Strategy. Results.",
+      "vibe": "Authority Navy + Gold",
+      "source_dna": "training_authority",
+      "applicable_industries": [
+        "firearms training",
+        "martial arts dojo",
+        "personal trainer",
+        "executive coach",
+        "security consultant",
+        "tactical training",
+        "police academy or auxiliary",
+        "first responder training",
+        "boxing gym",
+        "MMA gym",
+        "krav maga studio",
+        "shooting range",
+        "outdoor adventure guide"
+      ],
+      "preview_image": "/templates-preview/instructor_pro_navy.png",
+      "color_swatches": [
+        "#0B1426",
+        "#1E3A8A",
+        "#CA8A04",
+        "#F8FAFC"
+      ],
+      "fonts": {
+        "display": "Crimson Pro",
+        "body": "Atkinson Hyperlegible"
+      },
+      "best_for": "Executive coaching, leadership development, professional services authority.",
+      "tier": "free"
+    },
+    {
+      "id": "instructor_pro_forest",
+      "directory": "pebble/templates/instructor_pro_forest",
+      "name": "Northbound Guide Co",
+      "tagline": "Beyond the trail. Beyond yourself.",
+      "vibe": "Wilderness Forest + Bronze",
+      "source_dna": "training_authority",
+      "applicable_industries": [
+        "firearms training",
+        "martial arts dojo",
+        "personal trainer",
+        "executive coach",
+        "security consultant",
+        "tactical training",
+        "police academy or auxiliary",
+        "first responder training",
+        "boxing gym",
+        "MMA gym",
+        "krav maga studio",
+        "shooting range",
+        "outdoor adventure guide"
+      ],
+      "preview_image": "/templates-preview/instructor_pro_forest.png",
+      "color_swatches": [
+        "#0F1A14",
+        "#1F3D2D",
+        "#B8762E",
+        "#F2EDE3"
+      ],
+      "fonts": {
+        "display": "Barlow Condensed",
+        "body": "Barlow"
+      },
+      "best_for": "Wilderness guiding, outdoor adventure, survival training, eco-lodges.",
+      "tier": "free"
+    },
+    {
+      "id": "boutique_brokerage_sage",
+      "directory": "pebble/templates/boutique_brokerage_sage",
+      "name": "Willow & Slate Estates",
+      "tagline": "Quiet places. Considered properties.",
+      "vibe": "Sage Countryside + Bronze",
+      "source_dna": "real_estate_luxury",
+      "applicable_industries": [
+        "luxury real estate",
+        "boutique brokerage",
+        "real estate agent (urban luxury)",
+        "real estate developer",
+        "architecture firm",
+        "interior design studio",
+        "luxury vacation rentals",
+        "estate planning attorney",
+        "luxury yacht broker",
+        "private aviation",
+        "luxury auction house",
+        "wealth management"
+      ],
+      "preview_image": "/templates-preview/boutique_brokerage_sage.png",
+      "color_swatches": [
+        "#FAF8F2",
+        "#4A5840",
+        "#9B7B47",
+        "#1F2421"
+      ],
+      "fonts": {
+        "display": "Cinzel",
+        "body": "Josefin Sans"
+      },
+      "best_for": "Rural / countryside luxury real estate. Calm, considered, less urban.",
+      "tier": "free"
+    },
+    {
+      "id": "boutique_brokerage_navy",
+      "directory": "pebble/templates/boutique_brokerage_navy",
+      "name": "Harbor Stone Holdings",
+      "tagline": "Quietly significant properties.",
+      "vibe": "Marine Navy + Brass",
+      "source_dna": "real_estate_luxury",
+      "applicable_industries": [
+        "luxury real estate",
+        "boutique brokerage",
+        "real estate agent (urban luxury)",
+        "real estate developer",
+        "architecture firm",
+        "interior design studio",
+        "luxury vacation rentals",
+        "estate planning attorney",
+        "luxury yacht broker",
+        "private aviation",
+        "luxury auction house",
+        "wealth management"
+      ],
+      "preview_image": "/templates-preview/boutique_brokerage_navy.png",
+      "color_swatches": [
+        "#0A1726",
+        "#1E3A5F",
+        "#B8924A",
+        "#F5F1E8"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Inter"
+      },
+      "best_for": "Yacht-club / old-money urban-coastal real estate. Greenwich, Newport, Annapolis vibe.",
+      "tier": "free"
+    },
+    {
+      "id": "honest_garage_rust",
+      "directory": "pebble/templates/honest_garage_rust",
+      "name": "Rust Belt Garage",
+      "tagline": "Old-school repairs. Real work. Real prices.",
+      "vibe": "Vintage Americana Rust + Bone",
+      "source_dna": "auto_honest_diag",
+      "applicable_industries": [
+        "auto repair",
+        "mechanic shop",
+        "tire shop",
+        "transmission specialist",
+        "diesel mechanic",
+        "fleet maintenance",
+        "motorcycle repair",
+        "RV repair",
+        "auto body shop",
+        "muffler shop",
+        "oil change service",
+        "brake specialist",
+        "small-engine repair",
+        "marine engine repair"
+      ],
+      "preview_image": "/templates-preview/honest_garage_rust.png",
+      "color_swatches": [
+        "#1A1714",
+        "#C9501C",
+        "#E89E3C",
+        "#F4EDE0"
+      ],
+      "fonts": {
+        "display": "Bebas Neue",
+        "body": "Source Sans 3",
+        "accent": "JetBrains Mono"
+      },
+      "best_for": "Vintage / classic-car mechanics. Americana mood, warmer industrial.",
+      "tier": "free"
+    },
+    {
+      "id": "honest_garage_military",
+      "directory": "pebble/templates/honest_garage_military",
+      "name": "Foxtrot Motor Works",
+      "tagline": "Disciplined repairs. Operational standards.",
+      "vibe": "Olive Drab + Safety Orange",
+      "source_dna": "auto_honest_diag",
+      "applicable_industries": [
+        "auto repair",
+        "mechanic shop",
+        "tire shop",
+        "transmission specialist",
+        "diesel mechanic",
+        "fleet maintenance",
+        "motorcycle repair",
+        "RV repair",
+        "auto body shop",
+        "muffler shop",
+        "oil change service",
+        "brake specialist",
+        "small-engine repair",
+        "marine engine repair"
+      ],
+      "preview_image": "/templates-preview/honest_garage_military.png",
+      "color_swatches": [
+        "#1A1D14",
+        "#4A5240",
+        "#FF6B1A",
+        "#EDE9DC"
+      ],
+      "fonts": {
+        "display": "Share Tech Mono",
+        "body": "Fira Code",
+        "accent": "JetBrains Mono"
+      },
+      "best_for": "Diesel / fleet / military-spec / heavy-duty mechanics. Disciplined precision.",
+      "tier": "free"
+    }
+  ],
+  "_planned_next": []
+}

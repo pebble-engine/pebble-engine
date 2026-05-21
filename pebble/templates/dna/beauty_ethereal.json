@@ -1,0 +1,92 @@
+{
+  "dna_id": "beauty_ethereal",
+  "vibe_label": "Editorial Mint Ethereal-Cloud",
+  "source_brand": "Rich Queen Beauty Supply",
+  "source_industry": "beauty supply",
+  "applicable_industries": [
+    "beauty supply",
+    "cosmetics brand",
+    "haircare brand",
+    "skincare brand",
+    "spa",
+    "wellness retreat",
+    "luxury retail",
+    "jewelry brand",
+    "fashion boutique",
+    "nail salon",
+    "lash studio",
+    "barre or pilates studio",
+    "florist (luxury)",
+    "perfume / fragrance brand",
+    "natural beauty product line"
+  ],
+  "palette": {
+    "bg": "#e8fdfe",
+    "fg": "#0b1e1f",
+    "primary": "#3c6569",
+    "secondary": "#5d5f5f",
+    "accent": "#94483f",
+    "muted": "#404849",
+    "border": "#c0c8c8",
+    "extras": {
+      "surface": "#e8fdfe",
+      "surface_dim": "#c9dedf",
+      "surface_variant": "#d2e6e7",
+      "surface_container": "#ddf2f3",
+      "primary_container": "#a7d2d6",
+      "tertiary": "#94483f",
+      "tertiary_container": "#ffb9b0",
+      "outline": "#717879"
+    }
+  },
+  "fonts": {
+    "display": "Bodoni Moda",
+    "body": "Manrope",
+    "accent": "Pinyon Script"
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,wght@0,400..900;1,400..900&family=Manrope:wght@200..800&family=Pinyon+Script&display=swap",
+  "section_flow": [
+    {"id": "sky_video_bg", "type": "fixed_video_layer", "notes": "Fixed full-bleed looping sky video at 80% opacity with a soft gradient mix-blend-overlay scrim on top — sits beneath the whole site as ethereal backdrop."},
+    {"id": "splash_intro", "type": "fullscreen_video_intro", "notes": "Black-bg video splash on first load with 'Skip Intro' rounded glass pill; 800ms opacity transition to dismiss."},
+    {"id": "announcement_bar", "type": "promo_bar_dismissible", "notes": "Primary-color thin bar with shipping incentive + tap-to-apply promo code (QUEEN15) + close button."},
+    {"id": "nav", "type": "glass_blur_with_script_logo", "notes": "Sticky white-glass nav with Pinyon Script 'Rich Queen' wordmark (32px) above tiny tracked 'Beauty Supply' eyebrow; horizontal link list + filled shopping bag icon with badge counter."},
+    {"id": "hero", "type": "centered_logo_orb_with_pixie_dust", "notes": "Circular brand logo with white border + cyan shadow glow at center, pixie-dust particle layer floating around it, headline below in Manrope semibold + dual rounded-full CTAs (Shop Collection + Royal Runway 3D)."},
+    {"id": "runway_spotlight", "type": "ratio_21_9_play_card", "notes": "Glass band with 21:9 aspect image card; pulsing play icon + tertiary pill 'Enter 3D Interactive Runway'."},
+    {"id": "product_of_the_week", "type": "dynamic_featured_product", "notes": "JS-injected hero product slot."},
+    {"id": "featured_categories", "type": "three_square_image_overlay_links", "notes": "Three aspect-square photo cards (Lip Care / Haircare / Skincare) with bottom gradient overlay + italic Bodoni headline + uppercase 'Shop Now ->' label."},
+    {"id": "ambassador_cta", "type": "two_col_video_left_text_right", "notes": "3xl rounded card with lipgloss video at 55% right + dark primary gradient mask; left text block in white type with 'Claim Your Crown' italic display + glass white CTA pill."},
+    {"id": "shop_carousel", "type": "horizontal_product_scroller_with_arrows", "notes": "Featured products in a horizontal scroll-snap carousel with rounded circle prev/next chevron buttons."},
+    {"id": "story", "type": "centered_two_paragraph_heritage", "notes": "Eyebrow + italic Bodoni headline + two long Manrope paragraphs on white-30% glass overlay."},
+    {"id": "testimonials", "type": "three_glass_review_cards", "notes": "Three glass-card reviews with 5 tertiary-color filled stars, italic quote, avatar circle initial + name + 'Verified Buyer'."},
+    {"id": "trust_strip", "type": "four_icon_value_props", "notes": "Free Shipping / Secure Checkout / Premium Quality / Easy Returns four-column with Material Symbols icon + uppercase label + tiny subline."},
+    {"id": "shop_view", "type": "sidebar_filters_with_product_grid", "notes": "Hidden hash-routed shop page: 280px sticky filter sidebar (product type / price / brand) + sort dropdown + 3-col product grid; mobile gets bottom-right FAB opening a filter drawer."},
+    {"id": "runway_3d", "type": "threejs_carousel_view", "notes": "Hash-routed page running a Three.js WebGL carousel: ornate gold-extruded frames + bevel + corner flourishes, 6 product textures arranged on a radius circle with shadow floor + ACES tone-mapping + gold particle system. Drag to spin, fallback view if WebGL blocked."},
+    {"id": "product_detail", "type": "two_col_image_left_info_right", "notes": "Sticky image column + breadcrumb + variant chip selector + qty stepper + Add to Bag pill + related-products grid."},
+    {"id": "cart", "type": "items_left_summary_right", "notes": "Cart line items with stepper + remove; mobile sticky checkout bar fixed above bottom-nav with Bodoni total."},
+    {"id": "footer", "type": "multi_column_brand", "notes": "Standard ecom footer."}
+  ],
+  "hero_signature": "Cyan-mint background sky with sky_video_bg looping at 80% beneath everything. A circular logo orb (192-256px) sits centered, surrounded by a pixie_dust_container with 4-color floating particles that float up and sparkle on randomized 1.5-3s intervals. Below: italic Bodoni Moda script + paragraph + dual rounded-full CTAs. The brand wordmark above is Pinyon Script — cursive, hand-lettered.",
+  "notable_features": [
+    "Three.js WebGL 3D runway carousel with ornate extruded gold frames + bevel + bezier flourishes + ACES filmic tone-mapping + gold particle system",
+    "Sky video as fixed background layer that scrolls behind the whole site",
+    "Splash intro video overlay with skip button (one-time dismiss)",
+    "Pinyon Script cursive secondary font for brand wordmark + italic display fragments",
+    "Pixie dust particle generator: spawns random radius+color radial dots and floats them up via floatUp + sparkleAnim keyframes",
+    "Headless ecommerce: hash-routed SPA with /, /shop, /product, /cart, /runway views",
+    "Material Symbols Outlined for all icons (variable font with FILL axis)",
+    "Glass-card and glass-card-strong utilities with backdrop-blur",
+    "Vapor-shadow utility (long-throw colored drop shadow in primary tone)",
+    "Mobile sticky checkout bar with Bodoni total + tertiary CTA",
+    "Floating filter FAB on mobile that opens a right-side drawer",
+    "Custom token system with named container hierarchy (surface / surface-dim / surface-container-low/high/highest)"
+  ],
+  "motion_vocabulary": [
+    "fadeInUp + fadeIn keyframes for content reveal",
+    "floatUp particle keyframe (translateY -120px + scale 0.2 + rotate 180deg + opacity in/out)",
+    "sparkleAnim drop-shadow brightness pulse for individual particles",
+    "animate-on-scroll class with is-visible toggle via IntersectionObserver",
+    "Hover scale-105 on category cards, scale-110 on shop logo, -translate-y-1 on glass-card hover",
+    "Three.js carousel auto-rotates with momentum, drag-to-spin, ease-into-target"
+  ],
+  "tailwind_extras_inline_css": ".glass-card / .glass-card-strong (white 60-75% + backdrop-blur 16-20px + soft white border), .vapor-shadow (long colored drop-shadow in primary tone), .cloud-bg + .ethereal-bg gradient backgrounds, .text-display / .text-headline / .text-title / .text-body-lg / .text-label / .text-button typography scale with Bodoni Moda for display, .pixie-particle with stacked floatUp + sparkleAnim animations, .filter-fab + .filter-drawer + .filter-drawer-panel drawer system, .carousel-3d-section + .carousel-3d-container WebGL canvas containers, .mobile-checkout-bar sticky band with safe-area-inset-bottom padding."
+}

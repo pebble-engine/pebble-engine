@@ -1,0 +1,83 @@
+{
+  "dna_id": "auto_honest_diag",
+  "vibe_label": "Industrial Hazard-Stripe Stencil",
+  "source_brand": "Iron Cesspool Auto",
+  "source_industry": "auto repair",
+  "applicable_industries": [
+    "auto repair shop",
+    "mechanic / garage",
+    "tire shop",
+    "auto body / collision",
+    "construction company",
+    "industrial supply",
+    "welding / fabrication",
+    "machine shop",
+    "heavy equipment rental",
+    "trucking / logistics",
+    "electrician (industrial)",
+    "plumbing (industrial)",
+    "warehouse services",
+    "tool & equipment rental",
+    "concrete contractor"
+  ],
+  "palette": {
+    "bg": "#1A1A1A",
+    "fg": "rgba(232,229,224,0.92)",
+    "primary": "#1A1A1A",
+    "secondary": "rgba(232,229,224,0.52)",
+    "accent": "#FFD200",
+    "muted": "rgba(232,229,224,0.32)",
+    "border": "rgba(255,255,255,0.08)",
+    "extras": {
+      "surface1": "rgba(255,255,255,0.04)",
+      "surface2": "rgba(255,255,255,0.08)",
+      "border_bright": "rgba(255,255,255,0.18)",
+      "text_primary": "rgba(232,229,224,0.92)",
+      "text_secondary": "rgba(232,229,224,0.52)",
+      "text_muted": "rgba(232,229,224,0.32)",
+      "accent_glow": "rgba(255,210,0,0.20)"
+    }
+  },
+  "fonts": {
+    "display": "Anton",
+    "body": "Inter",
+    "accent": "JetBrains Mono"
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap",
+  "section_flow": [
+    {"id": "hazard_stripe", "type": "fixed_top_yellow_black_diagonal", "notes": "4px-tall fixed-top hazard stripe rendered with repeating-linear-gradient(45deg, yellow 10px, dark 10px) — sits above the nav as the signature 'industrial' tell."},
+    {"id": "nav", "type": "mix_blend_difference_logo_mono_links", "notes": "Floating mix-blend-difference nav. Yellow 'IC' square logo tile + 'Iron Cesspool Auto' wordmark in Anton uppercase + JetBrains Mono nav links + filled-yellow 'Get Estimate' CTA. Mobile gets a simple ☰ glyph."},
+    {"id": "hero", "type": "blob_mesh_with_ref_code_and_glass_chip", "notes": "Two large blurred yellow glow blobs (top-right + bottom-left). Top-right 'REF-2026-ICA · CLEVELAND · EST 1987' monospace reference code label. Bottom-aligned content: H1 'HONEST DIAGNOSTICS. REAL REPAIRS.' in Inter bold (NOT display) + supporting paragraph + dual CTAs (yellow 'Call (216) 555-0142' + outline 'See What We Fix'). Right column has a glass-card pill with 'BRAKES · ENGINE · TRANS · DIAG' mono."},
+    {"id": "trust_bar", "type": "four_badge_grid", "notes": "ASE MASTER / BBB A+ / AAA APPROVED / EST. 1987 trust badges in 4-col grid; each card has a 'BADGE-0X' ref code above the badge name in yellow mono bold."},
+    {"id": "services", "type": "alternating_two_col_image_text", "notes": "Three service blocks (BRAKES / ENGINE & DIAGNOSTICS / TRANSMISSION) alternating left/right. Each has SVC-XXX // SVC-NAME ref code, stencil heading, paragraph, and image with a yellow IMG-REF-XXXXX tag tab in the bottom-left corner."},
+    {"id": "process", "type": "five_step_numbered_grid", "notes": "'THE WORKFLOW' stencil heading + 5 cards (DROP OFF / DIAGNOSE / QUOTE / FIX / PICKUP) each with a small circle-number badge floating above the top edge."},
+    {"id": "reviews", "type": "three_col_glass_quotes", "notes": "'WORD OF MOUTH' stencil heading + 'REV-SUMMARY // 4.9/5.0' ref code; three glass cards each with oversized serif quote glyph, italic review, and uppercase mono author + city below a thin top border."},
+    {"id": "service_area", "type": "vertical_yellow_bar_chip_list", "notes": "'WE COME TO YOU' with town list. Each town is a mono-text item with a yellow border-left-2 accent bar."},
+    {"id": "contact", "type": "two_col_form_left_map_right", "notes": "Left: 'GET AN ESTIMATE' stencil head + mono inputs (NAME / PHONE / VEHICLE / ISSUE) + 'SEND REQUEST' yellow CTA. Right: grayscale-filtered embedded Google Maps iframe in a min-height 400px box with yellow MAP-REF tag corner badge."},
+    {"id": "footer", "type": "three_col_mono_industrial", "notes": "Address column + Hours column + Contact column with mono type throughout. Bottom strip says '1987 – 2026 IRON CESSPOOL AUTO. THIRD GENERATION.'"}
+  ],
+  "hero_signature": "1A1A1A near-black background with two huge yellow-glow blurred blobs (700px + 400px) in top-right and bottom-left. A monospace REF-2026-ICA reference code sits in the top-right corner as if stenciled onto a job ticket. The H1 is INTENTIONALLY in Inter bold (not the display Anton) — 'HONEST DIAGNOSTICS. REAL REPAIRS.' — to feel work-order, not marketing. Dual CTAs: yellow filled 'Call (...)' next to ghost-outline 'See What We Fix'. Right-side glass chip lists service types in mono.",
+  "notable_features": [
+    "Fixed top yellow-and-black diagonal hazard stripe (4px tall, repeating-linear-gradient at 45deg) — load-bearing visual signature",
+    "Stencil text utility: -webkit-text-stroke 1px in body color + transparent fill + Anton font for hollow-letter section headlines",
+    "JetBrains Mono ref-code system: every section labeled with REF-XXX / SVC-XXX / BADGE-0X / IMG-REF / MAP-REF / INQ-XXX -- treats the site like a parts catalog",
+    "Yellow IMG-REF tag corner tabs on every photo (yellow rectangle with mono text)",
+    "Grayscale + contrast filter on photography for industrial look",
+    "Grayscale-filtered embedded Google Maps iframe (filter: grayscale(1) brightness(0.6))",
+    "mix-blend-difference nav so the IC tile and wordmark invert against any background",
+    "Process step number badges floating half-outside the top edge of each card",
+    "Yellow border-left-2 vertical accent bars on service-area town list",
+    "All-caps city + state stamp under each review name in mono",
+    "Glass card with backdrop-blur(12px) + 4% white tint"
+  ],
+  "motion_vocabulary": [
+    "GSAP ScrollTrigger reveals: y/x 48px translate + opacity 0->1, power3.out 800ms",
+    "Alternating service blocks slide from opposite sides (-translate-x-12 vs translate-x-12)",
+    "Trust badges stagger via transition-delay 100ms / 200ms / 300ms",
+    "btn-primary depresses on :active (translateY 2px) — physical-button feel",
+    "Process step delays stagger 100ms each",
+    "Navbar adds bg-bg + bg-opacity-90 after 100px scroll",
+    "Image hover: scale-105 + grayscale-0.2 + contrast-110 transform-duration 700ms"
+  ],
+  "tailwind_extras_inline_css": ".hazard-stripe (fixed 4px repeating-linear-gradient diagonal yellow/dark), .stencil (Anton + webkit-text-stroke 1px + transparent fill + tracking 0.05em uppercase), .stencil-filled (filled Anton variant), .ref-code (JetBrains Mono 0.65rem uppercase tracking 0.15em at 32%-alpha body), .text-outline (alt stroke utility), .glass-card (white 4% tint + blur 12px + 10%-white border). Custom scrollbar with yellow thumb hover."
+}
