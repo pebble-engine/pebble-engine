@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, Palette, Rocket } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import {
   patchBrief,
@@ -16,7 +16,28 @@ import {
 import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
-import { createCheckoutSession, fetchSubscription, type SubscriptionState } from "@/lib/api";
+import {
+  createCheckoutSession,
+  fetchSubscription,
+  extractBrand,
+  type SubscriptionState,
+  type BrandExtractResult,
+} from "@/lib/api";
+
+/**
+ * URL-detection regex for Phase 33c. Tight on purpose — we treat
+ * something as a URL only if it parses cleanly as one with no spaces.
+ * False negatives are fine ("acme dot co" → free text). False positives
+ * would route plain text through the extractor and waste a request.
+ */
+const URL_LIKE_RX = /^(https?:\/\/)?[a-z0-9-]+(\.[a-z0-9-]+)+(\/\S*)?$/i;
+
+function looksLikeUrl(input: string): boolean {
+  const trimmed = input.trim();
+  if (!trimmed || trimmed.length > 200) return false;
+  if (/\s/.test(trimmed)) return false;
+  return URL_LIKE_RX.test(trimmed);
+}
 
 /**
  * Welcome / landing page.
@@ -452,12 +473,147 @@ export function WelcomePhase({ onAdvance }: Props) {
     setStarted(true);
   };
 
-  const handleSend = (message: string, files?: File[]) => {
+  // Phase 33c — URL ingestion state. When the user pastes a URL, we
+  // extract the brand identity instead of immediately advancing. The
+  // narration cycles through human-readable steps so the 3-5s extract
+  // call feels intentional, not stuck.
+  const [extracting, setExtracting] = useState(false);
+  const [extractStepIdx, setExtractStepIdx] = useState(0);
+  const [extractError, setExtractError] = useState<string | null>(null);
+
+  const EXTRACT_STEPS = [
+    "Reading your site…",
+    "Detecting your brand palette…",
+    "Identifying your industry…",
+    "Got it — let's go.",
+  ];
+
+  // Cycle the narration while the request is in flight. ~900ms per step.
+  useEffect(() => {
+    if (!extracting) {
+      setExtractStepIdx(0);
+      return;
+    }
+    const id = window.setInterval(() => {
+      setExtractStepIdx((i) => Math.min(i + 1, EXTRACT_STEPS.length - 1));
+    }, 900);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [extracting]);
+
+  /**
+   * Apply a successful extraction result to the brief and advance.
+   *
+   * Field mapping:
+   *   business_name → brief.business_name
+   *   industry       → brief.business_type   (snake_case slot the engine uses)
+   *   tone           → brief.brand_tone
+   *   palette        → brief._brand_palette  (derived; engine consumes optionally)
+   *   logo_url       → brief._extracted_logo_url
+   *   favicon_url    → brief._extracted_favicon_url
+   *   hero_copy      → brief._extracted_hero_copy
+   *   tagline        → brief._extracted_tagline
+   *   _inspired_by   → brief._inspired_by    (mirrors the /api/inspire convention)
+   *
+   * Also synthesizes a natural-language extra_context blob so any prompt
+   * path that doesn't yet read the new fields still gets the signal.
+   */
+  const applyExtractionAndAdvance = (
+    sourceUrl: string,
+    res: BrandExtractResult,
+    files?: File[],
+  ) => {
+    const blurbParts: string[] = [];
+    if (res.business_name) blurbParts.push(`Business name: ${res.business_name}.`);
+    if (res.tagline)        blurbParts.push(`Tagline: ${res.tagline}`);
+    if (res.industry)       blurbParts.push(`Industry: ${res.industry.replace(/_/g, " ")}.`);
+    if (res.tone)           blurbParts.push(`Tone: ${res.tone}.`);
+    if (res.hero_copy)      blurbParts.push(`Current hero copy: "${res.hero_copy}".`);
+    if (res.palette.length) blurbParts.push(`Brand palette: ${res.palette.join(", ")}.`);
+    blurbParts.push(`(Extracted from ${sourceUrl}.)`);
+
+    patchBrief({
+      business_name: res.business_name || deriveProjectName(sourceUrl),
+      business_type: res.industry || undefined,
+      brand_tone:    res.tone || undefined,
+      extra_context: blurbParts.join(" "),
+      user_first_name: firstName || undefined,
+      _inspired_by:  sourceUrl,
+      _brand_palette: res.palette,
+      _extracted_logo_url:    res.logo_url || undefined,
+      _extracted_favicon_url: res.favicon_url || undefined,
+      _extracted_hero_copy:   res.hero_copy || undefined,
+      _extracted_tagline:     res.tagline || undefined,
+    });
+
+    if (files && files.length > 0) {
+      sessionStorage.setItem(
+        "pebble.pendingFiles",
+        JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
+      );
+    }
+    onAdvance();
+  };
+
+  const handleSend = async (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
+
+    // Phase 33c — URL fast-path. If the input looks like a URL, run brand
+    // extraction first so the questionnaire is pre-filled instead of empty.
+    // Falls back gracefully to free-text on any extraction failure.
+    const trimmed = message.trim();
+    if (looksLikeUrl(trimmed)) {
+      setExtracting(true);
+      setExtractError(null);
+      try {
+        const res = await extractBrand(trimmed);
+        if (!res.ok) {
+          // Extraction reachable but failed (DNS, 4xx, parse). Honest
+          // narration to the user, then advance with the raw URL as
+          // extra_context so the build can still proceed.
+          setExtractError(res.error || "Couldn't read that site — using your URL as a hint instead.");
+          // Small pause so the message is readable, then fall through.
+          await new Promise((r) => setTimeout(r, 1500));
+          patchBrief({
+            business_name: deriveProjectName(trimmed),
+            extra_context: `User provided URL ${trimmed} but extraction failed: ${res.error || "unknown error"}.`,
+            user_first_name: firstName || undefined,
+            _inspired_by: trimmed,
+          });
+          if (files && files.length > 0) {
+            sessionStorage.setItem(
+              "pebble.pendingFiles",
+              JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
+            );
+          }
+          onAdvance();
+          return;
+        }
+        // Success path — let the final "Got it" frame breathe before advance.
+        await new Promise((r) => setTimeout(r, 600));
+        applyExtractionAndAdvance(trimmed, res, files);
+        return;
+      } catch (err) {
+        // Network-level failure (CORS, timeout, server down). Same fallback
+        // as a soft failure — don't block the user.
+        setExtractError(err instanceof Error ? err.message : "Network error — using your URL as a hint instead.");
+        await new Promise((r) => setTimeout(r, 1500));
+        patchBrief({
+          business_name: deriveProjectName(trimmed),
+          extra_context: `User provided URL ${trimmed} (extraction unavailable).`,
+          user_first_name: firstName || undefined,
+          _inspired_by: trimmed,
+        });
+        onAdvance();
+        return;
+      } finally {
+        setExtracting(false);
+      }
+    }
+
+    // Free-text path (existing behavior).
     // 2026-05-20 Phase 15a: derive a real business_name from the first
     // sentence of the idea text instead of hardcoding "Untitled Project".
-    // The user can rename via the top nav later, but the default should
-    // be recognisable (and produce a useful build slug).
     const derivedName = deriveProjectName(message);
     patchBrief({
       extra_context: message,
@@ -574,6 +730,56 @@ export function WelcomePhase({ onAdvance }: Props) {
                   <ArrowRight className="w-5 h-5 text-white" />
                 </span>
               </motion.button>
+            ) : extracting ? (
+              /* Phase 33c — extraction narration. Replaces the prompt
+                 input while the brand-extract call is in flight. Steps
+                 animate via setExtractStepIdx every 900ms. */
+              <motion.div
+                key="extract"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
+                className="w-full max-w-xl mx-auto p-8 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/15 space-y-4"
+                role="status"
+                aria-live="polite"
+              >
+                {EXTRACT_STEPS.map((label, i) => {
+                  const status =
+                    i < extractStepIdx ? "done" :
+                    i === extractStepIdx ? "active" : "pending";
+                  return (
+                    <div
+                      key={label}
+                      className={`flex items-center gap-3 text-base transition-colors ${
+                        status === "done"   ? "text-white/90" :
+                        status === "active" ? "text-white" :
+                        "text-white/30"
+                      }`}
+                    >
+                      {status === "done" ? (
+                        <Check className="w-5 h-5 text-green-400" aria-hidden />
+                      ) : status === "active" ? (
+                        <motion.div
+                          aria-hidden
+                          className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white"
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        />
+                      ) : (
+                        <div aria-hidden className="w-5 h-5 rounded-full border border-white/20" />
+                      )}
+                      <span>{label}</span>
+                    </div>
+                  );
+                })}
+                {extractError && (
+                  <div className="mt-4 flex items-start gap-2 text-sm text-amber-300/90 pt-4 border-t border-white/10">
+                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" aria-hidden />
+                    <span>{extractError}</span>
+                  </div>
+                )}
+              </motion.div>
             ) : (
               <motion.div
                 key="chat"
@@ -586,7 +792,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 <PromptInputBox
                   autoFocus
                   onSend={handleSend}
-                  placeholder="Example: I run a bakery in Brooklyn and I want a website where customers can see my menu and order online."
+                  placeholder="Paste your URL or describe your business — e.g. acme.co OR a bakery in Brooklyn that takes online orders."
                 />
                 <Link
                   href="/migrate"

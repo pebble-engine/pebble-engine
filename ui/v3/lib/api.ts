@@ -94,10 +94,19 @@ async function deleteJSON<T>(path: string): Promise<T> {
  * The ``done`` event carries the full GenerateResponse payload.
  */
 export type SSEEvent =
-  | { type: "started";    data: { slug: string } }
+  // Phase 25a (2026-05-20): business_name added so the workspace Plan
+  // Reveal can paint the project title immediately on submit — Webild
+  // parity move that closes the first-paint perception gap.
+  | { type: "started";    data: { slug: string; business_name?: string } }
   | { type: "industry";   data: { key: string | null } }
   | { type: "layout";     data: { layout_id: string; layout_label: string } }
-  | { type: "style";      data: { dna_label: string; dna_id: string } }
+  // Phase 25a — palette + signature_moves added so the Plan Reveal can
+  // paint color swatches and design-style chips as the style event fires.
+  | { type: "style";      data: { dna_label: string; dna_id: string; palette?: string[]; signature_moves?: string[] } }
+  // Phase 25a — compact plan summary emitted right after plan.json is
+  // written, BEFORE the long LLM call. Drives the site-structure
+  // checklist in the workspace Plan Reveal.
+  | { type: "plan";       data: { name?: string; audience?: string; goal?: string; pages?: Array<{ id: string; title: string; route: string; foundation: boolean }> } }
   | { type: "generating"; data: { model: string; max_tokens: number } }
   // Streaming mode (Phase 13a): one `file` event per <pebble-file> block
   // as it completes streaming in from the LLM. Index is 1-based.
@@ -288,6 +297,113 @@ export async function listProjects(): Promise<{ projects: ProjectSummary[]; coun
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});
+}
+
+// ---------- /api/bot-message (Phase 25b, 2026-05-20) -----------------------
+//
+// Cheap GPT-4o-mini chat for the workspace "bot persona" — greeting on
+// build start, status updates per phase, suggested follow-up chips after.
+// Returns fallback canned text when the LLM call fails, so the UI never
+// breaks. See pebble/server/bot_message.py.
+
+export type BotIntent = "greeting" | "status" | "chips";
+
+export type BotMessageContext = {
+  business_name?: string;
+  business_type?: string;
+  phase?: string;  // status only
+};
+
+export type BotMessageResponse = {
+  message?: string;       // greeting + status
+  chips?: string[];       // chips
+  fallback?: boolean;     // true when LLM call failed; UI may de-emphasize
+};
+
+export async function fetchBotMessage(
+  intent: BotIntent,
+  context: BotMessageContext,
+): Promise<BotMessageResponse> {
+  return postJSON("/api/bot-message", { intent, context });
+}
+
+// ---------- /api/brand-extract (Phase 33a/b, 2026-05-21) -------------------
+//
+// URL ingestion: paste a URL, get a partial brief back. Pre-fills the
+// questionnaire from the user's actual site instead of asking them to
+// describe it in words. The most important conversion lever in the funnel.
+//
+// Endpoint NEVER 4xx/5xx on a bad-but-well-formed URL — it returns 200
+// with `ok: false` + an `error` string so the UI can render a non-blocking
+// notice and fall back to free-text. Treat the response as advisory data,
+// never as a blocking gate.
+
+export type BrandExtractResult = {
+  url: string;
+  ok: boolean;
+  error: string | null;
+  business_name: string | null;
+  tagline: string | null;
+  industry: string | null;       // snake_case key (coffee_shop, wedding_photographer, …)
+  tone: string | null;           // 2-4 adjectives ("warm, professional")
+  palette: string[];             // up to 5 lowercase hex strings
+  logo_url: string | null;
+  favicon_url: string | null;
+  hero_copy: string | null;
+  raw_text_sample: string;
+  source: "cache" | "fresh";
+};
+
+export async function extractBrand(url: string, useCache = true): Promise<BrandExtractResult> {
+  return postJSON("/api/brand-extract", { url, use_cache: useCache });
+}
+
+// ---------- /api/templates (Phase 31, 2026-05-20) --------------------------
+//
+// Cheap-fast alternative to /api/generate. The user picks a designer-curated
+// template; the engine clones it + runs a focused content-swap LLM call
+// (~$0.005). Free-tier-friendly. See pebble/server/templates_api.py.
+
+export type TemplateSummary = {
+  id: string;
+  name: string;
+  tagline: string;
+  vibe: string;
+  source_dna: string;
+  applicable_industries: string[];
+  preview_image: string;
+  color_swatches: string[];
+  fonts: { display: string; body: string; accent?: string };
+  best_for: string;
+  tier: "free" | "paid";
+  // Phase 32a (2026-05-20) — live preview iframe target. In dev, points to
+  // a localhost port serving the template's instantiated showcase. In prod,
+  // points to a cloud-hosted preview URL. Pages list drives the tabs in
+  // the gallery preview modal so users can browse home/about/etc. before
+  // committing to instantiate.
+  preview_url?: string;
+  preview_pages?: Array<{ label: string; path: string }>;
+};
+
+export async function listTemplates(): Promise<{ templates: TemplateSummary[]; count: number }> {
+  return getJSON("/api/templates");
+}
+
+export type InstantiateTemplateResponse = {
+  ok: boolean;
+  slug: string;
+  template_id: string;
+  file_count: number;
+  swap_ok: boolean;
+  swap_message: string;
+  estimated_cost_usd: number;
+};
+
+export async function instantiateTemplate(
+  template_id: string,
+  brief: Brief,
+): Promise<InstantiateTemplateResponse> {
+  return postJSON("/api/instantiate-template", { template_id, brief });
 }
 
 // ---------- /api/history + /api/rollback (new) -----------------------------
