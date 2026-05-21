@@ -988,6 +988,10 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 
 {extra_context}
 
+### URL-Extracted Brand Signals
+
+{url_extraction_block}
+
 ---
 
 ## 5. No-Slop Rules

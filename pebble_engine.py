@@ -686,6 +686,97 @@ def build_resolved_contract(answers: dict, industry_intel: Optional[dict] = None
 # --------------------------------------------------------------------------
 
 # --------------------------------------------------------------------------
+# Helper: URL-extracted brand signals block (Phase 38d, 2026-05-21)
+#
+# When the v3 welcome-phase ran brand_extract against a URL, the brief gets
+# stamped with `_extracted_*` derived fields. They flow indirectly into the
+# prompt via the natural-language extra_context blob, but surfacing them
+# here as named signals lets the LLM act on them more confidently —
+# especially the `_inspire_source_url` case where the URL is reference-only
+# and the LLM should NOT borrow business name / copy / pages from it.
+# --------------------------------------------------------------------------
+
+
+def _build_url_extraction_block(answers: dict) -> str:
+    """Render the URL-extracted brand signals as a focused prompt block.
+
+    Returns the empty-state string when the brief has no URL extraction
+    metadata, so the template's section heading never sits empty.
+    """
+    inspire_url   = (answers.get("_inspire_source_url") or "").strip()
+    logo_url      = (answers.get("_extracted_logo_url") or "").strip()
+    favicon_url   = (answers.get("_extracted_favicon_url") or "").strip()
+    hero_copy     = (answers.get("_extracted_hero_copy") or "").strip()
+    tagline_extr  = (answers.get("_extracted_tagline") or "").strip()
+    palette       = answers.get("_brand_palette") or []
+    dna_pinned    = (answers.get("_design_dna_id") or "").strip()
+
+    has_any = bool(inspire_url or logo_url or favicon_url or hero_copy
+                   or tagline_extr or palette or dna_pinned)
+    if not has_any:
+        return ("*(No URL was extracted — generate brand identity from the "
+                "questionnaire fields alone.)*")
+
+    parts: list[str] = []
+
+    if inspire_url:
+        parts.append(
+            f"**Inspiration source URL:** `{inspire_url}`\n\n"
+            "The user pasted this URL as a STYLE REFERENCE — capture its "
+            "visual feel (palette, layout, motion, typography intensity), "
+            "but do NOT borrow the business name, copy, services, or page "
+            "structure from it. The business identity comes from the "
+            "questionnaire fields above. The pinned design DNA below was "
+            "matched against this URL's vibe."
+        )
+
+    if logo_url:
+        parts.append(
+            f"**Existing logo URL (visual reference):** `{logo_url}` — "
+            "look at the dominant color and shape language as inspiration "
+            "for `/app/icon.svg`. Do NOT embed this URL anywhere in the "
+            "generated site; produce `/app/icon.svg` locally per the "
+            "favicon eval."
+        )
+    elif favicon_url:
+        parts.append(f"**Existing favicon (visual reference only):** `{favicon_url}`")
+
+    if tagline_extr and not inspire_url:
+        parts.append(
+            f"**Existing tagline from the user's site:** \"{tagline_extr}\" "
+            "— adapt and refine for the new build, don't copy verbatim."
+        )
+
+    if hero_copy and not inspire_url:
+        parts.append(
+            f"**Existing hero copy from the user's site:** \"{hero_copy}\" "
+            "— use as creative direction for the new h1; rewrite to fit "
+            "the DNA's voice if needed."
+        )
+
+    if palette:
+        palette_str = ", ".join(p for p in palette if isinstance(p, str))
+        if palette_str:
+            origin = "the inspiration site" if inspire_url else "the user's existing site"
+            parts.append(
+                f"**Brand palette extracted from {origin}:** {palette_str}. "
+                "Use these as the dominant palette unless the chosen Style "
+                "DNA card explicitly defines its own (in which case the "
+                "DNA wins — this is just signal, not a hard requirement)."
+            )
+
+    if dna_pinned:
+        parts.append(
+            f"**Pinned Style DNA from the extractor:** `{dna_pinned}` — "
+            "the inspire-mode matcher chose this DNA card based on the "
+            "URL's visual vibe. The Style DNA block earlier in this "
+            "prompt is authoritative; this line is the rationale."
+        )
+
+    return "\n\n".join(parts)
+
+
+# --------------------------------------------------------------------------
 # PROMPT TEMPLATE  -- 11-section structure
 #
 # The template body lives in skills/prompt_template.md so it can be edited
@@ -740,6 +831,16 @@ def build_prompt(
 
     extra = answers.get("extra_context", "").strip()
     extra_block = extra if extra else "*(No extra context provided — use the Business Intelligence skill to fill in industry best practices.)*"
+
+    # Phase 38d (2026-05-21) — URL-extracted brand signals block.
+    # When the user pasted a URL into the v3 welcome-phase, brand_extract
+    # stamps the brief with `_extracted_logo_url`, `_extracted_hero_copy`,
+    # `_extracted_tagline`, `_brand_palette`, `_inspire_source_url`, and
+    # (inspire mode) `_design_dna_id`. They're already smushed into
+    # extra_context as a natural-language blob, but surfacing them as
+    # named signals here helps the LLM treat them with intent rather than
+    # just reading them as user prose.
+    url_extraction_block = _build_url_extraction_block(answers)
 
     # Reference URLs / inspiration sites (up to 3)
     _skip = {"", "none", "n/a", "no", "skip"}
@@ -1001,6 +1102,7 @@ Extract and synthesize across all references:
         reference_block=reference_block,
         design_reference_block=design_reference_block,
         extra_context=extra_block,
+        url_extraction_block=url_extraction_block,
         no_slop_block=no_slop_block,
         ios_skill_block=ios_skill_block,
         stack_block=stack_block,
