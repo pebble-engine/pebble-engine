@@ -35,17 +35,43 @@ type Props = {
   className?: string;
 };
 
-function cardWindow(index: number, total: number): {
+/**
+ * Phase 40e.3 fix (2026-05-21) — card window math now respects the
+ * pinned-vs-unpinned split.
+ *
+ * The OUTER section is `totalVh` tall (e.g. 360vh for 3 cards). The
+ * sticky INNER is `h-screen` (100vh). Sticky positioning pins the inner
+ * only while the outer container has room below the sticky child — i.e.
+ * for the first `(totalVh - 100)` viewport-heights of scroll. After
+ * that, the sticky bottoms out and scrolls normally with the page.
+ *
+ * Marc saw Card 3 never appearing because the old math distributed cards
+ * across the FULL [0, 1] scrollYProgress range — so Card 3's window
+ * started at 0.71 and the closer at 0.88, but sticky already unpinned
+ * at 0.72 (260/360) on a 3-card stack. Cards/closer beyond the pin
+ * fired off-screen.
+ *
+ * Fix: compress all card + heading + closer windows into the pinned
+ * portion [0, pinnedRatio]. Everything from the user's perspective now
+ * happens WHILE pinned. After pinnedRatio, the section unpins cleanly.
+ */
+function cardWindow(
+  index:        number,
+  total:        number,
+  pinnedRatio:  number,
+): {
   fadeIn:   [number, number];
   fadeOut:  [number, number];
   scaleIn:  [number, number];
   scaleOut: [number, number];
   yIn:      [number, number];
 } {
-  const HEADING_RESERVE = 0.12;
-  const CLOSER_RESERVE  = 0.12;
-  const usable          = 1 - HEADING_RESERVE - CLOSER_RESERVE;
-  const cardSpan        = usable / total;
+  // Within the pinned portion: 12% heading reserve, 12% closer reserve,
+  // rest split across cards.
+  const HEADING_RESERVE = 0.12 * pinnedRatio;
+  const CLOSER_RESERVE  = 0.12 * pinnedRatio;
+  const pinnedUsable    = pinnedRatio - HEADING_RESERVE - CLOSER_RESERVE;
+  const cardSpan        = pinnedUsable / total;
   const start           = HEADING_RESERVE + index * cardSpan;
   const fadeInEnd       = start + cardSpan * 0.55;
   const fadeOutStart    = start + cardSpan * 0.85;
@@ -63,14 +89,16 @@ function StackedCard({
   card,
   index,
   total,
+  pinnedRatio,
   scrollYProgress,
 }: {
   card:            StackCard;
   index:           number;
   total:           number;
+  pinnedRatio:     number;
   scrollYProgress: MotionValue<number>;
 }) {
-  const w = cardWindow(index, total);
+  const w = cardWindow(index, total, pinnedRatio);
   const isLast = index === total - 1;
 
   const opacity = useTransform(
@@ -126,13 +154,15 @@ function StackedCard({
 function CardDot({
   index,
   total,
+  pinnedRatio,
   scrollYProgress,
 }: {
   index:           number;
   total:           number;
+  pinnedRatio:     number;
   scrollYProgress: MotionValue<number>;
 }) {
-  const w = cardWindow(index, total);
+  const w = cardWindow(index, total, pinnedRatio);
   const opacity = useTransform(scrollYProgress, [w.fadeIn[0], w.fadeIn[1]], [0.15, 1]);
   return (
     <motion.span
@@ -156,14 +186,25 @@ export default function StickyScrollStackClient({
     offset: ["start start", "end end"],
   });
 
-  const headingOpacity = useTransform(scrollYProgress, [0, 0.08], [0, 1]);
-  const headingY       = useTransform(scrollYProgress, [0, 0.08], [48, 0]);
-  const headingScale   = useTransform(scrollYProgress, [0, 0.08], [0.88, 1]);
+  // Phase 40e.3 — section is `totalVh` tall; sticky inner is 100vh.
+  // The sticky child is PINNED for the first (totalVh - 100) of scroll,
+  // then unpins. All scroll-driven animations need to fit in that
+  // pinned window OR they fire off-screen after unpin.
+  const totalVh     = cards.length * 100 + 60;
+  const pinnedRatio = (totalVh - 100) / totalVh;
 
-  const closerOpacity  = useTransform(scrollYProgress, [0.88, 0.98], [0, 1]);
-  const closerY        = useTransform(scrollYProgress, [0.88, 0.98], [24, 0]);
+  // Heading lands in the first 8% of the pinned window.
+  const headingEnd = 0.08 * pinnedRatio;
+  const headingOpacity = useTransform(scrollYProgress, [0, headingEnd], [0, 1]);
+  const headingY       = useTransform(scrollYProgress, [0, headingEnd], [48, 0]);
+  const headingScale   = useTransform(scrollYProgress, [0, headingEnd], [0.88, 1]);
 
-  const totalVh = cards.length * 100 + 60;
+  // Closer fires in the last 10% of the pinned window — AFTER the final
+  // card has landed, BEFORE sticky unpins.
+  const closerStart = 0.88 * pinnedRatio;
+  const closerEnd   = 0.98 * pinnedRatio;
+  const closerOpacity  = useTransform(scrollYProgress, [closerStart, closerEnd], [0, 1]);
+  const closerY        = useTransform(scrollYProgress, [closerStart, closerEnd], [24, 0]);
 
   return (
     <section
@@ -194,6 +235,7 @@ export default function StickyScrollStackClient({
               card={card}
               index={i}
               total={cards.length}
+              pinnedRatio={pinnedRatio}
               scrollYProgress={scrollYProgress}
             />
           ))}
@@ -210,7 +252,7 @@ export default function StickyScrollStackClient({
 
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-1.5" aria-hidden>
           {cards.map((_, i) => (
-            <CardDot key={i} index={i} total={cards.length} scrollYProgress={scrollYProgress} />
+            <CardDot key={i} index={i} total={cards.length} pinnedRatio={pinnedRatio} scrollYProgress={scrollYProgress} />
           ))}
           <ChevronDown className="w-3.5 h-3.5 text-muted-foreground/40 ml-2 animate-bounce" aria-hidden />
         </div>
