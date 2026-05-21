@@ -197,8 +197,8 @@ export function WorkspaceShell() {
       return;
     }
     if (target === "features" || target === "setup") {
-      // No dedicated phase yet — both surface as views inside design.
-      if (build) setPhase("design");
+      // No dedicated phase yet — stubs. Click is intentionally a no-op
+      // so the user can see they're disabled (opacity-50 + cursor-not-allowed).
       return;
     }
     if (target === "draft") {
@@ -312,12 +312,17 @@ export function WorkspaceShell() {
           <nav className="flex flex-col gap-1">
             {BUILD_PLAN.map((s) => {
               const isActive = s.id === railStage;
+              const isStub = s.id === "features" || s.id === "setup";
               return (
                 <button
                   key={s.id}
                   onClick={() => handleJumpPhase(s.id)}
+                  title={isStub ? "Coming soon" : undefined}
+                  disabled={isStub}
                   className={`${interactions.chip} relative flex items-center gap-2 p-3 rounded-lg text-left ${type.label} ${
-                    isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
+                    isStub
+                      ? "opacity-50 cursor-not-allowed text-muted-foreground"
+                      : isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {isActive && (

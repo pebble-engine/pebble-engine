@@ -12,9 +12,10 @@ import {
   CheckCircle2,
   AlertCircle,
   Droplet,
+  Circle,
   type LucideIcon,
 } from "lucide-react";
-import { type SSEEvent } from "@/lib/api";
+import { type SSEEvent, fetchBotMessage } from "@/lib/api";
 import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 
@@ -103,6 +104,23 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   // streaming in. Engine emits this once per build.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewReadyAt, setPreviewReadyAt] = useState<number | null>(null);
+  // Phase 25a (2026-05-20) — Plan Reveal state. Webild-parity move: each
+  // piece animates in as its SSE event arrives, so the user sees the
+  // bot's plan unfolding in the first 10-15 seconds instead of a blank
+  // wait. Project name from `started`, palette from `style`, page list
+  // from `plan`, pagesShipped derived from `file` events.
+  const [planName, setPlanName] = useState<string | null>(null);
+  const [palette, setPalette] = useState<string[]>([]);
+  const [pages, setPages] = useState<Array<{ id: string; title: string; route: string; foundation: boolean }>>([]);
+  const [pagesShipped, setPagesShipped] = useState<Set<string>>(new Set());
+  // Phase 25c (2026-05-20) — bot greeting. Fetched once on the `started`
+  // SSE event from /api/bot-message via cheap GPT-4o-mini. Replaces the
+  // static "Hang out while Pebble builds…" headline with a warm,
+  // business-specific welcome. Fallback to static copy until the LLM
+  // call lands (or if it fails — endpoint returns canned text so the
+  // UI never breaks).
+  const [botGreeting, setBotGreeting] = useState<string | null>(null);
+  const botGreetingFetchedRef = useRef(false);
   const feedRef = useRef<HTMLDivElement>(null);
   const startTsRef = useRef<number>(Date.now());
   const notifiedRef = useRef(false);
@@ -200,6 +218,24 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
     switch (latest.type) {
       case "started":
         appendLog(`Starting your build…`, "step");
+        // Phase 25a — project name pops into the Plan Reveal card the
+        // moment we submit, before anything else renders. The single
+        // biggest perceived-speed cue.
+        if (latest.data.business_name) {
+          setPlanName(String(latest.data.business_name));
+        }
+        // Phase 25c — fetch a warm bot greeting from /api/bot-message
+        // ONCE per build. Fires-and-forgets; fallback already in state.
+        if (latest.data.business_name && !botGreetingFetchedRef.current) {
+          botGreetingFetchedRef.current = true;
+          const bn = String(latest.data.business_name);
+          const bt = ""; // business_type isn't in `started`; UI still works without it
+          fetchBotMessage("greeting", { business_name: bn, business_type: bt })
+            .then((res) => {
+              if (res && res.message) setBotGreeting(res.message);
+            })
+            .catch(() => { /* silent — fallback copy stays */ });
+        }
         setActiveIdx(0);
         break;
       case "industry":
@@ -228,7 +264,22 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         } else {
           appendLog(`Locked in the visual personality.`, "ok");
         }
+        // Phase 25a — palette swatches paint into the Plan Reveal card.
+        if (Array.isArray(latest.data.palette) && latest.data.palette.length > 0) {
+          setPalette((latest.data.palette as unknown[]).map(String));
+        }
         setActiveIdx(1);
+        break;
+      case "plan":
+        // Phase 25a — the engine emits this right after plan.json is
+        // written, BEFORE the long LLM call. Drives the site-structure
+        // checklist in the Plan Reveal card.
+        if (Array.isArray(latest.data.pages)) {
+          setPages(latest.data.pages as Array<{ id: string; title: string; route: string; foundation: boolean }>);
+        }
+        if (latest.data.name && !planName) {
+          setPlanName(String(latest.data.name));
+        }
         break;
       case "generating":
         appendLog(`Writing your site — copy, layout, sections, code.`, "step");
@@ -242,7 +293,27 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         // minute blank wait. Keep activeIdx at 2 ("Writing pages") —
         // we're still in that phase.
         if (latest.data.name) {
-          appendLog(`+ ${latest.data.name}`, "ok");
+          const fpath = String(latest.data.name);
+          appendLog(`+ ${fpath}`, "ok");
+          // Phase 25a — checkmark a page in the Plan Reveal site-structure
+          // list as soon as its file lands. Patterns: `app/page.tsx` is
+          // the homepage; `app/<route>/page.tsx` is the named page.
+          let shippedId: string | null = null;
+          if (fpath === "app/page.tsx") {
+            shippedId = "homepage";
+          } else {
+            const m = fpath.match(/^app\/([^/]+)\/page\.tsx$/);
+            if (m) shippedId = m[1];
+          }
+          if (shippedId) {
+            const id = shippedId;
+            setPagesShipped((prev) => {
+              if (prev.has(id)) return prev;
+              const next = new Set(prev);
+              next.add(id);
+              return next;
+            });
+          }
         }
         break;
       case "heartbeat":
@@ -353,7 +424,7 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
           variants={safeFadeUp}
           className={`${type.display.m} text-foreground`}
         >
-          Hang out while Pebble builds your masterpiece.
+          {botGreeting || "Hang out while Pebble builds your masterpiece."}
         </motion.h1>
         <motion.p
           variants={safeFadeUp}
@@ -407,6 +478,143 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
           </p>
         )}
       </motion.section>
+
+      {/* Phase 25a (2026-05-20) — Plan Reveal card. Webild-parity move:
+          each piece animates in as its SSE event arrives so the user
+          sees Pebble's plan unfolding in the first 10-15 seconds rather
+          than a blank wait. Project name from `started`, palette from
+          `style`, page list from `plan`, checkmarks from `file` events. */}
+      <AnimatePresence>
+        {(planName || palette.length > 0 || pages.length > 0 || buildContext.dna || buildContext.layout) && (
+          <motion.section
+            key="plan-reveal"
+            initial={{ opacity: 0, y: 14 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+            className="w-full max-w-lg bg-card border border-border rounded-2xl p-6 mb-6 relative z-10"
+          >
+            <p className={`${type.mono} text-muted-foreground uppercase tracking-wider mb-4 text-xs`}>
+              Pebble's plan
+            </p>
+
+            {/* Project name — first thing to land, biggest perceived-speed win. */}
+            <AnimatePresence>
+              {planName && (
+                <motion.h2
+                  key="plan-name"
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                  className={`${type.heading.l} text-foreground mb-4`}
+                >
+                  {planName}
+                </motion.h2>
+              )}
+            </AnimatePresence>
+
+            {/* Color palette — swatches as soon as the style event fires. */}
+            <AnimatePresence>
+              {palette.length > 0 && (
+                <motion.div
+                  key="plan-palette"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                  className="flex gap-2 mb-5"
+                >
+                  {palette.map((color, i) => (
+                    <motion.div
+                      key={`${color}-${i}`}
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: SHORT_S, delay: i * 0.06, ease: EASE_CINEMATIC }}
+                      className="w-7 h-7 rounded-full border border-border shadow-sm"
+                      style={{ backgroundColor: color }}
+                      aria-label={`Color ${color}`}
+                    />
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Design style chips — industry / layout / DNA as small pills. */}
+            <AnimatePresence>
+              {(buildContext.industry || buildContext.layout || buildContext.dna) && (
+                <motion.div
+                  key="plan-chips"
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                  className="flex flex-wrap gap-2 mb-5"
+                >
+                  {buildContext.industry && (
+                    <span className={`${type.mono} px-2.5 py-1 rounded-full border border-border bg-muted/40 text-muted-foreground text-xs`}>
+                      {buildContext.industry}
+                    </span>
+                  )}
+                  {buildContext.layout && (
+                    <span className={`${type.mono} px-2.5 py-1 rounded-full border border-border bg-muted/40 text-muted-foreground text-xs`}>
+                      {buildContext.layout}
+                    </span>
+                  )}
+                  {buildContext.dna && (
+                    <span className={`${type.mono} px-2.5 py-1 rounded-full border border-border bg-muted/40 text-muted-foreground text-xs`}>
+                      {buildContext.dna}
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+
+            {/* Site structure — every page Pebble plans to build, checked
+                off as each file lands. Best part of the reveal because the
+                user can SEE concrete output appearing in real time. */}
+            <AnimatePresence>
+              {pages.length > 0 && (
+                <motion.div
+                  key="plan-pages"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+                >
+                  <p className={`${type.mono} text-muted-foreground uppercase tracking-wider mb-2 text-xs`}>
+                    Site structure
+                  </p>
+                  <ul className="space-y-1.5">
+                    {pages.map((p, i) => {
+                      const shipped = pagesShipped.has(p.id);
+                      return (
+                        <motion.li
+                          key={p.id}
+                          initial={{ opacity: 0, x: -6 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          transition={{ duration: SHORT_S, delay: i * 0.04, ease: EASE_CINEMATIC }}
+                          className="flex items-center gap-2 text-sm"
+                        >
+                          {shipped ? (
+                            <CheckCircle2 className="w-4 h-4 text-foreground shrink-0" />
+                          ) : (
+                            <Circle className="w-4 h-4 text-muted-foreground/40 shrink-0" />
+                          )}
+                          <span className={shipped ? "text-foreground" : "text-muted-foreground"}>
+                            {p.title}
+                          </span>
+                          {p.foundation && (
+                            <span className={`${type.mono} text-muted-foreground/60 text-xs ml-auto`}>
+                              core
+                            </span>
+                          )}
+                        </motion.li>
+                      );
+                    })}
+                  </ul>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.section>
+        )}
+      </AnimatePresence>
 
       {/* Macro checklist — high-level "where are we" */}
       <section className="w-full max-w-lg bg-card border border-border rounded-2xl p-6 mb-6">

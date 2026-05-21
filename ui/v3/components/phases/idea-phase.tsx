@@ -23,6 +23,7 @@ import {
   PartyPopper,
   Gem,
   ArrowRight,
+  Check,
   type LucideIcon,
 } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
@@ -105,6 +106,7 @@ type Props = {
 export function IdeaPhase({ onAdvance }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
   const step = STEPS[stepIdx];
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Per-step selections — read once from saved brief, mutated locally.
   const brief = getBrief();
@@ -120,6 +122,7 @@ export function IdeaPhase({ onAdvance }: Props) {
   });
 
   const toggleChip = (chipId: string) => {
+    setValidationError(null);
     setSelections((prev) => {
       const next = { ...prev };
       const set = new Set(next[step.key]);
@@ -143,6 +146,11 @@ export function IdeaPhase({ onAdvance }: Props) {
   };
 
   const handleContinue = () => {
+    if (selected.size === 0) {
+      setValidationError("Please select at least one option to continue.");
+      return;
+    }
+    setValidationError(null);
     if (stepIdx < STEPS.length - 1) {
       setStepIdx(stepIdx + 1);
       return;
@@ -165,14 +173,15 @@ export function IdeaPhase({ onAdvance }: Props) {
           the current question." */}
 
       <div className="flex justify-center pt-6">
-        <div className="flex gap-3">
+        <div className="flex gap-3" role="status" aria-label={`Step ${stepIdx + 1} of ${STEPS.length}`}>
+          <span className="sr-only">Step {stepIdx + 1} of {STEPS.length}</span>
           {STEPS.map((_, i) => (
             <motion.div
               key={i}
-              className="h-2 rounded-full"
+              className="h-3 rounded-full"
               initial={false}
               animate={{
-                width: i === stepIdx ? 32 : 8,
+                width: i === stepIdx ? 32 : 12,
                 backgroundColor:
                   i < stepIdx
                     ? "var(--color-sage)"
@@ -232,10 +241,15 @@ export function IdeaPhase({ onAdvance }: Props) {
                       transition={{ duration: 0.18, ease: EASE_QUIET }}
                       className={`group relative flex flex-col items-start justify-end gap-5 p-5 min-h-[140px] rounded-lg overflow-hidden transition-colors duration-200 ${
                         isSelected
-                          ? "bg-foreground/[0.06] ring-1 ring-foreground text-foreground"
+                          ? "bg-primary/10 ring-2 ring-foreground text-foreground"
                           : "bg-transparent ring-1 ring-border hover:ring-foreground/40 text-foreground"
                       }`}
                     >
+                      {/* Check mark overlay — top-right corner when selected. */}
+                      {isSelected && (
+                        <Check className="absolute top-2 right-2 w-3.5 h-3.5 text-primary" aria-hidden />
+                      )}
+
                       {/* Top-left icon — small, restrained. Becomes brighter when selected. */}
                       <chip.Icon
                         className={`w-5 h-5 transition-colors duration-200 ${
@@ -268,6 +282,10 @@ export function IdeaPhase({ onAdvance }: Props) {
                   );
                 })}
               </motion.div>
+
+              {validationError && (
+                <p className={`${type.body.s} text-destructive text-center mt-3`}>{validationError}</p>
+              )}
             </motion.div>
           </AnimatePresence>
 

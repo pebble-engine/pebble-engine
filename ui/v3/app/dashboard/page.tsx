@@ -16,6 +16,8 @@ import {
   Globe,
   Download,
   Mail,
+  FolderOpen,
+  Search,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
@@ -193,7 +195,7 @@ export default function DashboardPage() {
                     Estimated cost
                   </p>
                 </div>
-                <p className={`${type.heading.m} text-foreground`}>
+                <p className={`${type.body.s} text-foreground`}>
                   ${usage.total_estimated_cost_usd.toFixed(4)}
                 </p>
                 <p className={`${type.caption} mt-1`}>
@@ -204,7 +206,7 @@ export default function DashboardPage() {
 
             <Link
               href="/"
-              className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg text-sm font-semibold`}
+              className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold`}
             >
               <Plus className="w-4 h-4" />
               Start something new
@@ -288,7 +290,7 @@ function ActivityFeed({
     <section className="pt-4 border-t border-border space-y-4">
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 text-muted-foreground" />
-        <h2 className={`${type.heading.m} text-foreground`}>Recently changed</h2>
+        <h2 className={`${type.eyebrow} text-foreground`}>Recently changed</h2>
         <p className={type.caption}>— every refinement and edit, undoable from the project workspace.</p>
       </div>
       <ul className="space-y-1.5">
@@ -545,7 +547,8 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
   if (query) {
     return (
       <div className="text-center py-16">
-        <p className={`${type.display.m} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
+        <Search className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+        <p className={`${type.heading.l} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Try a different name or industry.</p>
       </div>
     );
@@ -553,15 +556,16 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
   if (filter === "starred") {
     return (
       <div className="text-center py-16">
-        <Star className="w-10 h-10 mx-auto text-muted-foreground mb-4" />
-        <p className={`${type.display.m} text-foreground`}>Nothing starred yet.</p>
+        <Star className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+        <p className={`${type.heading.l} text-foreground`}>Nothing starred yet.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Click the star icon on any project to keep it handy.</p>
       </div>
     );
   }
   return (
     <div className="text-center py-20">
-      <p className={`${type.display.m} text-foreground`}>Nothing here yet.</p>
+      <FolderOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+      <p className={`${type.heading.l} text-foreground`}>Nothing here yet.</p>
       <p className={`${type.body.s} text-muted-foreground mt-2 mb-6`}>Let&apos;s build your first site.</p>
       <Link
         href="/"

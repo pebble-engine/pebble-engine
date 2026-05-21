@@ -113,17 +113,37 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
     onGenerate(() => generateSite(getBrief()));
   };
 
-  if (loading || !plan) {
+  if (loading && !error) {
+    return (
+      <div className="w-full max-w-2xl mx-auto space-y-4 animate-pulse px-4 py-8">
+        {/* Header skeleton */}
+        <div className="text-center mb-6 space-y-2">
+          <div className="h-8 bg-muted rounded-lg w-48 mx-auto" />
+          <div className="h-4 bg-muted rounded w-72 mx-auto" />
+        </div>
+        {/* Card skeletons */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="rounded-2xl border border-border bg-card p-6 space-y-3">
+              <div className="h-4 bg-muted rounded w-24" />
+              <div className="h-6 bg-muted rounded w-40" />
+              <div className="h-3 bg-muted rounded w-full" />
+              <div className="h-3 bg-muted rounded w-3/4" />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!plan) {
     return (
       <div className="flex flex-col items-center justify-center px-4 py-20 text-center gap-6">
-        <Loader2 className="w-10 h-10 animate-spin text-secondary" />
-        <p className="text-muted-foreground">
-          {error ? (
-            <span className="text-destructive">{error}</span>
-          ) : (
-            "Drafting the plan — pulling industry intel, picking a style, sketching pages…"
-          )}
-        </p>
+        {error ? (
+          <p className="text-destructive">{error}</p>
+        ) : (
+          <Loader2 className="w-10 h-10 animate-spin text-secondary" />
+        )}
       </div>
     );
   }
@@ -145,7 +165,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
       <Card delay={0.05}>
         <div className="flex justify-between items-start mb-3">
           <h3 className={`${type.heading.m} text-primary`}>Who I think this is for</h3>
-          <span className="px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wider text-muted-foreground bg-accent">
+          <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-accent">
             Audience
           </span>
         </div>
@@ -169,7 +189,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
                 <div className="flex items-center gap-2">
                   <span className={`${type.label} text-foreground`}>{page.title}</span>
                   <span
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                       page.foundation
                         ? "bg-secondary/20 text-secondary"
                         : "bg-spark/15 text-spark-deep"
@@ -180,7 +200,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
                 </div>
                 <p className="text-xs text-muted-foreground mt-0.5">{page.purpose}</p>
               </div>
-              <span className="text-[10px] font-mono text-muted-foreground/60 flex-shrink-0 ml-3">{page.route}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-muted-foreground/60 flex-shrink-0 ml-3">{page.route}</span>
             </div>
           ))}
         </div>
@@ -216,18 +236,22 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
             className={`${interactions.chip} flex-shrink-0 inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground border border-border hover:border-foreground/40 disabled:opacity-50 disabled:cursor-wait`}
             title="Pick a different visual style for the same answers"
           >
-            <Sparkles className={`w-3.5 h-3.5 ${rerolling ? "animate-pulse" : ""}`} aria-hidden />
+            {rerolling ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" aria-hidden />
+            ) : (
+              <Sparkles className="w-3.5 h-3.5" aria-hidden />
+            )}
             <span className={type.label}>{rerolling ? "Picking…" : "Try a different style"}</span>
           </button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2">
           <div className="p-6 md:p-8 bg-background">
             <p className={`${type.display.m} text-foreground`}>{plan.style.mood || plan.style.label}</p>
-            <p className="font-mono text-[10px] text-muted-foreground mt-2">DNA-driven layout</p>
+            <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground mt-2">DNA-driven layout</p>
           </div>
           <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-border space-y-4">
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Palette</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Palette</p>
               <div className="flex gap-2">
                 {Object.entries(plan.style.palette || {}).map(([name, hex]) =>
                   hex ? (
@@ -242,7 +266,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
               </div>
             </div>
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Typography</p>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Typography</p>
               <p className={`${type.heading.s} text-primary`}>{plan.style.fonts.display || "—"}</p>
               <p className={`${type.body.s} text-foreground`}>{plan.style.fonts.body || "—"}</p>
             </div>
@@ -285,7 +309,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
                 <div className="flex justify-between items-center">
                   <span className={type.label}>{item.label}</span>
                   <span
-                    className={`text-[9px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
                       item.status === "auto"
                         ? "bg-earth/20 text-earth-deep"
                         : item.status === "pending"
@@ -297,7 +321,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
                   </span>
                 </div>
                 {blockingDeps.length > 0 && (
-                  <p className="text-[10px] text-muted-foreground leading-tight">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">
                     Unlocks after: {blockingDeps.map((d) => d.label).join(" + ")}
                   </p>
                 )}

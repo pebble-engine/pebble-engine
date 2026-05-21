@@ -15,14 +15,18 @@
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   AlertTriangle,
+  ChevronDown,
   CreditCard,
+  Eye,
+  EyeOff,
   Lock,
   Settings as SettingsIcon,
   User,
 } from "lucide-react";
+import { type } from "@/lib/type";
 import { TopNav } from "@/components/top-nav";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -141,6 +145,11 @@ function SettingsPageContent() {
   const [pwError, setPwError]     = useState<string | null>(null);
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwSubmitting, setPwSubmitting] = useState(false);
+  const [showNewPassword, setShowNewPassword]         = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // ── delete zone visibility ─────────────────────────────────────────────────
+  const [showDeleteZone, setShowDeleteZone] = useState(false);
 
   // ── billing state ──────────────────────────────────────────────────────────
   const [billingError, setBillingError]     = useState<string | null>(null);
@@ -362,7 +371,7 @@ function SettingsPageContent() {
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
               <SettingsIcon className="w-6 h-6" />
             </div>
-            <h1 className="font-display text-3xl md:text-4xl font-bold tracking-tight text-foreground">
+            <h1 className={`${type.display.m} text-foreground`}>
               Settings
             </h1>
             <p className="text-muted-foreground">
@@ -378,7 +387,7 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <User className="w-5 h-5 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">Profile</h2>
+              <h2 className={`font-display ${type.heading.l}`}>Profile</h2>
             </div>
 
             {/* Avatar + email */}
@@ -392,7 +401,7 @@ function SettingsPageContent() {
               />
               <div>
                 <p className="font-medium text-foreground">{user.email}</p>
-                <p className="text-sm text-muted-foreground">Avatar generated from your email</p>
+                <p className={type.caption}>Avatar generated from your email</p>
               </div>
             </div>
 
@@ -402,7 +411,7 @@ function SettingsPageContent() {
               <form onSubmit={onSaveProfile} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <label className="block">
-                    <span className="text-sm text-muted-foreground">First name</span>
+                    <span className={`${type.label} text-muted-foreground`}>First name</span>
                     <input
                       type="text"
                       value={firstName}
@@ -413,7 +422,7 @@ function SettingsPageContent() {
                     />
                   </label>
                   <label className="block">
-                    <span className="text-sm text-muted-foreground">Display name</span>
+                    <span className={`${type.label} text-muted-foreground`}>Display name</span>
                     <input
                       type="text"
                       value={displayName}
@@ -425,7 +434,7 @@ function SettingsPageContent() {
                   </label>
                 </div>
                 <label className="block">
-                  <span className="text-sm text-muted-foreground">Time zone</span>
+                  <span className={`${type.label} text-muted-foreground`}>Time zone</span>
                   <select
                     value={timezone}
                     onChange={(e) => setTimezone(e.target.value)}
@@ -437,10 +446,10 @@ function SettingsPageContent() {
                   </select>
                 </label>
                 {profileError && (
-                  <p className="text-sm text-destructive" role="alert">{profileError}</p>
+                  <p className={`${type.body.s} text-destructive`} role="alert">{profileError}</p>
                 )}
                 {profileSuccess && (
-                  <p className="text-sm text-primary" role="status">Profile saved.</p>
+                  <p className={`${type.body.s} text-primary`} role="status">Profile saved.</p>
                 )}
                 <button
                   type="submit" disabled={profileSaving}
@@ -460,11 +469,11 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <User className="w-5 h-5 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">Account</h2>
+              <h2 className={`font-display ${type.heading.l}`}>Account</h2>
             </div>
 
             <div className="space-y-1">
-              <p className="text-sm text-muted-foreground">Signed in as</p>
+              <p className={type.caption}>Signed in as</p>
               <p className="text-foreground font-medium">{user.email}</p>
             </div>
 
@@ -473,10 +482,10 @@ function SettingsPageContent() {
               <div className="flex items-start gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4">
                 <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
                 <div className="flex-1 space-y-2">
-                  <p className="text-sm text-destructive font-medium">
+                  <p className={`${type.body.s} text-destructive font-medium`}>
                     Account scheduled for deletion on {deletionDate}
                   </p>
-                  <p className="text-sm text-muted-foreground">
+                  <p className={`${type.body.s} text-muted-foreground`}>
                     All your sites and data will be permanently removed. You can cancel this before that date.
                   </p>
                   <button
@@ -493,40 +502,58 @@ function SettingsPageContent() {
 
             {/* Delete account form (only shown when no deletion is scheduled) */}
             {!deletionDate && (
-              <details className="group pt-2">
-                <summary className="cursor-pointer text-sm text-destructive hover:underline list-none">
+              <div className="pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteZone(v => !v)}
+                  className={`flex items-center gap-1.5 ${type.body.s} text-destructive hover:underline`}
+                >
                   Delete my account
-                </summary>
-                <div className="mt-4 space-y-3 border-t border-border pt-4">
-                  <p className="text-sm text-muted-foreground">
-                    Type your email address to confirm. Your account will enter a{" "}
-                    <strong>14-day cooling-off period</strong> — you can cancel anytime before it expires.
-                    After that, all your data is permanently deleted.
-                  </p>
-                  <label className="block">
-                    <span className="text-sm text-muted-foreground">{user.email}</span>
-                    <input
-                      type="email"
-                      value={deleteConfirm}
-                      onChange={(e) => setDeleteConfirm(e.target.value)}
-                      placeholder={user.email ?? ""}
-                      autoComplete="off"
-                      className="mt-1 w-full rounded-lg border border-destructive/40 bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-destructive"
-                    />
-                  </label>
-                  {deleteError && (
-                    <p className="text-sm text-destructive" role="alert">{deleteError}</p>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showDeleteZone ? "rotate-180" : ""}`} />
+                </button>
+                <AnimatePresence>
+                  {showDeleteZone && (
+                    <motion.div
+                      key="delete-zone"
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="overflow-hidden"
+                    >
+                      <div className="mt-4 p-4 rounded-xl border border-destructive/40 bg-destructive/5 space-y-3">
+                        <p className={`${type.body.s} text-muted-foreground`}>
+                          Type your email address to confirm. Your account will enter a{" "}
+                          <strong>14-day cooling-off period</strong> — you can cancel anytime before it expires.
+                          After that, all your data is permanently deleted.
+                        </p>
+                        <label className="block">
+                          <span className={`${type.label} text-muted-foreground`}>{user.email}</span>
+                          <input
+                            type="email"
+                            value={deleteConfirm}
+                            onChange={(e) => setDeleteConfirm(e.target.value)}
+                            placeholder={user.email ?? ""}
+                            autoComplete="off"
+                            className="mt-1 w-full rounded-lg border border-destructive/40 bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-destructive"
+                          />
+                        </label>
+                        {deleteError && (
+                          <p className={`${type.body.s} text-destructive`} role="alert">{deleteError}</p>
+                        )}
+                        <button
+                          type="button"
+                          onClick={onRequestDeletion}
+                          disabled={deleteSubmitting || deleteConfirm.trim() === ""}
+                          className="inline-flex items-center rounded-full bg-destructive px-4 py-2 text-sm font-semibold text-white hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {deleteSubmitting ? "Scheduling…" : "Schedule account deletion"}
+                        </button>
+                      </div>
+                    </motion.div>
                   )}
-                  <button
-                    type="button"
-                    onClick={onRequestDeletion}
-                    disabled={deleteSubmitting || deleteConfirm.trim() === ""}
-                    className="inline-flex items-center rounded-full bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {deleteSubmitting ? "Scheduling…" : "Schedule account deletion"}
-                  </button>
-                </div>
-              </details>
+                </AnimatePresence>
+              </div>
             )}
           </motion.section>
 
@@ -538,28 +565,50 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <Lock className="w-5 h-5 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">Change password</h2>
+              <h2 className={`font-display ${type.heading.l}`}>Change password</h2>
             </div>
             <form onSubmit={onChangePassword} className="space-y-3">
               <label className="block">
-                <span className="text-sm text-muted-foreground">New password</span>
-                <input
-                  type="password" value={pw} onChange={(e) => setPw(e.target.value)}
-                  required minLength={8} autoComplete="new-password"
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <span className={`${type.label} text-muted-foreground`}>New password</span>
+                <div className="relative mt-1">
+                  <input
+                    type={showNewPassword ? "text" : "password"}
+                    value={pw} onChange={(e) => setPw(e.target.value)}
+                    required minLength={8} autoComplete="new-password"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNewPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showNewPassword ? "Hide password" : "Show password"}
+                  >
+                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </label>
               <label className="block">
-                <span className="text-sm text-muted-foreground">Confirm new password</span>
-                <input
-                  type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
-                  required minLength={8} autoComplete="new-password"
-                  className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
-                />
+                <span className={`${type.label} text-muted-foreground`}>Confirm new password</span>
+                <div className="relative mt-1">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)}
+                    required minLength={8} autoComplete="new-password"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  >
+                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </label>
-              {pwError && <p className="text-sm text-destructive" role="alert">{pwError}</p>}
+              {pwError && <p className={`${type.body.s} text-destructive`} role="alert">{pwError}</p>}
               {pwSuccess && (
-                <p className="text-sm text-primary" role="status">
+                <p className={`${type.body.s} text-primary`} role="status">
                   Password updated. You can keep using Pebble — no need to sign in again.
                 </p>
               )}
@@ -580,24 +629,29 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <h2 className="font-display text-xl font-semibold">Billing</h2>
+              <h2 className={`font-display ${type.heading.l}`}>Billing</h2>
             </div>
             {subLoading && justCheckedOut ? (
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Current plan</p>
+                <p className={type.caption}>Current plan</p>
                 <p className="text-muted-foreground italic">Syncing your subscription with Stripe…</p>
               </div>
             ) : !subLoading ? (
               <div className="space-y-1">
-                <p className="text-sm text-muted-foreground">Current plan</p>
+                <p className={type.caption}>Current plan</p>
                 <p className="text-foreground font-medium">{planBadge(subscription)}</p>
               </div>
             ) : null}
-            <p className="text-sm text-muted-foreground">
+            <p className={`${type.body.s} text-muted-foreground`}>
               Manage your plan, payment method, and download invoices. The
               billing portal is hosted by Stripe — Pebble never sees your card number.
             </p>
-            {billingError && <p className="text-sm text-destructive" role="alert">{billingError}</p>}
+            {!subscription && !subLoading && (
+              <p className={`${type.caption} text-muted-foreground mt-1`}>
+                Upgrade to unlock unlimited builds and publishing.
+              </p>
+            )}
+            {billingError && <p className={`${type.body.s} text-destructive`} role="alert">{billingError}</p>}
             <div className="flex flex-wrap items-center gap-3">
               {subscription ? (
                 <button
@@ -622,8 +676,8 @@ function SettingsPageContent() {
 
             {testMode && (
               <div className="mt-4 pt-4 border-t border-border space-y-3">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">Test mode</p>
-                <p className="text-sm text-muted-foreground">
+                <p className={type.eyebrow}>Test mode</p>
+                <p className={`${type.body.s} text-muted-foreground`}>
                   Drive a checkout end-to-end. Use Stripe's test card
                   <code className="mx-1 px-1 py-0.5 rounded bg-muted text-xs">4242 4242 4242 4242</code>
                   with any future expiry and CVC.

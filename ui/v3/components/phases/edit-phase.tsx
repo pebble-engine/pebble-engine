@@ -401,7 +401,8 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
-          className="fixed bottom-6 left-[240px] right-[320px] flex flex-col items-center gap-2 pointer-events-none"
+          className="fixed bottom-6 flex flex-col items-center gap-2 pointer-events-none"
+          style={{ left: 'var(--left-rail-w, 240px)', right: 'var(--right-rail-w, 320px)' }}
         >
           <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto`}>
             ✨ Style tweaks are free — click an element on the preview or pick a chip below
@@ -487,11 +488,14 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
               className={`pointer-events-auto rounded-xl border shadow-lg px-4 py-3 max-w-sm ${
                 t.kind === "success"
-                  ? "bg-card border-border text-foreground"
+                  ? "bg-card border-border border-l-4 border-l-green-500 text-foreground"
                   : "bg-destructive/10 border-destructive/40 text-destructive"
               }`}
             >
               <div className="flex items-start gap-3">
+                {t.kind === "success" && (
+                  <Check className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                )}
                 <div className="flex-1 text-sm">{t.message}</div>
                 {t.snapshotId && t.slug && (
                   <button
@@ -551,7 +555,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
               <div className="flex justify-between items-center">
                 <span className={type.label}>{s.label}</span>
                 <span
-                  className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase ${
                     s.status === "auto"
                       ? "bg-earth/20 text-earth-deep"
                       : s.status === "pending"
@@ -563,7 +567,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
                 </span>
               </div>
               {blockingDeps.length > 0 && (
-                <p className="text-[10px] text-muted-foreground leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   Unlocks after: {blockingDeps.map((d) => d!.label).join(" + ")}
                 </p>
               )}
@@ -575,7 +579,7 @@ function LaunchSetupPanel({ plan, onGoLive }: { plan: PebblePlan | null; onGoLiv
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={onGoLive}
-          className={`${interactions.button} w-full bg-secondary text-secondary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2`}
+          className={`${interactions.button} w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2`}
         >
           <Rocket className="w-4 h-4" /> Go Live
         </motion.button>
@@ -619,7 +623,7 @@ function VisualEditorPanel({
     >
       <div className="flex justify-between items-start">
         <div>
-          <p className="text-[10px] font-mono uppercase tracking-widest text-earth-deep">Free style tweak ✨</p>
+          <p className="text-[11px] font-mono uppercase tracking-widest text-earth-deep">Free style tweak ✨</p>
           <h2 className={`${type.heading.m} text-primary mt-1`}>
             Editing {selected.tag.toUpperCase()}
           </h2>
@@ -737,7 +741,7 @@ function HistoryDrawer({
       >
         <div className="p-5 border-b border-border flex justify-between items-start">
           <div>
-            <h2 className={`${type.display.m} text-primary`}>Version history</h2>
+            <h2 className={`${type.heading.l} text-primary`}>Version history</h2>
             <p className="text-xs text-muted-foreground mt-1">
               Every change creates a snapshot. Roll back any time.
             </p>
@@ -803,7 +807,7 @@ function ReasonBadge({ reason }: { reason: string }) {
           ? { bg: "bg-spark/15",  text: "text-spark-deep", label: "Restored" }
           : { bg: "bg-muted",     text: "text-muted-foreground", label: reason };
   return (
-    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${style.bg} ${style.text}`}>
+    <span className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider ${style.bg} ${style.text}`}>
       {style.label}
     </span>
   );
