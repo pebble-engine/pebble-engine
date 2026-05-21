@@ -575,7 +575,7 @@ class TestLlmInferStyle:
         class _Raises:
             def generate(self, **kw):
                 raise RuntimeError("oops")
-        with patch("pebble.llm.get_llm_client", return_value=_Raises()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Raises(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert result == {}
 
@@ -584,7 +584,7 @@ class TestLlmInferStyle:
         raw_json = '{"vibe_keywords":["dark"],"font_hints":[],"motion_intensity":"extreme","layout_density":"spacious","palette":[]}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert result["motion_intensity"] is None
 
@@ -593,7 +593,7 @@ class TestLlmInferStyle:
         raw_json = '{"vibe_keywords":["light"],"font_hints":[],"motion_intensity":"minimal","layout_density":"chaotic","palette":[]}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert result["layout_density"] is None
 
@@ -603,7 +603,7 @@ class TestLlmInferStyle:
         raw_json = f'{{"vibe_keywords":{json.dumps(kws)},"font_hints":[],"motion_intensity":"high","layout_density":"dense","palette":[]}}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert len(result["vibe_keywords"]) == 6
 
@@ -613,7 +613,7 @@ class TestLlmInferStyle:
         raw_json = f'{{"vibe_keywords":["a"],"font_hints":{json.dumps(fonts)},"motion_intensity":"minimal","layout_density":"spacious","palette":[]}}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert len(result["font_hints"]) == 3
 
@@ -622,7 +622,7 @@ class TestLlmInferStyle:
         raw_json = '{"vibe_keywords":["Dark Cinematic","EDITORIAL"],"font_hints":[],"motion_intensity":"high","layout_density":"spacious","palette":[]}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _llm_infer_style(self._SCRAPE)
         assert "dark cinematic" in result["vibe_keywords"]
         assert "editorial" in result["vibe_keywords"]
@@ -665,7 +665,7 @@ class TestMatchDna:
         class _Raises:
             def generate(self, **kw):
                 raise RuntimeError("oops")
-        with patch("pebble.llm.get_llm_client", return_value=_Raises()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Raises(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is None
 
@@ -674,7 +674,7 @@ class TestMatchDna:
         raw_json = '{"id":"made_up_card","confidence":0.9,"rationale":"looks right"}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is None
 
@@ -683,7 +683,7 @@ class TestMatchDna:
         raw_json = '{"id":"cinematic_imax","confidence":1.5,"rationale":"great match"}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is not None
         assert result["confidence"] == 1.0
@@ -693,7 +693,7 @@ class TestMatchDna:
         raw_json = '{"id":"cinematic_imax","confidence":-0.3,"rationale":"poor match"}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is not None
         assert result["confidence"] == 0.0
@@ -703,7 +703,7 @@ class TestMatchDna:
         raw_json = '{"id":"cinematic_imax","rationale":"fine match"}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is not None
         assert result["confidence"] == 0.5
@@ -713,7 +713,7 @@ class TestMatchDna:
         raw_json = '{"id":"cinematic_imax","confidence":0.87,"rationale":"strong match"}'
         class _Client:
             def generate(self, **kw): return raw_json
-        with patch("pebble.llm.get_llm_client", return_value=_Client()):
+        with patch("pebble.llm.get_llm_client", return_value=(_Client(), "ok")):
             result = _match_dna(self._SCRAPE, self._STYLE)
         assert result is not None
         assert result["id"] == "cinematic_imax"

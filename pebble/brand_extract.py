@@ -496,7 +496,11 @@ def _llm_infer(scraped: dict) -> dict:
         return {}
 
     try:
-        client = get_llm_client()
+        # get_llm_client() returns (client, reason). Unpack — passing the
+        # bare tuple downstream silently fails with "tuple has no attribute
+        # 'generate'" and the LLM-inferred fields end up None even though
+        # the call site thinks the call succeeded.
+        client, _reason = get_llm_client()
     except Exception:
         return {}
     if client is None:
@@ -574,7 +578,7 @@ def _llm_infer_style(scraped: dict) -> dict:
         return {}
 
     try:
-        client = get_llm_client()
+        client, _reason = get_llm_client()  # tuple — see _llm_infer for context
     except Exception:
         return {}
     if client is None:
@@ -702,7 +706,7 @@ def _match_dna(scraped: dict, style: dict) -> Optional[dict]:
     except Exception:
         return None
     try:
-        client = get_llm_client()
+        client, _reason = get_llm_client()  # tuple — see _llm_infer for context
     except Exception:
         return None
     if client is None:
