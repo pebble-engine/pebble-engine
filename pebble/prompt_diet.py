@@ -45,6 +45,7 @@ NO_SLOP_DIET = """
 - **Headlines say something specific.** If the brief gave you a value prop, use it. If it didn't, write a concrete promise about what the visitor will get.
 - **Testimonials are real or absent.** When the brief includes real testimonials, render them with the real attribution. When it does not, omit the testimonials section entirely. Never invent a quote, a name, a title, or a star count.
 - **Phone numbers are real or labeled.** When the brief includes a real phone number, use it everywhere. When it does not, use the literal string `[BUSINESS PHONE]` so the owner sees what to fill in. Never invent `(555)`-style numbers.
+- **Time markers are real or absent.** Only write "since 2015", "established 2020", or "15 years of service" when the brief gave you the year. Otherwise drop the time signal from the sentence (e.g. "Honest work. Fair pricing. Reliable service.") — no "since day one", no invented years.
 - **Body copy is industry-specific.** If you're writing for a plumber, mention `same-day service` or `up-front pricing`. If you're writing for a coach, mention the specific outcome ("clarity in 3 sessions"). Generic SaaS copy ("transform your business") is forbidden.
 - **Voice matches the Style DNA card.** Its `signature_moves` and `feel` describe how the copy should sound. Honor them.
 """

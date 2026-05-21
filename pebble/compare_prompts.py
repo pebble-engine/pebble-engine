@@ -167,12 +167,12 @@ class PromptRun:
             f"{self.response_chars:,} | "
             f"{self.elapsed_seconds:.1f}s | "
             f"{self.files_emitted} | "
-            f"{'✓' if self.has_real_image_urls else '✗'} | "
-            f"{'✓' if self.has_custom_css_tokens else '✗'} | "
-            f"{'✓' if self.has_tailwind_config_extension else '✗'} | "
-            f"{'✓' if self.has_gsap_wired else '✗'} | "
-            f"{'✓' if self.has_resend_server_action else '✗'} | "
-            f"{'✓' if self.has_schema_jsonld else '✗'} |"
+            f"{'Y' if self.has_real_image_urls else 'N'} | "
+            f"{'Y' if self.has_custom_css_tokens else 'N'} | "
+            f"{'Y' if self.has_tailwind_config_extension else 'N'} | "
+            f"{'Y' if self.has_gsap_wired else 'N'} | "
+            f"{'Y' if self.has_resend_server_action else 'N'} | "
+            f"{'Y' if self.has_schema_jsonld else 'N'} |"
         )
 
 
