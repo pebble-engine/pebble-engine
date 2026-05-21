@@ -301,6 +301,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         message: `Added "${result.component_name}" — themed against ${result.dna_label || "your site"}. Free ✨`,
         snapshotId: result.snapshot_id || undefined,
         slug: build.slug,
+        diff: result.diff,
       });
     } catch (e) {
       pushToast({

@@ -30,7 +30,7 @@ from pebble.blocks import (
 )
 from pebble.blocks.insert import load_brief, load_dna_for_site
 from pebble.engagement import log_event as _log_engagement
-from pebble.history import snapshot_site
+from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
 
@@ -162,11 +162,24 @@ def run_insert_block(handler, slug: str) -> None:
             handler._json(500, {"error": f"block insert failed: {e}"})
             return
 
+    # Phase 35b (2026-05-21) — diff panel data. insertBlock typically
+    # touches 2-4 files (the new component + page imports/usage). Best-
+    # effort; failure leaves diff=None so the response stays usable.
+    diff_payload = None
+    if snapshot_id:
+        try:
+            ds = diff_against_snapshot(slug, snapshot_id)
+            if ds is not None:
+                diff_payload = ds.to_dict()
+        except Exception as _exc:
+            log.warning("diff_against_snapshot failed (block %s): %s", block_id, _exc)
+
     handler._json(200, {
         "slug":            slug,
         "billable":        False,
         "dna_id":          tokens.dna_id,
         "dna_label":       tokens.dna_label,
+        "diff":            diff_payload,
         "applied_at":      datetime.now(timezone.utc).isoformat(),
         **result.to_dict(),
     })

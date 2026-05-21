@@ -734,6 +734,7 @@ export type BlockInsertResponse = {
   files_written:  string[];
   files_modified: string[];
   snapshot_id:    string | null;
+  diff:           DiffSummary | null;   // Phase 35b — same shape as refine/visual-edit
   position:       string;
   page_file:      string;
   billable:       false;          // always free — the whole point of blocks
