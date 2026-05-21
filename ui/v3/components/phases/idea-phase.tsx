@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import {
   HelpCircle,
   Home,
@@ -24,6 +24,7 @@ import {
   Gem,
   ArrowRight,
   Check,
+  Pencil,
   type LucideIcon,
 } from "lucide-react";
 import { LanguagePicker } from "@/components/language-picker";
@@ -103,6 +104,143 @@ type Props = {
   onAdvance: () => void;
 };
 
+// ---------------------------------------------------------------------------
+// Label maps for the confirmation card — chip id → human label.
+// ---------------------------------------------------------------------------
+
+const AUDIENCE_LABELS: Record<string, string> = {
+  locals:        "Locals",
+  travelers:     "Travelers",
+  professionals: "Professionals",
+  families:      "Families",
+  enthusiasts:   "Enthusiasts",
+  other:         "Other",
+};
+
+const FUNCTION_LABELS: Record<string, string> = {
+  presence:  "See your story",
+  leads:     "Get in touch",
+  booking:   "Book an appointment",
+  ecommerce: "Buy something",
+  portfolio: "See your work",
+  payment:   "Pay or donate",
+};
+
+const TONE_LABELS: Record<string, string> = {
+  warm:         "Warm",
+  professional: "Professional",
+  bold:         "Bold",
+  calm:         "Calm",
+  playful:      "Playful",
+  premium:      "Premium",
+};
+
+// ---------------------------------------------------------------------------
+// SmartDefaults confirmation card — shown when the brief is pre-filled.
+// ---------------------------------------------------------------------------
+
+function ConfirmationCard({
+  audience,
+  siteFunctions,
+  brandTone,
+  onConfirm,
+  onEdit,
+}: {
+  audience:      string[];
+  siteFunctions: string[];
+  brandTone:     string;
+  onConfirm:     () => void;
+  onEdit:        () => void;
+}) {
+  return (
+    <MotionConfig reducedMotion="user">
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -16 }}
+        transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+        className="flex flex-col h-full"
+      >
+        <main className="flex-grow flex flex-col items-center justify-center px-4 md:px-8 py-8">
+          <div className="max-w-xl w-full space-y-8">
+            {/* Header */}
+            <div className="text-center space-y-2">
+              <h1 className={`${type.heading.l} text-foreground`}>Here&apos;s what I figured out</h1>
+              <p className={`${type.body.m} text-muted-foreground`}>
+                Edit anything if it&apos;s off.
+              </p>
+            </div>
+
+            {/* Confirmation card */}
+            <div className="rounded-2xl bg-card border border-border p-6 space-y-6 shadow-[var(--shadow-1)]">
+              {/* Audience */}
+              <div className="space-y-2">
+                <p className={`${type.eyebrow}`}>Audience</p>
+                <div className="flex flex-wrap gap-2">
+                  {audience.map((id) => (
+                    <span
+                      key={id}
+                      className={`${type.badge} px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20`}
+                    >
+                      {AUDIENCE_LABELS[id] ?? id}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Site functions */}
+              <div className="space-y-2">
+                <p className={`${type.eyebrow}`}>Visitors will&hellip;</p>
+                <div className="flex flex-wrap gap-2">
+                  {siteFunctions.map((id) => (
+                    <span
+                      key={id}
+                      className={`${type.badge} px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20`}
+                    >
+                      {FUNCTION_LABELS[id] ?? id}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Brand tone */}
+              <div className="space-y-2">
+                <p className={`${type.eyebrow}`}>Tone</p>
+                <span
+                  className={`${type.badge} inline-block px-3 py-1 rounded-full bg-primary/10 text-primary border border-primary/20`}
+                >
+                  {TONE_LABELS[brandTone] ?? brandTone}
+                </span>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3">
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={onConfirm}
+                className={`${interactions.button} w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg shadow-md ${type.label}`}
+              >
+                Looks good <ArrowRight className="w-4 h-4" />
+              </motion.button>
+              <button
+                type="button"
+                onClick={onEdit}
+                className={`${interactions.chip} w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground py-2 ${type.label}`}
+              >
+                <Pencil className="w-3.5 h-3.5" aria-hidden />
+                Change anything?
+              </button>
+            </div>
+          </div>
+        </main>
+      </motion.div>
+    </MotionConfig>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
 export function IdeaPhase({ onAdvance }: Props) {
   const [stepIdx, setStepIdx] = useState(0);
   const step = STEPS[stepIdx];
@@ -110,6 +248,15 @@ export function IdeaPhase({ onAdvance }: Props) {
 
   // Per-step selections — read once from saved brief, mutated locally.
   const brief = getBrief();
+
+  // Phase 37 — confirmation card: shown when smart-defaults pre-filled the brief.
+  // Flip to false when the user clicks "Change anything?" to reveal the full
+  // 3-step questionnaire. Stays true across re-renders (local state).
+  const prefilled =
+    Array.isArray(brief.audience) && (brief.audience as string[]).length > 0 &&
+    Array.isArray(brief.site_functions) && (brief.site_functions as string[]).length > 0 &&
+    typeof brief.brand_tone === "string" && (brief.brand_tone as string).length > 0;
+  const [collapsed, setCollapsed] = useState(prefilled);
   const [selections, setSelections] = useState<Record<string, Set<string>>>(() => {
     const init: Record<string, Set<string>> = {};
     for (const s of STEPS) {
@@ -162,6 +309,28 @@ export function IdeaPhase({ onAdvance }: Props) {
   };
 
   const selected = selections[step.key];
+
+  // Phase 37 — render the confirmation card when smart-defaults are present
+  // and the user hasn't opted to edit manually.
+  if (collapsed && prefilled) {
+    return (
+      <AnimatePresence mode="wait">
+        <ConfirmationCard
+          key="confirmation"
+          audience={brief.audience as string[]}
+          siteFunctions={brief.site_functions as string[]}
+          brandTone={brief.brand_tone as string}
+          onConfirm={() => {
+            // Ensure business_type is guessed if not already set.
+            const idea = (brief.extra_context as string) || "";
+            if (!brief.business_type) patchBrief({ business_type: guessIndustryFromIdea(idea) });
+            onAdvance();
+          }}
+          onEdit={() => setCollapsed(false)}
+        />
+      </AnimatePresence>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">

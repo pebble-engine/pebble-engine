@@ -20,6 +20,7 @@ import {
   createCheckoutSession,
   fetchSubscription,
   extractBrand,
+  fetchSmartDefaults,
   type SubscriptionState,
   type BrandExtractResult,
   type ExtractMode,
@@ -509,14 +510,22 @@ export function WelcomePhase({ onAdvance }: Props) {
 
   const EXTRACT_STEPS = extractMode === "inspire" ? INSPIRE_STEPS : BRAND_STEPS;
 
-  // Cycle the narration while the request is in flight. ~900ms per step.
+  // Phase 33d (fixed 2026-05-21) — Cycle narration WHILE the request is in
+  // flight. The auto-cycle caps at the SECOND-TO-LAST step (e.g. "Matching
+  // to a Pebble design system…") so we never declare "Got it" before the
+  // actual response arrives. runExtraction() jumps to the final step
+  // ("Got it — let's go.") right before applyExtractionAndAdvance runs.
+  // Previously this was capped at LAST step → users saw "Got it" for 30+s
+  // while Qwen Plus was still inferring style + matching DNA.
   useEffect(() => {
     if (!extracting) {
       setExtractStepIdx(0);
       return;
     }
+    // Cap at LENGTH-2: the last step is reserved for "I have the answer now."
+    const lastNarrationIdx = Math.max(0, EXTRACT_STEPS.length - 2);
     const id = window.setInterval(() => {
-      setExtractStepIdx((i) => Math.min(i + 1, EXTRACT_STEPS.length - 1));
+      setExtractStepIdx((i) => Math.min(i + 1, lastNarrationIdx));
     }, 900);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -545,7 +554,7 @@ export function WelcomePhase({ onAdvance }: Props) {
    * Also synthesizes a natural-language extra_context blob so any prompt
    * path that doesn't yet read the new fields still gets the signal.
    */
-  const applyExtractionAndAdvance = (
+  const applyExtractionAndAdvance = async (
     sourceUrl: string,
     res: BrandExtractResult,
     files?: File[],
@@ -567,6 +576,22 @@ export function WelcomePhase({ onAdvance }: Props) {
         _inspire_source_url: sourceUrl,
         _brand_palette:   res.palette,
       });
+
+      // Silently enrich with smart defaults — fire with a 3s race timeout.
+      // On inspire mode we have no direct industry signal, so pass what we have.
+      try {
+        const defaults = await Promise.race([
+          fetchSmartDefaults({ business_type: res.industry || undefined }),
+          new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+        ]);
+        patchBrief({
+          audience:       defaults.audience,
+          site_functions: defaults.site_functions,
+          brand_tone:     defaults.brand_tone,
+        });
+      } catch {
+        // Timeout or network failure — continue without smart defaults.
+      }
     } else {
       // Brand: full business identity extraction (existing behavior).
       const blurbParts: string[] = [];
@@ -591,6 +616,29 @@ export function WelcomePhase({ onAdvance }: Props) {
         _extracted_hero_copy:   res.hero_copy || undefined,
         _extracted_tagline:     res.tagline || undefined,
       });
+
+      // Silently enrich with smart defaults from the inferred industry — 3s
+      // race timeout. If it wins, great: the idea-phase shows the confirmation
+      // card. If not, the user just sees the full 3-step questionnaire.
+      if (res.industry) {
+        try {
+          const defaults = await Promise.race([
+            fetchSmartDefaults({
+              industry:      res.industry,
+              business_type: res.industry,
+              business_name: res.business_name || undefined,
+            }),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error("timeout")), 3000)),
+          ]);
+          patchBrief({
+            audience:       defaults.audience,
+            site_functions: defaults.site_functions,
+            brand_tone:     defaults.brand_tone,
+          });
+        } catch {
+          // Timeout or network failure — continue without smart defaults.
+        }
+      }
     }
 
     if (files && files.length > 0) {
@@ -636,7 +684,10 @@ export function WelcomePhase({ onAdvance }: Props) {
         return;
       }
 
-      // Let the final narration step breathe.
+      // Response is here — jump narration to the final "Got it — let's go."
+      // step so the user sees a clear transition signal, then let it breathe
+      // 600ms before advancing or revealing the matched DNA card.
+      setExtractStepIdx(EXTRACT_STEPS.length - 1);
       await new Promise((r) => setTimeout(r, 600));
 
       if (mode === "inspire" && res.matched_dna) {
@@ -647,7 +698,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         return;
       }
 
-      applyExtractionAndAdvance(url, res, files, mode);
+      await applyExtractionAndAdvance(url, res, files, mode);
     } catch (err) {
       setExtractError(err instanceof Error ? err.message : "Network error — using your URL as a hint instead.");
       await new Promise((r) => setTimeout(r, 1500));
@@ -896,7 +947,7 @@ export function WelcomePhase({ onAdvance }: Props) {
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-1">
                   <button
-                    onClick={() => applyExtractionAndAdvance(pendingUrl, inspireResult, pendingFiles, "inspire")}
+                    onClick={() => { void applyExtractionAndAdvance(pendingUrl, inspireResult!, pendingFiles, "inspire"); }}
                     className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-[#1a1a1a] font-semibold text-sm hover:bg-white/90 transition-colors"
                   >
                     Use this style

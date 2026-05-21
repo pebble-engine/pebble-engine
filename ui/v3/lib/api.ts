@@ -355,6 +355,34 @@ export async function checkBuildIntegrity(slug: string): Promise<IntegrityRespon
   return getJSON(`/api/projects/${encodeURIComponent(slug)}/integrity`);
 }
 
+// ---------- /api/smart-defaults (Phase 37, 2026-05-21) --------------------
+//
+// Given an industry / business_type (and optionally a business_name), the
+// engine returns the most-likely audience chips, site-function chips, and
+// brand tone for that kind of business. This collapses the 3-step idea
+// questionnaire into a single confirmation card when the brief is populated
+// from URL ingestion (brand-extract or inspire).
+//
+// The call NEVER blocks the advance — callers fire-and-forget with a short
+// race timeout (2-3s). If the call loses the race, the user just sees the
+// full 3-step questionnaire as before (graceful degradation).
+
+export type SmartDefaultsResponse = {
+  audience: string[];         // chip ids: locals, travelers, professionals, families, enthusiasts, other
+  site_functions: string[];   // chip ids: presence, leads, booking, ecommerce, portfolio, payment
+  brand_tone: string;         // single chip id: warm, professional, bold, calm, playful, premium
+  source: "industries_json" | "llm" | "fallback";
+  fallback?: boolean;         // true when LLM call failed; UI may de-emphasize
+};
+
+export async function fetchSmartDefaults(input: {
+  industry?: string;
+  business_type?: string;
+  business_name?: string;
+}): Promise<SmartDefaultsResponse> {
+  return postJSON("/api/smart-defaults", input);
+}
+
 // ---------- /api/brand-extract (Phase 33a/b, 2026-05-21) -------------------
 //
 // URL ingestion: paste a URL, get a partial brief back. Pre-fills the

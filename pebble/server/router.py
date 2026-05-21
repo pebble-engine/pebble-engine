@@ -217,6 +217,13 @@ def route_post(handler) -> None:
             # asking for them. Cached 1h per URL.
             from pebble.server.brand_extract import run_brand_extract
             run_brand_extract(handler)
+        elif handler.path == "/api/smart-defaults":
+            # Phase 39a (2026-05-21) — auto-infer audience + site_functions +
+            # brand_tone from industry. Collapses the v3 idea-phase 3-step
+            # questionnaire into a single confirmation card. Two-tier: tries
+            # industries.json hints first (free), falls back to gpt-4o-mini.
+            from pebble.server.smart_defaults import run_smart_defaults
+            run_smart_defaults(handler)
         elif handler.path == "/api/publish":
             handler._handle_publish()
         elif handler.path.startswith("/api/forms/") and handler.path.endswith("/upload"):
