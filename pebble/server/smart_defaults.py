@@ -45,7 +45,17 @@ from pebble.security import client_ip, plan_limiter
 # Allowed chip ids — must match ui/v3/components/phases/idea-phase.tsx
 # ---------------------------------------------------------------------------
 
-VALID_AUDIENCE       = {"locals", "travelers", "professionals", "families", "enthusiasts", "other"}
+VALID_AUDIENCE       = {
+    "locals", "travelers", "professionals", "families", "enthusiasts",
+    # Phase 39c (2026-05-21) — Marc's feedback after the Bon Appétit
+    # build defaulted to "other": every industry HAS an audience. These
+    # four new chips knock out the most common "other" cases:
+    "patients",   # healthcare, dental, pediatric, therapy, hospice, vet
+    "students",   # tutors, coaches, online educators, schools
+    "members",    # gyms, clubs, churches, nonprofits, fraternal orgs
+    "pet_owners", # vets, groomers, pet daycare, pet supply stores
+    "other",
+}
 VALID_SITE_FUNCTIONS = {"presence", "leads", "booking", "ecommerce", "portfolio", "payment"}
 VALID_BRAND_TONE     = {"warm", "professional", "bold", "calm", "playful", "premium"}
 
@@ -132,10 +142,18 @@ def _site_functions_from_industry_intel(sections: list) -> list[str]:
     return picked
 
 
-# Audience picks per common industry category keyword. Defaults to "locals"
-# (the most generic small-biz audience).
+# Audience picks per common industry category keyword. Order matters —
+# more specific categories first so e.g. "pediatric dental" routes to
+# "patients" (medical specificity) over "families" (general).
+# Defaults to "locals" (the most generic small-biz audience).
 _AUDIENCE_BY_KEYWORD = [
-    ("families",      ["daycare", "kid", "child", "family", "pediatric", "dental", "school", "tutor"]),
+    # Phase 39c — new specific audience chips ordered before more general ones
+    ("pet_owners",    ["vet", "veterinarian", "veterinary", "groomer", "groom", "pet daycare", "pet_daycare", "pet supply", "pet_supply", "kennel", "boarding", "dog walk"]),
+    ("patients",      ["medical", "doctor", "physician", "dentist", "dental", "orthodontic", "pediatric", "therapy", "therapist", "chiropract", "physio", "psychology", "psychiatr", "hospice", "clinic", "hospital", "urgent care", "dermatol"]),
+    ("students",      ["tutor", "tutoring", "coach", "coaching", "online educator", "online course", "school", "academy", "instructor", "instruction", "lesson", "training", "bootcamp", "music teacher", "language teach"]),
+    ("members",       ["church", "synagogue", "mosque", "temple", "congregation", "nonprofit", "non-profit", "charity", "foundation", "fraternal", "club", "membership", "co-op", "cooperative", "guild", "association"]),
+    # Existing chips
+    ("families",      ["daycare", "kid", "child", "family", "school", "tutor"]),
     ("professionals", ["law", "legal", "attorney", "account", "consult", "advisor", "agency", "b2b", "saas"]),
     ("travelers",     ["hotel", "resort", "travel", "tourism", "tour", "airbnb", "vacation", "rental"]),
     ("enthusiasts",   ["enthusiast", "gym", "fitness", "yoga", "climbing", "music", "guitar", "art", "craft", "tattoo", "photo"]),
@@ -216,16 +234,23 @@ Business name: {business_name}
 Output schema (you MUST pick from these enumerations — never invent new ids):
 
 {{
-  "audience": ["locals" | "travelers" | "professionals" | "families" | "enthusiasts" | "other"],
+  "audience": ["locals" | "travelers" | "professionals" | "families" | "enthusiasts" | "patients" | "students" | "members" | "pet_owners" | "other"],
   "site_functions": ["presence" | "leads" | "booking" | "ecommerce" | "portfolio" | "payment"],
   "brand_tone": "warm" | "professional" | "bold" | "calm" | "playful" | "premium"
 }}
 
 Rules:
-- audience: 1-2 picks. Pick what fits — locals for neighborhood
-  businesses, travelers for hotels/tourism, professionals for B2B/legal/
-  accounting, families for daycares/dental/pediatric, enthusiasts for
-  fitness/photography/art/music/hobby.
+- audience: 1-2 picks. Pick what FITS — be specific.
+    • patients   for medical / dental / therapy / hospice / pediatric / clinics
+    • students   for tutors / coaches / online educators / schools / instructors
+    • members    for gyms / clubs / churches / nonprofits / fraternal orgs
+    • pet_owners for vets / pet groomers / pet daycare / pet supply
+    • locals     for neighborhood businesses (bakery / cafe / salon / contractor)
+    • travelers  for hotels / resorts / tourism / vacation rentals
+    • professionals for B2B / legal / accounting / advisors / agencies
+    • families   for daycare / kid-focused services (not medical — that's patients)
+    • enthusiasts for fitness / photography / art / music / hobby specialists
+    • other      ONLY as a last resort when no specific chip fits
 - site_functions: 2-4 picks. Always include "presence" (every site has
   a story) and "leads" (every site needs contact) unless the industry
   genuinely doesn't (e.g. donation-only nonprofits skip "leads").

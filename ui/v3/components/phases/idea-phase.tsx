@@ -10,6 +10,11 @@ import {
   Users,
   Star,
   MoreHorizontal,
+  // Phase 39c (2026-05-21) — new audience chip icons
+  Stethoscope,
+  GraduationCap,
+  HandHeart,
+  Dog,
   BookOpen,
   Mail,
   CalendarDays,
@@ -65,6 +70,12 @@ const STEPS: Step[] = [
       { id: "professionals", label: "Professionals", Icon: Briefcase },
       { id: "families",      label: "Families",      Icon: Users },
       { id: "enthusiasts",   label: "Enthusiasts",   Icon: Star },
+      // Phase 39c (2026-05-21) — new chips knocking out the most common
+      // "other" cases (Marc's feedback after the Bon Appétit build).
+      { id: "patients",      label: "Patients",      Icon: Stethoscope },
+      { id: "students",      label: "Students",      Icon: GraduationCap },
+      { id: "members",       label: "Members",       Icon: HandHeart },
+      { id: "pet_owners",    label: "Pet owners",    Icon: Dog },
       { id: "other",         label: "Other",         Icon: MoreHorizontal },
     ],
   },

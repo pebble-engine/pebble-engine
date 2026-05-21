@@ -62,7 +62,12 @@ def _reset_rate_limit():
 
 
 def test_valid_audience_matches_v3_idea_phase():
-    assert VALID_AUDIENCE == {"locals", "travelers", "professionals", "families", "enthusiasts", "other"}
+    # Phase 39c (2026-05-21) — added patients / students / members / pet_owners
+    assert VALID_AUDIENCE == {
+        "locals", "travelers", "professionals", "families", "enthusiasts",
+        "patients", "students", "members", "pet_owners",
+        "other",
+    }
 
 
 def test_valid_site_functions_matches_v3_idea_phase():
@@ -159,6 +164,38 @@ class TestAudienceMapping:
 
     def test_unknown_industry_defaults_to_locals(self):
         assert _audience_from_industry("xyz_widget", {}) == ["locals"]
+
+    # Phase 39c (2026-05-21) — new specific audience routing
+    def test_dental_office_maps_to_patients(self):
+        assert _audience_from_industry("dental_office", {}) == ["patients"]
+
+    def test_pediatric_clinic_maps_to_patients_not_families(self):
+        """Medical specificity wins over family-keyword: pediatric clinic
+        is for patients (with families), not families generically."""
+        assert _audience_from_industry("pediatric_clinic", {}) == ["patients"]
+
+    def test_therapist_maps_to_patients(self):
+        assert _audience_from_industry("therapist_practice", {}) == ["patients"]
+
+    def test_online_tutor_maps_to_students(self):
+        assert _audience_from_industry("online_tutor", {}) == ["students"]
+
+    def test_coaching_business_maps_to_students(self):
+        assert _audience_from_industry("life_coaching", {}) == ["students"]
+
+    def test_church_maps_to_members(self):
+        assert _audience_from_industry("church_community", {}) == ["members"]
+
+    def test_nonprofit_maps_to_members(self):
+        assert _audience_from_industry("nonprofit_foundation", {}) == ["members"]
+
+    def test_veterinary_clinic_maps_to_pet_owners_not_patients(self):
+        """Vet clinic is for pet OWNERS, not patients (humans).
+        Pet keyword must outrank medical keyword in priority order."""
+        assert _audience_from_industry("veterinary_clinic", {}) == ["pet_owners"]
+
+    def test_pet_groomer_maps_to_pet_owners(self):
+        assert _audience_from_industry("pet_groomer", {}) == ["pet_owners"]
 
 
 class TestTryIndustriesJson:
