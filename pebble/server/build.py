@@ -27,6 +27,8 @@ from pebble.llm import get_llm_client, LLMError
 from pebble.plan import build_pebble_plan
 from pebble.history import snapshot_site
 from pebble.cost import estimate_cost
+from pebble.text import sanitize_business_name
+from pebble.next_config_patch import ensure_allowed_dev_origins
 from pebble.visual_ids import inject_pebble_ids
 from pebble.security import client_ip, generate_limiter, plan_limiter
 
@@ -124,7 +126,14 @@ def run_plan(handler) -> None:
     if err:
         handler._json(400, err); return
 
-    answers["_slug"] = _slugify(answers.get("business_name", "untitled"))
+    # Phase 20a (2026-05-20): normalize business_name BEFORE slug + LLM so the
+    # rendered hero doesn't echo user typos like "Mechanic shop inQueens".
+    raw_name = answers.get("business_name", "")
+    cleaned = sanitize_business_name(raw_name)
+    if cleaned and cleaned != raw_name:
+        log.info("[plan] business_name sanitized: %r -> %r", raw_name, cleaned)
+        answers["business_name"] = cleaned
+    answers["_slug"] = _slugify(cleaned or "untitled")
 
     business_type = answers.get("business_type", answers.get("industry", ""))
     industry_key, industry_intel = (None, None)
@@ -231,7 +240,14 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     if err:
         handler._json(400, err); return
 
-    slug = _slugify(answers.get("business_name", "untitled"))
+    # Phase 20a (2026-05-20): normalize business_name BEFORE slug + LLM so the
+    # rendered hero doesn't echo user typos like "Mechanic shop inQueens".
+    raw_name = answers.get("business_name", "")
+    cleaned = sanitize_business_name(raw_name)
+    if cleaned and cleaned != raw_name:
+        log.info("[build] business_name sanitized: %r -> %r", raw_name, cleaned)
+        answers["business_name"] = cleaned
+    slug = _slugify(cleaned or "untitled")
     # Phase 15f (2026-05-20): if a next dev is actively serving this slug,
     # auto-suffix the rebuild so the previous preview keeps running on its
     # current port and the new build gets its own directory + dev server.
@@ -251,7 +267,10 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         # (overwrite — same as before Phase 15f). Soft-fail.
         pass
     answers["_slug"] = slug
-    _emit("started", {"slug": slug})
+    # Phase 25a (2026-05-20): emit business_name in started so the workspace
+    # Plan Reveal can show the project title immediately. The user sees their
+    # name pop in within 1-2 seconds of submit — the perceived-speed payoff.
+    _emit("started", {"slug": slug, "business_name": cleaned or slug.replace("-", " ").title()})
     if "_created_at" not in answers:
         answers["_created_at"] = datetime.now().isoformat()
 
@@ -347,9 +366,26 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         if design_dna:
             answers["_design_dna"] = design_dna["id"]
             log.info("Style DNA: %s (%s)", design_dna['label'], design_dna['id'])
+    # Phase 25a (2026-05-20): include palette + design summary so the
+    # workspace Plan Reveal can paint color swatches + style chips
+    # immediately as the style event arrives. Webild-parity UX move.
+    _style_palette: list[str] = []
+    _style_signature: list[str] = []
+    if design_dna:
+        _pal = design_dna.get("palette") or {}
+        if isinstance(_pal, dict):
+            for k in ("bg", "fg", "accent", "muted", "border"):
+                v = _pal.get(k)
+                if v and isinstance(v, str):
+                    _style_palette.append(v)
+        sigs = design_dna.get("signature_moves") or []
+        if isinstance(sigs, list):
+            _style_signature = [str(s) for s in sigs[:3] if s]
     _emit("style", {
         "dna_label": design_dna.get("label", "") if design_dna else "",
         "dna_id":    design_dna.get("id", "")    if design_dna else "",
+        "palette":   _style_palette,
+        "signature_moves": _style_signature,
     })
 
     # Language — same flow as run_plan. Detected once + persisted so the
@@ -389,6 +425,28 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     try:
         plan = build_pebble_plan(saved_answers, industry_intel, design_dna)
         (out_dir / "plan.json").write_text(json.dumps(plan, indent=2), encoding="utf-8")
+        # Phase 25a (2026-05-20): emit a compact plan summary as an SSE event
+        # so the workspace Plan Reveal can paint the section list immediately.
+        # We avoid sending the full plan to keep frame size small — just the
+        # name + page summaries the UI needs to render its checklist.
+        try:
+            _emit("plan", {
+                "name": saved_answers.get("business_name", "") or "Untitled",
+                "audience": plan.get("audience", "") if isinstance(plan, dict) else "",
+                "goal": plan.get("goal", "") if isinstance(plan, dict) else "",
+                "pages": [
+                    {
+                        "id": p.get("id", ""),
+                        "title": p.get("title", ""),
+                        "route": p.get("route", ""),
+                        "foundation": bool(p.get("foundation", False)),
+                    }
+                    for p in (plan.get("pages") or [])
+                    if isinstance(p, dict)
+                ],
+            })
+        except Exception as e:
+            log.warning("plan SSE emit failed: %s", e)
     except Exception as e:
         log.warning("Pebble Plan generation failed: %s", e)
     (out_dir / "PROMPT.md").write_text(prompt, encoding="utf-8")
@@ -770,6 +828,18 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
 
     # ---- POST-BUILD CHAIN ----
     # Each step degrades gracefully: failure does not block the response.
+
+    # Phase 20c (2026-05-20): patch the generated next.config.mjs so its
+    # `allowedDevOrigins` accepts 127.0.0.1/localhost. Without this, Next.js
+    # 15.5+ logs a cross-origin warning for every /_next/* dev request, and
+    # a future major version will block them outright. Idempotent — skips if
+    # the LLM already added the field.
+    try:
+        patched = ensure_allowed_dev_origins(site_dir / "next.config.mjs")
+        if patched:
+            log.info("[postbuild] patched next.config.mjs with allowedDevOrigins")
+    except Exception as e:
+        log.warning("[postbuild] next.config.mjs patch failed: %s", e)
 
     imagen_results: dict = {"generated": {}, "files_touched": 0, "enabled": False}
     try:

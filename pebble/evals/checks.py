@@ -417,6 +417,181 @@ def no_invented_phone(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 6.5 no_invented_time_markers (Phase 20b, 2026-05-20)
+# ---------------------------------------------------------------------------
+
+# Year markers: "since 2015", "est. 2015", "established 2015", "established in
+# 2015", "founded 2015", "founded in 2015". Year must be 4 digits to avoid
+# false-positives on small numbers in product copy.
+_YEAR_MARKER_RE = re.compile(
+    r"\b(since|est\.?|established|founded(?:\s+in)?)\s+(?:in\s+)?(\d{4})\b",
+    re.IGNORECASE,
+)
+
+# Vibey time markers with no anchor — "since day one", "since the beginning",
+# "since inception", "over a decade", "for years", "decades of experience".
+# These have no truth value; they're always slop because the brief never
+# grants the LLM permission to use them.
+_VIBEY_TIME_RE = re.compile(
+    r"\bsince\s+(?:day\s+one|the\s+beginning|day\s+1|inception)\b"
+    r"|\bover\s+(?:a\s+)?decade(?:s)?\b"
+    r"|\b(?:for|over)\s+(?:many\s+)?years\b"
+    r"|\bdecades\s+of\s+(?:experience|service)\b",
+    re.IGNORECASE,
+)
+
+# Years count, "keyword follows" form:
+#   "11 years experience", "11+ years", "over 11 years",
+#   "for 11 years", "11 years of service", "11 years in business"
+_YEARS_COUNT_RE = re.compile(
+    r"\b(?:over\s+|for\s+)?(\d{1,3})\+?\s+years?"
+    r"(?:\s+(?:of\s+)?(?:experience|service|business|uptime)"
+    r"|\s+in\s+business)\b",
+    re.IGNORECASE,
+)
+
+# Years count, "keyword leads" form:
+#   "uptime: 11 years", "experience: 15 years", "in business 20 years"
+# This is the form Qwen produced on 2026-05-20 ("uptime: 11 years, 139 days").
+_YEARS_COUNT_LEAD_RE = re.compile(
+    r"\b(?:uptime|experience|in\s+business|years\s+in\s+business|service)\s*[:\-]?\s+(\d{1,3})\+?\s+years?\b",
+    re.IGNORECASE,
+)
+
+# "N years, M days" — the uptime-brag structure with no anchor in the brief.
+# Always slop in marketing copy.
+_UPTIME_DAYS_RE = re.compile(
+    r"\b(\d{1,3})\s+years?,\s+\d{1,3}\s+days?\b",
+    re.IGNORECASE,
+)
+
+
+def _legitimate_year(brief: dict) -> int | None:
+    """Return the brief's stated founding year, if any. Tolerates several
+    key names since the brief schema has not yet been formalized for this
+    field (Phase 20b adds the eval; Phase 20d will add the field)."""
+    for key in ("founded_year", "_founded_year", "year_founded", "established_year"):
+        raw = brief.get(key)
+        if raw is None:
+            continue
+        try:
+            y = int(raw)
+            if 1800 < y < 2100:
+                return y
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+def _legitimate_years_count(brief: dict) -> int | None:
+    """Return the brief's stated years-in-business, if any."""
+    for key in ("years_in_business", "_years_in_business", "years_experience"):
+        raw = brief.get(key)
+        if raw is None:
+            continue
+        try:
+            n = int(raw)
+            if 0 <= n < 200:
+                return n
+        except (TypeError, ValueError):
+            continue
+    return None
+
+
+@check_metadata(details_file_key="files")
+def no_invented_time_markers(ctx: BuildContext) -> CheckResult:
+    """Trust-signal time markers (``since 2015``, ``11 years uptime``,
+    ``since day one``) must be backed by the brief — not invented.
+
+    Why this check exists
+    ---------------------
+    On 2026-05-20 the mechanic-shop-inqueens Qwen build emitted:
+
+    - footer:  "Honest work. Fair pricing. Reliable service — since 2015."
+    - subtext: "serving Queens drivers since day one."
+    - trust:   "mechanic shop inqueens uptime: 11 years, 139 days"
+
+    None of those numbers were in the brief. They look credible, which is
+    the worst kind of slop — visitors can't tell they're fake. This eval
+    catches the entire class: any year marker, vibey "since X" phrase, or
+    "N years" claim is treated as fabricated unless the brief carries a
+    matching ``founded_year`` / ``years_in_business`` field.
+
+    Repair hint: replace flagged spans with empty strings, the
+    ``[BUSINESS YEARS]`` placeholder, or a vibe-free reframing
+    (``"Honest work. Fair pricing. Reliable service."``).
+    """
+    if not ctx.site_dir.exists():
+        return CheckResult("no_invented_time_markers", "skip", "no site directory")
+
+    legit_year = _legitimate_year(ctx.brief)
+    legit_count = _legitimate_years_count(ctx.brief)
+
+    offending_files: list[str] = []
+    issues: list[str] = []
+
+    for ext in ("*.tsx", "*.ts"):
+        for f in ctx.site_dir.rglob(ext):
+            if _SKIP_DIRS.intersection(f.parts):
+                continue
+            text = f.read_text(encoding="utf-8", errors="ignore")
+            file_offenses: list[str] = []
+
+            # 1) Year markers — "since 2015", "established in 2015"
+            for m in _YEAR_MARKER_RE.finditer(text):
+                year = int(m.group(2))
+                if legit_year is None or year != legit_year:
+                    file_offenses.append(f"{m.group(0).strip()!r}")
+
+            # 2) Vibey time — "since day one" — always slop
+            for m in _VIBEY_TIME_RE.finditer(text):
+                file_offenses.append(f"{m.group(0).strip()!r}")
+
+            # 3a) Years count, keyword-after — "11 years experience"
+            for m in _YEARS_COUNT_RE.finditer(text):
+                n = int(m.group(1))
+                if legit_count is None or n != legit_count:
+                    # If brief states founded_year, "N years" might be
+                    # internally consistent (current_year - founded_year);
+                    # we still flag because that's an unstable calculation
+                    # the LLM is doing in its head, not from a brief field.
+                    file_offenses.append(f"{m.group(0).strip()!r}")
+
+            # 3b) Years count, keyword-before — "uptime: 11 years"
+            for m in _YEARS_COUNT_LEAD_RE.finditer(text):
+                n = int(m.group(1))
+                if legit_count is None or n != legit_count:
+                    file_offenses.append(f"{m.group(0).strip()!r}")
+
+            # 3c) "N years, M days" — uptime-brag structure, always slop
+            for m in _UPTIME_DAYS_RE.finditer(text):
+                file_offenses.append(f"{m.group(0).strip()!r}")
+
+            if file_offenses:
+                rel = str(f.relative_to(ctx.site_dir)).replace("\\", "/")
+                offending_files.append(rel)
+                issues.extend(f"{rel}: {o}" for o in file_offenses[:3])
+
+    if offending_files:
+        return CheckResult(
+            "no_invented_time_markers", "fail",
+            f"invented time markers in {len(offending_files)} file(s) — "
+            f"brief has no founded_year/years_in_business",
+            details={
+                "files": offending_files[:10],
+                "issues": issues[:20],
+                "legitimate_year": legit_year,
+                "legitimate_count": legit_count,
+            },
+        )
+
+    return CheckResult(
+        "no_invented_time_markers", "pass",
+        "no invented time markers (or all backed by brief)",
+    )
+
+
+# ---------------------------------------------------------------------------
 # 7. tsconfig_paths_alias
 # ---------------------------------------------------------------------------
 
@@ -4025,6 +4200,38 @@ _NEXT_HEAD_IMPORT_RE = re.compile(r"""import\s+\w+\s+from\s+["']next/head["']"""
 _NEXT_ROUTER_IMPORT_RE = re.compile(r"""from\s+["']next/router["']""")
 _USE_CLIENT_IN_LAYOUT_RE = re.compile(r'^\s*[\'"]use client[\'"]')
 
+# Phase 29 (2026-05-20) — browser-global references inside JSX expressions.
+#
+# Even with "use client", a component still SSR-renders on the server
+# during initial hydration. `document.body.classList.contains(...)` or
+# `window.matchMedia(...)` inside a JSX expression (template literal,
+# attribute value, or child) evaluates during SSR and crashes because
+# `document` / `window` are undefined.
+#
+# Caught in the wild 2026-05-20: Qwen-generated Footer.tsx used
+# `document.body.classList.contains("show-grid")` directly in
+# className + JSX child expressions. Page 500'd on every load until
+# patched to use React state + useEffect.
+#
+# This regex targets the three positions where this pattern bites:
+#   1. `={...document.|={...window.`     — JSX attribute value
+#   2. `>{...document.|>{...window.`     — JSX child expression
+#   3. `${...document.|${...window.`     — template literal expression
+_BROWSER_GLOBAL_IN_JSX_RE = re.compile(
+    # Attribute value: className={document.body...}
+    r"=\s*\{[^}]*\b(?:document|window)\.\w+"
+    # JSX child same-line: >{document.body...}
+    r"|>\s*\{[^}]*\b(?:document|window)\.\w+"
+    # JSX child next-line: line starts with whitespace + `{document...` (the
+    # parent tag's `>` is on the previous line — common formatting)
+    r"|^\s*\{[^}]*\b(?:document|window)\.\w+"
+    # Template literal expression: `... ${document.foo}`
+    r"|\$\{[^}]*\b(?:document|window)\.\w+",
+    re.MULTILINE,
+)
+# Lines like `typeof window !== "undefined"` are SSR-safe guards — skip them.
+_TYPEOF_GUARD_RE = re.compile(r"\btypeof\s+(?:document|window)\b")
+
 
 @check_metadata(details_file_key="files")
 def next_js_static_check(ctx: BuildContext) -> CheckResult:
@@ -4045,6 +4252,10 @@ def next_js_static_check(ctx: BuildContext) -> CheckResult:
          uses ``export const metadata``)
       5. ``from "next/router"`` (Pages Router pattern; App Router uses
          ``next/navigation``)
+      6. ``document.``/``window.`` reference inside a JSX expression
+         (Phase 29, 2026-05-20) — SSR crash on hydration even in
+         "use client" files. Must be inside useEffect or guarded with
+         ``typeof window !== "undefined"``.
 
     Each failure carries the offending file in ``details["files"]`` so the
     repair loop knows what to embed in the focused repair prompt.
@@ -4136,6 +4347,61 @@ def next_js_static_check(ctx: BuildContext) -> CheckResult:
                 if rel not in files_with_issues:
                     files_with_issues.append(rel)
 
+            # 6. document. / window. reference inside JSX expression (Phase 29).
+            # SSR-renders during hydration even for "use client" files. Must
+            # be inside useEffect or behind a typeof guard.
+            #
+            # Heuristic for "is this safe?": the matched substring is the
+            # JSX expression containing document/window. Check the matched
+            # substring itself for an arrow function (`=>`) that precedes
+            # the browser-global reference — that means it's a callback
+            # body (onClick={() => document.body.toggle(...)}) which runs
+            # only post-mount. Otherwise it's evaluated during render and
+            # crashes SSR.
+            if _BROWSER_GLOBAL_IN_JSX_RE.search(src):
+                lines = src.splitlines()
+                for i, line in enumerate(lines):
+                    m = _BROWSER_GLOBAL_IN_JSX_RE.search(line)
+                    if not m:
+                        continue
+                    if _TYPEOF_GUARD_RE.search(line):
+                        continue
+                    # Same-line arrow check: arrow function before the
+                    # document/window reference = handler body, safe.
+                    matched_str = m.group(0)
+                    arrow_pos = matched_str.find("=>")
+                    doc_pos_d = matched_str.find("document.")
+                    doc_pos_w = matched_str.find("window.")
+                    doc_pos = max(doc_pos_d, doc_pos_w)
+                    if arrow_pos >= 0 and doc_pos > arrow_pos:
+                        continue
+                    # Multi-line callback check: walk backwards looking for
+                    # an OPEN useEffect/useCallback/useMemo block whose
+                    # closing brace is AFTER this line.
+                    in_callback = False
+                    depth = 0
+                    for j in range(i - 1, max(-1, i - 30), -1):
+                        depth += lines[j].count("}") - lines[j].count("{")
+                        if depth < 0 and any(tok in lines[j] for tok in (
+                            "useEffect(", "useCallback(", "useMemo(",
+                        )):
+                            in_callback = True
+                            break
+                        if depth > 3:
+                            break  # too far up
+                    if in_callback:
+                        continue
+                    issues.append(
+                        f"{rel}:{i+1}: `document.`/`window.` referenced inside "
+                        "a JSX expression. Even in 'use client' files, this "
+                        "evaluates during SSR/hydration and crashes "
+                        "(document/window undefined). Move into useEffect "
+                        "with state, or guard with `typeof window !== 'undefined'`."
+                    )
+                    if rel not in files_with_issues:
+                        files_with_issues.append(rel)
+                    break  # one finding per file is enough
+
     if not issues:
         return CheckResult(
             "next_js_static_check", "pass",
@@ -4163,6 +4429,7 @@ ALL_CHECKS = [
     images_use_next_image,
     images_have_alt,
     no_invented_phone,
+    no_invented_time_markers,
     uses_100dvh_not_100vh,
     html_lang_attr,
     layout_is_server_component,

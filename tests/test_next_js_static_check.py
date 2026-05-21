@@ -208,6 +208,129 @@ def test_passes_next_navigation_import():
 
 
 # ------------------------------------------------------------------ #
+# Gotcha 6: document./window. in JSX expression (Phase 29, 2026-05-20) #
+# ------------------------------------------------------------------ #
+# Caught in the wild on 2026-05-20: Qwen-generated Footer.tsx had
+# `document.body.classList.contains("show-grid")` inside both the
+# className template literal AND the JSX child expression. 500'd the
+# whole page on SSR even though "use client" was set. The eval must
+# catch this pattern.
+
+
+def test_detects_document_in_jsx_attribute():
+    """`className={document.body.classList.contains(...) ? ... : ...}` —
+    the exact pattern from Marc's 2026-05-20 mechanic Footer."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Footer.tsx", """\
+"use client";
+export function Footer() {
+  return (
+    <button
+      onClick={() => {}}
+      className={`px-4 ${document.body.classList.contains("show-grid") ? 'bg-accent' : ''}`}
+    >
+      Toggle
+    </button>
+  );
+}
+""")
+        result = next_js_static_check(ctx)
+        assert result.status == "fail"
+        assert any("Footer.tsx" in f for f in result.details.get("files", []))
+
+
+def test_detects_document_in_jsx_child():
+    """`{document.body.classList.contains("x") ? "ON" : "OFF"}` — the
+    other half of the same Footer bug."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Footer.tsx", """\
+"use client";
+export function Footer() {
+  return (
+    <button onClick={() => {}}>
+      {document.body.classList.contains("show-grid") ? "HIDE" : "SHOW"}
+    </button>
+  );
+}
+""")
+        result = next_js_static_check(ctx)
+        assert result.status == "fail"
+
+
+def test_detects_window_in_jsx_template_literal():
+    """`className={`w-${window.innerWidth}px`}` — the matchMedia / sizing
+    family of failures."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Banner.tsx", """\
+"use client";
+export function Banner() {
+  return <div className={`w-${window.innerWidth}px`}>Hi</div>;
+}
+""")
+        result = next_js_static_check(ctx)
+        assert result.status == "fail"
+
+
+def test_passes_document_inside_useeffect():
+    """`useEffect(() => { document.body.classList.add(...) }, [])` is SAFE
+    — runs only after hydration. Must NOT flag."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Footer.tsx", """\
+"use client";
+import { useEffect } from "react";
+export function Footer() {
+  useEffect(() => {
+    document.body.classList.add("ready");
+  }, []);
+  return <div>hi</div>;
+}
+""")
+        assert next_js_static_check(ctx).status == "pass"
+
+
+def test_passes_document_with_typeof_guard():
+    """`typeof window !== "undefined" && window.matchMedia(...)` — SSR-safe."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Banner.tsx", """\
+"use client";
+export function Banner() {
+  const dark = typeof window !== "undefined" && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return <div>{dark ? "Dark" : "Light"}</div>;
+}
+""")
+        assert next_js_static_check(ctx).status == "pass"
+
+
+def test_passes_document_inside_onclick_handler():
+    """`onClick={() => document.body.classList.toggle("x")}` — runs only on
+    user click, after hydration. Must NOT flag."""
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        ctx = _ctx(Path(td))
+        _write(ctx, "components/Toggle.tsx", """\
+"use client";
+export function Toggle() {
+  return (
+    <button onClick={() => document.body.classList.toggle("dark")}>
+      Toggle
+    </button>
+  );
+}
+""")
+        assert next_js_static_check(ctx).status == "pass"
+
+
+# ------------------------------------------------------------------ #
 # Details payload — repair loop reads this to focus the repair prompt   #
 # ------------------------------------------------------------------ #
 
