@@ -443,15 +443,23 @@ export function WelcomePhase({ onAdvance }: Props) {
   // Parallax — document-scroll tied transforms. Blobs move slower than
   // scroll (depth), hero text lifts gently as you leave the hero behind.
   const { scrollY } = useScroll();
-  // Phase 40 (2026-05-21) — softened all four hero transforms ~3x.
-  // The combined load (heroLift + heroFadeOut + 2 blob shifts + per-
-  // section parallax firing immediately after) caused chunky jank on
-  // fast scroll. Subtle 40-100px lifts + opacity 1→0.7 reads as
-  // intentional depth without breaking.
-  const blobYTop      = useTransform(scrollY, [0, 1000], [0, -60]);
-  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, -100]);
-  const heroLift      = useTransform(scrollY, [0, 800], [0, -40]);
-  const heroFadeOut   = useTransform(scrollY, [200, 700], [1, 0.7]);
+  // Phase 40b (2026-05-21) — Marc reported parallax STILL broken after
+  // Phase 40's 3x softening. Killing the hero's global y-transforms +
+  // blob y-transforms entirely. Reasons:
+  //   1. The new BackgroundCarousel already provides depth — competing
+  //      blob transforms over a moving carousel create visual noise.
+  //   2. heroLift moved the hero text upward as user scrolled, which
+  //      doesn't change the section's layout height (transforms don't),
+  //      so the section below stays in place — the hero just slid up
+  //      *over* the carousel as if floating, breaking the depth illusion.
+  //   3. opacity-only fadeout is cheap and reads as natural transition
+  //      out of the hero. NO geometric transforms.
+  // The per-section parallaxes (already at 60px / 20px from Phase 40)
+  // stay — those are subtle enough to read as intentional.
+  const blobYTop      = useTransform(scrollY, [0, 1000], [0, 0]); // no transform
+  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, 0]); // no transform
+  const heroLift      = useTransform(scrollY, [0, 800],  [0, 0]); // no lift
+  const heroFadeOut   = useTransform(scrollY, [400, 900], [1, 0.85]); // gentle fade only
 
   // One parallax setup per marketing section.
   const sentenceSec = useParallaxSection();
