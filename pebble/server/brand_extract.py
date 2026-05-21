@@ -64,11 +64,17 @@ def run_brand_extract(handler) -> None:
         handler._json(400, {"error": "url is required"})
         return
 
+    # Phase 38a — mode flag. "brand" (default) extracts business facts;
+    # "inspire" extracts style vocabulary + matches a DNA card. Any other
+    # value silently falls back to "brand" so a stale client can't 400 us.
+    mode_raw = body.get("mode", "brand")
+    mode = mode_raw if isinstance(mode_raw, str) and mode_raw in ("brand", "inspire") else "brand"
+
     # Optional flag — power users can force a refresh
     use_cache = bool(body.get("use_cache", True))
 
     try:
-        result = extract_brand(url, use_cache=use_cache)
+        result = extract_brand(url, mode=mode, use_cache=use_cache)
     except Exception as e:  # extract_brand promises never to raise, but belt-and-suspenders
         log.error("[brand-extract] unexpected exception: %s", e)
         handler._json(500, {"error": "extraction failed unexpectedly"})

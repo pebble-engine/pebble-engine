@@ -22,6 +22,8 @@ import {
   extractBrand,
   type SubscriptionState,
   type BrandExtractResult,
+  type ExtractMode,
+  type MatchedDNA,
 } from "@/lib/api";
 
 /**
@@ -473,20 +475,35 @@ export function WelcomePhase({ onAdvance }: Props) {
     setStarted(true);
   };
 
-  // Phase 33c — URL ingestion state. When the user pastes a URL, we
-  // extract the brand identity instead of immediately advancing. The
-  // narration cycles through human-readable steps so the 3-5s extract
-  // call feels intentional, not stuck.
+  // Phase 33c/d — URL ingestion state.
   const [extracting, setExtracting] = useState(false);
   const [extractStepIdx, setExtractStepIdx] = useState(0);
   const [extractError, setExtractError] = useState<string | null>(null);
 
-  const EXTRACT_STEPS = [
+  // Phase 33d — Mode picker state.
+  // When a URL is detected, show the intent picker before extraction fires.
+  const [awaitingModeChoice, setAwaitingModeChoice] = useState(false);
+  const [pendingUrl, setPendingUrl] = useState<string>("");
+  const [pendingFiles, setPendingFiles] = useState<File[] | undefined>(undefined);
+  const [extractMode, setExtractMode] = useState<ExtractMode>("brand");
+  const [matchedDnaResult, setMatchedDnaResult] = useState<MatchedDNA | null>(null);
+  const [inspireResult, setInspireResult] = useState<BrandExtractResult | null>(null);
+
+  const BRAND_STEPS = [
     "Reading your site…",
     "Detecting your brand palette…",
     "Identifying your industry…",
     "Got it — let's go.",
   ];
+
+  const INSPIRE_STEPS = [
+    "Reading the reference site…",
+    "Capturing the visual vibe…",
+    "Matching to a Pebble design system…",
+    "Got it — we'll build something inspired by this.",
+  ];
+
+  const EXTRACT_STEPS = extractMode === "inspire" ? INSPIRE_STEPS : BRAND_STEPS;
 
   // Cycle the narration while the request is in flight. ~900ms per step.
   useEffect(() => {
@@ -499,12 +516,12 @@ export function WelcomePhase({ onAdvance }: Props) {
     }, 900);
     return () => window.clearInterval(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [extracting]);
+  }, [extracting, extractMode]);
 
   /**
    * Apply a successful extraction result to the brief and advance.
    *
-   * Field mapping:
+   * Brand mode field mapping:
    *   business_name → brief.business_name
    *   industry       → brief.business_type   (snake_case slot the engine uses)
    *   tone           → brief.brand_tone
@@ -515,6 +532,12 @@ export function WelcomePhase({ onAdvance }: Props) {
    *   tagline        → brief._extracted_tagline
    *   _inspired_by   → brief._inspired_by    (mirrors the /api/inspire convention)
    *
+   * Inspire mode additionally patches:
+   *   _design_dna_id       → matched_dna.id  (overrides random DNA pick at build time)
+   *   _inspire_source_url  → res.url
+   *   Does NOT set business_name/business_type/industry — the inspire URL is
+   *   just a style reference, not the user's own business.
+   *
    * Also synthesizes a natural-language extra_context blob so any prompt
    * path that doesn't yet read the new fields still gets the signal.
    */
@@ -522,29 +545,49 @@ export function WelcomePhase({ onAdvance }: Props) {
     sourceUrl: string,
     res: BrandExtractResult,
     files?: File[],
+    mode: ExtractMode = "brand",
   ) => {
-    const blurbParts: string[] = [];
-    if (res.business_name) blurbParts.push(`Business name: ${res.business_name}.`);
-    if (res.tagline)        blurbParts.push(`Tagline: ${res.tagline}`);
-    if (res.industry)       blurbParts.push(`Industry: ${res.industry.replace(/_/g, " ")}.`);
-    if (res.tone)           blurbParts.push(`Tone: ${res.tone}.`);
-    if (res.hero_copy)      blurbParts.push(`Current hero copy: "${res.hero_copy}".`);
-    if (res.palette.length) blurbParts.push(`Brand palette: ${res.palette.join(", ")}.`);
-    blurbParts.push(`(Extracted from ${sourceUrl}.)`);
+    if (mode === "inspire") {
+      // Inspire: patch style-only fields; leave business identity blank.
+      const blurbParts: string[] = [];
+      if (res.vibe_keywords?.length) blurbParts.push(`Visual vibe: ${res.vibe_keywords.join(", ")}.`);
+      if (res.font_hints?.length)    blurbParts.push(`Font direction: ${res.font_hints.join(", ")}.`);
+      if (res.matched_dna)           blurbParts.push(`Inspired by ${res.matched_dna.label} design language.`);
+      blurbParts.push(`(Style reference: ${sourceUrl}.)`);
 
-    patchBrief({
-      business_name: res.business_name || deriveProjectName(sourceUrl),
-      business_type: res.industry || undefined,
-      brand_tone:    res.tone || undefined,
-      extra_context: blurbParts.join(" "),
-      user_first_name: firstName || undefined,
-      _inspired_by:  sourceUrl,
-      _brand_palette: res.palette,
-      _extracted_logo_url:    res.logo_url || undefined,
-      _extracted_favicon_url: res.favicon_url || undefined,
-      _extracted_hero_copy:   res.hero_copy || undefined,
-      _extracted_tagline:     res.tagline || undefined,
-    });
+      patchBrief({
+        business_name:    deriveProjectName(sourceUrl),
+        extra_context:    blurbParts.join(" "),
+        user_first_name:  firstName || undefined,
+        _design_dna_id:   res.matched_dna?.id || undefined,
+        _inspire_source_url: sourceUrl,
+        _brand_palette:   res.palette,
+      });
+    } else {
+      // Brand: full business identity extraction (existing behavior).
+      const blurbParts: string[] = [];
+      if (res.business_name) blurbParts.push(`Business name: ${res.business_name}.`);
+      if (res.tagline)        blurbParts.push(`Tagline: ${res.tagline}`);
+      if (res.industry)       blurbParts.push(`Industry: ${res.industry.replace(/_/g, " ")}.`);
+      if (res.tone)           blurbParts.push(`Tone: ${res.tone}.`);
+      if (res.hero_copy)      blurbParts.push(`Current hero copy: "${res.hero_copy}".`);
+      if (res.palette.length) blurbParts.push(`Brand palette: ${res.palette.join(", ")}.`);
+      blurbParts.push(`(Extracted from ${sourceUrl}.)`);
+
+      patchBrief({
+        business_name: res.business_name || deriveProjectName(sourceUrl),
+        business_type: res.industry || undefined,
+        brand_tone:    res.tone || undefined,
+        extra_context: blurbParts.join(" "),
+        user_first_name: firstName || undefined,
+        _inspired_by:  sourceUrl,
+        _brand_palette: res.palette,
+        _extracted_logo_url:    res.logo_url || undefined,
+        _extracted_favicon_url: res.favicon_url || undefined,
+        _extracted_hero_copy:   res.hero_copy || undefined,
+        _extracted_tagline:     res.tagline || undefined,
+      });
+    }
 
     if (files && files.length > 0) {
       sessionStorage.setItem(
@@ -555,60 +598,79 @@ export function WelcomePhase({ onAdvance }: Props) {
     onAdvance();
   };
 
+  /**
+   * Kick off extraction for a URL once the user has confirmed their
+   * intent (mode = "brand" | "inspire"). Called from both the mode
+   * picker CTA and the auto-default timer.
+   */
+  const runExtraction = async (url: string, mode: ExtractMode, files?: File[]) => {
+    setExtractMode(mode);
+    setAwaitingModeChoice(false);
+    setExtracting(true);
+    setExtractError(null);
+    setMatchedDnaResult(null);
+    setInspireResult(null);
+
+    try {
+      const res = await extractBrand(url, mode);
+      if (!res.ok) {
+        setExtractError(res.error || "Couldn't read that site — using your URL as a hint instead.");
+        await new Promise((r) => setTimeout(r, 1500));
+        patchBrief({
+          business_name: deriveProjectName(url),
+          extra_context: `User provided URL ${url} but extraction failed: ${res.error || "unknown error"}.`,
+          user_first_name: firstName || undefined,
+          _inspired_by: url,
+        });
+        if (files && files.length > 0) {
+          sessionStorage.setItem(
+            "pebble.pendingFiles",
+            JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
+          );
+        }
+        onAdvance();
+        return;
+      }
+
+      // Let the final narration step breathe.
+      await new Promise((r) => setTimeout(r, 600));
+
+      if (mode === "inspire" && res.matched_dna) {
+        // Show the matched-DNA card before advancing.
+        setMatchedDnaResult(res.matched_dna);
+        setInspireResult(res);
+        // setExtracting stays false after the finally block; the card renders.
+        return;
+      }
+
+      applyExtractionAndAdvance(url, res, files, mode);
+    } catch (err) {
+      setExtractError(err instanceof Error ? err.message : "Network error — using your URL as a hint instead.");
+      await new Promise((r) => setTimeout(r, 1500));
+      patchBrief({
+        business_name: deriveProjectName(url),
+        extra_context: `User provided URL ${url} (extraction unavailable).`,
+        user_first_name: firstName || undefined,
+        _inspired_by: url,
+      });
+      onAdvance();
+    } finally {
+      setExtracting(false);
+    }
+  };
+
   const handleSend = async (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
 
-    // Phase 33c — URL fast-path. If the input looks like a URL, run brand
-    // extraction first so the questionnaire is pre-filled instead of empty.
-    // Falls back gracefully to free-text on any extraction failure.
+    // Phase 33c/d — URL fast-path. If the input looks like a URL, show
+    // the mode picker (brand vs inspire) before firing extraction.
     const trimmed = message.trim();
     if (looksLikeUrl(trimmed)) {
-      setExtracting(true);
-      setExtractError(null);
-      try {
-        const res = await extractBrand(trimmed);
-        if (!res.ok) {
-          // Extraction reachable but failed (DNS, 4xx, parse). Honest
-          // narration to the user, then advance with the raw URL as
-          // extra_context so the build can still proceed.
-          setExtractError(res.error || "Couldn't read that site — using your URL as a hint instead.");
-          // Small pause so the message is readable, then fall through.
-          await new Promise((r) => setTimeout(r, 1500));
-          patchBrief({
-            business_name: deriveProjectName(trimmed),
-            extra_context: `User provided URL ${trimmed} but extraction failed: ${res.error || "unknown error"}.`,
-            user_first_name: firstName || undefined,
-            _inspired_by: trimmed,
-          });
-          if (files && files.length > 0) {
-            sessionStorage.setItem(
-              "pebble.pendingFiles",
-              JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
-            );
-          }
-          onAdvance();
-          return;
-        }
-        // Success path — let the final "Got it" frame breathe before advance.
-        await new Promise((r) => setTimeout(r, 600));
-        applyExtractionAndAdvance(trimmed, res, files);
-        return;
-      } catch (err) {
-        // Network-level failure (CORS, timeout, server down). Same fallback
-        // as a soft failure — don't block the user.
-        setExtractError(err instanceof Error ? err.message : "Network error — using your URL as a hint instead.");
-        await new Promise((r) => setTimeout(r, 1500));
-        patchBrief({
-          business_name: deriveProjectName(trimmed),
-          extra_context: `User provided URL ${trimmed} (extraction unavailable).`,
-          user_first_name: firstName || undefined,
-          _inspired_by: trimmed,
-        });
-        onAdvance();
-        return;
-      } finally {
-        setExtracting(false);
-      }
+      setPendingUrl(trimmed);
+      setPendingFiles(files);
+      setAwaitingModeChoice(true);
+      setStarted(true);
+      return;
     }
 
     // Free-text path (existing behavior).
@@ -730,8 +792,116 @@ export function WelcomePhase({ onAdvance }: Props) {
                   <ArrowRight className="w-5 h-5 text-white" />
                 </span>
               </motion.button>
+            ) : awaitingModeChoice ? (
+              /* Phase 33d — intent picker. Shown when the user pastes a URL
+                 so they can choose whether to extract their own brand info
+                 or treat the URL as a visual inspiration reference. */
+              <motion.div
+                key="mode-picker"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
+                className="w-full max-w-xl mx-auto space-y-4"
+              >
+                <p className="text-sm text-white/60 text-center truncate">
+                  <span className="text-white/40 mr-1">URL:</span>
+                  <span className="text-white/70">{pendingUrl}</span>
+                </p>
+                <p className="text-base text-white/80 text-center font-medium">What would you like to do with this?</p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {/* Primary: brand mode */}
+                  <button
+                    onClick={() => runExtraction(pendingUrl, "brand", pendingFiles)}
+                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-white/10 hover:bg-white/15 border border-white/20 hover:border-white/35 backdrop-blur-xl transition-colors text-left group"
+                  >
+                    <span className="w-9 h-9 rounded-full bg-[#3054ff]/80 group-hover:bg-[#3054ff] flex items-center justify-center transition-colors shrink-0">
+                      <Rocket className="w-4 h-4 text-white" aria-hidden />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white">Build this business&apos;s site</span>
+                      <span className="block text-xs text-white/55 mt-0.5">Extract brand + industry info</span>
+                    </span>
+                    <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-[#3054ff] bg-[#3054ff]/10 px-2 py-1 rounded-full shrink-0">Recommended</span>
+                  </button>
+                  {/* Secondary: inspire mode */}
+                  <button
+                    onClick={() => runExtraction(pendingUrl, "inspire", pendingFiles)}
+                    className="flex-1 flex items-center gap-3 px-5 py-4 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/15 hover:border-white/25 backdrop-blur-xl transition-colors text-left group"
+                  >
+                    <span className="w-9 h-9 rounded-full bg-white/10 group-hover:bg-white/15 flex items-center justify-center transition-colors shrink-0">
+                      <Sparkles className="w-4 h-4 text-white/70" aria-hidden />
+                    </span>
+                    <span>
+                      <span className="block text-sm font-semibold text-white/90">Inspired by this design</span>
+                      <span className="block text-xs text-white/45 mt-0.5">Match the visual style only</span>
+                    </span>
+                  </button>
+                </div>
+                <button
+                  onClick={() => { setAwaitingModeChoice(false); setPendingUrl(""); }}
+                  className="w-full text-xs text-white/40 hover:text-white/65 text-center transition-colors py-1"
+                >
+                  Cancel — type something else
+                </button>
+              </motion.div>
+            ) : matchedDnaResult && inspireResult ? (
+              /* Phase 33d — matched DNA result card. Shown after a successful
+                 inspire extraction before advancing to the questionnaire. */
+              <motion.div
+                key="dna-card"
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.4, ease: EASE_CINEMATIC }}
+                className="w-full max-w-xl mx-auto p-7 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/15 space-y-5"
+              >
+                <div className="space-y-1">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-white/40">Matched style</p>
+                  <h3 className="font-display italic text-2xl text-white leading-snug">
+                    {matchedDnaResult.label}
+                  </h3>
+                  <p className="text-sm text-white/70 leading-relaxed">{matchedDnaResult.feel}</p>
+                </div>
+
+                {/* Confidence bar */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-white/40">
+                    <span>Style match confidence</span>
+                    <span>{Math.round(matchedDnaResult.confidence * 100)}%</span>
+                  </div>
+                  <div className="h-1 rounded-full bg-white/10 overflow-hidden">
+                    <motion.div
+                      className="h-full rounded-full bg-white/60"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${Math.round(matchedDnaResult.confidence * 100)}%` }}
+                      transition={{ duration: 0.6, ease: EASE_CINEMATIC, delay: 0.2 }}
+                    />
+                  </div>
+                </div>
+
+                <p className="text-[11px] text-white/35 leading-relaxed border-t border-white/10 pt-4">
+                  Custom 3D scenes and shaders won&apos;t be replicated — we&apos;ll match the vibe with lighter techniques.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                  <button
+                    onClick={() => applyExtractionAndAdvance(pendingUrl, inspireResult, pendingFiles, "inspire")}
+                    className="flex-1 flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-white text-[#1a1a1a] font-semibold text-sm hover:bg-white/90 transition-colors"
+                  >
+                    Use this style
+                    <ArrowRight className="w-4 h-4" aria-hidden />
+                  </button>
+                  <button
+                    onClick={() => { setMatchedDnaResult(null); setInspireResult(null); runExtraction(pendingUrl, "brand", pendingFiles); }}
+                    className="flex-1 text-sm text-white/60 hover:text-white/90 transition-colors px-4 py-3 rounded-xl hover:bg-white/5"
+                  >
+                    Pick a different style
+                  </button>
+                </div>
+              </motion.div>
             ) : extracting ? (
-              /* Phase 33c — extraction narration. Replaces the prompt
+              /* Phase 33c/d — extraction narration. Replaces the prompt
                  input while the brand-extract call is in flight. Steps
                  animate via setExtractStepIdx every 900ms. */
               <motion.div

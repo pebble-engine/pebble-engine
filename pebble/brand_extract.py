@@ -71,35 +71,48 @@ _FETCH_TIMEOUT_SECONDS = 8.0
 
 # ---- Public API ---------------------------------------------------------
 
-def extract_brand(url: str, *, use_cache: bool = True) -> dict:
+def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True) -> dict:
     """Extract a partial brief from a URL.
 
-    Returns a dict with the following shape (every key always present):
+    Two modes:
+      - "brand"   (default): the URL is the user's own business. Extract
+                  business FACTS — name, tagline, industry, tone, palette,
+                  logo. Pre-fills the questionnaire with what we found.
+      - "inspire": the URL is a reference site the user admires. Extract
+                  STYLE attributes only — palette, font hints, vibe keywords,
+                  motion intensity, layout density — then match the result
+                  to one of Pebble's 11 DNA cards so the build picks up the
+                  inspired aesthetic. We do NOT borrow business name /
+                  industry / tagline in this mode (the inspiration site is
+                  about how the user's site should FEEL, not who they are).
 
-        {
-          "url":            str,                # normalized URL we actually fetched
-          "ok":             bool,               # True = at least the scrape succeeded
-          "error":          str | None,         # populated on any failure
-          "business_name":  str | None,
-          "tagline":        str | None,
-          "industry":       str | None,         # LLM-inferred best guess
-          "tone":           str | None,         # LLM-inferred (e.g. "warm, professional")
-          "palette":        list[str],          # hex strings; up to 5
-          "logo_url":       str | None,
-          "favicon_url":    str | None,
-          "hero_copy":      str | None,         # h1 text or OG description
-          "raw_text_sample": str,               # first 500 chars of body text
-          "source":         "cache" | "fresh",
-        }
+    Returns a dict with all keys always present (see _empty_result for the
+    shape — every BrandExtractResult field is set in both modes; fields
+    that don't apply to the selected mode are null / empty list / etc.):
+
+        Common:
+          url, ok, error, palette, logo_url, favicon_url, raw_text_sample,
+          source, mode
+
+        Brand-mode populated:
+          business_name, tagline, industry, tone, hero_copy
+
+        Inspire-mode populated:
+          vibe_keywords, font_hints, motion_intensity, layout_density,
+          matched_dna  ({id, label, feel, confidence} | None)
 
     Never raises. On error, returns an `ok: False` shell that the caller
     can still pass through to the frontend.
     """
+    mode = mode if mode in ("brand", "inspire") else "brand"
+
     normalized = _normalize_url(url)
     if not normalized:
-        return _empty_result(url, "Invalid URL. Provide a full https:// address.")
+        return _empty_result(url, "Invalid URL. Provide a full https:// address.", mode=mode)
 
-    cache_key = _cache_key(normalized)
+    # Cache key includes mode so a site that's been brand-extracted before
+    # still gets a fresh inspire pass when the user toggles modes.
+    cache_key = _cache_key(f"{mode}:{normalized}")
     if use_cache:
         cached = _load_cache(cache_key)
         if cached:
@@ -109,31 +122,65 @@ def extract_brand(url: str, *, use_cache: bool = True) -> dict:
     try:
         html, final_url = _fetch_html(normalized)
     except _FetchError as e:
-        return _empty_result(normalized, f"Couldn't reach the site: {e}")
+        return _empty_result(normalized, f"Couldn't reach the site: {e}", mode=mode)
 
     try:
         scraped = _scrape_html(html, final_url)
     except Exception as e:  # pragma: no cover — pure regex
         log.error("[brand_extract] scrape failed: %s", e)
-        return _empty_result(normalized, "Couldn't parse the page.")
+        return _empty_result(normalized, "Couldn't parse the page.", mode=mode)
 
-    inferred = _llm_infer(scraped)
-
-    result = {
-        "url":            final_url,
-        "ok":             True,
-        "error":          None,
-        "business_name":  scraped["business_name"] or inferred.get("business_name"),
-        "tagline":        scraped["tagline"] or inferred.get("tagline"),
-        "industry":       inferred.get("industry"),
-        "tone":           inferred.get("tone"),
-        "palette":        scraped["palette"] or inferred.get("palette") or [],
-        "logo_url":       scraped["logo_url"],
-        "favicon_url":    scraped["favicon_url"],
-        "hero_copy":      scraped["hero_copy"] or inferred.get("hero_copy"),
-        "raw_text_sample": scraped["text_sample"],
-        "source":         "fresh",
-    }
+    if mode == "inspire":
+        style = _llm_infer_style(scraped)
+        matched = _match_dna(scraped, style) if style else None
+        result = {
+            "url":              final_url,
+            "ok":               True,
+            "error":            None,
+            "mode":             "inspire",
+            # Brand-mode fields stay nulled — inspire URL is about FEEL,
+            # not about who the user is.
+            "business_name":    None,
+            "tagline":          None,
+            "industry":         None,
+            "tone":             None,
+            "hero_copy":        None,
+            # Style-only fields (populated)
+            "palette":          scraped["palette"] or style.get("palette") or [],
+            "logo_url":         scraped["logo_url"],
+            "favicon_url":      scraped["favicon_url"],
+            "vibe_keywords":    style.get("vibe_keywords", []),
+            "font_hints":       style.get("font_hints", []),
+            "motion_intensity": style.get("motion_intensity"),
+            "layout_density":   style.get("layout_density"),
+            "matched_dna":      matched,
+            "raw_text_sample":  scraped["text_sample"],
+            "source":           "fresh",
+        }
+    else:
+        inferred = _llm_infer(scraped)
+        result = {
+            "url":              final_url,
+            "ok":               True,
+            "error":            None,
+            "mode":             "brand",
+            "business_name":    scraped["business_name"] or inferred.get("business_name"),
+            "tagline":          scraped["tagline"] or inferred.get("tagline"),
+            "industry":         inferred.get("industry"),
+            "tone":             inferred.get("tone"),
+            "palette":          scraped["palette"] or inferred.get("palette") or [],
+            "logo_url":         scraped["logo_url"],
+            "favicon_url":      scraped["favicon_url"],
+            "hero_copy":        scraped["hero_copy"] or inferred.get("hero_copy"),
+            # Inspire-only fields nulled
+            "vibe_keywords":    [],
+            "font_hints":       [],
+            "motion_intensity": None,
+            "layout_density":   None,
+            "matched_dna":      None,
+            "raw_text_sample":  scraped["text_sample"],
+            "source":           "fresh",
+        }
 
     if use_cache:
         _save_cache(cache_key, result)
@@ -476,6 +523,254 @@ def _llm_infer(scraped: dict) -> dict:
     return _parse_llm_json(raw)
 
 
+# ---- Inspire-mode style extraction (Phase 38a) -------------------------
+
+# Different prompt — we want STYLE vocabulary, not business facts. Tight
+# constraints on vibe_keywords and font_hints because we feed them to the
+# DNA matcher next and need consistent shape.
+_STYLE_PROMPT = """You are analyzing a website as a VISUAL INSPIRATION REFERENCE — not
+as the user's own business. The user wants Pebble to build something with
+this site's AESTHETIC FEEL, not to clone its business identity.
+
+Scraped signals (deterministic):
+  Tagline-ish copy (meta description): {tagline}
+  Hero copy (h1): {hero_copy}
+  Palette (from inline styles): {palette}
+  Body text sample: {text_sample}
+
+Your job: describe this site's VISUAL STYLE in a vocabulary Pebble's design
+system can consume. Output a single JSON object with this exact shape (no
+commentary, no markdown fences):
+
+{{
+  "vibe_keywords": ["3-6 short adjective phrases like 'dark editorial', 'cinematic widescreen', 'soft botanical', 'industrial brutalist', 'late-night intimate'"],
+  "font_hints": ["1-3 short type descriptors like 'serif display headings', 'geometric sans body', 'condensed grotesque', 'editorial italic'"],
+  "motion_intensity": "minimal | moderate | high",
+  "layout_density": "spacious | dense",
+  "palette": ["#hex", "#hex", "#hex"]
+}}
+
+Rules:
+- vibe_keywords: emotion + style + weight (e.g. "dark cinematic" not just "dark"). Lowercase.
+- motion_intensity: "minimal" if static-feeling, "moderate" if scroll fades + simple
+  parallax, "high" if scroll-driven Three.js or major reveal animations.
+- layout_density: "spacious" = generous margins, lots of whitespace, editorial. "dense" = card grids, sidebars, info-rich.
+- palette: prefer the scraped values if present (3-5 hex strings, 7 chars each, lowercase). If scrape gave 0-2 colors, fill in with colors that fit the vibe.
+- DO NOT include business_name, tagline, industry, tone — this is a STYLE reference, not the user's business.
+- Output JSON only. First character must be `{{`."""
+
+
+def _llm_infer_style(scraped: dict) -> dict:
+    """Inspire-mode counterpart to _llm_infer. Returns style vocabulary
+    instead of business facts.
+
+    Returns {} on any failure — caller falls back to deterministic
+    palette + a "minimal" motion intensity heuristic, but the matched_dna
+    field will be None.
+    """
+    try:
+        from pebble.llm import get_llm_client
+    except Exception:
+        return {}
+
+    try:
+        client = get_llm_client()
+    except Exception:
+        return {}
+    if client is None:
+        return {}
+
+    prompt = _STYLE_PROMPT.format(
+        tagline=scraped["tagline"] or "(none)",
+        hero_copy=scraped["hero_copy"] or "(none)",
+        palette=", ".join(scraped["palette"]) or "(none)",
+        text_sample=scraped["text_sample"][:_LLM_HTML_BUDGET] or "(no body text extracted)",
+    )
+
+    try:
+        raw = client.generate(
+            system="You analyze websites and output strict JSON describing their visual style.",
+            user=prompt,
+            max_tokens=400,
+        )
+    except Exception as e:
+        log.warning("[brand_extract] style LLM call failed: %s", e)
+        return {}
+
+    parsed = _parse_llm_json(raw)
+    if not parsed:
+        return {}
+
+    # Normalize: enforce shape + clamp vocabularies
+    motion = parsed.get("motion_intensity")
+    if motion not in ("minimal", "moderate", "high"):
+        motion = None
+    density = parsed.get("layout_density")
+    if density not in ("spacious", "dense"):
+        density = None
+
+    vibe = parsed.get("vibe_keywords")
+    if not isinstance(vibe, list):
+        vibe = []
+    vibe = [str(v).strip().lower() for v in vibe if isinstance(v, (str, int))][:6]
+
+    fonts = parsed.get("font_hints")
+    if not isinstance(fonts, list):
+        fonts = []
+    fonts = [str(f).strip() for f in fonts if isinstance(f, (str, int))][:3]
+
+    return {
+        "vibe_keywords":    vibe,
+        "font_hints":       fonts,
+        "motion_intensity": motion,
+        "layout_density":   density,
+        "palette":          parsed.get("palette", []),
+    }
+
+
+# ---- Vibe → DNA matcher (Phase 38b) ------------------------------------
+#
+# Single cheap LLM call. Given the extracted style attrs + a compact
+# description of each DNA card, returns the best-match dna_id + confidence
+# + rationale. The build pipeline already supports `_design_dna_id` pinning
+# so the caller just stamps it on the brief and the random pick is skipped.
+
+
+def _build_dna_catalog() -> list[dict]:
+    """Build a slim, prompt-friendly version of each DNA card.
+
+    We only send the LLM the discriminating fields — label, feel, motion,
+    palette posture, industry affinity — not the full 60-line cards. Keeps
+    the prompt under 2K tokens.
+    """
+    from style_dna import DNA_CARDS
+    catalog = []
+    for c in DNA_CARDS:
+        catalog.append({
+            "id":               c["id"],
+            "label":            c["label"],
+            "feel":             c.get("feel", ""),
+            "motion_intensity": c.get("motion_intensity", ""),
+            "palette_posture":  c.get("palette_posture", ""),
+            "industry_affinity": c.get("industry_affinity", [])[:6],
+        })
+    return catalog
+
+
+_DNA_MATCH_PROMPT = """You match an extracted visual style to one of Pebble's design
+system cards. Read the extracted style + the catalog, pick the SINGLE best
+match, and return strict JSON.
+
+Extracted style from the reference URL:
+  Vibe keywords:    {vibe_keywords}
+  Font hints:       {font_hints}
+  Motion intensity: {motion_intensity}
+  Layout density:   {layout_density}
+  Palette:          {palette}
+  Hero copy sample: {hero_copy}
+
+Pebble's DNA catalog (pick exactly one id from this list):
+{catalog}
+
+Output ONLY this JSON (no commentary, no fences):
+
+{{
+  "id": "<one of the catalog ids>",
+  "confidence": 0.0-1.0,
+  "rationale": "one sentence explaining why this match (under 25 words)"
+}}
+
+Rules:
+- "id" MUST be one of the catalog ids exactly — never invent.
+- Confidence: 0.9+ = strong match (vibe + motion both align), 0.6-0.9 = good fit, 0.3-0.6 = closest-of-imperfect, <0.3 = essentially a guess (still pick one).
+- Prefer cards whose `motion_intensity` matches the extracted motion_intensity. A "high" motion reference should NOT map to "swiss_magazine" (subtle motion only).
+- Prefer cards whose `feel` overlaps with the extracted vibe_keywords.
+- First character of output must be `{{`."""
+
+
+def _match_dna(scraped: dict, style: dict) -> Optional[dict]:
+    """Match the extracted style to a DNA card via one cheap LLM call.
+
+    Returns {id, label, feel, confidence} on success, None on any failure.
+    The caller treats this as optional — the build still works without a
+    matched DNA (falls back to industry-affinity random pick).
+    """
+    if not style:
+        return None
+    try:
+        from pebble.llm import get_llm_client
+    except Exception:
+        return None
+    try:
+        client = get_llm_client()
+    except Exception:
+        return None
+    if client is None:
+        return None
+
+    catalog = _build_dna_catalog()
+    # Render catalog as a numbered text block — easier for the LLM than JSON.
+    catalog_lines = []
+    for c in catalog:
+        catalog_lines.append(
+            f"- id: {c['id']}\n"
+            f"  label: {c['label']}\n"
+            f"  feel: {c['feel']}\n"
+            f"  motion: {c['motion_intensity']}\n"
+            f"  palette: {c['palette_posture']}\n"
+            f"  works for: {', '.join(c['industry_affinity']) or '(general)'}"
+        )
+    catalog_text = "\n".join(catalog_lines)
+
+    prompt = _DNA_MATCH_PROMPT.format(
+        vibe_keywords=", ".join(style.get("vibe_keywords", [])) or "(none)",
+        font_hints=", ".join(style.get("font_hints", [])) or "(none)",
+        motion_intensity=style.get("motion_intensity") or "(unknown)",
+        layout_density=style.get("layout_density") or "(unknown)",
+        palette=", ".join(scraped.get("palette", []) or style.get("palette", []) or []) or "(none)",
+        hero_copy=scraped.get("hero_copy") or "(none)",
+        catalog=catalog_text,
+    )
+
+    try:
+        raw = client.generate(
+            system="You match website visual styles to Pebble's design system cards. Output strict JSON.",
+            user=prompt,
+            max_tokens=200,
+        )
+    except Exception as e:
+        log.warning("[brand_extract] DNA match LLM call failed: %s", e)
+        return None
+
+    parsed = _parse_llm_json(raw)
+    if not parsed:
+        return None
+
+    chosen_id = parsed.get("id")
+    if not isinstance(chosen_id, str):
+        return None
+    # Validate against the catalog — refuse invented ids.
+    catalog_index = {c["id"]: c for c in catalog}
+    card = catalog_index.get(chosen_id)
+    if not card:
+        log.warning("[brand_extract] DNA matcher returned invalid id: %r", chosen_id)
+        return None
+
+    conf_raw = parsed.get("confidence")
+    try:
+        confidence = float(conf_raw) if conf_raw is not None else 0.5
+    except (TypeError, ValueError):
+        confidence = 0.5
+    confidence = max(0.0, min(1.0, confidence))
+
+    return {
+        "id":         card["id"],
+        "label":      card["label"],
+        "feel":       card["feel"],
+        "confidence": confidence,
+    }
+
+
 def _parse_llm_json(raw: str) -> dict:
     """Robust JSON parse that tolerates leading prose / code fences."""
     if not raw:
@@ -547,19 +842,30 @@ def _save_cache(key: str, payload: dict) -> None:
 
 # ---- Empty / failure result --------------------------------------------
 
-def _empty_result(url: str, error: str) -> dict:
+def _empty_result(url: str, error: str, *, mode: str = "brand") -> dict:
+    """Return an `ok: False` shell with every BrandExtractResult key present.
+
+    Keeping all keys present (just nulled) means the frontend can spread
+    the result freely without TypeScript narrowing for failure paths.
+    """
     return {
-        "url":             url,
-        "ok":              False,
-        "error":           error,
-        "business_name":   None,
-        "tagline":         None,
-        "industry":        None,
-        "tone":            None,
-        "palette":         [],
-        "logo_url":        None,
-        "favicon_url":     None,
-        "hero_copy":       None,
-        "raw_text_sample": "",
-        "source":          "fresh",
+        "url":              url,
+        "ok":               False,
+        "error":            error,
+        "mode":             mode if mode in ("brand", "inspire") else "brand",
+        "business_name":    None,
+        "tagline":          None,
+        "industry":         None,
+        "tone":             None,
+        "palette":          [],
+        "logo_url":         None,
+        "favicon_url":      None,
+        "hero_copy":        None,
+        "vibe_keywords":    [],
+        "font_hints":       [],
+        "motion_intensity": None,
+        "layout_density":   None,
+        "matched_dna":      None,
+        "raw_text_sample":  "",
+        "source":           "fresh",
     }

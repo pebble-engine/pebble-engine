@@ -365,6 +365,18 @@ export async function checkBuildIntegrity(slug: string): Promise<IntegrityRespon
 // with `ok: false` + an `error` string so the UI can render a non-blocking
 // notice and fall back to free-text. Treat the response as advisory data,
 // never as a blocking gate.
+//
+// Phase 33d: mode param added. "brand" (default) extracts business facts.
+// "inspire" extracts visual style + matches to a Pebble DNA design card.
+
+export type ExtractMode = "brand" | "inspire";
+
+export type MatchedDNA = {
+  id: string;          // e.g. "cinematic_imax"
+  label: string;       // e.g. "Cinematic IMAX"
+  feel: string;        // e.g. "Movie poster meets Tesla product page. Widescreen, dramatic."
+  confidence: number;  // 0.0–1.0
+};
 
 export type BrandExtractResult = {
   url: string;
@@ -380,10 +392,21 @@ export type BrandExtractResult = {
   hero_copy: string | null;
   raw_text_sample: string;
   source: "cache" | "fresh";
+  // Phase 33d — inspire-mode additions (null in brand mode)
+  mode: ExtractMode;
+  vibe_keywords: string[];                              // e.g. ["dark", "cinematic", "editorial"]
+  font_hints: string[];                                 // e.g. ["serif display", "geometric sans body"]
+  motion_intensity: "minimal" | "moderate" | "high" | null;
+  layout_density: "spacious" | "dense" | null;
+  matched_dna: MatchedDNA | null;                       // populated when mode === "inspire"
 };
 
-export async function extractBrand(url: string, useCache = true): Promise<BrandExtractResult> {
-  return postJSON("/api/brand-extract", { url, use_cache: useCache });
+export async function extractBrand(
+  url: string,
+  mode: ExtractMode = "brand",
+  useCache = true,
+): Promise<BrandExtractResult> {
+  return postJSON("/api/brand-extract", { url, mode, use_cache: useCache });
 }
 
 // ---------- /api/templates (Phase 31, 2026-05-20) --------------------------

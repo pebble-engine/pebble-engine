@@ -143,7 +143,7 @@ def test_valid_url_calls_extract_brand_and_returns_200():
     status, payload = h.response
     assert status == 200
     assert payload == fake_result
-    mock_ext.assert_called_once_with("https://acme.co", use_cache=True)
+    mock_ext.assert_called_once_with("https://acme.co", mode="brand", use_cache=True)
 
 
 def test_use_cache_false_is_honored():
@@ -155,7 +155,7 @@ def test_use_cache_false_is_honored():
     h = _StubHandler(b'{"url": "https://x.com", "use_cache": false}')
     with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext:
         endpoint_module.run_brand_extract(h)
-    mock_ext.assert_called_once_with("https://x.com", use_cache=False)
+    mock_ext.assert_called_once_with("https://x.com", mode="brand", use_cache=False)
 
 
 def test_extraction_failure_returns_200_with_ok_false():
@@ -185,3 +185,112 @@ def test_unexpected_exception_returns_500():
     status, payload = h.response
     assert status == 500
     assert "error" in payload
+
+
+# ------------------------------------------------------------------ #
+# Mode parameter plumbing (Phase 38a)                                 #
+# ------------------------------------------------------------------ #
+
+
+def _make_stub(body_dict: dict) -> "_StubHandler":
+    body = json.dumps(body_dict).encode()
+    return _StubHandler(body)
+
+
+def test_endpoint_passes_mode_to_extract_brand():
+    """mode="inspire" in body must be forwarded to extract_brand."""
+    fake_result = {
+        "url": "https://ref-site.com", "ok": True, "error": None,
+        "mode": "inspire", "business_name": None, "tagline": None,
+        "industry": None, "tone": None, "palette": [], "logo_url": None,
+        "favicon_url": None, "hero_copy": None,
+        "vibe_keywords": ["dark cinematic"], "font_hints": [],
+        "motion_intensity": "high", "layout_density": "spacious",
+        "matched_dna": None, "raw_text_sample": "", "source": "fresh",
+    }
+    h = _make_stub({"url": "https://ref-site.com", "mode": "inspire"})
+    with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext:
+        endpoint_module.run_brand_extract(h)
+    mock_ext.assert_called_once_with("https://ref-site.com", mode="inspire", use_cache=True)
+
+
+def test_endpoint_defaults_to_brand_mode_when_mode_omitted():
+    """Body without a mode key → extract_brand called with mode="brand"."""
+    fake_result = {
+        "url": "https://acme.co", "ok": True, "error": None,
+        "mode": "brand", "business_name": "Acme", "tagline": None,
+        "industry": "tech", "tone": "professional", "palette": [],
+        "logo_url": None, "favicon_url": None, "hero_copy": None,
+        "vibe_keywords": [], "font_hints": [], "motion_intensity": None,
+        "layout_density": None, "matched_dna": None,
+        "raw_text_sample": "", "source": "fresh",
+    }
+    h = _make_stub({"url": "https://acme.co"})
+    with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext:
+        endpoint_module.run_brand_extract(h)
+    mock_ext.assert_called_once_with("https://acme.co", mode="brand", use_cache=True)
+
+
+def test_endpoint_invalid_mode_falls_back_to_brand():
+    """Unrecognised mode string → silently becomes brand."""
+    fake_result = {
+        "url": "https://acme.co", "ok": True, "error": None,
+        "mode": "brand", "business_name": None, "tagline": None,
+        "industry": None, "tone": None, "palette": [], "logo_url": None,
+        "favicon_url": None, "hero_copy": None,
+        "vibe_keywords": [], "font_hints": [], "motion_intensity": None,
+        "layout_density": None, "matched_dna": None,
+        "raw_text_sample": "", "source": "fresh",
+    }
+    h = _make_stub({"url": "https://acme.co", "mode": "something_random"})
+    with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext:
+        endpoint_module.run_brand_extract(h)
+    mock_ext.assert_called_once_with("https://acme.co", mode="brand", use_cache=True)
+
+
+def test_endpoint_non_string_mode_falls_back_to_brand():
+    """Non-string mode (int, null) → silently becomes brand."""
+    fake_result = {
+        "url": "https://acme.co", "ok": True, "error": None,
+        "mode": "brand", "business_name": None, "tagline": None,
+        "industry": None, "tone": None, "palette": [], "logo_url": None,
+        "favicon_url": None, "hero_copy": None,
+        "vibe_keywords": [], "font_hints": [], "motion_intensity": None,
+        "layout_density": None, "matched_dna": None,
+        "raw_text_sample": "", "source": "fresh",
+    }
+    # mode=42
+    h = _make_stub({"url": "https://acme.co", "mode": 42})
+    with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext:
+        endpoint_module.run_brand_extract(h)
+    mock_ext.assert_called_once_with("https://acme.co", mode="brand", use_cache=True)
+
+    # mode=null (None in Python / null in JSON)
+    h2 = _make_stub({"url": "https://acme.co", "mode": None})
+    with patch.object(endpoint_module, "extract_brand", return_value=fake_result) as mock_ext2:
+        endpoint_module.run_brand_extract(h2)
+    mock_ext2.assert_called_once_with("https://acme.co", mode="brand", use_cache=True)
+
+
+def test_endpoint_returns_inspire_mode_payload_through():
+    """The endpoint must pass the inspire result dict through to _json unchanged."""
+    inspire_result = {
+        "url": "https://ref-site.com", "ok": True, "error": None,
+        "mode": "inspire", "business_name": None, "tagline": None,
+        "industry": None, "tone": None, "palette": ["#1a1a2e"],
+        "logo_url": None, "favicon_url": "https://ref-site.com/favicon.ico",
+        "hero_copy": None,
+        "vibe_keywords": ["dark cinematic", "editorial"],
+        "font_hints": ["serif display"],
+        "motion_intensity": "high", "layout_density": "spacious",
+        "matched_dna": {"id": "cinematic_imax", "label": "Cinematic IMAX",
+                        "feel": "Widescreen drama", "confidence": 0.87},
+        "raw_text_sample": "Welcome.", "source": "fresh",
+    }
+    h = _make_stub({"url": "https://ref-site.com", "mode": "inspire"})
+    with patch.object(endpoint_module, "extract_brand", return_value=inspire_result):
+        endpoint_module.run_brand_extract(h)
+    status, payload = h.response
+    assert status == 200
+    assert payload == inspire_result
+    assert payload["matched_dna"]["id"] == "cinematic_imax"
