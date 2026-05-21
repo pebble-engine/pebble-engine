@@ -33,6 +33,15 @@ type Props = {
   subhead?: string;
   closer?:  ReactNode;
   className?: string;
+  /** How many viewport heights each card occupies. Default 200 = roughly
+      2× current viewport per card. More = longer dwell on each step
+      (deliberate, cinematic). Less = snappier (more "tour" pacing).
+      Phase 40e.4 (2026-05-21) bumped default from 100 → 200 after Marc
+      reported the previous setting felt rushed + unpinned too early. */
+  vhPerCard?: number;
+  /** Extra vh added on top of `cards.length × vhPerCard` to give the
+      heading entrance + closer exit room. Default 120. */
+  overheadVh?: number;
 };
 
 /**
@@ -179,6 +188,8 @@ export default function StickyScrollStackClient({
   subhead,
   closer,
   className = "",
+  vhPerCard  = 200,
+  overheadVh = 120,
 }: Props) {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
@@ -186,11 +197,16 @@ export default function StickyScrollStackClient({
     offset: ["start start", "end end"],
   });
 
-  // Phase 40e.3 — section is `totalVh` tall; sticky inner is 100vh.
+  // Phase 40e.3/4 — section is `totalVh` tall; sticky inner is 100vh.
   // The sticky child is PINNED for the first (totalVh - 100) of scroll,
   // then unpins. All scroll-driven animations need to fit in that
   // pinned window OR they fire off-screen after unpin.
-  const totalVh     = cards.length * 100 + 60;
+  //
+  // Phase 40e.4: defaults bumped to 200vh per card + 120vh overhead
+  // (was 100 + 60). On 3 cards that's 720vh total → pinned for 620vh
+  // → 207vh of dwell per card. Feels intentional + cinematic instead
+  // of rushed.
+  const totalVh     = cards.length * vhPerCard + overheadVh;
   const pinnedRatio = (totalVh - 100) / totalVh;
 
   // Heading lands in the first 8% of the pinned window.

@@ -39,6 +39,11 @@ type Props = {
   subhead?: string;
   closer?:  ReactNode;
   className?: string;
+  /** vh per card. Default 200 (long dwell per card). Drop to 120-140
+      for snappier pacing. */
+  vhPerCard?: number;
+  /** Extra vh on top of cards × vhPerCard for heading + closer space. */
+  overheadVh?: number;
 };
 
 /** Static SSR-safe placeholder. Shows the heading + the first card +
@@ -52,8 +57,10 @@ function StickyScrollStackFallback({
   subhead,
   closer,
   className = "",
+  vhPerCard  = 200,
+  overheadVh = 120,
 }: Props) {
-  const totalVh = cards.length * 100 + 60;
+  const totalVh = cards.length * vhPerCard + overheadVh;
   const first = cards[0];
   return (
     <section
