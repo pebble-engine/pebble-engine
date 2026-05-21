@@ -697,6 +697,76 @@ def build_resolved_contract(answers: dict, industry_intel: Optional[dict] = None
 # --------------------------------------------------------------------------
 
 
+def _build_intent_block(answers: dict) -> str:
+    """Render the brief's `intent` field as a focused prompt block.
+
+    Phase 34 (2026-05-21). Two modes:
+
+      "business" (default): the user is building a real site for a real
+        business. Optimize for conversion: prominent CTAs, trust signals,
+        pricing emphasis, SEO-focused metadata, real form wiring. This
+        is the existing behavior — the block surfaces it explicitly so
+        the LLM treats it as intentional rather than implicit.
+
+      "project": the user is a developer / designer building a sandbox,
+        portfolio, or experimental site. Optimize for craft: cleaner code
+        with explicit structural comments, less aggressive CTAs, editorial
+        layout latitude, Tailwind classes that read like a hand-written
+        codebase rather than auto-generated soup. The audience is technical
+        — they will read the source.
+
+    Unknown / missing values fall back to "business" so legacy briefs
+    don't suddenly shift behavior.
+    """
+    intent = (answers.get("intent") or "business").strip().lower()
+    if intent not in ("business", "project"):
+        intent = "business"
+
+    if intent == "project":
+        return (
+            "**Build intent: PROJECT** (developer / designer sandbox).\n\n"
+            "The user is technical — they will READ the source code. "
+            "Optimize for craft over conversion:\n\n"
+            "- Write components with clear, explicit structure. Add brief "
+            "JSDoc-style comments at the top of each non-trivial component "
+            "explaining what it does and why.\n"
+            "- Keep Tailwind class lists in deliberate, readable groupings "
+            "(layout → spacing → color → typography → state). Don't "
+            "auto-compress into one giant string.\n"
+            "- CTAs are present but understated — don't decorate every "
+            "section with conversion bait. One primary CTA per page is "
+            "plenty.\n"
+            "- Editorial / portfolio / showcase layouts are encouraged. "
+            "Skip the standard \"hero → features → social proof → CTA\" "
+            "funnel template unless it genuinely fits.\n"
+            "- Use the DNA card faithfully — project-mode users care about "
+            "design fidelity more than the average SMB owner.\n"
+            "- README.md should include a brief \"design notes\" section "
+            "explaining the structural choices (DNA, motion intent, color "
+            "system) — this audience appreciates the reasoning."
+        )
+
+    # business (default)
+    return (
+        "**Build intent: BUSINESS** (real site for a real business).\n\n"
+        "The user is the business owner — non-technical, focused on "
+        "outcomes. Optimize for conversion:\n\n"
+        "- Every page should have a clear primary CTA above the fold.\n"
+        "- Wire the contact form to the existing Resend Server Action — "
+        "real working email, not a fake onSubmit.\n"
+        "- Include trust-signal sections (testimonials placeholder, "
+        "license / credential strip, social proof) where the industry "
+        "calls for them.\n"
+        "- Metadata: descriptive title, meta description, OG image, "
+        "schema.org JSON-LD for the business.\n"
+        "- Pricing / services should be specific enough that a visitor "
+        "can decide — don't hide pricing behind \"contact for quote\" "
+        "unless the industry genuinely requires it (legal, custom B2B).\n"
+        "- Keep the source code clean but don't comment every line — the "
+        "owner won't read it. Code is for Pebble's future refinements."
+    )
+
+
 def _build_url_extraction_block(answers: dict) -> str:
     """Render the URL-extracted brand signals as a focused prompt block.
 
@@ -841,6 +911,11 @@ def build_prompt(
     # named signals here helps the LLM treat them with intent rather than
     # just reading them as user prose.
     url_extraction_block = _build_url_extraction_block(answers)
+
+    # Phase 34 (2026-05-21) — build intent block (Business vs Project).
+    # Default is "business"; Project mode is a one-click opt-in for
+    # developers/designers building portfolios or sandboxes.
+    intent_block = _build_intent_block(answers)
 
     # Reference URLs / inspiration sites (up to 3)
     _skip = {"", "none", "n/a", "no", "skip"}
@@ -1103,6 +1178,7 @@ Extract and synthesize across all references:
         design_reference_block=design_reference_block,
         extra_context=extra_block,
         url_extraction_block=url_extraction_block,
+        intent_block=intent_block,
         no_slop_block=no_slop_block,
         ios_skill_block=ios_skill_block,
         stack_block=stack_block,

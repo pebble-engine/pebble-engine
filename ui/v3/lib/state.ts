@@ -12,6 +12,15 @@ export type Brief = Record<string, unknown> & {
   creative_direction?: string;    // free-text aesthetic hint, max 500 chars — keyword-classified into Layout DNA + injected as top-priority block in build prompt
   user_first_name?: string;       // captured at first session for personalized greeting
   design_reference_images?: Array<{ media_type: string; data: string; name?: string }>;
+  /**
+   * Phase 34 (2026-05-21) — build intent split.
+   *
+   * "business" (default, implicit when unset): real site for a real business.
+   *   Conversion-optimized output, real Resend form, trust signals, schema.org.
+   * "project": developer / designer sandbox or portfolio. Code reads cleanly,
+   *   editorial layout latitude, understated CTAs, design fidelity over funnel.
+   */
+  intent?: "business" | "project";
   _industry_intel_key?: string;
   _design_dna_id?: string;
   _inspired_by?: string;       // set by /api/inspire: the source URL the user pasted
@@ -139,11 +148,18 @@ export function clearBriefForNewProject(): void {
  * recognisable name in the workspace top nav AND the build's output dir
  * gets a useful slug (instead of "untitled-project").
  *
+ * Phase 20a (2026-05-20): split obvious camelCase autocorrect mashing
+ * ("inQueens" → "in Queens"), then title-case words that have no
+ * uppercase letter yet (preserves "iPhone", "ACME", "McDonald"). The
+ * engine repeats the same sanitization server-side as the source of
+ * truth (see pebble/text.py) — this one only exists for the top-nav
+ * display so the user sees the corrected name as they type.
+ *
  * The user can still edit the name in the top nav after the fact.
  */
 export function deriveProjectName(ideaText: string): string {
   if (!ideaText) return "New project";
-  // First sentence break, then strip filler verbs at the start
+  // First sentence break
   const firstSentence = ideaText
     .replace(/\s+/g, " ")
     .trim()
@@ -153,7 +169,19 @@ export function deriveProjectName(ideaText: string): string {
   const capped = firstSentence.length > 60
     ? firstSentence.slice(0, 60).trim() + "…"
     : firstSentence;
-  return capped || "New project";
+  if (!capped) return "New project";
+  // Split camelCase runs where 2+ lowercase chars meet uppercase
+  // (preserves brand casing like iPhone/iPad — single-char prefix is safe).
+  const split = capped.replace(/([a-z]{2,})([A-Z])/g, "$1 $2");
+  // Title-case word-by-word, leaving words that already contain uppercase.
+  return split
+    .split(" ")
+    .map((w) => {
+      if (!w) return w;
+      if (/[A-Z]/.test(w)) return w; // ACME, iPhone, McDonald — preserve
+      return w[0].toUpperCase() + w.slice(1);
+    })
+    .join(" ");
 }
 
 // Industry heuristic — quick keyword match used by intake.

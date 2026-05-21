@@ -480,6 +480,10 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [extractStepIdx, setExtractStepIdx] = useState(0);
   const [extractError, setExtractError] = useState<string | null>(null);
 
+  // Phase 34 (2026-05-21) — Build intent (Business default; Project opt-in
+  // for devs/designers). Stamped onto brief.intent before advance.
+  const [buildIntent, setBuildIntent] = useState<"business" | "project">("business");
+
   // Phase 33d — Mode picker state.
   // When a URL is detected, show the intent picker before extraction fires.
   const [awaitingModeChoice, setAwaitingModeChoice] = useState(false);
@@ -661,6 +665,12 @@ export function WelcomePhase({ onAdvance }: Props) {
 
   const handleSend = async (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
+
+    // Phase 34 (2026-05-21) — stamp the build intent once, BEFORE any branch.
+    // Every downstream patchBrief in this function leaves it intact. The
+    // engine reads brief.intent in _build_intent_block — business is the
+    // default; project is opt-in via the toggle below the prompt input.
+    patchBrief({ intent: buildIntent });
 
     // Phase 33c/d — URL fast-path. If the input looks like a URL, show
     // the mode picker (brand vs inspire) before firing extraction.
@@ -964,13 +974,34 @@ export function WelcomePhase({ onAdvance }: Props) {
                   onSend={handleSend}
                   placeholder="Paste your URL or describe your business — e.g. acme.co OR a bakery in Brooklyn that takes online orders."
                 />
-                <Link
-                  href="/migrate"
-                  className="text-sm text-white/60 hover:text-white/90 inline-flex items-center gap-2 transition-colors"
-                >
-                  <span>Already have a site?</span>
-                  <span className="font-semibold underline underline-offset-2">Bring it over →</span>
-                </Link>
+                <div className="flex items-center justify-between flex-wrap gap-3 text-sm">
+                  <Link
+                    href="/migrate"
+                    className="text-white/60 hover:text-white/90 inline-flex items-center gap-2 transition-colors"
+                  >
+                    <span>Already have a site?</span>
+                    <span className="font-semibold underline underline-offset-2">Bring it over →</span>
+                  </Link>
+                  {/* Phase 34 — Build intent toggle. Business is default and stays
+                      invisible to 90% of users. Project mode is one-click opt-in
+                      for developers / designers who want a sandbox-style build
+                      (cleaner source, editorial layout latitude, understated CTAs). */}
+                  <button
+                    type="button"
+                    onClick={() => setBuildIntent((cur) => cur === "business" ? "project" : "business")}
+                    className="inline-flex items-center gap-2 text-white/60 hover:text-white/90 transition-colors"
+                    title={buildIntent === "project"
+                      ? "Switch back to a business site build (default)"
+                      : "Switch to a project / portfolio build — cleaner code, editorial layout, understated CTAs"}
+                  >
+                    <span className={`inline-block w-2 h-2 rounded-full transition-colors ${buildIntent === "project" ? "bg-white" : "bg-white/30"}`} aria-hidden />
+                    <span>
+                      {buildIntent === "project"
+                        ? <>Project mode <span className="underline underline-offset-2 font-semibold">on</span></>
+                        : <>Building a portfolio? <span className="underline underline-offset-2 font-semibold">Switch to Project mode</span></>}
+                    </span>
+                  </button>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

@@ -17,6 +17,10 @@
 
 You are building a complete, production-quality website. Read every section of this brief before writing a single line of code. The skills embedded in this brief contain thousands of words of specific, researched direction. Apply all of it.
 
+## Build Intent
+
+{intent_block}
+
 ---
 
 ## INDUSTRY INTELLIGENCE — Design DNA For This Industry
