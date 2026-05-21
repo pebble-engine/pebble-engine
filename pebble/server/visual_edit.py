@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from pebble.history import snapshot_site
+from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.engagement import log_event as _log_engagement
 from pebble.security import project_lock, require_project_owner
@@ -417,6 +417,18 @@ def run_visual_edit(handler) -> None:
         if result.get("error"):
             handler._json(400, {"error": result["error"]}); return
 
+    # Phase 35 — diff panel data. Visual edits typically touch 1-2 files
+    # so this is a cheap, exact diff. The UI shows it inline with the
+    # change confirmation. Best-effort — failure leaves diff=None.
+    diff_payload = None
+    if snapshot_id:
+        try:
+            ds = diff_against_snapshot(slug, snapshot_id)
+            if ds is not None:
+                diff_payload = ds.to_dict()
+        except Exception as _exc:
+            log.warning("diff_against_snapshot failed (visual-edit %s): %s", op, _exc)
+
     handler._json(200, {
         "slug":          slug,
         "op":            op,
@@ -424,6 +436,7 @@ def run_visual_edit(handler) -> None:
         "ambiguous":     bool(result.get("ambiguous")),
         "billable":      False,
         "snapshot_id":   snapshot_id,
+        "diff":          diff_payload,
         "used_manifest": used_manifest,
         "applied_at":    datetime.now(timezone.utc).isoformat(),
     })

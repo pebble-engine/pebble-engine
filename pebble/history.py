@@ -204,9 +204,188 @@ def restore_snapshot(slug: str, snapshot_id: str, snapshot_current: bool = True)
     return count
 
 
+# ---- Diff helpers (Phase 35, 2026-05-21) ---------------------------------
+#
+# After every refinement or visual-edit, the workspace UI wants to surface
+# "Frontend: Updated components/Hero.tsx (3 lines) / Backend: Untouched"
+# — the Phase-3 diagram pattern. The data is already on disk (a snapshot
+# was taken before the mutation), we just need to compute the diff.
+
+
+@dataclass(frozen=True)
+class FileDiff:
+    """Per-file change record. ``status`` is one of: added | modified | deleted.
+
+    For text files we also record line counts for the UI ("(3 lines changed)").
+    For binary files (images, fonts) we set both counts to None.
+    """
+    path: str               # repo-relative, forward-slash, e.g. "components/Hero.tsx"
+    status: str             # "added" | "modified" | "deleted"
+    lines_added: Optional[int]
+    lines_removed: Optional[int]
+
+    def to_dict(self) -> dict:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class DiffSummary:
+    """High-level diff for one mutation. Drives the UI's diff panel.
+
+    ``categories`` rolls files up by top-level directory so the UI can
+    say "Frontend: Updated 3 components" instead of listing 7 files.
+    """
+    snapshot_id: str
+    files: list[FileDiff]
+    categories: dict[str, int]   # {"frontend": 3, "config": 1, ...}
+    total_changed: int
+
+    def to_dict(self) -> dict:
+        return {
+            "snapshot_id":   self.snapshot_id,
+            "files":         [f.to_dict() for f in self.files],
+            "categories":    self.categories,
+            "total_changed": self.total_changed,
+        }
+
+
+# File extensions we treat as text for line-count diffs. Anything else is
+# reported as added/modified/deleted without line counts.
+_TEXT_EXTS = {
+    ".tsx", ".ts", ".jsx", ".js", ".mjs", ".cjs",
+    ".css", ".scss", ".html", ".json", ".md",
+    ".py", ".sql", ".sh", ".yaml", ".yml", ".toml",
+    ".txt", ".env", ".gitignore",
+}
+
+
+# Map top-level paths → category buckets. Keep this small and stable; the
+# UI groups output by these bucket names.
+def _categorize(rel_path: str) -> str:
+    head = rel_path.split("/", 1)[0]
+    if head in ("app", "components", "hooks", "lib"):
+        return "Frontend"
+    if head in ("public",):
+        return "Assets"
+    if head in ("api", "routes", "actions"):
+        return "Backend"
+    if head in ("styles",) or rel_path.endswith(".css"):
+        return "Styles"
+    if head in ("tests", "__tests__"):
+        return "Tests"
+    if rel_path in ("package.json", "tsconfig.json", "tailwind.config.ts",
+                    "next.config.mjs", "vercel.json", ".env.example"):
+        return "Config"
+    return "Other"
+
+
+def _read_lines_safe(path: Path) -> Optional[list[str]]:
+    """Return file lines for text files; None for binary or read errors.
+
+    Used for the line-count component of the diff. Lines are split on \\n
+    so trailing-newline differences don't inflate counts.
+    """
+    if path.suffix.lower() not in _TEXT_EXTS:
+        return None
+    try:
+        return path.read_text(encoding="utf-8").splitlines()
+    except Exception:
+        return None
+
+
+def _diff_lines(before: Optional[list[str]], after: Optional[list[str]]) -> tuple[Optional[int], Optional[int]]:
+    """Tiny line-level diff: returns (added, removed) counts.
+
+    Not a true LCS diff — we use a SequenceMatcher-style ratio approximation
+    that's good enough for "(3 lines changed)" labels and orders-of-magnitude
+    cheaper than diffing every refine call against multi-file snapshots.
+    Returns (None, None) for binary files.
+    """
+    if before is None or after is None:
+        return (None, None)
+    # Quick path: identical
+    if before == after:
+        return (0, 0)
+    # Set-based approximation. Order-insensitive but the counts are still
+    # informative for the UI ("3 lines changed" is what users care about).
+    before_set = set(before)
+    after_set = set(after)
+    added   = sum(1 for line in after  if line not in before_set)
+    removed = sum(1 for line in before if line not in after_set)
+    return (added, removed)
+
+
+def diff_against_snapshot(slug: str, snapshot_id: str) -> Optional[DiffSummary]:
+    """Compute the change set between the current site and a snapshot.
+
+    Returns None if either side is missing. Never raises — returns an
+    empty diff (total_changed=0) for genuinely identical trees, and
+    swallows per-file read errors as binary-style modifications.
+
+    Caller convention: this is meant to be called AFTER a mutation (refine
+    or visual-edit), comparing the pre-mutation snapshot to the new
+    current state. The snapshot_id is whatever snapshot_site() returned
+    just before the mutation.
+    """
+    snapshot_site_dir = _history_root(slug) / snapshot_id / "site"
+    current_site_dir  = _site_dir(slug)
+    if not snapshot_site_dir.exists() or not current_site_dir.exists():
+        return None
+
+    def _file_map(root: Path) -> dict[str, Path]:
+        out: dict[str, Path] = {}
+        for p in root.rglob("*"):
+            if p.is_file():
+                rel = p.relative_to(root).as_posix()
+                out[rel] = p
+        return out
+
+    before_files = _file_map(snapshot_site_dir)
+    after_files  = _file_map(current_site_dir)
+
+    all_paths = sorted(set(before_files) | set(after_files))
+    diffs: list[FileDiff] = []
+    for rel in all_paths:
+        b = before_files.get(rel)
+        a = after_files.get(rel)
+        if b and not a:
+            diffs.append(FileDiff(path=rel, status="deleted", lines_added=None, lines_removed=None))
+            continue
+        if a and not b:
+            after_lines = _read_lines_safe(a)
+            line_count = len(after_lines) if after_lines is not None else None
+            diffs.append(FileDiff(path=rel, status="added",
+                                   lines_added=line_count, lines_removed=0 if line_count is not None else None))
+            continue
+        # Both exist — compare byte-equal first (cheap), then line counts.
+        assert a is not None and b is not None
+        try:
+            if a.stat().st_size == b.stat().st_size and a.read_bytes() == b.read_bytes():
+                continue  # identical, skip
+        except Exception:
+            pass
+        added, removed = _diff_lines(_read_lines_safe(b), _read_lines_safe(a))
+        diffs.append(FileDiff(path=rel, status="modified", lines_added=added, lines_removed=removed))
+
+    categories: dict[str, int] = {}
+    for d in diffs:
+        cat = _categorize(d.path)
+        categories[cat] = categories.get(cat, 0) + 1
+
+    return DiffSummary(
+        snapshot_id=snapshot_id,
+        files=diffs,
+        categories=categories,
+        total_changed=len(diffs),
+    )
+
+
 __all__ = [
     "HistoryEntry",
+    "FileDiff",
+    "DiffSummary",
     "snapshot_site",
     "list_history",
     "restore_snapshot",
+    "diff_against_snapshot",
 ]

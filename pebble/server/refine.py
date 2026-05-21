@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from pebble.engagement import log_event as _log_engagement
-from pebble.history import snapshot_site
+from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
 
@@ -357,6 +357,20 @@ def run_refine(handler) -> None:
 
         elapsed = time.time() - t0
 
+    # Phase 35 — diff panel. Compute what actually changed vs the snapshot
+    # we took above, attach to the response so the workspace can show
+    # "Frontend: Updated components/Hero.tsx (3 lines)". Cheap (set-based
+    # line diff over a marketing site of 30-100 files). Never raises —
+    # diff_against_snapshot returns None on any I/O issue.
+    diff_payload = None
+    if snapshot_id:
+        try:
+            ds = diff_against_snapshot(slug, snapshot_id)
+            if ds is not None:
+                diff_payload = ds.to_dict()
+        except Exception as _exc:
+            log.warning("diff_against_snapshot failed (refine %s): %s", refinement_id, _exc)
+
     handler._json(200, {
         "slug":             slug,
         "refinement_id":    refinement_id,
@@ -364,6 +378,7 @@ def run_refine(handler) -> None:
         "kind":             kind,
         "billable":         billable,
         "snapshot_id":      snapshot_id,
+        "diff":             diff_payload,
         "elapsed_seconds":  round(elapsed, 3),
         "details":          result.get("details", ""),
         "applied_at":       datetime.now(timezone.utc).isoformat(),

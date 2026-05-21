@@ -425,6 +425,30 @@ export async function rollback(slug: string, snapshot_id: string): Promise<{ slu
   return postJSON("/api/rollback", { slug, snapshot_id });
 }
 
+// ---------- Diff panel types (Phase 35, 2026-05-21) ------------------------
+//
+// Returned on every refine + visual-edit response. Computed server-side
+// from diff_against_snapshot() against the pre-mutation snapshot. The
+// workspace UI renders this as the Phase-3 diagram diff panel:
+//   Frontend: Updated components/Hero.tsx (3 lines)
+//   Backend: Untouched
+
+export type DiffFileStatus = "added" | "modified" | "deleted";
+
+export type FileDiff = {
+  path: string;
+  status: DiffFileStatus;
+  lines_added: number | null;     // null for binary files or deleted files
+  lines_removed: number | null;
+};
+
+export type DiffSummary = {
+  snapshot_id: string;
+  files: FileDiff[];
+  categories: Record<string, number>;   // e.g. { Frontend: 3, Config: 1 }
+  total_changed: number;
+};
+
 // ---------- /api/refine (new) ----------------------------------------------
 
 export type RefinementId =
@@ -439,6 +463,7 @@ export type RefineResponse = {
   kind: "deterministic" | "llm";
   billable: boolean;
   snapshot_id: string | null;
+  diff: DiffSummary | null;       // Phase 35 — null when snapshot or diff failed
   elapsed_seconds: number;
   details: string;
   applied_at: string;
@@ -468,6 +493,7 @@ export type VisualEditResponse = {
   ambiguous: boolean;
   billable: false;
   snapshot_id: string | null;
+  diff: DiffSummary | null;       // Phase 35 — null when snapshot or diff failed
   used_manifest: boolean;
   applied_at: string;
 };
