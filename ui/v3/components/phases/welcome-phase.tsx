@@ -460,7 +460,10 @@ export function WelcomePhase({ onAdvance }: Props) {
   const heroScale     = useTransform(scrollY, [0, 600], [1, 0.97]);    // backwards-scale cue
 
   // One parallax setup per marketing section.
-  const sentenceSec = useParallaxSection();
+  // (sentenceSec removed in Phase 40e — §2 now uses StickyScrollStack
+  // which manages its own scroll progress. Leaving the orphan hook here
+  // throws "Target ref is defined but not hydrated" because the ref
+  // never gets attached to any element.)
   const dnaSec      = useParallaxSection();
   const perfectSec  = useParallaxSection();
   const quoteSec    = useParallaxSection();
