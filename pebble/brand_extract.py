@@ -51,7 +51,15 @@ from pebble.log import log
 _PROJECT_ROOT = Path(__file__).parent.parent.resolve()
 BRAND_CACHE_DIR = _PROJECT_ROOT / "output" / ".brand_cache"
 
-CACHE_TTL_SECONDS = 60 * 60  # 1 hour
+CACHE_TTL_SECONDS = 60 * 60 * 24 * 7  # 1 week
+# Phase 38e (2026-05-21) — bumped from 1h to 1w for matcher consistency.
+# The LLM matcher in _match_dna is non-deterministic at provider-default
+# temperature (~0.7); two extractions of the same URL within the cache
+# window could pick different DNAs (Bon Appétit → swiss_magazine then
+# postmodern_max in our live test). Brand identity rarely changes day-
+# to-day, so a 1w TTL is safe AND eliminates ~95% of cache misses on
+# URLs the user revisits across a build, refinement, or follow-up
+# session. Users who genuinely want a re-pick can pass use_cache=false.
 
 # How big a slice of HTML we send to the LLM. ~4 KB keeps the call cheap
 # and inside the context budget even for the smallest Qwen model.
