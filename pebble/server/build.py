@@ -17,6 +17,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import threading
 import time
 from datetime import datetime
 from pathlib import Path
@@ -639,6 +640,59 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         def _check_preview_ready() -> bool:
             return all((site_dir / f).exists() for f in PREVIEW_REQUIRED)
 
+        # Phase 13f.2 (2026-05-21) — Early-start `next dev` thread.
+        # Foundation files + warmed-up node_modules is enough to start the
+        # dev server. We fire this in a SECOND background thread (in
+        # parallel with both the LLM stream AND the npm-install warmup)
+        # so the preview becomes clickable while the LLM is still writing
+        # the inner pages. Idempotent — only the first call to
+        # _try_start_dev_ready_thread spawns the worker.
+        #
+        # The worker:
+        #   1. Calls start_next_dev_after_install which waits for warmup
+        #      install to finish, then spawns `next dev` + polls until it
+        #      responds.
+        #   2. Registers the URL in dev_registry on success.
+        #
+        # The streaming-loop heartbeat checks dev_registry.get_url(slug)
+        # AFTER calling this; once the URL is registered, preview_ready
+        # fires honestly (dev server is actually up, not just files on disk).
+        _dev_ready_thread: Optional[threading.Thread] = None
+        _dev_ready_lock = threading.Lock()
+
+        def _try_start_dev_ready_thread() -> None:
+            """Kick off the dev-server startup in a background thread.
+            Idempotent (only starts once per build). Silent on failure —
+            errors bubble through the existing post-build error path."""
+            nonlocal _dev_ready_thread
+            with _dev_ready_lock:
+                if _dev_ready_thread is not None:
+                    return
+                if not _check_preview_ready():
+                    return
+                # Capture the slug + site_dir + warmup by closure
+                def _runner() -> None:
+                    try:
+                        from pebble.server.preview_warmup import start_next_dev_after_install
+                        from pebble.server.dev_registry import register as _reg_dev
+                        result = start_next_dev_after_install(site_dir, warmup)
+                        if result.get("url") and not result.get("errors"):
+                            _reg_dev(slug, result["url"])
+                            log.info("[preview-ready] dev server up at %s (early-start, install was %.1fs)",
+                                     result["url"], result.get("install_seconds") or 0)
+                        elif result.get("errors"):
+                            log.warning("[preview-ready] early-start failed: %s", result["errors"])
+                    except Exception as exc:
+                        log.warning("[preview-ready] early-start thread crashed: %s", exc)
+
+                t = threading.Thread(
+                    target=_runner,
+                    daemon=True,
+                    name=f"dev-ready-{slug}",
+                )
+                t.start()
+                _dev_ready_thread = t
+
         # Streaming path — emit a `file` SSE event per complete <pebble-file>
         # block as it arrives + write to disk + flag preview_ready as soon
         # as the foundation set is on disk. Falls back to single-shot
@@ -685,37 +739,41 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                             "chars_streamed": chars_streamed,
                             "files_so_far": file_index,
                         })
-                        # NOTE 2026-05-19: preview_ready emission disabled.
-                        # Foundation files on disk != preview renders, because
-                        # `next dev` for the slug doesn't start until AFTER
-                        # the LLM stream completes (see pebble/postbuild.py).
-                        # Hitting /preview/<slug>/ early returns "Preview
-                        # file not found: index.html" because Next.js source
-                        # needs a running dev server to render.
-                        #
-                        # PROPER FIX (queued as Phase 13f): start npm install
-                        # in a background thread the moment package.json is
-                        # on disk, start next dev as soon as install finishes,
-                        # then fire preview_ready when dev_registry has a URL.
-                        # That gets honest preview at ~120s instead of ~5-8 min
-                        # OR a misleading button at 60s.
-                        if False and not preview_emitted and _check_preview_ready():
-                            preview_emitted = True
-                            _emit("preview_ready", {
-                                "slug": slug,
-                                "url": f"/preview/{slug}/",
-                            })
+                        # Phase 13f.2 (2026-05-21) — preview_ready emission
+                        # re-enabled with the proper gate. Two stages now:
+                        #   (1) Foundation files on disk → kick off the
+                        #       background dev-start thread (idempotent).
+                        #   (2) dev_registry has the URL → emit
+                        #       preview_ready honestly. Frontend's iframe
+                        #       will actually render.
+                        # End result: clickable preview at ~LLM-start + 30s
+                        # (foundation lands quickly, warmup runs in parallel,
+                        # next dev boots in ~10-20s on warmed cache).
+                        if not preview_emitted and _check_preview_ready():
+                            _try_start_dev_ready_thread()
+                            from pebble.server.dev_registry import get_url as _get_dev_url
+                            if _get_dev_url(slug):
+                                preview_emitted = True
+                                _emit("preview_ready", {
+                                    "slug": slug,
+                                    "url": f"/preview/{slug}/",
+                                })
                 # Best-effort recovery of an unterminated trailing block
                 for path, content in parser.flush_remaining():
                     _write_one(path, content)
                     file_index += 1
                     _emit("file", {"name": path, "index": file_index})
+                    # Same gate as the heartbeat path — files on disk are
+                    # necessary but not sufficient. Wait for dev_registry.
                     if not preview_emitted and _check_preview_ready():
-                        preview_emitted = True
-                        _emit("preview_ready", {
-                            "slug": slug,
-                            "url": f"/preview/{slug}/",
-                        })
+                        _try_start_dev_ready_thread()
+                        from pebble.server.dev_registry import get_url as _get_dev_url
+                        if _get_dev_url(slug):
+                            preview_emitted = True
+                            _emit("preview_ready", {
+                                "slug": slug,
+                                "url": f"/preview/{slug}/",
+                            })
                 response = "".join(response_parts)
             else:
                 response = client.generate(
@@ -858,19 +916,35 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     screenshot_info: dict = {"screenshots": [], "errors": []}
     if auto_run_enabled and answers.get("output_mode") != "lite":
         try:
-            # Phase 13f: prefer the warmup-aware path when we have a warmup
-            # instance (set by the streaming loop earlier). Falls back to
-            # the cold-start path when streaming wasn't used (Gemini /
-            # Anthropic non-streaming).
-            _warmup = locals().get("warmup")
-            if _warmup is not None and _warmup.started:
-                from pebble.server.preview_warmup import start_next_dev_after_install
-                server_info.update(start_next_dev_after_install(site_dir, _warmup))
-                if _warmup.elapsed_seconds is not None:
-                    log.info("[postbuild] npm install was %.1fs (parallel with LLM stream)",
-                             _warmup.elapsed_seconds)
+            # Phase 13f.2 (2026-05-21) — if the streaming-loop's early-start
+            # thread already brought next dev up + registered it in
+            # dev_registry, don't start a SECOND dev server (would compete
+            # for the slug, register a second port, leave a zombie process).
+            # The early-start thread is daemon + already wired the URL.
+            from pebble.server.dev_registry import get_url as _get_dev_url
+            existing_url = _get_dev_url(slug)
+            if existing_url:
+                server_info["url"] = existing_url
+                _warmup = locals().get("warmup")
+                if _warmup and _warmup.elapsed_seconds is not None:
+                    log.info("[postbuild] dev server already running at %s (early-start) — install was %.1fs",
+                             existing_url, _warmup.elapsed_seconds)
+                else:
+                    log.info("[postbuild] dev server already running at %s (early-start)", existing_url)
             else:
-                server_info.update(post_build_run_dev_server(site_dir))
+                # Phase 13f: prefer the warmup-aware path when we have a warmup
+                # instance (set by the streaming loop earlier). Falls back to
+                # the cold-start path when streaming wasn't used (Gemini /
+                # Anthropic non-streaming).
+                _warmup = locals().get("warmup")
+                if _warmup is not None and _warmup.started:
+                    from pebble.server.preview_warmup import start_next_dev_after_install
+                    server_info.update(start_next_dev_after_install(site_dir, _warmup))
+                    if _warmup.elapsed_seconds is not None:
+                        log.info("[postbuild] npm install was %.1fs (parallel with LLM stream)",
+                                 _warmup.elapsed_seconds)
+                else:
+                    server_info.update(post_build_run_dev_server(site_dir))
         except Exception as e:
             server_info["errors"].append(f"dev server crashed: {e}")
         if server_info.get("url"):
