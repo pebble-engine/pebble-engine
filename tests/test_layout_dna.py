@@ -164,6 +164,74 @@ def test_mechanic_never_picks_gradient_mesh():
     )
 
 
+# ------------------------------------------------------------------ #
+# Phase 23a (2026-05-20) — picker haystack regression                  #
+# ------------------------------------------------------------------ #
+# Triggered by Marc's 2026-05-20 mechanic build that rendered as
+# Terminal DNA. Root cause: v3 intake set business_type="small_business"
+# (not "auto_repair"), so the keyword "mechanic" lived only in
+# business_name. The old picker haystack ignored business_name +
+# extra_context, so Weather Report's affinity never matched and Terminal
+# won safe-random by elimination.
+# After this fix:
+#   - haystack includes business_name, extra_context, notes_freeform
+#   - Terminal has "small_business"/"local business"/"mechanic"/"plumb"/
+#     etc. in its aversion → can't safe-random-pick onto a trades brief
+
+def test_business_name_keywords_drive_picker():
+    """When business_type is generic ('small_business') but business_name
+    mentions the trade, the picker MUST still recognize it. This is the
+    exact failure from 2026-05-20 morning. Both weather_report AND
+    single_screen legitimately list 'mechanic' in affinity, so we assert
+    the union covers virtually every pick."""
+    brief = {
+        "business_type": "small_business",
+        "business_name": "Mechanic shop in Queens",
+    }
+    rolls = [pick_layout_for_brief(brief)["id"] for _ in range(200)]
+    trades_friendly = sum(1 for r in rolls if r in ("weather_report", "single_screen"))
+    assert trades_friendly >= 180, (
+        f"Mechanic-in-business_name should drive Weather Report OR Single Screen; "
+        f"got {trades_friendly}/200 (picks: {set(rolls)})"
+    )
+    # AND terminal must never appear
+    assert "terminal" not in rolls, f"terminal must NEVER pick for mechanic; saw: {set(rolls)}"
+
+
+def test_extra_context_keywords_drive_picker():
+    """Same fix path via extra_context — the original idea text."""
+    brief = {
+        "business_type": "small_business",
+        "extra_context": "I want to build a website for my plumbing company",
+    }
+    rolls = [pick_layout_for_brief(brief)["id"] for _ in range(200)]
+    trades_friendly = sum(1 for r in rolls if r in ("weather_report", "single_screen"))
+    assert trades_friendly >= 180, (
+        f"plumbing-in-extra_context should drive trades-friendly layouts; "
+        f"got {trades_friendly}/200 (picks: {set(rolls)})"
+    )
+
+
+def test_terminal_excluded_from_small_business():
+    """Terminal must never safe-random onto a vague 'small_business' brief.
+    Used to be the failure mode: 9 of 10 layouts had aversion-exclude,
+    Terminal didn't, so it won by lottery."""
+    brief = {"business_type": "small_business", "business_name": "Joe's Auto"}
+    rolls = [pick_layout_for_brief(brief)["id"] for _ in range(200)]
+    assert "terminal" not in rolls, (
+        f"terminal must be excluded for small-business / trades briefs; "
+        f"saw: {set(rolls)}"
+    )
+
+
+def test_terminal_still_picks_for_cybersecurity():
+    """Sanity — narrowing Terminal's aversion must not break its core use."""
+    brief = {"business_type": "cybersecurity firm"}
+    rolls = [pick_layout_for_brief(brief)["id"] for _ in range(200)]
+    terminal = sum(1 for r in rolls if r == "terminal")
+    assert terminal >= 50, f"Terminal should still pick for cybersecurity; got {terminal}/200"
+
+
 def test_plumbing_never_picks_gradient_mesh():
     rolls = _rolls(_brief("plumbing contractor"))
     assert "gradient_mesh" not in rolls

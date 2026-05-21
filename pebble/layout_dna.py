@@ -341,7 +341,7 @@ looks like a command prompt. No AnimatedHeading. No gradient blobs.""",
         # "devops". Expanded aversions to ALL non-technical professions so terminal can't
         # accidentally pick up a "coach who works with tech founders" brief.
         "industry_affinity": ["software", "saas", "security", "cyber", "cybersecurity", "dev", "devops", "developer", "tech startup", "cloud", "infra", "infrastructure", "network", "linux", "open source", "api", "platform", "data engineering", "ml ops", "blockchain", "crypto exchange", "hacker", "ctf"],
-        "industry_aversion": ["bakery", "florist", "wedding", "salon", "spa", "yoga", "baby", "daycare", "restaurant", "bar", "cafe", "therapy", "counseling", "coach", "coaching", "law firm", "real estate", "photographer", "hair", "barber", "fashion", "musician", "art", "gallery"],
+        "industry_aversion": ["bakery", "florist", "wedding", "salon", "spa", "yoga", "baby", "daycare", "restaurant", "bar", "cafe", "therapy", "counseling", "coach", "coaching", "law firm", "real estate", "photographer", "hair", "barber", "fashion", "musician", "art", "gallery", "small_business", "small business", "local business", "mechanic", "automotive", "auto repair", "plumb", "hvac", "electrician", "contractor", "tow", "locksmith", "handyman", "landscap", "cleaner", "cleaning"],
         "keyword_triggers": ["terminal", "command line", "monospace", "hacker", "cli", "developer", "technical", "green on black", "amber"],
         "forbidden": ["AnimatedHeading", "gradient mesh blobs", "liquid-glass", "any sans-serif font except JetBrains Mono as primary", "card grids with shadows"],
         "signature_moves": [
@@ -518,7 +518,21 @@ def pick_layout_for_brief(
         if card:
             return card
 
-    haystack = (brief.get("business_type") or brief.get("industry", "")).lower()
+    # Phase 23a (2026-05-20): widen the keyword pool. The prior version only
+    # checked business_type/industry, which collapses to "small_business" for
+    # vague intake. That made "Mechanic shop in Queens" invisible to the
+    # picker — Weather Report (which has "mechanic"/"auto repair" in affinity)
+    # never won, and Terminal won safe-random by elimination. Folding in
+    # business_name + extra_context + notes_freeform exposes the user's own
+    # words to the affinity match.
+    haystack_parts = [
+        brief.get("business_type", ""),
+        brief.get("industry", ""),
+        brief.get("business_name", ""),
+        brief.get("extra_context", ""),
+        brief.get("notes_freeform", ""),
+    ]
+    haystack = " ".join(str(p) for p in haystack_parts if p).lower()
 
     # 3 — affinity strict mode
     affinity_matched = [
