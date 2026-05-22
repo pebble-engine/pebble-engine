@@ -1,39 +1,9 @@
 # Morning handoff — 2026-05-22 overnight session
 
-> Marc — read this FIRST. Production is down for reasons that have
-> nothing to do with my code, but it's the most urgent thing to fix.
-
----
-
-## 🚨 URGENT — pebbleapp.ai is showing Vercel `DEPLOYMENT_NOT_FOUND` 404
-
-Symptom: every URL on pebbleapp.ai returns the Vercel 404 page with
-`Code: DEPLOYMENT_NOT_FOUND`.
-
-What's NOT the cause:
-- ✅ `npx tsc --noEmit` passes clean on every commit shipped
-- ✅ `npm run build` succeeded locally — full route list compiled
-  including all new pages (/trust, /dpa, /integrations, /community/*)
-- ✅ `localhost:3001` serves the latest code correctly (verified via
-  Chrome MCP — the new Trust seal renders perfectly)
-- ✅ Every commit pushed cleanly to `pebblewebsite/main`
-
-What's the actual cause (Vercel-side):
-1. Most likely: the GitHub → Vercel webhook is broken / disconnected
-2. Possible: the Vercel project was archived or the production alias
-   got unlinked
-3. Possible: account-level quota or billing issue
-
-**First thing to do this morning:**
-1. Log into Vercel dashboard (vercel.com/dashboard)
-2. Find the `pebble-engine` (or whatever the project is named) project
-3. Check "Deployments" tab — is there a recent build? Did it fail?
-4. Check "Settings → Git" — is the repo still connected to `pebblewebsite/pebble-engine.git`?
-5. Check "Settings → Domains" — does pebbleapp.ai still resolve to a deployment?
-6. If all else fails: trigger a manual redeploy from the last green
-   commit (`f679f19` — Phase 43.17, pre-this-session)
-
-I genuinely cannot fix this from my side without your Vercel auth.
+> Marc — overnight summary below. Production at pebbleapp.ai is
+> intentionally offline (Marc shut it down to keep bots + random
+> traffic off a mid-build site). All work runs on localhost:3001
+> for now; redeploy when ready.
 
 ---
 
