@@ -596,7 +596,7 @@ export function DetectiveInput({
       >
         {/* Animated gradient border (absolute, behind card surface) */}
         <div
-          className={cn("detective-focus-ring rounded-2xl", focused && "active")}
+          className={cn("detective-focus-ring rounded-2xl")}
           aria-hidden
         />
 
