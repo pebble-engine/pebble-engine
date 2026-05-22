@@ -228,6 +228,7 @@ export function WorkspaceShell() {
 
   function handleAdvanceFromWelcome() {
     const currentBrief = getBrief();
+    console.log("[pebble.shell] handleAdvanceFromWelcome — pathname:", pathname, "planFirst:", currentBrief.planFirst, "has_brief:", !!(currentBrief.business_name || currentBrief.extra_context));
 
     if (currentBrief.planFirst === true) {
       // Plan mode: show the plan preview before building.
@@ -241,9 +242,11 @@ export function WorkspaceShell() {
     } else {
       // Standard mode: skip the questionnaire — go straight to build.
       if (pathname === "/") {
+        console.log("[pebble.shell] standard mode — setting autostart flag + router.push to /workspace");
         // Flag for the auto-start useEffect above, then navigate to workspace.
         sessionStorage.setItem("pebble.autostart", "1");
         safeStartViewTransition(() => {
+          console.log("[pebble.shell] inside view-transition callback — calling router.push");
           router.push("/workspace");
         });
       } else {

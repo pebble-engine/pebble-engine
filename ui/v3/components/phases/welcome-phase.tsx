@@ -811,6 +811,7 @@ export function WelcomePhase({ onAdvance }: Props) {
 
   const handleSend = async (message: string, files?: File[]) => {
     if (typeof window === "undefined") return;
+    console.log("[pebble.welcome] handleSend called, message:", message.slice(0, 60));
 
     // Phase 34 (2026-05-21) — stamp the build intent once, BEFORE any branch.
     // Every downstream patchBrief in this function leaves it intact. The
@@ -822,12 +823,14 @@ export function WelcomePhase({ onAdvance }: Props) {
     // the mode picker (brand vs inspire) before firing extraction.
     const trimmed = message.trim();
     if (looksLikeUrl(trimmed)) {
+      console.log("[pebble.welcome] looksLikeUrl=true, going to URL mode picker");
       setPendingUrl(trimmed);
       setPendingFiles(files);
       setAwaitingModeChoice(true);
       setStarted(true);
       return;
     }
+    console.log("[pebble.welcome] free-text path, calling onAdvance");
 
     // Free-text path (existing behavior).
     // 2026-05-20 Phase 15a: derive a real business_name from the first
@@ -845,6 +848,7 @@ export function WelcomePhase({ onAdvance }: Props) {
       );
     }
     onAdvance();
+    console.log("[pebble.welcome] onAdvance returned");
   };
 
   return (
