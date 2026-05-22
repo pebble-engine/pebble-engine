@@ -12,28 +12,23 @@ import {
   Plus,
   ExternalLink,
   Trash2,
-  Coins,
   Globe,
   Download,
   Mail,
   FolderOpen,
   Search,
 } from "lucide-react";
-import { TopNav } from "@/components/top-nav";
+import { DashboardLayout } from "@/components/workspace/dashboard-layout";
 import { type } from "@/lib/type";
 import {
   listProjects,
   toggleStar,
-  fetchUsage,
   fetchActivity,
-  fetchSubscription,
   deleteProject,
   type ProjectSummary,
-  type UsageSummary,
   type ActivityRow,
-  type SubscriptionState,
 } from "@/lib/api";
-import { setLastBuild, getUserProfile } from "@/lib/state";
+import { setLastBuild } from "@/lib/state";
 import { interactions } from "@/lib/interactions";
 
 type Filter = "all" | "starred" | "recents";
@@ -41,33 +36,30 @@ type Filter = "all" | "starred" | "recents";
 export default function DashboardPage() {
   const router = useRouter();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [usage, setUsage] = useState<UsageSummary | null>(null);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<Filter>("all");
   const [query, setQuery] = useState("");
-  const [firstName, setFirstName] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null); // slug pending confirm
-  const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
 
   useEffect(() => {
-    setFirstName(getUserProfile().firstName || null);
     void refresh();
   }, []);
 
   async function refresh() {
     setLoading(true);
     try {
-      const [projRes, usageRes, activityRes, subRes] = await Promise.all([
+      // Phase 45 (2026-05-22): subscription + usage are now read from
+      // the shared DashboardSidebar (its own fetch); we only pull
+      // projects + activity here. The Sidebar duplicates listProjects()
+      // because it needs starred + recent slices for its drawer — a
+      // single shared fetch would need a Provider; not worth it yet.
+      const [projRes, activityRes] = await Promise.all([
         listProjects(),
-        fetchUsage().catch(() => null),
         fetchActivity().catch(() => ({ activity: [], count: 0 })),
-        fetchSubscription().catch(() => null),
       ]);
       setProjects(projRes.projects);
-      setUsage(usageRes);
       setActivity(activityRes.activity || []);
-      setSubscription(subRes);
     } finally {
       setLoading(false);
     }
@@ -128,104 +120,26 @@ export default function DashboardPage() {
   const visible = filter === "recents" ? filtered.slice(0, 6) : filtered;
 
   return (
-    <div className="min-h-screen-safe flex flex-col">
-      <TopNav projectName="Projects" />
-
-      <div className="flex flex-1">
-        {/* Left sidebar — Pebble's "established company" surface */}
-        <aside className="w-[240px] bg-card border-r border-border p-5 flex flex-col gap-1">
-          <div className="mb-5 px-1">
-            <p className={`${type.mono} text-muted-foreground`}>
-              {firstName ? `${firstName}'s` : "Your"} workspace
-            </p>
-          </div>
-
-          <SidebarItem
-            active={filter === "all"}
-            onClick={() => setFilter("all")}
-            Icon={Home}
-            label="All projects"
-            count={projects.length}
-          />
-          <SidebarItem
-            active={filter === "starred"}
-            onClick={() => setFilter("starred")}
-            Icon={Star}
-            label="Starred"
-            count={projects.filter((p) => p.starred).length}
-          />
-          <SidebarItem
-            active={filter === "recents"}
-            onClick={() => setFilter("recents")}
-            Icon={Clock}
-            label="Recents"
-          />
-
-          <div className="mt-auto pt-4 border-t border-border space-y-3">
-            {/* Free-plan publish-limit indicator — only shows for users with no
-                active subscription so they know how many more sites they can
-                publish before hitting the paywall. */}
-            {subscription !== null && !subscription?.plan && (() => {
-              const published = projects.filter(p => p.publish != null).length;
-              const FREE_LIMIT = 2;
-              const atLimit = published >= FREE_LIMIT;
-              return (
-                <div className={`px-3 py-2 bg-background border rounded-lg ${atLimit ? "border-destructive/40" : "border-border"}`}>
-                  <div className="flex items-center justify-between gap-2">
-                    <p className={type.eyebrow}>Free plan</p>
-                    <span className={`text-xs font-bold ${atLimit ? "text-destructive" : "text-muted-foreground"}`}>
-                      {published} / {FREE_LIMIT} live
-                    </span>
-                  </div>
-                  {atLimit && (
-                    <Link href="/pricing" className="text-xs text-primary hover:underline mt-1 block">
-                      Upgrade for more →
-                    </Link>
-                  )}
-                </div>
-              );
-            })()}
-            {/* Usage indicator — honest cost telemetry. Shows total only when
-                we have at least one paid build to report. */}
-            {usage && usage.projects > 0 && (
-              <div className="px-3 py-2 bg-background border border-border rounded-lg">
-                <div className="flex items-center gap-2 mb-1">
-                  <Coins className="w-3.5 h-3.5 text-muted-foreground" />
-                  <p className={`${type.eyebrow}`}>
-                    Estimated cost
-                  </p>
-                </div>
-                <p className={`${type.body.s} text-foreground`}>
-                  ${usage.total_estimated_cost_usd.toFixed(4)}
-                </p>
-                <p className={`${type.caption} mt-1`}>
-                  {usage.projects} {usage.projects === 1 ? "build" : "builds"} · {(usage.total_input_tokens + usage.total_output_tokens).toLocaleString()} tokens
-                </p>
-              </div>
-            )}
-
-            <Link
-              href="/"
-              className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold`}
-            >
-              <Plus className="w-4 h-4" />
-              Start something new
-            </Link>
-          </div>
-        </aside>
-
-        {/* Main project grid */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <div className="max-w-5xl mx-auto space-y-6">
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <h1 className={`${type.display.m} text-foreground`}>
-                  {filter === "starred" ? "Starred projects" : filter === "recents" ? "Recently built" : "All projects"}
-                </h1>
-                <p className={`${type.body.s} text-muted-foreground mt-1`}>
-                  {visible.length} {visible.length === 1 ? "project" : "projects"}
-                </p>
-              </div>
+    <DashboardLayout topNavLabel="Designs">
+      <div className="p-8">
+        <div className="max-w-5xl mx-auto space-y-6">
+          {/* Phase 45 — page-local filter chips sit in the main area now
+              (not the sidebar). The sidebar is shared across workspace
+              pages and shouldn't carry per-page state. These three chips
+              are the same All / Starred / Recents view as before. */}
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className={`${type.display.m} text-foreground`}>
+                {filter === "starred" ? "Starred designs" : filter === "recents" ? "Recently built" : "All designs"}
+              </h1>
+              <p className={`${type.body.s} text-muted-foreground mt-1`}>
+                {visible.length} {visible.length === 1 ? "design" : "designs"}
+              </p>
+            </div>
+            <div className="flex items-center gap-3 flex-wrap">
+              <FilterChip active={filter === "all"}     onClick={() => setFilter("all")}     Icon={Home}  label="All" />
+              <FilterChip active={filter === "starred"} onClick={() => setFilter("starred")} Icon={Star}  label="Starred" />
+              <FilterChip active={filter === "recents"} onClick={() => setFilter("recents")} Icon={Clock} label="Recents" />
               <div className="relative">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
@@ -233,51 +147,76 @@ export default function DashboardPage() {
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search by name or industry..."
-                  className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-72"
+                  className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-60"
                 />
               </div>
             </div>
-
-            {loading && (
-              <div className="text-center py-20 text-muted-foreground">Loading…</div>
-            )}
-
-            {!loading && visible.length === 0 && (
-              <EmptyState filter={filter} query={query} />
-            )}
-
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
-            >
-              <AnimatePresence>
-                {visible.map((p) => (
-                  <ProjectCard
-                    key={p.slug}
-                    p={p}
-                    onOpen={() => openProject(p)}
-                    onToggleStar={() => handleToggleStar(p.slug, p.starred)}
-                    onRequestDelete={() => setDeleting(p.slug)}
-                    deletePending={deleting === p.slug}
-                    onConfirmDelete={() => handleDelete(p.slug)}
-                    onCancelDelete={() => setDeleting(null)}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
-
-            {!loading && activity.length > 0 && (
-              <ActivityFeed activity={activity} onOpenProject={(slug) => {
-                const p = projects.find((x) => x.slug === slug);
-                if (p) openProject(p);
-              }} />
-            )}
           </div>
-        </main>
+
+          {loading && (
+            <div className="text-center py-20 text-muted-foreground">Loading…</div>
+          )}
+
+          {!loading && visible.length === 0 && (
+            <EmptyState filter={filter} query={query} />
+          )}
+
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.04 } } }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          >
+            <AnimatePresence>
+              {visible.map((p) => (
+                <ProjectCard
+                  key={p.slug}
+                  p={p}
+                  onOpen={() => openProject(p)}
+                  onToggleStar={() => handleToggleStar(p.slug, p.starred)}
+                  onRequestDelete={() => setDeleting(p.slug)}
+                  deletePending={deleting === p.slug}
+                  onConfirmDelete={() => handleDelete(p.slug)}
+                  onCancelDelete={() => setDeleting(null)}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+
+          {!loading && activity.length > 0 && (
+            <ActivityFeed activity={activity} onOpenProject={(slug) => {
+              const p = projects.find((x) => x.slug === slug);
+              if (p) openProject(p);
+            }} />
+          )}
+        </div>
       </div>
-    </div>
+    </DashboardLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+function FilterChip({
+  active, onClick, Icon, label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  Icon: typeof Home;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      className={`${interactions.chip} inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold ${
+        active
+          ? "bg-primary/15 text-primary"
+          : "bg-card border border-border text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <Icon className="w-3.5 h-3.5" />
+      {label}
+    </button>
   );
 }
 
