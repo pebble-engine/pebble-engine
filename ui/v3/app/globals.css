@@ -288,6 +288,30 @@ html {
   animation: pebble-tier-led 1.4s ease-out;
 }
 
+/* ---------------------------------------------------------------------------
+   Phase 43.16 (2026-05-22) — Start Building gradient button.
+
+   Applied to the per-tier CTA on every pricing card. Three-stop linear
+   gradient (Pebble blue → violet → magenta) that slowly drifts via
+   background-position animation so the button reads as "alive" without
+   being distracting. ~6s loop, very subtle motion.
+--------------------------------------------------------------------------- */
+@keyframes pebble-start-building-shift {
+  0%, 100% { background-position:   0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.start-building-btn {
+  background-image: linear-gradient(
+    100deg,
+    #3054ff 0%,
+    #6d28d9 35%,
+    #d946ef 70%,
+    #f97316 100%
+  );
+  background-size: 200% 200%;
+  animation: pebble-start-building-shift 6s ease-in-out infinite;
+}
+
 /* Phase 43.6 marquee CSS + .pebble-dot-grid reverted (2026-05-21) —
    Marc reported the §3 marquee variant pushed the hero out of frame
    on his iPhone. Backing the styles out completely along with the

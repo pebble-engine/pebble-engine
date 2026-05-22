@@ -1240,6 +1240,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                     the `planFirst` brief flag patched below). */}
                 <DetectiveInput
                   autoFocus
+                  attachLocked={!user}
                   onSubmit={(value, opts) => {
                     // Inspire-mode shortcut: if the user clicked "Switch to
                     // Inspired by this design" inside the input, we skip the
@@ -1491,17 +1492,12 @@ export function WelcomePhase({ onAdvance }: Props) {
             </div>
           </motion.div>
 
-          <motion.div {...MOBILE_FADE_PROPS}>
-            {activePlan && (
-              <p className={`${type.mono} text-center text-muted-foreground mb-4`}>
-                You&apos;re currently on the <strong className="text-foreground">{activePlan}</strong> plan
-              </p>
-            )}
-
-            {/* Phase 43.15 — Plan-picker micro-quiz removed at Marc's
-                request. The recommendation logic, recommendedTier
-                state, and the JSX block all stripped. Pricing tier
-                grid now sits directly below the heading. */}
+          {/* Phase 43.16 — extra top padding so the price cards sit
+              clear of the heading + blue halo above (Marc reported
+              overlap). The 'You're currently on the X plan' badge was
+              removed at the same time per Marc — that info lives in
+              /settings now, not on the marketing page. */}
+          <motion.div className="mt-10 sm:mt-14" {...MOBILE_FADE_PROPS}>
 
             <motion.div
               variants={STAGGER_PARENT}
@@ -1657,24 +1653,28 @@ export function WelcomePhase({ onAdvance }: Props) {
                     </AnimatePresence>
 
                     {(() => {
-                      const isCurrent = activePlan && activePlan === tier.stripePlan;
+                      // Phase 43.16 — uniform "Start Building" gradient
+                      // button on every tier card. Replaces the per-tier
+                      // Stripe CTAs Marc called "add to cart" buttons.
+                      // Click handler still routes correctly per tier:
+                      //   ctaHref (Enterprise) → mailto / external link
+                      //   else → handleChoosePlan (Free → questionnaire,
+                      //          Starter/Pro → Stripe checkout)
+                      // Whole card is also clickable for expand/collapse;
+                      // stopPropagation here keeps the gradient button
+                      // from double-firing the toggle.
                       const isLoading = stripeLoading === tier.name;
-                      const label = isCurrent
-                        ? "Current plan"
-                        : isLoading
-                          ? "Redirecting…"
-                          : tier.cta;
-                      const buttonClass = `block w-full text-center text-sm font-medium py-2.5 rounded-full transition-colors disabled:opacity-60 ${
-                        isCurrent
-                          ? "bg-muted hover:bg-muted/70 text-foreground"
-                          : tier.featured
-                            ? "bg-[#3054ff] hover:bg-[#2040e0] text-white"
-                            : "bg-muted hover:bg-muted/70 text-foreground"
-                      }`;
+                      const buttonClass = cn(
+                        "start-building-btn block w-full text-center py-3 rounded-full",
+                        "text-white text-sm font-bold tracking-tight",
+                        "shadow-[0_8px_24px_rgba(48,84,255,0.30)]",
+                        "hover:shadow-[0_12px_32px_rgba(48,84,255,0.42)]",
+                        "active:scale-[0.98] transition-[transform,box-shadow] duration-200",
+                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                        "disabled:opacity-60 disabled:cursor-not-allowed",
+                      );
+                      const label = isLoading ? "Redirecting…" : "Start Building";
 
-                      // Phase 43 — stopPropagation so clicking the CTA
-                      // doesn't ALSO toggle the card expansion (the whole
-                      // card is now a click target for toggle/expand).
                       if (tier.ctaHref) {
                         return (
                           <>

@@ -12,6 +12,7 @@ import {
   Square,
   X,
   ClipboardList,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type } from "@/lib/type";
@@ -390,6 +391,10 @@ export interface DetectiveInputProps {
   /** Disable the entire panel (e.g. while extraction runs). */
   disabled?: boolean;
   autoFocus?: boolean;
+  /** Phase 43.16 — when true, the attach-files button shows a lock
+      badge and pops a tooltip on hover/click instead of opening the
+      file picker. Used for logged-out visitors. */
+  attachLocked?: boolean;
 }
 
 /* ===========================================================================
@@ -400,6 +405,7 @@ export function DetectiveInput({
   defaultValue = "",
   disabled = false,
   autoFocus = false,
+  attachLocked = false,
 }: DetectiveInputProps) {
   useGradientStyle();
 
@@ -416,6 +422,11 @@ export function DetectiveInput({
   const [listening, setListening]    = React.useState(false);
   const [fileError, setFileError]    = React.useState<string | null>(null);
   const [speechSupported, setSpeechSupported] = React.useState(false);
+  // Phase 43.16 — lock tooltip for the attach-files button when
+  // attachLocked is true. Shows on hover; click also triggers it +
+  // auto-hides after 2.5s (so touch users get the same affordance).
+  const [showLockTip, setShowLockTip] = React.useState(false);
+  const lockTipTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
     setSpeechSupported(getSpeechRecognitionCtor() !== null);
@@ -434,6 +445,14 @@ export function DetectiveInput({
 
   /* ---- File picker handlers ---- */
   const handleFilePick = () => {
+    if (attachLocked) {
+      // Phase 43.16 — pop the tooltip + auto-hide after 2.5s. Don't
+      // open the file picker. Same affordance for touch + desktop.
+      setShowLockTip(true);
+      if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
+      lockTipTimer.current = setTimeout(() => setShowLockTip(false), 2500);
+      return;
+    }
     setFileError(null);
     fileInputRef.current?.click();
   };
@@ -581,12 +600,13 @@ export function DetectiveInput({
           aria-hidden
         />
 
-        {/* Card surface — Phase 40m: pure white (was `bg-card` which
-            resolved to cream in light mode). Marc wanted the search bar
-            to read crisp / pure-white against the cream page background. */}
+        {/* Card surface. Phase 43.16: border removed (Marc reported the
+            outline made the bar feel small). The animated gradient
+            focus-ring (above) + the soft shadow now do all the
+            outlining work. */}
         <div
           className={cn(
-            "relative z-10 rounded-2xl bg-white border border-border",
+            "relative z-10 rounded-2xl bg-white",
             "shadow-[0_8px_40px_rgba(0,0,0,0.06)]",
             "transition-shadow duration-300",
             focused && "shadow-[0_12px_48px_rgba(0,0,0,0.10)]",
@@ -648,23 +668,72 @@ export function DetectiveInput({
               </button>
             )}
 
-            {/* File attach */}
-            <button
-              type="button"
-              onClick={handleFilePick}
-              disabled={isDisabled || files.length >= MAX_FILES}
-              aria-label="Attach inspiration images"
-              title="Attach images (logo, references, photos of your space)"
-              className={cn(
-                "shrink-0 flex items-center justify-center w-10 h-10 rounded-full",
-                "text-muted-foreground hover:text-foreground",
-                "hover:bg-accent transition-colors duration-150",
-                "disabled:opacity-40 disabled:cursor-not-allowed",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-              )}
+            {/* File attach — with lock state for signed-out visitors. */}
+            <div
+              className="relative shrink-0"
+              onMouseEnter={() => attachLocked && setShowLockTip(true)}
+              onMouseLeave={() => {
+                if (!attachLocked) return;
+                if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
+                setShowLockTip(false);
+              }}
             >
-              <Paperclip className="w-5 h-5" />
-            </button>
+              <button
+                type="button"
+                onClick={handleFilePick}
+                disabled={isDisabled || (!attachLocked && files.length >= MAX_FILES)}
+                aria-label={attachLocked ? "Sign in to attach files" : "Attach inspiration images"}
+                title={attachLocked
+                  ? "This feature unlocks after signing in."
+                  : "Attach images (logo, references, photos of your space)"}
+                className={cn(
+                  "flex items-center justify-center w-10 h-10 rounded-full relative",
+                  "text-muted-foreground hover:text-foreground",
+                  "hover:bg-accent transition-colors duration-150",
+                  "disabled:opacity-40 disabled:cursor-not-allowed",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  attachLocked && "opacity-70",
+                )}
+              >
+                <Paperclip className="w-5 h-5" />
+                {attachLocked && (
+                  <span
+                    aria-hidden
+                    className="absolute -bottom-0.5 -right-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-foreground text-background"
+                  >
+                    <Lock className="w-2.5 h-2.5" strokeWidth={3} />
+                  </span>
+                )}
+              </button>
+
+              {/* Phase 43.16 — lock tooltip. Pops above the button on
+                  hover OR after click. White card with small caret. */}
+              <AnimatePresence>
+                {attachLocked && showLockTip && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 4, scale: 0.96 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.96 }}
+                    transition={{ duration: 0.18, ease: EASE_CINEMATIC }}
+                    role="tooltip"
+                    className={cn(
+                      "absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-2",
+                      "px-3 py-2 rounded-lg bg-foreground text-background",
+                      "text-xs font-semibold whitespace-nowrap",
+                      "shadow-[0_8px_24px_rgba(0,0,0,0.18)]",
+                    )}
+                  >
+                    <Lock className="w-3 h-3 inline-block mr-1.5 -mt-0.5" strokeWidth={3} />
+                    This feature unlocks after signing in.
+                    {/* Caret pointing down */}
+                    <span
+                      aria-hidden
+                      className="absolute top-full left-1/2 -translate-x-1/2 -mt-px w-2 h-2 bg-foreground rotate-45"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
 
             {/* Plan-mode toggle */}
             <button
