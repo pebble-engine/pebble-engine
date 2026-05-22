@@ -502,7 +502,12 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [wordIdx, setWordIdx] = useState(0);
   const [started, setStarted] = useState(false);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
-  const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
+  // Phase 43.17 — switched from Set<string> (multi-expand) to a single
+  // string | null. Only one tier card is open at a time now; clicking
+  // another card switches the open one, clicking the same card closes
+  // it. The 'Start Building' gradient button lives inside the expanded
+  // accordion → no Start Building button is visible when nothing is open.
+  const [expandedTier, setExpandedTier] = useState<string | null>(null);
   // Phase 43 — track the tier whose LED is currently pulsing, so we can
   // strip the className when the animation finishes (otherwise the
   // keyframe re-fires on next click only when the class is added fresh).
@@ -546,12 +551,9 @@ export function WelcomePhase({ onAdvance }: Props) {
   }, [user]);
 
   const toggleTier = (name: string) => {
-    setExpandedTiers((prev) => {
-      const next = new Set(prev);
-      if (next.has(name)) next.delete(name);
-      else next.add(name);
-      return next;
-    });
+    // Phase 43.17 — single-expand. Click open card again → closes it.
+    // Click a different card → switches the open one (closes any other).
+    setExpandedTier((cur) => (cur === name ? null : name));
     // Phase 43 — fire the LED pulse. Re-trigger by clearing the class
     // first (in case the user clicks twice in quick succession) and
     // then re-applying on the next tick.
@@ -1526,7 +1528,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                       ? `$${tier.yearly} billed annually`
                       : `Billed monthly`;
 
-                const isExpanded = expandedTiers.has(tier.name);
+                const isExpanded = expandedTier === tier.name;
                 // Phase 43.4 — count-up lookup (hooks called at the top
                 // of the component, indexed by tier name). For Free /
                 // Enterprise we still render the static string label.
@@ -1621,8 +1623,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                       ))}
                     </ul>
 
+                    {/* Phase 43.17 — only the OPEN card shows its
+                        accordion. The 'Start Building' gradient button
+                        lives INSIDE this block so it appears only when
+                        the user has actually opened a card. Closing or
+                        switching to a different card hides it again. */}
                     <AnimatePresence initial={false}>
-                      {expandedTiers.has(tier.name) && (
+                      {isExpanded && (
                         <motion.div
                           key="details"
                           initial={{ height: 0, opacity: 0 }}
@@ -1648,65 +1655,57 @@ export function WelcomePhase({ onAdvance }: Props) {
                               </div>
                             ))}
                           </div>
+                          {/* "Start Building" gradient CTA — only visible
+                              while this card is expanded. Routes per
+                              tier exactly as before. */}
+                          {(() => {
+                            const isLoading = stripeLoading === tier.name;
+                            const buttonClass = cn(
+                              "start-building-btn block w-full text-center py-3 rounded-full mt-4",
+                              "text-white text-sm font-bold tracking-tight",
+                              "shadow-[0_8px_24px_rgba(48,84,255,0.30)]",
+                              "hover:shadow-[0_12px_32px_rgba(48,84,255,0.42)]",
+                              "active:scale-[0.98] transition-[transform,box-shadow] duration-200",
+                              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                              "disabled:opacity-60 disabled:cursor-not-allowed",
+                            );
+                            const label = isLoading ? "Redirecting…" : "Start Building";
+
+                            if (tier.ctaHref) {
+                              return (
+                                <>
+                                  <a
+                                    href={tier.ctaHref}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className={buttonClass}
+                                  >
+                                    {label}
+                                  </a>
+                                  {stripeErrorTierId === tier.name && stripeError && (
+                                    <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
+                                  )}
+                                </>
+                              );
+                            }
+                            return (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); handleChoosePlan(tier); }}
+                                  disabled={isLoading}
+                                  className={buttonClass}
+                                >
+                                  {label}
+                                </button>
+                                {stripeErrorTierId === tier.name && stripeError && (
+                                  <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
+                                )}
+                              </>
+                            );
+                          })()}
                         </motion.div>
                       )}
                     </AnimatePresence>
-
-                    {(() => {
-                      // Phase 43.16 — uniform "Start Building" gradient
-                      // button on every tier card. Replaces the per-tier
-                      // Stripe CTAs Marc called "add to cart" buttons.
-                      // Click handler still routes correctly per tier:
-                      //   ctaHref (Enterprise) → mailto / external link
-                      //   else → handleChoosePlan (Free → questionnaire,
-                      //          Starter/Pro → Stripe checkout)
-                      // Whole card is also clickable for expand/collapse;
-                      // stopPropagation here keeps the gradient button
-                      // from double-firing the toggle.
-                      const isLoading = stripeLoading === tier.name;
-                      const buttonClass = cn(
-                        "start-building-btn block w-full text-center py-3 rounded-full",
-                        "text-white text-sm font-bold tracking-tight",
-                        "shadow-[0_8px_24px_rgba(48,84,255,0.30)]",
-                        "hover:shadow-[0_12px_32px_rgba(48,84,255,0.42)]",
-                        "active:scale-[0.98] transition-[transform,box-shadow] duration-200",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
-                        "disabled:opacity-60 disabled:cursor-not-allowed",
-                      );
-                      const label = isLoading ? "Redirecting…" : "Start Building";
-
-                      if (tier.ctaHref) {
-                        return (
-                          <>
-                            <a
-                              href={tier.ctaHref}
-                              onClick={(e) => e.stopPropagation()}
-                              className={buttonClass}
-                            >
-                              {label}
-                            </a>
-                            {stripeErrorTierId === tier.name && stripeError && (
-                              <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
-                            )}
-                          </>
-                        );
-                      }
-                      return (
-                        <>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); handleChoosePlan(tier); }}
-                            disabled={isLoading}
-                            className={buttonClass}
-                          >
-                            {label}
-                          </button>
-                          {stripeErrorTierId === tier.name && stripeError && (
-                            <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
-                          )}
-                        </>
-                      );
-                    })()}
                   </motion.div>
                 );
               })}
