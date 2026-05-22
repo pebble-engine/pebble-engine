@@ -364,15 +364,6 @@ export default function TrustPage() {
               binary level — no downgrade attack possible.
             </li>
             <li>
-              <strong className="text-[#1a1a1a]">CSA STAR Level 1</strong>
-              {" "}— Cloud Security Alliance&apos;s public security registry. We&apos;ll
-              submit our CAIQ to CSA and be listed on{" "}
-              <a href="https://cloudsecurityalliance.org/star/registry/" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
-                their registry
-              </a>
-              . Public, verifiable, no theatre.
-            </li>
-            <li>
               <strong className="text-[#1a1a1a]">OpenSSF Best Practices Badge</strong>
               {" "}— Open Source Security Foundation badge for projects that
               meet a documented set of secure-development practices. We&apos;ll

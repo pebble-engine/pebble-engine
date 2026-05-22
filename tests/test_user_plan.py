@@ -103,7 +103,10 @@ def test_limits_starter(_isolate):
 
 def test_limits_pro(_isolate):
     _write_sub(_isolate, "u1", "pro")
-    assert user_plan.get_limit("u1", "published_sites") == -1  # unlimited
+    # Pro's published_sites=-1 (unlimited) clamps DOWN to the
+    # HARD_CEILINGS value of 100. Real Pro customers shouldn't hit
+    # this; if they do, ops adds a ceiling_override.json.
+    assert user_plan.get_limit("u1", "published_sites") == 100
     assert user_plan.get_limit("u1", "custom_domains") == 5
     assert user_plan.get_limit("u1", "drop_in_sections_allowed") is True
     assert user_plan.get_limit("u1", "site_analytics") is True
@@ -174,16 +177,49 @@ def test_increment_then_check(_isolate):
     assert limit == 30
 
 
-def test_unlimited_plan_never_exceeds(_isolate):
+def test_unlimited_plan_clamps_to_hard_ceiling(_isolate):
+    """Enterprise's nominally-unlimited ai_refinements_per_month gets
+    clamped to HARD_CEILINGS[ai_refinements_per_month] = 1000.
+    Defense-in-depth: even if subscription.json is spoofed to Enterprise,
+    the user can't burn more than 1000 refinements/month worth of LLM
+    cost. Real Enterprise customers get a per-user override file."""
     _write_sub(_isolate, "u1", "enterprise")
     for _ in range(500):
         user_plan.increment_usage("u1", "ai_refinements")
     exceeds, current, limit = user_plan.would_exceed_quota(
         "u1", "ai_refinements", "ai_refinements_per_month",
     )
-    assert exceeds is False
+    assert exceeds is False           # 500 < 1000 ceiling
     assert current == 500
-    assert limit == -1
+    assert limit == 1000              # clamped from -1
+
+
+def test_ceiling_override_lifts_cap(_isolate, monkeypatch):
+    """Per-user override at ceiling_override.json bypasses HARD_CEILINGS.
+    Used by ops staff to honor real Enterprise contracts above the
+    default ceiling. Manual filesystem write — no API path."""
+    _write_sub(_isolate, "u1", "enterprise")
+    override_dir = _isolate / ".users" / "u1"
+    override_dir.mkdir(parents=True, exist_ok=True)
+    (override_dir / "ceiling_override.json").write_text(
+        json.dumps({"ai_refinements_per_month": 10000}),
+        encoding="utf-8",
+    )
+    assert user_plan.get_limit("u1", "ai_refinements_per_month") == 10000
+
+
+def test_ceiling_clamps_published_sites_for_pro(_isolate):
+    """Pro's -1 published_sites clamps to 100, the HARD_CEILINGS value."""
+    _write_sub(_isolate, "u1", "pro")
+    assert user_plan.get_limit("u1", "published_sites") == 100
+
+
+def test_ceiling_ignored_for_boolean_features(_isolate):
+    """Boolean features (drop_in_sections_allowed, etc.) are feature
+    flags, not counters — the ceiling doesn't apply."""
+    _write_sub(_isolate, "u1", "pro")
+    # No KeyError on a feature without a HARD_CEILINGS entry.
+    assert user_plan.get_limit("u1", "drop_in_sections_allowed") is True
 
 
 def test_increment_creates_user_dir_on_demand(_isolate):

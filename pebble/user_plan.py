@@ -193,15 +193,70 @@ def get_user_plan(user_id: str) -> str:
     return plan_lower
 
 
+def _ceiling_override(user_id: str, key: str) -> Optional[int]:
+    """Read a per-user manual ceiling override.
+
+    Real Enterprise customers occasionally need limits above the
+    HARD_CEILINGS defaults. The override file
+    ``output/.users/<uid>/ceiling_override.json`` lets ops staff lift a
+    cap without code changes — but ONLY via filesystem write, never via
+    API. Format:: ``{"<key>": <int>}``. Returns the override value if
+    present and valid, else None.
+    """
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
+        return None
+    path = _output_dir() / ".users" / safe_uid / "ceiling_override.json"
+    if not path.exists():
+        return None
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return None
+    if not isinstance(data, dict):
+        return None
+    value = data.get(key)
+    if isinstance(value, int) and value > 0:
+        return value
+    return None
+
+
 def get_limit(user_id: str, key: str) -> int | bool:
     """Return the limit value for ``key`` under the user's plan.
 
     Numeric values: -1 means unlimited. Boolean values: True/False.
     Unknown keys raise KeyError — every gated feature must have an
     entry in PLAN_LIMITS or the gate is unsafe.
+
+    Hard ceiling pass: when ``key`` has a HARD_CEILINGS entry, the
+    plan-tier value is clamped down. Even an Enterprise user with a
+    -1 (unlimited) plan value gets the ceiling. Per-user override at
+    ``ceiling_override.json`` lifts the cap for specific accounts.
     """
     plan = get_user_plan(user_id)
-    return PLAN_LIMITS[plan][key]
+    plan_limit = PLAN_LIMITS[plan][key]
+
+    # Booleans don't have ceilings — they're feature flags, not counters.
+    if isinstance(plan_limit, bool):
+        return plan_limit
+
+    ceiling = HARD_CEILINGS.get(key)
+    if ceiling is None:
+        return plan_limit  # no defensive cap configured for this key
+
+    # Per-user override beats the global ceiling. Override is a manual
+    # filesystem write; can't be set via API.
+    override = _ceiling_override(user_id, key)
+    effective_ceiling = override if override is not None else ceiling
+
+    # Unlimited (-1) plan value clamps to the ceiling.
+    if plan_limit == -1:
+        return effective_ceiling
+    # Plan-tier value above the ceiling clamps down. (Shouldn't happen
+    # with current PLAN_LIMITS, but defensive against future tier edits.)
+    if plan_limit > effective_ceiling:
+        return effective_ceiling
+    return plan_limit
 
 
 def get_project_plan(slug: str) -> str:
