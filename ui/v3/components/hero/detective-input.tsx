@@ -669,7 +669,10 @@ export function DetectiveInput({
               </button>
             )}
 
-            {/* File attach — with lock state for signed-out visitors. */}
+            {/* File attach — with lock state for signed-out visitors.
+                The button is fully disabled when locked so it can't be
+                interacted with; the wrapper div handles hover + click to
+                show the tooltip (disabled buttons swallow pointer events). */}
             <div
               className="relative shrink-0"
               onMouseEnter={() => attachLocked && setShowLockTip(true)}
@@ -678,22 +681,28 @@ export function DetectiveInput({
                 if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
                 setShowLockTip(false);
               }}
+              onClick={() => {
+                if (!attachLocked) return;
+                setShowLockTip(true);
+                if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
+                lockTipTimer.current = setTimeout(() => setShowLockTip(false), 2500);
+              }}
             >
               <button
                 type="button"
                 onClick={handleFilePick}
-                disabled={isDisabled || (!attachLocked && files.length >= MAX_FILES)}
+                disabled={isDisabled || attachLocked || files.length >= MAX_FILES}
                 aria-label={attachLocked ? "Sign in to attach files" : "Attach inspiration images"}
                 title={attachLocked
-                  ? "This feature unlocks after signing in."
+                  ? "Sign in to attach files"
                   : "Attach images (logo, references, photos of your space)"}
                 className={cn(
                   "flex items-center justify-center w-10 h-10 rounded-full relative",
-                  "text-muted-foreground hover:text-foreground",
-                  "hover:bg-accent transition-colors duration-150",
-                  "disabled:opacity-40 disabled:cursor-not-allowed",
+                  "transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  attachLocked && "opacity-70",
+                  attachLocked
+                    ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed",
                 )}
               >
                 <Paperclip className="w-5 h-5" />
