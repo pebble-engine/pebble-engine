@@ -788,7 +788,7 @@ export function WelcomePhase({ onAdvance }: Props) {
 
         <motion.div
           style={{ y: heroLift, opacity: heroFadeOut, scale: heroScale }}
-          className="relative z-10 min-h-screen flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10 will-change-transform"
+          className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10 will-change-transform"
         >
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -1170,7 +1170,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative"
           style={{ height: "200vh" }}
         >
-          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
+          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
             <motion.div
               style={{ y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity }}
               className="text-center mb-12 space-y-4 will-change-transform"
@@ -1211,7 +1211,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative"
           style={{ height: "180vh" }}
         >
-          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-5xl mx-auto overflow-hidden">
+          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-5xl mx-auto overflow-hidden">
             <motion.div
               style={{ y: perfectSec.headingY, scale: perfectSec.scale, opacity: perfectSec.opacity }}
               className="text-center mb-12 space-y-4 will-change-transform"
@@ -1251,7 +1251,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative"
           style={{ height: "160vh" }}
         >
-          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden">
+          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden">
             <motion.blockquote
               style={{ y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity }}
               className="space-y-6 will-change-transform"
@@ -1274,7 +1274,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative"
           style={{ height: "240vh" }}
         >
-          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
+          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
           <motion.div
             style={{ y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity }}
             className="text-center mb-10 space-y-4 will-change-transform"
@@ -1500,7 +1500,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative"
           style={{ height: "180vh" }}
         >
-          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10">
+          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10">
           <motion.div
             style={{ y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity }}
             className="space-y-4 will-change-transform"

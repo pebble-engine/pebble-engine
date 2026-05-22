@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
@@ -46,6 +46,25 @@ export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL ?? "https://pebbleapp.ai"),
   title: "Pebble",
   description: "Pebble — build a website you understand.",
+};
+
+// Phase 41 (2026-05-21) — viewport export for iOS Safari. Marc reported
+// the landing was broken on his iPhone. Three things matter here:
+//   • viewportFit: "cover" — content extends edge-to-edge under the
+//     notch / Dynamic Island; combined with env(safe-area-inset-*) in
+//     globals.css this lets us render fully without clipping.
+//   • themeColor — colors the iOS status bar bg to match the page so
+//     it doesn't look like a white strip floating above cream.
+//   • maximumScale: 5 — preserve accessibility zoom. Don't lock to 1.
+export const viewport: Viewport = {
+  width:        "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit:  "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f7f3ec" }, // sand
+    { media: "(prefers-color-scheme: dark)",  color: "#0a0a0a" }, // near-black
+  ],
 };
 
 // Inline script applies the user's stored theme before the page paints,

@@ -203,16 +203,22 @@ export function LandingNav() {
       </nav>
 
       {/* Mobile full-screen menu (≤md). Anchored below the nav row, fills
-          rest of viewport. Auto-closes on link click. */}
+          rest of viewport. Auto-closes on link click.
+          Phase 41 (2026-05-21) — uses `bottom: 0 + env(safe-area-inset-bottom)`
+          via the .pb-safe utility on the inner so the Sign In / Get
+          Started CTAs aren't hidden under the iPhone home-indicator.
+          Also gets overscroll-behavior: contain to stop scroll chaining
+          through to the body when the menu is open. */}
       <div
         className={cn(
           "fixed top-14 left-0 right-0 bottom-0 z-50 md:hidden",
           "bg-background/95 backdrop-blur-xl border-y border-border",
           "flex flex-col overflow-hidden",
+          "[overscroll-behavior:contain]",
           open ? "flex" : "hidden",
         )}
       >
-        <div className="flex flex-col justify-between gap-y-4 p-6 h-full">
+        <div className="flex flex-col justify-between gap-y-4 p-6 h-full pb-safe">
           <div className="grid gap-y-1">
             {LINKS.map((link) => (
               <a

@@ -105,15 +105,23 @@ export function ShuffleGrid({
   const [tiles, setTiles] = useState<Tile[]>(TILES);
 
   useEffect(() => {
+    // Phase 41 iOS perf (2026-05-21) — 16 concurrent spring-layout
+    // animations every 3s is heavy on low-end iPhones. On screens
+    // ≤640px (Tailwind sm breakpoint) we slow the cadence so the GPU
+    // gets time to recover between shuffles. Saves Marc's iPhone from
+    // turning into a hand-warmer; still visually alive.
+    const isMobile = typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches;
+    const effectiveInterval = isMobile ? Math.max(intervalMs * 2, 6000) : intervalMs;
+
     // Immediate first shuffle on mount — no perceptible delay vs the
     // old behavior, but it happens AFTER hydration so server + client
     // markup match.
     setTiles(shuffle(TILES));
     const tick = () => {
       setTiles((cur) => shuffle(cur));
-      timeoutRef.current = setTimeout(tick, intervalMs);
+      timeoutRef.current = setTimeout(tick, effectiveInterval);
     };
-    timeoutRef.current = setTimeout(tick, intervalMs);
+    timeoutRef.current = setTimeout(tick, effectiveInterval);
     return () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
     };

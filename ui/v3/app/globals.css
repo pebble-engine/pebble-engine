@@ -185,6 +185,54 @@ body {
   transition: background-color 280ms ease, color 280ms ease;
 }
 
+/* ---------------------------------------------------------------------------
+   Phase 41 (2026-05-21) — iOS Safari hardening.
+
+   Marc reported the landing page was broken on his iPhone. These are the
+   minimum-effort fixes that move the needle most:
+
+   1. Kill the default blue tap-highlight that iOS Safari shows on every
+      <a> / <button> tap — it makes the site look amateur.
+   2. Prevent iOS auto-text-size adjust on device rotation (otherwise the
+      hero h1 can jump dramatically when the user rotates landscape).
+   3. Custom viewport-height utilities that prefer 100dvh (dynamic
+      viewport — accounts for the iOS URL bar collapsing on scroll)
+      but fall back to 100vh on iOS Safari < 15.4 where dvh isn't yet
+      supported. Used by welcome-phase's hero + sticky-scroll sections
+      via Tailwind's arbitrary-value syntax wouldn't compose right, so
+      we ship a few hand-rolled classes.
+   4. safe-area-inset utility for elements that need to clear the iPhone
+      home-indicator (e.g. mobile menu CTAs at the bottom of the screen).
+--------------------------------------------------------------------------- */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+html {
+  -webkit-text-size-adjust: 100%;
+       text-size-adjust: 100%;
+}
+
+.h-screen-safe {
+  height: 100vh;       /* iOS Safari < 15.4 fallback */
+  height: 100dvh;      /* iOS Safari 15.4+, all modern browsers */
+}
+.min-h-screen-safe {
+  min-height: 100vh;   /* fallback */
+  min-height: 100dvh;
+}
+/* Static "small viewport height" — useful for elements that should
+   ignore the URL-bar collapse (e.g. hero text that's allowed to extend
+   into the safe area). */
+.h-svh-safe {
+  height: 100vh;
+  height: 100svh;
+}
+/* Mobile menu / overlay padding that clears the iPhone home-indicator
+   (the horizontal pill at the bottom of notched iPhones). */
+.pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
