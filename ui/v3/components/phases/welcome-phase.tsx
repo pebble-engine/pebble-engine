@@ -415,6 +415,16 @@ const MOBILE_FADE_PROPS = {
 };
 
 /**
+ * Phase 43.14 (2026-05-22) — useStickySection retired. Marc's call:
+ * remove ALL scroll-tied effects across the landing. Page now scrolls
+ * freely, no sticky pinning, no parallax. Hook removed; sections
+ * collapsed to plain `py-16 sm:py-24` flow.
+ *
+ * The historical block below stays as a comment so the design intent
+ * (sticky scroll-stage, Apple/Linear pattern) is preserved if we ever
+ * want to revisit selectively.
+ *
+ * === RETIRED ===
  * Sticky-pinned section. Phase 40g (2026-05-21) — Marc's call: §3–§7
  * (DNA showcase → Perfect for → testimonial → pricing → final CTA) all
  * use the same pinned-stage pattern. Each section is tall (configurable
@@ -433,21 +443,7 @@ const MOBILE_FADE_PROPS = {
  *   - 0.25 → 0.75: dwell at full opacity, neutral position
  *   - 0.75 → 1: exit (content lifts + scales down + fades out)
  */
-function useStickySection() {
-  const ref = useRef<HTMLElement>(null);
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start start", "end end"],
-  });
-  return {
-    ref,
-    scrollYProgress,
-    headingY: useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [80, 0, 0, -60]),
-    bodyY:    useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [120, 0, 0, -40]),
-    scale:    useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.9, 1, 1, 0.94]),
-    opacity:  useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]),
-  };
-}
+/* useStickySection() deleted in Phase 43.14 — no longer used. */
 
 /**
  * BoldSectionHeading — Phase 43.13 (2026-05-22).
@@ -630,39 +626,11 @@ export function WelcomePhase({ onAdvance }: Props) {
     }
   };
 
-  // Parallax — document-scroll tied transforms. Blobs move slower than
-  // scroll (depth), hero text lifts gently as you leave the hero behind.
-  const { scrollY } = useScroll();
-  // Phase 40c (2026-05-21) — third pass on hero/scroll motion. Marc
-  // clarified: he WANTS the cinematic parallax moment at the hero →
-  // section-2 boundary. The earlier "broken parallax" report was about
-  // the boundary feeling FLAT, not about jank. So we restore a subtle
-  // "hero recedes" effect (scale 1 → 0.97 + opacity 1 → 0.6) tied to
-  // scroll progress over the first 600px. The §2 section then enters
-  // with weight (see whileInView animations on its heading + cards).
-  // Blobs stay anchored — competing y-transforms over the carousel
-  // were the actual jank source.
-  const blobYTop      = useTransform(scrollY, [0, 1000], [0, 0]);
-  const blobYBottom   = useTransform(scrollY, [0, 1000], [0, 0]);
-  const heroLift      = useTransform(scrollY, [0, 600], [0, -24]);     // gentle recede
-  const heroFadeOut   = useTransform(scrollY, [100, 600], [1, 0.6]);   // recede + fade
-  const heroScale     = useTransform(scrollY, [0, 600], [1, 0.97]);    // backwards-scale cue
-
-  // One parallax setup per marketing section.
-  // (sentenceSec removed in Phase 40e — §2 now uses StickyScrollStack
-  // which manages its own scroll progress. Leaving the orphan hook here
-  // throws "Target ref is defined but not hydrated" because the ref
-  // never gets attached to any element.)
-  const dnaSec      = useStickySection();
-  // perfectSec removed in Phase 43.13 — §4 deleted, content moving to /about.
-  const quoteSec    = useStickySection();
-  const pricingSec  = useStickySection();
-  const ctaSec      = useStickySection();
-
-  // Phase 43 — read once per render; gates the sticky-pin + scroll-tied
-  // parallax on §3-§7. On mobile we render stacked panels with fade-in;
-  // on md+ the cinematic pinning stays in.
-  const isMobile = useIsMobile();
+  // Phase 43.14 (2026-05-22) — all scroll-tied effects removed per
+  // Marc's request. Blob drift, hero recede/fade/scale, and the
+  // per-section sticky-scroll hooks (dnaSec / quoteSec / pricingSec /
+  // ctaSec) all deleted. Sections are plain `py-N` flow now.
+  // `useIsMobile` still imported but no longer needed at this layer.
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -1009,22 +977,18 @@ export function WelcomePhase({ onAdvance }: Props) {
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/35 via-transparent to-background/35"
         />
-        {/* Decorative blobs — softer pastel pulse over the grid + bg */}
-        <motion.div
+        {/* Decorative blobs — static. Were scroll-tied via blobYTop/Bottom
+            before Phase 43.14; now sit as quiet ambient pastel pulses. */}
+        <div
           aria-hidden
-          style={{ y: blobYTop }}
-          className="pointer-events-none absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-[#f5d5b8]/40 blur-[120px] will-change-transform"
+          className="pointer-events-none absolute -top-[10%] left-[20%] w-[600px] h-[600px] bg-[#f5d5b8]/40 blur-[120px]"
         />
-        <motion.div
+        <div
           aria-hidden
-          style={{ y: blobYBottom }}
-          className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px] will-change-transform"
+          className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px]"
         />
 
-        <motion.div
-          style={{ y: heroLift, opacity: heroFadeOut, scale: heroScale }}
-          className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10 will-change-transform"
-        >
+        <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -1373,7 +1337,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
           </motion.button>
         )}
-        </motion.div>
+        </div>
       </section>
 
       {/* ════════════════════════════════════════════════════════════════
@@ -1475,7 +1439,6 @@ export function WelcomePhase({ onAdvance }: Props) {
             marquee component manages its own viewport. */}
         <section
           id="looks"
-          ref={dnaSec.ref}
           className="relative py-16 sm:py-24 overflow-hidden"
         >
           <motion.div
@@ -1505,19 +1468,11 @@ export function WelcomePhase({ onAdvance }: Props) {
             gradient that replaced it (Phase 43.7) were both pulled at
             Marc's request. Back to the placeholder quote we're keeping
             until a real beta user testimonial lands. */}
-        <section
-          ref={quoteSec.ref}
-          className={cn("relative", !isMobile && "h-[160vh]")}
-        >
-          <div className={cn(
-            "flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
-          )}>
+        <section className="relative py-16 sm:py-24">
+          <div className="flex flex-col justify-center px-4 max-w-3xl mx-auto text-center">
             <motion.blockquote
-              className="space-y-6 will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity } })}
+              className="space-y-6"
+              {...MOBILE_FADE_PROPS}
             >
               <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
                 &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
@@ -1534,18 +1489,12 @@ export function WelcomePhase({ onAdvance }: Props) {
             the accordion expansions fit inside the pin. */}
         <section
           id="pricing"
-          ref={pricingSec.ref}
-          className={cn("relative", !isMobile && "h-[240vh]")}
+          className="relative py-16 sm:py-24"
         >
-          <div className={cn(
-            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
-          )}>
+          <div className="flex flex-col justify-center px-4 max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-10 space-y-4 will-change-transform"
-            {...(isMobile
-              ? MOBILE_FADE_PROPS
-              : { style: { y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity } })}
+            className="text-center mb-10 space-y-4"
+            {...MOBILE_FADE_PROPS}
           >
             <BoldSectionHeading accent="Simple" main="pricing." />
             <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
@@ -1580,10 +1529,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             </div>
           </motion.div>
 
-          <motion.div
-            className="will-change-transform"
-            {...(!isMobile && { style: { y: pricingSec.bodyY, opacity: pricingSec.opacity } })}
-          >
+          <motion.div {...MOBILE_FADE_PROPS}>
             {activePlan && (
               <p className={`${type.mono} text-center text-muted-foreground mb-4`}>
                 You&apos;re currently on the <strong className="text-foreground">{activePlan}</strong> plan
@@ -1880,20 +1826,11 @@ export function WelcomePhase({ onAdvance }: Props) {
             top; this section just closes the loop. */}
         <section
           id="start"
-          ref={ctaSec.ref}
-          className={cn("relative", !isMobile && "h-[140vh]")}
+          className="relative py-20 sm:py-28"
         >
-          <div className={cn(
-            "flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center overflow-hidden",
-            isMobile ? "py-20" : "sticky top-0 h-screen-safe",
-          )}>
+          <div className="flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center">
             {/* Big rotating multilingual logo — the centerpiece */}
-            <motion.div
-              className="will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity } })}
-            >
+            <motion.div {...MOBILE_FADE_PROPS}>
               <RotatingPebbleLogo
                 shimmerStyle={shimmerForegroundStyle}
                 className="text-6xl sm:text-8xl lg:text-9xl"
@@ -1901,12 +1838,7 @@ export function WelcomePhase({ onAdvance }: Props) {
             </motion.div>
 
             {/* One line + one CTA */}
-            <motion.div
-              className="space-y-8 will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: ctaSec.bodyY, opacity: ctaSec.opacity } })}
-            >
+            <motion.div className="space-y-8" {...MOBILE_FADE_PROPS}>
               <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-3xl text-foreground/85 max-w-xl mx-auto`}>
                 Your idea is one paragraph away.
               </p>
