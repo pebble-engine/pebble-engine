@@ -12,7 +12,6 @@ import { LandingNav } from "@/components/hero/landing-nav";
 import { DetectiveInput } from "@/components/hero/detective-input";
 import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { BuildDemo } from "@/components/hero/build-demo";
-import { TakeoffMoment } from "@/components/hero/takeoff-moment";
 import { MarqueeShowcase } from "@/components/hero/marquee-showcase";
 import {
   patchBrief,
@@ -1431,23 +1430,30 @@ export function WelcomePhase({ onAdvance }: Props) {
           </div>
         </section>
 
-        {/* §5 — Takeoff moment. Phase 43.5 (2026-05-21) — retired the
-            placeholder testimonial in favor of a launch animation that
-            tees up the pricing section directly below. See
-            components/hero/takeoff-moment.tsx. The component manages
-            its own scroll-into-view trigger + reduced-motion fallback;
-            here we just give it a wrapper with enough height to feel
-            cinematic (full screen on desktop, ~70vh on mobile so it
-            doesn't dominate). */}
+        {/* §5 — Testimonial. Reverted (2026-05-21) — the takeoff
+            animation (Phase 43.5) and the scroll-driven sunrise
+            gradient that replaced it (Phase 43.7) were both pulled at
+            Marc's request. Back to the placeholder quote we're keeping
+            until a real beta user testimonial lands. */}
         <section
           ref={quoteSec.ref}
-          className={cn("relative", !isMobile && "h-[150vh]")}
+          className={cn("relative", !isMobile && "h-[160vh]")}
         >
           <div className={cn(
-            "overflow-hidden",
-            isMobile ? "h-[70vh]" : "sticky top-0 h-screen-safe",
+            "flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
           )}>
-            <TakeoffMoment scrollTo="#pricing" />
+            <motion.blockquote
+              className="space-y-6 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity } })}
+            >
+              <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
+                &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
+              </p>
+              <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
+            </motion.blockquote>
           </div>
         </section>
 
