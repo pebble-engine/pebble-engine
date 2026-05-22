@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle, Globe, Lock, Shield } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
@@ -1713,6 +1713,59 @@ export function WelcomePhase({ onAdvance }: Props) {
 
           </motion.div>
           </div>
+
+          {/* §6.5 — Trust row. Phase 47 (2026-05-22). Honest social proof
+              for the security-conscious buyer. We do NOT claim SOC 2 / ISO
+              27001 because Pebble itself isn't certified — only the
+              underlying platforms (Supabase, Stripe, Cloudflare, Railway)
+              are. The "Built on SOC 2 infrastructure" card spells that
+              out explicitly so we're not borrowing trust we don't have. */}
+          <div className="max-w-5xl mx-auto px-4 mt-12 sm:mt-16">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <Link
+                href="/privacy"
+                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Globe className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">GDPR compliant</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                    Account delete, data export, plain-language privacy policy.
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/settings"
+                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Lock className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Your data, your rights</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                    One-click account delete with a 14-day cooling-off window.
+                  </p>
+                </div>
+              </Link>
+              <Link
+                href="/dpa"
+                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
+              >
+                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                  <Shield className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground">Built on SOC 2 infrastructure</h3>
+                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
+                    Supabase, Stripe, Cloudflare — Pebble itself isn&apos;t certified yet.
+                  </p>
+                </div>
+              </Link>
+            </div>
+          </div>
         </section>
 
         {/* §7 — Final CTA. Phase 43.1 (2026-05-21) — stripped to a pure
@@ -1778,6 +1831,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 <div className={`${type.eyebrow}`}>Legal</div>
                 <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
                 <Link href="/terms"   className="block text-muted-foreground hover:text-foreground">Terms</Link>
+                <Link href="/dpa"     className="block text-muted-foreground hover:text-foreground">DPA</Link>
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Account</div>
