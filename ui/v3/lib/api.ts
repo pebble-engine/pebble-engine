@@ -583,9 +583,11 @@ export type VisualEditOp = "text" | "color" | "font-size";
 // When absent (older builds without injection), the engine falls back to
 // the legacy substring/selector-hint heuristics.
 export type VisualEditBody =
-  | { slug: string; op: "text"; pebble_id?: string; original_text: string; new_text: string }
-  | { slug: string; op: "color"; pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
-  | { slug: string; op: "font-size"; pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number };
+  | { slug: string; op: "text";         pebble_id?: string; original_text: string; new_text: string }
+  | { slug: string; op: "color";        pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
+  | { slug: string; op: "font-size";    pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number }
+  | { slug: string; op: "font-family";  pebble_id?: string; selector_hint?: string; new_font_family: string }
+  | { slug: string; op: "image-swap";   pebble_id?: string; selector_hint?: string; original_src: string; new_src: string };
 
 export type VisualEditResponse = {
   slug: string;
@@ -612,6 +614,7 @@ export type PebbleSelectMessage = {
   pebble_id: string;     // empty string when the build pre-dates id injection
   className: string;
   text: string;
+  src: string;           // populated for <img> elements (Phase 56c)
   rect: { x: number; y: number; w: number; h: number };
   style: {
     color: string;
@@ -1303,4 +1306,22 @@ export async function deleteIntegration(
   return deleteJSON(
     `/api/projects/${encodeURIComponent(slug)}/integrations/${encodeURIComponent(id)}`,
   );
+}
+
+// ---------- /api/chat-edit (Phase 57) ----------------------------------------
+
+export type ChatEditResponse =
+  | { matched: true;  billable: boolean; refinement_id: string; snapshot_id?: string; diff?: DiffSummary | null }
+  | { matched: false; billable: false;   suggestion: string };
+
+/**
+ * Natural-language edit routing. Routes common phrases ("more professional",
+ * "change the colors") to the closest /api/refine action. If the phrase
+ * doesn't map to a known refinement, returns matched:false + a suggestion.
+ */
+export async function chatEdit(
+  slug: string,
+  message: string,
+): Promise<ChatEditResponse> {
+  return postJSON("/api/chat-edit", { slug, message });
 }

@@ -24,6 +24,8 @@ import {
   Check,
   Monitor,
   Smartphone,
+  Image as ImageIcon,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import { BlockGallery } from "@/components/block-gallery";
@@ -40,6 +42,7 @@ import {
   rollback,
   fetchHistory,
   visualEdit,
+  chatEdit,
   pickPreviewUrl,
   type RefinementId,
   type HistorySnapshot,
@@ -119,6 +122,8 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
   const [busyBlockId, setBusyBlockId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
   const toastIdRef = useRef(0);
 
   function pushToast(t: Omit<Toast, "id">) {
@@ -340,6 +345,94 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
     }
   }
 
+  async function handleFontFamily(fontName: string) {
+    if (!selected || !build?.slug) return;
+    try {
+      const result = await visualEdit({
+        slug: build.slug,
+        op: "font-family",
+        pebble_id: selected.pebble_id || undefined,
+        selector_hint: selected.text || selected.className,
+        new_font_family: fontName,
+      });
+      setIframeBust((n) => n + 1);
+      pushToast({
+        kind: "success",
+        message: `Font changed to ${fontName}. Free tweak ✨`,
+        snapshotId: result.snapshot_id || undefined,
+        slug: build.slug,
+        diff: result.diff,
+      });
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Font edit failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    }
+  }
+
+  async function handleImageSwap(newSrc: string) {
+    if (!selected || !build?.slug) return;
+    try {
+      const result = await visualEdit({
+        slug: build.slug,
+        op: "image-swap",
+        pebble_id: selected.pebble_id || undefined,
+        selector_hint: selected.className,
+        original_src: selected.src ?? "",
+        new_src: newSrc,
+      });
+      setIframeBust((n) => n + 1);
+      pushToast({
+        kind: "success",
+        message: "Image swapped. Free tweak ✨",
+        snapshotId: result.snapshot_id || undefined,
+        slug: build.slug,
+        diff: result.diff,
+      });
+      setSelected(null);
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Image swap failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    }
+  }
+
+  async function handleChatEdit() {
+    if (!build?.slug || !chatMessage.trim() || chatBusy) return;
+    const msg = chatMessage.trim();
+    setChatMessage("");
+    setChatBusy(true);
+    try {
+      const result = await chatEdit(build.slug, msg);
+      if (result.matched) {
+        setIframeBust((n) => n + 1);
+        pushToast({
+          kind: "success",
+          message: result.billable
+            ? `Applied: "${msg}" (used credits)`
+            : `Applied: "${msg}" — free tweak ✨`,
+          snapshotId: result.snapshot_id || undefined,
+          slug: build.slug,
+          diff: result.diff,
+        });
+      } else {
+        pushToast({
+          kind: "error",
+          message: `Couldn't apply that yet — try: "${result.suggestion}"`,
+        });
+      }
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Chat edit failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
   const basePreview = pickPreviewUrl(build);
   const previewUrl = basePreview === "about:blank"
     ? "about:blank"
@@ -453,6 +546,34 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               );
             })}
           </nav>
+
+          {/* Phase 57 — AI chat bar: plain-English edits routed through /api/chat-edit.
+              Keyword-matched to existing refinements so no extra LLM call for simple
+              requests. Falls back to a friendly suggestion if unrecognised. */}
+          <form
+            className="pointer-events-auto bg-card border border-border shadow-lg rounded-full px-4 py-2 flex gap-2 items-center w-full max-w-xl"
+            onSubmit={(e) => { e.preventDefault(); handleChatEdit(); }}
+          >
+            <input
+              type="text"
+              value={chatMessage}
+              onChange={(e) => setChatMessage(e.target.value)}
+              placeholder='Ask a change… "Make it friendlier"'
+              disabled={chatBusy || !build?.slug}
+              className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none min-w-0 disabled:opacity-50"
+            />
+            <button
+              type="submit"
+              disabled={!chatMessage.trim() || chatBusy || !build?.slug}
+              className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-40`}
+              aria-label="Send"
+            >
+              {chatBusy
+                ? <span className="w-3 h-3 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
+                : <Send className="w-3.5 h-3.5" />
+              }
+            </button>
+          </form>
         </motion.div>
       </main>
 
@@ -466,6 +587,8 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
             onText={handleTextEdit}
             onFontSize={handleFontSizeStep}
             onColor={handleColor}
+            onFontFamily={handleFontFamily}
+            onImageSwap={handleImageSwap}
           />
         ) : (
           <LaunchSetupPanel
@@ -661,20 +784,40 @@ function VisualEditorPanel({
   onText,
   onFontSize,
   onColor,
+  onFontFamily,
+  onImageSwap,
 }: {
   selected: PebbleSelectMessage;
   onClose: () => void;
   onText: (newText: string) => void;
   onFontSize: (delta: number) => void;
   onColor: (hex: string) => void;
+  onFontFamily: (fontName: string) => void;
+  onImageSwap: (newSrc: string) => void;
 }) {
   const [textDraft, setTextDraft] = useState(selected.text);
-  useEffect(() => { setTextDraft(selected.text); }, [selected]);
+  const [imageSrcDraft, setImageSrcDraft] = useState(selected.src ?? "");
+  useEffect(() => {
+    setTextDraft(selected.text);
+    setImageSrcDraft(selected.src ?? "");
+  }, [selected]);
 
   const PALETTE = [
     "#1F1D1A", "#205661", "#4B6548", "#C76E3A", "#5A554E",
     "#F7F3EC", "#ECE6DC", "#D8D1C5", "#EFEAE1", "#FFFFFF",
   ];
+
+  const FONT_FAMILIES = [
+    "Inter",
+    "Playfair Display",
+    "DM Sans",
+    "Lato",
+    "Space Grotesk",
+    "Merriweather",
+    "JetBrains Mono",
+  ];
+
+  const isImage = selected.tag === "img";
 
   return (
     <motion.aside
@@ -700,68 +843,136 @@ function VisualEditorPanel({
         </button>
       </div>
 
-      {/* Text editor — only show when the element actually has text content */}
-      {selected.text && selected.text.trim() && (
+      {/* Phase 56c — image swap: when an <img> is selected show URL swap controls
+          instead of text / font / color (those don't apply to images). */}
+      {isImage ? (
         <div className="space-y-2">
           <label className={`${type.eyebrow} flex items-center gap-1`}>
-            <Edit3 className="w-3 h-3" /> Text
+            <ImageIcon className="w-3 h-3" /> Swap image
           </label>
-          <textarea
-            value={textDraft}
-            onChange={(e) => setTextDraft(e.target.value)}
-            rows={Math.min(6, Math.max(2, Math.ceil(textDraft.length / 40)))}
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          {selected.src && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selected.src}
+              alt="Current image"
+              className="w-full h-24 object-cover rounded-lg border border-border"
+            />
+          )}
+          <input
+            type="url"
+            value={imageSrcDraft}
+            onChange={(e) => setImageSrcDraft(e.target.value)}
+            placeholder="https://images.unsplash.com/…"
+            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
-            onClick={() => onText(textDraft)}
-            disabled={textDraft === selected.text}
+            onClick={() => onImageSwap(imageSrcDraft)}
+            disabled={!imageSrcDraft.trim() || imageSrcDraft === selected.src}
             className={`${interactions.button} w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2`}
           >
-            <Check className="w-4 h-4" /> Save text
+            <Check className="w-4 h-4" /> Swap image
           </button>
+          <p className="text-xs text-muted-foreground italic">
+            Paste any public image URL — Unsplash, Pexels, or your own CDN.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Text editor — only show when the element actually has text content */}
+          {selected.text && selected.text.trim() && (
+            <div className="space-y-2">
+              <label className={`${type.eyebrow} flex items-center gap-1`}>
+                <Edit3 className="w-3 h-3" /> Text
+              </label>
+              <textarea
+                value={textDraft}
+                onChange={(e) => setTextDraft(e.target.value)}
+                rows={Math.min(6, Math.max(2, Math.ceil(textDraft.length / 40)))}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <button
+                onClick={() => onText(textDraft)}
+                disabled={textDraft === selected.text}
+                className={`${interactions.button} w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2`}
+              >
+                <Check className="w-4 h-4" /> Save text
+              </button>
+            </div>
+          )}
+
+          {/* Font size stepper */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <TypeIcon className="w-3 h-3" /> Font size
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onFontSize(-1)}
+                className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
+              >
+                <Minus className="w-4 h-4" /> Smaller
+              </button>
+              <button
+                onClick={() => onFontSize(1)}
+                className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
+              >
+                <Plus className="w-4 h-4" /> Larger
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground italic">Currently {selected.style.fontSize}</p>
+          </div>
+
+          {/* Phase 56b — font family picker (curated list of Google-safe families) */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <TypeIcon className="w-3 h-3" /> Font family
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {FONT_FAMILIES.map((font) => (
+                <button
+                  key={font}
+                  onClick={() => onFontFamily(font)}
+                  className={`${interactions.chip} px-2.5 py-1 text-xs rounded-full border border-border hover:border-primary hover:bg-accent transition-colors`}
+                  style={{ fontFamily: font }}
+                >
+                  {font}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color picker — Pebble palette + free hex input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <Palette className="w-3 h-3" /> Color
+            </label>
+            <div className="grid grid-cols-5 gap-2">
+              {PALETTE.map((hex) => (
+                <button
+                  key={hex}
+                  onClick={() => onColor(hex)}
+                  className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors"
+                  style={{ backgroundColor: hex }}
+                  title={hex}
+                  aria-label={`Set color to ${hex}`}
+                />
+              ))}
+            </div>
+            {/* Phase 56b — native color picker for any hex the user wants */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="color"
+                defaultValue="#205661"
+                onChange={(e) => onColor(e.target.value)}
+                className="w-8 h-8 rounded border border-border cursor-pointer bg-transparent p-0.5"
+                title="Custom color"
+                aria-label="Pick custom color"
+              />
+              <span className="text-xs text-muted-foreground">Custom color</span>
+            </div>
+          </div>
+        </>
       )}
-
-      {/* Font size stepper */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-          <TypeIcon className="w-3 h-3" /> Font size
-        </label>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onFontSize(-1)}
-            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
-          >
-            <Minus className="w-4 h-4" /> Smaller
-          </button>
-          <button
-            onClick={() => onFontSize(1)}
-            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
-          >
-            <Plus className="w-4 h-4" /> Larger
-          </button>
-        </div>
-        <p className="text-xs text-muted-foreground italic">Currently {selected.style.fontSize}</p>
-      </div>
-
-      {/* Color picker — Pebble palette */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-          <Palette className="w-3 h-3" /> Color
-        </label>
-        <div className="grid grid-cols-5 gap-2">
-          {PALETTE.map((hex) => (
-            <button
-              key={hex}
-              onClick={() => onColor(hex)}
-              className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors"
-              style={{ backgroundColor: hex }}
-              title={hex}
-              aria-label={`Set color to ${hex}`}
-            />
-          ))}
-        </div>
-      </div>
 
       <div className="mt-auto pt-4 border-t border-border">
         <p className="text-[11px] text-muted-foreground italic leading-snug">
