@@ -433,7 +433,29 @@ export async function extractBrand(
   url: string,
   mode: ExtractMode = "brand",
   useCache = true,
+  files?: File[],
 ): Promise<BrandExtractResult> {
+  if (files && files.length > 0) {
+    // Send as multipart/form-data so the engine can read image bytes.
+    const authHeader = await getAuthHeader();
+    const form = new FormData();
+    form.append("url", url);
+    form.append("mode", mode);
+    form.append("use_cache", useCache ? "true" : "false");
+    for (const file of files) {
+      form.append("images[]", file);
+    }
+    const resp = await fetch(engineUrl("/api/brand-extract"), {
+      method: "POST",
+      headers: { ...authHeader }, // no Content-Type: browser sets it with boundary
+      body: form,
+    });
+    const text = await resp.text();
+    let data: BrandExtractResult;
+    try { data = JSON.parse(text); } catch { throw new Error(`Unexpected response: ${text.slice(0, 200)}`); }
+    if (!resp.ok) throw new Error((data as { error?: string }).error || `HTTP ${resp.status}`);
+    return data;
+  }
   return postJSON("/api/brand-extract", { url, mode, use_cache: useCache });
 }
 

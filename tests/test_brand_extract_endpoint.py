@@ -42,12 +42,29 @@ class _StubHandler:
 def _reset_rate_limit():
     """Reset the plan_limiter bucket between tests so 429s don't bleed across."""
     from pebble.security import plan_limiter
-    # Internal state is keyed by IP — reset_ip if available, else just clear all
+    # Try the public reset() method first; fall back to clearing internal state.
+    try:
+        plan_limiter.reset()
+    except Exception:
+        pass
     try:
         plan_limiter._calls.clear()  # type: ignore[attr-defined]
     except Exception:
         pass
+    try:
+        plan_limiter._buckets.clear()  # type: ignore[attr-defined]
+    except Exception:
+        pass
     yield
+    # Also reset after each test to be safe
+    try:
+        plan_limiter.reset()
+    except Exception:
+        pass
+    try:
+        plan_limiter._buckets.clear()  # type: ignore[attr-defined]
+    except Exception:
+        pass
 
 
 # ------------------------------------------------------------------ #
@@ -294,3 +311,134 @@ def test_endpoint_returns_inspire_mode_payload_through():
     assert status == 200
     assert payload == inspire_result
     assert payload["matched_dna"]["id"] == "cinematic_imax"
+
+
+# ------------------------------------------------------------------ #
+# Multipart / image-attachment path                                   #
+# ------------------------------------------------------------------ #
+
+# Minimal valid 8-byte PNG stub (correct magic: \x89PNG\r\n\x1a\n)
+_FAKE_PNG = b"\x89PNG\r\n\x1a\n"
+
+
+def _build_multipart(
+    fields: dict[str, str],
+    images: list[tuple[str, bytes, str]],  # (field_name, data, mime)
+    boundary: str = "testboundary123",
+) -> tuple[bytes, str]:
+    """Build a raw multipart/form-data body.
+
+    Returns (body_bytes, content_type_header_value).
+    """
+    parts: list[bytes] = []
+    crlf = b"\r\n"
+
+    for name, value in fields.items():
+        parts.append(
+            f'--{boundary}\r\n'
+            f'Content-Disposition: form-data; name="{name}"\r\n'
+            f'\r\n'
+            f'{value}\r\n'.encode()
+        )
+
+    for field_name, data, mime in images:
+        header = (
+            f'--{boundary}\r\n'
+            f'Content-Disposition: form-data; name="{field_name}"; filename="test.img"\r\n'
+            f'Content-Type: {mime}\r\n'
+            f'\r\n'
+        ).encode()
+        parts.append(header + data + crlf)
+
+    parts.append(f'--{boundary}--\r\n'.encode())
+    body = b"".join(parts)
+    ct = f"multipart/form-data; boundary={boundary}"
+    return body, ct
+
+
+class _MultipartStubHandler:
+    """Stub handler that carries a multipart Content-Type header."""
+
+    def __init__(self, body: bytes, content_type: str):
+        self.headers = {
+            "Content-Type": content_type,
+            "Content-Length": str(len(body)),
+        }
+        self.rfile = io.BytesIO(body)
+        self.client_address = ("127.0.0.1", 12345)
+        self.response: tuple[int, dict] | None = None
+        self.path = "/api/brand-extract"
+        self.command = "POST"
+
+    def _json(self, status: int, payload: dict) -> None:
+        self.response = (status, payload)
+
+
+_FAKE_RESULT_OK = {
+    "url": "https://acme.co", "ok": True, "error": None,
+    "mode": "brand", "business_name": "Acme", "tagline": None,
+    "industry": "tech", "tone": "professional", "palette": [],
+    "logo_url": None, "favicon_url": None, "hero_copy": None,
+    "vibe_keywords": [], "font_hints": [], "motion_intensity": None,
+    "layout_density": None, "matched_dna": None,
+    "raw_text_sample": "", "source": "fresh",
+}
+
+
+def test_multipart_happy_path_one_png_returns_200():
+    """One valid PNG → 200; extract_brand called with inspiration_images=[bytes]."""
+    body, ct = _build_multipart(
+        fields={"url": "https://acme.co", "mode": "brand"},
+        images=[("images[]", _FAKE_PNG, "image/png")],
+    )
+    h = _MultipartStubHandler(body, ct)
+    with patch.object(endpoint_module, "extract_brand", return_value=_FAKE_RESULT_OK) as mock_ext:
+        endpoint_module.run_brand_extract(h)
+    status, payload = h.response
+    assert status == 200
+    assert payload["ok"] is True
+    # Verify the raw bytes were forwarded
+    args, kwargs = mock_ext.call_args
+    assert kwargs.get("inspiration_images") == [_FAKE_PNG]
+
+
+def test_multipart_oversized_image_returns_4xx():
+    """An image > 10 MB → 400 or 413."""
+    big_png = _FAKE_PNG + b"\x00" * (10 * 1024 * 1024 + 1)
+    body, ct = _build_multipart(
+        fields={"url": "https://acme.co"},
+        images=[("images[]", big_png, "image/png")],
+    )
+    h = _MultipartStubHandler(body, ct)
+    with patch.object(endpoint_module, "extract_brand", return_value=_FAKE_RESULT_OK):
+        endpoint_module.run_brand_extract(h)
+    status, payload = h.response
+    assert status in (400, 413)
+    assert "error" in payload
+
+
+def test_multipart_wrong_mime_returns_400():
+    """application/zip → 400."""
+    body, ct = _build_multipart(
+        fields={"url": "https://acme.co"},
+        images=[("images[]", b"PK\x03\x04fakearchive", "application/zip")],
+    )
+    h = _MultipartStubHandler(body, ct)
+    endpoint_module.run_brand_extract(h)
+    status, payload = h.response
+    assert status == 400
+    assert "unsupported" in payload["error"].lower()
+
+
+def test_multipart_too_many_images_returns_400():
+    """Six images → 400."""
+    images = [("images[]", _FAKE_PNG, "image/png")] * 6
+    body, ct = _build_multipart(
+        fields={"url": "https://acme.co"},
+        images=images,
+    )
+    h = _MultipartStubHandler(body, ct)
+    endpoint_module.run_brand_extract(h)
+    status, payload = h.response
+    assert status == 400
+    assert "error" in payload

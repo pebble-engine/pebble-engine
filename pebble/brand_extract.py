@@ -32,6 +32,7 @@ reaching the intake form.
 """
 from __future__ import annotations
 
+import base64
 import hashlib
 import html as html_module
 import json
@@ -79,13 +80,18 @@ _FETCH_TIMEOUT_SECONDS = 8.0
 
 # ---- Public API ---------------------------------------------------------
 
-def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True) -> dict:
+def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True,
+                  inspiration_images: "list[bytes] | None" = None) -> dict:
     """Extract a partial brief from a URL.
 
     Two modes:
       - "brand"   (default): the URL is the user's own business. Extract
                   business FACTS — name, tagline, industry, tone, palette,
                   logo. Pre-fills the questionnaire with what we found.
+                  When inspiration_images are provided in this mode, they
+                  are treated as the business's own assets (logo, photos of
+                  their space, product shots) and are passed to the LLM as
+                  additional visual evidence alongside the scraped HTML.
       - "inspire": the URL is a reference site the user admires. Extract
                   STYLE attributes only — palette, font hints, vibe keywords,
                   motion intensity, layout density — then match the result
@@ -93,6 +99,15 @@ def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True) -> d
                   inspired aesthetic. We do NOT borrow business name /
                   industry / tagline in this mode (the inspiration site is
                   about how the user's site should FEEL, not who they are).
+                  When inspiration_images are provided in this mode, they
+                  are treated as palette and layout cues — visual references
+                  the user wants the generated site to evoke.
+
+    Optional arg:
+      inspiration_images: raw bytes of up to 5 images. Caller is responsible
+        for MIME validation and size caps. Each image is base64-encoded and
+        passed to the LLM as a vision message block. When None (default),
+        the LLM call is text-only (existing behavior).
 
     Returns a dict with all keys always present (see _empty_result for the
     shape — every BrandExtractResult field is set in both modes; fields
@@ -138,8 +153,18 @@ def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True) -> d
         log.error("[brand_extract] scrape failed: %s", e)
         return _empty_result(normalized, "Couldn't parse the page.", mode=mode)
 
+    # Convert raw bytes → [{"data": b64str, "media_type": "image/png"}] blocks
+    # for the LLM vision layer. The caller already validated MIME + size.
+    image_blocks: list[dict] = []
+    if inspiration_images:
+        for img_bytes in inspiration_images[:5]:
+            image_blocks.append({
+                "data": base64.b64encode(img_bytes).decode("ascii"),
+                "media_type": "image/png",  # caller validated; PNG is the safe fallback
+            })
+
     if mode == "inspire":
-        style = _llm_infer_style(scraped)
+        style = _llm_infer_style(scraped, images=image_blocks if image_blocks else None)
         matched = _match_dna(scraped, style) if style else None
         result = {
             "url":              final_url,
@@ -166,7 +191,7 @@ def extract_brand(url: str, *, mode: str = "brand", use_cache: bool = True) -> d
             "source":           "fresh",
         }
     else:
-        inferred = _llm_infer(scraped)
+        inferred = _llm_infer(scraped, images=image_blocks if image_blocks else None)
         result = {
             "url":              final_url,
             "ok":               True,
@@ -493,8 +518,12 @@ Rules:
 - Output JSON only. First character must be `{{`."""
 
 
-def _llm_infer(scraped: dict) -> dict:
+def _llm_infer(scraped: dict, images: "list[dict] | None" = None) -> dict:
     """Call the configured LLM to infer industry/tone/palette.
+
+    images: optional list of {"data": b64str, "media_type": str} dicts.
+      In brand mode these are the business's own assets (logo, space photos).
+      When provided, the LLM sees them alongside the scraped text signals.
 
     Returns {} on any failure — caller treats inference as optional.
     """
@@ -522,11 +551,21 @@ def _llm_infer(scraped: dict) -> dict:
         text_sample=scraped["text_sample"][:_LLM_HTML_BUDGET] or "(no body text extracted)",
     )
 
+    image_note = ""
+    if images:
+        image_note = (
+            "\n\nThe user also uploaded images of their business (logo, photos of their "
+            "space, product shots, signage). These are the business's own visual assets — "
+            "treat them as authoritative brand evidence. Use any palette colors, logo style, "
+            "or visual mood visible in the images to refine your inferences."
+        )
+
     try:
         raw = client.generate(
             system="You analyze websites and output strict JSON describing their brand identity.",
-            user=prompt,
+            user=prompt + image_note,
             max_tokens=400,
+            images=images or None,
         )
     except Exception as e:
         log.warning("[brand_extract] LLM call failed: %s", e)
@@ -572,9 +611,14 @@ Rules:
 - Output JSON only. First character must be `{{`."""
 
 
-def _llm_infer_style(scraped: dict) -> dict:
+def _llm_infer_style(scraped: dict, images: "list[dict] | None" = None) -> dict:
     """Inspire-mode counterpart to _llm_infer. Returns style vocabulary
     instead of business facts.
+
+    images: optional list of {"data": b64str, "media_type": str} dicts.
+      In inspire mode these are palette and layout cues — visual references
+      the user wants the generated site to evoke. The LLM treats them as
+      style signals rather than business facts.
 
     Returns {} on any failure — caller falls back to deterministic
     palette + a "minimal" motion intensity heuristic, but the matched_dna
@@ -599,11 +643,21 @@ def _llm_infer_style(scraped: dict) -> dict:
         text_sample=scraped["text_sample"][:_LLM_HTML_BUDGET] or "(no body text extracted)",
     )
 
+    image_note = ""
+    if images:
+        image_note = (
+            "\n\nThe user also uploaded reference images as palette and layout cues — "
+            "screenshots, mood-board images, or visual references that capture the aesthetic "
+            "feel they want. Let the visual mood, color usage, and layout density of these "
+            "images inform your vibe_keywords, font_hints, motion_intensity, and palette."
+        )
+
     try:
         raw = client.generate(
             system="You analyze websites and output strict JSON describing their visual style.",
-            user=prompt,
+            user=prompt + image_note,
             max_tokens=400,
+            images=images or None,
         )
     except Exception as e:
         log.warning("[brand_extract] style LLM call failed: %s", e)
