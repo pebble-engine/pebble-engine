@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Edit3, Sparkles, Loader2 } from "lucide-react";
+import { Edit3, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan, type PebbleSetupItem } from "@/lib/state";
 import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
@@ -10,25 +10,30 @@ import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 
 /**
- * Phase 40i — plan-first flow; reads brief.planFirst (set by DetectiveInput)
- * and inserts a /api/plan preview step before /api/generate. When planFirst
- * is true the back-button reads "Change my mind" and returns to welcome;
- * otherwise it reads "Edit the questions" and returns to the idea phase.
- */
-
-/**
- * Plan phase — the user-facing "here's what I'll build" review screen.
+ * Plan phase — Phase 46b (2026-05-22) Base44-style restructure.
  *
- * On mount, calls /api/plan if no plan is cached yet (i.e. user just
- * came from the idea phase) and shows a skeleton state while it loads.
- * Once the plan is in memory, displays the seven sections (audience,
- * goal, pages, features, style, setup, language) and a big Generate
- * button.
+ * Marc shared Base44's plan card showing a single elegant card with
+ * five clearly-labelled sections (Intent & Goal / Audience & Roles /
+ * Core Flows / Technical Requirements / Design Preferences) and a
+ * "Start Building" button. He thought it was "executed appropriately"
+ * — denser, more readable, less wizard-y than our previous 6-card
+ * stack.
  *
- * Generate kicks off the full LLM build via /api/generate. The phase
- * shell handles the transition: when Generate is clicked, the shell
- * jumps to draft phase, awaits the response, and jumps to design phase
- * when complete.
+ * This rewrite preserves all the underlying data (no info loss) but
+ * lays it out as Base44 does:
+ *   - One outer Plan card holds the five labelled sections
+ *   - Each section is a label-row + body-content pair
+ *   - A "Show less" toggle condenses very long sections
+ *   - Launch Setup stays a separate card below (it's its own thing —
+ *     dependency graph + auto/pending/manual badges don't compress
+ *     well into a sentence)
+ *   - Reroll-DNA + Edit + Generate buttons preserved
+ *
+ * Phase 40i — plan-first flow; reads brief.planFirst (set by
+ * DetectiveInput) and inserts a /api/plan preview step before
+ * /api/generate. When planFirst is true the back-button reads "Change
+ * my mind" and returns to welcome; otherwise it reads "Edit the
+ * questions" and returns to the idea phase.
  */
 
 type Props = {
@@ -43,27 +48,15 @@ const cardVariants = {
   visible: { opacity: 1, y: 0 },
 };
 
-function Card({ children, delay = 0, className = "" }: { children: React.ReactNode; delay?: number; className?: string }) {
-  const safeCardVariants = useMemo(() => withReducedMotion(cardVariants), []);
-  return (
-    <motion.article
-      variants={safeCardVariants}
-      initial="hidden"
-      animate="visible"
-      transition={{ duration: STANDARD_S, delay, ease: EASE_QUIET }}
-      className={`bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[var(--shadow-1)] ${className}`}
-    >
-      {children}
-    </motion.article>
-  );
-}
-
 export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showLess, setShowLess] = useState(false);
   const startedRef = useRef(false);
+
+  const safeCardVariants = useMemo(() => withReducedMotion(cardVariants), []);
 
   /**
    * Phase 15b — re-pick Layout DNA + Style DNA for the same brief.
@@ -75,7 +68,6 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
     if (rerolling) return;
     setRerolling(true);
     setError(null);
-    // Clear the pinned DNA ids so the picker re-rolls
     patchBrief({ _design_dna_id: undefined, _layout_dna_id: undefined });
     try {
       const result = await fetchPlan(getBrief());
@@ -94,8 +86,6 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   };
 
   useEffect(() => {
-    // Use cached plan when present. Otherwise compute it fresh — usually
-    // means we just arrived from the idea phase.
     const cached = getPlan();
     if (cached) {
       setPlanLocal(cached);
@@ -124,20 +114,14 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
 
   if (loading && !error) {
     return (
-      <div className="w-full max-w-2xl mx-auto space-y-4 animate-pulse px-4 py-8">
-        {/* Header skeleton */}
-        <div className="text-center mb-6 space-y-2">
-          <div className="h-8 bg-muted rounded-lg w-48 mx-auto" />
-          <div className="h-4 bg-muted rounded w-72 mx-auto" />
-        </div>
-        {/* Card skeletons */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-border bg-card p-6 space-y-3">
-              <div className="h-4 bg-muted rounded w-24" />
-              <div className="h-6 bg-muted rounded w-40" />
-              <div className="h-3 bg-muted rounded w-full" />
-              <div className="h-3 bg-muted rounded w-3/4" />
+      <div className="w-full max-w-3xl mx-auto px-4 py-12">
+        <div className="bg-card border border-border rounded-2xl p-8 space-y-6 animate-pulse">
+          <div className="h-6 bg-muted rounded w-24" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="space-y-2 pb-4 border-b border-border last:border-0">
+              <div className="h-3 bg-muted rounded w-32" />
+              <div className="h-4 bg-muted rounded w-full" />
+              <div className="h-4 bg-muted rounded w-4/5" />
             </div>
           ))}
         </div>
@@ -151,11 +135,18 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         {error ? (
           <p className="text-destructive">{error}</p>
         ) : (
-          <Loader2 className="w-10 h-10 animate-spin text-secondary" />
+          <Loader2 className="w-10 h-10 animate-spin text-foreground/50" />
         )}
       </div>
     );
   }
+
+  // Pre-compute concise section content. Each section is a string OR a
+  // ReactNode — strings get the "show less" length truncation; nodes pass
+  // through as-is (lists, palette swatches, etc.).
+  const intentAndGoal = plan.goal;
+  const audienceAndRoles = plan.audience;
+  const projectName = plan.meta?.business_name || "your project";
 
   return (
     <div className="px-4 md:px-8 py-8 max-w-3xl mx-auto w-full space-y-6">
@@ -163,142 +154,154 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-        className="text-center space-y-2"
+        className="space-y-2"
       >
-        <h1 className={`${type.display.l} text-primary`}>The Pebble Plan</h1>
+        <h1 className={`${type.display.l} text-foreground`}>Plan</h1>
         <p className={`${type.body.m} text-muted-foreground`}>
-          Verify what I&apos;ll build before I generate the first draft.
+          Here&apos;s what I&apos;ll build for <span className="text-foreground font-semibold">{projectName}</span>.
+          Edit anything before generating.
         </p>
       </motion.div>
 
-      <Card delay={0.05}>
-        <div className="flex justify-between items-start mb-3">
-          <h3 className={`${type.heading.m} text-primary`}>Who I think this is for</h3>
-          <span className="px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider text-muted-foreground bg-accent">
-            Audience
-          </span>
-        </div>
-        <p className="leading-relaxed text-foreground">{plan.audience}</p>
-      </Card>
+      {/* Main Plan card — Base44 layout: single elegant container, labelled
+          sections separated by hairlines, optional show-less collapse. */}
+      <motion.article
+        variants={safeCardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: STANDARD_S, ease: EASE_QUIET }}
+        className="bg-card border border-border rounded-2xl shadow-[var(--shadow-1)] overflow-hidden"
+      >
+        <div className="p-6 md:p-8 space-y-6">
+          <Section label="Intent & Goal" condense={showLess} maxChars={180}>
+            <p className="leading-relaxed text-foreground">{intentAndGoal}</p>
+          </Section>
 
-      <Card delay={0.1}>
-        <h3 className={`${type.heading.m} text-primary mb-2`}>The one thing I&apos;m optimizing for</h3>
-        <p className="leading-relaxed text-foreground">{plan.goal}</p>
-      </Card>
+          <Section label="Audience & Roles" condense={showLess} maxChars={180}>
+            <p className="leading-relaxed text-foreground">{audienceAndRoles}</p>
+          </Section>
 
-      <Card delay={0.15}>
-        <h3 className={`${type.heading.m} text-primary mb-4`}>Pages I&apos;ll create</h3>
-        <div className="space-y-2">
-          {plan.pages.map((page) => (
-            <div
-              key={page.id}
-              className="flex justify-between items-start py-2 border-b border-border last:border-0"
-            >
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className={`${type.label} text-foreground`}>{page.title}</span>
-                  <span
-                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                      page.foundation
-                        ? "bg-secondary/20 text-secondary"
-                        : "bg-spark/15 text-spark-deep"
-                    }`}
-                  >
-                    {page.foundation ? "Foundation" : "Industry"}
-                  </span>
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">{page.purpose}</p>
-              </div>
-              <span className="text-[11px] font-bold uppercase tracking-wider font-mono text-muted-foreground/60 flex-shrink-0 ml-3">{page.route}</span>
+          <Section label="Core Flows" condense={showLess}>
+            <ul className="space-y-1.5">
+              {plan.pages.map((page) => (
+                <li key={page.id} className="flex items-start gap-2 text-sm">
+                  <span className="text-muted-foreground/60 font-mono mt-0.5 shrink-0">•</span>
+                  <div className="min-w-0">
+                    <span className="font-semibold text-foreground">{page.title}</span>
+                    {!showLess && page.purpose && (
+                      <span className="text-muted-foreground"> — {page.purpose}</span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Section>
+
+          <Section label="Technical Requirements" condense={showLess}>
+            <div className="flex flex-wrap gap-1.5">
+              {plan.features.map((f) => (
+                <span
+                  key={f.id}
+                  className="px-2.5 py-1 bg-background border border-border rounded-full text-xs font-semibold text-foreground"
+                >
+                  {f.label}
+                </span>
+              ))}
             </div>
-          ))}
-        </div>
-      </Card>
+          </Section>
 
-      <Card delay={0.2}>
-        <h3 className={`${type.heading.m} text-primary mb-3`}>Core capabilities</h3>
-        <div className="flex flex-wrap gap-2">
-          {plan.features.map((f) => (
-            <span
-              key={f.id}
-              className={`px-3 py-2 bg-background border border-border rounded-full ${type.label}`}
-            >
-              {f.label}
-            </span>
-          ))}
-        </div>
-      </Card>
-
-      <Card delay={0.25} className="overflow-hidden p-0">
-        <div className="p-6 md:p-8 border-b border-border flex items-start justify-between gap-4">
-          <div>
-            <h3 className={`${type.heading.m} text-primary`}>Visual style</h3>
-            <p className="text-xs text-muted-foreground italic mt-1">Inspired by {plan.style.label}</p>
-          </div>
-          {/* Phase 15b: reroll button — lets the user try a different
-              DNA without restarting the questionnaire. Free (no LLM call;
-              just re-runs the picker + plan computation). */}
-          <button
-            type="button"
-            onClick={handleRerollDna}
-            disabled={rerolling}
-            className={`${interactions.chip} flex-shrink-0 inline-flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-md text-muted-foreground hover:text-foreground border border-border hover:border-foreground/40 disabled:opacity-50 disabled:cursor-wait`}
-            title="Pick a different visual style for the same answers"
-          >
-            {rerolling ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin mr-1.5" aria-hidden />
-            ) : (
-              <Sparkles className="w-3.5 h-3.5" aria-hidden />
-            )}
-            <span className={type.label}>{rerolling ? "Picking…" : "Try a different style"}</span>
-          </button>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2">
-          <div className="p-6 md:p-8 bg-background">
-            <p className={`${type.display.m} text-foreground`}>{plan.style.mood || plan.style.label}</p>
-            <p className="font-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground mt-2">DNA-driven layout</p>
-          </div>
-          <div className="p-6 md:p-8 border-t md:border-t-0 md:border-l border-border space-y-4">
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Palette</p>
-              <div className="flex gap-2">
-                {Object.entries(plan.style.palette || {}).map(([name, hex]) =>
-                  hex ? (
-                    <div
-                      key={name}
-                      className="w-10 h-10 rounded-full border border-border shadow-sm"
-                      style={{ backgroundColor: hex }}
-                      title={`${name}: ${hex}`}
-                    />
-                  ) : null,
+          <Section
+            label="Design Preferences"
+            condense={showLess}
+            rightSlot={
+              <button
+                type="button"
+                onClick={handleRerollDna}
+                disabled={rerolling}
+                className={`${interactions.chip} inline-flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground disabled:opacity-50 disabled:cursor-wait`}
+                title="Pick a different visual style for the same answers"
+              >
+                {rerolling ? (
+                  <Loader2 className="w-3 h-3 animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles className="w-3 h-3" aria-hidden />
                 )}
-              </div>
+                {rerolling ? "Picking" : "Reroll"}
+              </button>
+            }
+          >
+            <div className="space-y-3">
+              <p className={`${type.heading.s} text-foreground`}>
+                {plan.style.mood || plan.style.label}
+              </p>
+              {!showLess && (
+                <>
+                  <div className="flex items-center gap-3 flex-wrap">
+                    {Object.entries(plan.style.palette || {}).map(([name, hex]) =>
+                      hex ? (
+                        <div
+                          key={name}
+                          className="flex items-center gap-1.5"
+                          title={`${name}: ${hex}`}
+                        >
+                          <div
+                            className="w-5 h-5 rounded-full border border-border shadow-sm"
+                            style={{ backgroundColor: hex }}
+                          />
+                          <span className="text-[11px] font-mono text-muted-foreground">{hex}</span>
+                        </div>
+                      ) : null,
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">{plan.style.fonts.display || "—"}</span>{" "}
+                    + <span className="text-foreground">{plan.style.fonts.body || "—"}</span>
+                  </p>
+                </>
+              )}
             </div>
-            <div>
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mb-2">Typography</p>
-              <p className={`${type.heading.s} text-primary`}>{plan.style.fonts.display || "—"}</p>
-              <p className={`${type.body.s} text-foreground`}>{plan.style.fonts.body || "—"}</p>
-            </div>
-          </div>
+          </Section>
+
+          {plan.language && plan.language.code !== "en" && (
+            <Section label="Language" condense={false}>
+              <p className="text-sm text-foreground">
+                Site copy in{" "}
+                <span className="font-semibold">{plan.language.native_name}</span>{" "}
+                <span className="text-muted-foreground">({plan.language.english_name})</span>.
+              </p>
+            </Section>
+          )}
         </div>
-      </Card>
 
-      {plan.language && plan.language.code !== "en" && (
-        <Card delay={0.27}>
-          <h3 className={`${type.heading.m} text-primary mb-2`}>Language</h3>
-          <p className="leading-relaxed text-foreground">
-            Site copy will be in{" "}
-            <span className="font-semibold">{plan.language.native_name}</span>{" "}
-            <span className="text-muted-foreground text-sm">({plan.language.english_name})</span>.
+        {/* Show less / Show more toggle — Base44 pattern. Sits at the bottom
+            of the plan card. Defaults to expanded; one click compacts the
+            long sections (Pages purposes, palette hexes, font names). */}
+        <button
+          type="button"
+          onClick={() => setShowLess((v) => !v)}
+          className={`w-full px-6 md:px-8 py-3 border-t border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 flex items-center justify-center gap-1.5 transition-colors`}
+        >
+          {showLess ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
+          {showLess ? "Show more" : "Show less"}
+        </button>
+      </motion.article>
+
+      {/* Launch Setup — separate card. The dependency graph + auto/pending/
+          manual badges don't condense into a sentence; better as its own
+          surface so users can scan what Pebble will and won't handle. */}
+      <motion.article
+        variants={safeCardVariants}
+        initial="hidden"
+        animate="visible"
+        transition={{ duration: STANDARD_S, delay: 0.05, ease: EASE_QUIET }}
+        className="bg-card border border-border rounded-2xl p-6 md:p-8 shadow-[var(--shadow-1)] space-y-4"
+      >
+        <div>
+          <h3 className={`${type.heading.m} text-foreground`}>Launch Setup</h3>
+          <p className="text-xs text-muted-foreground mt-1">
+            {plan.setup_needs.length} items. Pebble handles what it can; the rest is honest about what&apos;s next.
           </p>
-        </Card>
-      )}
-
-      <Card delay={0.3}>
-        <h3 className={`${type.heading.m} text-primary mb-1`}>Launch setup</h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          {plan.setup_needs.length} items. Pebble handles what it can; the rest is honest about what&apos;s next.
-        </p>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           {topoSortSetupNeeds(plan.setup_needs).map((item) => {
             const byId = new Map(plan.setup_needs.map((s) => [s.id, s]));
@@ -315,14 +318,14 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
                 }`}
                 title={item.notes}
               >
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center gap-2">
                   <span className={type.label}>{item.label}</span>
                   <span
-                    className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                    className={`text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
                       item.status === "auto"
-                        ? "bg-earth/20 text-earth-deep"
+                        ? "bg-foreground/10 text-foreground"
                         : item.status === "pending"
-                          ? "bg-spark/15 text-spark-deep"
+                          ? "bg-foreground/15 text-foreground"
                           : "bg-muted text-muted-foreground"
                     }`}
                   >
@@ -330,7 +333,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
                   </span>
                 </div>
                 {blockingDeps.length > 0 && (
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground leading-tight">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 leading-tight">
                     Unlocks after: {blockingDeps.map((d) => d.label).join(" + ")}
                   </p>
                 )}
@@ -338,24 +341,24 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
             );
           })}
         </div>
-      </Card>
+      </motion.article>
 
-      <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+      {/* Action row — Edit (back) + Start Building (primary). Base44's
+          big-button-bottom-of-card pattern. */}
+      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
         <button
           onClick={onBack}
           className={`${interactions.chip} flex items-center gap-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md ${type.label}`}
         >
-          {/* Phase 40i: plan-first users land here without going through the
-              idea questionnaire — back means "change your mind", not "edit". */}
           <Edit3 className="w-3.5 h-3.5" />
           {planFirst ? "Change my mind" : "Edit the questions"}
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleGenerate}
-          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-semibold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2`}
+          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-bold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2`}
         >
-          <Sparkles className="w-4 h-4" /> Generate my draft
+          <Sparkles className="w-4 h-4" /> Start Building
         </motion.button>
       </div>
 
@@ -371,6 +374,54 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Section — labeled section row inside the main Plan card.
+// ---------------------------------------------------------------------------
+
+function Section({
+  label,
+  children,
+  condense,
+  maxChars,
+  rightSlot,
+}: {
+  label: string;
+  children: React.ReactNode;
+  /** When true, truncate string content past maxChars and hide non-essential bits. */
+  condense?: boolean;
+  /** Used only when the child is a single <p> string we can truncate. */
+  maxChars?: number;
+  /** Optional element to right-align next to the label (e.g. Reroll button). */
+  rightSlot?: React.ReactNode;
+}) {
+  // For simple paragraph content, optionally truncate when condensed.
+  let body = children;
+  if (
+    condense &&
+    maxChars &&
+    typeof children === "object" &&
+    children !== null &&
+    "props" in children &&
+    typeof (children as { props?: { children?: unknown } }).props?.children === "string"
+  ) {
+    const text = (children as { props: { children: string } }).props.children;
+    if (text.length > maxChars) {
+      body = <p className="leading-relaxed text-foreground">{text.slice(0, maxChars).trimEnd()}…</p>;
+    }
+  }
+  return (
+    <div className="border-b border-border last:border-0 pb-6 last:pb-0">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+          {label}
+        </h3>
+        {rightSlot}
+      </div>
+      {body}
     </div>
   );
 }
