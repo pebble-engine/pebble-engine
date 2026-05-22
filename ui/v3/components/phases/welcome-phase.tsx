@@ -912,27 +912,34 @@ export function WelcomePhase({ onAdvance }: Props) {
         >
           Let&apos;s build your{" "}
           <MotionConfig reducedMotion="never">
-            <AnimatePresence mode="wait">
-              <motion.span
-                key={ROTATING_WORDS[wordIdx]}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{
-                  opacity: 1,
-                  y: 0,
-                  backgroundPosition: ["0% 0%", "200% 0%"],
-                }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{
-                  opacity: { duration: 0.5, ease: EASE_CINEMATIC },
-                  y:       { duration: 0.5, ease: EASE_CINEMATIC },
-                  backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
-                }}
-                className="inline bg-clip-text text-transparent"
-                style={shimmerForegroundStyle}
-              >
-                {ROTATING_WORDS[wordIdx]}
-              </motion.span>
-            </AnimatePresence>
+            {/* Fixed-width slot sized to the widest word ("presence").
+                Rotating word is left-aligned inside it — short words
+                leave empty space to the right, long words fit exactly.
+                The sentence never reflows or shifts position. */}
+            <span className="relative inline-block align-baseline">
+              <span aria-hidden className="invisible select-none">presence</span>
+              <AnimatePresence mode="wait">
+                <motion.span
+                  key={ROTATING_WORDS[wordIdx]}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{
+                    opacity: 1,
+                    y: 0,
+                    backgroundPosition: ["0% 0%", "200% 0%"],
+                  }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{
+                    opacity: { duration: 0.5, ease: EASE_CINEMATIC },
+                    y:       { duration: 0.5, ease: EASE_CINEMATIC },
+                    backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
+                  }}
+                  className="absolute left-0 top-0 bg-clip-text text-transparent whitespace-nowrap"
+                  style={shimmerForegroundStyle}
+                >
+                  {ROTATING_WORDS[wordIdx]}
+                </motion.span>
+              </AnimatePresence>
+            </span>
           </MotionConfig>
         </motion.h1>
 
