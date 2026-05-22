@@ -15,7 +15,7 @@ python pebble_engine.py
 # Override port if 8000 is taken
 python pebble_engine.py --port 8765
 
-# Test suite — 1173 passing as of 2026-05-17 (incl. 15 e2e HTTP tests)
+# Test suite — 1981 passing as of 2026-05-21 (incl. 15 e2e HTTP tests + 21 brand-extract multipart cases)
 python -m pytest -q
 
 # Run only the e2e HTTP integration tests (boots engine in-process)
@@ -126,6 +126,26 @@ Style DNA (`style_dna.py`) holds 10 over-specified personalities (Swiss Magazine
 7. **Secrets never go in chat.** The `.env` file is the secret channel. To take a new key from the user, add a labeled section to `.env` with a placeholder, link them to it, they paste and save. Pattern in use since 2026-05-14.
 
 8. **Live engine logs are at `engine.log` / `engine.err.log` in repo root.** They're gitignored. If `python -m pytest` complains about port 8000, the engine is already running.
+
+9. **iOS Safari needs `100dvh`, not `100vh`.** iOS includes the URL bar in `100vh` and the page jumps when the bar collapses. Use the `.h-screen-safe` / `.min-h-screen-safe` utilities defined in `app/globals.css` (they fall back to `100vh` on iOS < 15.4). Phase 41 hardening: viewport meta has `viewport-fit=cover`, tap-highlight is killed globally, mobile menu has `.pb-safe` for the home-indicator. Don't add raw `h-screen` to new landing components — use the safe variants.
+
+10. **Named Framer Motion variants MUST be wrapped via `withReducedMotion`.** `tests/test_motion_module_wiring.py` enforces it. If you declare a variant at module level (e.g. `const FADE_UP = {...}`), the component that imports it must call `useMemo(() => withReducedMotion(FADE_UP), [])` inside the function body. The pattern in `welcome-phase.tsx` is `_RAW` suffix on the const declarations + wrapped name in the component.
+
+## Phase 40 + 41 landing architecture (May 2026)
+
+The landing page (`ui/v3/components/phases/welcome-phase.tsx`, ~1645 lines) was rebuilt across Phase 40 (a → o) and Phase 41 (iOS hardening). Key components, all in `ui/v3/components/hero/`:
+
+- **`landing-nav.tsx`** — sticky pill, shrinks on scroll past 10px, mobile menu via `Menu`/`X` icons with body scroll-lock + `pb-safe` for iPhone home-indicator. Brand mark + nav links + Sign In + Get Started all in Plus Jakarta Sans (one professional typeface end-to-end).
+- **`shuffle-grid.tsx`** — hero backdrop, 4×4 grid of 16 real Pebble template PNGs from `public/templates-preview/`. Reshuffles every 3s (6s on screens ≤640px to spare low-end iPhones). Hydration-safe (deterministic initial state, first shuffle in `useEffect`).
+- **`detective-input.tsx`** — the search bar / "six-pack" input. Row 1 is the input only (pure white `bg-white`, full-width for typewriter cycle). Row 2 is the action toolbar: mic (Web Speech API, auto-hidden on Firefox), paperclip (≤5 image uploads, multipart-posted to `/api/brand-extract`), Plan toggle (stamps `brief.planFirst`), Build button (glows when unlocked). Typewriter placeholder has a permanent "Hey Pebble! Build " prefix; only the body suffix types/erases. Rotating clickable suggestion pill below.
+- **`swiper-steps.tsx`** — §2 "From sentence to site" horizontal swiper, replaces the old `StickyScrollStack`.
+- **Sticky-scroll §3-§7** — each marketing section (DNA showcase, Perfect for, Testimonial, Pricing, Final CTA) is a tall outer with a `sticky top-0 h-screen-safe` inner. `useStickySection` hook reads `scrollYProgress` and applies a reveal curve (enter 0→0.25, dwell 0.25→0.75, exit 0.75→1).
+
+The retired `BackgroundCarousel` + `StickyScrollStack` files are kept on disk for fast revert but not imported by the active path.
+
+Plan-first flow: when `brief.planFirst === true`, `workspace-shell.tsx`'s `handleAdvanceFromWelcome` skips the idea questionnaire and routes directly to the existing `PlanPhase` (calls `/api/plan` cheap preview). Back button reads "Change my mind" and returns to welcome.
+
+Brand-extract image ingestion: `pebble/server/brand_extract.py` accepts `multipart/form-data` with `images[]` (≤5 images, ≤10MB each, ≤60MB total, MIME allowlist + magic-byte check). `pebble/brand_extract.py` `extract_brand()` takes optional `inspiration_images: list[bytes]` and forwards them to the LLM via vision message blocks (Anthropic + Gemini both supported).
 
 ## Skills to invoke at specific triggers (Pebble-specific reminder system)
 
