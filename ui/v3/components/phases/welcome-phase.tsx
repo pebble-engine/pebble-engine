@@ -304,6 +304,52 @@ function RotatingPebbleLogo({
  * RotatingPebbleLogo remain used by the footer below.
  */
 
+/* ---------------------------------------------------------------------------
+ * Phase 43.4 (2026-05-21) — CountUp + plan-picker quiz helpers.
+ *
+ * CountUp: tiny rAF-driven number ticker. Eases from 0 → target over
+ * `durationMs` when `run` flips to true. Pricing tier cards use it to
+ * count up the dollar amount on first scroll-into-view — satisfying
+ * dopamine moment that costs almost nothing.
+ *
+ * PlanPickerQuiz: 2-question micro-quiz ("How many sites?" + "Custom
+ * domain?"). Maps the answers to a recommended Pebble tier; the
+ * recommendation pulses the matching card via the same ledTier
+ * mechanism the click-LED uses. Genuinely useful, not just decorative.
+ * --------------------------------------------------------------------------- */
+
+function useCountUp(target: number, durationMs: number, run: boolean): number {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!run) { setVal(0); return; }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const elapsed = now - start;
+      const t = Math.min(1, elapsed / durationMs);
+      const eased = 1 - Math.pow(1 - t, 3); // ease-out cubic
+      setVal(Math.round(target * eased));
+      if (t < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs, run]);
+  return val;
+}
+
+type QuizSites  = "one" | "few" | "many";
+type QuizDomain = "no"  | "yes";
+
+/** Returns the recommended tier name from the answer pair. Mirrors the
+    real tier mechanics: Free covers 1 site no domain, Starter covers
+    1-5 sites + a custom domain, Pro covers unlimited. */
+function recommendTier(sites: QuizSites | null, domain: QuizDomain | null): string | null {
+  if (sites === null || domain === null) return null;
+  if (sites === "many")               return "Pro";
+  if (sites === "few")                return "Starter";
+  return domain === "yes" ? "Starter" : "Free";
+}
+
 /**
  * Phase 43 (2026-05-21) — mobile-detect hook. Used to skip the sticky-
  * scroll + scroll-tied parallax on §3–§7 on iPhone-sized screens, where
@@ -414,6 +460,47 @@ export function WelcomePhase({ onAdvance }: Props) {
   // strip the className when the animation finishes (otherwise the
   // keyframe re-fires on next click only when the class is added fresh).
   const [ledTier, setLedTier] = useState<string | null>(null);
+
+  // Phase 43.4 — plan-picker micro-quiz state. Sites + domain answers
+  // map to a recommended tier; the recommendation pulses the matching
+  // card (reuses ledTier). Count-up ticker for prices triggers when the
+  // pricing section enters view (pricingInView).
+  const [quizSites,  setQuizSites]  = useState<QuizSites  | null>(null);
+  const [quizDomain, setQuizDomain] = useState<QuizDomain | null>(null);
+  const [pricingInView, setPricingInView] = useState(false);
+
+  // Per-tier count-up tickers. Rules of Hooks: must be called at the
+  // top of the component, not inside the .map() that renders cards.
+  // Targets recompute when billing toggles so the digits visibly morph
+  // between monthly / yearly.
+  const tickStarter = useCountUp(
+    billing === "monthly" ? 19 : Math.round(190 / 12),
+    900,
+    pricingInView,
+  );
+  const tickPro = useCountUp(
+    billing === "monthly" ? 49 : Math.round(490 / 12),
+    900,
+    pricingInView,
+  );
+  const priceTickers: Record<string, number> = {
+    Free:       0,
+    Starter:    tickStarter,
+    Pro:        tickPro,
+    Enterprise: 0,
+  };
+  const recommendedTier = recommendTier(quizSites, quizDomain);
+  // Pulse the recommended tier whenever the recommendation lands or
+  // changes. Same 1.4s LED animation as the manual click.
+  useEffect(() => {
+    if (!recommendedTier) return;
+    setLedTier(null);
+    const raf = requestAnimationFrame(() => {
+      setLedTier(recommendedTier);
+      window.setTimeout(() => setLedTier((cur) => (cur === recommendedTier ? null : cur)), 1400);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [recommendedTier]);
   const [stripeLoading, setStripeLoading] = useState<string | null>(null);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
@@ -1489,10 +1576,91 @@ export function WelcomePhase({ onAdvance }: Props) {
                 You&apos;re currently on the <strong className="text-foreground">{activePlan}</strong> plan
               </p>
             )}
+
+            {/* Phase 43.4 — Plan-picker micro-quiz. Two questions, three
+                + two pill buttons. Answering both populates a
+                "recommended for you" badge on the matching tier card
+                + pulses its LED border. Honest + useful, not a sales
+                gimmick — the recommendation logic mirrors the real
+                tier mechanics. */}
+            <div className="max-w-3xl mx-auto mb-8 sm:mb-10">
+              <div className="rounded-2xl border border-border bg-white/70 backdrop-blur-sm shadow-[0_4px_18px_rgba(31,29,26,0.05)] p-5 sm:p-6">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                  <p className="text-xs uppercase tracking-[0.14em] font-semibold text-muted-foreground">
+                    Not sure which plan? Two quick questions.
+                  </p>
+                  {recommendedTier && (
+                    <motion.span
+                      key={recommendedTier}
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, ease: EASE_CINEMATIC }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#3054ff]/10 text-[#3054ff] text-xs font-semibold"
+                    >
+                      <Sparkles className="w-3 h-3" aria-hidden />
+                      We recommend {recommendedTier}
+                    </motion.span>
+                  )}
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">How many sites?</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        { v: "one",  label: "Just 1"      },
+                        { v: "few",  label: "A handful"   },
+                        { v: "many", label: "Lots"        },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => setQuizSites(opt.v)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                            quizSites === opt.v
+                              ? "bg-foreground text-background"
+                              : "bg-muted/60 text-foreground/80 hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2">Custom domain?</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([
+                        { v: "no",  label: "Not yet" },
+                        { v: "yes", label: "Yes"     },
+                      ] as const).map((opt) => (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => setQuizDomain(opt.v)}
+                          className={cn(
+                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150",
+                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                            quizDomain === opt.v
+                              ? "bg-foreground text-background"
+                              : "bg-muted/60 text-foreground/80 hover:bg-muted hover:text-foreground",
+                          )}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <motion.div
               variants={STAGGER_PARENT}
               initial="hidden"
               whileInView="show"
+              onViewportEnter={() => setPricingInView(true)}
               viewport={{ once: true, amount: 0.1 }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10 items-stretch"
             >
@@ -1516,6 +1684,11 @@ export function WelcomePhase({ onAdvance }: Props) {
                       : `Billed monthly`;
 
                 const isExpanded = expandedTiers.has(tier.name);
+                // Phase 43.4 — count-up lookup (hooks called at the top
+                // of the component, indexed by tier name). For Free /
+                // Enterprise we still render the static string label.
+                const animatedPrice = priceTickers[tier.name] ?? 0;
+                const showCountUp   = !isContact && !isFree;
                 return (
                   <motion.div
                     key={tier.name}
@@ -1574,7 +1747,9 @@ export function WelcomePhase({ onAdvance }: Props) {
                           transition={{ duration: 0.22, ease: EASE_CINEMATIC }}
                           className="flex items-baseline gap-1"
                         >
-                          <span className={type.display.m}>{headlinePrice}</span>
+                          <span className={type.display.m}>
+                            {showCountUp ? `$${animatedPrice}` : headlinePrice}
+                          </span>
                           {period && <span className="text-sm text-muted-foreground/80">{period}</span>}
                         </motion.div>
                       </AnimatePresence>
