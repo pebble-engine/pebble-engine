@@ -916,24 +916,27 @@ export function WelcomePhase({ onAdvance }: Props) {
                 Rotating word is left-aligned inside it — short words
                 leave empty space to the right, long words fit exactly.
                 The sentence never reflows or shifts position. */}
-            <span className="relative inline-block align-baseline">
+            <span
+              className="relative inline-block align-baseline"
+              style={{ paddingTop: "0.12em", paddingBottom: "0.12em", marginTop: "-0.12em", marginBottom: "-0.12em" }}
+            >
               <span aria-hidden className="invisible select-none">presence</span>
               <AnimatePresence mode="wait">
                 <motion.span
                   key={ROTATING_WORDS[wordIdx]}
-                  initial={{ opacity: 0, y: 10 }}
+                  initial={{ opacity: 0, y: 5 }}
                   animate={{
                     opacity: 1,
                     y: 0,
                     backgroundPosition: ["0% 0%", "200% 0%"],
                   }}
-                  exit={{ opacity: 0, y: -10 }}
+                  exit={{ opacity: 0, y: -5 }}
                   transition={{
                     opacity: { duration: 0.5, ease: EASE_CINEMATIC },
                     y:       { duration: 0.5, ease: EASE_CINEMATIC },
                     backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
                   }}
-                  className="absolute left-0 top-0 bg-clip-text text-transparent whitespace-nowrap"
+                  className="absolute left-0 top-[0.12em] bg-clip-text text-transparent whitespace-nowrap"
                   style={shimmerForegroundStyle}
                 >
                   {ROTATING_WORDS[wordIdx]}
