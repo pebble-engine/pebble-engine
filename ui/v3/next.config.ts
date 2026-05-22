@@ -39,7 +39,7 @@ const SECURITY_HEADERS = [
       "font-src 'self' data:",
       "img-src 'self' data: blob: https:",
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com",
-      "frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com",
+      "frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self' https://accounts.google.com https://github.com https://*.supabase.co",

@@ -34,6 +34,7 @@ import { DraftPhase } from "@/components/phases/draft-phase";
 import { ReadyPhase } from "@/components/phases/ready-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { PublishPhase } from "@/components/phases/publish-phase";
+import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 import { PlanPickerModal } from "@/components/plan-picker-modal";
 import { fetchSubscription } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
@@ -266,9 +267,14 @@ export function WorkspaceShell() {
       if (build) setPhase("publish");
       return;
     }
-    if (target === "features" || target === "setup") {
-      // No dedicated phase yet — stubs. Click is intentionally a no-op
-      // so the user can see they're disabled (opacity-50 + cursor-not-allowed).
+    if (target === "features") {
+      // Phase 56a: Integrations panel — available once a site is built.
+      if (build) setPhase("integrations" as Phase);
+      return;
+    }
+    if (target === "setup") {
+      // Setup has no dedicated phase yet — surface inside design.
+      if (build) setPhase("design");
       return;
     }
     if (target === "draft") {
@@ -409,6 +415,9 @@ export function WorkspaceShell() {
                   onOpenEditor={() => setPhase("design")}
                   onPublish={() => setPhase("publish")}
                 />
+              )}
+              {(phase as string) === "integrations" && (
+                <IntegrationsPhase onBack={() => setPhase("design")} />
               )}
             </motion.div>
           </AnimatePresence>

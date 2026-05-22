@@ -1258,3 +1258,49 @@ export type ProfileUpdates = {
   display_name?: string | null;
   timezone?:     string;
 };
+
+// ---------- /api/projects/<slug>/integrations (Phase 56a) -------------------
+
+export type IntegrationId =
+  | "whatsapp"
+  | "booking"
+  | "google-maps"
+  | "social"
+  | "cookie-consent"
+  | "custom-code";
+
+export type IntegrationRecord = {
+  enabled: boolean;
+  config:  Record<string, string>;
+};
+
+export type IntegrationsMap = Partial<Record<IntegrationId, IntegrationRecord>>;
+
+/** Fetch all saved integrations for a project. */
+export async function getIntegrations(slug: string): Promise<IntegrationsMap> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/integrations`);
+}
+
+/** Save (create or update) one integration. Returns the saved record. */
+export async function saveIntegration(
+  slug:    string,
+  id:      IntegrationId,
+  enabled: boolean,
+  config:  Record<string, string>,
+): Promise<IntegrationRecord> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/integrations`, {
+    integration_id: id,
+    enabled,
+    config,
+  });
+}
+
+/** Delete a saved integration. Returns { existed: boolean }. */
+export async function deleteIntegration(
+  slug: string,
+  id:   IntegrationId,
+): Promise<{ existed: boolean }> {
+  return deleteJSON(
+    `/api/projects/${encodeURIComponent(slug)}/integrations/${encodeURIComponent(id)}`,
+  );
+}

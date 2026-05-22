@@ -34,8 +34,9 @@ export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready"
  * Idea stage, just with different chrome (welcome hides the rail, idea
  * shows the chip questionnaire).
  */
-export function phaseToStage(p: Phase): string {
-  if (p === "welcome") return "idea";
+export function phaseToStage(p: Phase | string): string {
+  if (p === "welcome")      return "idea";
+  if (p === "integrations") return "features";  // highlights "Features" nav item (Phase 56a)
   return p;
 }
 

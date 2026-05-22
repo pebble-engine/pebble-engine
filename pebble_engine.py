@@ -1785,7 +1785,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
         # cache so the CDN/browser can reuse responses across visitors.
         if ext in ("html", "htm"):
             try:
+                from pebble.integrations import render_all_snippets as _render_integrations
                 raw = site_file.read_text(encoding="utf-8")
+                # Phase 56a — inject active integration widgets (WhatsApp, booking,
+                # Google Maps, social rail, cookie-consent, custom code) into every
+                # HTML response. Integrations are live for both workspace preview
+                # (non-public) AND public subdomain visitors so the published site
+                # includes them. The injection is idempotent (snippets use stable IDs).
+                integration_html = _render_integrations(slug)
+                if integration_html:
+                    raw = self._inject_html(raw, integration_html)
                 if public_mode:
                     data = raw.encode("utf-8")
                     cache_header = "public, max-age=60"
@@ -1805,6 +1814,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass  # fall through to plain serve
         self._serve_file(site_file, ct)
+
+    @staticmethod
+    def _inject_html(html: str, snippet: str) -> str:
+        """Insert *snippet* (raw HTML) just before </body>.
+        If </body> is absent, append at the end."""
+        lower = html.lower()
+        idx = lower.rfind("</body>")
+        if idx == -1:
+            return html + snippet
+        return html[:idx] + snippet + html[idx:]
 
     @staticmethod
     def _inject_bridge(html: str, script_body: str) -> str:
