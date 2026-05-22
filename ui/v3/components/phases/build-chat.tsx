@@ -86,7 +86,7 @@ export function BuildChatPanel({ sseEvents, done, error, onAnswers }: Props) {
   const [messages, setMessages] = useState<Msg[]>([
     {
       role: "pebble",
-      text: "While your site builds I'll grab a few quick details to personalise it — nothing required, just answer what you know.",
+      text: "Hi! I'm Pebblet 👋 While your site builds I'll grab a few quick details to personalise it — nothing required, just answer what you know.",
     },
   ]);
   const [input, setInput]           = useState("");
@@ -181,7 +181,7 @@ export function BuildChatPanel({ sseEvents, done, error, onAnswers }: Props) {
           P
         </div>
         <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground leading-none">Pebble</p>
+          <p className="text-sm font-bold text-foreground leading-none">Pebblet</p>
           <p className="text-[11px] text-muted-foreground mt-0.5">personalising while building</p>
         </div>
         <AnimatePresence>
