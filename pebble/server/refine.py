@@ -28,6 +28,12 @@ from pathlib import Path
 from typing import Callable, Optional
 
 from pebble.engagement import log_event as _log_engagement
+from pebble.user_plan import (
+    gate_response,
+    get_user_plan,
+    increment_usage,
+    would_exceed_quota,
+)
 from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
@@ -322,6 +328,31 @@ def run_refine(handler) -> None:
     if not site_dir.exists():
         handler._json(404, {"error": f"project site not found: {slug}"}); return
 
+    # Phase 54a (2026-05-23) — monthly AI refinement quota gate.
+    # Predict billable BEFORE running the refinement so we can deny
+    # at-the-door instead of burning compute and then 402'ing the user.
+    # Deterministic refinements in FREE_DETERMINISTIC_REFINEMENTS bypass
+    # the counter entirely; everything else counts against the user's
+    # monthly limit (Free: 30, Starter: 150, Pro: 400). Unknown
+    # refinement_ids fall through to the existing 400 handler below.
+    will_bill = (
+        refinement_id in LLM_REFINEMENTS or
+        (refinement_id in DETERMINISTIC_REFINEMENTS and refinement_id not in FREE_DETERMINISTIC_REFINEMENTS)
+    )
+    if will_bill:
+        exceeds, current, limit = would_exceed_quota(
+            caller_uid, "ai_refinements", "ai_refinements_per_month",
+        )
+        if exceeds:
+            handler._json(402, gate_response(
+                feature_label="AI refinement",
+                required_plan="starter",
+                current_plan=get_user_plan(caller_uid),
+                current=current,
+                limit=limit,
+            ))
+            return
+
     # Per-slug write lock — same NLM pass found a race window where two
     # concurrent refines on one project both snapshot pre-state and both
     # write, so the second snapshot bakes in the first edit.
@@ -371,6 +402,13 @@ def run_refine(handler) -> None:
         except Exception as _exc:
             log.warning("diff_against_snapshot failed (refine %s): %s", refinement_id, _exc)
 
+    # Phase 54a — commit the +1 to the monthly counter now that the
+    # refinement succeeded. Pre-checked at the top so the user can't
+    # exceed their plan here; this is the post-success commit half.
+    refinement_count_after = None
+    if billable:
+        refinement_count_after = increment_usage(caller_uid, "ai_refinements")
+
     handler._json(200, {
         "slug":             slug,
         "refinement_id":    refinement_id,
@@ -382,6 +420,7 @@ def run_refine(handler) -> None:
         "elapsed_seconds":  round(elapsed, 3),
         "details":          result.get("details", ""),
         "applied_at":       datetime.now(timezone.utc).isoformat(),
+        "refinement_count": refinement_count_after,
     })
     # Per-user engagement signal (T17). Best-effort — silent on failure.
     # NEVER pass refinement_id or any user content; only the event name.

@@ -26,6 +26,7 @@ from pebble.domain import (
 from pebble.log import log
 from pebble.publish import cloudflare_configured, cloudflare_setup_checklist
 from pebble.security import require_project_owner
+from pebble.user_plan import gate_response, get_limit, get_user_plan
 
 
 def _engine():
@@ -90,7 +91,23 @@ def run_get_domain(handler, slug: str) -> None:
 
 def run_set_domain(handler, slug: str) -> None:
     """Attach a custom domain. Body: ``{ host: "example.com" }``."""
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
+        return
+
+    # Phase 54a — custom domain is a paid feature (Starter: 1, Pro: 5,
+    # Enterprise: unlimited). Free users get 0. Block the attach when the
+    # user's plan grants 0 custom domains. We do NOT track per-project
+    # ownership of the domain quota here (that's a follow-up — for now,
+    # if the user is allowed any domains at all, this single domain is
+    # the one they get).
+    domain_limit = get_limit(caller_uid, "custom_domains")
+    if isinstance(domain_limit, int) and domain_limit == 0:
+        handler._json(402, gate_response(
+            feature_label="Custom domain",
+            required_plan="starter",
+            current_plan=get_user_plan(caller_uid),
+        ))
         return
 
     body = _read_body(handler)

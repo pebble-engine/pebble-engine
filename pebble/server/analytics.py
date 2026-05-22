@@ -70,9 +70,26 @@ def run_track(handler, slug: str) -> None:
 
 def run_get_summary(handler, slug: str) -> None:
     """Owner-facing analytics summary for the last 7 days. Requires the
-    caller to own the project."""
+    caller to own the project AND be on a plan that includes analytics
+    (Phase 54a: Pro+ only)."""
     if not _safe_slug(slug):
         handler._json(400, {"error": "invalid slug"}); return
-    if require_project_owner(handler, slug) is None:
+    caller_uid = require_project_owner(handler, slug)
+    if caller_uid is None:
         return
+
+    # Phase 54a — site analytics is a Pro-tier feature. Free / Starter
+    # see the v3 nav item but get a 402 + upgrade prompt instead of the
+    # summary payload. Tracking endpoints (POST /api/track/<slug>) stay
+    # OPEN so generated sites keep recording — the gate is on READING
+    # the summary, not collecting the data.
+    from pebble.user_plan import gate_response, get_user_plan, has_feature
+    if not has_feature(caller_uid, "site_analytics"):
+        handler._json(402, gate_response(
+            feature_label="Site analytics",
+            required_plan="pro",
+            current_plan=get_user_plan(caller_uid),
+        ))
+        return
+
     handler._json(200, summarize(slug, days=7))

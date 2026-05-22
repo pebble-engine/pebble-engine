@@ -144,10 +144,26 @@ def test_summarize_aggregates(tmp_path, monkeypatch):
 
 # ---- HTTP integration ---------------------------------------------------
 
+def _seed_pro_subscription(out: Path, uid: str) -> None:
+    """Phase 54a — write subscription.json so the test user reads as Pro.
+    Analytics is a Pro-tier feature; without this, /api/projects/<slug>/
+    analytics returns 402 even to project owners."""
+    user_dir = out / ".users" / uid
+    user_dir.mkdir(parents=True, exist_ok=True)
+    (user_dir / "subscription.json").write_text(
+        json.dumps({
+            "status": "active",
+            "plan":   "pro",
+        }),
+        encoding="utf-8",
+    )
+
+
 def test_track_records_and_summary_returns(engine_server):
     out = engine_server["output"]
     cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "owner@example.com", "valid-password")
     _seed_project(out, "good-co", owner_id=uid)
+    _seed_pro_subscription(out, uid)
     status, body = _request("POST", engine_server["base"], "/api/track/good-co",
                             {"path": "/about", "referrer": "https://x.com/post"})
     assert status == 200
@@ -159,6 +175,23 @@ def test_track_records_and_summary_returns(engine_server):
     assert status == 200
     assert summary["total_views"] >= 1
     assert summary["top_paths"][0]["path"] == "/about"
+
+
+def test_summary_402_when_free_plan(engine_server):
+    """Phase 54a — Free-plan users hit a 402 when fetching analytics.
+    The track-write side stays open (the customer's site can still
+    record visits), but reading the summary requires Pro."""
+    out = engine_server["output"]
+    cookie, uid = _signup_get_cookie_and_id(engine_server["base"], "freebie@example.com", "valid-password")
+    _seed_project(out, "good-co", owner_id=uid)
+    # NO subscription seeded — user defaults to Free.
+    status, body = _request("GET", engine_server["base"],
+                            "/api/projects/good-co/analytics",
+                            headers={"Cookie": cookie})
+    assert status == 402
+    assert body["required_plan"] == "pro"
+    assert body["current_plan"] == "free"
+    assert body["upgrade_url"] == "/pricing"
 
 
 def test_summary_401_when_signed_out(engine_server):

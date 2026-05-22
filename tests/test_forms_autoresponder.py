@@ -24,6 +24,13 @@ def _isolate(tmp_path, monkeypatch):
     fake.OUTPUT_DIR = tmp_path
     monkeypatch.setitem(sys.modules, "pebble_engine", fake)
     ar._reset_rate_limiter_for_tests()
+    # Phase 54a — Resend email forms are a Starter+ feature; the
+    # autoresponder unit tests don't care about plan gating, they care
+    # about the autoresponder ITSELF. Bypass the gate so they keep
+    # testing the underlying logic. (The plan-gate behavior gets its
+    # own dedicated test in test_forms.py.)
+    from pebble import user_plan
+    monkeypatch.setattr(user_plan, "project_has_feature", lambda slug, key: True)
     yield tmp_path
 
 

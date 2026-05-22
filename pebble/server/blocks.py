@@ -33,6 +33,7 @@ from pebble.engagement import log_event as _log_engagement
 from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
+from pebble.user_plan import gate_response, get_user_plan, has_feature
 
 
 def _engine():
@@ -84,6 +85,17 @@ def run_insert_block(handler, slug: str) -> None:
     # Auth gate FIRST — never read the body for a project we don't own.
     caller_uid = require_project_owner(handler, slug)
     if caller_uid is None:
+        return
+
+    # Phase 54a — drop-in section library is a Pro-tier feature. Free
+    # and Starter users still see /api/blocks (the catalog) for upgrade
+    # framing but can't actually insert into their projects.
+    if not has_feature(caller_uid, "drop_in_sections_allowed"):
+        handler._json(402, gate_response(
+            feature_label="Drop-in section library",
+            required_plan="pro",
+            current_plan=get_user_plan(caller_uid),
+        ))
         return
 
     try:

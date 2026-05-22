@@ -229,11 +229,25 @@ def _lookup_email(fields: dict, reply_field: str) -> Optional[str]:
 
 def send_autoresponse(slug: str, submission: dict) -> Optional[str]:
     """Send the configured autoresponse to the visitor. Returns:
-      - None on success or deliberate skip (not enabled, no email field)
+      - None on success or deliberate skip (not enabled, no email field, plan-gated)
       - error string on validation/delivery failure
 
     Never raises — like the webhook deliverer, the inbox is the source
     of truth and a failed autoresponse must not break form intake."""
+    # Phase 54a — Resend-backed email forms are a Starter+ feature.
+    # Free-plan project owners get form submissions saved to their
+    # inbox (always works), but the auto-reply email to the visitor
+    # only fires if the owner is on Starter or Pro. Silent skip + log
+    # so we have telemetry on how many free-plan owners are leaving
+    # autoresponses on the table.
+    try:
+        from pebble.user_plan import project_has_feature
+        if not project_has_feature(slug, "resend_email_forms"):
+            log.info("autoresponse skipped for %s — owner on Free plan", slug)
+            return None
+    except Exception as e:  # pragma: no cover — never let the gate raise
+        log.warning("plan-gate check failed for %s: %s — allowing", slug, e)
+
     config = get_config(slug)
     if not config.enabled:
         return None  # opt-out — silent skip

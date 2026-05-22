@@ -53,6 +53,10 @@ def engine_server(tmp_path, monkeypatch):
     monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
     monkeypatch.delenv("CLOUDFLARE_ACCOUNT_ID", raising=False)
     monkeypatch.delenv("CLOUDFLARE_API_TOKEN", raising=False)
+    # Phase 54a — custom domains require Starter+. These tests predate
+    # the gate; bypass at the call site so they keep exercising the
+    # domain-attach contract. Dedicated 402 test lives separately.
+    monkeypatch.setattr(domain_server, "get_limit", lambda uid, key: 1)
 
     # Auth gate bypass — see test_publish.py / test_http_e2e.py for the
     # rationale. Existing tests target the JSON contract; the auth gate

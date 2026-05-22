@@ -495,6 +495,13 @@ def engine_server(tmp_path, monkeypatch):
     out.mkdir()
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", out)
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    # Phase 54a — drop-in section library is a Pro-tier feature. These
+    # tests predate the gate and assert successful inserts; bypass the
+    # plan check at the call site (pebble.server.blocks imports
+    # has_feature at module load, so monkeypatching the user_plan
+    # module alone doesn't reach the local binding).
+    from pebble.server import blocks as blocks_handler
+    monkeypatch.setattr(blocks_handler, "has_feature", lambda uid, key: True)
     port = _find_free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), pebble_engine.PebbleHandler)
     server.daemon_threads = True

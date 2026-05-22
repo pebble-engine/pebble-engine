@@ -29,6 +29,17 @@ def engine_server(tmp_path, monkeypatch):
     out.mkdir()
     monkeypatch.setattr(pebble_engine, "OUTPUT_DIR", out)
     monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    # Phase 54a — Resend-backed email forms are Starter+. The
+    # autoresponder dispatch test asserts an email gets sent; bypass
+    # the project-plan gate so the underlying email path keeps being
+    # exercised. The 402-for-Free behavior of the gate itself is
+    # covered by user_plan unit tests.
+    from pebble import forms_autoresponder
+    monkeypatch.setattr(
+        "pebble.user_plan.project_has_feature",
+        lambda slug, key: True,
+    )
+    _ = forms_autoresponder  # silence unused-import linter
     port = _find_free_port()
     server = ThreadingHTTPServer(("127.0.0.1", port), pebble_engine.PebbleHandler)
     server.daemon_threads = True
