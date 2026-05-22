@@ -1724,7 +1724,7 @@ export function WelcomePhase({ onAdvance }: Props) {
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Legal</div>
-                <Link href="/trust"   className="block text-muted-foreground hover:text-foreground">Trust Charter</Link>
+                <Link href="/trust"   className="block text-muted-foreground hover:text-foreground">Trust Commitment</Link>
                 <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
                 <Link href="/terms"   className="block text-muted-foreground hover:text-foreground">Terms</Link>
                 <Link href="/dpa"     className="block text-muted-foreground hover:text-foreground">DPA</Link>

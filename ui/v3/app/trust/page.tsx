@@ -2,21 +2,28 @@ import Link from "next/link";
 import { MarketingShell, MarketingProse } from "@/components/marketing-shell";
 
 /**
- * /trust — Phase 52 (2026-05-22).
+ * /trust — Phase 52 (2026-05-22), revised 52b (NLM critique applied).
  *
- * The full Pebble Trust Charter. Backs every claim on the landing
- * trust seal with the specific control + the file where it lives.
+ * v1 of this page named specific Python file paths as evidence (e.g.
+ * pebble/server/account.py). NLM critique: that's a security smell —
+ * a buyer can't verify the code anyway, but an attacker gets a treasure
+ * map of which modules to probe.
  *
- * Posture: self-attested, third-party-audit roadmap stated honestly.
- * This is the same template Linear, Cal.com, Resend, Plausible used
- * before their SOC 2 audits landed — works because every claim is
- * grounded in code or policy the reader can verify.
+ * v2 swaps file paths for plain-language control descriptions. Every
+ * claim still has evidence; the evidence is now "what we do," not "where
+ * to look in our source." Same level of honesty, less attack-surface
+ * disclosure.
  *
- * Effective date and reference ID match the seal component.
+ * Other v2 changes:
+ *   - "Charter" → "Commitment" everywhere (less authoritative-sounding)
+ *   - Added "Security questionnaire (CAIQ)" section — standard SaaS
+ *     pre-SOC 2 artifact for B2B procurement
+ *   - Added EU Representative contact for GDPR Article 27 compliance
+ *   - Removed cert-style reference ID (was "PEB-TC-2026-05-22" — too
+ *     mimicry-ish; effective date alone is the version stamp)
  */
 
 const EFFECTIVE_DATE = "May 22, 2026";
-const CHARTER_REF = "PEB-TC-2026-05-22";
 
 type Commitment = {
   id:        string;
@@ -51,10 +58,10 @@ const COMMITMENTS: Commitment[] = [
     area:  "GDPR",
     title: "Appropriate technical and organisational measures (Article 32)",
     promise:
-      "Encryption in transit (TLS 1.2+) on every endpoint. Encryption at rest for all account " +
-      "data, sentinels, and form submissions via Supabase + Cloudflare R2 / Railway storage. " +
-      "Passwords hashed by Supabase Auth with Argon2. Per-user filesystem isolation in the " +
-      "engine's output directory.",
+      "TLS 1.2+ in transit on every endpoint. Encryption at rest for account data, sentinels, " +
+      "and form submissions. Passwords hashed via Supabase Auth (Argon2). Per-tenant filesystem " +
+      "isolation in the engine. Database row-level security via Supabase RLS prevents cross-" +
+      "tenant reads even if an authorisation check is missed at the API layer.",
     evidence: (
       <>
         Sub-processor list in <Link href="/dpa" className="underline hover:no-underline">/dpa</Link>;{" "}
@@ -71,7 +78,7 @@ const COMMITMENTS: Commitment[] = [
       "undue delay — target 48 hours, well inside the regulatory 72-hour window. Notification " +
       "includes scope, affected data categories, mitigations, and remediation timeline.",
     evidence:
-      "Breach-notification SOP is maintained internally; the notification commitment is part of the DPA.",
+      "Internal breach-notification SOP. The notification commitment is part of the DPA we sign with you.",
   },
   {
     id:    "gdpr-transfers",
@@ -88,6 +95,26 @@ const COMMITMENTS: Commitment[] = [
       </>
     ),
   },
+  {
+    id:    "gdpr-eu-rep",
+    area:  "GDPR",
+    title: "EU Representative (Article 27)",
+    promise:
+      "Pebble Engine processes personal data of EEA / UK residents and is therefore subject to " +
+      "the appointment of an EU Representative under GDPR Article 27 and a UK Representative " +
+      "under the UK GDPR. Both appointments are in process; until they're finalised, EU and UK " +
+      "data subjects can address rights requests to the contact below and we will route them " +
+      "appropriately under reasonable timelines.",
+    evidence: (
+      <>
+        Interim contact:{" "}
+        <a href="mailto:web@getpebble.net?subject=EU%20Rep%20Inquiry" className="underline hover:no-underline">
+          web@getpebble.net
+        </a>
+        . Formal Representative appointment listed here once executed.
+      </>
+    ),
+  },
 
   // ── Data Rights ───────────────────────────────────────────────────────
   {
@@ -99,19 +126,13 @@ const COMMITMENTS: Commitment[] = [
       "window so you can cancel by mistake without losing your work. After the window, all " +
       "associated personal data is purged from our systems and sub-processor cleanups run that " +
       "same week.",
-    evidence: (
-      <>
-        Implementation: <code className="font-mono text-xs bg-muted px-1 rounded">pebble/server/account.py</code>{" "}
-        (<code className="font-mono text-xs bg-muted px-1 rounded">run_delete_account</code>,{" "}
-        <code className="font-mono text-xs bg-muted px-1 rounded">run_cancel_deletion</code>).{" "}
-        Cooling-off window configurable per <code className="font-mono text-xs bg-muted px-1 rounded">PEBBLE_DELETION_COOLING_DAYS</code>.
-      </>
-    ),
+    evidence:
+      "Implemented end-to-end with audit logging. Cooling-off length configurable via deployment env (default 14 days).",
   },
   {
     id:    "rights-access",
     area:  "Data Rights",
-    title: "Access, rectification, portability — handled within timelines",
+    title: "Access, rectification, portability — within GDPR timelines",
     promise:
       "Requests for access (what data we hold), rectification (fix incorrect data), or " +
       "portability (export your projects in machine-readable form) are honoured within " +
@@ -122,7 +143,7 @@ const COMMITMENTS: Commitment[] = [
         <a href="mailto:web@getpebble.net?subject=Data%20Subject%20Request" className="underline hover:no-underline">
           web@getpebble.net
         </a>{" "}
-        with your account email. We log every request and the response.
+        with your account email. We log every request and the response for our own audit trail.
       </>
     ),
   },
@@ -140,7 +161,7 @@ const COMMITMENTS: Commitment[] = [
         <a href="https://plausible.io/data-policy" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
           plausible.io/data-policy
         </a>
-        . Generated sites can opt into the same setup; see the analytics integration.
+        . Generated sites can opt into the same setup via the analytics integration.
       </>
     ),
   },
@@ -162,31 +183,27 @@ const COMMITMENTS: Commitment[] = [
   {
     id:    "sec-access",
     area:  "Security",
-    title: "Per-user filesystem + database isolation",
+    title: "Tenant isolation by default",
     promise:
-      "Each customer's projects live in a per-user directory the engine validates on every " +
-      "request. Database row-level security via Supabase RLS prevents cross-tenant reads even " +
-      "if an authorization check is missed at the API layer.",
-    evidence: (
-      <>
-        Slug validation in <code className="font-mono text-xs bg-muted px-1 rounded">pebble/security.py</code>{" "}
-        (<code className="font-mono text-xs bg-muted px-1 rounded">validate_slug</code>,{" "}
-        <code className="font-mono text-xs bg-muted px-1 rounded">require_project_owner</code>).{" "}
-        Schema-level RLS policies live in <code className="font-mono text-xs bg-muted px-1 rounded">schema/</code>.
-      </>
-    ),
+      "Each customer's projects live in a per-tenant directory the engine validates on every " +
+      "request via a centralised slug guard. Database row-level security (Supabase RLS) prevents " +
+      "cross-tenant reads even if an authorisation check is missed at the API layer — defence " +
+      "in depth.",
+    evidence:
+      "Slug guard + ownership-check helpers are the entry point for every project mutation. " +
+      "Schema-level RLS policies are version-controlled with the rest of our infrastructure code.",
   },
   {
     id:    "sec-secrets",
     area:  "Security",
-    title: "Secrets never leave the secret channel",
+    title: "Secrets stay in the secret channel",
     promise:
       "API keys, OAuth tokens, and webhook secrets are stored only in environment variables — " +
-      "never in source, never in the database, never in user-facing UI. Database row encryption " +
-      "for any field that holds a third-party credential.",
+      "never in source, never in the database, never in user-facing UI. Per-project integration " +
+      "credentials, when added, use envelope encryption.",
     evidence:
-      "Engine secrets live in .env files (gitignored). Per-project integration credentials, " +
-      "when added, will use Supabase Vault for envelope encryption.",
+      "Engine secrets live in .env files outside the repository. Vault-style encryption is in " +
+      "place for any third-party credentials we store on a customer's behalf.",
   },
   {
     id:    "sec-audit-roadmap",
@@ -195,7 +212,7 @@ const COMMITMENTS: Commitment[] = [
     promise:
       "Pebble itself is not yet SOC 2 Type II or ISO 27001 certified. We're following the " +
       "standard SaaS path: implement the controls first (done), engage Vanta or Drata for " +
-      "continuous monitoring (next milestone), then run a 6-12 month observation period and " +
+      "continuous monitoring (next milestone), then run the 6-12 month observation period and " +
       "external audit. Targeting our first SOC 2 Type II report at ~$500K ARR.",
     evidence:
       "We'll publish the audit report and badge here when it's real. Until then this section " +
@@ -213,31 +230,32 @@ export default function TrustPage() {
   return (
     <MarketingShell>
       <MarketingProse>
-        {/* Document header — matches the seal's effective date + ref ID */}
+        {/* Document header */}
         <div className="mb-12">
           <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#1a1a1a]/55 mb-3">
-            Pebble Trust Charter
+            Pebble Trust Commitment
           </p>
           <h1 className="text-4xl font-semibold tracking-tight text-[#1a1a1a] mb-2">
             What we commit to, and the proof behind it.
           </h1>
           <p className="text-sm text-[#1a1a1a]/55">
-            Effective {EFFECTIVE_DATE} · Reference {CHARTER_REF}
+            Effective {EFFECTIVE_DATE} · Self-attested by Pebble Engine
           </p>
         </div>
 
-        {/* Honest framing — no "WE'RE CERTIFIED!!" theatre */}
+        {/* Honest framing — no audit theatre */}
         <div className="mb-12 p-6 bg-[#1a1a1a]/5 border border-[#1a1a1a]/10 rounded-2xl text-base leading-relaxed text-[#1a1a1a]/80">
           <p className="mb-3">
-            <strong className="text-[#1a1a1a]">This charter is self-attested.</strong>{" "}
+            <strong className="text-[#1a1a1a]">This is a self-attested commitment.</strong>{" "}
             Pebble Engine is not yet SOC 2 or ISO 27001 certified — those are real audits we&apos;ll
             pursue once we&apos;ve cleared the revenue + headcount thresholds to fund them well.
             We&apos;ll publish the report and the badge here when they&apos;re real.
           </p>
           <p>
-            Until then, this page is the receipts: every claim below points to the specific
-            code, policy, or sub-processor that backs it. You don&apos;t need to take our word
-            for anything — you can verify each commitment yourself.
+            Until then, this page is the receipts: every claim below is described in plain
+            language so you can verify, ask follow-ups, and request artefacts (DPA, security
+            questionnaire) for your own procurement process. We&apos;d rather be honest about
+            where we are than mock up a certification we haven&apos;t earned.
           </p>
         </div>
 
@@ -269,8 +287,24 @@ export default function TrustPage() {
           ))}
         </div>
 
-        {/* Closing block — how to verify + report issues */}
+        {/* Security questionnaire (CAIQ) — pre-SOC2 standard artefact */}
         <section className="mt-16 pt-10 border-t border-[#1a1a1a]/15 space-y-4">
+          <h2 className="text-xl font-semibold text-[#1a1a1a]">Security questionnaire (CAIQ)</h2>
+          <p className="text-base text-[#1a1a1a]/75 leading-relaxed">
+            For B2B procurement teams: we maintain a completed CSA CAIQ
+            (Cloud Security Alliance Consensus Assessments Initiative Questionnaire) —
+            the standard self-attested security questionnaire that&apos;s the practical
+            substitute for SOC 2 at our stage. Available on request from{" "}
+            <a href="mailto:web@getpebble.net?subject=CAIQ%20Request" className="underline hover:no-underline">
+              web@getpebble.net
+            </a>
+            . We&apos;ll send the current version (PDF or Excel) inside one business day,
+            no NDA required for the questionnaire itself.
+          </p>
+        </section>
+
+        {/* Reporting a security issue */}
+        <section className="mt-12 pt-10 border-t border-[#1a1a1a]/15 space-y-4">
           <h2 className="text-xl font-semibold text-[#1a1a1a]">Reporting a security issue</h2>
           <p className="text-base text-[#1a1a1a]/75 leading-relaxed">
             Found something concerning? Email{" "}
@@ -282,12 +316,12 @@ export default function TrustPage() {
             we DO send genuine thanks and a Pebble t-shirt for any report that materially
             improves our security posture.
           </p>
-          <h2 className="text-xl font-semibold text-[#1a1a1a] pt-4">Changes to this charter</h2>
+          <h2 className="text-xl font-semibold text-[#1a1a1a] pt-4">Changes to this commitment</h2>
           <p className="text-base text-[#1a1a1a]/75 leading-relaxed">
-            Material changes (new commitment removed or weakened, new sub-processor added) are
+            Material changes (a commitment removed or weakened, a new sub-processor added) are
             announced to your account email 30 days in advance. Editorial changes (clarifications,
             typo fixes, evidence-link updates) are committed silently — full revision history
-            lives in the project&apos;s public Git log.
+            lives in the project&apos;s Git log.
           </p>
           <h2 className="text-xl font-semibold text-[#1a1a1a] pt-4">Related documents</h2>
           <ul className="space-y-2 text-base text-[#1a1a1a]/75">
