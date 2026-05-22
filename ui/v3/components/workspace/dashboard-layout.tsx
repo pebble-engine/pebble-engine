@@ -32,7 +32,7 @@ export function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen-safe flex flex-col">
+    <div data-workspace-theme="mono" className="min-h-screen-safe flex flex-col">
       <TopNav projectName={topNavLabel} />
       <div className="flex flex-1">
         <DashboardSidebar />

@@ -4,18 +4,13 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { motion, AnimatePresence, MotionConfig } from "framer-motion";
 import {
-  Lightbulb,
-  Map,
-  Edit3,
-  Palette,
-  Puzzle,
-  Settings,
   Rocket,
   History,
   Plus,
-  type LucideIcon,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
+import { DashboardSidebar } from "@/components/workspace/dashboard-sidebar";
+import { PhaseTracker } from "@/components/workspace/phase-tracker";
 import {
   getBrief,
   getLastBuild,
@@ -71,17 +66,13 @@ const useIsomorphicLayoutEffect =
  * - publish  → publish flow (used to live at /publish)
  */
 
-type RailStep = { id: Phase | "features" | "setup"; label: string; Icon: LucideIcon };
-
-const BUILD_PLAN: RailStep[] = [
-  { id: "idea",     label: "Idea",     Icon: Lightbulb },
-  { id: "plan",     label: "Plan",     Icon: Map },
-  { id: "draft",    label: "Draft",    Icon: Edit3 },
-  { id: "design",   label: "Design",   Icon: Palette },
-  { id: "features", label: "Features", Icon: Puzzle },
-  { id: "setup",    label: "Setup",    Icon: Settings },
-  { id: "publish",  label: "Publish",  Icon: Rocket },
-];
+/* Phase 46 (2026-05-22) — the old vertical "Your Build Plan" rail
+   (Idea/Plan/Draft/Design/Features/Setup/Publish) lived here. Marc
+   reviewed the workspace and called it "too wizard-y, not workspace-y"
+   compared to Base44's left-nav (Home/All/Templates/Integrations/
+   Community). We now share that nav with /dashboard via DashboardSidebar.
+   The per-project phase progress moves to a horizontal PhaseTracker at
+   the top of the main content area (hidden on welcome + design). */
 
 
 export function WorkspaceShell() {
@@ -216,7 +207,7 @@ export function WorkspaceShell() {
       });
   }
 
-  function handleJumpPhase(target: RailStep["id"]) {
+  function handleJumpPhase(target: Phase | "features" | "setup") {
     if (target === "publish") {
       // Publish is only meaningful once we've generated something.
       if (build) setPhase("publish");
@@ -285,7 +276,10 @@ export function WorkspaceShell() {
     // preference for animations that bypass the Variants path — most importantly,
     // the layoutId/shared-element morphs that withReducedMotion() can't reach.
     <MotionConfig reducedMotion="user">
-    <div className={`min-h-screen-safe flex flex-col ${isWelcome ? "bg-black" : ""}`}>
+    <div
+      data-workspace-theme={isWelcome ? undefined : "mono"}
+      className={`min-h-screen-safe flex flex-col ${isWelcome ? "bg-black" : ""}`}
+    >
       {/* TopNav persists across all phase changes — but the welcome phase
           owns its own full-bleed dark canvas (and renders the Pebble logo
           itself, fading in after Start Building Free is clicked). */}
@@ -314,85 +308,50 @@ export function WorkspaceShell() {
       )}
 
       <div className={`flex flex-1 ${isWelcome ? "bg-black" : "overflow-hidden"}`}>
-        {/* Rail is persistent — visible state animates instead of mounting/unmounting.
-            On welcome the rail's width and opacity collapse to 0 so it visually
-            disappears but stays in the DOM, preserving its layoutId children for
-            cross-phase morphs. */}
-        <motion.aside
-          aria-hidden={!showLeftRail}
-          inert={!showLeftRail}
-          style={{ viewTransitionName: "rail" }}
-          animate={{
-            width:   showLeftRail ? 240 : 0,
-            opacity: showLeftRail ? 1   : 0,
-          }}
-          transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-          className={`flex flex-col gap-1 p-4 overflow-hidden shrink-0 ${
-            showLeftRail ? "bg-card border-r border-border" : ""
-          }`}
-        >
-          <div className="mb-6 px-1">
-            <h2 className={`${type.heading.m} text-primary`}>Your Build Plan</h2>
-            <p className={`${type.caption} opacity-70`}>AI-Guided Strategy</p>
-          </div>
-          <nav className="flex flex-col gap-1">
-            {BUILD_PLAN.map((s) => {
-              const isActive = s.id === railStage;
-              const isStub = s.id === "features" || s.id === "setup";
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => handleJumpPhase(s.id)}
-                  title={isStub ? "Coming soon" : undefined}
-                  disabled={isStub}
-                  className={`${interactions.chip} relative flex items-center gap-2 p-3 rounded-lg text-left ${type.label} ${
-                    isStub
-                      ? "opacity-50 cursor-not-allowed text-muted-foreground"
-                      : isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {isActive && (
-                    <motion.div
-                      layoutId="rail-active"
-                      className="absolute inset-0 bg-primary/15 rounded-lg"
-                      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-                    />
-                  )}
-                  <s.Icon className="w-5 h-5 shrink-0" />
-                  <span>{s.label}</span>
-                </button>
-              );
-            })}
-          </nav>
-        </motion.aside>
+        {/* Phase 46 — shared dashboard sidebar (same one used on /dashboard,
+            /integrations, /community/*) replaces the per-project rail. The
+            workspace now feels like a coherent product surface across all
+            logged-in routes, not a wizard. Hidden on welcome (the marketing
+            canvas is full-bleed). */}
+        {showLeftRail && <DashboardSidebar />}
 
-        {/* Center column — only this swaps between phases. AnimatePresence with
-            mode="wait" ensures the outgoing phase finishes its exit before the
-            incoming one mounts. */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={phase}
-            variants={safePhaseVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}
-          >
-            {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
-            {phase === "design"  && (
-              <EditPhase
-                ref={editPhaseRef}
-                build={build}
-                plan={plan}
-                onPublish={() => setPhase("publish")}
-              />
-            )}
-            {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
-            {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
-            {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
-            {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
-          </motion.div>
-        </AnimatePresence>
+        {/* Center column — phase-specific content. AnimatePresence mode="wait"
+            ensures the outgoing phase finishes its exit before the incoming
+            one mounts. The horizontal PhaseTracker sits above it as a subtle
+            breadcrumb (renders nothing on welcome / design). */}
+        <div className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}>
+          {!isWelcome && (
+            <PhaseTracker
+              current={phase}
+              onJump={handleJumpPhase}
+              buildExists={!!build}
+            />
+          )}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={phase}
+              variants={safePhaseVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}
+            >
+              {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
+              {phase === "design"  && (
+                <EditPhase
+                  ref={editPhaseRef}
+                  build={build}
+                  plan={plan}
+                  onPublish={() => setPhase("publish")}
+                />
+              )}
+              {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
+              {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
+              {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
+              {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
     </MotionConfig>

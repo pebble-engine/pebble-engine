@@ -152,6 +152,36 @@
   --color-pebble: #2a2a2a;         /* was warm beige — now dark border-gray */
 }
 
+/* Phase 46 (2026-05-22) — Workspace monochrome scope.
+   Marc's call: the logged-in workspace (dashboard, integrations,
+   community, per-project view) should feel "professional and sleek" —
+   no playful blue, no brand teal. The marketing landing keeps its
+   color; only chrome under [data-workspace-theme="mono"] gets stripped.
+
+   Strategy: override the primary/accent/ring tokens to match the
+   foreground (black on cream in light, white on near-black in dark).
+   Surfaces, borders, and muted text stay on the existing palette so
+   typography contrast is preserved. The dark-mode workspace was
+   already monochrome (2026-05-19 pass); this brings light mode in
+   line so the experience reads as one product, not two themes. */
+[data-workspace-theme="mono"] {
+  --accent-1:                 #1a1a1a;
+  --color-river:              #1a1a1a;
+  --color-primary:            #1a1a1a;
+  --color-primary-foreground: #fafafa;
+  --color-ring:               #1a1a1a;
+  --color-brand-cta:          #1a1a1a;
+}
+.dark [data-workspace-theme="mono"],
+.dark[data-workspace-theme="mono"] {
+  --accent-1:                 #fafafa;
+  --color-river:              #fafafa;
+  --color-primary:            #fafafa;
+  --color-primary-foreground: #0a0a0a;
+  --color-ring:               #fafafa;
+  --color-brand-cta:          #fafafa;
+}
+
 /* Phase 40 (2026-05-21) — Forced light-mode landing scope.
    Marc's call: the landing page should be light EVEN when the user has
    dark mode set globally. The workspace stays dark by default; only
