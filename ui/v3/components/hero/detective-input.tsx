@@ -629,6 +629,7 @@ export function DetectiveInput({
               placeholder={placeholder}
               disabled={isDisabled}
               autoFocus={autoFocus}
+              style={{ outline: "none", boxShadow: "none" }}
               className={cn(
                 "w-full bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0",
                 // Phase 40l — Marc's call: bumped down a notch from
