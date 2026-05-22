@@ -119,6 +119,10 @@ def route_get(handler) -> None:
         elif handler.path == "/api/admin/engagement":
             from pebble.server.admin import run_engagement_summary
             run_engagement_summary(handler)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrations"):
+            slug = handler.path[len("/api/projects/"):-len("/integrations")]
+            from pebble.server.integrations import run_get_integrations
+            run_get_integrations(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/history"):
             slug = handler.path[len("/api/projects/"):-len("/history")]
             handler._handle_get_history(slug)
@@ -215,6 +219,10 @@ def route_post(handler) -> None:
         elif handler.path == "/api/auth/reset":
             from pebble.server.auth import run_reset
             run_reset(handler)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrations"):
+            slug = handler.path[len("/api/projects/"):-len("/integrations")]
+            from pebble.server.integrations import run_post_integration
+            run_post_integration(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/star"):
             slug = handler.path[len("/api/projects/"):-len("/star")]
             handler._handle_toggle_star(slug)
@@ -281,6 +289,16 @@ def route_delete(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/forms/autoresponder")]
             from pebble.server.forms import run_delete_autoresponder_config
             run_delete_autoresponder_config(handler, slug)
+        elif handler.path.startswith("/api/projects/") and "/integrations/" in handler.path:
+            # DELETE /api/projects/<slug>/integrations/<id>
+            rest = handler.path[len("/api/projects/"):]
+            parts = rest.split("/integrations/", 1)
+            if len(parts) == 2 and parts[1]:
+                slug, integration_id = parts[0], parts[1]
+                from pebble.server.integrations import run_delete_integration
+                run_delete_integration(handler, slug, integration_id)
+            else:
+                handler.send_response(404); handler.end_headers()
         elif handler.path.startswith("/api/projects/") and "/inbox/" in handler.path:
             handler._handle_inbox_delete()
         elif handler.path.startswith("/api/projects/"):

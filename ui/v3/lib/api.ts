@@ -553,6 +553,57 @@ export async function extractBrand(
   return postJSON("/api/brand-extract", { url, mode });
 }
 
+// ---------- /api/projects/<slug>/integrations --------------------------------
+
+export type IntegrationId =
+  | "whatsapp"
+  | "booking"
+  | "google-maps"
+  | "social"
+  | "cookie-consent"
+  | "custom-code";
+
+export type IntegrationRecord = {
+  enabled: boolean;
+  config:  Record<string, string>;
+};
+
+export type IntegrationsMap = Partial<Record<IntegrationId, IntegrationRecord>>;
+
+export async function getIntegrations(slug: string): Promise<IntegrationsMap> {
+  const authHeader = await getAuthHeader();
+  const resp = await fetch(engineUrl(`/api/projects/${encodeURIComponent(slug)}/integrations`), {
+    headers: authHeader,
+  });
+  if (!resp.ok) return {};
+  return resp.json();
+}
+
+export async function saveIntegration(
+  slug: string,
+  id: IntegrationId,
+  enabled: boolean,
+  config: Record<string, string>,
+): Promise<IntegrationRecord & { id: IntegrationId }> {
+  const authHeader = await getAuthHeader();
+  const resp = await fetch(engineUrl(`/api/projects/${encodeURIComponent(slug)}/integrations`), {
+    method:  "POST",
+    headers: { "Content-Type": "application/json", ...authHeader },
+    body:    JSON.stringify({ id, enabled, config }),
+  });
+  const json = await resp.json();
+  if (!resp.ok) throw new Error(json.error || `HTTP ${resp.status}`);
+  return json;
+}
+
+export async function deleteIntegration(slug: string, id: IntegrationId): Promise<void> {
+  const authHeader = await getAuthHeader();
+  await fetch(
+    engineUrl(`/api/projects/${encodeURIComponent(slug)}/integrations/${encodeURIComponent(id)}`),
+    { method: "DELETE", headers: authHeader },
+  );
+}
+
 // ---------- /api/blocks (DNA-themed drop-in sections) ---------------------
 
 export type BlockCategory = "social-proof" | "conversion" | "explainer" | "monetization" | "growth";

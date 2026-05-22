@@ -37,6 +37,7 @@ import { PlanPhase } from "@/components/phases/plan-phase";
 import { DraftPhase } from "@/components/phases/draft-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { PublishPhase } from "@/components/phases/publish-phase";
+import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 
 // Fires synchronously before paint on the client; falls back to useEffect
 // on the server (where there is no DOM) to suppress the SSR warning.
@@ -228,8 +229,13 @@ export function WorkspaceShell() {
       if (build) setPhase("publish");
       return;
     }
-    if (target === "features" || target === "setup") {
-      // No dedicated phase yet — both surface as views inside design.
+    if (target === "features") {
+      // Phase 56a: Integrations panel — available once a site is built.
+      if (build) setPhase("integrations" as Phase);
+      return;
+    }
+    if (target === "setup") {
+      // Setup has no dedicated phase yet — surface inside design.
       if (build) setPhase("design");
       return;
     }
@@ -370,6 +376,9 @@ export function WorkspaceShell() {
               />
             )}
             {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
+            {(phase as string) === "integrations" && (
+              <IntegrationsPhase onBack={() => setPhase("design")} />
+            )}
           </motion.div>
         </AnimatePresence>
       </div>

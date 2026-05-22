@@ -1446,7 +1446,12 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if ext in ("html", "htm"):
             try:
                 from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
+                from pebble.integrations import render_all_snippets as _render_integrations
                 raw = site_file.read_text(encoding="utf-8")
+                # Inject any active integration widgets (WhatsApp, booking, etc.)
+                integration_html = _render_integrations(slug)
+                if integration_html:
+                    raw = self._inject_html(raw, integration_html)
                 injected = self._inject_bridge(raw, PEBBLE_VISUAL_EDIT_BRIDGE)
                 data = injected.encode("utf-8")
                 self.send_response(200)
@@ -1460,6 +1465,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
             except Exception:
                 pass  # fall through to plain serve
         self._serve_file(site_file, ct)
+
+    @staticmethod
+    def _inject_html(html: str, snippet: str) -> str:
+        """Insert raw HTML just before </body>. Used for integration widgets."""
+        lower = html.lower()
+        idx = lower.rfind("</body>")
+        if idx == -1:
+            return html + snippet
+        return html[:idx] + snippet + html[idx:]
 
     @staticmethod
     def _inject_bridge(html: str, script_body: str) -> str:
