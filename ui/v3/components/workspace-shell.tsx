@@ -20,6 +20,7 @@ import {
   getBrief,
   getLastBuild,
   getPlan,
+  patchBrief,
   setLastBuild,
   type Brief,
   type PebblePlan,
@@ -58,6 +59,14 @@ const useIsomorphicLayoutEffect =
  * - draft    → build animation
  * - design   → preview + refine + visual editor + history drawer + block gallery
  * - publish  → publish flow (used to live at /publish)
+ *
+ * Phase 40i — plan-first flow: when ``brief.planFirst`` is true the shell
+ * routes welcome → plan directly (skipping the idea questionnaire). The plan
+ * phase calls ``/api/plan`` cheaply, renders the 7-field preview card, then
+ * on confirm calls ``handleGenerate`` (same path as today). On cancel it
+ * returns to welcome (not idea) because the user arrived from welcome. If
+ * ``brief.planFirst`` is falsy the default welcome → idea → plan → draft
+ * path is unchanged.
  */
 
 type RailStep = { id: Phase | "features" | "setup"; label: string; Icon: LucideIcon };
@@ -123,6 +132,16 @@ export function WorkspaceShell() {
   }, []);
 
   function handleAdvanceFromWelcome() {
+    // Phase 40i: if the user toggled "Plan first" in the prompt box, skip
+    // the idea questionnaire and go straight to the plan preview phase.
+    // brief.planFirst is stamped by welcome-phase before calling onAdvance.
+    const currentBrief = getBrief();
+    const skipToplan = currentBrief.planFirst === true;
+    // Sync the shell's brief state so planFirst is visible in the JSX
+    // (e.g. for the PlanPhase backLabel prop) without waiting for a re-render
+    // triggered elsewhere.
+    setBrief(currentBrief);
+
     // On the welcome / home route, this is the one meaningful "commit to
     // building" transition — the URL flips from / to /workspace so the
     // browser bar reflects the new context. From any other route, we're
@@ -133,10 +152,10 @@ export function WorkspaceShell() {
       // Firefox + older browsers fall through to a plain router.push and
       // get the AnimatePresence-based fade.
       safeStartViewTransition(() => {
-        router.push("/workspace#phase=idea");
+        router.push(skipToplan ? "/workspace#phase=plan" : "/workspace#phase=idea");
       });
     } else {
-      setPhase("idea");
+      setPhase(skipToplan ? "plan" : "idea");
     }
   }
 
@@ -146,7 +165,19 @@ export function WorkspaceShell() {
   }
 
   function handleBackToIdea() {
-    setPhase("idea");
+    // Phase 40i: if the user arrived at plan via the planFirst shortcut
+    // (welcome → plan), send them back to welcome rather than idea, since
+    // they never visited idea and the "Change my mind" action should feel
+    // like starting over. Clear the planFirst flag so re-submitting from
+    // welcome uses the default path unless they toggle Plan again.
+    const currentBrief = getBrief();
+    if (currentBrief.planFirst === true) {
+      const updated = patchBrief({ planFirst: undefined });
+      setBrief(updated);
+      setPhase("welcome");
+    } else {
+      setPhase("idea");
+    }
   }
 
   // Plan phase → Draft phase → Design phase. Streams build progress via
@@ -155,6 +186,9 @@ export function WorkspaceShell() {
   // but is not used — we call streamGenerateSite directly so we can
   // feed live events into the draft animation.
   function handleGenerate(_kickOff: () => Promise<GenerateResponse>) {
+    // Phase 40i: clear planFirst before generate so a future welcome visit
+    // doesn't accidentally re-enter the plan-first shortcut.
+    setBrief(patchBrief({ planFirst: undefined }));
     setSseEvents([]);
     setGenerateDone(false);
     setGenerateError(null);
@@ -328,7 +362,13 @@ export function WorkspaceShell() {
             )}
             {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
             {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
-            {phase === "plan"    && <PlanPhase  onBack={handleBackToIdea} onGenerate={handleGenerate} />}
+            {phase === "plan"    && (
+              <PlanPhase
+                onBack={handleBackToIdea}
+                onGenerate={handleGenerate}
+                backLabel={brief.planFirst === true ? "Change my mind" : undefined}
+              />
+            )}
             {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
           </motion.div>
         </AnimatePresence>

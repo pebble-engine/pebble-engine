@@ -476,6 +476,83 @@ export async function inspireFromUrl(url: string): Promise<InspireResponse> {
   return postJSON("/api/inspire", { url });
 }
 
+// ---------- /api/brand-extract (URL + optional images → brand signals) ----
+
+export type BrandExtractResult = {
+  mode:                string;
+  url:                 string;
+  business_name_guess: string;
+  business_type_guess: string;
+  palette_hints:       string[];
+  layout_notes:        string;
+  copy_voice:          string;
+  dna_hint:            string;
+  extra_context:       string;
+  error:               string | null;
+};
+
+export type BrandExtractBriefPartial = {
+  extra_context:    string;
+  business_name:    string;
+  business_type:    string;
+  _brand_dna_hint:  string;
+};
+
+export type BrandExtractResponse = {
+  url:           string;
+  mode:          string;
+  extract:       BrandExtractResult;
+  brief_partial: BrandExtractBriefPartial;
+  ok:            boolean;
+  error:         string | null;
+};
+
+/**
+ * Extract brand / inspiration signals from a URL, optionally with images.
+ *
+ * When ``files`` is non-empty the request is sent as ``multipart/form-data``
+ * so the images travel alongside the URL.  When ``files`` is absent or empty
+ * the existing JSON path is used — callers that never attach files incur no
+ * behaviour change.
+ *
+ * @param url   The URL to analyse (may be empty if images are provided)
+ * @param mode  "brand" (user's own assets) | "inspire" (external moodboard)
+ * @param files Optional array of File objects from a file-input or drag-drop
+ */
+export async function extractBrand(
+  url: string,
+  mode: "brand" | "inspire" = "brand",
+  files?: File[],
+): Promise<BrandExtractResponse> {
+  const authHeader = await getAuthHeader();
+
+  if (files && files.length > 0) {
+    // Multipart path — images travel as FormData parts.
+    const form = new FormData();
+    form.append("url", url);
+    form.append("mode", mode);
+    for (const file of files) {
+      form.append("images[]", file, file.name);
+    }
+    const resp = await fetch(engineUrl("/api/brand-extract"), {
+      method: "POST",
+      headers: { ...authHeader },  // DO NOT set Content-Type — browser sets boundary
+      body: form,
+    });
+    const text = await resp.text();
+    let json: unknown;
+    try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+    if (!resp.ok) {
+      const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+      throw new Error(err);
+    }
+    return json as BrandExtractResponse;
+  }
+
+  // JSON path — keep the existing signature / behaviour.
+  return postJSON("/api/brand-extract", { url, mode });
+}
+
 // ---------- /api/blocks (DNA-themed drop-in sections) ---------------------
 
 export type BlockCategory = "social-proof" | "conversion" | "explainer" | "monetization" | "growth";

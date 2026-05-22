@@ -182,6 +182,9 @@ def route_post(handler) -> None:
             handler._handle_migrate()
         elif handler.path == "/api/inspire":
             handler._handle_inspire()
+        elif handler.path == "/api/brand-extract":
+            from pebble.server.brand_extract import run_brand_extract
+            run_brand_extract(handler)
         elif handler.path == "/api/publish":
             handler._handle_publish()
         elif handler.path.startswith("/api/forms/") and handler.path.endswith("/upload"):

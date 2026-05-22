@@ -22,11 +22,20 @@ import { interactions } from "@/lib/interactions";
  * shell handles the transition: when Generate is clicked, the shell
  * jumps to draft phase, awaits the response, and jumps to design phase
  * when complete.
+ *
+ * Phase 40i — plan-first flow: when the user arrives here directly from
+ * the welcome phase (via ``brief.planFirst``), the shell passes
+ * ``backLabel="Change my mind"`` so the back action reads correctly
+ * (the user never visited the idea questionnaire). On confirm the shell
+ * clears ``planFirst`` and calls ``handleGenerate`` exactly as today.
  */
 
 type Props = {
   onBack: () => void;
   onGenerate: (kickOff: () => Promise<GenerateResponse>) => void;
+  /** Label for the back/cancel action. Defaults to "Edit the questions".
+   *  Pass "Change my mind" when arriving via the plan-first shortcut. */
+  backLabel?: string;
 };
 
 const cardVariants = {
@@ -49,7 +58,7 @@ function Card({ children, delay = 0, className = "" }: { children: React.ReactNo
   );
 }
 
-export function PlanPhase({ onBack, onGenerate }: Props) {
+export function PlanPhase({ onBack, onGenerate, backLabel = "Edit the questions" }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -268,7 +277,7 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
           onClick={onBack}
           className={`${interactions.chip} flex items-center gap-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md ${type.label}`}
         >
-          <Edit3 className="w-3.5 h-3.5" /> Edit the questions
+          <Edit3 className="w-3.5 h-3.5" /> {backLabel}
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}

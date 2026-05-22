@@ -13,6 +13,7 @@ import {
   getLastBuild,
   getBrief,
 } from "@/lib/state";
+import { extractBrand } from "@/lib/api";
 import { fadeUp, STANDARD_S, SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -29,6 +30,13 @@ import { interactions } from "@/lib/interactions";
  * Visually distinctive — full-bleed grid, big headline, no project chrome.
  * The shell hides the Build Plan rail during this phase so the user
  * isn't staring at navigation for a project that doesn't exist yet.
+ *
+ * Phase 40i — plan-first flow: when the user activates the "Plan" toggle
+ * in the PromptInputBox and submits, ``patchBrief({ planFirst: true })``
+ * is stamped before ``onAdvance()`` fires. The workspace shell reads
+ * ``brief.planFirst`` in ``handleAdvanceFromWelcome`` and routes directly
+ * to the plan phase (skipping the idea questionnaire), where ``/api/plan``
+ * runs cheaply before any billable ``/api/generate`` call.
  */
 
 /**
@@ -82,12 +90,16 @@ export function WelcomePhase({ onAdvance }: Props) {
     router.push("/workspace#phase=design");
   };
 
-  const handleSend = (message: string, files?: File[]) => {
+  const handleSend = (message: string, files?: File[], modes?: { plan: boolean; brand: boolean }) => {
     if (typeof window === "undefined") return;
     patchBrief({
       extra_context: message,
       business_name: "Untitled Project",
       user_first_name: firstName || undefined,
+      // Phase 40i: stamp planFirst when the user activated the "Plan" toggle.
+      // The workspace shell reads this flag in handleAdvanceFromWelcome and
+      // routes to the plan phase instead of the idea questionnaire.
+      planFirst: modes?.plan === true ? true : undefined,
     });
     if (files && files.length > 0) {
       sessionStorage.setItem(
@@ -95,6 +107,28 @@ export function WelcomePhase({ onAdvance }: Props) {
         JSON.stringify(files.map((f) => ({ name: f.name, type: f.type, size: f.size }))),
       );
     }
+
+    // When images are attached, kick off brand extraction in the background
+    // so that by the time the user reaches the idea / plan phase, the brief
+    // already has palette hints + business type pre-filled.
+    // Fire-and-forget: if it fails the user just fills in the fields manually.
+    if (files && files.length > 0) {
+      const mode = modes?.brand ? "brand" : "inspire";
+      extractBrand(message, mode, files)
+        .then((res) => {
+          if (res.ok && res.brief_partial) {
+            const p = res.brief_partial;
+            patchBrief({
+              ...(p.business_name ? { business_name: p.business_name } : {}),
+              ...(p.business_type ? { business_type: p.business_type } : {}),
+              ...(p.extra_context  ? { extra_context: p.extra_context }  : {}),
+              ...(p._brand_dna_hint ? { _design_dna_id: p._brand_dna_hint } : {}),
+            });
+          }
+        })
+        .catch(() => { /* silent — user fills fields manually */ });
+    }
+
     onAdvance();
   };
 
