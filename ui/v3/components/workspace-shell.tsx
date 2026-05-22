@@ -31,6 +31,7 @@ import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
 import { PlanPhase } from "@/components/phases/plan-phase";
 import { DraftPhase } from "@/components/phases/draft-phase";
+import { ReadyPhase } from "@/components/phases/ready-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { PublishPhase } from "@/components/phases/publish-phase";
 
@@ -89,6 +90,11 @@ export function WorkspaceShell() {
   const [generateDone, setGenerateDone] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [sseEvents, setSseEvents] = useState<SSEEvent[]>([]);
+  // Phase 49 — elapsed seconds for the build. Captured at the moment we
+  // kick off /api/generate-stream so the Ready-phase summary can show
+  // "Built in 47s". Cleared on new generation.
+  const [buildElapsedSec, setBuildElapsedSec] = useState<number | null>(null);
+  const generateStartedAtRef = useRef<number | null>(null);
   const editPhaseRef = useRef<EditPhaseHandle>(null);
 
   const safePhaseVariants = useMemo(() => withReducedMotion(phaseVariants), []);
@@ -177,6 +183,8 @@ export function WorkspaceShell() {
     setSseEvents([]);
     setGenerateDone(false);
     setGenerateError(null);
+    setBuildElapsedSec(null);
+    generateStartedAtRef.current = Date.now();
     setPhase("draft");
     const brief = getBrief();
     streamGenerateSite(brief, (event) => {
@@ -197,10 +205,15 @@ export function WorkspaceShell() {
         setBuild(built);
         setPlan(getPlan());
         setGenerateDone(true);
-        // Tiny pause lets the draft phase paint its "Ready" state once
-        // before we swap views; eliminates the visual hiccup of jumping
-        // straight from "Drafting…" to a full preview.
-        setTimeout(() => setPhase("design"), 600);
+        // Capture elapsed for ReadyPhase summary.
+        if (generateStartedAtRef.current) {
+          setBuildElapsedSec(Math.round((Date.now() - generateStartedAtRef.current) / 1000));
+        }
+        // Phase 49 — draft → ready → (user clicks) → design. Gives the
+        // user a real "site is live" moment with a summary card instead
+        // of snapping silently into the editor. Tiny pause lets the
+        // draft "Ready" pulse paint once before the switch.
+        setTimeout(() => setPhase("ready"), 600);
       })
       .catch((e: Error) => {
         setGenerateError(e.message || "Build failed");
@@ -349,6 +362,14 @@ export function WorkspaceShell() {
               {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
               {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
               {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
+              {phase === "ready"   && (
+                <ReadyPhase
+                  build={build}
+                  elapsedSeconds={buildElapsedSec ?? undefined}
+                  onOpenEditor={() => setPhase("design")}
+                  onPublish={() => setPhase("publish")}
+                />
+              )}
             </motion.div>
           </AnimatePresence>
         </div>
