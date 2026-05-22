@@ -6,9 +6,11 @@ import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
-import { BackgroundCarousel } from "@/components/hero/background-carousel";
+import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
+import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
+import { LandingNav } from "@/components/hero/landing-nav";
 import { DetectiveInput } from "@/components/hero/detective-input";
-import { StickyScrollStack, type StackCard } from "@/components/hero/sticky-scroll-stack";
+import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps";
 import {
   patchBrief,
   getUserProfile,
@@ -212,18 +214,9 @@ const SECTION_REVEAL = {
 const darkGradient = "text-white";
 const lightGradient = "text-foreground";
 
-const NAV_ITEMS = [
-  { label: "How it works", href: "#how" },
-  { label: "Looks",        href: "#looks" },
-  { label: "Pricing",      href: "#pricing" },
-  { label: "Start",        href: "#start" },
-];
-
-const shimmerSilverStyle = {
-  backgroundImage:
-    "linear-gradient(90deg, #9ca3af 0%, #e5e7eb 25%, #ffffff 50%, #e5e7eb 75%, #9ca3af 100%)",
-  backgroundSize: "200% auto",
-};
+/* Phase 40j (2026-05-21) — NAV_ITEMS + shimmerSilverStyle removed.
+   Both were only consumed by the retired TopNavBar() function. NAV_ITEMS
+   now lives in components/hero/landing-nav.tsx. */
 
 /**
  * Foreground-aware shimmer for light / dark surfaces (footer, etc.).
@@ -288,98 +281,70 @@ function RotatingPebbleLogo({
 }
 
 /**
- * Glassmorphic top nav. Fixed pill at top-center; items use an animated
- * silver gradient (`shimmerSilverStyle`) clipped to the text. Anchors
- * scroll smoothly into the corresponding section.
+ * Phase 40j (2026-05-21) — TopNavBar() retired. Replaced by `LandingNav`
+ * (header-2 pattern: sticky pill that shrinks on scroll + mobile menu
+ * + Sign In / Get Started CTAs). See components/hero/landing-nav.tsx.
+ * NAV_ITEMS now lives only in landing-nav; the shimmerForegroundStyle +
+ * RotatingPebbleLogo remain used by the footer below.
  */
-function TopNavBar() {
-  const handleClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
-    e.preventDefault();
-    const id = href.replace("#", "");
-    if (id === "") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } else {
-      document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
-  return (
-    <>
-      {/* ── Top-left: rotating multilingual Pebble wordmark ── */}
-      <motion.div
-        initial={{ opacity: 0, x: -16 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-4 left-6 z-40"
-      >
-        <Link
-          href="/"
-          onClick={(e) => handleClick(e, "#")}
-          className="inline-flex items-center"
-        >
-          <RotatingPebbleLogo shimmerStyle={shimmerForegroundStyle} className="text-2xl" />
-        </Link>
-      </motion.div>
-
-      {/* ── Center: page-anchor pill (no wordmark) ── */}
-      <motion.nav
-        initial={{ opacity: 0, y: -16 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-        className="fixed top-4 left-1/2 -translate-x-1/2 z-40"
-        aria-label="Page navigation"
-      >
-        <MotionConfig reducedMotion="never">
-          <div className="flex items-center gap-2 px-3 py-2 rounded-full bg-card/60 backdrop-blur-2xl border border-border shadow-[0_4px_32px_rgba(31,29,26,0.08),inset_0_1px_0_rgba(255,255,255,0.6)]">
-            {NAV_ITEMS.map((item) => (
-              <a
-                key={item.href}
-                href={item.href}
-                onClick={(e) => handleClick(e, item.href)}
-                className="px-5 py-2 rounded-full hover:bg-accent transition-colors text-base font-bold"
-              >
-                <motion.span
-                  className="bg-clip-text text-transparent"
-                  style={shimmerForegroundStyle}
-                  animate={{ backgroundPosition: ["0% 0%", "200% 0%"] }}
-                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                >
-                  {item.label}
-                </motion.span>
-              </a>
-            ))}
-          </div>
-        </MotionConfig>
-      </motion.nav>
-    </>
-  );
-}
 
 /**
- * Two-layer scroll-tied parallax per section. The heading layer moves faster
- * (180px range) than the body (60px) to create depth as the user scrolls
- * through. Opacity fades content in/out at the section edges so each one
- * reads as its own moment.
+ * Sticky-pinned section. Phase 40g (2026-05-21) — Marc's call: §3–§7
+ * (DNA showcase → Perfect for → testimonial → pricing → final CTA) all
+ * use the same pinned-stage pattern. Each section is tall (configurable
+ * via `vh`) and contains a `sticky top-0 h-screen` inner. As the user
+ * scrolls into the section, content reveals via scroll-tied transforms;
+ * the inner pins for the middle ~half of the section's scroll range,
+ * then unpins to the next section's pin. Feels like a guided tour
+ * where each marketing beat gets its own viewport moment.
+ *
+ * Offset is `["start start", "end end"]` so scrollYProgress maps cleanly
+ * to the pin lifecycle: 0 = section top hits viewport top (pin starts),
+ * 1 = section bottom hits viewport bottom (pin releases).
+ *
+ * Reveal curve:
+ *   - 0 → 0.25: enter (content rises + scales up + fades in)
+ *   - 0.25 → 0.75: dwell at full opacity, neutral position
+ *   - 0.75 → 1: exit (content lifts + scales down + fades out)
  */
-function useParallaxSection() {
+function useStickySection() {
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({
     target: ref,
-    offset: ["start end", "end start"],
+    offset: ["start start", "end end"],
   });
   return {
     ref,
-    // Phase 40 (2026-05-21) — Marc reported parallax "breaking when starting
-    // to scroll down". Root cause was magnitude collisions: 180px heading
-    // lift + 60px body shift + global hero lift + hero fade + dual blob
-    // shifts all firing simultaneously caused jank on fast scroll. Softened
-    // magnitudes by ~3x. Subtle motion still reads as parallax, but the
-    // visual chunking is gone.
-    headingY: useTransform(scrollYProgress, [0, 1], [60, -60]),
-    bodyY:    useTransform(scrollYProgress, [0, 1], [20, -20]),
-    opacity:  useTransform(scrollYProgress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]),
+    scrollYProgress,
+    headingY: useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [80, 0, 0, -60]),
+    bodyY:    useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [120, 0, 0, -40]),
+    scale:    useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.9, 1, 1, 0.94]),
+    opacity:  useTransform(scrollYProgress, [0, 0.15, 0.85, 1], [0, 1, 1, 0]),
   };
 }
+
+/** Stagger-children variants used by every grid/list in §3-§6.
+    Items rise 32px + fade in on scroll-into-view; container drives the
+    timing so cards / chips / tiers cascade in instead of popping all
+    at once. */
+const STAGGER_PARENT = {
+  hidden: {},
+  show: {
+    transition: {
+      staggerChildren: 0.08,
+      delayChildren:   0.1,
+    },
+  },
+};
+const STAGGER_CHILD = {
+  hidden: { opacity: 0, y: 32, scale: 0.96 },
+  show: {
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: { duration: 0.7, ease: [0.22, 1, 0.36, 1] as const },
+  },
+};
 
 export function WelcomePhase({ onAdvance }: Props) {
   const router = useRouter();
@@ -464,11 +429,11 @@ export function WelcomePhase({ onAdvance }: Props) {
   // which manages its own scroll progress. Leaving the orphan hook here
   // throws "Target ref is defined but not hydrated" because the ref
   // never gets attached to any element.)
-  const dnaSec      = useParallaxSection();
-  const perfectSec  = useParallaxSection();
-  const quoteSec    = useParallaxSection();
-  const pricingSec  = useParallaxSection();
-  const ctaSec      = useParallaxSection();
+  const dnaSec      = useStickySection();
+  const perfectSec  = useStickySection();
+  const quoteSec    = useStickySection();
+  const pricingSec  = useStickySection();
+  const ctaSec      = useStickySection();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -686,7 +651,7 @@ export function WelcomePhase({ onAdvance }: Props) {
     setInspireResult(null);
 
     try {
-      const res = await extractBrand(url, mode);
+      const res = await extractBrand(url, mode, true, files);
       if (!res.ok) {
         setExtractError(res.error || "Couldn't read that site — using your URL as a hint instead.");
         await new Promise((r) => setTimeout(r, 1500));
@@ -779,15 +744,37 @@ export function WelcomePhase({ onAdvance }: Props) {
        even when the user has dark mode set globally. Workspace stays dark;
        only marketing surfaces use this scope. */
     <div className="light-mode-landing relative w-full font-[family-name:var(--font-plus-jakarta-sans)] bg-background text-foreground">
-      <TopNavBar />
+      {/* Phase 40j (2026-05-21) — LandingNav replaces the old fixed-pill
+          TopNavBar. Sticky pill that shrinks + gains backdrop blur on
+          scroll, with Sign In + Get Started CTAs and a mobile menu.
+          The old TopNavBar function (~line 295) is now dead code; left
+          in place for one cycle in case we want to revert. */}
+      <LandingNav />
 
       {/* ════════════════════════════════════════════════════════════════
           LIGHT HERO (cream/sand background, charcoal text)
           ════════════════════════════════════════════════════════════════ */}
       <section className="relative bg-background text-foreground overflow-hidden">
-        {/* Background carousel — real Pebble builds, ken-burns parallax */}
-        <BackgroundCarousel />
-        {/* Decorative blobs — softer pastel pulse over the carousel + bg */}
+        {/* Phase 40j — ShuffleGrid replaces the ken-burns BackgroundCarousel.
+            4×4 grid of real Pebble template PNGs reshuffles every 3s →
+            constant motion reads as "Pebble builds many different
+            things." Cream gradient overlay below still tunes legibility
+            for the hero text on top. BackgroundCarousel kept as a file
+            (not deleted) in case we want it back. */}
+        <ShuffleHeroBackdrop />
+        {/* Cream gradient overlay — tames the busy 4×4 shuffle behind text.
+            Same dual-gradient pattern the old BackgroundCarousel used
+            internally; lifted up to welcome-phase so legibility tuning
+            lives next to the text it's protecting. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-background/85 via-background/65 to-background/95"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-background/35 via-transparent to-background/35"
+        />
+        {/* Decorative blobs — softer pastel pulse over the grid + bg */}
         <motion.div
           aria-hidden
           style={{ y: blobYTop }}
@@ -1071,10 +1058,16 @@ export function WelcomePhase({ onAdvance }: Props) {
                 transition={{ duration: 0.35, ease: EASE_CINEMATIC }}
                 className="w-full space-y-6"
               >
-                {/* Phase 40 — DetectiveInput replaces the generic chat-style
-                    PromptInputBox. Detects URL vs industry phrase vs prose as
-                    the user types and surfaces a status line. No fake "plan/
-                    generate/attach" buttons that other AI builders ship. */}
+                {/* Phase 40h (2026-05-21) — DetectiveInput now ships with the
+                    "six-pack": Add Files, Plan-first toggle, voice dictation
+                    (Web Speech API; hidden on Firefox), glowing Send when
+                    unlocked, typewriter placeholder cycle, and a rotating
+                    clickable suggestion below the bar. opts.files threads
+                    image attachments through to handleSend / runExtraction
+                    (both already accept files). opts.planMode is wired here:
+                    on plan-first, we still call handleSend but the workspace
+                    knows to hit /api/plan before committing the credit (see
+                    the `planFirst` brief flag patched below). */}
                 <DetectiveInput
                   autoFocus
                   onSubmit={(value, opts) => {
@@ -1083,10 +1076,17 @@ export function WelcomePhase({ onAdvance }: Props) {
                     // separate mode-picker step.
                     if (opts?.inspireMode && looksLikeUrl(value.trim())) {
                       setPendingUrl(value.trim());
-                      void runExtraction(value.trim(), "inspire");
+                      void runExtraction(value.trim(), "inspire", opts?.files);
                       return;
                     }
-                    void handleSend(value);
+                    // Plan-first: stamp a flag onto the brief so the build
+                    // pipeline calls /api/plan (cheap preview, no credit
+                    // spent) before any /api/generate. Workspace surfaces
+                    // the plan + a "Build this" confirm step.
+                    if (opts?.planMode) {
+                      void patchBrief({ planFirst: true });
+                    }
+                    void handleSend(value, opts?.files);
                   }}
                 />
                 <div className="flex items-center justify-between flex-wrap gap-3 text-sm">
@@ -1142,136 +1142,141 @@ export function WelcomePhase({ onAdvance }: Props) {
           ════════════════════════════════════════════════════════════════ */}
       <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
         {/* §2 — From sentence to site.
-            Phase 40e (2026-05-21) — sticky-scroll stack. Apple iPad /
-            Linear / Vercel pattern. Section pins to top of viewport
-            while user scrolls; cards stack on top of each other as
-            scroll progresses; section unpins once all cards landed
-            + the "Ready to build?" closer has appeared. Feels like
-            the page is being pulled UP toward the viewer. */}
-        <StickyScrollStack
+            Phase 40f (2026-05-21) — Marc's call: retire StickyScrollStack
+            here. The pinned-stack pattern hijacked too much vertical
+            scroll for §2 alone and meant the entire lower half of the
+            page (DNA showcase, "Perfect for…", testimonial, pricing,
+            final CTA) felt like an afterthought. A horizontal swiper
+            communicates the same 3 steps in roughly one viewport-height
+            so we can spend the remaining scroll real-estate on the rest
+            of the marketing story (which IS where the parallax sits now). */}
+        <SwiperSteps
           id="how"
           heading="From sentence to site."
           subhead="Three steps from a paragraph about your business to a real, editable website."
-          cards={STEPS.map((step, i): StackCard => ({
-            id: step.title,
+          steps={STEPS.map((step, i): SwiperStep => ({
+            id:      step.title,
             eyebrow: `Step 0${i + 1}`,
-            icon: <step.Icon className="w-9 h-9" />,
-            title: step.title,
-            body: step.body,
+            icon:    <step.Icon className="w-9 h-9" />,
+            title:   step.title,
+            body:    step.body,
           }))}
-          closer={
-            <div className="text-center space-y-5">
-              <p className={`${type.eyebrow}`}>Ready to build yours?</p>
-              <p className={`${type.heading.m} text-foreground max-w-md mx-auto`}>
-                Three steps. One click to start.
-              </p>
-              <a
-                href="#start"
-                onClick={(e) => {
-                  e.preventDefault();
-                  document.getElementById("start")?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }}
-                className="inline-flex items-center gap-3 pl-8 pr-3 py-3 bg-foreground rounded-full text-background font-semibold text-lg hover:bg-foreground/90 transition-colors group"
-              >
-                <span>Start Building Free</span>
-                <span className="w-11 h-11 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
-                  <ArrowRight className="w-5 h-5 text-white" />
-                </span>
-              </a>
-            </div>
-          }
         />
 
-        {/* §3 — DNA showcase. */}
+        {/* §3 — DNA showcase. Sticky pin. */}
         <section
           id="looks"
           ref={dnaSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-6xl mx-auto py-16"
+          className="relative"
+          style={{ height: "200vh" }}
         >
-          <motion.div
-            style={{ y: dnaSec.headingY, opacity: dnaSec.opacity }}
-            className="text-center mb-16 space-y-4 will-change-transform"
-          >
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              The looks Pebble can wear.
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
-              Every Pebble build picks from an over-specified visual personality — so two sites for the same industry come out feeling like they were made by different studios.
-            </p>
-          </motion.div>
+          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
+            <motion.div
+              style={{ y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity }}
+              className="text-center mb-12 space-y-4 will-change-transform"
+            >
+              <h2 className={`${type.display.l} ${lightGradient}`}>
+                The looks Pebble can wear.
+              </h2>
+              <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
+                Every Pebble build picks from an over-specified visual personality — so two sites for the same industry come out feeling like they were made by different studios.
+              </p>
+            </motion.div>
 
-          <motion.div
-            style={{ y: dnaSec.bodyY, opacity: dnaSec.opacity }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 will-change-transform"
-          >
-            {DNAS.map((dna) => (
-              <div
-                key={dna.label}
-                className="p-6 rounded-xl bg-card border border-border hover:border-[#3054ff]/40 transition-colors"
-              >
-                <h3 className={`${type.heading.s} mb-2`}>{dna.label}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{dna.feel}</p>
-              </div>
-            ))}
-          </motion.div>
+            <motion.div
+              style={{ y: dnaSec.bodyY, opacity: dnaSec.opacity }}
+              variants={STAGGER_PARENT}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.15 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 will-change-transform"
+            >
+              {DNAS.map((dna) => (
+                <motion.div
+                  key={dna.label}
+                  variants={STAGGER_CHILD}
+                  className="p-6 rounded-xl bg-card border border-border hover:border-[#3054ff]/40 transition-colors"
+                >
+                  <h3 className={`${type.heading.s} mb-2`}>{dna.label}</h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{dna.feel}</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </section>
 
-        {/* §4 — Perfect for. */}
+        {/* §4 — Perfect for. Sticky pin. */}
         <section
           ref={perfectSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-5xl mx-auto py-16"
+          className="relative"
+          style={{ height: "180vh" }}
         >
-          <motion.div
-            style={{ y: perfectSec.headingY, opacity: perfectSec.opacity }}
-            className="text-center mb-16 space-y-4 will-change-transform"
-          >
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              Perfect for…
-            </h2>
-            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
-              Pebble routes industry-specific design choices automatically. These are the businesses we&apos;re tuned for today.
-            </p>
-          </motion.div>
+          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-5xl mx-auto overflow-hidden">
+            <motion.div
+              style={{ y: perfectSec.headingY, scale: perfectSec.scale, opacity: perfectSec.opacity }}
+              className="text-center mb-12 space-y-4 will-change-transform"
+            >
+              <h2 className={`${type.display.l} ${lightGradient}`}>
+                Perfect for…
+              </h2>
+              <p className="text-lg max-w-xl mx-auto text-muted-foreground">
+                Pebble routes industry-specific design choices automatically. These are the businesses we&apos;re tuned for today.
+              </p>
+            </motion.div>
 
-          <motion.div
-            style={{ y: perfectSec.bodyY, opacity: perfectSec.opacity }}
-            className="flex flex-wrap justify-center gap-3 will-change-transform"
-          >
-            {BUSINESS_TYPES.map((t) => (
-              <span
-                key={t}
-                className="px-5 py-3 rounded-full bg-card border border-border text-foreground/85 text-sm sm:text-base"
-              >
-                {t}
-              </span>
-            ))}
-          </motion.div>
+            <motion.div
+              style={{ y: perfectSec.bodyY, opacity: perfectSec.opacity }}
+              variants={STAGGER_PARENT}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.2 }}
+              className="flex flex-wrap justify-center gap-3 will-change-transform"
+            >
+              {BUSINESS_TYPES.map((t) => (
+                <motion.span
+                  key={t}
+                  variants={STAGGER_CHILD}
+                  className="px-5 py-3 rounded-full bg-card border border-border text-foreground/85 text-sm sm:text-base"
+                >
+                  {t}
+                </motion.span>
+              ))}
+            </motion.div>
+          </div>
         </section>
 
-        {/* §5 — Testimonial. */}
+        {/* §5 — Testimonial. Sticky pin. */}
         <section
           ref={quoteSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-3xl mx-auto text-center py-16"
+          className="relative"
+          style={{ height: "160vh" }}
         >
-          <motion.blockquote
-            style={{ y: quoteSec.headingY, opacity: quoteSec.opacity }}
-            className="space-y-6 will-change-transform"
-          >
-            <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
-              &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
-            </p>
-            <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
-          </motion.blockquote>
+          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden">
+            <motion.blockquote
+              style={{ y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity }}
+              className="space-y-6 will-change-transform"
+            >
+              <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
+                &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
+              </p>
+              <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
+            </motion.blockquote>
+          </div>
         </section>
 
-        {/* §6 — Pricing tease with monthly/yearly toggle. */}
+        {/* §6 — Pricing tease with monthly/yearly toggle. Sticky pin.
+            Outer is taller (240vh) than the other sections to give the
+            4-tier grid + accordion expansions enough room to fit while
+            pinned. */}
         <section
           id="pricing"
           ref={pricingSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-6xl mx-auto py-16"
+          className="relative"
+          style={{ height: "240vh" }}
         >
+          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
           <motion.div
-            style={{ y: pricingSec.headingY, opacity: pricingSec.opacity }}
+            style={{ y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity }}
             className="text-center mb-10 space-y-4 will-change-transform"
           >
             <h2 className={`${type.display.l} ${lightGradient}`}>
@@ -1318,7 +1323,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                 You&apos;re currently on the <strong className="text-foreground">{activePlan}</strong> plan
               </p>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10 items-stretch">
+            <motion.div
+              variants={STAGGER_PARENT}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, amount: 0.1 }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-10 items-stretch"
+            >
               {PRICING_TIERS.map((tier) => {
                 const isFree     = tier.monthly === 0;
                 const isContact  = tier.monthly === null;
@@ -1339,8 +1350,9 @@ export function WelcomePhase({ onAdvance }: Props) {
                       : `Billed monthly`;
 
                 return (
-                  <div
+                  <motion.div
                     key={tier.name}
+                    variants={STAGGER_CHILD}
                     className={`relative p-6 rounded-2xl flex flex-col transition-transform ${
                       tier.featured
                         ? "bg-card border-2 border-[#3054ff] shadow-[0_12px_32px_rgba(48,84,255,0.18)] lg:scale-[1.03] lg:-translate-y-2"
@@ -1472,22 +1484,25 @@ export function WelcomePhase({ onAdvance }: Props) {
                         </>
                       );
                     })()}
-                  </div>
+                  </motion.div>
                 );
               })}
-            </div>
+            </motion.div>
 
           </motion.div>
+          </div>
         </section>
 
-        {/* §7 — Final CTA. */}
+        {/* §7 — Final CTA. Sticky pin. */}
         <section
           id="start"
           ref={ctaSec.ref}
-          className="relative min-h-[75vh] flex flex-col justify-center px-4 max-w-3xl mx-auto text-center py-16 space-y-10"
+          className="relative"
+          style={{ height: "180vh" }}
         >
+          <div className="sticky top-0 h-screen flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10">
           <motion.div
-            style={{ y: ctaSec.headingY, opacity: ctaSec.opacity }}
+            style={{ y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity }}
             className="space-y-4 will-change-transform"
           >
             <p className={`${type.eyebrow}`}>Ready to build?</p>
@@ -1509,6 +1524,7 @@ export function WelcomePhase({ onAdvance }: Props) {
               You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
             </p>
           </motion.div>
+          </div>
         </section>
 
         {/* §8 — Footer. */}
