@@ -163,21 +163,12 @@ const DNAS = [
   { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered",               preview: "/templates-preview/ink_studio.png"          },
 ] as const;
 
-/** Phase 43 — "Perfect for" replaces text-only chips with the new
-    hero-craft photos. Anchors the section emotionally: small business
-    owners see themselves in the imagery, not a flat tag list. Photos
-    are the same set the hero ShuffleGrid uses (one origin of truth);
-    we just render 8 of them as a grid below. */
-const PERFECT_FOR = [
-  { label: "Coffee shops + cafés",       photo: "/hero-craft/barista.jpg"              },
-  { label: "Photographers",              photo: "/hero-craft/wedding-photographer.jpg" },
-  { label: "Restaurants + food trucks",  photo: "/hero-craft/chef.jpg"                 },
-  { label: "Coaches + trainers",         photo: "/hero-craft/personal-trainer.jpg"     },
-  { label: "Salons + beauty",            photo: "/hero-craft/hairstylist.jpg"          },
-  { label: "Trades + contractors",       photo: "/hero-craft/auto-mechanic.jpg"        },
-  { label: "Florists + boutiques",       photo: "/hero-craft/florist.jpg"              },
-  { label: "Artists + studios",          photo: "/hero-craft/tattoo-artist.jpg"        },
-];
+/* Phase 43.13 (2026-05-22) — PERFECT_FOR moved out of the landing.
+   Marc plans to lift this content into a future /about page so the
+   "who Pebble serves" story gets its own room to breathe instead of
+   competing with the build/looks/pricing flow. The data lives in git
+   history (look for "Perfect for" deletion commit). hero-craft photos
+   in /public/ stay — the hero ShuffleGrid still uses them. */
 
 type FeatureCategory = { category: string; items: readonly string[] };
 
@@ -458,6 +449,46 @@ function useStickySection() {
   };
 }
 
+/**
+ * BoldSectionHeading — Phase 43.13 (2026-05-22).
+ *
+ * Two-line section title. Italic Cormorant serif on top (lyrical, the
+ * "feel" line) → massive extrabold sans below (declarative, the
+ * "answer" line). Editorial-cover energy.
+ *
+ * Applied uniformly to §2 / §3 / §6 so the lower half reads as one
+ * coordinated rhythm:
+ *
+ *   <accent italic line>
+ *   ─── BIG BOLD WORD ───
+ *
+ * The §7 finale uses the rotating multilingual Pebble wordmark as its
+ * own visual centerpiece — different treatment by design.
+ */
+function BoldSectionHeading({ accent, main }: { accent: string; main: string }) {
+  return (
+    <h2 className="flex flex-col items-center text-center">
+      <span
+        className={
+          "font-[family-name:var(--font-cormorant)] italic text-foreground/85 " +
+          "text-3xl sm:text-5xl lg:text-6xl leading-[1.05] tracking-tight"
+        }
+      >
+        {accent}
+      </span>
+      <span
+        className={
+          "font-[family-name:var(--font-plus-jakarta-sans)] text-foreground " +
+          "text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.95] " +
+          "mt-1 sm:mt-2"
+        }
+      >
+        {main}
+      </span>
+    </h2>
+  );
+}
+
 /** Stagger-children variants used by every grid/list in §3-§6.
     Items rise 32px + fade in on scroll-into-view; container drives the
     timing so cards / chips / tiers cascade in instead of popping all
@@ -623,7 +654,7 @@ export function WelcomePhase({ onAdvance }: Props) {
   // throws "Target ref is defined but not hydrated" because the ref
   // never gets attached to any element.)
   const dnaSec      = useStickySection();
-  const perfectSec  = useStickySection();
+  // perfectSec removed in Phase 43.13 — §4 deleted, content moving to /about.
   const quoteSec    = useStickySection();
   const pricingSec  = useStickySection();
   const ctaSec      = useStickySection();
@@ -1366,12 +1397,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             whileInView={{ opacity: 1, y: 0, scale: 1 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="text-center mb-10 sm:mb-14 space-y-4"
+            className="text-center mb-10 sm:mb-14 space-y-4 px-4"
           >
-            <h2 className={`${type.display.l} text-foreground`}>
-              From sentence to site.
-            </h2>
-            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
+            <BoldSectionHeading accent="From sentence" main="to a site." />
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
               Watch it happen, then read what just happened.
             </p>
           </motion.div>
@@ -1450,13 +1479,11 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="relative py-16 sm:py-24 overflow-hidden"
         >
           <motion.div
-            className="text-center mb-10 sm:mb-12 space-y-4 px-4 max-w-3xl mx-auto"
+            className="text-center mb-10 sm:mb-12 space-y-4 px-4 max-w-4xl mx-auto"
             {...MOBILE_FADE_PROPS}
           >
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              The looks Pebble can wear.
-            </h2>
-            <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
+            <BoldSectionHeading accent="The looks Pebble" main="can wear." />
+            <p className="text-lg max-w-2xl mx-auto text-muted-foreground pt-2">
               Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
             </p>
           </motion.div>
@@ -1468,65 +1495,10 @@ export function WelcomePhase({ onAdvance }: Props) {
           <DnaMarquee dnas={TEMPLATE_TILES} />
         </section>
 
-        {/* §4 — Perfect for. Phase 43: was a flat text-chip list — now
-            an emotional 4-col photo grid using the same hero-craft
-            photography. Each tile is a real person doing their craft
-            with a clean label overlay. Mobile gets 2 cols + stacked
-            (no sticky pin). */}
-        <section
-          ref={perfectSec.ref}
-          className={cn("relative", !isMobile && "h-[180vh]")}
-        >
-          <div className={cn(
-            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
-          )}>
-            <motion.div
-              className="text-center mb-10 space-y-4 will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: perfectSec.headingY, scale: perfectSec.scale, opacity: perfectSec.opacity } })}
-            >
-              <h2 className={`${type.display.l} ${lightGradient}`}>
-                Built for the people who do the work.
-              </h2>
-              <p className="text-lg max-w-xl mx-auto text-muted-foreground">
-                Pebble tunes itself to your industry automatically.
-              </p>
-            </motion.div>
-
-            <motion.div
-              variants={STAGGER_PARENT}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.15 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 will-change-transform"
-              {...(!isMobile && { style: { y: perfectSec.bodyY, opacity: perfectSec.opacity } })}
-            >
-              {PERFECT_FOR.map((p) => (
-                <motion.div
-                  key={p.label}
-                  variants={STAGGER_CHILD}
-                  whileHover={{ y: -4, scale: 1.02 }}
-                  transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
-                  className="relative group rounded-xl overflow-hidden aspect-[4/5] sm:aspect-square bg-muted shadow-[0_4px_20px_rgba(31,29,26,0.06)] hover:shadow-[0_12px_36px_rgba(31,29,26,0.14)] transition-shadow"
-                  style={{
-                    backgroundImage:    `url(${p.photo})`,
-                    backgroundSize:     "cover",
-                    backgroundPosition: "center",
-                  }}
-                  title={p.label}
-                >
-                  {/* Bottom gradient + label — keeps the photo readable
-                      while ensuring the industry name reads at all sizes */}
-                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 sm:p-4">
-                    <span className="text-white text-xs sm:text-sm font-semibold tracking-tight drop-shadow">{p.label}</span>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
-        </section>
+        {/* §4 — Perfect for. Removed in Phase 43.13 (2026-05-22). Content
+            moving to a future /about page. Block deleted; PERFECT_FOR
+            const + perfectSec hook + JSX all stripped. Recoverable from
+            git history when the about page lands. */}
 
         {/* §5 — Testimonial. Reverted (2026-05-21) — the takeoff
             animation (Phase 43.5) and the scroll-driven sunrise
@@ -1575,10 +1547,8 @@ export function WelcomePhase({ onAdvance }: Props) {
               ? MOBILE_FADE_PROPS
               : { style: { y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity } })}
           >
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              Simple pricing.
-            </h2>
-            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
+            <BoldSectionHeading accent="Simple" main="pricing." />
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
               Start free. Upgrade when you need more sites or a custom domain.
             </p>
 
