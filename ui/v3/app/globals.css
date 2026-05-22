@@ -264,38 +264,10 @@ html {
   animation: pebble-tier-led 1.4s ease-out;
 }
 
-/* ---------------------------------------------------------------------------
-   Phase 43.6 (2026-05-21) — §3 marquee + designer-canvas dot grid.
-
-   The §3 Looks section is now a horizontal infinite marquee of real
-   template PNGs (matches the vercel-v0-style reference Marc shared).
-   The marquee runs CSS-only (no rAF) so there's zero JS overhead per
-   frame — just a translateX animation on a flex row that contains 2×
-   the tile list (the second copy provides the seamless wrap).
-
-   `pebble-dot-grid` is a repeating radial-gradient — subtle "this is
-   a designer's canvas" cue behind the marquee, matches the dotted
-   pattern in the reference screenshot.
---------------------------------------------------------------------------- */
-@keyframes pebble-marquee {
-  from { transform: translate3d(0,     0, 0); }
-  to   { transform: translate3d(-50%,  0, 0); }
-}
-.pebble-marquee-track {
-  animation: pebble-marquee 80s linear infinite;
-}
-.pebble-marquee:hover .pebble-marquee-track,
-.pebble-marquee:focus-within .pebble-marquee-track {
-  animation-play-state: paused;
-}
-@media (prefers-reduced-motion: reduce) {
-  .pebble-marquee-track { animation: none; }
-}
-
-.pebble-dot-grid {
-  background-image: radial-gradient(circle, color-mix(in oklab, var(--color-border) 70%, transparent) 1.1px, transparent 1.1px);
-  background-size: 22px 22px;
-}
+/* Phase 43.6 marquee CSS + .pebble-dot-grid reverted (2026-05-21) —
+   Marc reported the §3 marquee variant pushed the hero out of frame
+   on his iPhone. Backing the styles out completely along with the
+   component itself. */
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
