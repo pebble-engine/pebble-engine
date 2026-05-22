@@ -27,6 +27,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BlockGallery } from "@/components/block-gallery";
+import { SuggestionChips } from "@/components/workspace/suggestion-chips";
 import { type PebblePlan } from "@/lib/state";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -419,6 +420,15 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto`}>
             ✨ Style tweaks are free — click an element on the preview or pick a chip below
           </p>
+          {/* Phase 50 — block suggestion chips. One quick row of the most-
+              wanted "Add testimonials / pricing / FAQ / stats / newsletter"
+              additions, fed by /api/blocks. The full library remains one
+              click away via "Browse all sections" → BlockGallery modal. */}
+          <SuggestionChips
+            busyBlockId={busyBlockId}
+            onInsert={(blockId) => handleInsertBlock(blockId)}
+            onBrowseAll={() => setGalleryOpen(true)}
+          />
           <nav className="bg-card border border-border shadow-lg rounded-full px-3 py-2 flex gap-1 pointer-events-auto">
             {REFINE_CHIPS.map((c) => {
               const isBusy = busyRefinement === c.id;
