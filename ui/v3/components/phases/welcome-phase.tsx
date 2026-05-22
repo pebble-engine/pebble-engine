@@ -335,17 +335,8 @@ function RotatingPebbleLogo({
  */
 
 /* ---------------------------------------------------------------------------
- * Phase 43.4 (2026-05-21) — CountUp + plan-picker quiz helpers.
- *
- * CountUp: tiny rAF-driven number ticker. Eases from 0 → target over
- * `durationMs` when `run` flips to true. Pricing tier cards use it to
- * count up the dollar amount on first scroll-into-view — satisfying
- * dopamine moment that costs almost nothing.
- *
- * PlanPickerQuiz: 2-question micro-quiz ("How many sites?" + "Custom
- * domain?"). Maps the answers to a recommended Pebble tier; the
- * recommendation pulses the matching card via the same ledTier
- * mechanism the click-LED uses. Genuinely useful, not just decorative.
+ * Phase 43.4 (2026-05-21) — CountUp helper for animated pricing digits.
+ * Plan-picker quiz removed in Phase 43.15.
  * --------------------------------------------------------------------------- */
 
 function useCountUp(target: number, durationMs: number, run: boolean): number {
@@ -367,18 +358,8 @@ function useCountUp(target: number, durationMs: number, run: boolean): number {
   return val;
 }
 
-type QuizSites  = "one" | "few" | "many";
-type QuizDomain = "no"  | "yes";
-
-/** Returns the recommended tier name from the answer pair. Mirrors the
-    real tier mechanics: Free covers 1 site no domain, Starter covers
-    1-5 sites + a custom domain, Pro covers unlimited. */
-function recommendTier(sites: QuizSites | null, domain: QuizDomain | null): string | null {
-  if (sites === null || domain === null) return null;
-  if (sites === "many")               return "Pro";
-  if (sites === "few")                return "Starter";
-  return domain === "yes" ? "Starter" : "Free";
-}
+/* Quiz types + recommendTier helper deleted in Phase 43.15 with the
+   plan-picker quiz removal. */
 
 /**
  * Phase 43 (2026-05-21) — mobile-detect hook. Used to skip the sticky-
@@ -527,12 +508,8 @@ export function WelcomePhase({ onAdvance }: Props) {
   // keyframe re-fires on next click only when the class is added fresh).
   const [ledTier, setLedTier] = useState<string | null>(null);
 
-  // Phase 43.4 — plan-picker micro-quiz state. Sites + domain answers
-  // map to a recommended tier; the recommendation pulses the matching
-  // card (reuses ledTier). Count-up ticker for prices triggers when the
-  // pricing section enters view (pricingInView).
-  const [quizSites,  setQuizSites]  = useState<QuizSites  | null>(null);
-  const [quizDomain, setQuizDomain] = useState<QuizDomain | null>(null);
+  // Phase 43.15 — quiz state removed. pricingInView is kept (still
+  // drives the per-tier count-up animation when the grid enters view).
   const [pricingInView, setPricingInView] = useState(false);
 
   // Per-tier count-up tickers. Rules of Hooks: must be called at the
@@ -555,18 +532,8 @@ export function WelcomePhase({ onAdvance }: Props) {
     Pro:        tickPro,
     Enterprise: 0,
   };
-  const recommendedTier = recommendTier(quizSites, quizDomain);
-  // Pulse the recommended tier whenever the recommendation lands or
-  // changes. Same 1.4s LED animation as the manual click.
-  useEffect(() => {
-    if (!recommendedTier) return;
-    setLedTier(null);
-    const raf = requestAnimationFrame(() => {
-      setLedTier(recommendedTier);
-      window.setTimeout(() => setLedTier((cur) => (cur === recommendedTier ? null : cur)), 1400);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [recommendedTier]);
+  // Phase 43.15 — recommendedTier / auto-pulse useEffect removed with
+  // the quiz. ledTier is now only set by the manual whole-card click.
   const [stripeLoading, setStripeLoading] = useState<string | null>(null);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
@@ -1463,24 +1430,10 @@ export function WelcomePhase({ onAdvance }: Props) {
             const + perfectSec hook + JSX all stripped. Recoverable from
             git history when the about page lands. */}
 
-        {/* §5 — Testimonial. Reverted (2026-05-21) — the takeoff
-            animation (Phase 43.5) and the scroll-driven sunrise
-            gradient that replaced it (Phase 43.7) were both pulled at
-            Marc's request. Back to the placeholder quote we're keeping
-            until a real beta user testimonial lands. */}
-        <section className="relative py-16 sm:py-24">
-          <div className="flex flex-col justify-center px-4 max-w-3xl mx-auto text-center">
-            <motion.blockquote
-              className="space-y-6"
-              {...MOBILE_FADE_PROPS}
-            >
-              <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
-                &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
-              </p>
-              <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
-            </motion.blockquote>
-          </div>
-        </section>
+        {/* §5 — Removed Phase 43.15 (2026-05-22). The placeholder
+            testimonial is gone; the "Ready for takeoff?" moment Marc
+            wanted is now folded into the §6 pricing heading below so
+            the prices appear immediately after the takeoff line. */}
 
         {/* §6 — Pricing. Phase 43: mobile drops the sticky pin and the
             cards become whole-card click targets that expand on tap +
@@ -1493,13 +1446,22 @@ export function WelcomePhase({ onAdvance }: Props) {
         >
           <div className="flex flex-col justify-center px-4 max-w-6xl mx-auto">
           <motion.div
-            className="text-center mb-10 space-y-4"
+            className="relative text-center mb-10 space-y-4"
             {...MOBILE_FADE_PROPS}
           >
-            <BoldSectionHeading accent="Simple" main="pricing." />
-            <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
-              Start free. Upgrade when you need more sites or a custom domain.
-            </p>
+            {/* Phase 43.15 — blue gradient glow behind the heading.
+                Absolutely positioned, blurred + saturated Pebble blue.
+                Sits behind the heading via z-stack; doesn't push layout. */}
+            <div
+              aria-hidden
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl h-[140%] rounded-full bg-[#3054ff]/25 blur-3xl"
+            />
+            <div className="relative">
+              <BoldSectionHeading accent="Ready for" main="takeoff?" />
+              <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-3">
+                Start free. Upgrade when you need more sites or a custom domain.
+              </p>
+            </div>
 
             {/* Billing toggle — animated thumb slides between Monthly / Yearly. */}
             <div className="inline-flex items-center gap-1 p-1 rounded-full bg-muted border border-border mt-4">
@@ -1536,84 +1498,10 @@ export function WelcomePhase({ onAdvance }: Props) {
               </p>
             )}
 
-            {/* Phase 43.4 — Plan-picker micro-quiz. Two questions, three
-                + two pill buttons. Answering both populates a
-                "recommended for you" badge on the matching tier card
-                + pulses its LED border. Honest + useful, not a sales
-                gimmick — the recommendation logic mirrors the real
-                tier mechanics. */}
-            <div className="max-w-3xl mx-auto mb-8 sm:mb-10">
-              <div className="rounded-2xl border border-border bg-white/70 backdrop-blur-sm shadow-[0_4px_18px_rgba(31,29,26,0.05)] p-5 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                  <p className="text-xs uppercase tracking-[0.14em] font-semibold text-muted-foreground">
-                    Not sure which plan? Two quick questions.
-                  </p>
-                  {recommendedTier && (
-                    <motion.span
-                      key={recommendedTier}
-                      initial={{ opacity: 0, scale: 0.95 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.3, ease: EASE_CINEMATIC }}
-                      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#3054ff]/10 text-[#3054ff] text-xs font-semibold"
-                    >
-                      <Sparkles className="w-3 h-3" aria-hidden />
-                      We recommend {recommendedTier}
-                    </motion.span>
-                  )}
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">How many sites?</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {([
-                        { v: "one",  label: "Just 1"      },
-                        { v: "few",  label: "A handful"   },
-                        { v: "many", label: "Lots"        },
-                      ] as const).map((opt) => (
-                        <button
-                          key={opt.v}
-                          type="button"
-                          onClick={() => setQuizSites(opt.v)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
-                            quizSites === opt.v
-                              ? "bg-foreground text-background"
-                              : "bg-muted/60 text-foreground/80 hover:bg-muted hover:text-foreground",
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-2">Custom domain?</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {([
-                        { v: "no",  label: "Not yet" },
-                        { v: "yes", label: "Yes"     },
-                      ] as const).map((opt) => (
-                        <button
-                          key={opt.v}
-                          type="button"
-                          onClick={() => setQuizDomain(opt.v)}
-                          className={cn(
-                            "px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150",
-                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
-                            quizDomain === opt.v
-                              ? "bg-foreground text-background"
-                              : "bg-muted/60 text-foreground/80 hover:bg-muted hover:text-foreground",
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Phase 43.15 — Plan-picker micro-quiz removed at Marc's
+                request. The recommendation logic, recommendedTier
+                state, and the JSX block all stripped. Pricing tier
+                grid now sits directly below the heading. */}
 
             <motion.div
               variants={STAGGER_PARENT}
@@ -1694,7 +1582,16 @@ export function WelcomePhase({ onAdvance }: Props) {
                       ▾
                     </motion.span>
 
-                    <div className={`${type.eyebrow} mb-2 pr-8`}>{tier.name}</div>
+                    {/* Phase 43.15 — bolder, more readable. Tier name
+                        was muted; now uses foreground at heavier weight.
+                        Price was Cormorant text-2xl/3xl; now extrabold
+                        sans at text-5xl/6xl for stronger first-glance
+                        legibility. Features bumped to text-base + medium
+                        weight + foreground/95 for better contrast at
+                        scan distance. */}
+                    <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-foreground mb-3 pr-8">
+                      {tier.name}
+                    </div>
 
                     <div className="mb-4">
                       <AnimatePresence mode="wait" initial={false}>
@@ -1704,23 +1601,25 @@ export function WelcomePhase({ onAdvance }: Props) {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -8 }}
                           transition={{ duration: 0.22, ease: EASE_CINEMATIC }}
-                          className="flex items-baseline gap-1"
+                          className="flex items-baseline gap-1.5"
                         >
-                          <span className={type.display.m}>
+                          <span className="text-5xl sm:text-6xl font-black tracking-tighter leading-none text-foreground">
                             {showCountUp ? `$${animatedPrice}` : headlinePrice}
                           </span>
-                          {period && <span className="text-sm text-muted-foreground/80">{period}</span>}
+                          {period && (
+                            <span className="text-base font-medium text-muted-foreground">{period}</span>
+                          )}
                         </motion.div>
                       </AnimatePresence>
-                      <div className="text-xs text-muted-foreground/70 mt-1 h-4">{subtext}</div>
+                      <div className="text-xs font-medium text-muted-foreground mt-1.5 h-4">{subtext}</div>
                     </div>
 
-                    <p className="text-sm text-muted-foreground leading-relaxed mb-5">{tier.desc}</p>
+                    <p className="text-sm font-medium text-foreground/85 leading-relaxed mb-5">{tier.desc}</p>
 
-                    <ul className="space-y-2 text-sm text-foreground/75 mb-4 flex-1">
+                    <ul className="space-y-2.5 text-[15px] font-medium text-foreground/95 mb-4 flex-1">
                       {tier.highlights.map((f) => (
-                        <li key={f} className="flex items-start gap-2">
-                          <span className="text-[#3054ff] mt-0.5 shrink-0">✓</span>
+                        <li key={f} className="flex items-start gap-2.5">
+                          <span className="text-[#3054ff] font-bold mt-0.5 shrink-0">✓</span>
                           <span>{f}</span>
                         </li>
                       ))}
