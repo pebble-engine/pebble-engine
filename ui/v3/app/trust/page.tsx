@@ -303,6 +303,37 @@ export default function TrustPage() {
           </p>
         </section>
 
+        {/* Verified credentials — earned, live, and third-party verifiable.
+            Each one links to the public scan or registry so anyone can
+            verify the claim themselves. Only credentials that are
+            CURRENTLY ACTIVE belong here; pending ones go in the
+            "Working toward" section below. */}
+        <section className="mt-12 pt-10 border-t border-[#1a1a1a]/15 space-y-4">
+          <h2 className="text-xl font-semibold text-[#1a1a1a]">Verified credentials</h2>
+          <p className="text-base text-[#1a1a1a]/75 leading-relaxed">
+            What&apos;s real today. Click any of these to verify the result
+            yourself — none of them require you to take our word.
+          </p>
+          <ul className="space-y-4 text-base text-[#1a1a1a]/75 leading-relaxed">
+            <li>
+              <strong className="text-[#1a1a1a]">SSL Labs A+ rating</strong>
+              {" "}— third-party scan of our TLS configuration. Live grade
+              available at{" "}
+              <a
+                href="https://www.ssllabs.com/ssltest/analyze.html?d=pebbleapp.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline"
+              >
+                ssllabs.com/ssltest
+              </a>
+              . Auto-rescans on every deploy; covers TLS 1.3, post-quantum
+              key exchange (X25519MLKEM768), forward secrecy, and HSTS
+              with a 2-year max-age.
+            </li>
+          </ul>
+        </section>
+
         {/* Working toward — honest near-term security roadmap. These are
             real, free, third-party-listed credentials that Pebble can
             pursue NOW without paying for an audit. Listed publicly so
@@ -316,6 +347,22 @@ export default function TrustPage() {
             verifiable.
           </p>
           <ul className="space-y-4 text-base text-[#1a1a1a]/75 leading-relaxed">
+            <li>
+              <strong className="text-[#1a1a1a]">HSTS preload list</strong>
+              {" "}— pebbleapp.ai is{" "}
+              <a
+                href="https://hstspreload.org/?domain=pebbleapp.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline"
+              >
+                submitted and pending inclusion
+              </a>
+              {" "}in Chrome / Firefox / Edge / Safari&apos;s HSTS preload
+              lists. Once shipped (typical wait: 6-12 weeks), browsers
+              refuse to connect to pebbleapp.ai over plain HTTP at the
+              binary level — no downgrade attack possible.
+            </li>
             <li>
               <strong className="text-[#1a1a1a]">CSA STAR Level 1</strong>
               {" "}— Cloud Security Alliance&apos;s public security registry. We&apos;ll
@@ -336,11 +383,11 @@ export default function TrustPage() {
               with the answers we submitted visible to anyone.
             </li>
             <li>
-              <strong className="text-[#1a1a1a]">Mozilla Observatory + SSL Labs A+ grades</strong>
-              {" "}— third-party scans of our HTTP security headers, TLS
-              configuration, and content security policy. Re-scanned on
-              every deploy; we&apos;ll display the live grade once it&apos;s
-              A+ across both.
+              <strong className="text-[#1a1a1a]">Mozilla Observatory A+ grade</strong>
+              {" "}— third-party scan of our HTTP security headers and
+              content security policy. SSL Labs is already A+ (above);
+              Observatory covers a different layer (header hardening)
+              and we&apos;re working toward A+ there too.
             </li>
             <li>
               <strong className="text-[#1a1a1a]">SOC 2 Type II</strong>

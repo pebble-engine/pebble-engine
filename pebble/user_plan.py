@@ -102,6 +102,24 @@ PLAN_LIMITS: dict[str, dict[str, int | bool]] = {
     },
 }
 
+# Hard ceilings — defense-in-depth caps that apply REGARDLESS of plan.
+# Even if a user has subscription.json claiming "enterprise" (with the
+# tier's -1 "unlimited" limit), they can never exceed these without an
+# explicit per-user override. Protects against:
+#   - compromised sentinel files
+#   - code bugs that accidentally upgrade a user
+#   - frontend retry-loops hammering an endpoint
+#   - webhook replay / spoofed Stripe events
+#
+# Real Enterprise customers (when they exist) get their ceilings lifted
+# via a manual override file at output/.users/<uid>/ceiling_override.json
+# which can ONLY be written server-side — no API path to it.
+HARD_CEILINGS: dict[str, int] = {
+    "ai_refinements_per_month":  1000,   # 2.5× Pro's advertised 400
+    "custom_domains":            20,
+    "published_sites":           100,
+}
+
 # Active subscription statuses that grant the user their paid plan's
 # benefits. Lapsed states (canceled, past_due, unpaid, paused) drop the
 # user back to "free" until they resubscribe or pay the past-due amount.
