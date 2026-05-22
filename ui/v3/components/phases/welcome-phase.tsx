@@ -13,6 +13,7 @@ import { DetectiveInput } from "@/components/hero/detective-input";
 import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { BuildDemo } from "@/components/hero/build-demo";
 import { TakeoffMoment } from "@/components/hero/takeoff-moment";
+import { MarqueeShowcase } from "@/components/hero/marquee-showcase";
 import {
   patchBrief,
   getUserProfile,
@@ -1340,94 +1341,34 @@ export function WelcomePhase({ onAdvance }: Props) {
           <BuildDemo />
         </section>
 
-        {/* §3 — DNA showcase. Phase 43: sticky pinning is desktop-only;
-            mobile gets a stacked panel with whileInView fade-in. Cards
-            are now palette swatches (4 color bars + DNA name + 1-liner
-            feel) instead of text descriptions. Less reading, more visual. */}
+        {/* §3 — Looks. Phase 43.6 (2026-05-21) — retired the palette grid
+            + hover preview (Phase 43 / 43.3) in favor of the vercel-v0-
+            style reference Marc shared: "Prompt → Application" pill arc
+            above a full-bleed horizontal marquee of real Pebble template
+            PNGs. Each tile is large enough to read as a real artifact.
+            See components/hero/marquee-showcase.tsx.
+
+            The DNAS const still lives in this file (used implicitly
+            elsewhere via type / for the workspace plan phase) so we
+            don't delete it. */}
         <section
           id="looks"
           ref={dnaSec.ref}
-          className={cn("relative", !isMobile && "h-[200vh]")}
+          className="relative pebble-dot-grid py-16 sm:py-24 overflow-hidden"
         >
-          <div className={cn(
-            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
-          )}>
-            <motion.div
-              className="text-center mb-12 space-y-4 will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity } })}
-            >
-              <h2 className={`${type.display.l} ${lightGradient}`}>
-                The looks Pebble can wear.
-              </h2>
-              <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
-                Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
-              </p>
-            </motion.div>
+          <motion.div
+            className="text-center mb-10 sm:mb-12 space-y-4 px-4 max-w-3xl mx-auto"
+            {...MOBILE_FADE_PROPS}
+          >
+            <h2 className={`${type.display.l} ${lightGradient}`}>
+              What Pebble actually builds.
+            </h2>
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
+              Real marketing sites from real Pebble runs. Every one of these started as a single sentence.
+            </p>
+          </motion.div>
 
-            <motion.div
-              variants={STAGGER_PARENT}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, amount: 0.15 }}
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 will-change-transform"
-              {...(!isMobile && { style: { y: dnaSec.bodyY, opacity: dnaSec.opacity } })}
-            >
-              {DNAS.map((dna) => (
-                <motion.div
-                  key={dna.label}
-                  variants={STAGGER_CHILD}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
-                  // Phase 43.3 — fixed-height card so hover overlay
-                  // doesn't push the grid row. h-52 fits palette + label
-                  // + feel + a hairline of breathing room.
-                  className="group relative h-52 sm:h-56 overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/30 hover:shadow-[0_12px_36px_rgba(31,29,26,0.12)] transition-all duration-200"
-                >
-                  {/* 4-color palette strip — the visual proof. Middle
-                      swatch expands slightly on hover for a tactile cue. */}
-                  <div className="flex h-20 sm:h-24 w-full" aria-hidden>
-                    {dna.colors.map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 transition-[flex] duration-300 group-hover:flex-[1.3]"
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                  {/* Label + feel — always visible */}
-                  <div className="p-4 sm:p-5">
-                    <h3 className={`${type.heading.s} mb-1 text-foreground`}>{dna.label}</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground/85">{dna.feel}</p>
-                  </div>
-                  {/* Hover overlay — slides up from the bottom edge to
-                      reveal a real template preview in this DNA. Covers
-                      the label/feel area on hover; layout doesn't shift. */}
-                  <div
-                    aria-hidden
-                    className={cn(
-                      "absolute inset-0 flex flex-col justify-end overflow-hidden rounded-xl",
-                      "bg-cover bg-top",
-                      "translate-y-full opacity-0",
-                      "group-hover:translate-y-0 group-hover:opacity-100",
-                      "transition-[transform,opacity] duration-400 ease-out",
-                    )}
-                    style={{ backgroundImage: `url(${dna.preview})` }}
-                  >
-                    {/* Bottom gradient pulls the label out of the photo */}
-                    <div className="bg-gradient-to-t from-black/85 via-black/35 to-transparent p-4 sm:p-5">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-white/80 mb-0.5">
-                        A real site in this DNA
-                      </p>
-                      <p className="text-sm font-semibold text-white">{dna.label}</p>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </motion.div>
-          </div>
+          <MarqueeShowcase />
         </section>
 
         {/* §4 — Perfect for. Phase 43: was a flat text-chip list — now
