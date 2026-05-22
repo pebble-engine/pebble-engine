@@ -170,26 +170,57 @@ export function WorkspaceShell() {
         ? hashPhase as Phase
         : phase
     );
+
+    // Phase 58a: if the user just submitted a prompt on / and we're now
+    // mounting on /workspace, the autostart flag is set and we have a brief.
+    // Jump STRAIGHT to "draft" in this layoutEffect so the user never sees
+    // the welcome page flash on /workspace. Without this, the sequence is
+    // design → welcome (this layoutEffect) → draft (useEffect autostart),
+    // which paints the welcome page for one frame and reads as "bounced
+    // back to landing."
+    const hasBriefContent = !!(currentBrief.business_name || currentBrief.extra_context);
+    const autostartPending =
+      typeof window !== "undefined" &&
+      sessionStorage.getItem("pebble.autostart") === "1" &&
+      hasBriefContent &&
+      !currentBuild;
+
+    if (autostartPending) {
+      setPhase("draft");
+      return;
+    }
+
     if (!currentBuild && (resolvedPhase === "design" || resolvedPhase === "draft" || resolvedPhase === "publish")) {
       setPhase("welcome");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Phase 56a: auto-start generation when the user clicked Build from the
-  // landing page. DetectiveInput stores the brief in localStorage before
-  // navigating; we set a sessionStorage flag so the workspace knows to kick
-  // off immediately instead of showing the questionnaire.
-  // NOTE: intentionally no !getLastBuild() guard — returning users who
-  // click Build again with a new prompt should get a fresh build, not be
-  // silently blocked by their old build sitting in localStorage.
+  // Phase 56a + 58a: auto-start generation when the user clicked Build from
+  // the landing page. Two signals trigger this — either is sufficient:
+  //   1. sessionStorage("pebble.autostart") === "1" (the explicit signal
+  //      set by handleAdvanceFromWelcome before router.push)
+  //   2. Self-healing: we're on /workspace, the brief has content, and
+  //      there's no build yet. This covers the case where the flag was
+  //      lost (e.g. cross-tab navigation, refresh during transition,
+  //      or a previous handleGenerate that errored before completing).
+  // The planFirst escape hatch: if the user explicitly chose plan-first
+  // mode, don't autostart — they want to see the plan preview first.
   useEffect(() => {
-    const autostart = sessionStorage.getItem("pebble.autostart");
-    if (autostart !== "1") return;
+    const flagSet = sessionStorage.getItem("pebble.autostart") === "1";
     sessionStorage.removeItem("pebble.autostart");
+
     const currentBrief = getBrief();
+    const currentBuild = getLastBuild();
     const hasBrief = !!(currentBrief.business_name || currentBrief.extra_context);
-    if (hasBrief) {
+    const wantsPlan = currentBrief.planFirst === true;
+    const onWorkspace = pathname === "/workspace";
+
+    if (wantsPlan) return;
+    if (!hasBrief) return;
+    if (currentBuild) return;            // already built — don't restart
+
+    if (flagSet || onWorkspace) {
       handleGenerate(() => Promise.resolve({} as GenerateResponse));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

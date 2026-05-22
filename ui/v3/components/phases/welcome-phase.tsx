@@ -84,18 +84,18 @@ const ROTATING_WORDS = [
 const STEPS = [
   {
     Icon: Sparkles,
-    title: "Start with an idea",
-    body: "Describe your business in your own words. No jargon. No templates to wade through.",
+    title: "Describe your business",
+    body: "Plain words. No jargon.",
   },
   {
     Icon: Palette,
     title: "Pebble builds it live",
-    body: "Watch your site come together piece by piece, with every choice explained.",
+    body: "Watch it come together in real time.",
   },
   {
     Icon: Rocket,
     title: "Refine and publish",
-    body: "Edit anything with a click. Publish when you're ready. Change it anytime.",
+    body: "Click to edit. Publish when ready.",
   },
 ];
 
@@ -893,16 +893,20 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px]"
         />
 
-        <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
+        {/* "welcome to Pebble." — pinned small at top so the rotating headline owns the hero */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-baseline justify-center gap-2"
+          transition={{ duration: 0.5 }}
+          className="absolute top-20 sm:top-24 left-0 right-0 flex items-center justify-center z-10"
         >
-          <span className="text-muted-foreground text-lg sm:text-xl">welcome to</span>
-          <span className="text-2xl sm:text-3xl font-semibold text-foreground">Pebble.</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-muted-foreground text-xs sm:text-sm">welcome to</span>
+            <span className="text-sm sm:text-base font-semibold text-foreground">Pebble.</span>
+          </div>
         </motion.div>
+
+        <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
 
         <motion.h1
           initial={{ opacity: 0, scale: 0.92 }}
@@ -918,7 +922,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 The sentence never reflows or shifts position. */}
             <span
               className="relative inline-block align-baseline"
-              style={{ paddingTop: "0.12em", paddingBottom: "0.28em", marginTop: "-0.12em", marginBottom: "-0.28em" }}
+              style={{ paddingTop: "0.12em", paddingBottom: "0.42em", marginTop: "-0.12em", marginBottom: "-0.42em" }}
             >
               <span aria-hidden className="invisible select-none">presence</span>
               <AnimatePresence mode="wait">
@@ -936,7 +940,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                     y:       { duration: 0.5, ease: EASE_CINEMATIC },
                     backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
                   }}
-                  className="absolute left-0 top-[0.12em] bg-clip-text text-transparent whitespace-nowrap"
+                  className="absolute left-1/2 -translate-x-1/2 top-[0.12em] pb-[0.3em] bg-clip-text text-transparent whitespace-nowrap"
                   style={shimmerForegroundStyle}
                 >
                   {ROTATING_WORDS[wordIdx]}
@@ -946,13 +950,14 @@ export function WelcomePhase({ onAdvance }: Props) {
           </MotionConfig>
         </motion.h1>
 
+        {/* Short punchy quote above CTA — swap text here if needed */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-lg sm:text-xl font-medium leading-[1.65] text-foreground max-w-2xl"
+          className="text-2xl sm:text-4xl font-extrabold text-foreground max-w-xl"
         >
-          For the ones who are brilliant at what they do and just need the world to find them.
+          The world needs what you do.
         </motion.p>
 
         <motion.div
@@ -996,13 +1001,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                   // on mobile, retains the cinematic feel on desktop.
                   className="group flex items-center gap-2 sm:gap-4 pl-5 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-3 bg-foreground rounded-full"
                 >
-                  <span className="font-semibold text-base sm:text-2xl text-background">Start Building Free</span>
+                  <span className="font-extrabold text-lg sm:text-3xl text-background">Start Building Free</span>
                   <span className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
                     <ArrowRight className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                   </span>
                 </motion.button>
-                <p className={`${type.caption} text-muted-foreground/80`}>
-                  Free to start. Because your work deserves to be seen.
+                <p className="text-sm sm:text-base font-semibold text-muted-foreground">
+                  Your first website on us. Get started now.
                 </p>
               </motion.div>
             ) : awaitingModeChoice ? (
@@ -1198,9 +1203,9 @@ export function WelcomePhase({ onAdvance }: Props) {
                     // pipeline calls /api/plan (cheap preview, no credit
                     // spent) before any /api/generate. Workspace surfaces
                     // the plan + a "Build this" confirm step.
-                    if (opts?.planMode) {
-                      void patchBrief({ planFirst: true });
-                    }
+                    // ALWAYS write planFirst explicitly so stale state from
+                    // a previous toggle doesn't leak into the new submit.
+                    void patchBrief({ planFirst: opts?.planMode === true });
                     void handleSend(value, opts?.files);
                   }}
                 />
@@ -1277,7 +1282,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           >
             <BoldSectionHeading accent="From sentence" main="to a site." />
             <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
-              Watch it happen, then read what just happened.
+              Tell Pebble what you need, kick back, and relax.
             </p>
           </motion.div>
 
@@ -1300,6 +1305,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 preload="metadata"
                 className="block w-full h-auto bg-muted"
                 aria-label="A live recording of a Pebble build, from sentence to live site"
+                ref={(el) => { if (el) el.playbackRate = 1.5; }}
               />
             </motion.div>
 
@@ -1359,7 +1365,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           >
             <BoldSectionHeading accent="The looks Pebble" main="can wear." />
             <p className="text-lg max-w-2xl mx-auto text-muted-foreground pt-2">
-              Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
+              Choose a prebuilt template or create your own, we got you covered.
             </p>
           </motion.div>
 
@@ -1409,9 +1415,9 @@ export function WelcomePhase({ onAdvance }: Props) {
               className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-xl h-[130%] rounded-full bg-[#3054ff]/15 blur-2xl"
             />
             <div className="relative">
-              <BoldSectionHeading accent="Ready for" main="takeoff?" />
-              <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-3">
-                Start free. Upgrade when you need more sites or a custom domain.
+              <BoldSectionHeading accent="The hardest part is starting." main="That&apos;s why it&apos;s free." />
+              <p className="text-base max-w-md mx-auto text-muted-foreground pt-4">
+                No contracts or commitments. Cancel whenever you want.
               </p>
             </div>
 
@@ -1768,8 +1774,8 @@ export function WelcomePhase({ onAdvance }: Props) {
         >
           <div className="flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center">
             <motion.div className="space-y-10" {...MOBILE_FADE_PROPS}>
-              <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-5xl text-foreground max-w-2xl mx-auto leading-tight`}>
-                Your idea is one paragraph away.
+              <p className="font-[family-name:var(--font-plus-jakarta-sans)] font-bold text-xl sm:text-2xl text-foreground max-w-2xl mx-auto leading-tight">
+                Your idea is one sentence away.
               </p>
               <motion.button
                 type="button"
@@ -1788,18 +1794,18 @@ export function WelcomePhase({ onAdvance }: Props) {
               {/* Reassurance row — concrete promises in lieu of social
                   proof we don't have yet. Subtle, dot-separated, doesn't
                   fight the headline. */}
-              <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+              <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  Free for two live sites
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  Free to start
                 </li>
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  Yours forever — export anytime
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  No credit card required
                 </li>
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  No card required
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  Cancel anytime
                 </li>
               </ul>
             </motion.div>
