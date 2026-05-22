@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { DashboardSidebar } from "@/components/workspace/dashboard-sidebar";
-import { PhaseTracker } from "@/components/workspace/phase-tracker";
+// PhaseTracker removed — internal workflow steps not exposed to users.
 import {
   getBrief,
   getLastBuild,
@@ -21,7 +21,8 @@ import {
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
-import { streamGenerateSite, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { streamGenerateSite, enrichContent, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { type CollectedAnswer } from "@/components/phases/build-chat";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -100,7 +101,12 @@ export function WorkspaceShell() {
   // "Built in 47s". Cleared on new generation.
   const [buildElapsedSec, setBuildElapsedSec] = useState<number | null>(null);
   const generateStartedAtRef = useRef<number | null>(null);
+  const generatingRef = useRef(false); // concurrency guard — prevents double-build on fast double-click / autostart
   const editPhaseRef = useRef<EditPhaseHandle>(null);
+  // Phase 58a — chat answers collected by BuildChatPanel during the build.
+  // Updated via the onEnrich callback on DraftPhase; read in handleGenerate's
+  // .then() to fire enrichContent in the background after the build lands.
+  const chatAnswersRef = useRef<CollectedAnswer[]>([]);
 
   // Phase 54c — plan-picker overlay state. Marc's "offer wall during
   // build" UX: show the picker while the build is in flight so the
@@ -165,32 +171,54 @@ export function WorkspaceShell() {
         : phase
     );
     if (!currentBuild && (resolvedPhase === "design" || resolvedPhase === "draft" || resolvedPhase === "publish")) {
-      const hasBriefContent = !!(currentBrief.business_name || currentBrief.extra_context);
-      setPhase(hasBriefContent ? "idea" : "welcome");
+      setPhase("welcome");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Phase 56a: auto-start generation when the user clicked Build from the
+  // landing page. DetectiveInput stores the brief in localStorage before
+  // navigating; we set a sessionStorage flag so the workspace knows to kick
+  // off immediately instead of showing the questionnaire.
+  // NOTE: intentionally no !getLastBuild() guard — returning users who
+  // click Build again with a new prompt should get a fresh build, not be
+  // silently blocked by their old build sitting in localStorage.
+  useEffect(() => {
+    const autostart = sessionStorage.getItem("pebble.autostart");
+    if (autostart !== "1") return;
+    sessionStorage.removeItem("pebble.autostart");
+    const currentBrief = getBrief();
+    const hasBrief = !!(currentBrief.business_name || currentBrief.extra_context);
+    if (hasBrief) {
+      handleGenerate(() => Promise.resolve({} as GenerateResponse));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleAdvanceFromWelcome() {
-    // Phase 40i: if the user toggled "Plan first" in DetectiveInput, skip
-    // the idea questionnaire and go straight to the plan preview.
     const currentBrief = getBrief();
-    const targetPhase: Phase = currentBrief.planFirst === true ? "plan" : "idea";
 
-    // On the welcome / home route, this is the one meaningful "commit to
-    // building" transition — the URL flips from / to /workspace so the
-    // browser bar reflects the new context. From any other route, we're
-    // already inside the workspace shell; just update the phase.
-    if (pathname === "/") {
-      // Wrap the router.push in a View Transition so Chrome/Edge/Safari
-      // morph the layout natively instead of cutting between routes.
-      // Firefox + older browsers fall through to a plain router.push and
-      // get the AnimatePresence-based fade.
-      safeStartViewTransition(() => {
-        router.push(`/workspace#phase=${targetPhase}`);
-      });
+    if (currentBrief.planFirst === true) {
+      // Plan mode: show the plan preview before building.
+      if (pathname === "/") {
+        safeStartViewTransition(() => {
+          router.push("/workspace#phase=plan");
+        });
+      } else {
+        setPhase("plan");
+      }
     } else {
-      setPhase(targetPhase);
+      // Standard mode: skip the questionnaire — go straight to build.
+      if (pathname === "/") {
+        // Flag for the auto-start useEffect above, then navigate to workspace.
+        sessionStorage.setItem("pebble.autostart", "1");
+        safeStartViewTransition(() => {
+          router.push("/workspace");
+        });
+      } else {
+        // Already inside workspace — kick off generation immediately.
+        handleGenerate(() => Promise.resolve({} as GenerateResponse));
+      }
     }
   }
 
@@ -200,16 +228,12 @@ export function WorkspaceShell() {
   }
 
   function handleBackFromPlan() {
-    // Phase 40i: if the user arrived via plan-first, back goes to welcome.
-    // Clear the planFirst flag so the normal flow is restored.
-    const currentBrief = getBrief();
-    if (currentBrief.planFirst === true) {
-      patchBrief({ planFirst: false });
-      setBrief(getBrief());
-      setPhase("welcome");
-    } else {
-      setPhase("idea");
-    }
+    // Back from plan always returns to welcome — "idea" questionnaire is no
+    // longer in the standard flow (Phase 56a removed it). Clear planFirst so
+    // the next Build click from welcome doesn't re-enter plan mode.
+    patchBrief({ planFirst: false });
+    setBrief(getBrief());
+    setPhase("welcome");
   }
 
   // Plan phase → Draft phase → Design phase. Streams build progress via
@@ -218,19 +242,35 @@ export function WorkspaceShell() {
   // but is not used — we call streamGenerateSite directly so we can
   // feed live events into the draft animation.
   function handleGenerate(_kickOff: () => Promise<GenerateResponse>) {
+    // Concurrency guard: one build at a time. Protects against double-click
+    // from the landing page autostart and fast double-tap on mobile.
+    if (generatingRef.current) return;
+    generatingRef.current = true;
+
     // Phase 40i: clear planFirst so returning to welcome after a build
     // doesn't re-trigger the plan-first shortcut.
     patchBrief({ planFirst: false });
     setSseEvents([]);
     setGenerateDone(false);
     setGenerateError(null);
+    setBuild(null);  // clear stale build so design phase doesn't show old site on error
     setBuildElapsedSec(null);
     generateStartedAtRef.current = Date.now();
     setPhase("draft");
     const brief = getBrief();
-    streamGenerateSite(brief, (event) => {
-      setSseEvents((prev) => [...prev, event]);
-    })
+
+    // 5-minute hard timeout — engine hangs shouldn't leave users stuck in draft.
+    const timeoutMs = 5 * 60 * 1000;
+    const timeoutP = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Build timed out — please try again.")), timeoutMs),
+    );
+
+    Promise.race([
+      streamGenerateSite(brief, (event) => {
+        setSseEvents((prev) => [...prev, event]);
+      }),
+      timeoutP,
+    ])
       .then((response) => {
         const built = {
           slug: response.slug,
@@ -250,14 +290,28 @@ export function WorkspaceShell() {
         if (generateStartedAtRef.current) {
           setBuildElapsedSec(Math.round((Date.now() - generateStartedAtRef.current) / 1000));
         }
-        // Phase 49 — draft → ready → (user clicks) → design. Gives the
-        // user a real "site is live" moment with a summary card instead
-        // of snapping silently into the editor. Tiny pause lets the
-        // draft "Ready" pulse paint once before the switch.
-        setTimeout(() => setPhase("ready"), 600);
+        // Phase 58a — fire enrichment in background if the user answered
+        // chat questions during the build. React effects run before the
+        // 600ms macrotask fires, so chatAnswersRef is populated by then.
+        // Fire-and-forget: the user transitions to "ready" regardless.
+        const buildSlug = response.slug;
+        setTimeout(() => {
+          const answers = chatAnswersRef.current;
+          if (answers.length > 0) {
+            const facts = answers.map((a) => ({ key: a.questionId, value: a.answer }));
+            enrichContent(buildSlug, facts).catch(() => {
+              /* best-effort — enrichment failure doesn't block the user */
+            });
+          }
+          // Phase 49 — draft → ready → (user clicks) → design.
+          setPhase("ready");
+        }, 600);
       })
       .catch((e: Error) => {
         setGenerateError(e.message || "Build failed");
+      })
+      .finally(() => {
+        generatingRef.current = false;
       });
   }
 
@@ -269,7 +323,7 @@ export function WorkspaceShell() {
     }
     if (target === "features") {
       // Phase 56a: Integrations panel — available once a site is built.
-      if (build) setPhase("integrations" as Phase);
+      if (build) setPhase("integrations");
       return;
     }
     if (target === "setup") {
@@ -376,16 +430,8 @@ export function WorkspaceShell() {
 
         {/* Center column — phase-specific content. AnimatePresence mode="wait"
             ensures the outgoing phase finishes its exit before the incoming
-            one mounts. The horizontal PhaseTracker sits above it as a subtle
-            breadcrumb (renders nothing on welcome / design). */}
+            one mounts. */}
         <div className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}>
-          {!isWelcome && (
-            <PhaseTracker
-              current={phase}
-              onJump={handleJumpPhase}
-              buildExists={!!build}
-            />
-          )}
           <AnimatePresence mode="wait">
             <motion.div
               key={phase}
@@ -407,7 +453,15 @@ export function WorkspaceShell() {
               {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
               {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
               {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
-              {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
+              {phase === "draft"   && (
+                <DraftPhase
+                  done={generateDone}
+                  error={generateError}
+                  sseEvents={sseEvents}
+                  onRetry={() => handleGenerate(() => Promise.resolve({} as GenerateResponse))}
+                  onEnrich={(answers) => { chatAnswersRef.current = answers; }}
+                />
+              )}
               {phase === "ready"   && (
                 <ReadyPhase
                   build={build}

@@ -210,6 +210,12 @@ def route_post(handler) -> None:
         elif handler.path == "/api/chat-edit":
             from pebble.server.chat_edit import run_chat_edit
             run_chat_edit(handler)
+        elif handler.path == "/api/enrich-content":
+            # Phase 58a — apply build-time chat facts (phone / location /
+            # services) to an already-generated site. No LLM call — pure
+            # regex substitution. Always billable: false.
+            from pebble.server.enrich import run_enrich_content
+            run_enrich_content(handler)
         elif handler.path == "/api/visual-edit":
             handler._handle_visual_edit()
         elif handler.path == "/api/migrate":

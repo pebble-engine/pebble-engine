@@ -1308,6 +1308,33 @@ export async function deleteIntegration(
   );
 }
 
+// ---------- /api/enrich-content (Phase 58a — build-time chat enrichment) -----
+//
+// Applies facts collected by BuildChatPanel (phone, services, location) to the
+// already-generated site via targeted regex replacements. Fired in the
+// background immediately after build completes — zero additional wait for the
+// user. No LLM call: pure text substitution. Always billable: false.
+
+export type EnrichFact = {
+  /** "phone" | "services" | "location" */
+  key: string;
+  value: string;
+};
+
+export type EnrichResponse = {
+  slug:          string;
+  facts_applied: number;
+  files_changed: string[];
+  snapshot_id:   string | null;
+};
+
+export async function enrichContent(
+  slug: string,
+  facts: EnrichFact[],
+): Promise<EnrichResponse> {
+  return postJSON("/api/enrich-content", { slug, facts });
+}
+
 // ---------- /api/chat-edit (Phase 57) ----------------------------------------
 
 export type ChatEditResponse =
