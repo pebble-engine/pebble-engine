@@ -10,7 +10,8 @@ import { BackgroundCarousel } from "@/components/hero/background-carousel"; // e
 import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
 import { LandingNav } from "@/components/hero/landing-nav";
 import { DetectiveInput } from "@/components/hero/detective-input";
-import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps";
+import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
+import { BuildDemo } from "@/components/hero/build-demo";
 import {
   patchBrief,
   getUserProfile,
@@ -1219,26 +1220,33 @@ export function WelcomePhase({ onAdvance }: Props) {
           ════════════════════════════════════════════════════════════════ */}
       <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
         {/* §2 — From sentence to site.
-            Phase 40f (2026-05-21) — Marc's call: retire StickyScrollStack
-            here. The pinned-stack pattern hijacked too much vertical
-            scroll for §2 alone and meant the entire lower half of the
-            page (DNA showcase, "Perfect for…", testimonial, pricing,
-            final CTA) felt like an afterthought. A horizontal swiper
-            communicates the same 3 steps in roughly one viewport-height
-            so we can spend the remaining scroll real-estate on the rest
-            of the marketing story (which IS where the parallax sits now). */}
-        <SwiperSteps
+            Phase 43.2 (2026-05-21) — retired the SwiperSteps text cards.
+            The most compelling answer to "how does this work?" is showing
+            it actually working, so §2 is now a code-driven build demo
+            that loops through the 3 stages (TYPE → PLAN → SITE) in ~12s.
+            See components/hero/build-demo.tsx. SwiperSteps is still on
+            disk for a quick revert if needed.
+            STEPS data also unused for now — kept for the same revert path. */}
+        <section
           id="how"
-          heading="From sentence to site."
-          subhead="Three steps from a paragraph about your business to a real, editable website."
-          steps={STEPS.map((step, i): SwiperStep => ({
-            id:      step.title,
-            eyebrow: `Step 0${i + 1}`,
-            icon:    <step.Icon className="w-9 h-9" />,
-            title:   step.title,
-            body:    step.body,
-          }))}
-        />
+          className="relative px-4 py-16 sm:py-24 max-w-5xl mx-auto"
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.94 }}
+            whileInView={{ opacity: 1, y: 0, scale: 1 }}
+            viewport={{ once: true, amount: 0.2 }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+            className="text-center mb-10 sm:mb-14 space-y-4"
+          >
+            <h2 className={`${type.display.l} text-foreground`}>
+              From sentence to site.
+            </h2>
+            <p className="text-lg max-w-xl mx-auto text-muted-foreground">
+              Three steps. About twelve seconds to watch. About five minutes to ship.
+            </p>
+          </motion.div>
+          <BuildDemo />
+        </section>
 
         {/* §3 — DNA showcase. Phase 43: sticky pinning is desktop-only;
             mobile gets a stacked panel with whileInView fade-in. Cards
