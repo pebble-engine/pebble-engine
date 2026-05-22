@@ -174,6 +174,93 @@ def _execute_deletion_if_due(user_id: str, email: str) -> bool:
 
 # ─── GET /api/account/profile ────────────────────────────────────────────────
 
+def run_select_plan(handler) -> None:
+    """POST /api/account/select-plan — Phase 54b (2026-05-23).
+
+    Clears the ``needs_plan_selection`` flag for the caller. Used by the
+    post-signup plan picker (Phase 54c) when the user explicitly picks
+    Free / Starter / Pro / Enterprise.
+
+    Body::
+
+        { "plan": "free" | "starter" | "pro" | "enterprise" }
+
+    For Free: just clears the flag. The user gets all default Free
+    benefits (1 site, 30 refinements/mo, etc.) without us needing to
+    write a subscription.json — absence of subscription IS the Free
+    plan in our resolution logic.
+
+    For paid plans: clears the flag AND returns the Stripe checkout
+    URL — the v3 frontend redirects there. The flag stays cleared even
+    if the user abandons checkout, because they've still made an
+    intentional pick (they CHOSE paid, just didn't pay yet). The plan
+    they actually get is still "free" until Stripe webhook confirms
+    payment.
+
+    Auth: Bearer Supabase access token (same pattern as the rest of
+    /api/account/*). 401 if missing/invalid.
+    """
+    if not is_configured():
+        handler._json(503, {"error": "Account service not configured"})
+        return
+    token = _bearer_token(handler)
+    if not token:
+        handler._json(401, {"error": "missing Bearer access token"})
+        return
+    try:
+        user = validate_access_token(token)
+    except AdminError as e:
+        handler._json(502, {"error": f"could not validate session: {e}"})
+        return
+    if user is None:
+        handler._json(401, {"error": "session is invalid or expired"})
+        return
+
+    user_id = user.get("id") or ""
+    if not user_id:
+        handler._json(401, {"error": "session lacks user id"})
+        return
+
+    try:
+        length = int(handler.headers.get("Content-Length", "0"))
+    except ValueError:
+        handler._json(400, {"error": "invalid Content-Length"})
+        return
+    if length <= 0 or length > 1024:
+        handler._json(400, {"error": "invalid request body length"})
+        return
+    try:
+        body = json.loads(handler.rfile.read(length).decode("utf-8"))
+    except (ValueError, UnicodeDecodeError):
+        handler._json(400, {"error": "invalid JSON body"})
+        return
+
+    plan = (body or {}).get("plan")
+    if plan not in ("free", "starter", "pro", "enterprise"):
+        handler._json(400, {"error": "plan must be one of: free, starter, pro, enterprise"})
+        return
+
+    from pebble.user_plan import set_needs_plan_selection
+    ok = set_needs_plan_selection(user_id, False)
+    if not ok:
+        handler._json(500, {"error": "failed to record plan selection"})
+        return
+
+    log.info("user picked %s plan (user_id=%s)", plan, _redact(user.get("email") or ""))
+
+    # For paid plans, the frontend should follow up with POST /api/checkout/
+    # create-session to get the Stripe URL. We don't auto-call it here
+    # because returning a redirect URL inside a JSON response is awkward
+    # and the existing checkout endpoint already handles the pricing-tier
+    # lookup. Return the picked plan so the frontend knows which next
+    # step to take.
+    handler._json(200, {
+        "ok":            True,
+        "plan_selected": plan,
+        "next":          "build" if plan == "free" else "checkout",
+    })
+
+
 def run_get_profile(handler) -> None:
     """Return the caller's profile row plus any pending deletion info."""
     if not is_configured():

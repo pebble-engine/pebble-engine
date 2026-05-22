@@ -263,6 +263,71 @@ def test_gate_response_minimal_shape():
     assert "Starter" in r["error"]  # title-cased plan name in the error string
 
 
+# ---------- needs_plan_selection (Phase 54b) ------------------------------
+
+def test_needs_plan_selection_default_false_for_legacy(_isolate):
+    """Existing users without profile.json must NOT get gated — only NEW
+    signups after the flag was added get profile.json. Default = False."""
+    assert user_plan.needs_plan_selection("legacy-user") is False
+
+
+def test_needs_plan_selection_false_for_invalid_uid(_isolate):
+    assert user_plan.needs_plan_selection("") is False
+    assert user_plan.needs_plan_selection("../escape") is False
+
+
+def test_set_then_read_needs_plan_selection(_isolate):
+    """After signup hook fires set_needs_plan_selection(True), the flag
+    reads as True until the user explicitly picks a plan."""
+    ok = user_plan.set_needs_plan_selection("u1", True)
+    assert ok is True
+    assert user_plan.needs_plan_selection("u1") is True
+
+
+def test_clearing_needs_plan_selection(_isolate):
+    """POST /api/account/select-plan → set_needs_plan_selection(False)."""
+    user_plan.set_needs_plan_selection("u1", True)
+    assert user_plan.needs_plan_selection("u1") is True
+    user_plan.set_needs_plan_selection("u1", False)
+    assert user_plan.needs_plan_selection("u1") is False
+
+
+def test_set_needs_plan_selection_preserves_other_profile_fields(_isolate):
+    """The read-modify-write pattern must not nuke unrelated fields when
+    we toggle the flag — future profile fields (notification prefs, beta
+    flags) sit in the same file."""
+    safe_uid = "u1"
+    profile = _isolate / ".users" / safe_uid / "profile.json"
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    profile.write_text(
+        json.dumps({
+            "needs_plan_selection": True,
+            "notification_prefs":   {"email": False},
+            "beta_feature_x":       True,
+        }),
+        encoding="utf-8",
+    )
+
+    user_plan.set_needs_plan_selection(safe_uid, False)
+    data = json.loads(profile.read_text(encoding="utf-8"))
+    assert data["needs_plan_selection"] is False
+    assert data["notification_prefs"] == {"email": False}
+    assert data["beta_feature_x"] is True
+
+
+def test_set_needs_plan_selection_invalid_uid_returns_false(_isolate):
+    assert user_plan.set_needs_plan_selection("", True) is False
+    assert user_plan.set_needs_plan_selection("../escape", True) is False
+
+
+def test_needs_plan_selection_handles_corrupt_profile(_isolate):
+    """Corrupt JSON → fail-open False so a bad sentinel never traps the user."""
+    profile = _isolate / ".users" / "u1" / "profile.json"
+    profile.parent.mkdir(parents=True)
+    profile.write_text("not-json{")
+    assert user_plan.needs_plan_selection("u1") is False
+
+
 def test_gate_response_includes_quota_when_provided():
     r = user_plan.gate_response(
         feature_label="AI refinement",

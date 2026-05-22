@@ -149,6 +149,17 @@ def _usage_sentinel(safe_uid: str, month: str) -> Path:
     return _output_dir() / ".users" / safe_uid / f"usage_{month}.json"
 
 
+def _profile_sentinel(safe_uid: str) -> Path:
+    """Phase 54b — user-level flags that aren't billing-specific.
+
+    Holds the ``needs_plan_selection`` boolean and any future per-user
+    state (notification prefs, beta flags, etc.) that doesn't belong in
+    subscription.json (Stripe-owned). Written on signup, cleared when
+    the user explicitly picks a plan.
+    """
+    return _output_dir() / ".users" / safe_uid / "profile.json"
+
+
 def _current_month() -> str:
     """YYYY-MM in UTC. Used as the suffix for monthly usage files."""
     return datetime.now(timezone.utc).strftime("%Y-%m")
@@ -257,6 +268,71 @@ def get_limit(user_id: str, key: str) -> int | bool:
     if plan_limit > effective_ceiling:
         return effective_ceiling
     return plan_limit
+
+
+# --------- needs_plan_selection (Phase 54b) ------------------------------
+
+def needs_plan_selection(user_id: str) -> bool:
+    """Phase 54b — has the user explicitly chosen a plan (Free / Starter /
+    Pro) since signing up?
+
+    Default semantics:
+      * profile.json missing      → False (legacy users + dev accounts
+                                    aren't subject to the gate; only NEW
+                                    signups after this flag was added
+                                    get the profile.json that triggers it)
+      * profile.json invalid/corrupt → False (fail-open for read errors
+                                    so existing users never get stuck
+                                    behind a busted sentinel)
+      * profile.json with needs_plan_selection=true → True (the gate fires)
+      * profile.json with needs_plan_selection=false → False (selection done)
+
+    Set to True by the signup path (supabase_webhook or legacy auth);
+    cleared by POST /api/account/select-plan.
+    """
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
+        return False
+    path = _profile_sentinel(safe_uid)
+    if not path.exists():
+        return False
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+        return False
+    if not isinstance(data, dict):
+        return False
+    return bool(data.get("needs_plan_selection"))
+
+
+def set_needs_plan_selection(user_id: str, value: bool) -> bool:
+    """Phase 54b — atomic write of the gate flag. Returns True on success,
+    False on invalid uid or write error. Preserves any other fields
+    already in profile.json.
+    """
+    safe_uid = safe_user_id(user_id)
+    if not safe_uid:
+        return False
+    path = _profile_sentinel(safe_uid)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Read-modify-write so other profile fields (future: notification
+    # prefs, beta flags) survive the toggle.
+    data: dict = {}
+    if path.exists():
+        try:
+            existing = json.loads(path.read_text(encoding="utf-8"))
+            if isinstance(existing, dict):
+                data = existing
+        except (json.JSONDecodeError, UnicodeDecodeError, OSError):
+            pass
+    data["needs_plan_selection"] = bool(value)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    try:
+        tmp.write_text(json.dumps(data, indent=2, sort_keys=True), encoding="utf-8")
+        os.replace(tmp, path)
+        return True
+    except OSError:
+        return False
 
 
 def get_project_plan(slug: str) -> str:

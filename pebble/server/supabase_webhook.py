@@ -158,6 +158,21 @@ def run_supabase_webhook(handler) -> None:
         handler._json(200, {"ok": True, "action": "skipped", "reason": "no email on record"})
         return
 
+    # Phase 54b (2026-05-23) — flag the new account as needing an
+    # explicit plan selection BEFORE we send the welcome email. The
+    # Supabase profiles row typically has `id` = the auth.users UUID;
+    # if it's absent the flag silently no-ops (and the user lands on
+    # the legacy auto-Free path). Fail-open on any sentinel error so a
+    # bad disk write never blocks signups.
+    user_id = (record.get("id") or "").strip()
+    if user_id:
+        try:
+            from pebble.user_plan import set_needs_plan_selection
+            set_needs_plan_selection(user_id, True)
+        except Exception as e:
+            log.warning("needs_plan_selection set failed for %s: %s",
+                        _redact_email(email), e)
+
     first_name = _clean_first_name(record.get("first_name"))
     redacted = _redact_email(email)
 

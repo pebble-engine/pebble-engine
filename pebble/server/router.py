@@ -304,6 +304,11 @@ def route_post(handler) -> None:
         elif handler.path == "/api/account/cancel-deletion":
             from pebble.server.account import run_cancel_deletion
             run_cancel_deletion(handler)
+        elif handler.path == "/api/account/select-plan":
+            # Phase 54b — clears the needs_plan_selection flag after the
+            # user explicitly picks Free / Starter / Pro / Enterprise.
+            from pebble.server.account import run_select_plan
+            run_select_plan(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url

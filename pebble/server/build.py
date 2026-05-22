@@ -297,6 +297,32 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     except Exception as e:
         log.warning("user id resolution failed: %s", e)
 
+    # Phase 54b — intentional Free signup gate. If the caller signed up
+    # but hasn't explicitly picked a plan yet, deny the build with a 402
+    # pointing them to the plan picker. The v3 frontend responds by
+    # showing the plan-picker modal (with the offer-wall + background-
+    # build trick in Phase 54c). Anonymous callers (no _user_id) pass
+    # through — they hit the auth gate elsewhere and we don't double-up.
+    caller_uid = answers.get("_user_id")
+    if generate and caller_uid:
+        try:
+            from pebble.user_plan import needs_plan_selection, gate_response, get_user_plan
+            if needs_plan_selection(caller_uid):
+                handler._json(402, {
+                    **gate_response(
+                        feature_label="Site generation",
+                        required_plan="free",  # Free is enough — they just need to ACTIVELY pick it
+                        current_plan=get_user_plan(caller_uid),
+                    ),
+                    "needs_plan_selection": True,
+                    "error": "Pick a plan to start your first build.",
+                })
+                return
+        except Exception as e:
+            # Fail-open: never let the plan-selection gate break builds
+            # because of a sentinel read error.
+            log.warning("plan-selection gate check failed: %s", e)
+
     ds_text = ""
     if generate_design_system:
         try:
