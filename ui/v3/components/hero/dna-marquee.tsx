@@ -46,12 +46,26 @@ function DnaCard({ dna }: { dna: DnaCardData }) {
         "transition-shadow duration-200 cursor-default",
       )}
     >
-      {/* Palette strip — 4 swatches */}
-      <div className="flex h-14 w-full" aria-hidden>
-        {dna.colors.map((c, i) => (
-          <div key={i} className="flex-1" style={{ backgroundColor: c }} />
-        ))}
-      </div>
+      {/* Template preview — real Pebble site rendered in this DNA.
+          Phase 43.9 — replaced the 4-swatch palette strip with the
+          actual template screenshot Marc has mapped to each DNA.
+          aspect-[16/10] keeps every card the same height; bg-top so
+          the hero/nav of each template stays visible at the small
+          render size. Falls back to a muted color block if a DNA
+          somehow has no preview field. */}
+      {dna.preview ? (
+        <div
+          className="aspect-[16/10] w-full bg-muted bg-cover bg-top"
+          style={{ backgroundImage: `url(${dna.preview})` }}
+          aria-hidden
+        />
+      ) : (
+        <div className="flex h-14 w-full" aria-hidden>
+          {dna.colors.map((c, i) => (
+            <div key={i} className="flex-1" style={{ backgroundColor: c }} />
+          ))}
+        </div>
+      )}
       <div className="p-3">
         <h3 className="text-sm font-semibold text-foreground leading-tight">{dna.label}</h3>
         <p className="text-[11px] text-muted-foreground mt-1 line-clamp-1">{dna.feel}</p>
