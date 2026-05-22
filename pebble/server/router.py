@@ -207,6 +207,9 @@ def route_post(handler) -> None:
             handler._handle_rollback()
         elif handler.path == "/api/refine":
             handler._handle_refine()
+        elif handler.path == "/api/chat-edit":
+            from pebble.server.chat_edit import run_chat_edit
+            run_chat_edit(handler)
         elif handler.path == "/api/visual-edit":
             handler._handle_visual_edit()
         elif handler.path == "/api/migrate":

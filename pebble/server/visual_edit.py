@@ -452,6 +452,48 @@ def _edit_font_family_for_selector(
     }
 
 
+# ---- Image-swap op --------------------------------------------------------
+
+def _edit_image_swap(site_dir: Path, original_src: str, new_src: str) -> dict:
+    """Replace every occurrence of ``original_src`` with ``new_src`` across
+    all .tsx, .ts, and .css files in the site.
+
+    This is intentionally a literal string replacement — no URL parsing or
+    path normalisation. The caller (the workspace UI) passes the src exactly
+    as it appears in the rendered DOM (``img.src`` or ``img.getAttribute("src")``),
+    so a literal match is the safest and most predictable approach.
+
+    Returns ``{files_changed: [...]}`` — ``ambiguous: false`` always because
+    image-swap intentionally replaces ALL occurrences everywhere (you want the
+    same photo swapped consistently across the site, not just one instance).
+    """
+    if not original_src or not isinstance(original_src, str):
+        return {"files_changed": [], "error": "original_src is required"}
+    if not new_src or not isinstance(new_src, str):
+        return {"files_changed": [], "error": "new_src is required"}
+
+    files_changed: list[str] = []
+    # Scan .tsx, .ts, and .css — images live in JSX props and CSS url() calls.
+    patterns = ("**/*.tsx", "**/*.ts", "**/*.css")
+    for pattern in patterns:
+        for f in site_dir.glob(pattern):
+            try:
+                text = f.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            if original_src not in text:
+                continue
+            new_text = text.replace(original_src, new_src)
+            if new_text != text:
+                f.write_text(new_text, encoding="utf-8")
+                files_changed.append(f.relative_to(site_dir).as_posix())
+
+    return {
+        "files_changed": files_changed,
+        "ambiguous":     False,
+    }
+
+
 # ---- HTTP entry point ------------------------------------------------------
 
 def run_visual_edit(handler) -> None:
@@ -479,8 +521,8 @@ def run_visual_edit(handler) -> None:
     op = body.get("op")
     if not isinstance(slug, str) or not slug:
         handler._json(400, {"error": "slug is required"}); return
-    if op not in ("text", "color", "font-size", "font-family"):
-        handler._json(400, {"error": "op must be 'text', 'color', 'font-size', or 'font-family'"}); return
+    if op not in ("text", "color", "font-size", "font-family", "image-swap"):
+        handler._json(400, {"error": "op must be 'text', 'color', 'font-size', 'font-family', or 'image-swap'"}); return
 
     # Auth gate — see refine.py + the 2026-05-15 evening NLM pass.
     caller_uid = require_project_owner(handler, slug)
@@ -533,7 +575,7 @@ def run_visual_edit(handler) -> None:
                 if result is None:
                     hint = body.get("selector_hint") or body.get("original_text") or ""
                     result = _edit_font_size_for_selector(site_dir, hint, delta)
-            else:  # font-family
+            elif op == "font-family":
                 new_font_family = (body.get("new_font_family") or "").strip()
                 if not new_font_family:
                     handler._json(400, {"error": "new_font_family is required for font-family op"}); return
@@ -545,6 +587,14 @@ def run_visual_edit(handler) -> None:
                 if result is None:
                     hint = body.get("selector_hint") or body.get("original_text") or ""
                     result = _edit_font_family_for_selector(site_dir, hint, new_font_family)
+            else:  # image-swap
+                original_src = (body.get("original_src") or "").strip()
+                new_src_val  = (body.get("new_src") or "").strip()
+                if not original_src:
+                    handler._json(400, {"error": "original_src is required for image-swap op"}); return
+                if not new_src_val:
+                    handler._json(400, {"error": "new_src is required for image-swap op"}); return
+                result = _edit_image_swap(site_dir, original_src, new_src_val)
         except Exception as e:
             log.warning("visual-edit failed: %s", e)
             handler._json(500, {"error": f"edit failed: {e}"}); return
@@ -647,6 +697,7 @@ PEBBLE_VISUAL_EDIT_BRIDGE = r"""
         fontFamily: cs.fontFamily,
         background: cs.backgroundColor,
       },
+      src: (tag === "img") ? (el.getAttribute("src") || el.src || "") : "",
     };
   }
 
