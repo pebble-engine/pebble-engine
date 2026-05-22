@@ -105,6 +105,44 @@ const STEPS = [
   },
 ];
 
+/** Phase 43.11 (2026-05-22) — full template lineup for the §3 marquee.
+    All 21 PNGs in /public/templates-preview/ (7 base templates × 3
+    color variants each). Marc reported the 8-DNA-only set didn't show
+    enough variety — this gives the marquee the full library to cycle
+    through so the 4 columns never feel repetitive. Labels follow the
+    "Base · Variant" convention; `feel` is the industry archetype the
+    template was built for. */
+const TEMPLATE_TILES = [
+  // Artisan kitchen — restaurant/cafe
+  { label: "Artisan Kitchen",            feel: "Restaurant",   preview: "/templates-preview/artisan_kitchen.png"         },
+  { label: "Artisan Kitchen · Olive",    feel: "Restaurant",   preview: "/templates-preview/artisan_kitchen_olive.png"   },
+  { label: "Artisan Kitchen · Navy",     feel: "Restaurant",   preview: "/templates-preview/artisan_kitchen_navy.png"    },
+  // Boutique brokerage — real estate
+  { label: "Boutique Brokerage",         feel: "Real estate",  preview: "/templates-preview/boutique_brokerage.png"      },
+  { label: "Boutique Brokerage · Navy",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_navy.png" },
+  { label: "Boutique Brokerage · Sage",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_sage.png" },
+  // Honest garage — automotive
+  { label: "Honest Garage",              feel: "Automotive",   preview: "/templates-preview/honest_garage.png"           },
+  { label: "Honest Garage · Rust",       feel: "Automotive",   preview: "/templates-preview/honest_garage_rust.png"      },
+  { label: "Honest Garage · Military",   feel: "Automotive",   preview: "/templates-preview/honest_garage_military.png"  },
+  // Ink studio — tattoo / art
+  { label: "Ink Studio",                 feel: "Tattoo studio",preview: "/templates-preview/ink_studio.png"              },
+  { label: "Ink Studio · Oxblood",       feel: "Tattoo studio",preview: "/templates-preview/ink_studio_oxblood.png"      },
+  { label: "Ink Studio · Steel",         feel: "Tattoo studio",preview: "/templates-preview/ink_studio_steel.png"        },
+  // Instructor pro — coaching / education
+  { label: "Instructor Pro",             feel: "Coaching",     preview: "/templates-preview/instructor_pro.png"          },
+  { label: "Instructor Pro · Forest",    feel: "Coaching",     preview: "/templates-preview/instructor_pro_forest.png"   },
+  { label: "Instructor Pro · Navy",      feel: "Coaching",     preview: "/templates-preview/instructor_pro_navy.png"     },
+  // Luxe beauty — salon / beauty
+  { label: "Luxe Beauty",                feel: "Beauty + salon", preview: "/templates-preview/luxe_beauty.png"           },
+  { label: "Luxe Beauty · Aubergine",    feel: "Beauty + salon", preview: "/templates-preview/luxe_beauty_aubergine.png" },
+  { label: "Luxe Beauty · Rose",         feel: "Beauty + salon", preview: "/templates-preview/luxe_beauty_rose.png"      },
+  // Service pro — trades / contractor
+  { label: "Service Pro",                feel: "Contractor",   preview: "/templates-preview/service_pro.png"             },
+  { label: "Service Pro · Cream",        feel: "Contractor",   preview: "/templates-preview/service_pro_cream.png"       },
+  { label: "Service Pro · Navy",         feel: "Contractor",   preview: "/templates-preview/service_pro_navy.png"        },
+] as const;
+
 /** Phase 43 — DNA showcase visualized as palette swatches instead of
     text descriptions. Each DNA gets 4 representative colors lifted from
     its signature palette (in style_dna.py) and a `preview` PNG from the
@@ -1423,7 +1461,11 @@ export function WelcomePhase({ onAdvance }: Props) {
             </p>
           </motion.div>
 
-          <DnaMarquee dnas={DNAS} />
+          {/* Phase 43.11 — feed the full 21-template set instead of just
+              the 8 DNA-mapped previews. Variety across the 4 marquee
+              columns is the whole point; with only 8 unique screenshots
+              the streams synced up visually. */}
+          <DnaMarquee dnas={TEMPLATE_TILES} />
         </section>
 
         {/* §4 — Perfect for. Phase 43: was a flat text-chip list — now

@@ -28,8 +28,11 @@ import { Marquee } from "@/components/ui/marquee";
 
 export type DnaCardData = {
   label:   string;
-  colors:  readonly string[];
+  /** Optional — used as a fallback "swatch strip" if `preview` is missing. */
+  colors?: readonly string[];
   feel:    string;
+  /** Recommended — bg-image path. When present, the card renders the
+      preview screenshot instead of the color swatches. */
   preview?: string;
 };
 
@@ -61,7 +64,7 @@ function DnaCard({ dna }: { dna: DnaCardData }) {
         />
       ) : (
         <div className="flex h-14 w-full" aria-hidden>
-          {dna.colors.map((c, i) => (
+          {(dna.colors ?? []).map((c, i) => (
             <div key={i} className="flex-1" style={{ backgroundColor: c }} />
           ))}
         </div>
