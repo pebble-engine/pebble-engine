@@ -1,0 +1,98 @@
+[
+  {
+    "label": "Baker",
+    "file": "baker.jpg",
+    "photographer": "letizia",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Tattoo artist",
+    "file": "tattoo-artist.jpg",
+    "photographer": "Gilles QUERTIER",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Wedding photographer",
+    "file": "wedding-photographer.jpg",
+    "photographer": "Amar  Preciado",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Yoga instructor",
+    "file": "yoga-instructor.jpg",
+    "photographer": "Arsov Ivan",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Personal trainer",
+    "file": "personal-trainer.jpg",
+    "photographer": "Jotamar Audiovisual",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Chef",
+    "file": "chef.jpg",
+    "photographer": "Amine İspir",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Florist",
+    "file": "florist.jpg",
+    "photographer": "Anastasia  Shuraeva",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Hairstylist",
+    "file": "hairstylist.jpg",
+    "photographer": "Renan Rezende",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Auto mechanic",
+    "file": "auto-mechanic.jpg",
+    "photographer": "Malcolm Garret",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Real estate agent",
+    "file": "real-estate-agent.jpg",
+    "photographer": "Nikolaeva Nastia",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Barista",
+    "file": "barista.jpg",
+    "photographer": "Khoa Võ",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Carpenter",
+    "file": "carpenter.jpg",
+    "photographer": "Mazin Omron",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Musician",
+    "file": "musician.jpg",
+    "photographer": "Martin Puerto",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Painter / artist",
+    "file": "painter-artist.jpg",
+    "photographer": "Emanuel Pedro",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Salon professional",
+    "file": "salon-professional.jpg",
+    "photographer": "Kulani Shibambu",
+    "source": "pexels.com"
+  },
+  {
+    "label": "Personal chef",
+    "file": "personal-chef.jpg",
+    "photographer": "- landsmann -",
+    "source": "pexels.com"
+  }
+]

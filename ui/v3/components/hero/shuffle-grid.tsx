@@ -28,32 +28,41 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState, type ReactElement } from "react";
 
-/** Cherry-picked 16 from the 21 PNGs in /public/templates-preview/.
-    Mix of industries (kitchen, brokerage, beauty, garage, instructor,
-    service pro, ink studio) × color variants so the grid feels diverse
-    on every shuffle. */
-const TILE_SRCS: string[] = [
-  "/templates-preview/artisan_kitchen.png",
-  "/templates-preview/artisan_kitchen_olive.png",
-  "/templates-preview/boutique_brokerage.png",
-  "/templates-preview/boutique_brokerage_navy.png",
-  "/templates-preview/honest_garage.png",
-  "/templates-preview/honest_garage_rust.png",
-  "/templates-preview/ink_studio.png",
-  "/templates-preview/ink_studio_oxblood.png",
-  "/templates-preview/instructor_pro.png",
-  "/templates-preview/instructor_pro_forest.png",
-  "/templates-preview/luxe_beauty.png",
-  "/templates-preview/luxe_beauty_aubergine.png",
-  "/templates-preview/service_pro.png",
-  "/templates-preview/service_pro_navy.png",
-  "/templates-preview/artisan_kitchen_navy.png",
-  "/templates-preview/instructor_pro_navy.png",
+/** Phase 42 (2026-05-21) — Marc's call. Retired the 16 template-preview
+    PNGs in favor of real "people in their craft" photography from
+    Pexels. Reasoning lives in the chat; short version: at tile size,
+    website screenshots all read as identical visual noise and signal
+    "look at our software." Industry photography signals "look at the
+    kind of work Pebble is built for" — emotional + audience-first,
+    matches the "Pebble is for the people" positioning.
+
+    Photos curated by scripts/pull_hero_pexels.py (one shot, run once,
+    photos downloaded into public/hero-craft/ so we're not dependent
+    on Pexels CDN at runtime). Credits manifest at
+    public/hero-craft/_credits.json — Pexels doesn't require
+    attribution but we keep it for completeness. */
+const TILE_SRCS: { src: string; label: string }[] = [
+  { src: "/hero-craft/baker.jpg",                label: "Baker"                },
+  { src: "/hero-craft/tattoo-artist.jpg",        label: "Tattoo artist"        },
+  { src: "/hero-craft/wedding-photographer.jpg", label: "Wedding photographer" },
+  { src: "/hero-craft/yoga-instructor.jpg",      label: "Yoga instructor"      },
+  { src: "/hero-craft/personal-trainer.jpg",     label: "Personal trainer"     },
+  { src: "/hero-craft/chef.jpg",                 label: "Chef"                 },
+  { src: "/hero-craft/florist.jpg",              label: "Florist"              },
+  { src: "/hero-craft/hairstylist.jpg",          label: "Hairstylist"          },
+  { src: "/hero-craft/auto-mechanic.jpg",        label: "Auto mechanic"        },
+  { src: "/hero-craft/real-estate-agent.jpg",    label: "Real estate agent"    },
+  { src: "/hero-craft/barista.jpg",              label: "Barista"              },
+  { src: "/hero-craft/carpenter.jpg",            label: "Carpenter"            },
+  { src: "/hero-craft/musician.jpg",             label: "Musician"             },
+  { src: "/hero-craft/painter-artist.jpg",       label: "Painter / artist"     },
+  { src: "/hero-craft/salon-professional.jpg",   label: "Salon professional"   },
+  { src: "/hero-craft/personal-chef.jpg",        label: "Personal chef"        },
 ];
 
-type Tile = { id: number; src: string };
+type Tile = { id: number; src: string; label: string };
 
-const TILES: Tile[] = TILE_SRCS.map((src, i) => ({ id: i + 1, src }));
+const TILES: Tile[] = TILE_SRCS.map((t, i) => ({ id: i + 1, src: t.src, label: t.label }));
 
 /** Fisher-Yates shuffle. Returns a new array; doesn't mutate the input. */
 function shuffle<T>(input: T[]): T[] {
@@ -71,13 +80,20 @@ function renderSquares(tiles: Tile[]): ReactElement[] {
       key={tile.id}
       layout
       transition={{ duration: 1.5, type: "spring" }}
+      // Phase 42 — `title` shows the industry on desktop hover so the
+      // grid quietly communicates the breadth of who Pebble serves.
+      // `aria-label` gives screen-readers the same context; role="img"
+      // because this IS image content (was aria-hidden before, when
+      // tiles were just template thumbnails).
+      title={tile.label}
+      aria-label={tile.label}
+      role="img"
       className="w-full h-full rounded-md overflow-hidden bg-muted will-change-transform"
       style={{
         backgroundImage:    `url(${tile.src})`,
         backgroundSize:     "cover",
         backgroundPosition: "center",
       }}
-      aria-hidden
     />
   ));
 }
