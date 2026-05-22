@@ -17,7 +17,7 @@ const TOPICS: { title: string; href: string; Icon: typeof LifeBuoy; lead: string
 
 export default function HelpPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav projectName="Help" />
 
       <main className="flex-1 px-6 py-12 md:py-16">

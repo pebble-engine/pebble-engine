@@ -13,7 +13,7 @@ import { type } from "@/lib/type";
 
 export default function SignupPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-black" />}>
+    <Suspense fallback={<div className="min-h-screen-safe bg-black" />}>
       <SignupForm />
     </Suspense>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
@@ -18,7 +18,7 @@ import {
   getBrief,
   deriveProjectName,
 } from "@/lib/state";
-import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -327,7 +327,12 @@ function useStickySection() {
     Items rise 32px + fade in on scroll-into-view; container drives the
     timing so cards / chips / tiers cascade in instead of popping all
     at once. */
-const STAGGER_PARENT = {
+/* Raw variants — wrap with withReducedMotion() at the consumption site
+   (see WelcomePhase below). The wiring test (test_motion_module_wiring)
+   enforces this: if a component imports named variants, it must pass
+   them through withReducedMotion() so the OS reduce-motion preference
+   collapses them to instant transitions. */
+const STAGGER_PARENT_RAW = {
   hidden: {},
   show: {
     transition: {
@@ -336,7 +341,7 @@ const STAGGER_PARENT = {
     },
   },
 };
-const STAGGER_CHILD = {
+const STAGGER_CHILD_RAW = {
   hidden: { opacity: 0, y: 32, scale: 0.96 },
   show: {
     opacity: 1,
@@ -496,6 +501,12 @@ export function WelcomePhase({ onAdvance }: Props) {
   ];
 
   const EXTRACT_STEPS = extractMode === "inspire" ? INSPIRE_STEPS : BRAND_STEPS;
+
+  // Phase 40g sticky-scroll stagger variants — wrapped via withReducedMotion
+  // so OS reduce-motion flattens them to instant transitions. Memoized so
+  // we don't re-wrap on every render. Required by tests/test_motion_module_wiring.
+  const STAGGER_PARENT = useMemo(() => withReducedMotion(STAGGER_PARENT_RAW), []);
+  const STAGGER_CHILD  = useMemo(() => withReducedMotion(STAGGER_CHILD_RAW),  []);
 
   // Phase 33d (fixed 2026-05-21) — Cycle narration WHILE the request is in
   // flight. The auto-cycle caps at the SECOND-TO-LAST step (e.g. "Matching

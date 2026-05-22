@@ -285,7 +285,7 @@ export function WorkspaceShell() {
     // preference for animations that bypass the Variants path — most importantly,
     // the layoutId/shared-element morphs that withReducedMotion() can't reach.
     <MotionConfig reducedMotion="user">
-    <div className={`min-h-screen flex flex-col ${isWelcome ? "bg-black" : ""}`}>
+    <div className={`min-h-screen-safe flex flex-col ${isWelcome ? "bg-black" : ""}`}>
       {/* TopNav persists across all phase changes — but the welcome phase
           owns its own full-bleed dark canvas (and renders the Pebble logo
           itself, fading in after Start Building Free is clicked). */}

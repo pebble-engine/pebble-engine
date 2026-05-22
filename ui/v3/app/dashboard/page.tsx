@@ -128,7 +128,7 @@ export default function DashboardPage() {
   const visible = filter === "recents" ? filtered.slice(0, 6) : filtered;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav projectName="Projects" />
 
       <div className="flex flex-1">

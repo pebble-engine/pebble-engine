@@ -45,7 +45,7 @@ export default function TemplatesPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background text-foreground">
+    <div className="min-h-screen-safe flex flex-col bg-background text-foreground">
       <TopNav />
       <main className="flex-1 px-6 md:px-12 lg:px-16 py-12 max-w-7xl mx-auto w-full">
         <header className="text-center mb-12">

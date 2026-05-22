@@ -90,7 +90,7 @@ export default function AdminPage() {
 
   if (authLoading || !user) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen-safe flex flex-col">
         <TopNav projectName="Admin" />
         <main className="flex-1 flex items-center justify-center text-muted-foreground">Loading…</main>
       </div>
@@ -98,7 +98,7 @@ export default function AdminPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav projectName="Admin" />
       <main className="flex-1 px-6 py-10">
         <div className="max-w-5xl mx-auto space-y-6">

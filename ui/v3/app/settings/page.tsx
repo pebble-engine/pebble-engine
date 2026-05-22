@@ -342,7 +342,7 @@ function SettingsPageContent() {
   // ── shimmer ────────────────────────────────────────────────────────────────
   if (loading || !user) {
     return (
-      <div className="min-h-screen flex flex-col">
+      <div className="min-h-screen-safe flex flex-col">
         <TopNav projectName="Settings" />
         <main className="flex-1 px-6 py-12">
           <div className="max-w-2xl mx-auto">
@@ -357,7 +357,7 @@ function SettingsPageContent() {
   const deletionDate = deletionScheduled ? deletionScheduled.slice(0, 10) : null;
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav projectName="Settings" />
 
       <main className="flex-1 px-6 py-12 md:py-16">
@@ -709,7 +709,7 @@ function SettingsPageContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-background" />}>
+    <Suspense fallback={<div className="min-h-screen-safe bg-background" />}>
       <SettingsPageContent />
     </Suspense>
   );

@@ -95,7 +95,7 @@ export default function MigratePage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav />
 
       <main className="flex-1 px-4 py-16">

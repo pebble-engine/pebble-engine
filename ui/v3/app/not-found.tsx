@@ -11,8 +11,8 @@ import { InfiniteGrid } from "@/components/ui/the-infinite-grid";
  */
 export default function NotFound() {
   return (
-    <InfiniteGrid className="min-h-screen">
-      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen text-center px-4 max-w-3xl mx-auto">
+    <InfiniteGrid className="min-h-screen-safe">
+      <main className="relative z-10 flex flex-col items-center justify-center min-h-screen-safe text-center px-4 max-w-3xl mx-auto">
         <motion.span
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 0.08, scale: 1 }}

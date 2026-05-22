@@ -17,7 +17,7 @@ import type { ReactNode } from "react";
  */
 export function MarketingShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative min-h-screen flex flex-col bg-black text-white overflow-hidden font-[family-name:var(--font-plus-jakarta-sans)]">
+    <div className="relative min-h-screen-safe flex flex-col bg-black text-white overflow-hidden font-[family-name:var(--font-plus-jakarta-sans)]">
       {/* Decorative blobs. */}
       <div
         aria-hidden

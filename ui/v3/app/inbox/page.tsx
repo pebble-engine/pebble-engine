@@ -304,7 +304,7 @@ function InboxRoute() {
 
 export default function InboxPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen-safe flex flex-col">
       <TopNav projectName="Inbox" />
       <Suspense fallback={<div className="flex-1 flex items-center justify-center text-muted-foreground">Loading…</div>}>
         <InboxRoute />
