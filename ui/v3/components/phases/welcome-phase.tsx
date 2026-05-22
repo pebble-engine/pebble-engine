@@ -1645,41 +1645,58 @@ export function WelcomePhase({ onAdvance }: Props) {
           </div>
         </section>
 
-        {/* §7 — Final CTA. Phase 43: mobile drops the sticky pin. */}
+        {/* §7 — Final CTA. Phase 43.1 (2026-05-21) — stripped to a pure
+            emotional finale per Marc's plan. The page now has a real
+            ending: big rotating multilingual Pebble wordmark, one line
+            of copy, and a single button that scrolls back to the hero
+            input. The old duplicate PromptInputBox was UI redundancy —
+            same input twice on the same page. Conversion lives at the
+            top; this section just closes the loop. */}
         <section
           id="start"
           ref={ctaSec.ref}
-          className={cn("relative", !isMobile && "h-[180vh]")}
+          className={cn("relative", !isMobile && "h-[140vh]")}
         >
           <div className={cn(
-            "flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+            "flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center overflow-hidden",
+            isMobile ? "py-20" : "sticky top-0 h-screen-safe",
           )}>
+            {/* Big rotating multilingual logo — the centerpiece */}
             <motion.div
-              className="space-y-4 will-change-transform"
+              className="will-change-transform"
               {...(isMobile
                 ? MOBILE_FADE_PROPS
                 : { style: { y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity } })}
             >
-              <p className={`${type.eyebrow}`}>Ready to build?</p>
-              <h2 className={`${type.display.l} ${lightGradient}`}>
-                Tell me what you&apos;re thinking.
-              </h2>
+              <RotatingPebbleLogo
+                shimmerStyle={shimmerForegroundStyle}
+                className="text-6xl sm:text-8xl lg:text-9xl"
+              />
             </motion.div>
 
+            {/* One line + one CTA */}
             <motion.div
-              className="space-y-10 will-change-transform"
+              className="space-y-8 will-change-transform"
               {...(isMobile
                 ? MOBILE_FADE_PROPS
                 : { style: { y: ctaSec.bodyY, opacity: ctaSec.opacity } })}
             >
-              <PromptInputBox
-                onSend={handleSend}
-                placeholder="Example: A site for my new coffee shop — menu, hours, and a way to order pickup."
-              />
-              <p className="text-sm text-muted-foreground/80">
-                You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
+              <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-3xl text-foreground/85 max-w-xl mx-auto`}>
+                Your idea is one paragraph away.
               </p>
+              <motion.button
+                type="button"
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                whileHover={{ scale: 1.03, y: -2 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.2, ease: EASE_CINEMATIC }}
+                className="group inline-flex items-center gap-3 pl-6 sm:pl-8 pr-2 sm:pr-3 py-1.5 sm:py-2 bg-foreground rounded-full hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2"
+              >
+                <span className="font-semibold text-base sm:text-lg text-background">Take me back to the start</span>
+                <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
+                  <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white -rotate-90" aria-hidden />
+                </span>
+              </motion.button>
             </motion.div>
           </div>
         </section>
