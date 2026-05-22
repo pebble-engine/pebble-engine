@@ -630,7 +630,7 @@ export function DetectiveInput({
               disabled={isDisabled}
               autoFocus={autoFocus}
               className={cn(
-                "w-full bg-transparent border-none outline-none focus:outline-none",
+                "w-full bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0",
                 // Phase 40l — Marc's call: bumped down a notch from
                 // text-xl/2xl so the typewriter prompts read comfortably
                 // without dominating the card.
