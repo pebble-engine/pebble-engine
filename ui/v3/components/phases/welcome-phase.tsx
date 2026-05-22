@@ -1663,29 +1663,21 @@ export function WelcomePhase({ onAdvance }: Props) {
           </div>
         </section>
 
-        {/* §7 — Final CTA. Phase 43.1 (2026-05-21) — stripped to a pure
-            emotional finale per Marc's plan. The page now has a real
-            ending: big rotating multilingual Pebble wordmark, one line
-            of copy, and a single button that scrolls back to the hero
-            input. The old duplicate PromptInputBox was UI redundancy —
-            same input twice on the same page. Conversion lives at the
-            top; this section just closes the loop. */}
+        {/* §7 — Final CTA. Phase 53 (2026-05-23) rebuild — Marc's morning
+            review: the giant rotating PEBBLE wordmark here + the rotating
+            wordmark in the Trust seal above were two of the same visual,
+            redundant. Wordmark dropped. Section is now:
+              - italic Cormorant tagline (kept, it's good copy)
+              - meatier black CTA pill (clearer "start" CTA, not "go back")
+              - three reassurance chips below the button (concrete promises
+                in place of social proof we don't have yet) */}
         <section
           id="start"
           className="relative py-20 sm:py-28"
         >
           <div className="flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center">
-            {/* Big rotating multilingual logo — the centerpiece */}
-            <motion.div {...MOBILE_FADE_PROPS}>
-              <RotatingPebbleLogo
-                shimmerStyle={shimmerForegroundStyle}
-                className="text-6xl sm:text-8xl lg:text-9xl"
-              />
-            </motion.div>
-
-            {/* One line + one CTA */}
-            <motion.div className="space-y-8" {...MOBILE_FADE_PROPS}>
-              <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-3xl text-foreground/85 max-w-xl mx-auto`}>
+            <motion.div className="space-y-10" {...MOBILE_FADE_PROPS}>
+              <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-5xl text-foreground max-w-2xl mx-auto leading-tight`}>
                 Your idea is one paragraph away.
               </p>
               <motion.button
@@ -1694,13 +1686,31 @@ export function WelcomePhase({ onAdvance }: Props) {
                 whileHover={{ scale: 1.03, y: -2 }}
                 whileTap={{ scale: 0.97 }}
                 transition={{ duration: 0.2, ease: EASE_CINEMATIC }}
-                className="group inline-flex items-center gap-3 pl-6 sm:pl-8 pr-2 sm:pr-3 py-1.5 sm:py-2 bg-foreground rounded-full hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2"
+                className="group inline-flex items-center gap-3 pl-7 sm:pl-9 pr-2 sm:pr-3 py-2 sm:py-2.5 bg-foreground rounded-full hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2 shadow-[0_12px_36px_rgba(31,29,26,0.18)]"
               >
-                <span className="font-semibold text-base sm:text-lg text-background">Take me back to the start</span>
-                <span className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
+                <span className="font-semibold text-lg sm:text-xl text-background">Start with one sentence</span>
+                <span className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
                   <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 text-white -rotate-90" aria-hidden />
                 </span>
               </motion.button>
+
+              {/* Reassurance row — concrete promises in lieu of social
+                  proof we don't have yet. Subtle, dot-separated, doesn't
+                  fight the headline. */}
+              <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+                <li className="inline-flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
+                  Free for two live sites
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
+                  Yours forever — export anytime
+                </li>
+                <li className="inline-flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
+                  No card required
+                </li>
+              </ul>
             </motion.div>
           </div>
         </section>

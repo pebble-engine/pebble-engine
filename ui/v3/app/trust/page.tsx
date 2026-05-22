@@ -303,6 +303,64 @@ export default function TrustPage() {
           </p>
         </section>
 
+        {/* Working toward — honest near-term security roadmap. These are
+            real, free, third-party-listed credentials that Pebble can
+            pursue NOW without paying for an audit. Listed publicly so
+            anyone evaluating Pebble can hold us to the timeline. */}
+        <section className="mt-12 pt-10 border-t border-[#1a1a1a]/15 space-y-4">
+          <h2 className="text-xl font-semibold text-[#1a1a1a]">Working toward — next 30 days</h2>
+          <p className="text-base text-[#1a1a1a]/75 leading-relaxed">
+            We don&apos;t want to talk about security without taking concrete
+            steps. Below are the public, third-party-listed credentials
+            we&apos;re actively pursuing right now. Each one is free and
+            verifiable.
+          </p>
+          <ul className="space-y-4 text-base text-[#1a1a1a]/75 leading-relaxed">
+            <li>
+              <strong className="text-[#1a1a1a]">CSA STAR Level 1</strong>
+              {" "}— Cloud Security Alliance&apos;s public security registry. We&apos;ll
+              submit our CAIQ to CSA and be listed on{" "}
+              <a href="https://cloudsecurityalliance.org/star/registry/" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                their registry
+              </a>
+              . Public, verifiable, no theatre.
+            </li>
+            <li>
+              <strong className="text-[#1a1a1a]">OpenSSF Best Practices Badge</strong>
+              {" "}— Open Source Security Foundation badge for projects that
+              meet a documented set of secure-development practices. We&apos;ll
+              be listed on{" "}
+              <a href="https://www.bestpractices.dev/" target="_blank" rel="noopener noreferrer" className="underline hover:no-underline">
+                bestpractices.dev
+              </a>{" "}
+              with the answers we submitted visible to anyone.
+            </li>
+            <li>
+              <strong className="text-[#1a1a1a]">Mozilla Observatory + SSL Labs A+ grades</strong>
+              {" "}— third-party scans of our HTTP security headers, TLS
+              configuration, and content security policy. Re-scanned on
+              every deploy; we&apos;ll display the live grade once it&apos;s
+              A+ across both.
+            </li>
+            <li>
+              <strong className="text-[#1a1a1a]">SOC 2 Type II</strong>
+              {" "}— the real audit. Vanta or Drata for continuous monitoring
+              at ~$200K ARR, full Type II audit at ~$500K ARR. We&apos;ll
+              publish the report and the badge here when it&apos;s real.
+            </li>
+          </ul>
+          <p className="text-sm text-[#1a1a1a]/55 leading-relaxed pt-2">
+            We&apos;re shipping these because we&apos;d rather earn a real
+            credential than slap a mocked-up one on the site. If you&apos;re
+            evaluating Pebble and want a status update on any of the above,
+            email{" "}
+            <a href="mailto:web@getpebble.net?subject=Security%20Roadmap" className="underline hover:no-underline">
+              web@getpebble.net
+            </a>
+            .
+          </p>
+        </section>
+
         {/* Reporting a security issue */}
         <section className="mt-12 pt-10 border-t border-[#1a1a1a]/15 space-y-4">
           <h2 className="text-xl font-semibold text-[#1a1a1a]">Reporting a security issue</h2>

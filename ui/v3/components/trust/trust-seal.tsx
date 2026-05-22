@@ -24,14 +24,24 @@
 import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { RotatingPebbleLogo } from "@/components/hero/rotating-pebble-logo";
+import { Droplet } from "lucide-react";
 
 // Effective date is the date this commitment was published.
 // Update when the underlying commitments change materially.
 const COMMITMENT_EFFECTIVE = "May 22, 2026";
 
+// Phase 53 (2026-05-23): the seal had the rotating Pebble wordmark as
+// the centerpiece, but the same wordmark also dominates §7 (final CTA)
+// — two rotating wordmarks on the same page reads as redundant. Marc's
+// call: strip from both. The seal's centerpiece is now the Pebble
+// droplet (the brand mark already used in the publish-phase ripple +
+// dashboard nav) — branded, but visually quieter than the wordmark, so
+// the SELF-ATTESTED COMMITMENT framing carries the meaning. The
+// shimmerStyle prop is preserved on the component signature for API
+// stability even though we no longer use the rotating wordmark here.
+
 export function TrustSeal({
-  shimmerStyle,
+  shimmerStyle: _shimmerStyle,
 }: {
   shimmerStyle: React.CSSProperties;
 }) {
@@ -65,13 +75,15 @@ export function TrustSeal({
             </h2>
           </div>
 
-          {/* CENTERPIECE — the rotating Pebble wordmark. The brand IS the
-              signature, the way a CEO signs a public commitment. Not the
-              way an auditor stamps a certificate. */}
-          <div className="py-2">
-            <RotatingPebbleLogo
-              shimmerStyle={shimmerStyle}
-              className="text-3xl sm:text-4xl"
+          {/* CENTERPIECE — Pebble droplet, the brand mark. Quieter than
+              the rotating wordmark which lives elsewhere on the page;
+              the "SELF-ATTESTED COMMITMENT" eyebrow carries the
+              certification framing. */}
+          <div className="py-2 text-foreground">
+            <Droplet
+              className="w-12 h-12 sm:w-14 sm:h-14 fill-current"
+              strokeWidth={1.5}
+              aria-hidden
             />
           </div>
 
