@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { RotatingPebbleLogo, shimmerForegroundStyle, PEBBLE_LANGS } from "@/components/hero/rotating-pebble-logo";
-import { TrustSeal } from "@/components/trust/trust-seal";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
@@ -1658,15 +1657,81 @@ export function WelcomePhase({ onAdvance }: Props) {
           </motion.div>
           </div>
 
-          {/* §6.5 — Trust Charter seal. Phase 52 (2026-05-22). Replaces
-              the three card row Marc flagged as feeling too "I made these
-              up." The new format is a single elegant certificate-style
-              seal with the rotating Pebble wordmark as the centerpiece
-              (the brand IS the attestation, like a notary mark). Three
-              chips below the wordmark identify the commitment areas
-              (GDPR · Data Rights · Security). Full charter at /trust. */}
-          <div className="max-w-5xl mx-auto px-4 mt-12 sm:mt-16 flex justify-center">
-            <TrustSeal shimmerStyle={shimmerForegroundStyle} />
+        </section>
+
+        {/* §6.5 — Transparency manifesto. "Your business is our business."
+            Replaces the TrustSeal certificate card — same commitments, but
+            full-width, cinematic, matches the BoldSectionHeading cadence of
+            the rest of the page. No card, no borders, just type and space. */}
+        <section className="py-20 sm:py-28 border-t border-border/40">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8">
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.55, ease: EASE_CINEMATIC }}
+            >
+              <BoldSectionHeading accent="your business" main="is our business." />
+            </motion.div>
+
+            <div className="mt-14 sm:mt-20 grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-12 sm:gap-y-16">
+              {[
+                {
+                  n: "01",
+                  title: "Your code, your files",
+                  body: "Download everything anytime. Zero lock-in, no proprietary formats — the site is standard Next.js you can take anywhere.",
+                },
+                {
+                  n: "02",
+                  title: "No tracking by default",
+                  body: "We don't sell your data or run ads against you. Page analytics only run if you turn them on.",
+                },
+                {
+                  n: "03",
+                  title: "No dark patterns",
+                  body: "Cancel in two clicks. Refunds within 7 days. No renewal traps, no gotchas buried in the fine print.",
+                },
+                {
+                  n: "04",
+                  title: "Open book",
+                  body: "If something breaks on our end, we tell you first. Status page, changelog, plain English — always.",
+                },
+              ].map(({ n, title, body }, i) => (
+                <motion.div
+                  key={n}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: i * 0.08 }}
+                >
+                  <span className="text-[11px] font-bold tracking-[0.25em] text-muted-foreground/40 select-none">
+                    {n}
+                  </span>
+                  <h3 className="mt-3 text-xl sm:text-2xl font-semibold text-foreground leading-snug">
+                    {title}
+                  </h3>
+                  <p className="mt-2.5 text-base text-muted-foreground leading-relaxed">
+                    {body}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: 0.35 }}
+              className="mt-14 sm:mt-20"
+            >
+              <Link
+                href="/trust"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                Read the full commitment
+                <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            </motion.div>
           </div>
         </section>
 
