@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle, ShieldCheck, EyeOff, BadgeCheck } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { RotatingPebbleLogo, shimmerForegroundStyle, PEBBLE_LANGS } from "@/components/hero/rotating-pebble-logo";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
@@ -1666,30 +1666,6 @@ export function WelcomePhase({ onAdvance }: Props) {
         <section className="py-20 sm:py-28 border-t border-border/40">
           <div className="max-w-5xl mx-auto px-4 sm:px-8">
 
-            {/* Earned badges — real proof points, shown before the
-                manifesto so they land as credentials, not decoration. */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{ duration: 0.45, ease: EASE_CINEMATIC }}
-              className="flex flex-wrap gap-3 mb-10 sm:mb-12"
-            >
-              {[
-                { icon: <ShieldCheck className="w-3.5 h-3.5" />, label: "Mozilla Observatory A Grade" },
-                { icon: <BadgeCheck className="w-3.5 h-3.5" />, label: "GDPR Ready" },
-                { icon: <EyeOff className="w-3.5 h-3.5" />,     label: "No Third-Party Tracking" },
-              ].map(({ icon, label }) => (
-                <span
-                  key={label}
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-border bg-muted/50 text-xs font-semibold text-foreground/70 tracking-wide"
-                >
-                  {icon}
-                  {label}
-                </span>
-              ))}
-            </motion.div>
-
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1698,6 +1674,18 @@ export function WelcomePhase({ onAdvance }: Props) {
             >
               <BoldSectionHeading accent="your business" main="is our business." />
             </motion.div>
+
+            {/* Credentials line — plain text, dot-separated, sits quietly
+                under the heading as proof rather than decoration. */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: 0.15 }}
+              className="mt-5 text-sm text-muted-foreground/70 tracking-wide"
+            >
+              Mozilla Observatory A Grade · GDPR Ready · No Third-Party Tracking
+            </motion.p>
 
             <div className="mt-14 sm:mt-20 grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-12 sm:gap-y-16">
               {[
