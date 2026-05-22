@@ -1682,7 +1682,7 @@ export function WelcomePhase({ onAdvance }: Props) {
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: 0.15 }}
-              className="mt-5 text-sm text-muted-foreground/70 tracking-wide"
+              className="mt-5 text-sm font-semibold text-foreground/80 tracking-wide text-center"
             >
               Mozilla Observatory A Grade · GDPR Ready · No Third-Party Tracking
             </motion.p>
