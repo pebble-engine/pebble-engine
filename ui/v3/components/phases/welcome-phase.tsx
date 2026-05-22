@@ -106,18 +106,22 @@ const STEPS = [
 
 /** Phase 43 — DNA showcase visualized as palette swatches instead of
     text descriptions. Each DNA gets 4 representative colors lifted from
-    its signature palette (in style_dna.py) — at tile size, the palette
-    + the name does the heavy lifting; we drop the "feel" paragraph that
-    nobody was reading. Marc's ask: less reading, more visual. */
+    its signature palette (in style_dna.py) and a `preview` PNG from the
+    template gallery — at tile size, palette + name + hover-revealed
+    preview do the heavy lifting. Drops the "feel" paragraph that
+    nobody was reading.
+    Phase 43.3 — added `preview` so on hover we reveal a real template
+    PNG in that DNA. Mapping below picks the closest visual match from
+    public/templates-preview/. */
 const DNAS = [
-  { label: "Swiss Magazine",        colors: ["#1a1a1a", "#ffffff", "#dc2626", "#f5f5f5"], feel: "Editorial · quiet authority" },
-  { label: "Cinematic IMAX",        colors: ["#0a1428", "#1e3a5f", "#c19a6b", "#f5f0e8"], feel: "Widescreen · dramatic" },
-  { label: "Garden Press",          colors: ["#f5f0e1", "#5b6f4a", "#8b6f47", "#2a2a1f"], feel: "Botanical · considered" },
-  { label: "Velvet Lounge",         colors: ["#1a0f1f", "#722f4a", "#c4a058", "#f3e5cc"], feel: "Intimate · candlelit" },
-  { label: "Tactile Y2K",           colors: ["#ffe4ec", "#f0e6d2", "#a8c8e8", "#3d3d3d"], feel: "Soft · organic" },
-  { label: "Industrial Freight",    colors: ["#1f1f1f", "#f97316", "#9ca3af", "#fef3c7"], feel: "Utilitarian · blocky" },
-  { label: "Marina",                colors: ["#0c2340", "#ffffff", "#c9a96e", "#a8c8d8"], feel: "Salt-air premium" },
-  { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered" },
+  { label: "Swiss Magazine",        colors: ["#1a1a1a", "#ffffff", "#dc2626", "#f5f5f5"], feel: "Editorial · quiet authority", preview: "/templates-preview/instructor_pro.png"       },
+  { label: "Cinematic IMAX",        colors: ["#0a1428", "#1e3a5f", "#c19a6b", "#f5f0e8"], feel: "Widescreen · dramatic",        preview: "/templates-preview/service_pro_navy.png"    },
+  { label: "Garden Press",          colors: ["#f5f0e1", "#5b6f4a", "#8b6f47", "#2a2a1f"], feel: "Botanical · considered",       preview: "/templates-preview/artisan_kitchen.png"     },
+  { label: "Velvet Lounge",         colors: ["#1a0f1f", "#722f4a", "#c4a058", "#f3e5cc"], feel: "Intimate · candlelit",         preview: "/templates-preview/ink_studio_oxblood.png"  },
+  { label: "Tactile Y2K",           colors: ["#ffe4ec", "#f0e6d2", "#a8c8e8", "#3d3d3d"], feel: "Soft · organic",               preview: "/templates-preview/luxe_beauty_rose.png"    },
+  { label: "Industrial Freight",    colors: ["#1f1f1f", "#f97316", "#9ca3af", "#fef3c7"], feel: "Utilitarian · blocky",         preview: "/templates-preview/honest_garage_rust.png"  },
+  { label: "Marina",                colors: ["#0c2340", "#ffffff", "#c9a96e", "#a8c8d8"], feel: "Salt-air premium",             preview: "/templates-preview/boutique_brokerage_navy.png" },
+  { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered",               preview: "/templates-preview/ink_studio.png"          },
 ] as const;
 
 /** Phase 43 — "Perfect for" replaces text-only chips with the new
@@ -1289,9 +1293,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                   variants={STAGGER_CHILD}
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
-                  className="group overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/30 hover:shadow-[0_8px_28px_rgba(31,29,26,0.10)] transition-all duration-200"
+                  // Phase 43.3 — fixed-height card so hover overlay
+                  // doesn't push the grid row. h-52 fits palette + label
+                  // + feel + a hairline of breathing room.
+                  className="group relative h-52 sm:h-56 overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/30 hover:shadow-[0_12px_36px_rgba(31,29,26,0.12)] transition-all duration-200"
                 >
-                  {/* 4-color palette strip — the visual proof */}
+                  {/* 4-color palette strip — the visual proof. Middle
+                      swatch expands slightly on hover for a tactile cue. */}
                   <div className="flex h-20 sm:h-24 w-full" aria-hidden>
                     {dna.colors.map((c, i) => (
                       <div
@@ -1301,10 +1309,32 @@ export function WelcomePhase({ onAdvance }: Props) {
                       />
                     ))}
                   </div>
-                  {/* Label + 1-liner feel */}
+                  {/* Label + feel — always visible */}
                   <div className="p-4 sm:p-5">
                     <h3 className={`${type.heading.s} mb-1 text-foreground`}>{dna.label}</h3>
                     <p className="text-xs sm:text-sm text-muted-foreground/85">{dna.feel}</p>
+                  </div>
+                  {/* Hover overlay — slides up from the bottom edge to
+                      reveal a real template preview in this DNA. Covers
+                      the label/feel area on hover; layout doesn't shift. */}
+                  <div
+                    aria-hidden
+                    className={cn(
+                      "absolute inset-0 flex flex-col justify-end overflow-hidden rounded-xl",
+                      "bg-cover bg-top",
+                      "translate-y-full opacity-0",
+                      "group-hover:translate-y-0 group-hover:opacity-100",
+                      "transition-[transform,opacity] duration-400 ease-out",
+                    )}
+                    style={{ backgroundImage: `url(${dna.preview})` }}
+                  >
+                    {/* Bottom gradient pulls the label out of the photo */}
+                    <div className="bg-gradient-to-t from-black/85 via-black/35 to-transparent p-4 sm:p-5">
+                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-white/80 mb-0.5">
+                        A real site in this DNA
+                      </p>
+                      <p className="text-sm font-semibold text-white">{dna.label}</p>
+                    </div>
                   </div>
                 </motion.div>
               ))}
