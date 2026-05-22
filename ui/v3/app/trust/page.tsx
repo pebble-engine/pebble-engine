@@ -331,6 +331,23 @@ export default function TrustPage() {
               key exchange (X25519MLKEM768), forward secrecy, and HSTS
               with a 2-year max-age.
             </li>
+            <li>
+              <strong className="text-[#1a1a1a]">Mozilla Observatory B+ (80/100)</strong>
+              {" "}— third-party scan of our HTTP security headers. Live
+              grade at{" "}
+              <a
+                href="https://developer.mozilla.org/en-US/observatory/analyze?host=pebbleapp.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline hover:no-underline"
+              >
+                developer.mozilla.org/observatory
+              </a>
+              . Covers Content-Security-Policy, X-Frame-Options,
+              X-Content-Type-Options, Referrer-Policy, Permissions-Policy,
+              and HSTS. We&apos;re working toward A+ (requires nonce-based
+              CSP — see below).
+            </li>
           </ul>
         </section>
 
@@ -375,10 +392,10 @@ export default function TrustPage() {
             </li>
             <li>
               <strong className="text-[#1a1a1a]">Mozilla Observatory A+ grade</strong>
-              {" "}— third-party scan of our HTTP security headers and
-              content security policy. SSL Labs is already A+ (above);
-              Observatory covers a different layer (header hardening)
-              and we&apos;re working toward A+ there too.
+              {" "}— currently at B+ (above). The last 20 points require
+              nonce-based CSP (no &apos;unsafe-inline&apos; / &apos;unsafe-eval&apos;).
+              That&apos;s a Next.js middleware change we&apos;ll ship once we&apos;ve
+              verified it doesn&apos;t break hydration in any DNA combo.
             </li>
             <li>
               <strong className="text-[#1a1a1a]">SOC 2 Type II</strong>
