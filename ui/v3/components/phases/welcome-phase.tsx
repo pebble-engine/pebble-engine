@@ -1384,17 +1384,24 @@ export function WelcomePhase({ onAdvance }: Props) {
           id="pricing"
           className="relative py-16 sm:py-24"
         >
+          {/* Full-section soft blue gradient — covers heading + all pricing
+              cards. Radial from upper-centre, fades to transparent so it
+              blends into the cream/dark background above and below. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_15%,rgba(48,84,255,0.14)_0%,rgba(48,84,255,0.06)_50%,transparent_100%)]"
+          />
           <div className="flex flex-col justify-center px-4 max-w-6xl mx-auto">
           <motion.div
             className="relative text-center mb-10 space-y-4"
             {...MOBILE_FADE_PROPS}
           >
-            {/* Phase 43.15 — blue gradient glow behind the heading.
-                Absolutely positioned, blurred + saturated Pebble blue.
-                Sits behind the heading via z-stack; doesn't push layout. */}
+            {/* Tighter heading halo — the section gradient already sets the
+                blue mood; this inner glow just adds a focal punch directly
+                behind the text. Reduced opacity vs the old standalone blob. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl h-[140%] rounded-full bg-[#3054ff]/25 blur-3xl"
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-xl h-[130%] rounded-full bg-[#3054ff]/15 blur-2xl"
             />
             <div className="relative">
               <BoldSectionHeading accent="Ready for" main="takeoff?" />
