@@ -45,6 +45,15 @@ const useIsomorphicLayoutEffect =
   typeof window !== "undefined" ? useLayoutEffect : useEffect;
 
 /**
+ * Phase 40i — plan-first flow; reads brief.planFirst (set by DetectiveInput)
+ * and inserts a /api/plan preview step before /api/generate. When
+ * brief.planFirst === true, handleAdvanceFromWelcome routes welcome → plan
+ * instead of welcome → idea, the PlanPhase back-button returns to welcome
+ * (not idea), and the flag is cleared before /api/generate fires so that
+ * subsequent welcome → advance flows behave normally if the user comes back.
+ */
+
+/**
  * Unified workspace shell. Single component, rendered by both ``/`` (the
  * welcome route) and ``/workspace`` (the build / design route). The two
  * pages exist so that bookmarks and external links resolve naturally, but
@@ -125,6 +134,11 @@ export function WorkspaceShell() {
   }, []);
 
   function handleAdvanceFromWelcome() {
+    // Phase 40i: if the user toggled "Plan first" in DetectiveInput, skip
+    // the idea questionnaire and go straight to the plan preview.
+    const currentBrief = getBrief();
+    const targetPhase: Phase = currentBrief.planFirst === true ? "plan" : "idea";
+
     // On the welcome / home route, this is the one meaningful "commit to
     // building" transition — the URL flips from / to /workspace so the
     // browser bar reflects the new context. From any other route, we're
@@ -135,10 +149,10 @@ export function WorkspaceShell() {
       // Firefox + older browsers fall through to a plain router.push and
       // get the AnimatePresence-based fade.
       safeStartViewTransition(() => {
-        router.push("/workspace#phase=idea");
+        router.push(`/workspace#phase=${targetPhase}`);
       });
     } else {
-      setPhase("idea");
+      setPhase(targetPhase);
     }
   }
 
@@ -147,8 +161,17 @@ export function WorkspaceShell() {
     setPhase("plan");
   }
 
-  function handleBackToIdea() {
-    setPhase("idea");
+  function handleBackFromPlan() {
+    // Phase 40i: if the user arrived via plan-first, back goes to welcome.
+    // Clear the planFirst flag so the normal flow is restored.
+    const currentBrief = getBrief();
+    if (currentBrief.planFirst === true) {
+      patchBrief({ planFirst: false });
+      setBrief(getBrief());
+      setPhase("welcome");
+    } else {
+      setPhase("idea");
+    }
   }
 
   // Plan phase → Draft phase → Design phase. Streams build progress via
@@ -157,6 +180,9 @@ export function WorkspaceShell() {
   // but is not used — we call streamGenerateSite directly so we can
   // feed live events into the draft animation.
   function handleGenerate(_kickOff: () => Promise<GenerateResponse>) {
+    // Phase 40i: clear planFirst so returning to welcome after a build
+    // doesn't re-trigger the plan-first shortcut.
+    patchBrief({ planFirst: false });
     setSseEvents([]);
     setGenerateDone(false);
     setGenerateError(null);
@@ -363,7 +389,7 @@ export function WorkspaceShell() {
             )}
             {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
             {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
-            {phase === "plan"    && <PlanPhase  onBack={handleBackToIdea} onGenerate={handleGenerate} />}
+            {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
             {phase === "draft"   && <DraftPhase done={generateDone} error={generateError} sseEvents={sseEvents} />}
           </motion.div>
         </AnimatePresence>

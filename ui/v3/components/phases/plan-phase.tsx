@@ -10,6 +10,13 @@ import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 
 /**
+ * Phase 40i — plan-first flow; reads brief.planFirst (set by DetectiveInput)
+ * and inserts a /api/plan preview step before /api/generate. When planFirst
+ * is true the back-button reads "Change my mind" and returns to welcome;
+ * otherwise it reads "Edit the questions" and returns to the idea phase.
+ */
+
+/**
  * Plan phase — the user-facing "here's what I'll build" review screen.
  *
  * On mount, calls /api/plan if no plan is cached yet (i.e. user just
@@ -27,6 +34,8 @@ import { interactions } from "@/lib/interactions";
 type Props = {
   onBack: () => void;
   onGenerate: (kickOff: () => Promise<GenerateResponse>) => void;
+  /** Phase 40i: true when the user came via the plan-first shortcut from DetectiveInput. */
+  planFirst?: boolean;
 };
 
 const cardVariants = {
@@ -49,7 +58,7 @@ function Card({ children, delay = 0, className = "" }: { children: React.ReactNo
   );
 }
 
-export function PlanPhase({ onBack, onGenerate }: Props) {
+export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [loading, setLoading] = useState(false);
   const [rerolling, setRerolling] = useState(false);
@@ -336,7 +345,10 @@ export function PlanPhase({ onBack, onGenerate }: Props) {
           onClick={onBack}
           className={`${interactions.chip} flex items-center gap-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md ${type.label}`}
         >
-          <Edit3 className="w-3.5 h-3.5" /> Edit the questions
+          {/* Phase 40i: plan-first users land here without going through the
+              idea questionnaire — back means "change your mind", not "edit". */}
+          <Edit3 className="w-3.5 h-3.5" />
+          {planFirst ? "Change my mind" : "Edit the questions"}
         </button>
         <motion.button
           whileTap={{ scale: 0.97 }}
