@@ -20,6 +20,7 @@ import {
 } from "@/lib/state";
 import { SHORT_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 import {
   createCheckoutSession,
@@ -102,26 +103,36 @@ const STEPS = [
   },
 ];
 
+/** Phase 43 — DNA showcase visualized as palette swatches instead of
+    text descriptions. Each DNA gets 4 representative colors lifted from
+    its signature palette (in style_dna.py) — at tile size, the palette
+    + the name does the heavy lifting; we drop the "feel" paragraph that
+    nobody was reading. Marc's ask: less reading, more visual. */
 const DNAS = [
-  { label: "Swiss Magazine",        feel: "Editorial print. Vignelli-meets-Pentagram. Quiet authority." },
-  { label: "Cinematic IMAX",        feel: "Movie poster meets Tesla product page. Widescreen, dramatic." },
-  { label: "Garden Press",          feel: "Kinfolk × botanical letterpress almanac. Quiet, premium, considered." },
-  { label: "Velvet Lounge",         feel: "Late-night Manhattan jazz bar. Rich, intimate, candlelit." },
-  { label: "Tactile Y2K",           feel: "Early-2000s Apple × a really good neighborhood bakery. Soft, organic." },
-  { label: "Industrial Freight",    feel: "Shipping manifest × heavy-equipment catalog. Utilitarian, blocky." },
-  { label: "Marina",                feel: "Hinckley Yachts × Hamptons summer journal. Clean, salt-air premium." },
-  { label: "Postmodern Maximalist", feel: "David Carson × club flyer. Loud, layered, intentionally chaotic." },
-];
+  { label: "Swiss Magazine",        colors: ["#1a1a1a", "#ffffff", "#dc2626", "#f5f5f5"], feel: "Editorial · quiet authority" },
+  { label: "Cinematic IMAX",        colors: ["#0a1428", "#1e3a5f", "#c19a6b", "#f5f0e8"], feel: "Widescreen · dramatic" },
+  { label: "Garden Press",          colors: ["#f5f0e1", "#5b6f4a", "#8b6f47", "#2a2a1f"], feel: "Botanical · considered" },
+  { label: "Velvet Lounge",         colors: ["#1a0f1f", "#722f4a", "#c4a058", "#f3e5cc"], feel: "Intimate · candlelit" },
+  { label: "Tactile Y2K",           colors: ["#ffe4ec", "#f0e6d2", "#a8c8e8", "#3d3d3d"], feel: "Soft · organic" },
+  { label: "Industrial Freight",    colors: ["#1f1f1f", "#f97316", "#9ca3af", "#fef3c7"], feel: "Utilitarian · blocky" },
+  { label: "Marina",                colors: ["#0c2340", "#ffffff", "#c9a96e", "#a8c8d8"], feel: "Salt-air premium" },
+  { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered" },
+] as const;
 
-const BUSINESS_TYPES = [
-  "Coffee shops + cafés",
-  "Photographers + videographers",
-  "Restaurants + food trucks",
-  "Coaches + consultants",
-  "Law + accounting practices",
-  "Trades + contractors",
-  "Personal portfolios",
-  "Salons + boutique shops",
+/** Phase 43 — "Perfect for" replaces text-only chips with the new
+    hero-craft photos. Anchors the section emotionally: small business
+    owners see themselves in the imagery, not a flat tag list. Photos
+    are the same set the hero ShuffleGrid uses (one origin of truth);
+    we just render 8 of them as a grid below. */
+const PERFECT_FOR = [
+  { label: "Coffee shops + cafés",       photo: "/hero-craft/barista.jpg"              },
+  { label: "Photographers",              photo: "/hero-craft/wedding-photographer.jpg" },
+  { label: "Restaurants + food trucks",  photo: "/hero-craft/chef.jpg"                 },
+  { label: "Coaches + trainers",         photo: "/hero-craft/personal-trainer.jpg"     },
+  { label: "Salons + beauty",            photo: "/hero-craft/hairstylist.jpg"          },
+  { label: "Trades + contractors",       photo: "/hero-craft/auto-mechanic.jpg"        },
+  { label: "Florists + boutiques",       photo: "/hero-craft/florist.jpg"              },
+  { label: "Artists + studios",          photo: "/hero-craft/tattoo-artist.jpg"        },
 ];
 
 type FeatureCategory = { category: string; items: readonly string[] };
@@ -289,6 +300,40 @@ function RotatingPebbleLogo({
  */
 
 /**
+ * Phase 43 (2026-05-21) — mobile-detect hook. Used to skip the sticky-
+ * scroll + scroll-tied parallax on §3–§7 on iPhone-sized screens, where
+ * 1000+vh of scroll-jacked sections was murdering Marc's navigation
+ * experience. On md+ the cinematic pinning stays exactly as Phase 40g
+ * shipped it; on mobile each section becomes a simple stacked panel
+ * with a one-shot fade-in via whileInView. SSR-safe (returns false until
+ * the first client-side measurement).
+ */
+function useIsMobile(maxWidthPx = 768): boolean {
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia(`(max-width: ${maxWidthPx}px)`);
+    const apply = () => setIsMobile(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [maxWidthPx]);
+  return isMobile;
+}
+
+/**
+ * Mobile fade-in motion props — applied to section content via spread
+ * when isMobile is true. Replaces the desktop scroll-tied transforms
+ * with a single one-shot animation when the element enters the viewport.
+ */
+const MOBILE_FADE_PROPS = {
+  initial:    { opacity: 0, y: 16 },
+  whileInView:{ opacity: 1, y: 0 },
+  viewport:   { once: true, amount: 0.2 },
+  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const },
+};
+
+/**
  * Sticky-pinned section. Phase 40g (2026-05-21) — Marc's call: §3–§7
  * (DNA showcase → Perfect for → testimonial → pricing → final CTA) all
  * use the same pinned-stage pattern. Each section is tall (configurable
@@ -360,6 +405,10 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [started, setStarted] = useState(false);
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly");
   const [expandedTiers, setExpandedTiers] = useState<Set<string>>(new Set());
+  // Phase 43 — track the tier whose LED is currently pulsing, so we can
+  // strip the className when the animation finishes (otherwise the
+  // keyframe re-fires on next click only when the class is added fresh).
+  const [ledTier, setLedTier] = useState<string | null>(null);
   const [stripeLoading, setStripeLoading] = useState<string | null>(null);
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
@@ -377,6 +426,14 @@ export function WelcomePhase({ onAdvance }: Props) {
       if (next.has(name)) next.delete(name);
       else next.add(name);
       return next;
+    });
+    // Phase 43 — fire the LED pulse. Re-trigger by clearing the class
+    // first (in case the user clicks twice in quick succession) and
+    // then re-applying on the next tick.
+    setLedTier(null);
+    requestAnimationFrame(() => {
+      setLedTier(name);
+      window.setTimeout(() => setLedTier((cur) => (cur === name ? null : cur)), 1400);
     });
   };
 
@@ -439,6 +496,11 @@ export function WelcomePhase({ onAdvance }: Props) {
   const quoteSec    = useStickySection();
   const pricingSec  = useStickySection();
   const ctaSec      = useStickySection();
+
+  // Phase 43 — read once per render; gates the sticky-pin + scroll-tied
+  // parallax on §3-§7. On mobile we render stacked panels with fade-in;
+  // on md+ the cinematic pinning stays in.
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -879,7 +941,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 <motion.button
                   onClick={handleStartClick}
                   whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileTap={{ scale: 0.97 }}
                   animate={{
                     boxShadow: [
                       "0 8px 28px rgba(31,29,26,0.10)",
@@ -891,11 +953,15 @@ export function WelcomePhase({ onAdvance }: Props) {
                     boxShadow: { duration: 3.6, repeat: Infinity, ease: "easeInOut" },
                     scale:     { duration: 0.18, ease: EASE_CINEMATIC },
                   }}
-                  className="group flex items-center gap-4 pl-10 pr-3 py-3 bg-foreground rounded-full"
+                  // Phase 43 (2026-05-21) — was uniformly huge across all
+                  // viewports (text-2xl + w-14 arrow). On iPhone that read
+                  // as a comically oversized banner. Now responsive: tighter
+                  // on mobile, retains the cinematic feel on desktop.
+                  className="group flex items-center gap-2 sm:gap-4 pl-5 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-3 bg-foreground rounded-full"
                 >
-                  <span className="font-semibold text-2xl text-background">Start Building Free</span>
-                  <span className="w-14 h-14 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
-                    <ArrowRight className="w-7 h-7 text-white" />
+                  <span className="font-semibold text-base sm:text-2xl text-background">Start Building Free</span>
+                  <span className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
+                    <ArrowRight className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                   </span>
                 </motion.button>
                 <p className={`${type.caption} text-muted-foreground/80`}>
@@ -1174,100 +1240,146 @@ export function WelcomePhase({ onAdvance }: Props) {
           }))}
         />
 
-        {/* §3 — DNA showcase. Sticky pin. */}
+        {/* §3 — DNA showcase. Phase 43: sticky pinning is desktop-only;
+            mobile gets a stacked panel with whileInView fade-in. Cards
+            are now palette swatches (4 color bars + DNA name + 1-liner
+            feel) instead of text descriptions. Less reading, more visual. */}
         <section
           id="looks"
           ref={dnaSec.ref}
-          className="relative"
-          style={{ height: "200vh" }}
+          className={cn("relative", !isMobile && "h-[200vh]")}
         >
-          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
+          <div className={cn(
+            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+          )}>
             <motion.div
-              style={{ y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity }}
               className="text-center mb-12 space-y-4 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity } })}
             >
               <h2 className={`${type.display.l} ${lightGradient}`}>
                 The looks Pebble can wear.
               </h2>
               <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
-                Every Pebble build picks from an over-specified visual personality — so two sites for the same industry come out feeling like they were made by different studios.
+                Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
               </p>
             </motion.div>
 
             <motion.div
-              style={{ y: dnaSec.bodyY, opacity: dnaSec.opacity }}
               variants={STAGGER_PARENT}
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, amount: 0.15 }}
-              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 will-change-transform"
+              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 will-change-transform"
+              {...(!isMobile && { style: { y: dnaSec.bodyY, opacity: dnaSec.opacity } })}
             >
               {DNAS.map((dna) => (
                 <motion.div
                   key={dna.label}
                   variants={STAGGER_CHILD}
-                  className="p-6 rounded-xl bg-card border border-border hover:border-[#3054ff]/40 transition-colors"
+                  whileHover={{ y: -4 }}
+                  transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
+                  className="group overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/30 hover:shadow-[0_8px_28px_rgba(31,29,26,0.10)] transition-all duration-200"
                 >
-                  <h3 className={`${type.heading.s} mb-2`}>{dna.label}</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{dna.feel}</p>
+                  {/* 4-color palette strip — the visual proof */}
+                  <div className="flex h-20 sm:h-24 w-full" aria-hidden>
+                    {dna.colors.map((c, i) => (
+                      <div
+                        key={i}
+                        className="flex-1 transition-[flex] duration-300 group-hover:flex-[1.3]"
+                        style={{ backgroundColor: c }}
+                      />
+                    ))}
+                  </div>
+                  {/* Label + 1-liner feel */}
+                  <div className="p-4 sm:p-5">
+                    <h3 className={`${type.heading.s} mb-1 text-foreground`}>{dna.label}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground/85">{dna.feel}</p>
+                  </div>
                 </motion.div>
               ))}
             </motion.div>
           </div>
         </section>
 
-        {/* §4 — Perfect for. Sticky pin. */}
+        {/* §4 — Perfect for. Phase 43: was a flat text-chip list — now
+            an emotional 4-col photo grid using the same hero-craft
+            photography. Each tile is a real person doing their craft
+            with a clean label overlay. Mobile gets 2 cols + stacked
+            (no sticky pin). */}
         <section
           ref={perfectSec.ref}
-          className="relative"
-          style={{ height: "180vh" }}
+          className={cn("relative", !isMobile && "h-[180vh]")}
         >
-          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-5xl mx-auto overflow-hidden">
+          <div className={cn(
+            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+          )}>
             <motion.div
-              style={{ y: perfectSec.headingY, scale: perfectSec.scale, opacity: perfectSec.opacity }}
-              className="text-center mb-12 space-y-4 will-change-transform"
+              className="text-center mb-10 space-y-4 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: perfectSec.headingY, scale: perfectSec.scale, opacity: perfectSec.opacity } })}
             >
               <h2 className={`${type.display.l} ${lightGradient}`}>
-                Perfect for…
+                Built for the people who do the work.
               </h2>
               <p className="text-lg max-w-xl mx-auto text-muted-foreground">
-                Pebble routes industry-specific design choices automatically. These are the businesses we&apos;re tuned for today.
+                Pebble tunes itself to your industry automatically.
               </p>
             </motion.div>
 
             <motion.div
-              style={{ y: perfectSec.bodyY, opacity: perfectSec.opacity }}
               variants={STAGGER_PARENT}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.2 }}
-              className="flex flex-wrap justify-center gap-3 will-change-transform"
+              viewport={{ once: true, amount: 0.15 }}
+              className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 will-change-transform"
+              {...(!isMobile && { style: { y: perfectSec.bodyY, opacity: perfectSec.opacity } })}
             >
-              {BUSINESS_TYPES.map((t) => (
-                <motion.span
-                  key={t}
+              {PERFECT_FOR.map((p) => (
+                <motion.div
+                  key={p.label}
                   variants={STAGGER_CHILD}
-                  className="px-5 py-3 rounded-full bg-card border border-border text-foreground/85 text-sm sm:text-base"
+                  whileHover={{ y: -4, scale: 1.02 }}
+                  transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
+                  className="relative group rounded-xl overflow-hidden aspect-[4/5] sm:aspect-square bg-muted shadow-[0_4px_20px_rgba(31,29,26,0.06)] hover:shadow-[0_12px_36px_rgba(31,29,26,0.14)] transition-shadow"
+                  style={{
+                    backgroundImage:    `url(${p.photo})`,
+                    backgroundSize:     "cover",
+                    backgroundPosition: "center",
+                  }}
+                  title={p.label}
                 >
-                  {t}
-                </motion.span>
+                  {/* Bottom gradient + label — keeps the photo readable
+                      while ensuring the industry name reads at all sizes */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 via-black/30 to-transparent p-3 sm:p-4">
+                    <span className="text-white text-xs sm:text-sm font-semibold tracking-tight drop-shadow">{p.label}</span>
+                  </div>
+                </motion.div>
               ))}
             </motion.div>
           </div>
         </section>
 
-        {/* §5 — Testimonial. Sticky pin. */}
+        {/* §5 — Testimonial. Phase 43: mobile drops the sticky pin. */}
         <section
           ref={quoteSec.ref}
-          className="relative"
-          style={{ height: "160vh" }}
+          className={cn("relative", !isMobile && "h-[160vh]")}
         >
-          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden">
+          <div className={cn(
+            "flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+          )}>
             <motion.blockquote
-              style={{ y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity }}
               className="space-y-6 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: quoteSec.headingY, scale: quoteSec.scale, opacity: quoteSec.opacity } })}
             >
-              <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
+              <p className={`font-[family-name:var(--font-cormorant)] italic text-2xl sm:text-4xl leading-[1.2] ${lightGradient}`}>
                 &ldquo;We&apos;re building Pebble in public. A real testimonial from a real beta user will land here once their site is shipped. We&apos;d rather wait than make one up.&rdquo;
               </p>
               <footer className="text-sm text-muted-foreground/80">— Pebble, May 2026</footer>
@@ -1275,20 +1387,25 @@ export function WelcomePhase({ onAdvance }: Props) {
           </div>
         </section>
 
-        {/* §6 — Pricing tease with monthly/yearly toggle. Sticky pin.
-            Outer is taller (240vh) than the other sections to give the
-            4-tier grid + accordion expansions enough room to fit while
-            pinned. */}
+        {/* §6 — Pricing. Phase 43: mobile drops the sticky pin and the
+            cards become whole-card click targets that expand on tap +
+            fire an LED border pulse for a "feels good" interaction.
+            The pinned desktop variant stays but is taller (240vh) so
+            the accordion expansions fit inside the pin. */}
         <section
           id="pricing"
           ref={pricingSec.ref}
-          className="relative"
-          style={{ height: "240vh" }}
+          className={cn("relative", !isMobile && "h-[240vh]")}
         >
-          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden">
+          <div className={cn(
+            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+          )}>
           <motion.div
-            style={{ y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity }}
             className="text-center mb-10 space-y-4 will-change-transform"
+            {...(isMobile
+              ? MOBILE_FADE_PROPS
+              : { style: { y: pricingSec.headingY, scale: pricingSec.scale, opacity: pricingSec.opacity } })}
           >
             <h2 className={`${type.display.l} ${lightGradient}`}>
               Simple pricing.
@@ -1326,8 +1443,8 @@ export function WelcomePhase({ onAdvance }: Props) {
           </motion.div>
 
           <motion.div
-            style={{ y: pricingSec.bodyY, opacity: pricingSec.opacity }}
             className="will-change-transform"
+            {...(!isMobile && { style: { y: pricingSec.bodyY, opacity: pricingSec.opacity } })}
           >
             {activePlan && (
               <p className={`${type.mono} text-center text-muted-foreground mb-4`}>
@@ -1360,15 +1477,34 @@ export function WelcomePhase({ onAdvance }: Props) {
                       ? `$${tier.yearly} billed annually`
                       : `Billed monthly`;
 
+                const isExpanded = expandedTiers.has(tier.name);
                 return (
                   <motion.div
                     key={tier.name}
                     variants={STAGGER_CHILD}
-                    className={`relative p-6 rounded-2xl flex flex-col transition-transform ${
+                    onClick={() => toggleTier(tier.name)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        toggleTier(tier.name);
+                      }
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={isExpanded}
+                    aria-label={`${tier.name} plan — tap to ${isExpanded ? "collapse" : "see all features"}`}
+                    whileHover={{ y: -4 }}
+                    whileTap={{ scale: 0.985 }}
+                    transition={{ duration: 0.2, ease: EASE_CINEMATIC }}
+                    className={cn(
+                      "relative p-6 rounded-2xl flex flex-col cursor-pointer select-none",
+                      "transition-shadow duration-300",
+                      "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
                       tier.featured
-                        ? "bg-card border-2 border-[#3054ff] shadow-[0_12px_32px_rgba(48,84,255,0.18)] lg:scale-[1.03] lg:-translate-y-2"
-                        : "bg-card border border-border"
-                    }`}
+                        ? "bg-card border-2 border-[#3054ff] shadow-[0_12px_32px_rgba(48,84,255,0.18)] hover:shadow-[0_18px_44px_rgba(48,84,255,0.26)] lg:scale-[1.03] lg:-translate-y-2"
+                        : "bg-card border border-border hover:border-foreground/30 hover:shadow-[0_12px_32px_rgba(31,29,26,0.10)]",
+                      ledTier === tier.name && "tier-led-pulse",
+                    )}
                   >
                     {tier.featured && (
                       <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 rounded-full bg-[#3054ff] text-white text-[10px] font-semibold uppercase tracking-wider whitespace-nowrap">
@@ -1376,7 +1512,19 @@ export function WelcomePhase({ onAdvance }: Props) {
                       </div>
                     )}
 
-                    <div className={`${type.eyebrow} mb-2`}>{tier.name}</div>
+                    {/* Phase 43 — chevron at top-right indicates expandable
+                        state. Replaces the verbose "See all features"
+                        button row below. */}
+                    <motion.span
+                      aria-hidden
+                      animate={{ rotate: isExpanded ? 180 : 0 }}
+                      transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
+                      className="absolute top-4 right-4 inline-flex w-7 h-7 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground bg-muted/60 text-sm leading-none"
+                    >
+                      ▾
+                    </motion.span>
+
+                    <div className={`${type.eyebrow} mb-2 pr-8`}>{tier.name}</div>
 
                     <div className="mb-4">
                       <AnimatePresence mode="wait" initial={false}>
@@ -1405,22 +1553,6 @@ export function WelcomePhase({ onAdvance }: Props) {
                         </li>
                       ))}
                     </ul>
-
-                    <button
-                      type="button"
-                      onClick={() => toggleTier(tier.name)}
-                      aria-expanded={expandedTiers.has(tier.name)}
-                      className="flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground/80 hover:text-foreground mb-4 transition-colors"
-                    >
-                      {expandedTiers.has(tier.name) ? "Hide all features" : "See all features"}
-                      <motion.span
-                        animate={{ rotate: expandedTiers.has(tier.name) ? 180 : 0 }}
-                        transition={{ duration: 0.2 }}
-                        className="inline-block"
-                      >
-                        ▾
-                      </motion.span>
-                    </button>
 
                     <AnimatePresence initial={false}>
                       {expandedTiers.has(tier.name) && (
@@ -1469,10 +1601,19 @@ export function WelcomePhase({ onAdvance }: Props) {
                             : "bg-muted hover:bg-muted/70 text-foreground"
                       }`;
 
+                      // Phase 43 — stopPropagation so clicking the CTA
+                      // doesn't ALSO toggle the card expansion (the whole
+                      // card is now a click target for toggle/expand).
                       if (tier.ctaHref) {
                         return (
                           <>
-                            <a href={tier.ctaHref} className={buttonClass}>{label}</a>
+                            <a
+                              href={tier.ctaHref}
+                              onClick={(e) => e.stopPropagation()}
+                              className={buttonClass}
+                            >
+                              {label}
+                            </a>
                             {stripeErrorTierId === tier.name && stripeError && (
                               <p className={`${type.body.s} text-destructive mt-2 text-center`}>{stripeError}</p>
                             )}
@@ -1483,7 +1624,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                         <>
                           <button
                             type="button"
-                            onClick={() => handleChoosePlan(tier)}
+                            onClick={(e) => { e.stopPropagation(); handleChoosePlan(tier); }}
                             disabled={isLoading}
                             className={buttonClass}
                           >
@@ -1504,37 +1645,42 @@ export function WelcomePhase({ onAdvance }: Props) {
           </div>
         </section>
 
-        {/* §7 — Final CTA. Sticky pin. */}
+        {/* §7 — Final CTA. Phase 43: mobile drops the sticky pin. */}
         <section
           id="start"
           ref={ctaSec.ref}
-          className="relative"
-          style={{ height: "180vh" }}
+          className={cn("relative", !isMobile && "h-[180vh]")}
         >
-          <div className="sticky top-0 h-screen-safe flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10">
-          <motion.div
-            style={{ y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity }}
-            className="space-y-4 will-change-transform"
-          >
-            <p className={`${type.eyebrow}`}>Ready to build?</p>
-            <h2 className={`${type.display.l} ${lightGradient}`}>
-              Tell me what you&apos;re thinking.
-            </h2>
-          </motion.div>
+          <div className={cn(
+            "flex flex-col justify-center px-4 max-w-3xl mx-auto text-center overflow-hidden space-y-10",
+            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
+          )}>
+            <motion.div
+              className="space-y-4 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: ctaSec.headingY, scale: ctaSec.scale, opacity: ctaSec.opacity } })}
+            >
+              <p className={`${type.eyebrow}`}>Ready to build?</p>
+              <h2 className={`${type.display.l} ${lightGradient}`}>
+                Tell me what you&apos;re thinking.
+              </h2>
+            </motion.div>
 
-          <motion.div
-            style={{ y: ctaSec.bodyY, opacity: ctaSec.opacity }}
-            className="space-y-10 will-change-transform"
-          >
-            <PromptInputBox
-              onSend={handleSend}
-              placeholder="Example: A site for my new coffee shop — menu, hours, and a way to order pickup."
-            />
-
-            <p className="text-sm text-muted-foreground/80">
-              You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
-            </p>
-          </motion.div>
+            <motion.div
+              className="space-y-10 will-change-transform"
+              {...(isMobile
+                ? MOBILE_FADE_PROPS
+                : { style: { y: ctaSec.bodyY, opacity: ctaSec.opacity } })}
+            >
+              <PromptInputBox
+                onSend={handleSend}
+                placeholder="Example: A site for my new coffee shop — menu, hours, and a way to order pickup."
+              />
+              <p className="text-sm text-muted-foreground/80">
+                You&apos;ll see exactly what I&apos;m doing every step of the way. Nothing is final until you say it is.
+              </p>
+            </motion.div>
           </div>
         </section>
 

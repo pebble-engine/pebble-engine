@@ -233,6 +233,37 @@ html {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
 }
 
+/* ---------------------------------------------------------------------------
+   Phase 43 (2026-05-21) — LED pulse for pricing-tier card clicks.
+
+   When the user taps a tier card the whole card briefly emits a soft
+   neon halo in Pebble blue. Two concentric pulses: a tight inner ring
+   for definition + a wider diffused outer bloom for the "dopamine"
+   feel Marc asked for. Animation fires once per click via a temporary
+   className applied from React, then cleared after the keyframe ends.
+--------------------------------------------------------------------------- */
+@keyframes pebble-tier-led {
+  0% {
+    box-shadow:
+      0 0 0 0 rgba(48, 84, 255, 0),
+      0 0 0 0 rgba(48, 84, 255, 0);
+  }
+  30% {
+    box-shadow:
+      0 0 0 3px rgba(48, 84, 255, 0.55),
+      0 0 32px 8px rgba(48, 84, 255, 0.30),
+      0 0 64px 16px rgba(48, 84, 255, 0.12);
+  }
+  100% {
+    box-shadow:
+      0 0 0 0 rgba(48, 84, 255, 0),
+      0 0 0 0 rgba(48, 84, 255, 0);
+  }
+}
+.tier-led-pulse {
+  animation: pebble-tier-led 1.4s ease-out;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
