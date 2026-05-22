@@ -480,7 +480,7 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
   const [sub, setSub] = useState<SubscriptionState | null | "loading">("loading");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!user) { setSub(null); return; }
@@ -1179,7 +1179,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                     the `planFirst` brief flag patched below). */}
                 <DetectiveInput
                   autoFocus
-                  attachLocked={!user}
+                  attachLocked={authLoading || !user}
                   onSubmit={(value, opts) => {
                     // Inspire-mode shortcut: if the user clicked "Switch to
                     // Inspired by this design" inside the input, we skip the
