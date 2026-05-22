@@ -85,20 +85,23 @@ export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
   return (
     <>
       {/* DESKTOP — 3D 4-column vertical marquee. Hidden on mobile.
-          Wrapped in [perspective:300px] container so the inner
-          transform tilts in genuine 3D, not just a flat 2D shear. */}
+          Phase 43.10 (2026-05-22) — bumped perspective from 340px to
+          900px so the 3D tilt actually reads (340 was nearly flat).
+          Rotation angles also pushed slightly so the columns feel
+          like they're falling toward the viewer at an angle rather
+          than sitting in a flat row. */}
       <div
         className={cn(
           "hidden md:block",
-          "relative h-[560px] lg:h-[640px] w-full overflow-hidden [perspective:340px]",
+          "relative h-[560px] lg:h-[640px] w-full overflow-hidden [perspective:900px] [perspective-origin:50%_50%]",
           className,
         )}
       >
         <div
-          className="absolute inset-0 flex flex-row items-center justify-center gap-3"
+          className="absolute inset-0 flex flex-row items-center justify-center gap-3 [transform-style:preserve-3d]"
           style={{
             transform:
-              "translateX(-40px) translateY(0px) translateZ(-100px) rotateX(18deg) rotateY(-12deg) rotateZ(18deg)",
+              "translateZ(-120px) rotateX(22deg) rotateY(-14deg) rotateZ(20deg)",
           }}
         >
           <Marquee vertical pauseOnHover repeat={3} className="[--duration:42s] [--gap:0.75rem]">

@@ -70,22 +70,29 @@
   /* Radius */
   --radius: 0.75rem;
 
-  /* Phase 43.8 (2026-05-22) — Marquee animation registered via Tailwind v4
-     @theme so `animate-marquee` + `animate-marquee-vertical` resolve to
-     the matching keyframes defined below. CSS-only; no JS per frame.
-     The component reads --duration and --gap from inline styles, so each
-     marquee instance can tune its own pacing. */
-  --animate-marquee:          marquee var(--duration) infinite linear;
-  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
 }
 
+/* Phase 43.8 / 43.10 (2026-05-22) — Marquee animation. Defined as
+   explicit CSS classes (NOT via Tailwind @theme) for two reasons:
+   1. Avoids any Tailwind v4 @theme variable-resolution edge case
+      where `var(--duration)` wasn't reaching the animated element.
+   2. Uses `!important` to beat the global `prefers-reduced-motion`
+      override below (the §3 DNA marquee is a hero animation — same
+      logic we used for BackgroundCarousel + the typewriter cycle:
+      OS reduce-motion shouldn't kill cinematic landing surfaces). */
 @keyframes marquee {
   from { transform: translateX(0); }
-  to   { transform: translateX(calc(-100% - var(--gap))); }
+  to   { transform: translateX(calc(-100% - var(--gap, 1rem))); }
 }
 @keyframes marquee-vertical {
   from { transform: translateY(0); }
-  to   { transform: translateY(calc(-100% - var(--gap))); }
+  to   { transform: translateY(calc(-100% - var(--gap, 1rem))); }
+}
+.animate-marquee {
+  animation: marquee var(--duration, 40s) linear infinite !important;
+}
+.animate-marquee-vertical {
+  animation: marquee-vertical var(--duration, 40s) linear infinite !important;
 }
 
 /* Light theme — applied on <html> by default. */
