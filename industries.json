@@ -2472,5 +2472,37 @@
       "hidden_pricing",
       "autoplay_audio"
     ]
+  },
+  "culinary_publication": {
+    "emotion": "appetite, inspiration, discovery, sophistication",
+    "visual_style": "editorial, photo-forward layout",
+    "hero_type": "video",
+    "video_keyword": "slow motion chef plating cinematic",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#A64B35",
+      "accent": "#D98C3A",
+      "background": "#FAF8F5"
+    },
+    "tone": "curated, evocative, authoritative",
+    "key_sections": [
+      "hero_banner",
+      "latest_features",
+      "seasonal_recipes",
+      "chef_interviews",
+      "newsletter_signup"
+    ],
+    "trust_signals": [
+      "James Beard award badges",
+      "established publication year",
+      "test-kitchen verified tags",
+      "expert contributor bios"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_mode_default",
+      "auto_play_audio",
+      "recipe_popup_wall"
+    ]
   }
 }
