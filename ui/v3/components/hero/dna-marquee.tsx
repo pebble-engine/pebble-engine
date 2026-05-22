@@ -26,6 +26,24 @@ import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Marquee } from "@/components/ui/marquee";
 
+/** Phase 43.12 (2026-05-22) — deterministic seeded shuffle. Marc
+    reported the 4 marquee columns all showed the same tiles in the
+    same order because we passed one array to each column. This
+    shuffles per-column with a different seed so the streams visibly
+    mix DIFFERENT tiles past the viewer at any given moment. Seeded
+    instead of Math.random() so SSR + client render the same order
+    (otherwise React hydration mismatches → blank cards). */
+function shuffleSeeded<T>(arr: readonly T[], seed: number): T[] {
+  const out = [...arr];
+  let s = seed;
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s * 9301 + 49297) % 233280;
+    const j = Math.floor((s / 233280) * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
 export type DnaCardData = {
   label:   string;
   /** Optional — used as a fallback "swatch strip" if `preview` is missing. */
@@ -85,6 +103,17 @@ interface DnaMarqueeProps {
 }
 
 export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
+  // Phase 43.12 — per-column shuffles. Each column gets the FULL tile
+  // set but in a different order, so at any horizontal slice across
+  // the 4 columns you see 4 DIFFERENT templates rather than 4 copies
+  // of the same one. Seeds 1/2/3/4 are arbitrary; the only thing that
+  // matters is they're distinct.
+  const colA = React.useMemo(() => shuffleSeeded(dnas, 1), [dnas]);
+  const colB = React.useMemo(() => shuffleSeeded(dnas, 2), [dnas]);
+  const colC = React.useMemo(() => shuffleSeeded(dnas, 3), [dnas]);
+  const colD = React.useMemo(() => shuffleSeeded(dnas, 4), [dnas]);
+  const colMobile = React.useMemo(() => shuffleSeeded(dnas, 7), [dnas]);
+
   return (
     <>
       {/* DESKTOP — 3D 4-column vertical marquee. Hidden on mobile.
@@ -108,16 +137,16 @@ export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
           }}
         >
           <Marquee vertical pauseOnHover repeat={3} className="[--duration:42s] [--gap:0.75rem]">
-            {dnas.map((dna) => <DnaCard key={`a-${dna.label}`} dna={dna} />)}
+            {colA.map((dna) => <DnaCard key={`a-${dna.label}`} dna={dna} />)}
           </Marquee>
           <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:38s] [--gap:0.75rem]">
-            {dnas.map((dna) => <DnaCard key={`b-${dna.label}`} dna={dna} />)}
+            {colB.map((dna) => <DnaCard key={`b-${dna.label}`} dna={dna} />)}
           </Marquee>
           <Marquee vertical pauseOnHover repeat={3} className="[--duration:46s] [--gap:0.75rem]">
-            {dnas.map((dna) => <DnaCard key={`c-${dna.label}`} dna={dna} />)}
+            {colC.map((dna) => <DnaCard key={`c-${dna.label}`} dna={dna} />)}
           </Marquee>
           <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:40s] [--gap:0.75rem]">
-            {dnas.map((dna) => <DnaCard key={`d-${dna.label}`} dna={dna} />)}
+            {colD.map((dna) => <DnaCard key={`d-${dna.label}`} dna={dna} />)}
           </Marquee>
         </div>
 
@@ -135,7 +164,7 @@ export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
           duration so the user gets through them in reasonable time. */}
       <div className="md:hidden relative h-[420px] w-full overflow-hidden">
         <Marquee vertical pauseOnHover repeat={2} className="[--duration:26s] [--gap:0.75rem] items-center justify-center">
-          {dnas.map((dna) => <DnaCard key={`m-${dna.label}`} dna={dna} />)}
+          {colMobile.map((dna) => <DnaCard key={`m-${dna.label}`} dna={dna} />)}
         </Marquee>
         <div className="pointer-events-none absolute inset-x-0 top-0    h-1/4 bg-gradient-to-b from-background to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background to-transparent" />
