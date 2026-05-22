@@ -69,6 +69,23 @@
 
   /* Radius */
   --radius: 0.75rem;
+
+  /* Phase 43.8 (2026-05-22) — Marquee animation registered via Tailwind v4
+     @theme so `animate-marquee` + `animate-marquee-vertical` resolve to
+     the matching keyframes defined below. CSS-only; no JS per frame.
+     The component reads --duration and --gap from inline styles, so each
+     marquee instance can tune its own pacing. */
+  --animate-marquee:          marquee var(--duration) infinite linear;
+  --animate-marquee-vertical: marquee-vertical var(--duration) linear infinite;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(calc(-100% - var(--gap))); }
+}
+@keyframes marquee-vertical {
+  from { transform: translateY(0); }
+  to   { transform: translateY(calc(-100% - var(--gap))); }
 }
 
 /* Light theme — applied on <html> by default. */

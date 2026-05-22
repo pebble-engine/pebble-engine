@@ -11,7 +11,8 @@ import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
 import { LandingNav } from "@/components/hero/landing-nav";
 import { DetectiveInput } from "@/components/hero/detective-input";
 import { SwiperSteps, type SwiperStep } from "@/components/hero/swiper-steps"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
-import { BuildDemo } from "@/components/hero/build-demo";
+import { BuildDemo } from "@/components/hero/build-demo"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
+import { DnaMarquee } from "@/components/hero/dna-marquee";
 import {
   patchBrief,
   getUserProfile,
@@ -1311,16 +1312,16 @@ export function WelcomePhase({ onAdvance }: Props) {
           ════════════════════════════════════════════════════════════════ */}
       <div className="relative bg-gradient-to-b from-background via-background to-muted text-foreground font-[family-name:var(--font-plus-jakarta-sans)]">
         {/* §2 — From sentence to site.
-            Phase 43.2 (2026-05-21) — retired the SwiperSteps text cards.
-            The most compelling answer to "how does this work?" is showing
-            it actually working, so §2 is now a code-driven build demo
-            that loops through the 3 stages (TYPE → PLAN → SITE) in ~12s.
-            See components/hero/build-demo.tsx. SwiperSteps is still on
-            disk for a quick revert if needed.
-            STEPS data also unused for now — kept for the same revert path. */}
+            Phase 43.8 (2026-05-22) — Marc dropped /mp_.mp4 (a real
+            screen recording of a Pebble build). Replacing the BuildDemo
+            animation with a side-by-side: video on the left (smaller
+            window), three numbered step cards on the right. The video
+            does the heavy lifting; the steps articulate what's
+            happening as the user watches. BuildDemo kept on disk for
+            quick revert. */}
         <section
           id="how"
-          className="relative px-4 py-16 sm:py-24 max-w-5xl mx-auto"
+          className="relative px-4 py-16 sm:py-24 max-w-6xl mx-auto"
         >
           <motion.div
             initial={{ opacity: 0, y: 24, scale: 0.94 }}
@@ -1333,90 +1334,96 @@ export function WelcomePhase({ onAdvance }: Props) {
               From sentence to site.
             </h2>
             <p className="text-lg max-w-xl mx-auto text-muted-foreground">
-              Three steps. About twelve seconds to watch. About five minutes to ship.
+              Watch it happen, then read what just happened.
             </p>
           </motion.div>
-          <BuildDemo />
-        </section>
 
-        {/* §3 — DNA showcase. Reverted to Phase 43.3 — Marc saw the
-            marquee variant push the hero out of frame; backing off to
-            the previous palette grid + hover preview while we
-            investigate. */}
-        <section
-          id="looks"
-          ref={dnaSec.ref}
-          className={cn("relative", !isMobile && "h-[200vh]")}
-        >
-          <div className={cn(
-            "flex flex-col justify-center px-4 max-w-6xl mx-auto overflow-hidden",
-            isMobile ? "py-16" : "sticky top-0 h-screen-safe",
-          )}>
+          {/* Video left (~40% on md+, full width on mobile) + steps right */}
+          <div className="grid grid-cols-1 md:grid-cols-[42%_1fr] gap-8 sm:gap-10 md:gap-14 items-center">
+            {/* Left — looping screen recording of a real Pebble build */}
             <motion.div
-              className="text-center mb-12 space-y-4 will-change-transform"
-              {...(isMobile
-                ? MOBILE_FADE_PROPS
-                : { style: { y: dnaSec.headingY, scale: dnaSec.scale, opacity: dnaSec.opacity } })}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+              className="rounded-2xl overflow-hidden border border-border bg-card shadow-[0_18px_44px_rgba(31,29,26,0.10)]"
             >
-              <h2 className={`${type.display.l} ${lightGradient}`}>
-                The looks Pebble can wear.
-              </h2>
-              <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
-                Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
-              </p>
+              <video
+                src="/mp_.mp4"
+                autoPlay
+                muted
+                loop
+                playsInline
+                preload="metadata"
+                className="block w-full h-auto bg-muted"
+                aria-label="A live recording of a Pebble build, from sentence to live site"
+              />
             </motion.div>
 
-            <motion.div
+            {/* Right — 3 numbered step cards from the existing STEPS const */}
+            <motion.ol
               variants={STAGGER_PARENT}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, amount: 0.15 }}
-              className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 will-change-transform"
-              {...(!isMobile && { style: { y: dnaSec.bodyY, opacity: dnaSec.opacity } })}
+              viewport={{ once: true, amount: 0.2 }}
+              className="flex flex-col gap-6 sm:gap-8"
             >
-              {DNAS.map((dna) => (
-                <motion.div
-                  key={dna.label}
+              {STEPS.map((step, i) => (
+                <motion.li
+                  key={step.title}
                   variants={STAGGER_CHILD}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.25, ease: EASE_CINEMATIC }}
-                  className="group relative h-52 sm:h-56 overflow-hidden rounded-xl bg-card border border-border hover:border-foreground/30 hover:shadow-[0_12px_36px_rgba(31,29,26,0.12)] transition-all duration-200"
+                  className="flex gap-4 items-start"
                 >
-                  <div className="flex h-20 sm:h-24 w-full" aria-hidden>
-                    {dna.colors.map((c, i) => (
-                      <div
-                        key={i}
-                        className="flex-1 transition-[flex] duration-300 group-hover:flex-[1.3]"
-                        style={{ backgroundColor: c }}
-                      />
-                    ))}
-                  </div>
-                  <div className="p-4 sm:p-5">
-                    <h3 className={`${type.heading.s} mb-1 text-foreground`}>{dna.label}</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground/85">{dna.feel}</p>
-                  </div>
-                  <div
+                  {/* Number badge */}
+                  <span
+                    className="shrink-0 inline-flex items-center justify-center w-10 h-10 rounded-full bg-foreground text-background text-sm font-bold tracking-tight"
                     aria-hidden
-                    className={cn(
-                      "absolute inset-0 flex flex-col justify-end overflow-hidden rounded-xl",
-                      "bg-cover bg-top",
-                      "translate-y-full opacity-0",
-                      "group-hover:translate-y-0 group-hover:opacity-100",
-                      "transition-[transform,opacity] duration-400 ease-out",
-                    )}
-                    style={{ backgroundImage: `url(${dna.preview})` }}
                   >
-                    <div className="bg-gradient-to-t from-black/85 via-black/35 to-transparent p-4 sm:p-5">
-                      <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-white/80 mb-0.5">
-                        A real site in this DNA
-                      </p>
-                      <p className="text-sm font-semibold text-white">{dna.label}</p>
+                    0{i + 1}
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <step.Icon className="w-5 h-5 text-[#3054ff] shrink-0" aria-hidden />
+                      <h3 className={`${type.heading.s} text-foreground`}>{step.title}</h3>
                     </div>
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed">
+                      {step.body}
+                    </p>
                   </div>
-                </motion.div>
+                </motion.li>
               ))}
-            </motion.div>
+            </motion.ol>
           </div>
+        </section>
+
+        {/* §3 — Looks. Phase 43.8 (2026-05-22) — Marc picked option A
+            from the conversation: 21st.dev 3D vertical 4-column marquee
+            pattern, but with DNA palette cards instead of the original
+            testimonials (the form factor fits portrait cards way better
+            than landscape website screenshots). Mobile falls back to
+            a single-column vertical marquee — the 3D 4-column layout
+            would be illegible on iPhone. See components/hero/dna-
+            marquee.tsx for the full implementation.
+            Section is just normal flow now — no sticky pin — since the
+            marquee component manages its own viewport. */}
+        <section
+          id="looks"
+          ref={dnaSec.ref}
+          className="relative py-16 sm:py-24 overflow-hidden"
+        >
+          <motion.div
+            className="text-center mb-10 sm:mb-12 space-y-4 px-4 max-w-3xl mx-auto"
+            {...MOBILE_FADE_PROPS}
+          >
+            <h2 className={`${type.display.l} ${lightGradient}`}>
+              The looks Pebble can wear.
+            </h2>
+            <p className="text-lg max-w-2xl mx-auto text-muted-foreground">
+              Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
+            </p>
+          </motion.div>
+
+          <DnaMarquee dnas={DNAS} />
         </section>
 
         {/* §4 — Perfect for. Phase 43: was a flat text-chip list — now
