@@ -918,7 +918,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 The sentence never reflows or shifts position. */}
             <span
               className="relative inline-block align-baseline"
-              style={{ paddingTop: "0.12em", paddingBottom: "0.12em", marginTop: "-0.12em", marginBottom: "-0.12em" }}
+              style={{ paddingTop: "0.12em", paddingBottom: "0.28em", marginTop: "-0.12em", marginBottom: "-0.28em" }}
             >
               <span aria-hidden className="invisible select-none">presence</span>
               <AnimatePresence mode="wait">
@@ -948,11 +948,11 @@ export function WelcomePhase({ onAdvance }: Props) {
 
         <motion.p
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.75 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-lg sm:text-xl leading-[1.65] text-foreground max-w-xl"
+          className="text-lg sm:text-xl font-medium leading-[1.65] text-foreground max-w-2xl"
         >
-          One click can change everything.
+          For the ones who are brilliant at what they do and just need the world to find them.
         </motion.p>
 
         <motion.div
@@ -1002,7 +1002,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                   </span>
                 </motion.button>
                 <p className={`${type.caption} text-muted-foreground/80`}>
-                  No credit card needed. One site free.
+                  Free to start. Because your work deserves to be seen.
                 </p>
               </motion.div>
             ) : awaitingModeChoice ? (
