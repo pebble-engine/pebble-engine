@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, X } from "lucide-react";
+import { Check, Globe, Lock, Shield, X } from "lucide-react";
 import { AuthMenu } from "@/components/auth-menu";
 import { useAuth } from "@/components/auth-provider";
 import { createCheckoutSession, fetchSubscription, type SubscriptionState } from "@/lib/api";
@@ -320,6 +320,90 @@ export default function PricingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Trust row — honest badges only. ISO 27001 / SOC 2 are not claimed
+            for Pebble-the-company (we haven't paid for those audits). We DO
+            inherit SOC 2 from the infrastructure providers underneath us, and
+            we comply with GDPR via the privacy + DPA stack and real data
+            controls (account deletion, no tracking by default, etc.). */}
+        <section className="py-16 px-6 border-b border-border">
+          <div className="mx-auto max-w-4xl">
+            <h2 className="text-2xl font-bold tracking-tight text-center mb-3">
+              Trust &amp; data protection
+            </h2>
+            <p className="text-center text-sm text-muted-foreground max-w-xl mx-auto mb-10">
+              We don&apos;t claim certifications we don&apos;t hold. Here&apos;s what is
+              actually true about how Pebble handles your data.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link
+                href="/privacy"
+                className="rounded-2xl border border-border bg-card p-6 space-y-3 hover:border-primary/50 transition-colors"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
+                  <Shield className="h-5 w-5 text-primary" aria-hidden="true" />
+                </span>
+                <h3 className="font-semibold text-foreground">GDPR compliant</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Plain-language privacy policy, 14-day soft-delete cooling-off, data export
+                  and right-to-erasure on request.
+                </p>
+                <span className="inline-block text-xs font-medium text-primary">
+                  Read privacy policy →
+                </span>
+              </Link>
+
+              <Link
+                href="/settings"
+                className="rounded-2xl border border-border bg-card p-6 space-y-3 hover:border-primary/50 transition-colors"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
+                  <Lock className="h-5 w-5 text-primary" aria-hidden="true" />
+                </span>
+                <h3 className="font-semibold text-foreground">Your data, your rights</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Delete your account any time from Settings — files, submissions, and
+                  attachments removed after the cooling-off window. No support ticket
+                  required.
+                </p>
+                <span className="inline-block text-xs font-medium text-primary">
+                  Manage account →
+                </span>
+              </Link>
+
+              <div className="rounded-2xl border border-border bg-card p-6 space-y-3">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent">
+                  <Globe className="h-5 w-5 text-primary" aria-hidden="true" />
+                </span>
+                <h3 className="font-semibold text-foreground">
+                  Built on SOC 2 infrastructure
+                </h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Supabase, Stripe, Cloudflare, Railway, and Vercel handle data underneath
+                  Pebble — each with their own SOC 2 / ISO 27001 posture. Pebble itself is
+                  not yet certified.
+                </p>
+                <Link
+                  href="/dpa"
+                  className="inline-block text-xs font-medium text-primary"
+                >
+                  Sub-processor list →
+                </Link>
+              </div>
+            </div>
+
+            <p className="text-center text-xs text-muted-foreground mt-8 max-w-2xl mx-auto">
+              Need a signed Data Processing Addendum?{" "}
+              <Link
+                href="/dpa"
+                className="underline underline-offset-2 hover:text-foreground transition-colors"
+              >
+                Request one here
+              </Link>
+              .
+            </p>
           </div>
         </section>
 

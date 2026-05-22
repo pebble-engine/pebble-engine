@@ -214,8 +214,10 @@ export default function TermsPage() {
               11. Governing law
             </h2>
             <p>
-              These Terms are governed by the laws of the United States. Any disputes shall be
-              resolved through good-faith negotiation; if that fails, through binding arbitration.
+              These Terms are governed by the laws of the State of Delaware, United States,
+              without regard to its conflict-of-laws principles. Any disputes shall be resolved
+              through good-faith negotiation; if that fails, through binding arbitration seated
+              in Delaware.
             </p>
           </section>
 
@@ -236,6 +238,9 @@ export default function TermsPage() {
         <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-5 text-sm text-muted-foreground">
           <Link href="/privacy" className="hover:text-foreground transition-colors">
             Privacy Policy
+          </Link>
+          <Link href="/dpa" className="hover:text-foreground transition-colors">
+            DPA
           </Link>
           <Link href="/landing" className="hover:text-foreground transition-colors">
             Back to Pebble

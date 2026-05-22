@@ -120,6 +120,14 @@ export default function PrivacyPage() {
                 pebbleapp.ai. No cookies, no cross-site tracking, no personal data collected.
               </li>
             </ul>
+            <p className="mt-3">
+              If your business needs a signed Data Processing Addendum covering these
+              sub-processors, see our{" "}
+              <Link href="/dpa" className="underline hover:text-foreground transition-colors">
+                DPA page
+              </Link>
+              .
+            </p>
           </section>
 
           <section>
@@ -237,6 +245,9 @@ export default function PrivacyPage() {
         <div className="mt-16 pt-8 border-t border-border flex flex-wrap gap-5 text-sm text-muted-foreground">
           <Link href="/terms" className="hover:text-foreground transition-colors">
             Terms of Service
+          </Link>
+          <Link href="/dpa" className="hover:text-foreground transition-colors">
+            DPA
           </Link>
           <Link href="/landing" className="hover:text-foreground transition-colors">
             Back to Pebble

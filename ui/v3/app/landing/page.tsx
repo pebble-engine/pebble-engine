@@ -483,6 +483,7 @@ function Footer() {
           <Link href="/migrate" className="hover:text-foreground transition-colors">Migrate</Link>
           <Link href="/privacy" className="hover:text-foreground transition-colors">Privacy</Link>
           <Link href="/terms" className="hover:text-foreground transition-colors">Terms</Link>
+          <Link href="/dpa" className="hover:text-foreground transition-colors">DPA</Link>
           <Link href="/workspace#phase=idea" className="hover:text-foreground transition-colors">Start building</Link>
         </div>
       </div>
