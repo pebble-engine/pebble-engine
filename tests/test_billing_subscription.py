@@ -94,7 +94,30 @@ def test_returns_200_with_null_plan_when_no_sentinel(signed_in_user, output_root
     h = FakeHandler()
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
-    assert h.body == {"plan": None, "status": None, "current_period_end": None}
+    assert h.body == {"plan": None, "status": None, "current_period_end": None, "needs_plan_selection": False}
+
+
+def test_surfaces_needs_plan_selection_flag(signed_in_user, output_root):
+    """Phase 54c — v3 reads needs_plan_selection from this endpoint to
+    decide whether to mount the plan-picker modal. Profile.json with
+    needs_plan_selection=true must propagate."""
+    from pebble.server import billing_subscription
+    p = output_root / ".users" / "uuid-marc-abc"
+    p.mkdir(parents=True, exist_ok=True)
+    (p / "profile.json").write_text(
+        json.dumps({"needs_plan_selection": True}),
+        encoding="utf-8",
+    )
+
+    h = FakeHandler()
+    billing_subscription.run_get_subscription(h)
+    assert h.status == 200
+    assert h.body == {
+        "plan":                 None,
+        "status":               None,
+        "current_period_end":   None,
+        "needs_plan_selection": True,
+    }
 
 
 def test_returns_200_with_null_plan_when_sentinel_is_corrupt(signed_in_user, output_root):
@@ -122,9 +145,10 @@ def test_returns_active_subscription(signed_in_user, output_root):
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
     assert h.body == {
-        "plan":               "starter",
-        "status":             "active",
-        "current_period_end": 1893456000,
+        "plan":                 "starter",
+        "status":               "active",
+        "current_period_end":   1893456000,
+        "needs_plan_selection": False,
     }
 
 
@@ -200,4 +224,4 @@ def test_rejects_path_traversal_user_id(monkeypatch, output_root):
     # MUST NOT leak the victim's plan — fall through to the "no
     # subscription" 200/null branch instead.
     assert h.status == 200
-    assert h.body == {"plan": None, "status": None, "current_period_end": None}
+    assert h.body == {"plan": None, "status": None, "current_period_end": None, "needs_plan_selection": False}

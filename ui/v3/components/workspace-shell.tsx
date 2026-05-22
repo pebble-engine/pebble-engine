@@ -34,6 +34,10 @@ import { DraftPhase } from "@/components/phases/draft-phase";
 import { ReadyPhase } from "@/components/phases/ready-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { PublishPhase } from "@/components/phases/publish-phase";
+import { PlanPickerModal } from "@/components/plan-picker-modal";
+import { fetchSubscription } from "@/lib/api";
+import { useAuth } from "@/components/auth-provider";
+import { getUserProfile } from "@/lib/state";
 
 // Fires synchronously before paint on the client; falls back to useEffect
 // on the server (where there is no DOM) to suppress the SSR warning.
@@ -96,6 +100,42 @@ export function WorkspaceShell() {
   const [buildElapsedSec, setBuildElapsedSec] = useState<number | null>(null);
   const generateStartedAtRef = useRef<number | null>(null);
   const editPhaseRef = useRef<EditPhaseHandle>(null);
+
+  // Phase 54c — plan-picker overlay state. Marc's "offer wall during
+  // build" UX: show the picker while the build is in flight so the
+  // user reads tiers as a perceived-speed boost instead of staring at
+  // a progress bar. Triggered by the needs_plan_selection flag set
+  // during signup (Phase 54b) — surfaced in /api/billing/subscription.
+  // We only fetch the flag once per shell mount; clearing happens via
+  // the picker's own select-plan call.
+  const { user: authUser, loading: authLoading } = useAuth();
+  const [needsPlanPick, setNeedsPlanPick] = useState(false);
+  const [planPickFetched, setPlanPickFetched] = useState(false);
+
+  useEffect(() => {
+    // Wait for auth to resolve so we don't fire a Bearer request before
+    // there's a session token. Anonymous visitors get no picker.
+    if (authLoading || !authUser) {
+      setPlanPickFetched(true);
+      return;
+    }
+    let cancelled = false;
+    fetchSubscription()
+      .then((sub) => {
+        if (cancelled) return;
+        setNeedsPlanPick(Boolean((sub as { needs_plan_selection?: boolean }).needs_plan_selection));
+      })
+      .catch(() => {
+        // Network / auth glitch — don't block the user on the picker.
+        if (!cancelled) setNeedsPlanPick(false);
+      })
+      .finally(() => {
+        if (!cancelled) setPlanPickFetched(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [authUser, authLoading]);
 
   const safePhaseVariants = useMemo(() => withReducedMotion(phaseVariants), []);
   const safeChipDeck = useMemo(() => withReducedMotion(chipDeck), []);
@@ -374,6 +414,21 @@ export function WorkspaceShell() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* Phase 54c — plan-picker overlay. Marc's "offer wall during
+          build" UX: mounts on top of the workspace shell whenever the
+          authenticated user still has needs_plan_selection=true. The
+          build (if any) streams underneath; the picker is the time-
+          filler that doubles as upgrade prompt. Skip on welcome — the
+          marketing canvas owns the visitor and shouldn't be obscured.
+          The fetched gate is the one signal — we don't manually open
+          this from any phase transition. */}
+      {planPickFetched && needsPlanPick && !isWelcome && (
+        <PlanPickerModal
+          firstName={getUserProfile().firstName || null}
+          onPlanSelected={() => setNeedsPlanPick(false)}
+        />
+      )}
     </div>
     </MotionConfig>
   );

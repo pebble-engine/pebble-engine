@@ -977,10 +977,27 @@ export type BillingPortalResponse = {
 };
 
 export type SubscriptionState = {
-  plan:               "starter" | "pro" | null;
-  status:             string | null;   // "active" | "past_due" | "canceled" | ... | null
-  current_period_end: number | null;   // unix seconds, or null
+  plan:                 "starter" | "pro" | null;
+  status:               string | null;   // "active" | "past_due" | "canceled" | ... | null
+  current_period_end:   number | null;   // unix seconds, or null
+  /** Phase 54b — true when the user signed up but hasn't picked a plan
+   *  yet. v3 mounts the plan-picker modal when this is true. */
+  needs_plan_selection: boolean;
 };
+
+/** Phase 54b — body of POST /api/account/select-plan. */
+export type SelectPlanResponse = {
+  ok:            true;
+  plan_selected: "free" | "starter" | "pro" | "enterprise";
+  next:          "build" | "checkout";
+};
+
+/** Phase 54b — clear the needs_plan_selection flag. Returns the next step
+ *  the frontend should take ("build" for Free / Enterprise, "checkout"
+ *  for Starter / Pro — the caller follows up with createCheckoutSession). */
+export async function selectPlan(plan: "free" | "starter" | "pro" | "enterprise"): Promise<SelectPlanResponse> {
+  return authedPostJSON<SelectPlanResponse>("/api/account/select-plan", { plan });
+}
 
 /**
  * Helper that does the "get current JWT, send Authorization: Bearer" dance

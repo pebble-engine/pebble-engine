@@ -63,22 +63,35 @@ def run_get_subscription(handler) -> None:
     if user is None:
         return
 
+    # Phase 54b — surface whether the user still needs to pick a plan.
+    # v3 uses this to decide whether to mount the plan-picker modal
+    # (Phase 54c offer wall). Imported inside the function so a bad
+    # user_plan import never breaks the subscription endpoint.
+    needs_pick = False
+    try:
+        from pebble.user_plan import needs_plan_selection
+        needs_pick = needs_plan_selection(user.get("id", ""))
+    except Exception:
+        pass
+
     sentinel = _load_sentinel(user.get("id", ""))
     if sentinel is None:
         # No subscription. Respond 200 with explicit nulls so v3 can
         # render an "upgrade to a plan" CTA without parsing exception
         # messages.
         handler._json(200, {
-            "plan":               None,
-            "status":             None,
-            "current_period_end": None,
+            "plan":                  None,
+            "status":                None,
+            "current_period_end":    None,
+            "needs_plan_selection":  needs_pick,
         })
         return
 
     # Curated subset — never echo customer_id / subscription_id (PII /
     # internal stripe identifiers) or the dedup tracking fields.
     handler._json(200, {
-        "plan":               sentinel.get("plan"),
-        "status":             sentinel.get("status"),
-        "current_period_end": sentinel.get("current_period_end"),
+        "plan":                  sentinel.get("plan"),
+        "status":                sentinel.get("status"),
+        "current_period_end":    sentinel.get("current_period_end"),
+        "needs_plan_selection":  needs_pick,
     })
