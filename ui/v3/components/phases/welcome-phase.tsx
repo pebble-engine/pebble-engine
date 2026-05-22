@@ -4,7 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
-import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle, Globe, Lock, Shield } from "lucide-react";
+import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
+import { RotatingPebbleLogo, shimmerForegroundStyle, PEBBLE_LANGS } from "@/components/hero/rotating-pebble-logo";
+import { TrustSeal } from "@/components/trust/trust-seal";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
@@ -75,17 +77,10 @@ const ROTATING_WORDS = [
   "empire",   "presence", "purpose", "voice",
 ] as const;
 
-/** "Pebble" translated into 8 world languages — for the rotating nav + footer wordmark. */
-const PEBBLE_LANGS = [
-  "Pebble",     // English
-  "Guijarro",   // Español
-  "Caillou",    // Français
-  "Kiesel",     // Deutsch
-  "Seixo",      // Português
-  "小石",        // 日本語
-  "자갈",        // 한국어
-  "Ciottolo",   // Italiano
-] as const;
+// PEBBLE_LANGS + RotatingPebbleLogo + shimmerForegroundStyle were moved
+// to components/hero/rotating-pebble-logo.tsx on 2026-05-22 (Phase 52)
+// so the Trust Charter seal could reuse them. The footer + final-CTA
+// still import via the named re-exports below.
 
 const STEPS = [
   {
@@ -264,67 +259,9 @@ const lightGradient = "text-foreground";
    Both were only consumed by the retired TopNavBar() function. NAV_ITEMS
    now lives in components/hero/landing-nav.tsx. */
 
-/**
- * Foreground-aware shimmer for light / dark surfaces (footer, etc.).
- * Uses CSS custom properties so it resolves to the right tones in each
- * theme — near-black on sand in light mode, near-white on #0a0a0a in dark.
- */
-const shimmerForegroundStyle: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(90deg, var(--color-muted-foreground) 0%, var(--color-foreground) 40%, var(--color-foreground) 60%, var(--color-muted-foreground) 100%)",
-  backgroundSize: "200% auto",
-};
-
-/**
- * Cycles through PEBBLE_LANGS with a shimmering gradient clipped to the
- * text. Usable on both dark (nav) and light (footer) surfaces — just
- * pass the appropriate shimmerStyle.
- */
-function RotatingPebbleLogo({
-  shimmerStyle,
-  className = "",
-}: {
-  shimmerStyle: React.CSSProperties;
-  className?: string;
-}) {
-  const [idx, setIdx] = useState(0);
-
-  useEffect(() => {
-    const id = setInterval(() => setIdx((i) => (i + 1) % PEBBLE_LANGS.length), 2800);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <MotionConfig reducedMotion="never">
-      {/* aria-label="Pebble" so screen readers always hear the brand name */}
-      <span aria-label="Pebble" className={`relative inline-block font-logo tracking-[0.12em] ${className}`}>
-        {/* invisible max-width anchor — "Guijarro" is the longest word */}
-        <span aria-hidden className="invisible select-none">Guijarro</span>
-        <AnimatePresence mode="wait">
-          <motion.span
-            key={PEBBLE_LANGS[idx]}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              backgroundPosition: ["0% 0%", "200% 0%"],
-            }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{
-              opacity: { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
-              y:       { duration: 0.4, ease: [0.22, 1, 0.36, 1] },
-              backgroundPosition: { duration: 3.5, repeat: Infinity, ease: "linear" },
-            }}
-            className="absolute left-0 top-0 bg-clip-text text-transparent whitespace-nowrap"
-            style={shimmerStyle}
-          >
-            {PEBBLE_LANGS[idx]}
-          </motion.span>
-        </AnimatePresence>
-      </span>
-    </MotionConfig>
-  );
-}
+// Phase 52 (2026-05-22): RotatingPebbleLogo, PEBBLE_LANGS, and
+// shimmerForegroundStyle moved to components/hero/rotating-pebble-logo.tsx
+// so the Trust Charter seal can re-use them. Imported above.
 
 /**
  * Phase 40j (2026-05-21) — TopNavBar() retired. Replaced by `LandingNav`
@@ -1714,57 +1651,15 @@ export function WelcomePhase({ onAdvance }: Props) {
           </motion.div>
           </div>
 
-          {/* §6.5 — Trust row. Phase 47 (2026-05-22). Honest social proof
-              for the security-conscious buyer. We do NOT claim SOC 2 / ISO
-              27001 because Pebble itself isn't certified — only the
-              underlying platforms (Supabase, Stripe, Cloudflare, Railway)
-              are. The "Built on SOC 2 infrastructure" card spells that
-              out explicitly so we're not borrowing trust we don't have. */}
-          <div className="max-w-5xl mx-auto px-4 mt-12 sm:mt-16">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Link
-                href="/privacy"
-                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Globe className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">GDPR compliant</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
-                    Account delete, data export, plain-language privacy policy.
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/settings"
-                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">Your data, your rights</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
-                    One-click account delete with a 14-day cooling-off window.
-                  </p>
-                </div>
-              </Link>
-              <Link
-                href="/dpa"
-                className="group bg-card border border-border rounded-2xl p-5 flex items-start gap-3 hover:border-primary/40 transition-colors"
-              >
-                <div className="w-10 h-10 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-bold text-foreground">Built on SOC 2 infrastructure</h3>
-                  <p className="text-xs text-muted-foreground mt-1 leading-snug">
-                    Supabase, Stripe, Cloudflare — Pebble itself isn&apos;t certified yet.
-                  </p>
-                </div>
-              </Link>
-            </div>
+          {/* §6.5 — Trust Charter seal. Phase 52 (2026-05-22). Replaces
+              the three card row Marc flagged as feeling too "I made these
+              up." The new format is a single elegant certificate-style
+              seal with the rotating Pebble wordmark as the centerpiece
+              (the brand IS the attestation, like a notary mark). Three
+              chips below the wordmark identify the commitment areas
+              (GDPR · Data Rights · Security). Full charter at /trust. */}
+          <div className="max-w-5xl mx-auto px-4 mt-12 sm:mt-16 flex justify-center">
+            <TrustSeal shimmerStyle={shimmerForegroundStyle} />
           </div>
         </section>
 
@@ -1829,6 +1724,7 @@ export function WelcomePhase({ onAdvance }: Props) {
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Legal</div>
+                <Link href="/trust"   className="block text-muted-foreground hover:text-foreground">Trust Charter</Link>
                 <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
                 <Link href="/terms"   className="block text-muted-foreground hover:text-foreground">Terms</Link>
                 <Link href="/dpa"     className="block text-muted-foreground hover:text-foreground">DPA</Link>
