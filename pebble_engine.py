@@ -1725,6 +1725,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if ".." in rel.split("/"):
             self.send_response(403); self.end_headers(); return
 
+        # Phase 44 — flag set by the router when this request came in via
+        # ``<slug>.pebbleapp.ai`` instead of the workspace iframe. Public
+        # visitors must NOT see the visual-edit bridge (it leaks workspace
+        # internals + spawns hover outlines on the live site) and SHOULD
+        # get cache headers because the bytes are stable between edits.
+        public_mode = bool(getattr(self, "_public_subdomain_mode", False))
+
         # Block preview if the project owner's subscription has lapsed.
         # Unclaimed projects and free-tier users (no subscription.json) pass
         # through. Only fired when a sentinel file is present with a
@@ -1771,16 +1778,26 @@ class PebbleHandler(BaseHTTPRequestHandler):
         # The bridge highlights elements on hover and posts a "selected"
         # message back to the parent window for click-to-edit. Bridge is
         # safe to ship: it's pure DOM event listeners, no network.
+        #
+        # Phase 44 — when serving via a public subdomain (public_mode=True)
+        # we skip the bridge entirely (visitors don't get a click-to-edit
+        # overlay) AND swap the no-store cache header for a short public
+        # cache so the CDN/browser can reuse responses across visitors.
         if ext in ("html", "htm"):
             try:
-                from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
                 raw = site_file.read_text(encoding="utf-8")
-                injected = self._inject_bridge(raw, PEBBLE_VISUAL_EDIT_BRIDGE)
-                data = injected.encode("utf-8")
+                if public_mode:
+                    data = raw.encode("utf-8")
+                    cache_header = "public, max-age=60"
+                else:
+                    from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
+                    injected = self._inject_bridge(raw, PEBBLE_VISUAL_EDIT_BRIDGE)
+                    data = injected.encode("utf-8")
+                    cache_header = "no-store, no-cache, must-revalidate, max-age=0"
                 self.send_response(200)
                 self.send_header("Content-Type", ct)
                 self.send_header("Content-Length", str(len(data)))
-                self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+                self.send_header("Cache-Control", cache_header)
                 self.send_header("Access-Control-Allow-Origin", "*")
                 self.end_headers()
                 self.wfile.write(data)
@@ -1803,13 +1820,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
     def _proxy_to_dev(self, dev_url: str, forward_path: str) -> bool:
         """Forward GET *forward_path* to the running next dev server at *dev_url*.
 
-        Injects the visual-edit bridge into HTML responses, matching the
-        behaviour of the static-file path.  Returns True on success.
-        The caller must not write any HTTP response on False — the connection
-        state is clean (no bytes sent).
+        Injects the visual-edit bridge into HTML responses (workspace iframe
+        path); skips injection when the caller set _public_subdomain_mode
+        (Phase 44 — public subdomain visitors shouldn't see the editor
+        overlay). Returns True on success. The caller must not write any
+        HTTP response on False — the connection state is clean (no bytes
+        sent).
         """
         import http.client
         from urllib.parse import urlsplit
+        public_mode = bool(getattr(self, "_public_subdomain_mode", False))
         parsed = urlsplit(dev_url)
         conn: http.client.HTTPConnection | None = None
         try:
@@ -1818,7 +1838,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
             resp = conn.getresponse()
             data = resp.read()
             ct = resp.getheader("Content-Type", "application/octet-stream")
-            if "text/html" in ct:
+            if "text/html" in ct and not public_mode:
                 try:
                     from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
                     html = data.decode("utf-8", errors="replace")
@@ -1826,10 +1846,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
                     ct = "text/html; charset=utf-8"
                 except Exception:
                     pass
+            elif "text/html" in ct and public_mode:
+                ct = "text/html; charset=utf-8"
+            cache_header = (
+                "public, max-age=60" if public_mode
+                else "no-store, no-cache, must-revalidate, max-age=0"
+            )
             self.send_response(resp.status)
             self.send_header("Content-Type", ct)
             self.send_header("Content-Length", str(len(data)))
-            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Cache-Control", cache_header)
             self.send_header("Access-Control-Allow-Origin", "*")
             self.end_headers()
             self.wfile.write(data)

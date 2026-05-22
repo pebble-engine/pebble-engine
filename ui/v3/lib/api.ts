@@ -1129,6 +1129,59 @@ export async function fetchPublishState(slug: string): Promise<PublishStateRespo
   return getJSON(`/api/projects/${encodeURIComponent(slug)}/publish`);
 }
 
+// ---------- /api/publish/instant (Phase 44 — Base44-style subdomain) ------
+//
+// The instant flow is the new default. Hitting publish writes a sentinel
+// on the engine that flips `<slug>.pebbleapp.ai` from 404 to live in a
+// single round-trip (no Cloudflare deploy = no 30s wait). The Cloudflare
+// path above is kept as a power-user escape hatch for custom domains.
+
+export type InstantPublishResponse = {
+  slug:            string;
+  subdomain:       string;
+  url:             string;             // https://<sub>.pebbleapp.ai
+  published_at:    string;
+  snapshot_id?:    string | null;
+  kind:            "instant";
+  elapsed_seconds?: number;
+};
+
+export type InstantPublishState =
+  | { slug: string; published: false }
+  | {
+      slug:         string;
+      published:    true;
+      subdomain:    string;
+      url:          string;
+      published_at: string;
+      snapshot_id?: string | null;
+    };
+
+export async function publishInstant(slug: string, subdomain?: string): Promise<InstantPublishResponse> {
+  return postJSON("/api/publish/instant", subdomain ? { slug, subdomain } : { slug });
+}
+
+export async function unpublishInstant(slug: string): Promise<{ slug: string; was_published: boolean }> {
+  const resp = await fetch("/api/publish/instant", {
+    method: "DELETE",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug }),
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return json as { slug: string; was_published: boolean };
+}
+
+export async function fetchInstantPublishState(slug: string): Promise<InstantPublishState> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/published`);
+}
+
 // ---------- /api/projects/<slug>/domain ------------------------------------
 
 export type DomainRecord = {

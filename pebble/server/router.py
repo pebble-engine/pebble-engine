@@ -81,6 +81,15 @@ def route_get(handler) -> None:
     handler.path = path_only
     handler._raw_path = raw_path
     try:
+        # Phase 44 (2026-05-22) — instant subdomain publish. Before any
+        # other route matching, check whether the Host header is a
+        # <slug>.pebbleapp.ai address. If yes, route to the preview
+        # handler with public_mode=True (no bridge injection, no auth).
+        # /api/* and /preview/* paths on a subdomain pass through to the
+        # workspace iframe behaviour — useful when the workspace runs
+        # under a custom domain that's ALSO wildcard-pointed.
+        if _route_subdomain_get(handler):
+            return
         if path_only in ("/", "/index.html"):
             handler._handle_engine_root()
         elif handler.path == "/api/health":
@@ -131,6 +140,11 @@ def route_get(handler) -> None:
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish"):
             slug = handler.path[len("/api/projects/"):-len("/publish")]
             handler._handle_get_publish_state(slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/published"):
+            # Phase 44 — instant publish state for this project (owner-gated).
+            slug = handler.path[len("/api/projects/"):-len("/published")]
+            from pebble.server.publish_instant import run_get_instant_state
+            run_get_instant_state(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_get_domain(slug)
@@ -226,6 +240,10 @@ def route_post(handler) -> None:
             run_smart_defaults(handler)
         elif handler.path == "/api/publish":
             handler._handle_publish()
+        elif handler.path == "/api/publish/instant":
+            # Phase 44 — instant subdomain publish (no external deploy).
+            from pebble.server.publish_instant import run_publish_instant
+            run_publish_instant(handler)
         elif handler.path.startswith("/api/forms/") and handler.path.endswith("/upload"):
             slug = handler.path[len("/api/forms/"):-len("/upload")]
             from pebble.server.forms import run_upload_attachment
@@ -305,10 +323,17 @@ def route_post(handler) -> None:
 
 
 def route_delete(handler) -> None:
-    """The HTTP DELETE verb. Only one route uses it today —
+    """The HTTP DELETE verb. Used for:
     DELETE /api/projects/<slug>          → hard delete project
-    DELETE /api/projects/<slug>/domain   → detach custom domain"""
+    DELETE /api/projects/<slug>/domain   → detach custom domain
+    DELETE /api/publish/instant          → remove instant-publish sentinel
+    """
     try:
+        if handler.path == "/api/publish/instant":
+            # Phase 44 — body carries {slug}. Owner-gated inside the handler.
+            from pebble.server.publish_instant import run_unpublish_instant
+            run_unpublish_instant(handler)
+            return
         if handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_delete_domain(slug)
@@ -333,6 +358,69 @@ def route_delete(handler) -> None:
             handler.send_response(404); handler.end_headers()
     except Exception as exc:
         handler._handle_500(exc)
+
+
+# --------- Phase 44 — subdomain routing -----------------------------------
+#
+# Two requirements:
+#   1. https://bakery.pebbleapp.ai/             → serve preview of bakery
+#   2. https://bakery.pebbleapp.ai/about        → serve preview/bakery/about.html
+#
+# Everything else (API calls, /preview/<other-slug>, /dist/...) must keep
+# working on the same wildcard cert when the workspace runs at
+# https://app.pebbleapp.ai — we just don't intercept those paths.
+#
+# The host check is cheap (1 env read + 1 string suffix check). It fires
+# on EVERY GET, so keep this tight.
+
+def _route_subdomain_get(handler) -> bool:
+    """Return True when this GET was satisfied by subdomain routing.
+
+    Behaviour:
+      * Resolve ``Host`` header → published-project slug (or None).
+      * If slug found AND the request path is "site-shaped" (root or a
+        path that isn't ``/api/...``/``/preview/``/``/dist/``), rewrite
+        ``handler.path`` to ``/preview/<slug>/<rest>`` and delegate to
+        the existing preview handler with ``public_mode=True`` (skips
+        the visual-edit bridge + sets caching headers).
+      * If slug found but path is ``/api/*``/``/preview/*``/``/dist/*``,
+        fall through to normal routing so the workspace API still works
+        on app.pebbleapp.ai-style sub-domains.
+
+    Returns False on any other condition (no env config, host doesn't
+    match, subdomain unknown, etc.) so the caller continues with the
+    regular if/elif chain.
+    """
+    host = handler.headers.get("Host", "") if hasattr(handler, "headers") else ""
+    if not host:
+        return False
+    try:
+        from pebble.server.publish_instant import lookup_published_slug_by_subdomain
+    except Exception:
+        return False
+
+    slug = lookup_published_slug_by_subdomain(host)
+    if not slug:
+        return False
+
+    path = handler.path
+    # Don't hijack API or other system routes — they're called from inside
+    # the published site too (form submit, analytics tracker).
+    if path.startswith("/api/") or path.startswith("/preview/") or path.startswith("/dist/"):
+        return False
+
+    # Rewrite the path so the existing preview handler does the heavy
+    # lifting (next-dev proxy, static fallback, etc.). The rest of the
+    # path is preserved verbatim — ``/about`` becomes
+    # ``/preview/<slug>/about``.
+    rest = path.lstrip("/")
+    handler.path = f"/preview/{slug}/{rest}" if rest else f"/preview/{slug}/"
+    # Tell the preview handler this is a public visitor, not a workspace
+    # iframe — affects bridge injection + cache headers.
+    handler._public_subdomain_mode = True
+    handler._public_subdomain_slug = slug
+    handler._handle_preview()
+    return True
 
 
 def route_patch(handler) -> None:
