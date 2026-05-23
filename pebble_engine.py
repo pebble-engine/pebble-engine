@@ -73,6 +73,94 @@ load_env_file(PROJECT_ROOT / ".env")
 
 
 # --------------------------------------------------------------------------
+# SENTRY ERROR MONITORING (gated on SENTRY_DSN — no-op if unset)
+# --------------------------------------------------------------------------
+# Runs immediately after .env load so DSN is available, but before optional
+# imports so any failure there is captured. Init is cheap and idempotent.
+#
+# Defaults intentionally tuned for the free Developer tier (5K errors,
+# 5M spans, 50 replays / month) and Pebble's PII posture:
+#   - send_default_pii=False — overrides Sentry's onboarding default;
+#     matches the email-redaction posture set during the 2026-05-22
+#     overnight bug hunt (no full emails in engine.err.log either).
+#   - traces_sample_rate from env, default 1.0 in dev / 0.1 in prod.
+#   - profile_session_sample_rate=0.0 — disabled (24/7 server would
+#     produce more profiling data than the free quota allows).
+#   - enable_logs=False — Python logging volume from the build pipeline
+#     would flood the event quota. Errors still captured via the default
+#     exception integration.
+#
+# before_send hook scrubs known secret patterns (Stripe / Anthropic /
+# Supabase / OpenRouter / webhook secrets) and full email addresses from
+# event payloads — defense-in-depth on top of send_default_pii=False.
+
+_SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+if _SENTRY_DSN:
+    try:
+        import re as _re_sentry
+        import sentry_sdk as _sentry_sdk
+
+        _SENTRY_ENV = os.environ.get("SENTRY_ENVIRONMENT", "development").strip() or "development"
+        _SENTRY_TRACES = float(os.environ.get(
+            "SENTRY_TRACES_SAMPLE_RATE",
+            "1.0" if _SENTRY_ENV == "development" else "0.1",
+        ))
+
+        # Patterns to scrub before anything ships to Sentry. Liberal on
+        # purpose — false positives here are cosmetic; false negatives
+        # leak secrets. Keep in sync with .env keys that hold secrets.
+        _SENTRY_SCRUBBERS = [
+            (_re_sentry.compile(r"sk-ant-api\d+-[A-Za-z0-9_-]{40,}"),  "<ANTHROPIC_KEY>"),
+            (_re_sentry.compile(r"sk_(test|live)_[A-Za-z0-9]{20,}"),    "<STRIPE_SK>"),
+            (_re_sentry.compile(r"rk_(test|live)_[A-Za-z0-9]{20,}"),    "<STRIPE_RK>"),
+            (_re_sentry.compile(r"whsec_[A-Za-z0-9]{20,}"),             "<WEBHOOK_SECRET>"),
+            # Supabase service-role / user JWTs (3-segment base64url)
+            (_re_sentry.compile(r"eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}"),
+                                                                         "<JWT>"),
+            (_re_sentry.compile(r"sk-or-v1-[A-Za-z0-9]{40,}"),          "<OPENROUTER_KEY>"),
+            # Email redaction — keep first char + domain for triage
+            (_re_sentry.compile(r"\b([A-Za-z0-9_.+-])[A-Za-z0-9_.+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b"),
+                                                                         r"\1***@\2"),
+        ]
+
+        def _sentry_scrub(value):
+            """Recursively walk event dicts/lists/strings, redacting matches."""
+            if isinstance(value, str):
+                for pattern, replacement in _SENTRY_SCRUBBERS:
+                    value = pattern.sub(replacement, value)
+                return value
+            if isinstance(value, dict):
+                return {k: _sentry_scrub(v) for k, v in value.items()}
+            if isinstance(value, (list, tuple)):
+                return type(value)(_sentry_scrub(v) for v in value)
+            return value
+
+        def _sentry_before_send(event, _hint):
+            # Wrap in try so a scrubber bug never blocks error reporting.
+            try:
+                return _sentry_scrub(event)
+            except Exception:
+                return event
+
+        _sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            environment=_SENTRY_ENV,
+            release=os.environ.get("SENTRY_RELEASE") or None,
+            send_default_pii=False,
+            traces_sample_rate=_SENTRY_TRACES,
+            profile_session_sample_rate=0.0,
+            enable_logs=False,
+            before_send=_sentry_before_send,
+        )
+    except Exception as _sentry_init_err:
+        # Sentry being unavailable must NEVER prevent the engine from
+        # booting. Log to the engine's own stderr (engine.err.log) and
+        # carry on — the worst case is "no error reporting today."
+        print(f"[sentry] init skipped (not fatal): {_sentry_init_err}",
+              file=sys.stderr)
+
+
+# --------------------------------------------------------------------------
 # OPTIONAL IMPORTS
 # --------------------------------------------------------------------------
 
