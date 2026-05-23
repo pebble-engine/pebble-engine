@@ -102,12 +102,13 @@ Prioritized by impact:
    ```
    Marginal storage savings; mostly to keep the advisor feed clean.
 
-5. **Re-enable engine.err.log per-line timestamping** — morning-brief v2
-   work. Right now I scan the last 5MB and report "what's there" rather
-   than "what's in the last 24h" because lines aren't timestamped.
-   Adding a `[YYYY-MM-DD HH:MM:SS]` prefix to every `log.info` /
-   `log.warning` call (or just switching the logger format string) would
-   make the brief honest about the window. ~1 hr.
+5. ~~**Re-enable engine.err.log per-line timestamping** — morning-brief v2
+   work~~. **DONE 2026-05-23 (commit `7bab70a`).** Turned out the
+   pebble logger already timestamps every line — the brief just
+   wasn't parsing them. Now parses the ISO prefix, buckets multi-line
+   records (errors + their tracebacks), and properly window-filters.
+   Two new regression tests cover the old-record drop + continuation-
+   line attachment edge cases.
 
 6. **Smooth rail slide-in transition** — Lovable-parity T3.10. When
    phase flips from welcome → idea, the left rail appears abruptly.
