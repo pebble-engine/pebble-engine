@@ -91,7 +91,13 @@ export function BuildChatPanel({ sseEvents, done, error, onAnswers }: Props) {
   ]);
   const [input, setInput]           = useState("");
   const [answers, setAnswers]       = useState<CollectedAnswer[]>([]);
-  const [askedIds, setAskedIds]     = useState<Set<string>>(new Set());
+  // askedIds was useState before — but it's a write-only accumulator
+  // (never read for rendering), and the previous code had a stale-
+  // closure bug where two SSE events arriving in quick succession could
+  // both see a snapshot before either had added its question, and
+  // double-ask. Moving to a ref guarantees we always read the latest
+  // value at check time. Bonus: no useless re-renders on every add.
+  const askedIdsRef                 = useRef<Set<string>>(new Set());
   const [isTyping, setIsTyping]     = useState(false);
   const bottomRef                   = useRef<HTMLDivElement>(null);
   const inputRef                    = useRef<HTMLInputElement>(null);
@@ -107,19 +113,22 @@ export function BuildChatPanel({ sseEvents, done, error, onAnswers }: Props) {
     if (!sseEvents.length) return;
     const latest = sseEvents[sseEvents.length - 1];
     for (const q of QUESTIONS) {
-      if (q.trigger === latest.type && !askedIds.has(q.id)) {
-        setAskedIds((prev) => new Set([...prev, q.id]));
-        setIsTyping(true);
-        setTimeout(() => {
-          setIsTyping(false);
-          setMessages((prev) => [
-            ...prev,
-            { role: "pebble", text: q.text, questionId: q.id },
-          ]);
-          inputRef.current?.focus();
-        }, 900);
-        break;
-      }
+      if (q.trigger !== latest.type) continue;
+      // Atomic check-and-add on the ref guarantees a question is only
+      // queued ONCE even if two SSE events with the same trigger fire
+      // before either has finished its 900ms typing animation.
+      if (askedIdsRef.current.has(q.id)) continue;
+      askedIdsRef.current.add(q.id);
+      setIsTyping(true);
+      setTimeout(() => {
+        setIsTyping(false);
+        setMessages((prev) => [
+          ...prev,
+          { role: "pebble", text: q.text, questionId: q.id },
+        ]);
+        inputRef.current?.focus();
+      }, 900);
+      break;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sseEvents]);
@@ -159,7 +168,7 @@ export function BuildChatPanel({ sseEvents, done, error, onAnswers }: Props) {
         setTimeout(() => {
           setIsTyping(false);
           const remaining = QUESTIONS.filter(
-            (q) => !askedIds.has(q.id) && ![...askedIds].includes(q.id),
+            (q) => !askedIdsRef.current.has(q.id),
           ).length;
           const ack =
             remaining > 0

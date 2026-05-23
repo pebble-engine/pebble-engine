@@ -21,12 +21,20 @@ function InboxForSlug({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [view, setView] = useState<"submissions" | "settings">("submissions");
+  // Surface a one-line error banner. Previously every fetch error was
+  // swallowed with `catch {}` — meaning a 401 / 500 / network blip
+  // would silently revert the UI to its old state (e.g. a "deleted"
+  // item re-appears after refresh) and look like a ghost bug. Now we
+  // tell the user what happened so they can retry or escalate.
+  const [opError, setOpError] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
     try {
       const r = await fetchInbox(slug);
       setItems(r.submissions);
+    } catch (e) {
+      setOpError(e instanceof Error ? `Failed to load inbox: ${e.message}` : "Failed to load inbox");
     } finally {
       setLoading(false);
     }
@@ -37,7 +45,14 @@ function InboxForSlug({ slug }: { slug: string }) {
   async function open(sub: Submission) {
     setSelected(sub);
     if (!sub.read) {
-      try { await markSubmissionRead(slug, sub.id, true); refresh(); } catch {}
+      try {
+        await markSubmissionRead(slug, sub.id, true);
+        refresh();
+      } catch (e) {
+        setOpError(e instanceof Error
+          ? `Couldn't mark as read: ${e.message}`
+          : "Couldn't mark as read");
+      }
     }
   }
 
@@ -47,10 +62,30 @@ function InboxForSlug({ slug }: { slug: string }) {
       await deleteSubmission(slug, sub.id);
       setSelected(null);
       refresh();
-    } catch {}
+    } catch (e) {
+      setOpError(e instanceof Error
+        ? `Couldn't delete: ${e.message}`
+        : "Couldn't delete this submission");
+    }
   }
 
   return (
+    <div className="flex flex-1 overflow-hidden flex-col">
+      {/* Error banner — only renders when an inbox operation failed.
+          Dismissible. Sits above the columns so the user sees it
+          regardless of which pane they're looking at. */}
+      {opError && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-sm flex items-center justify-between">
+          <span>{opError}</span>
+          <button
+            onClick={() => setOpError(null)}
+            className="text-amber-700 hover:text-amber-900 font-semibold ml-4"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
     <div className="flex flex-1 overflow-hidden">
       <aside className="w-[360px] border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border flex items-center justify-between">
@@ -179,6 +214,7 @@ function InboxForSlug({ slug }: { slug: string }) {
           </AnimatePresence>
         )}
       </main>
+    </div>
     </div>
   );
 }

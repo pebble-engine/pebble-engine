@@ -72,6 +72,17 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
 
   const cancelAutoAdvance = () => setAutoAdvanceIn(null);
 
+  // Cancel auto-advance on ANY key press anywhere on the page.
+  // <main onKeyDown> doesn't work because <main> isn't focusable — the
+  // listener never fires. Attach to document instead so a stray keypress
+  // (someone scanning the page) does what the user expects.
+  useEffect(() => {
+    if (autoAdvanceIn === null) return;
+    const handler = () => setAutoAdvanceIn(null);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [autoAdvanceIn]);
+
   const businessName = plan?.meta?.business_name || "your site";
   const dnaLabel = plan?.style?.label || null;
   const pages = plan?.pages || [];
@@ -80,7 +91,6 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
     <main
       className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 py-16"
       onMouseMove={cancelAutoAdvance}
-      onKeyDown={cancelAutoAdvance}
     >
       {/* Celebration mark — slight scale-pop on mount. */}
       <motion.div

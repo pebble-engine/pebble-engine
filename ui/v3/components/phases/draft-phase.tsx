@@ -209,9 +209,23 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
   }, [done, error]);
 
   // Auto-scroll the build feed when new lines arrive.
+  //
+  // Two design choices:
+  //   1. behavior: "auto" (instant), not "smooth". A multi-page build
+  //      fires 50+ SSE events in seconds; smooth-scrolling each one
+  //      queues animations that stack up, the panel gets stuck mid-
+  //      animation, and user-initiated scrolls get stomped.
+  //   2. Pin-to-bottom only: if the user has scrolled UP to read an
+  //      earlier line, don't snap them back to the bottom on every new
+  //      event. We treat "within 80px of bottom" as still pinned (so
+  //      the tiny gap from a chip-row layout shift doesn't bail).
   useEffect(() => {
-    if (feedRef.current) {
-      feedRef.current.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
+    const el = feedRef.current;
+    if (!el) return;
+    const slack = 80; // px from bottom that still counts as pinned
+    const pinned = el.scrollHeight - el.scrollTop - el.clientHeight < slack;
+    if (pinned) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
     }
   }, [logLines]);
 

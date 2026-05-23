@@ -51,6 +51,10 @@ function SignupForm() {
       setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-up failed.");
+    } finally {
+      // Reset in finally so a stuck-or-cancelled flow never leaves
+      // the button locked in "Creating account…". setState on an
+      // unmounting component is a harmless no-op in React 19.
       setSubmitting(false);
     }
   }
@@ -63,6 +67,9 @@ function SignupForm() {
       else await signInWithGithub();
     } catch (e) {
       setError(e instanceof Error ? e.message : `${provider} sign-in failed.`);
+    } finally {
+      // Same reasoning as the login page — never let the OAuth button
+      // stay disabled if the provider redirect is blocked or slow.
       setOauthBusy(null);
     }
   }
