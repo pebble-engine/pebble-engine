@@ -233,9 +233,8 @@ export function WorkspaceShell() {
     if (currentBrief.planFirst === true) {
       // Plan mode: show the plan preview before building.
       if (pathname === "/") {
-        safeStartViewTransition(() => {
-          router.push("/workspace#phase=plan");
-        });
+        // Bypass view-transition (same reason as the standard-mode branch).
+        router.push("/workspace#phase=plan");
       } else {
         setPhase("plan");
       }
@@ -245,10 +244,13 @@ export function WorkspaceShell() {
         console.log("[pebble.shell] standard mode — setting autostart flag + router.push to /workspace");
         // Flag for the auto-start useEffect above, then navigate to workspace.
         sessionStorage.setItem("pebble.autostart", "1");
-        safeStartViewTransition(() => {
-          console.log("[pebble.shell] inside view-transition callback — calling router.push");
-          router.push("/workspace");
-        });
+        // Phase 58a — bypass safeStartViewTransition for this navigation.
+        // The View Transitions wrap was swallowing the router.push silently
+        // in some browser/Next combos (URL stayed at / after submit). Direct
+        // router.push always works; the visual transition is non-essential
+        // for this specific hop (welcome → workspace mount swap).
+        console.log("[pebble.shell] calling router.push directly");
+        router.push("/workspace");
       } else {
         // Already inside workspace — kick off generation immediately.
         handleGenerate(() => Promise.resolve({} as GenerateResponse));
