@@ -166,7 +166,7 @@ export function DashboardSidebar() {
       <SectionHeader>Recents</SectionHeader>
       {recents.length === 0 ? (
         <p className={`${type.caption} px-3 py-2 leading-snug`}>
-          Nothing yet — build your first design from <Link href="/" className="underline">Home</Link>.
+          Nothing yet — <Link href="/workspace#phase=welcome" className="underline">start your first design</Link>.
         </p>
       ) : (
         <>
@@ -221,7 +221,13 @@ export function DashboardSidebar() {
         )}
 
         <Link
-          href="/"
+          // Phase 58b — point to /workspace#phase=welcome (the actual idea-
+          // capture surface) instead of /. The middleware now redirects
+          // signed-in users from / to /dashboard, so linking to / from the
+          // dashboard would just loop back here. /workspace#phase=welcome
+          // renders the WelcomePhase inside the workspace shell so the
+          // prompt input is available end-to-end.
+          href="/workspace#phase=welcome"
           className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold`}
         >
           <Plus className="w-4 h-4" />

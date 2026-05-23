@@ -507,7 +507,7 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
       <p className={`${type.heading.l} text-foreground`}>Nothing here yet.</p>
       <p className={`${type.body.s} text-muted-foreground mt-2 mb-6`}>Let&apos;s build your first site.</p>
       <Link
-        href="/"
+        href="/workspace#phase=welcome"
         className={`${interactions.button} inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold`}
       >
         <Plus className="w-4 h-4" /> Start something new
