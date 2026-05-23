@@ -70,20 +70,16 @@ export const viewport: Viewport = {
 // Inline script applies the user's stored theme before the page paints,
 // so a dark-mode user doesn't see a flash of light theme on load.
 //
-// 2026-05-19 second pass: app DEFAULTS to DARK and the dark theme is now
-// pure neutral (true black background, white text, neutral grays). The
-// landing hero, the workspace, and the marketing body share one mono
-// identity. Light mode still exists for accessibility / user preference
-// but is no longer the auto default.
+// Phase 56a: app DEFAULTS to LIGHT — the landing and workspace both look
+// their best in light mode and that's what new visitors should see first.
+// Returning users who explicitly chose dark still get dark (stored pref wins).
 const THEME_INIT_SCRIPT = `
 (function() {
   try {
     var stored = localStorage.getItem('pebble.theme');
-    var theme = stored === 'dark' || stored === 'light' ? stored : 'dark';
+    var theme = stored === 'dark' || stored === 'light' ? stored : 'light';
     if (theme === 'dark') document.documentElement.classList.add('dark');
-  } catch (e) {
-    document.documentElement.classList.add('dark');
-  }
+  } catch (e) {}
 })();
 `;
 

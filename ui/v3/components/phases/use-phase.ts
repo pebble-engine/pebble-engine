@@ -23,9 +23,9 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffec
  * other hash-bound state later without colliding.
  */
 
-export type Phase = "welcome" | "idea" | "plan" | "draft" | "ready" | "design" | "publish";
+export type Phase = "welcome" | "idea" | "plan" | "draft" | "ready" | "design" | "publish" | "integrations";
 
-export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready", "design", "publish"];
+export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready", "design", "publish", "integrations"];
 
 /**
  * Phase → Build-Plan-rail "stage" mapping. The rail has seven steps

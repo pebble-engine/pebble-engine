@@ -4,7 +4,7 @@ import { Suspense, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
-import { ArrowRight, Loader2 } from "lucide-react";
+import { ArrowRight, Loader2, Mail } from "lucide-react";
 import { useAuth } from "@/components/auth-provider";
 import { safeRedirect } from "@/lib/safe-redirect";
 import { MarketingShell, MarketingCard } from "@/components/marketing-shell";
@@ -30,6 +30,7 @@ function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | "github" | null>(null);
+  const [done, setDone] = useState(false);
 
   const redirect = safeRedirect(params.get("redirect"));
 
@@ -47,7 +48,7 @@ function SignupForm() {
     setSubmitting(true);
     try {
       await signUp(email, password, firstName.trim() || undefined);
-      router.push(redirect);
+      setDone(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-up failed.");
       setSubmitting(false);
@@ -64,6 +65,48 @@ function SignupForm() {
       setError(e instanceof Error ? e.message : `${provider} sign-in failed.`);
       setOauthBusy(null);
     }
+  }
+
+  if (done) {
+    return (
+      <MarketingShell>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md"
+        >
+          <MarketingCard>
+            <div className="flex flex-col items-center text-center space-y-4 py-4">
+              <div className="w-14 h-14 rounded-full bg-[#3054ff]/10 flex items-center justify-center">
+                <Mail className="w-7 h-7 text-[#3054ff]" />
+              </div>
+              <h1 className="text-xl font-bold text-[#1a1a1a]">Check your inbox</h1>
+              <p className="text-sm text-[#1a1a1a]/65 leading-relaxed">
+                We sent a confirmation link to <strong className="text-[#1a1a1a]">{email}</strong>.
+                Click it to activate your account and start building.
+              </p>
+              <p className="text-xs text-[#1a1a1a]/45">
+                Didn&apos;t get it? Check your spam folder or{" "}
+                <button
+                  type="button"
+                  onClick={() => setDone(false)}
+                  className="underline hover:text-[#1a1a1a] transition-colors"
+                >
+                  try again
+                </button>.
+              </p>
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 text-sm font-medium text-[#3054ff] hover:underline"
+              >
+                Back to sign in <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </MarketingCard>
+        </motion.div>
+      </MarketingShell>
+    );
   }
 
   return (

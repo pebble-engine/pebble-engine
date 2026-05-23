@@ -184,10 +184,8 @@ export function WorkspaceShell() {
       sessionStorage.getItem("pebble.autostart") === "1" &&
       hasBriefContent &&
       !currentBuild;
-    console.log("[pebble.shell.layout] mount — pathname:", pathname, "phase:", phase, "resolvedPhase:", resolvedPhase, "hasBriefContent:", hasBriefContent, "hasBuild:", !!currentBuild, "autostartFlag:", typeof window !== "undefined" ? sessionStorage.getItem("pebble.autostart") : "n/a", "autostartPending:", autostartPending);
 
     if (autostartPending) {
-      console.log("[pebble.shell.layout] autostartPending=true → setPhase(draft)");
       setPhase("draft");
       return;
     }
@@ -198,14 +196,10 @@ export function WorkspaceShell() {
     // - resolvedPhase==="draft" means we're actively building (don't bounce).
     // Without these guards, this layoutEffect's second run (StrictMode dev OR
     // post-handleGenerate re-render) sees a stale autostartFlag and clobbers
-    // the active draft state back to welcome. That's the "bounce to landing"
-    // bug Marc spent half an hour debugging.
+    // the active draft state back to welcome.
     const isActivelyBuilding = hasBriefContent || generatingRef.current || resolvedPhase === "draft";
     if (!currentBuild && !isActivelyBuilding && (resolvedPhase === "design" || resolvedPhase === "publish")) {
-      console.log("[pebble.shell.layout] no build + no active work + resolvedPhase=", resolvedPhase, "→ setPhase(welcome)");
       setPhase("welcome");
-    } else {
-      console.log("[pebble.shell.layout] no welcome-bounce (activeBuild:", isActivelyBuilding, "phase:", resolvedPhase, ")");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -230,24 +224,18 @@ export function WorkspaceShell() {
     const wantsPlan = currentBrief.planFirst === true;
     const onWorkspace = pathname === "/workspace";
 
-    console.log("[pebble.shell.autostart] pathname:", pathname, "flagSet:", flagSet, "hasBrief:", hasBrief, "wantsPlan:", wantsPlan, "currentBuild:", !!currentBuild, "onWorkspace:", onWorkspace);
-
-    if (wantsPlan) { console.log("[pebble.shell.autostart] bail: wantsPlan"); return; }
-    if (!hasBrief) { console.log("[pebble.shell.autostart] bail: !hasBrief"); return; }
-    if (currentBuild) { console.log("[pebble.shell.autostart] bail: currentBuild"); return; }
+    if (wantsPlan) return;
+    if (!hasBrief) return;
+    if (currentBuild) return;
 
     if (flagSet || onWorkspace) {
-      console.log("[pebble.shell.autostart] firing handleGenerate");
       handleGenerate(() => Promise.resolve({} as GenerateResponse));
-    } else {
-      console.log("[pebble.shell.autostart] no trigger");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleAdvanceFromWelcome() {
     const currentBrief = getBrief();
-    console.log("[pebble.shell] handleAdvanceFromWelcome — pathname:", pathname, "planFirst:", currentBrief.planFirst, "has_brief:", !!(currentBrief.business_name || currentBrief.extra_context), "authed:", !!authUser);
 
     // Phase 58a / Phase 54c — signup gate. Unauthenticated visitors must
     // sign up before they can land on /workspace (proxy.ts middleware
@@ -258,7 +246,6 @@ export function WorkspaceShell() {
     // accidentally signup-route a logged-in user whose session is still
     // hydrating.
     if (!authLoading && !authUser && pathname === "/") {
-      console.log("[pebble.shell] signed out — routing to /signup with redirect back to /workspace");
       // Ensure the autostart flag is set so /workspace kicks off the
       // build automatically after signup completes.
       sessionStorage.setItem("pebble.autostart", "1");
@@ -277,7 +264,6 @@ export function WorkspaceShell() {
     } else {
       // Standard mode: skip the questionnaire — go straight to build.
       if (pathname === "/") {
-        console.log("[pebble.shell] standard mode — setting autostart flag + router.push to /workspace");
         // Flag for the auto-start useEffect above, then navigate to workspace.
         sessionStorage.setItem("pebble.autostart", "1");
         // Phase 58a — bypass safeStartViewTransition for this navigation.
@@ -285,7 +271,6 @@ export function WorkspaceShell() {
         // in some browser/Next combos (URL stayed at / after submit). Direct
         // router.push always works; the visual transition is non-essential
         // for this specific hop (welcome → workspace mount swap).
-        console.log("[pebble.shell] calling router.push directly");
         router.push("/workspace");
       } else {
         // Already inside workspace — kick off generation immediately.

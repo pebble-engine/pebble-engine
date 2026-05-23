@@ -56,13 +56,14 @@ export type DnaCardData = {
 
 /* ----------------------------- card ---------------------------------- */
 
-function DnaCard({ dna }: { dna: DnaCardData }) {
+function DnaCard({ dna, small = false }: { dna: DnaCardData; small?: boolean }) {
   return (
     <motion.div
       whileHover={{ scale: 1.04 }}
       transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
       className={cn(
-        "w-44 rounded-xl bg-card border border-border overflow-hidden",
+        small ? "w-36" : "w-44",
+        "rounded-xl bg-card border border-border overflow-hidden",
         "shadow-[0_4px_18px_rgba(31,29,26,0.06)] hover:shadow-[0_12px_36px_rgba(31,29,26,0.14)]",
         "transition-shadow duration-200 cursor-default",
       )}
@@ -112,7 +113,6 @@ export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
   const colB = React.useMemo(() => shuffleSeeded(dnas, 2), [dnas]);
   const colC = React.useMemo(() => shuffleSeeded(dnas, 3), [dnas]);
   const colD = React.useMemo(() => shuffleSeeded(dnas, 4), [dnas]);
-  const colMobile = React.useMemo(() => shuffleSeeded(dnas, 7), [dnas]);
 
   return (
     <>
@@ -158,16 +158,34 @@ export function DnaMarquee({ dnas, className = "" }: DnaMarqueeProps) {
         <div className="pointer-events-none absolute inset-y-0 right-0  w-1/5 bg-gradient-to-l from-background to-transparent" />
       </div>
 
-      {/* MOBILE — single-column auto-scrolling vertical marquee.
-          Drops the 3D perspective + 4-column layout (both would be
-          illegible on iPhone). Same DnaCards, single stream, faster
-          duration so the user gets through them in reasonable time. */}
-      <div className="md:hidden relative h-[420px] w-full overflow-hidden">
-        <Marquee vertical pauseOnHover repeat={2} className="[--duration:26s] [--gap:0.75rem] items-center justify-center">
-          {colMobile.map((dna) => <DnaCard key={`m-${dna.label}`} dna={dna} />)}
-        </Marquee>
+      {/* MOBILE — 2-column 3D marquee. Same cinematic perspective as
+          desktop but scaled for phone: 2 columns of w-36 cards (296px
+          total + gap) fit comfortably in a 375px viewport. Tilt angles
+          are softer than desktop so the cards don't clip the edges. */}
+      <div
+        className={cn(
+          "md:hidden",
+          "relative h-[480px] w-full overflow-hidden [perspective:600px] [perspective-origin:50%_50%]",
+          className,
+        )}
+      >
+        <div
+          className="absolute inset-0 flex flex-row items-center justify-center gap-2 [transform-style:preserve-3d]"
+          style={{
+            transform: "translateZ(-60px) rotateX(18deg) rotateY(-8deg) rotateZ(14deg)",
+          }}
+        >
+          <Marquee vertical pauseOnHover repeat={3} className="[--duration:38s] [--gap:0.5rem]">
+            {colA.map((dna) => <DnaCard key={`ma-${dna.label}`} dna={dna} small />)}
+          </Marquee>
+          <Marquee vertical pauseOnHover reverse repeat={3} className="[--duration:34s] [--gap:0.5rem]">
+            {colB.map((dna) => <DnaCard key={`mb-${dna.label}`} dna={dna} small />)}
+          </Marquee>
+        </div>
         <div className="pointer-events-none absolute inset-x-0 top-0    h-1/4 bg-gradient-to-b from-background to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 left-0   w-1/6 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0  w-1/6 bg-gradient-to-l from-background to-transparent" />
       </div>
     </>
   );

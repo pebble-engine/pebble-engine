@@ -3,24 +3,11 @@
 /**
  * LandingNav — Phase 40j (2026-05-21).
  *
- * Replaces the inline `TopNavBar()` that used to live inside
- * welcome-phase.tsx. Pattern adapted from a 21st.dev "header-2" Marc
- * liked: sticky pill that shrinks + adds backdrop blur + shadow once
- * the user scrolls past the threshold, with a full-screen mobile menu
- * for ≤md viewports.
- *
- * What's preserved from the old TopNavBar:
- *   - Pebble brand mark on the left, anchored to the page top
- *   - The four section-anchor links (How it works / Looks / Pricing / Start)
- *   - Smooth-scroll behavior on link click
- *   - Light-mode color palette (the landing forces light tokens)
- *
- * What's new:
- *   - Sign In (link → /login) + Get Started (primary, link → /signup)
- *     CTAs on the right, matching every other modern SaaS landing
- *   - Sticky behavior with a scroll threshold (shrinks pill at >10px)
- *   - Mobile menu toggle (hamburger / X via lucide-react)
- *   - All-section overflow scroll-lock when the mobile menu is open
+ * Phase 56 updates (2026-05-22):
+ *   - Full-width edge-to-edge bar (removed max-w-5xl / mx-auto constraint)
+ *   - Bigger text throughout (logo 26px, links + CTAs 17px)
+ *   - Blue radial gradient background matching §6 pricing section
+ *   - Gradient fades out gracefully when scrolled pill activates
  */
 
 import React from "react";
@@ -63,20 +50,14 @@ function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string)
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/** Pebble brand mark for the nav. Phase 40k (2026-05-21) — Marc's call:
-    nav uses ONE professional font end-to-end. Switched from Cinzel
-    (the global `font-logo`) to Plus Jakarta Sans (the body sans) so
-    brand + links + buttons all share the same typeface family. Heavy
-    weight + tight tracking gives the wordmark feel without needing a
-    separate serif. The cycling multilingual `RotatingPebbleLogo` stays
-    in the footer where Cinzel still has room to breathe. */
+/** Pebble brand mark for the nav. */
 function PebbleMark({ className = "" }: { className?: string }) {
   return (
     <Link
       href="/"
       onClick={(e) => handleAnchorClick(e, "#")}
       className={cn(
-        "inline-flex items-center text-[22px] font-extrabold tracking-tight text-foreground",
+        "inline-flex items-center text-[28px] font-extrabold tracking-tight text-foreground",
         "hover:text-foreground/85 transition-colors",
         className,
       )}
@@ -91,20 +72,11 @@ export function LandingNav() {
   const [open, setOpen] = React.useState(false);
   const scrolled = useScrolled(10);
 
-  // Lock body scroll while the mobile menu is open so the page behind
-  // doesn't scroll with finger drags.
   React.useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // Close the mobile menu when a link is clicked.
   const handleMobileLink = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     handleAnchorClick(e, href);
     setOpen(false);
@@ -112,28 +84,37 @@ export function LandingNav() {
 
   return (
     <header
-      // Phase 40k — explicit Plus Jakarta Sans on the whole header so
-      // brand, links, and buttons share one professional typeface
-      // (matches Marc's "Efferd" reference screenshot).
       style={{ fontFamily: "var(--font-plus-jakarta-sans), system-ui, sans-serif" }}
       className={cn(
-        "sticky top-0 z-50 mx-auto w-full max-w-5xl border-b border-transparent",
-        "md:rounded-full md:border md:transition-all md:ease-out",
-        // scrolled + closed → shrunk pill with backdrop, sits 16px from top
+        // Phase 56: full-width edge-to-edge — no max-w or mx-auto in default state
+        "sticky top-0 z-50 w-full border-b border-transparent",
+        "transition-all duration-300 ease-out",
+        // Scrolled: shrink to centered pill (same as before)
         scrolled && !open && [
           "bg-card/95 supports-[backdrop-filter]:bg-card/65 backdrop-blur-xl",
-          "border-border md:top-4 md:max-w-4xl",
+          "border-border md:mx-auto md:top-4 md:rounded-full md:max-w-4xl",
           "shadow-[0_8px_32px_rgba(31,29,26,0.08)]",
         ],
-        // open mobile menu → solid surface so menu reads cleanly
         open && "bg-card/95",
       )}
     >
+      {/* Blue radial gradient — same palette as §6 pricing section.
+          Fades out when scrolled so the pill state stays clean. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0 transition-opacity duration-300",
+          "bg-[radial-gradient(ellipse_80%_160%_at_50%_0%,rgba(48,84,255,0.13)_0%,rgba(48,84,255,0.05)_55%,transparent_100%)]",
+          scrolled || open ? "opacity-0" : "opacity-100",
+        )}
+      />
+
       <nav
         className={cn(
-          "flex h-14 w-full items-center justify-between gap-3 px-4",
-          "md:h-12 md:transition-all md:ease-out",
-          scrolled && "md:px-3",
+          "relative flex h-16 w-full items-center justify-between gap-3",
+          "px-6 sm:px-10 lg:px-16",
+          "transition-all ease-out",
+          scrolled && "md:h-14 md:px-6",
         )}
         aria-label="Primary"
       >
@@ -141,14 +122,15 @@ export function LandingNav() {
         <PebbleMark />
 
         {/* Center anchor links (md+) */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-0.5 flex-shrink min-w-0">
           {LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={(e) => handleAnchorClick(e, link.href)}
               className={cn(
-                "inline-flex items-center px-3.5 py-1.5 rounded-full text-[15px] font-semibold tracking-tight",
+                "inline-flex items-center whitespace-nowrap px-3 py-2 rounded-full",
+                "text-[15px] font-semibold tracking-tight",
                 "text-foreground/85 hover:text-foreground hover:bg-accent",
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -160,11 +142,11 @@ export function LandingNav() {
         </div>
 
         {/* CTAs right (md+) */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
           <Link
             href="/login"
             className={cn(
-              "inline-flex items-center justify-center rounded-full border border-border px-4 py-1.5",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full border border-border px-4 py-2",
               "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
               "hover:bg-accent transition-colors",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -175,10 +157,11 @@ export function LandingNav() {
           <Link
             href="/signup"
             className={cn(
-              "inline-flex items-center justify-center rounded-full px-4 py-1.5",
-              "text-[15px] font-semibold tracking-tight text-background bg-foreground",
-              "hover:opacity-90 transition-opacity",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
+              "text-[15px] font-semibold tracking-tight text-white",
+              "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
+              "hover:brightness-110 transition-[filter] duration-150",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
             )}
           >
             Get Started
@@ -202,16 +185,10 @@ export function LandingNav() {
         </button>
       </nav>
 
-      {/* Mobile full-screen menu (≤md). Anchored below the nav row, fills
-          rest of viewport. Auto-closes on link click.
-          Phase 41 (2026-05-21) — uses `bottom: 0 + env(safe-area-inset-bottom)`
-          via the .pb-safe utility on the inner so the Sign In / Get
-          Started CTAs aren't hidden under the iPhone home-indicator.
-          Also gets overscroll-behavior: contain to stop scroll chaining
-          through to the body when the menu is open. */}
+      {/* Mobile full-screen menu (≤md). */}
       <div
         className={cn(
-          "fixed top-14 left-0 right-0 bottom-0 z-50 md:hidden",
+          "fixed top-16 left-0 right-0 bottom-0 z-50 md:hidden",
           "bg-background/95 backdrop-blur-xl border-y border-border",
           "flex flex-col overflow-hidden",
           "[overscroll-behavior:contain]",
@@ -227,7 +204,7 @@ export function LandingNav() {
                 onClick={(e) => handleMobileLink(e, link.href)}
                 className={cn(
                   "inline-flex items-center justify-start px-4 py-3 rounded-xl",
-                  "text-xl font-semibold tracking-tight text-foreground",
+                  "text-2xl font-semibold tracking-tight text-foreground",
                   "hover:bg-accent transition-colors",
                 )}
               >
@@ -241,7 +218,7 @@ export function LandingNav() {
               onClick={() => setOpen(false)}
               className={cn(
                 "inline-flex items-center justify-center rounded-full border border-border w-full py-3",
-                "text-base font-medium text-foreground bg-transparent",
+                "text-lg font-semibold text-foreground bg-transparent",
                 "hover:bg-accent transition-colors",
               )}
             >
@@ -252,7 +229,7 @@ export function LandingNav() {
               onClick={() => setOpen(false)}
               className={cn(
                 "inline-flex items-center justify-center rounded-full w-full py-3",
-                "text-base font-semibold text-background bg-foreground",
+                "text-lg font-semibold text-background bg-foreground",
                 "hover:opacity-90 transition-opacity",
               )}
             >

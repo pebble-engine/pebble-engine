@@ -22,9 +22,22 @@ const PEBBLE_ENGINE_URL = process.env.PEBBLE_ENGINE_URL ?? "http://127.0.0.1:800
  *   - Plausible analytics
  *   - Stripe.js for checkout sessions
  *   - Self everywhere else
- * Tighten further (nonce-based, drop unsafe-*) once we know nothing
- * breaks — that's a follow-up Observatory A+ pass.
+ *
+ * Dev vs prod split (Phase 56a):
+ *   - Dev adds http://localhost:8000 + http://127.0.0.1:8000 to connect-src
+ *     because NEXT_PUBLIC_PEBBLE_ENGINE_URL bypasses the Next.js proxy so
+ *     long SSE streams (generate-stream) don't get killed by the dev proxy.
+ *   - Dev omits upgrade-insecure-requests so HTTP localhost calls aren't
+ *     silently upgraded to HTTPS (which also fails locally).
  */
+const isDev = process.env.NODE_ENV === "development";
+
+// Extra connect-src hosts when running locally so the direct-to-engine
+// calls allowed by NEXT_PUBLIC_PEBBLE_ENGINE_URL aren't CSP-blocked.
+const devConnectSrc = isDev
+  ? " http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:*"
+  : "";
+
 const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options",        value: "SAMEORIGIN" },
@@ -38,13 +51,16 @@ const SECURITY_HEADERS = [
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       "img-src 'self' data: blob: https:",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com",
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com${devConnectSrc}`,
       "frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com",
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self' https://accounts.google.com https://github.com https://*.supabase.co",
       "object-src 'none'",
-      "upgrade-insecure-requests",
+      // upgrade-insecure-requests is intentionally OMITTED in dev:
+      // it would rewrite http://localhost:8000 → https://localhost:8000
+      // which fails and defeats the direct-engine bypass.
+      ...(!isDev ? ["upgrade-insecure-requests"] : []),
     ].join("; "),
   },
 ];
