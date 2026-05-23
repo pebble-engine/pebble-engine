@@ -500,7 +500,6 @@ def test_get_project_state_401_when_no_auth(tmp_path, monkeypatch):
     (out / slug).mkdir()
     (out / slug / "brief.json").write_text(json.dumps({"business_name": "Good Co"}),
                                           encoding="utf-8")
-    _seed_site(out, slug, {"app/page.tsx": "x"})
 
     h = FakeHandler()
     projects.run_get_project_state(h, slug)

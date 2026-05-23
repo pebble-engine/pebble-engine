@@ -993,8 +993,7 @@ def test_get_project_state_bundles_brief_plan_meta(engine_server):
 
 
 def test_get_project_state_404_for_unknown_slug(engine_server):
-    """E2E 404 path — non-existent slug returns 404 even though the
-    engine_server fixture bypasses ownership (fixture's bypass still
-    returns 404 for missing project dirs, mirroring real-world behavior)."""
+    """Missing project dir → 404 regardless of auth (require_project_owner
+    emits the 404 before ownership is even checked)."""
     status, _ = _get(engine_server["base"], "/api/projects/does-not-exist")
     assert status == 404

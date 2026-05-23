@@ -299,9 +299,13 @@ def run_get_project_state(handler, slug: str) -> None:
         if not p.exists():
             return None
         try:
-            return json.loads(p.read_text(encoding="utf-8"))
+            data = json.loads(p.read_text(encoding="utf-8"))
         except Exception:
             return None
+        # Coerce non-dict payloads to None — every consumer expects a
+        # dict-or-null contract; a corrupted JSON scalar would otherwise
+        # leak through and break callers.
+        return data if isinstance(data, dict) else None
 
     handler._json(200, {
         "slug":       slug,
