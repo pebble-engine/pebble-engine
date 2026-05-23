@@ -423,3 +423,56 @@ def test_project_delete_logs_engagement_event(fake_output):
     assert h.status == 200
     events = engagement_mod.read_user_events("test-user")
     assert any(e["event"] == "project_deleted" for e in events)
+
+
+# ---- /api/projects/<slug> (single-project state) ----------------------------
+
+def test_get_project_state_returns_brief_plan_meta(fake_output):
+    """The new GET /api/projects/<slug> bundles everything a workspace
+    needs to resume a project: slug + brief + plan + build_meta."""
+    slug = "good-co"
+    (fake_output / slug).mkdir()
+    (fake_output / slug / "brief.json").write_text(json.dumps({
+        "business_name": "Good Co",
+        "business_type": "bakery",
+        "_design_dna": "swiss_magazine",
+    }), encoding="utf-8")
+    (fake_output / slug / "plan.json").write_text(json.dumps({
+        "name": "Good Co",
+        "audience": "local",
+    }), encoding="utf-8")
+    (fake_output / slug / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-14T12:00:00",
+        "model": "qwen/qwen3.6-plus",
+    }), encoding="utf-8")
+    _seed_site(fake_output, slug, {"app/page.tsx": "x"})
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 200
+    body = h.json_body
+    assert body["slug"] == slug
+    assert body["brief"]["business_name"] == "Good Co"
+    assert body["plan"]["name"] == "Good Co"
+    assert body["build_meta"]["built_at"] == "2026-05-14T12:00:00"
+
+
+def test_get_project_state_404_for_unknown(fake_output):
+    h = FakeHandler()
+    projects.run_get_project_state(h, "does-not-exist")
+    assert h.status == 404
+
+
+def test_get_project_state_handles_missing_plan_gracefully(fake_output):
+    """Some old projects don't have plan.json yet. Return null for plan
+    rather than 500."""
+    slug = "ancient"
+    (fake_output / slug).mkdir()
+    (fake_output / slug / "brief.json").write_text(json.dumps({"business_name": "Ancient"}))
+    _seed_site(fake_output, slug, {"app/page.tsx": "x"})
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 200
+    assert h.json_body["plan"] is None
+    assert h.json_body["build_meta"] is None  # also missing

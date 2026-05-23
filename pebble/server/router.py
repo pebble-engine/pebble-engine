@@ -122,6 +122,13 @@ def route_get(handler) -> None:
             handler._handle_usage_summary()
         elif handler.path == "/api/activity":
             handler._handle_activity_feed()
+        elif handler.path.startswith("/api/projects/") and handler.path.count("/") == 3:
+            # Bare /api/projects/<slug> — no suffix. Must be checked before
+            # the suffix patterns below. Path has exactly 3 "/" chars:
+            # "" + "api" + "projects" + "<slug>".
+            slug = handler.path[len("/api/projects/"):]
+            from pebble.server.projects import run_get_project_state
+            run_get_project_state(handler, slug)
         elif handler.path == "/api/admin/users":
             from pebble.server.admin import run_list_users
             run_list_users(handler)
