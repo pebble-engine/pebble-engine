@@ -5,9 +5,10 @@ Branch: `phase56a-for-squitopest` (worktree `bold-hopper-c3631f`).
 
 ## TL;DR
 
-7 security holes closed + 1 PII-leak fix + 2 test-fixture repairs. Suite
-went from 2113 → 2120 passing (5 new regression pins + 2 pre-existing
-broken tests recovered).
+7 security holes closed + 1 PII-leak fix + 2 test-fixture repairs + 4 v3
+frontend bugs (1 of mine, 3 surfaced by a parallel-agent code review).
+Suite went from 2113 → 2120 passing (5 new regression pins + 2
+pre-existing broken tests recovered).
 
 The big one: `/api/projects` and `/api/usage` were leaking every user's
 project list + token-spend + cost data to anyone who hit them — both
@@ -17,6 +18,8 @@ only checked the legacy cookie). Closed in commit `08dd1d6`.
 ## Commits since `418147d` (last commit before this session)
 
 ```
+bb3d3ab fix(v3): 3 frontend bugs surfaced by overnight code review
+d4ad0f7 fix: workspace-shell phase allowlist missing 'ready' + 'integrations'
 204d629 fix: redact full emails in legacy auth log lines
 96c3b7f test: regression pin /api/enrich-content auth gate
 80a82e4 fix: rate-limit + body-cap /api/migrate (sister to /api/inspire)
@@ -106,7 +109,45 @@ enqueueing failed. Those logs get tailed by `/api/admin/errors`. Added
 a local `_redact_email` helper matching the existing
 `pebble.server.account._redact` shape (`a***@example.com`).
 
-### 7. Two pre-existing test-suite breakages I had to fix to unblock my own changes
+### 7. Workspace phase allowlist missing two phases (`d4ad0f7`)
+
+`workspace-shell.tsx` had a 6-item allowlist for valid hash phases
+(welcome / idea / plan / draft / design / publish) but the `Phase`
+type has 8 (also "ready" and "integrations"). Direct nav to
+`/workspace#phase=ready` would:
+1. `usePhase` accept the hash and set phase = "ready" → ReadyPhase renders
+2. THIS layoutEffect's allowlist reject "ready" → resolvedPhase falls
+   back to current phase (usually "welcome")
+3. The needsBuild bounce (from commit 09257f9) keyed on "welcome" → bounce
+   never fires
+4. ReadyPhase renders with no build, showing the misleading "your site
+   is live" surface to a user who hasn't built anything
+
+Fix: keep allowlist in sync with the Phase type via a named `ALL_PHASES`
+const.
+
+### 8. v3 frontend bug pass (`bb3d3ab`)
+
+Dispatched a parallel agent to sweep for non-security v3 bugs. Three
+real ones triaged + fixed:
+
+  - **Sidebar ProjectLink loaded the wrong project**:
+    `dashboard-sidebar.tsx`'s ProjectLink rendered
+    `<Link href="/workspace?slug=X">` but workspace-shell never read
+    the ?slug= query param. Clicking a sidebar project loaded the LAST
+    opened project, not the clicked one. Mirror the dashboard's
+    `setLastBuild()` + `router.push("/workspace")` pattern.
+  - **Hydration mismatch in DetectiveInput**: `useRotatingSuggestion`
+    initialized state with `Math.floor(Math.random() * ...)`. SSR seed
+    ≠ hydration seed → React hydration warning on every welcome
+    pageload. Fix: init to 0, randomize in useEffect on mount.
+  - **`streamGenerateSite` couldn't be cancelled**: added an optional
+    `signal?: AbortSignal` parameter. No call site uses it yet (build
+    is intentionally background-runnable per Phase 54c) but future
+    callers (Stop button, route-cancel) can plug in. Behavior unchanged
+    for current callers.
+
+### 9. Two pre-existing test-suite breakages I had to fix to unblock my own changes
 
 - `test_refine_llm.py` (11 tests) + `test_projects_api.py::test_refine_colors_rotates_palette`: all hit a 402 from the Phase 54a refinement-quota gate because the synthetic "test-user" id has no plan. Bypassed `would_exceed_quota` + `increment_usage` in the test fixtures (same pattern as the existing `require_project_owner` bypass). Plan-gate behavior is exercised in `tests/test_user_plan.py` with real fixtures. Commit `a92d3ae`.
 - `test_publish.py::test_dashboard_summary_includes_publish_after_publishing` + `test_domain.py::test_dashboard_summary_includes_domain_after_attach`: anon GET to `/api/projects` (now 401). Added `_signup_and_get_cookie` helpers and threaded a cookie through. Commit `712e784`.
