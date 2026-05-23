@@ -936,6 +936,25 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     except Exception as e:
         imagen_results["error"] = str(e)
 
+    # Phase 58c (2026-05-22) — image-URL validation safety net.
+    # The LLM is instructed to use real Pexels/Unsplash URLs but
+    # frequently hallucinates photo IDs that 404. Without this step,
+    # the generated site's hero collapses to gray/black boxes.
+    # HEAD-validates every Pexels/Unsplash URL, replaces 404s with
+    # real photos from the Pexels API keyed off the resolved industry.
+    # Silent on failure — never blocks the build.
+    image_repair: dict = {"enabled": False}
+    try:
+        from pebble.image_fallback import validate_and_repair_images
+        # industry_key (snake_case) is set higher up after IndustryIntelligence
+        # resolves the brief. Fall back to business_type when missing.
+        repair_industry = locals().get("industry_key") or business_type
+        image_repair = validate_and_repair_images(site_dir, repair_industry)
+        image_repair["enabled"] = True
+    except Exception as e:
+        log.warning("[postbuild] image validator crashed: %s", e)
+        image_repair["error"] = str(e)
+
     # Auto-run (npm install + next dev) gated on PEBBLE_AUTO_RUN=true
     auto_run_enabled = os.environ.get("PEBBLE_AUTO_RUN", "").strip().lower() in {"1", "true", "yes", "on"}
     server_info: dict = {"enabled": auto_run_enabled, "port": None, "url": None, "errors": []}
