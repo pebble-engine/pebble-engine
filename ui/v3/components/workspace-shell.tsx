@@ -184,14 +184,28 @@ export function WorkspaceShell() {
       sessionStorage.getItem("pebble.autostart") === "1" &&
       hasBriefContent &&
       !currentBuild;
+    console.log("[pebble.shell.layout] mount — pathname:", pathname, "phase:", phase, "resolvedPhase:", resolvedPhase, "hasBriefContent:", hasBriefContent, "hasBuild:", !!currentBuild, "autostartFlag:", typeof window !== "undefined" ? sessionStorage.getItem("pebble.autostart") : "n/a", "autostartPending:", autostartPending);
 
     if (autostartPending) {
+      console.log("[pebble.shell.layout] autostartPending=true → setPhase(draft)");
       setPhase("draft");
       return;
     }
 
-    if (!currentBuild && (resolvedPhase === "design" || resolvedPhase === "draft" || resolvedPhase === "publish")) {
+    // Welcome-bounce: ONLY when user has nothing in progress.
+    // - hasBriefContent=true means a build is queued or in flight (don't bounce).
+    // - generatingRef.current=true means a build just kicked off (don't bounce).
+    // - resolvedPhase==="draft" means we're actively building (don't bounce).
+    // Without these guards, this layoutEffect's second run (StrictMode dev OR
+    // post-handleGenerate re-render) sees a stale autostartFlag and clobbers
+    // the active draft state back to welcome. That's the "bounce to landing"
+    // bug Marc spent half an hour debugging.
+    const isActivelyBuilding = hasBriefContent || generatingRef.current || resolvedPhase === "draft";
+    if (!currentBuild && !isActivelyBuilding && (resolvedPhase === "design" || resolvedPhase === "publish")) {
+      console.log("[pebble.shell.layout] no build + no active work + resolvedPhase=", resolvedPhase, "→ setPhase(welcome)");
       setPhase("welcome");
+    } else {
+      console.log("[pebble.shell.layout] no welcome-bounce (activeBuild:", isActivelyBuilding, "phase:", resolvedPhase, ")");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -216,12 +230,17 @@ export function WorkspaceShell() {
     const wantsPlan = currentBrief.planFirst === true;
     const onWorkspace = pathname === "/workspace";
 
-    if (wantsPlan) return;
-    if (!hasBrief) return;
-    if (currentBuild) return;            // already built — don't restart
+    console.log("[pebble.shell.autostart] pathname:", pathname, "flagSet:", flagSet, "hasBrief:", hasBrief, "wantsPlan:", wantsPlan, "currentBuild:", !!currentBuild, "onWorkspace:", onWorkspace);
+
+    if (wantsPlan) { console.log("[pebble.shell.autostart] bail: wantsPlan"); return; }
+    if (!hasBrief) { console.log("[pebble.shell.autostart] bail: !hasBrief"); return; }
+    if (currentBuild) { console.log("[pebble.shell.autostart] bail: currentBuild"); return; }
 
     if (flagSet || onWorkspace) {
+      console.log("[pebble.shell.autostart] firing handleGenerate");
       handleGenerate(() => Promise.resolve({} as GenerateResponse));
+    } else {
+      console.log("[pebble.shell.autostart] no trigger");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
