@@ -125,7 +125,9 @@ export default function DashboardPage() {
                 {filter === "starred" ? "Starred designs" : filter === "recents" ? "Recently built" : "All designs"}
               </h1>
               <p className={`${type.body.s} text-muted-foreground mt-1`}>
-                {visible.length} {visible.length === 1 ? "design" : "designs"}
+                {loading
+                  ? "Loading your designs…"
+                  : `${visible.length} ${visible.length === 1 ? "design" : "designs"}`}
               </p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">

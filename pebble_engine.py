@@ -1858,6 +1858,45 @@ class PebbleHandler(BaseHTTPRequestHandler):
         except Exception:
             pass  # fall through to static files
 
+        # On-demand warmup (2026-05-23): if no dev URL is registered AND this
+        # is a Next.js project (has package.json), kick off `next dev` in a
+        # background thread and return a self-refreshing splash so the user
+        # doesn't see a broken-image 404 in the workspace iframe. The first
+        # /preview hit after an engine restart triggers warmup; subsequent
+        # /preview hits proxy normally once the splash auto-refreshes.
+        # Skipped in public_mode — public visitors should see live content
+        # or nothing, never a workspace-internal splash.
+        if not public_mode:
+            project_dir = OUTPUT_DIR / slug
+            site_dir    = project_dir / "site"
+            if (site_dir / "package.json").exists():
+                try:
+                    from pebble.server.preview_ondemand import (
+                        render_splash_html,
+                        start_or_get,
+                    )
+                    status = start_or_get(slug, site_dir)
+                    if status == "ready":
+                        # Race: registry just got populated while we were
+                        # checking. Tell the iframe to retry — the next hit
+                        # will land on the proxy path above.
+                        self.send_response(503)
+                        self.send_header("Retry-After", "1")
+                        self.send_header("Content-Type", "text/plain; charset=utf-8")
+                        self.end_headers()
+                        self.wfile.write(b"Preview just became ready - reload"); return
+                    html = render_splash_html(slug, status).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(html)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(html); return
+                except Exception:
+                    # Fall through to the original 404 path on any unexpected
+                    # error so the engine never crashes the preview path.
+                    pass
+
         site_file = OUTPUT_DIR / slug / "site" / rel
         if not site_file.exists() or not site_file.is_file():
             self.send_response(404); self.end_headers()
