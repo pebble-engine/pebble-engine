@@ -64,7 +64,7 @@ Environment flags that change behavior (see `.env`):
 - `pebble.email` — Resend SDK wrapper (welcome, password reset, form auto-responder).
 - `pebble.security` — rate limiters, project locks, `require_project_owner`, slug validation.
 - `pebble.server.build` — `/api/generate` and `/api/plan` request bodies. Snapshots site/ before overwriting.
-- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star,claim}` + `/api/rollback` + DELETE. `claim` migrates anon builds onto the caller's user account (cheat-sheet inverted-onboarding pattern).
+- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>` bundled state + `/api/projects/<slug>/{history,star,claim}` + `/api/rollback` + DELETE. `claim` migrates anon builds onto the caller's user account (cheat-sheet inverted-onboarding pattern). The bare-slug GET powers the v3 `/workspace/<slug>` deep-link route by returning `{slug, brief, plan, build_meta}` in one round-trip.
 - `pebble.server.refine` — `/api/refine`. Two refinement classes:
   - **Deterministic** (`billable: false`): `simpler` (regex palette tone-down), `colors` (rotates 5 brand-safe palettes). No LLM call. Milliseconds.
   - **LLM-backed** (`billable: true`): `friendlier`, `professional`, `booking`. Single focused LLM turn.
@@ -253,6 +253,7 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 | Method | Path | Body / Query | Purpose |
 |---|---|---|---|
 | GET | `/api/projects` | — | **List every project for the dashboard** — slug, name, type, file_count, starred, built_at |
+| GET | `/api/projects/<slug>` | — | **Bundled project state** (slug + brief + plan + build_meta) for the v3 workspace `/workspace/<slug>` deep-link route. Owner-gated. |
 | GET | `/api/projects/<slug>/history` | — | List snapshots, newest-first — for the workspace history drawer |
 | GET | `/api/projects/<slug>/analytics` | — | Page-view summary for the customer's generated site (7d window). |
 | POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. Pre-rollback state is also snapshotted (undoable). |
