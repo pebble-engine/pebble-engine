@@ -312,12 +312,40 @@ def require_project_owner(handler, slug: str) -> Optional[str]:
     if not project_dir.exists():
         handler._json(404, {"error": f"project not found: {slug}"})
         return None
-    try:
-        from pebble.server.auth import current_user_id
-    except Exception:
-        handler._json(500, {"error": "auth subsystem unavailable"})
-        return None
-    uid = current_user_id(handler)
+
+    # Phase 58d (2026-05-22) — accept BOTH auth paths:
+    #   1. Supabase Bearer JWT (modern, what v3 actually sends)
+    #   2. Legacy session cookie (deprecated; some old clients still use it)
+    # Previously this only checked the legacy cookie, so every owner-gated
+    # endpoint returned 401 for Supabase-authed users. Try the Bearer
+    # token first — if absent or invalid we silently fall through to the
+    # legacy path (no premature error response).
+    uid: Optional[str] = None
+    raw_auth = (handler.headers.get("Authorization", "") or "").strip()
+    if raw_auth.lower().startswith("bearer ") and len(raw_auth) > 7:
+        try:
+            from pebble import auth_admin
+            if auth_admin.is_configured():
+                try:
+                    supabase_user = auth_admin.validate_access_token(raw_auth[7:].strip())
+                    if isinstance(supabase_user, dict) and supabase_user.get("id"):
+                        uid = supabase_user["id"]
+                except auth_admin.AdminError:
+                    # GoTrue unreachable — DON'T 503 here, let the legacy
+                    # cookie path try too. Only fail closed if both miss.
+                    pass
+        except Exception:
+            # auth_admin import / configuration check failed — fall through.
+            pass
+
+    if not uid:
+        try:
+            from pebble.server.auth import current_user_id
+        except Exception:
+            handler._json(500, {"error": "auth subsystem unavailable"})
+            return None
+        uid = current_user_id(handler)
+
     if not uid:
         handler._json(401, {"error": "sign in required"})
         return None
