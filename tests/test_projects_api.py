@@ -505,3 +505,52 @@ def test_get_project_state_401_when_no_auth(tmp_path, monkeypatch):
     projects.run_get_project_state(h, slug)
     # No Authorization header on FakeHandler, no cookie — should 401
     assert h.status == 401
+
+
+def test_get_project_state_403_when_cross_tenant(tmp_path, monkeypatch):
+    """Cross-tenant isolation pin (NLM 2026-05-23 critique #8) — User B
+    must NOT be able to read User A's project. The existing auth-pin
+    only covers no-auth (401); this pins the 403 owner-mismatch path,
+    which is the real production threat (signed-in user trying to
+    enumerate other users' slugs)."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    class FakeEngine:
+        OUTPUT_DIR = out
+    monkeypatch.setattr(projects, "_engine", lambda: FakeEngine)
+
+    # Restore the real require_project_owner (undo the fixture bypass).
+    from pebble.security import require_project_owner as real_require
+    monkeypatch.setattr(projects, "require_project_owner", real_require)
+
+    # Seed a project owned by Alice. _project_owner reads _user_id from
+    # brief.json, so stamping it there is enough to mark ownership.
+    slug = "alices-cafe"
+    (out / slug).mkdir()
+    (out / slug / "brief.json").write_text(json.dumps({
+        "business_name": "Alice's Cafe",
+        "_user_id":      "alice-uid-12345",
+    }), encoding="utf-8")
+    _seed_site(out, slug, {"app/page.tsx": "x"})
+
+    # Simulate Bob calling — resolve_user_id returns Bob's UID, but the
+    # project is owned by Alice. The handler must 403.
+    monkeypatch.setattr(security_mod, "resolve_user_id",
+                        lambda handler: "bob-uid-99999")
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 403, (
+        f"expected 403 cross-tenant block, got {h.status}: {h.json_body}"
+    )
+    # And confirm the same handler call returns 200 when Bob IS Alice
+    # (sanity — proves the test is exercising the ownership branch, not
+    # 401 or 404 by accident).
+    monkeypatch.setattr(security_mod, "resolve_user_id",
+                        lambda handler: "alice-uid-12345")
+    h2 = FakeHandler()
+    projects.run_get_project_state(h2, slug)
+    assert h2.status == 200
+    assert h2.json_body["brief"]["business_name"] == "Alice's Cafe"

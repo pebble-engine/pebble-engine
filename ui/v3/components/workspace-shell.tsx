@@ -218,12 +218,24 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     const needsBuild = resolvedPhase === "design" || resolvedPhase === "publish" ||
                        resolvedPhase === "integrations" || resolvedPhase === "ready";
     const needsBrief = resolvedPhase === "plan";
-    // Skip the welcome-bounce on cold load of /workspace/<slug>: localStorage
-    // hasn't been hydrated by the slug-fetch effect yet, so currentBuild is
-    // null and we'd flash the welcome page for one frame before the fetch
-    // resolves. The slug-fetch effect below will populate state, and if it
-    // fails it bounces to /dashboard explicitly.
-    if (slugProp) return;
+    // /workspace/<slug> route: localStorage hasn't been hydrated by the
+    // slug-fetch effect yet, so currentBuild is null and we'd flash the
+    // welcome page for one frame before the fetch resolves. The slug-fetch
+    // effect below will populate state, and if it fails it bounces to
+    // /dashboard explicitly.
+    //
+    // NLM 2026-05-23 critique #5: a malformed deep-link like
+    // /workspace/<slug>#phase=welcome would render the welcome UI ("start
+    // a new project" hero + blank prompt) wrapped inside an EXISTING
+    // project's URL — extremely confusing. Coerce welcome/idea (which
+    // only make sense for fresh-build entry) to "design" when slugProp
+    // is present, so deep-links land on a sensible phase.
+    if (slugProp) {
+      if (resolvedPhase === "welcome" || resolvedPhase === "idea") {
+        setPhase("design");
+      }
+      return;
+    }
     if (!currentBuild && !isActivelyBuilding && needsBuild) {
       setPhase("welcome");
     } else if (!currentBuild && !hasBriefContent && needsBrief) {
@@ -274,9 +286,17 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     const cachedBrief = getBrief();
     if (cached?.slug === slugProp && cachedBrief?.business_name) return;
 
+    // Race-guard (NLM 2026-05-23 critique #2): rapid sidebar A→B clicks
+    // can fire two fetches back-to-back. If A's response lands AFTER B's,
+    // the cancelled flag prevents A's late resolve from clobbering B's
+    // freshly-written localStorage + React state. React StrictMode also
+    // double-invokes effects in dev — the cleanup runs between, so the
+    // first fetch is marked cancelled before its writes ever fire.
+    let cancelled = false;
     void (async () => {
       try {
         const state = await fetchProjectState(slugProp);
+        if (cancelled) return;
         // Write to the persistence layer (localStorage) first so all
         // downstream consumers keep working (history drawer, refine, etc.).
         storeBrief(state.brief as Brief);
@@ -293,11 +313,15 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         setBrief(getBrief());
         setPlan(getPlan());
       } catch (e) {
+        if (cancelled) return;
         console.error("[workspace] failed to load project state:", e);
         // Bounce to dashboard rather than render a half-loaded shell.
         router.push("/dashboard");
       }
     })();
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slugProp]);
 
