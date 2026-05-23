@@ -218,6 +218,12 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     const needsBuild = resolvedPhase === "design" || resolvedPhase === "publish" ||
                        resolvedPhase === "integrations" || resolvedPhase === "ready";
     const needsBrief = resolvedPhase === "plan";
+    // Skip the welcome-bounce on cold load of /workspace/<slug>: localStorage
+    // hasn't been hydrated by the slug-fetch effect yet, so currentBuild is
+    // null and we'd flash the welcome page for one frame before the fetch
+    // resolves. The slug-fetch effect below will populate state, and if it
+    // fails it bounces to /dashboard explicitly.
+    if (slugProp) return;
     if (!currentBuild && !isActivelyBuilding && needsBuild) {
       setPhase("welcome");
     } else if (!currentBuild && !hasBriefContent && needsBrief) {
@@ -279,7 +285,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
           slug:        state.slug,
           preview_url: `/preview/${state.slug}/`,
           saved_to:    `output/${state.slug}/`,
-          file_count:  0,
+          file_count:  (state.build_meta?.file_count as number | undefined) ?? 0,
         });
         // Refresh React state from localStorage so the UI re-renders
         // with the freshly-fetched data.
