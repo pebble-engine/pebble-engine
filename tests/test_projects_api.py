@@ -476,3 +476,33 @@ def test_get_project_state_handles_missing_plan_gracefully(fake_output):
     assert h.status == 200
     assert h.json_body["plan"] is None
     assert h.json_body["build_meta"] is None  # also missing
+
+
+def test_get_project_state_401_when_no_auth(tmp_path, monkeypatch):
+    """Pin the auth-gate behavior at the unit level. The fake_output
+    fixture bypasses require_project_owner for JSON-contract tests;
+    here we undo that to confirm the handler actually 401s on no auth."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    class FakeEngine:
+        OUTPUT_DIR = out
+    monkeypatch.setattr(projects, "_engine", lambda: FakeEngine)
+
+    # Restore the real require_project_owner (undo the fixture bypass).
+    # We import and use the actual function from security module.
+    from pebble.security import require_project_owner as real_require
+    monkeypatch.setattr(projects, "require_project_owner", real_require)
+
+    # Seed a real project so we get past the 404-doesn't-exist check
+    slug = "good-co"
+    (out / slug).mkdir()
+    (out / slug / "brief.json").write_text(json.dumps({"business_name": "Good Co"}),
+                                          encoding="utf-8")
+    _seed_site(out, slug, {"app/page.tsx": "x"})
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    # No Authorization header on FakeHandler, no cookie — should 401
+    assert h.status == 401

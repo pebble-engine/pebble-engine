@@ -968,9 +968,11 @@ def test_delete_rejects_subroute_paths(engine_server):
 # ---- /api/projects/<slug> (single-project state) ----------------------------
 
 def test_get_project_state_bundles_brief_plan_meta(engine_server):
-    """The new GET /api/projects/<slug> bundles everything a workspace
-    needs to resume a project: slug + brief + plan + build_meta. This is
-    called when the user opens /workspace/<slug> to populate the shell state."""
+    """E2E sanity check — the new endpoint serves the full bundled
+    state through the real HTTP server. Auth-gate behavior is covered
+    by the unit tests in test_projects_api.py (which exercise
+    require_project_owner) and by the engine_server fixture which
+    bypasses auth for JSON-contract testing."""
     out = engine_server["output"]
     _seed_project(out, "good-co", {"app/page.tsx": "x"},
                   brief={"business_name": "Good Co", "business_type": "bakery"})
@@ -979,16 +981,20 @@ def test_get_project_state_bundles_brief_plan_meta(engine_server):
         json.dumps({"name": "Good Co", "audience": "local"}), encoding="utf-8"
     )
     (out / "good-co" / "build_meta.json").write_text(
-        json.dumps({"built_at": "2026-05-14T12:00:00", "model": "qwen"}), encoding="utf-8"
+        json.dumps({"built_at": "2026-05-14T12:00:00", "model": "qwen/qwen3.6-plus"}),
+        encoding="utf-8",
     )
     status, body = _get(engine_server["base"], "/api/projects/good-co")
     assert status == 200
     assert body["slug"] == "good-co"
     assert body["brief"]["business_name"] == "Good Co"
-    assert body["plan"]["audience"] == "local"
-    assert body["build_meta"]["model"] == "qwen"
+    assert body["plan"]["name"] == "Good Co"
+    assert body["build_meta"]["built_at"] == "2026-05-14T12:00:00"
 
 
-def test_get_project_state_404_for_unknown(engine_server):
-    status, _ = _get(engine_server["base"], "/api/projects/nonexistent")
+def test_get_project_state_404_for_unknown_slug(engine_server):
+    """E2E 404 path — non-existent slug returns 404 even though the
+    engine_server fixture bypasses ownership (fixture's bypass still
+    returns 404 for missing project dirs, mirroring real-world behavior)."""
+    status, _ = _get(engine_server["base"], "/api/projects/does-not-exist")
     assert status == 404

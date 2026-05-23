@@ -186,41 +186,6 @@ def _project_mtime(project_dir: Path) -> str:
         return ""
 
 
-# --------- GET /api/projects/<slug> -----------------------------------------
-
-def run_get_project_state(handler, slug: str) -> None:
-    """Return the full state of a project: slug + brief + plan + build_meta.
-
-    Used by the v3 workspace shell to populate state when a user opens
-    a project via /workspace/<slug>. Missing plan / build_meta are
-    returned as null (old projects predate them).
-
-    Auth: gated through require_project_owner. The full project state
-    includes the brief (business name, design DNA, customer answers)
-    which is sensitive enough to keep behind ownership.
-    """
-    if require_project_owner(handler, slug) is None:
-        return
-
-    project_dir = _output_dir() / slug
-
-    def _read_optional(name: str):
-        p = project_dir / name
-        if not p.exists():
-            return None
-        try:
-            return json.loads(p.read_text(encoding="utf-8"))
-        except Exception:
-            return None
-
-    handler._json(200, {
-        "slug":       slug,
-        "brief":      _read_optional("brief.json") or {},
-        "plan":       _read_optional("plan.json"),
-        "build_meta": _read_optional("build_meta.json"),
-    })
-
-
 # --------- GET /api/activity ---------
 
 def run_activity_feed(handler) -> None:
@@ -308,6 +273,41 @@ def run_get_history(handler, slug: str) -> None:
         "slug":      slug,
         "snapshots": [e.to_dict() for e in entries],
         "count":     len(entries),
+    })
+
+
+# --------- GET /api/projects/<slug> -----------------------------------------
+
+def run_get_project_state(handler, slug: str) -> None:
+    """Return the full state of a project: slug + brief + plan + build_meta.
+
+    Used by the v3 workspace shell to populate state when a user opens
+    a project via /workspace/<slug>. Missing plan / build_meta are
+    returned as null (old projects predate them).
+
+    Auth: gated through require_project_owner. The full project state
+    includes the brief (business name, design DNA, customer answers)
+    which is sensitive enough to keep behind ownership.
+    """
+    if require_project_owner(handler, slug) is None:
+        return
+
+    project_dir = _output_dir() / slug
+
+    def _read_optional(name: str):
+        p = project_dir / name
+        if not p.exists():
+            return None
+        try:
+            return json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+
+    handler._json(200, {
+        "slug":       slug,
+        "brief":      _read_optional("brief.json") or {},
+        "plan":       _read_optional("plan.json"),
+        "build_meta": _read_optional("build_meta.json"),
     })
 
 
