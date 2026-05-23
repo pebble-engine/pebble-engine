@@ -44,6 +44,11 @@ const PROTECTED_PREFIXES = [
   "/dashboard",
   "/admin",
   "/inbox",
+  // Phase 58g — /settings was relying on a client-side router.replace()
+  // for auth gating. Defense-in-depth: SSR'd HTML for /settings would
+  // leak the page chrome (profile form, plan badge) to unauth scrapers
+  // before the JS bailed. Middleware now blocks at the boundary.
+  "/settings",
   // Legacy client-side redirects into /workspace. These render null
   // and rely on a JS-driven router.replace() to land the visitor on
   // the gated phase. With JS disabled or HTML scraped, the empty
