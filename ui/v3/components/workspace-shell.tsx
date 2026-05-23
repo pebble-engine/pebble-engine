@@ -314,8 +314,13 @@ export function WorkspaceShell() {
     setPhase("draft");
     const brief = getBrief();
 
-    // 5-minute hard timeout — engine hangs shouldn't leave users stuck in draft.
-    const timeoutMs = 5 * 60 * 1000;
+    // 12-minute hard timeout — Qwen 3.6 Plus multi-page builds typically
+    // run 60-300s but the eval+repair loop (PEBBLE_AUTO_REPAIR=true) can
+    // push past the prior 5-min ceiling. Bumped to 12 min so a normal
+    // build completes cleanly; real engine hangs still surface inside the
+    // window. Matches the engine-side _TIMEOUT_S=900s SSE generator
+    // timeout so neither side gives up before the other.
+    const timeoutMs = 12 * 60 * 1000;
     const timeoutP = new Promise<never>((_, reject) =>
       setTimeout(() => reject(new Error("Build timed out — please try again.")), timeoutMs),
     );
