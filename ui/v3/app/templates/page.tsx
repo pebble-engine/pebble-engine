@@ -26,7 +26,7 @@ import {
   type TemplateSummary,
 } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
-import { setLastBuild, type Brief } from "@/lib/state";
+import { type Brief } from "@/lib/state";
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -476,9 +476,7 @@ function InstantiateDialog({
       if (!res.ok || !res.slug) {
         throw new Error(res.swap_message || "Template instantiation failed");
       }
-      // Persist as the user's "last build" so the workspace can pick it up
-      setLastBuild({ slug: res.slug, businessName: businessName.trim() });
-      router.push(`/workspace?slug=${encodeURIComponent(res.slug)}`);
+      router.push(`/workspace/${encodeURIComponent(res.slug)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSubmitting(false);

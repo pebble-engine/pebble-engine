@@ -28,7 +28,6 @@ import {
   type ProjectSummary,
   type ActivityRow,
 } from "@/lib/api";
-import { setLastBuild } from "@/lib/state";
 import { interactions } from "@/lib/interactions";
 
 type Filter = "all" | "starred" | "recents";
@@ -91,14 +90,7 @@ export default function DashboardPage() {
   }
 
   function openProject(p: ProjectSummary) {
-    // Pretend the user just generated this so workspace routes work.
-    setLastBuild({
-      slug: p.slug,
-      preview_url: p.preview_url,
-      saved_to: `output/${p.slug}/`,
-      file_count: p.file_count,
-    });
-    router.push("/workspace");
+    router.push(`/workspace/${encodeURIComponent(p.slug)}`);
   }
 
   // Filter + search

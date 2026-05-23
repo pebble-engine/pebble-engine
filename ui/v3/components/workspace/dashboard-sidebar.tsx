@@ -55,7 +55,7 @@ import {
   type UsageSummary,
   type SubscriptionState,
 } from "@/lib/api";
-import { getUserProfile, setLastBuild } from "@/lib/state";
+import { getUserProfile } from "@/lib/state";
 import { useRouter } from "next/navigation";
 
 type IconType = typeof Home;
@@ -310,27 +310,17 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
 }
 
 function ProjectLink({ project }: { project: ProjectSummary }) {
-  // Phase 58f bug fix (2026-05-23): the previous version used
-  // ``<Link href="/workspace?slug=...">``, but workspace-shell never read
-  // the ``?slug=`` query param — it always renders whatever is in
-  // ``localStorage.pebble.lastBuild`` (set by the dashboard's
-  // ``openProject``). Clicking a sidebar project loaded the LAST opened
-  // project, not the clicked one. Mirror the dashboard's pattern:
-  // stamp setLastBuild() first, then navigate.
   const router = useRouter();
   function open(e: React.MouseEvent) {
     e.preventDefault();
-    setLastBuild({
-      slug:        project.slug,
-      preview_url: project.preview_url,
-      saved_to:    `output/${project.slug}/`,
-      file_count:  project.file_count,
-    });
-    router.push("/workspace");
+    // /workspace/<slug> is now self-sufficient — the shell fetches the
+    // brief + plan from the engine. We no longer need to stamp
+    // localStorage here (the shell does it after the fetch lands).
+    router.push(`/workspace/${encodeURIComponent(project.slug)}`);
   }
   return (
     <a
-      href="/workspace"
+      href={`/workspace/${encodeURIComponent(project.slug)}`}
       onClick={open}
       className={`${interactions.chip} flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground truncate`}
       title={project.business_name}
