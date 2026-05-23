@@ -24,7 +24,18 @@ from pebble.security import require_project_owner
 
 
 def run_get_integrations(handler, slug: str) -> None:
-    """GET /api/projects/<slug>/integrations"""
+    """GET /api/projects/<slug>/integrations — owner-gated.
+
+    Returns ``{id: {enabled, config}}`` for every integration on the
+    project. Config values can include phone numbers (WhatsApp),
+    addresses + emails (booking links), or arbitrary HTML/JS snippets
+    (custom-code) — all things a competitor shouldn't be able to peek
+    at by guessing slugs. Found during the 2026-05-22 overnight bug
+    hunt: the POST + DELETE handlers below were owner-gated but GET
+    was wide open.
+    """
+    if require_project_owner(handler, slug) is None:
+        return  # require_project_owner already wrote 400/401/403/404
     data = get_integrations(slug)
     handler._json(200, data)
 

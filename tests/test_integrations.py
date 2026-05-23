@@ -169,3 +169,71 @@ def test_render_all_snippets_combines_enabled(output_root):
 
 def test_render_all_snippets_empty_project(output_root):
     assert intg.render_all_snippets("no-project") == ""
+
+
+# ---------------------------------------------------------------------------
+# HTTP handler auth gate (Phase 58e, 2026-05-22)
+# ---------------------------------------------------------------------------
+#
+# run_get_integrations was missing require_project_owner — the POST and
+# DELETE handlers had it, but GET was wide open. This let any caller read
+# any project's integration configs by guessing the slug: WhatsApp phone,
+# booking-link URLs (often containing business emails), custom HTML/JS
+# snippets, etc. Tier-1 finding from the 2026-05-22 overnight bug hunt.
+
+from io import BytesIO
+import pebble.server.integrations as integrations_server
+import pebble.security as security_mod
+
+
+class _FakeHandler:
+    def __init__(self):
+        self.rfile = BytesIO(b"")
+        self.headers = {}
+        self.status = None
+        self.json_body = None
+    def _json(self, status, payload):
+        self.status = status
+        self.json_body = payload
+
+
+def test_get_integrations_401_when_signed_out(output_root, monkeypatch):
+    """The leak: previously returned 200 with the integration config to
+    any anon caller. Must 401 instead."""
+    intg.save_integration("victim-co", "whatsapp", True, {"phone": "+15551234567"})
+    h = _FakeHandler()
+    integrations_server.run_get_integrations(h, "victim-co")
+    assert h.status == 401
+    assert "integration" not in str(h.json_body).lower() or "sign" in str(h.json_body).lower()
+
+
+def test_get_integrations_403_when_signed_in_as_other_user(output_root, monkeypatch):
+    """Signed-in but not the owner — must 403, not 200."""
+    # Seed a project owned by ALICE
+    (output_root / "alice-co").mkdir()
+    (output_root / "alice-co" / "brief.json").write_text(
+        json.dumps({"_user_id": "ALICE_UID"}), encoding="utf-8"
+    )
+    intg.save_integration("alice-co", "whatsapp", True, {"phone": "+15551234567"})
+    # require_project_owner returns alice's uid when resolve_user_id == alice;
+    # for BOB we get 403. Stub resolve_user_id to BOB.
+    monkeypatch.setattr(security_mod, "resolve_user_id", lambda h: "BOB_UID")
+    h = _FakeHandler()
+    integrations_server.run_get_integrations(h, "alice-co")
+    assert h.status == 403
+
+
+def test_get_integrations_200_when_owner(output_root, monkeypatch):
+    """Owner case — must still return the configs (regression pin so we
+    don't accidentally over-gate)."""
+    (output_root / "alice-co").mkdir()
+    (output_root / "alice-co" / "brief.json").write_text(
+        json.dumps({"_user_id": "ALICE_UID"}), encoding="utf-8"
+    )
+    intg.save_integration("alice-co", "whatsapp", True, {"phone": "+15551234567"})
+    monkeypatch.setattr(security_mod, "resolve_user_id", lambda h: "ALICE_UID")
+    h = _FakeHandler()
+    integrations_server.run_get_integrations(h, "alice-co")
+    assert h.status == 200
+    assert "whatsapp" in h.json_body
+    assert h.json_body["whatsapp"]["config"]["phone"] == "+15551234567"
