@@ -150,7 +150,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   const safeChipDeck = useMemo(() => withReducedMotion(chipDeck), []);
   const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
-  // Hydrate from localStorage before the first paint so the user never sees
+  // Hydrate from sessionStorage before the first paint so the user never sees
   // an "empty" brief or the wrong phase. useLayoutEffect fires synchronously
   // after the commit but before the browser paints; useEffect would show the
   // wrong state for one frame (causes the logo / project-name flicker).
@@ -218,7 +218,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     const needsBuild = resolvedPhase === "design" || resolvedPhase === "publish" ||
                        resolvedPhase === "integrations" || resolvedPhase === "ready";
     const needsBrief = resolvedPhase === "plan";
-    // /workspace/<slug> route: localStorage hasn't been hydrated by the
+    // /workspace/<slug> route: sessionStorage hasn't been hydrated by the
     // slug-fetch effect yet, so currentBuild is null and we'd flash the
     // welcome page for one frame before the fetch resolves. The slug-fetch
     // effect below will populate state, and if it fails it bounces to
@@ -231,7 +231,13 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     // only make sense for fresh-build entry) to "design" when slugProp
     // is present, so deep-links land on a sensible phase.
     if (slugProp) {
-      if (resolvedPhase === "welcome" || resolvedPhase === "idea") {
+      // Audit Finding #2 (2026-05-23): "ready" added to the coerced set.
+      // /workspace/<slug>#phase=ready would otherwise mount ReadyPhase
+      // with build=null during the slug-fetch window, starting its
+      // 12-second auto-advance countdown before state hydrates. For a
+      // returning user with a slug URL, design is the right landing —
+      // they've already seen the post-build celebration.
+      if (resolvedPhase === "welcome" || resolvedPhase === "idea" || resolvedPhase === "ready") {
         setPhase("design");
       }
       return;
@@ -275,9 +281,9 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   // When the URL provides a slug (we're at /workspace/<slug>), fetch the
   // full project state from the engine. Without this, opening a project
   // from the sidebar would render with the PREVIOUS project's brief/plan
-  // still in localStorage — a real bug pre-fix.
+  // still in sessionStorage — a real bug pre-fix.
   //
-  // We skip the fetch when localStorage already matches the requested
+  // We skip the fetch when sessionStorage already matches the requested
   // slug (the sidebar click flow stamps it before navigating), so we
   // don't pay the round-trip when the data is already warm.
   useEffect(() => {
@@ -289,7 +295,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     // Race-guard (NLM 2026-05-23 critique #2): rapid sidebar A→B clicks
     // can fire two fetches back-to-back. If A's response lands AFTER B's,
     // the cancelled flag prevents A's late resolve from clobbering B's
-    // freshly-written localStorage + React state. React StrictMode also
+    // freshly-written sessionStorage + React state. React StrictMode also
     // double-invokes effects in dev — the cleanup runs between, so the
     // first fetch is marked cancelled before its writes ever fire.
     let cancelled = false;
@@ -297,17 +303,25 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
       try {
         const state = await fetchProjectState(slugProp);
         if (cancelled) return;
-        // Write to the persistence layer (localStorage) first so all
+        // Write to the persistence layer (sessionStorage) first so all
         // downstream consumers keep working (history drawer, refine, etc.).
         storeBrief(state.brief as Brief);
-        if (state.plan) storePlan(state.plan);
+        // Audit Finding #1 (2026-05-23): explicitly clear stale plan when
+        // the fetched project has none. Without this, switching from
+        // project A (has plan) to B (plan-less) would leave A's plan in
+        // sessionStorage and render A's pages under B's URL.
+        if (state.plan) {
+          storePlan(state.plan);
+        } else {
+          sessionStorage.removeItem("pebble.plan");
+        }
         setLastBuild({
           slug:        state.slug,
           preview_url: `/preview/${state.slug}/`,
           saved_to:    `output/${state.slug}/`,
           file_count:  (state.build_meta?.file_count as number | undefined) ?? 0,
         });
-        // Refresh React state from localStorage so the UI re-renders
+        // Refresh React state from sessionStorage so the UI re-renders
         // with the freshly-fetched data.
         setBuild(getLastBuild());
         setBrief(getBrief());
@@ -332,8 +346,9 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     // sign up before they can land on /workspace (proxy.ts middleware
     // would otherwise bounce them to /login, which feels broken — they
     // submitted a Build prompt, not a Sign In). Route to /signup with
-    // ?redirect=/workspace so the brief is preserved in localStorage and
-    // they autostart on return. Wait for auth to resolve so we don't
+    // ?redirect=/workspace so the brief is preserved in sessionStorage
+    // (same-tab navigation through signup → workspace keeps it intact)
+    // and they autostart on return. Wait for auth to resolve so we don't
     // accidentally signup-route a logged-in user whose session is still
     // hydrating.
     if (!authLoading && !authUser && pathname === "/") {
