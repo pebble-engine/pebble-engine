@@ -253,7 +253,21 @@ def validate_build_payload(answers):
 
     btype = answers.get("business_type") or answers.get("industry") or ""
     if not isinstance(btype, str) or not btype.strip():
-        return None, _validation_error("business_type", "business_type (or industry) is required")
+        # Phase 58b — the welcome-phase fast-path (Phase 56a) skips the
+        # questionnaire, so it doesn't collect business_type explicitly.
+        # extra_context typically contains enough signal ("thai restaurant
+        # in seattle") for the IndustryIntelligence layer to infer the
+        # industry downstream. Accept extra_context as the fallback so
+        # those builds aren't rejected at the validation gate.
+        extra = answers.get("extra_context") or ""
+        if isinstance(extra, str) and extra.strip():
+            # Promote extra_context to business_type so all downstream
+            # consumers (industry lookup, prompt assembly, slug) see a
+            # value. The industry inference will produce a snake_case
+            # key from this free-text below.
+            answers["business_type"] = extra.strip()
+        else:
+            return None, _validation_error("business_type", "business_type (or industry) is required")
 
     for field, cap in _STRING_LIMITS.items():
         val = answers.get(field)
