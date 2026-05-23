@@ -167,20 +167,30 @@ def test_health_returns_engine_status(engine_server):
 
 # ---- /api/projects ------------------------------------------------------
 
+def test_list_projects_401_when_signed_out(engine_server):
+    """Phase 58e regression pin (2026-05-22) — /api/projects used to fall
+    through to "show all projects" for anon callers, which leaked every
+    user's slug + business_name + inbox counts. Must 401 instead."""
+    status, _ = _get(engine_server["base"], "/api/projects")
+    assert status == 401
+
+
 def test_list_projects_empty_initially(engine_server):
-    status, body = _get(engine_server["base"], "/api/projects")
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    status, body = _get_with_cookie(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     assert body["count"] == 0
 
 
 def test_list_projects_returns_seeded_project(engine_server):
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
     _seed_project(
         engine_server["output"],
         "good-co",
         {"app/page.tsx": "x", "package.json": "y"},
         brief={"business_name": "Good Co", "business_type": "bakery"},
     )
-    status, body = _get(engine_server["base"], "/api/projects")
+    status, body = _get_with_cookie(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     assert body["count"] == 1
     p = body["projects"][0]
@@ -830,8 +840,17 @@ def test_inspire_rejects_oversized_body(engine_server):
 
 # ---- /api/usage ---------------------------------------------------------
 
+def test_usage_401_when_signed_out(engine_server):
+    """Phase 58e regression pin (2026-05-22) — /api/usage used to
+    aggregate every project regardless of caller, exposing every user's
+    slugs + token counts + cost data. Must 401 instead."""
+    status, _ = _get(engine_server["base"], "/api/usage")
+    assert status == 401
+
+
 def test_usage_empty_when_no_projects(engine_server):
-    status, body = _get(engine_server["base"], "/api/usage")
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
     assert status == 200
     assert body["projects"] == 0
     assert body["total_estimated_cost_usd"] == 0
@@ -839,6 +858,7 @@ def test_usage_empty_when_no_projects(engine_server):
 
 
 def test_usage_aggregates_build_meta(engine_server):
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
     out = engine_server["output"]
     _seed_project(out, "p1", {"app/page.tsx": "x"})
     (out / "p1" / "build_meta.json").write_text(json.dumps({
@@ -857,7 +877,7 @@ def test_usage_aggregates_build_meta(engine_server):
         "estimated_cost_usd": 0.030,
     }), encoding="utf-8")
 
-    status, body = _get(engine_server["base"], "/api/usage")
+    status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
     assert status == 200
     assert body["projects"] == 2
     assert body["total_input_tokens"] == 13000
@@ -868,10 +888,42 @@ def test_usage_aggregates_build_meta(engine_server):
 
 
 def test_usage_skips_projects_without_build_meta(engine_server):
+    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
     out = engine_server["output"]
     _seed_project(out, "still-cooking", {"app/page.tsx": "x"})  # no build_meta.json
-    status, body = _get(engine_server["base"], "/api/usage")
+    status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
     assert body["projects"] == 0
+
+
+def test_usage_filters_other_users_projects(engine_server):
+    """Phase 58e (2026-05-22) — usage is now per-caller. A project
+    owned by another user must not appear in the caller's aggregation."""
+    cookie = _signin(engine_server["base"], "alice@example.com", "valid-password")
+    out = engine_server["output"]
+    # Alice's project
+    _seed_project(out, "alice-co", {"app/page.tsx": "x"},
+                  brief={"business_name": "Alice", "_user_id": "ALICE_PLACEHOLDER"})
+    (out / "alice-co" / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-22T12:00:00",
+        "billable": True,
+        "tokens_used": {"input": 1000, "output": 1000},
+        "estimated_cost_usd": 0.005,
+    }), encoding="utf-8")
+    # Stranger's project — owner is a fixed other id, never alice
+    _seed_project(out, "stranger-co", {"app/page.tsx": "x"},
+                  brief={"business_name": "Stranger", "_user_id": "OTHER_USER_ID"})
+    (out / "stranger-co" / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-22T12:00:00",
+        "billable": True,
+        "tokens_used": {"input": 9999, "output": 9999},
+        "estimated_cost_usd": 99.99,
+    }), encoding="utf-8")
+    status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
+    assert status == 200
+    # Stranger's project must not appear or contribute to the total
+    slugs = [r["slug"] for r in body["by_project"]]
+    assert "stranger-co" not in slugs
+    assert body["total_estimated_cost_usd"] < 1.0  # nowhere near 99.99
 
 
 # ---- DELETE /api/projects/<slug> ----------------------------------------

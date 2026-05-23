@@ -291,6 +291,54 @@ def require_user(handler) -> Optional[dict]:
     return user
 
 
+def resolve_user_id(handler) -> Optional[str]:
+    """Resolve the calling user's id from EITHER auth path:
+
+      1. ``Authorization: Bearer <jwt>`` — Supabase access token (what
+         the v3 frontend sends).
+      2. Legacy ``pebble_session`` cookie — homegrown auth, deprecated
+         but still used by Python test fixtures.
+
+    Returns ``None`` if neither identifies a valid user. NEVER writes
+    to the handler — the caller decides what 'no user' means for its
+    endpoint (401, empty list, etc.).
+
+    Phase 58e (2026-05-22) — extracted from ``require_project_owner``
+    so the project-listing and usage-summary endpoints (which never
+    take a slug) can use the same Bearer-first/cookie-fallback chain.
+    Without this, /api/projects and /api/usage were silently treating
+    Bearer-authed v3 callers as logged-out, and showing them every
+    user's projects + cost data. Found during the 2026-05-22 overnight
+    bug hunt.
+    """
+    uid: Optional[str] = None
+    raw_auth = (handler.headers.get("Authorization", "") or "").strip()
+    if raw_auth.lower().startswith("bearer ") and len(raw_auth) > 7:
+        try:
+            from pebble import auth_admin
+            if auth_admin.is_configured():
+                try:
+                    supabase_user = auth_admin.validate_access_token(raw_auth[7:].strip())
+                    if isinstance(supabase_user, dict) and supabase_user.get("id"):
+                        uid = supabase_user["id"]
+                except auth_admin.AdminError:
+                    # GoTrue unreachable — DON'T fail here, let the
+                    # legacy cookie path try too. Only None out if both
+                    # miss; the caller decides what to do with that.
+                    pass
+        except Exception:
+            # auth_admin import / configuration check failed — fall through.
+            pass
+
+    if not uid:
+        try:
+            from pebble.server.auth import current_user_id
+            uid = current_user_id(handler)
+        except Exception:
+            uid = None
+    return uid
+
+
 def require_project_owner(handler, slug: str) -> Optional[str]:
     """Return the calling user's id on success, otherwise respond and
     return None.
@@ -313,38 +361,10 @@ def require_project_owner(handler, slug: str) -> Optional[str]:
         handler._json(404, {"error": f"project not found: {slug}"})
         return None
 
-    # Phase 58d (2026-05-22) — accept BOTH auth paths:
-    #   1. Supabase Bearer JWT (modern, what v3 actually sends)
-    #   2. Legacy session cookie (deprecated; some old clients still use it)
-    # Previously this only checked the legacy cookie, so every owner-gated
-    # endpoint returned 401 for Supabase-authed users. Try the Bearer
-    # token first — if absent or invalid we silently fall through to the
-    # legacy path (no premature error response).
-    uid: Optional[str] = None
-    raw_auth = (handler.headers.get("Authorization", "") or "").strip()
-    if raw_auth.lower().startswith("bearer ") and len(raw_auth) > 7:
-        try:
-            from pebble import auth_admin
-            if auth_admin.is_configured():
-                try:
-                    supabase_user = auth_admin.validate_access_token(raw_auth[7:].strip())
-                    if isinstance(supabase_user, dict) and supabase_user.get("id"):
-                        uid = supabase_user["id"]
-                except auth_admin.AdminError:
-                    # GoTrue unreachable — DON'T 503 here, let the legacy
-                    # cookie path try too. Only fail closed if both miss.
-                    pass
-        except Exception:
-            # auth_admin import / configuration check failed — fall through.
-            pass
-
-    if not uid:
-        try:
-            from pebble.server.auth import current_user_id
-        except Exception:
-            handler._json(500, {"error": "auth subsystem unavailable"})
-            return None
-        uid = current_user_id(handler)
+    # Phase 58d (2026-05-22) — accept BOTH auth paths via the shared
+    # resolver: Supabase Bearer JWT first (what v3 actually sends),
+    # then legacy session cookie. Returns None on no/invalid auth.
+    uid = resolve_user_id(handler)
 
     if not uid:
         handler._json(401, {"error": "sign in required"})

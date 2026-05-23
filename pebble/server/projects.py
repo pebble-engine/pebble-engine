@@ -15,7 +15,12 @@ import shutil
 from pebble.engagement import log_event as _log_engagement
 from pebble.history import list_history, restore_snapshot
 from pebble.log import log
-from pebble.security import project_lock, require_project_owner, validate_snapshot_id
+from pebble.security import (
+    project_lock,
+    require_project_owner,
+    resolve_user_id,
+    validate_snapshot_id,
+)
 
 
 def _engine():
@@ -44,20 +49,24 @@ def _read_body(handler) -> Optional[dict]:
 def run_list_projects(handler) -> None:
     """List every project in output/ that the current user can see.
 
-    - Logged-in users see their own projects (by ``_user_id``) plus unclaimed
-      projects (no ``_user_id``). Unclaimed = anything built before auth was
-      added; they remain visible so the user doesn't lose access on first
-      login.
-    - Logged-out users see all projects (legacy behavior).
+    - Signed-in users see their own projects (by ``_user_id``) plus
+      unclaimed projects (no ``_user_id``). Unclaimed = anything built
+      before auth was added; they remain visible so the user doesn't
+      lose access on first login.
+    - Signed-out users → 401.
+
+    Phase 58e (2026-05-22) — previously fell back to "show all projects"
+    when no user could be resolved. That was a leak in two ways: anon
+    callers saw every project's slug + business_name + inbox counts,
+    AND signed-in v3 users (Bearer JWT) were also treated as anon
+    because the resolver only checked legacy cookies. Now uses the
+    shared ``resolve_user_id`` (Bearer-first, cookie-fallback) and
+    fails closed.
     """
-    # Resolve current user once. Failure to import auth is tolerated so the
-    # endpoint stays usable in environments without the auth module loaded.
-    current_uid: Optional[str] = None
-    try:
-        from pebble.server.auth import current_user_id
-        current_uid = current_user_id(handler)
-    except Exception:
-        current_uid = None
+    current_uid = resolve_user_id(handler)
+    if not current_uid:
+        handler._json(401, {"error": "sign in required"})
+        return
 
     out = _output_dir()
     if not out.exists():
@@ -192,12 +201,11 @@ def run_activity_feed(handler) -> None:
     """
     # Resolve current user. Signed-out callers get 401 — fall-through
     # to "all projects" was a leak NotebookLM caught in review.
-    current_uid: Optional[str] = None
-    try:
-        from pebble.server.auth import current_user_id
-        current_uid = current_user_id(handler)
-    except Exception:
-        current_uid = None
+    # Phase 58e (2026-05-22) — switched from current_user_id (legacy
+    # cookie only) to resolve_user_id (Bearer JWT first, then cookie)
+    # so v3 Supabase-authed callers actually get their own activity
+    # instead of being treated as anon.
+    current_uid = resolve_user_id(handler)
     if not current_uid:
         handler._json(401, {"error": "sign in required"})
         return
@@ -358,13 +366,20 @@ def run_toggle_star(handler, slug: str) -> None:
 # --------- GET /api/usage ---------
 
 def run_usage_summary(handler) -> None:
-    """Aggregate cost telemetry across every project for a dashboard
-    "this period: $X" indicator.
+    """Aggregate cost telemetry across the caller's projects for a
+    dashboard "this period: $X" indicator.
 
     Sums tokens_used and estimated_cost_usd from build_meta.json across
-    every project directory. Refinement and visual-edit calls don't
-    yet write their own meta files (they only update billable in their
-    HTTP response), so this is generation-only for now.
+    the caller's project directories. Refinement and visual-edit calls
+    don't yet write their own meta files (they only update billable in
+    their HTTP response), so this is generation-only for now.
+
+    Auth (Phase 58e, 2026-05-22): the endpoint used to aggregate every
+    project in output/ regardless of caller — anyone hitting /api/usage
+    saw every user's slugs + token counts + cost. Now requires a valid
+    user (Bearer JWT or legacy cookie) and scopes the aggregation to
+    that user's own + unclaimed projects (matching the dashboard
+    listing rules).
 
     Response::
 
@@ -378,6 +393,11 @@ def run_usage_summary(handler) -> None:
           ]
         }
     """
+    current_uid = resolve_user_id(handler)
+    if not current_uid:
+        handler._json(401, {"error": "sign in required"})
+        return
+
     out = _output_dir()
     if not out.exists():
         handler._json(200, {
@@ -395,6 +415,17 @@ def run_usage_summary(handler) -> None:
     for project_dir in out.iterdir():
         if not project_dir.is_dir():
             continue
+        # User-scope filter — owner must match or be unclaimed
+        # (consistent with list_projects + activity_feed).
+        brief_path = project_dir / "brief.json"
+        if brief_path.exists():
+            try:
+                brief = json.loads(brief_path.read_text(encoding="utf-8"))
+            except Exception:
+                brief = {}
+            owner = brief.get("_user_id")
+            if owner and owner != current_uid:
+                continue
         meta_path = project_dir / "build_meta.json"
         if not meta_path.exists():
             continue

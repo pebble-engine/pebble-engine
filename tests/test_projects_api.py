@@ -74,6 +74,14 @@ def fake_output(tmp_path, monkeypatch):
     monkeypatch.setattr(projects, "require_project_owner", bypass)
     monkeypatch.setattr(refine, "require_project_owner", bypass)
     monkeypatch.setattr(visual_edit, "require_project_owner", bypass)
+    # Phase 58e (2026-05-22) — /api/projects + /api/usage now require
+    # an authenticated user (used to fall through to "show all" on
+    # anon callers, which was a leak). The JSON-contract tests below
+    # don't pass auth headers, so short-circuit resolve_user_id too
+    # — the same way require_project_owner is bypassed above. Auth-
+    # specific behavior is exercised in test_security.py + test_http_e2e.py.
+    monkeypatch.setattr(security_mod, "resolve_user_id", lambda h: "test-user")
+    monkeypatch.setattr(projects, "resolve_user_id", lambda h: "test-user")
     # Isolate engagement storage per test (T17). Without this every test
     # would append to a shared output/.engagement/ dir.
     monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
