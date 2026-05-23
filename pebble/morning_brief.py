@@ -187,10 +187,14 @@ def section_engine_log(window_hours: int) -> Section:
         )
 
     # Cap at last 5MB to bound memory on weeks-old logs.
+    # If the file is smaller than the cap, just read the whole thing —
+    # `seek(-bytes, 2)` errors on small files because the negative
+    # offset from end would land before byte 0.
     size = ENGINE_ERR.stat().st_size
-    read_bytes = min(size, 5 * 1024 * 1024)
+    cap = 5 * 1024 * 1024
     with ENGINE_ERR.open("rb") as f:
-        f.seek(-read_bytes, 2 if size > read_bytes else 0)
+        if size > cap:
+            f.seek(-cap, 2)
         tail = f.read().decode("utf-8", errors="replace")
 
     errors, warnings, noise = [], [], []
