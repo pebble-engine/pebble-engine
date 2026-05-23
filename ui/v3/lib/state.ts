@@ -92,16 +92,30 @@ const KEY_BRIEF = "pebble.brief";
 const KEY_PLAN  = "pebble.plan";
 const KEY_BUILD = "pebble.lastBuild";
 
-// localStorage so state survives tab close / browser restart.
-// sessionStorage would lose everything on close, sending the user back
-// to the welcome screen after a fresh tab open.
+// sessionStorage (tab-scoped) so two tabs editing two different projects
+// don't clobber each other's brief / plan / lastBuild. NLM 2026-05-23
+// critique #4: before this fix, opening project A in tab 1 and project B
+// in tab 2 left BOTH tabs reading whichever project was most-recently
+// loaded — a silent data-corruption bug now made worse by /workspace/<slug>
+// URLs that explicitly invite multi-tab use.
+//
+// Trade-off: closing the tab mid-questionnaire loses the in-flight draft.
+// Once a build exists, /workspace/<slug> rehydrates from the engine via
+// fetchProjectState(), so the loss only affects pre-build drafts (~1% of
+// sessions). userProfile stays in localStorage (cross-project preference).
+//
+// Migration story: returning users with stale `pebble.brief` etc. in
+// localStorage will see those rows simply ignored. They land on welcome,
+// not on a half-loaded prior project — that's the correct UX. We could
+// add a one-shot copy-then-purge but it's not worth the code; the
+// "lost state" is at most one incomplete questionnaire.
 export function getBrief(): Brief {
   if (typeof window === "undefined") return {};
-  try { return JSON.parse(localStorage.getItem(KEY_BRIEF) || "{}"); } catch { return {}; }
+  try { return JSON.parse(sessionStorage.getItem(KEY_BRIEF) || "{}"); } catch { return {}; }
 }
 export function setBrief(b: Brief): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(KEY_BRIEF, JSON.stringify(b));
+  sessionStorage.setItem(KEY_BRIEF, JSON.stringify(b));
 }
 export function patchBrief(patch: Partial<Brief>): Brief {
   const next = { ...getBrief(), ...patch };
@@ -110,19 +124,19 @@ export function patchBrief(patch: Partial<Brief>): Brief {
 }
 export function getPlan(): PebblePlan | null {
   if (typeof window === "undefined") return null;
-  try { return JSON.parse(localStorage.getItem(KEY_PLAN) || "null"); } catch { return null; }
+  try { return JSON.parse(sessionStorage.getItem(KEY_PLAN) || "null"); } catch { return null; }
 }
 export function setPlan(p: PebblePlan): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(KEY_PLAN, JSON.stringify(p));
+  sessionStorage.setItem(KEY_PLAN, JSON.stringify(p));
 }
 export function getLastBuild(): { slug: string; preview_url: string; [key: string]: unknown } | null {
   if (typeof window === "undefined") return null;
-  try { return JSON.parse(localStorage.getItem(KEY_BUILD) || "null"); } catch { return null; }
+  try { return JSON.parse(sessionStorage.getItem(KEY_BUILD) || "null"); } catch { return null; }
 }
 export function setLastBuild(b: unknown): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(KEY_BUILD, JSON.stringify(b));
+  sessionStorage.setItem(KEY_BUILD, JSON.stringify(b));
 }
 
 /**
@@ -134,9 +148,20 @@ export function setLastBuild(b: unknown): void {
  *
  * 2026-05-20 Phase 15a: added because Marc's 4th rebuild kept landing
  * on the same "Untitled Project" with prior chips pre-selected. UX gap.
+ *
+ * 2026-05-23: storage backend swapped to sessionStorage (see KEY_*
+ * comment block) so the removes target the right place. Also purges
+ * the legacy localStorage keys for users who still have stale rows
+ * from the old code — one-shot housekeeping, runs every time which is
+ * cheap.
  */
 export function clearBriefForNewProject(): void {
   if (typeof window === "undefined") return;
+  sessionStorage.removeItem(KEY_BRIEF);
+  sessionStorage.removeItem(KEY_PLAN);
+  sessionStorage.removeItem(KEY_BUILD);
+  // Also clean up any leftover localStorage rows from before the
+  // sessionStorage migration. Safe no-op when keys are absent.
   localStorage.removeItem(KEY_BRIEF);
   localStorage.removeItem(KEY_PLAN);
   localStorage.removeItem(KEY_BUILD);

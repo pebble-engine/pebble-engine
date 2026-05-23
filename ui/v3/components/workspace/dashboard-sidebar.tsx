@@ -55,7 +55,7 @@ import {
   type UsageSummary,
   type SubscriptionState,
 } from "@/lib/api";
-import { getUserProfile } from "@/lib/state";
+import { getUserProfile, clearBriefForNewProject } from "@/lib/state";
 import { useRouter } from "next/navigation";
 
 type IconType = typeof Home;
@@ -231,13 +231,13 @@ export function DashboardSidebar() {
           href="/workspace#phase=welcome"
           // Clear stale brief/build/plan so the user gets a TRUE fresh
           // start. Without this, the workspace shell would hydrate the
-          // previous brief from localStorage and (in the worst case)
-          // auto-rebuild it.
+          // previous brief from storage and (in the worst case)
+          // auto-rebuild it. Routes through clearBriefForNewProject()
+          // which hits the right storage (now sessionStorage) AND
+          // sweeps the legacy localStorage rows for migrating users.
           onClick={() => {
             try {
-              localStorage.removeItem("pebble.brief");
-              localStorage.removeItem("pebble.lastBuild");
-              localStorage.removeItem("pebble.plan");
+              clearBriefForNewProject();
               sessionStorage.removeItem("pebble.autostart");
             } catch { /* storage disabled — fine */ }
           }}
