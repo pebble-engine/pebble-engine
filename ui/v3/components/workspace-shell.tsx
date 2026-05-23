@@ -165,8 +165,16 @@ export function WorkspaceShell() {
     // but we check it here so we don't race with its layoutEffect).
     const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
     const hashPhase = hashParams.get("phase");
+    // Phase 58f bug fix (2026-05-23): the allowed list was missing
+    // "ready" and "integrations", so a direct nav to
+    // /workspace#phase=ready would fall through to the current phase
+    // (usually "welcome" on first mount) and the needsBuild check below
+    // wouldn't trigger — but usePhase HAD already accepted the hash and
+    // set phase="ready", so the page rendered ReadyPhase without a build.
+    // Keep this list in sync with the Phase type in use-phase.ts.
+    const ALL_PHASES = ["welcome","idea","plan","draft","ready","design","publish","integrations"] as const;
     const resolvedPhase: Phase = (
-      hashPhase && ["welcome","idea","plan","draft","design","publish"].includes(hashPhase)
+      hashPhase && (ALL_PHASES as readonly string[]).includes(hashPhase)
         ? hashPhase as Phase
         : phase
     );
