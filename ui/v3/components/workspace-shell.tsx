@@ -197,8 +197,20 @@ export function WorkspaceShell() {
     // Without these guards, this layoutEffect's second run (StrictMode dev OR
     // post-handleGenerate re-render) sees a stale autostartFlag and clobbers
     // the active draft state back to welcome.
+    //
+    // Phase 58f: extended to ALL phases that require a build/brief to make
+    // sense — design, publish, integrations, ready (require build), plan
+    // (requires brief). Without these bounces, direct URL access to e.g.
+    // /workspace#phase=ready renders "your site is live" with no actual
+    // build, and /workspace#phase=plan spins forever waiting on a plan
+    // that will never load.
     const isActivelyBuilding = hasBriefContent || generatingRef.current || resolvedPhase === "draft";
-    if (!currentBuild && !isActivelyBuilding && (resolvedPhase === "design" || resolvedPhase === "publish")) {
+    const needsBuild = resolvedPhase === "design" || resolvedPhase === "publish" ||
+                       resolvedPhase === "integrations" || resolvedPhase === "ready";
+    const needsBrief = resolvedPhase === "plan";
+    if (!currentBuild && !isActivelyBuilding && needsBuild) {
+      setPhase("welcome");
+    } else if (!currentBuild && !hasBriefContent && needsBrief) {
       setPhase("welcome");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
