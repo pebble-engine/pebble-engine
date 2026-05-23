@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import { withSentryConfig } from "@sentry/nextjs";
 
 /**
  * Proxy /api/* and /preview/* to the Python engine (localhost:8000) during
@@ -95,4 +96,27 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+/**
+ * Sentry wrapper — adds source-map upload at build time + the
+ * /monitoring tunnel route at runtime.
+ *
+ * tunnelRoute is the important one: it makes the browser SDK POST
+ * events to /monitoring (same-origin) instead of *.ingest.sentry.io.
+ * That sidesteps two problems at once:
+ *   1. Our CSP only lists 'self' + a small allowlist in connect-src;
+ *      ingest.sentry.io is NOT on it, so without the tunnel the
+ *      browser would block every Sentry POST.
+ *   2. Some ad-blockers block requests to *.sentry.io.
+ *
+ * org / project are required for source-map upload. authToken is read
+ * from SENTRY_AUTH_TOKEN env var (Sentry CLI default); leave it unset
+ * locally and the wrapper silently skips upload — runtime still works.
+ */
+export default withSentryConfig(nextConfig, {
+  org:                   "pebble-6q",
+  project:               "pebble-v3",
+  silent:                !process.env.CI,
+  tunnelRoute:           "/monitoring",
+  widenClientFileUpload: true,
+  disableLogger:         true,
+});

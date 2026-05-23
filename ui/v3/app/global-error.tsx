@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import * as Sentry from "@sentry/nextjs";
 
 // Catches errors in the root layout itself (AuthProvider, fonts, etc.).
 // Must be a very minimal component — cannot rely on any layout providers,
@@ -13,6 +14,9 @@ export default function GlobalError({
   reset: () => void;
 }) {
   useEffect(() => {
+    // Sentry: capture root-level errors that React's normal error
+    // boundary can't reach. No-op if SENTRY_DSN isn't configured.
+    Sentry.captureException(error);
     console.error("[pebble global error]", error);
   }, [error]);
 
