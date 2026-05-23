@@ -60,6 +60,20 @@ def build_stream_generator(
     def _run() -> None:
         try:
             run_build(shim, generate=True, progress_cb=_cb)
+            # If run_build short-circuited with a non-2xx response (rate
+            # limit 429, quota gate 402, auth 401, validation 400, etc.),
+            # the body was captured on the shim instead of surfacing
+            # through progress_cb. Translate it into an SSE error event
+            # so the client sees something better than the generic
+            # "Stream ended without a done event" fallback.
+            if shim.response_status >= 400:
+                err_msg = f"HTTP {shim.response_status}"
+                try:
+                    payload = json.loads((shim.binary_body or b"").decode("utf-8"))
+                    err_msg = payload.get("error") or err_msg
+                except Exception:
+                    pass
+                q.put(("error", {"error": err_msg, "status": shim.response_status}))
         except Exception as exc:
             q.put(("error", {"error": str(exc)}))
         finally:
