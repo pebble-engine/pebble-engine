@@ -307,6 +307,22 @@ export async function toggleStar(slug: string, starred?: boolean): Promise<{ slu
     typeof starred === "boolean" ? { starred } : {});
 }
 
+// ---------- /api/projects/<slug> (single-project state) ---------------------
+
+export type ProjectState = {
+  slug:       string;
+  brief:      Record<string, unknown>;
+  plan:       PebblePlan | null;
+  build_meta: Record<string, unknown> | null;
+};
+
+/** Fetch the full state of one project — brief + plan + build_meta.
+ *  Used by /workspace/<slug> dynamic route to populate the shell on
+ *  mount without depending on localStorage. */
+export async function fetchProjectState(slug: string): Promise<ProjectState> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}`);
+}
+
 // ---------- /api/bot-message (Phase 25b, 2026-05-20) -----------------------
 //
 // Cheap GPT-4o-mini chat for the workspace "bot persona" — greeting on
