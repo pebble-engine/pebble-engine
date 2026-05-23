@@ -82,6 +82,14 @@ def fake_output(tmp_path, monkeypatch):
     # specific behavior is exercised in test_security.py + test_http_e2e.py.
     monkeypatch.setattr(security_mod, "resolve_user_id", lambda h: "test-user")
     monkeypatch.setattr(projects, "resolve_user_id", lambda h: "test-user")
+    # Phase 54a (2026-05-23) — `colors` and the LLM refinements call
+    # would_exceed_quota() before doing any work. "test-user" has no real
+    # plan, so the gate would 402 every refinement. Bypass it the same way
+    # require_project_owner is bypassed; plan-gate behavior is exercised
+    # in tests/test_user_plan.py.
+    monkeypatch.setattr(refine, "would_exceed_quota",
+                        lambda uid, ev_kind, lim_key: (False, 0, 999_999))
+    monkeypatch.setattr(refine, "increment_usage", lambda uid, ev_kind: None)
     # Isolate engagement storage per test (T17). Without this every test
     # would append to a shared output/.engagement/ dir.
     monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
