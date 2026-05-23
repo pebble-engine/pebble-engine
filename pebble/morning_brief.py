@@ -171,14 +171,41 @@ _NOISE_PATTERNS = (
 )
 
 
-def section_engine_log(window_hours: int) -> Section:
-    """Tail engine.err.log + classify recent lines.
+_LOG_TIMESTAMP_RE = re.compile(
+    r"^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})"
+)
 
-    We can't trust the per-line timestamps because the engine doesn't
-    timestamp every line. So we use a heuristic: read the last N lines
-    (cheap), classify each, and bucket by pattern. The window_hours value
-    is reported as context, not used for filtering — that's an honest
-    limitation surfaced in the brief itself.
+
+def _line_timestamp(line: str) -> Optional[datetime]:
+    """Pull the ISO timestamp prefix from one engine.err.log line.
+
+    Matches the format set by pebble/log.py:
+        "2026-05-23T14:48:00 INFO  message text"
+    Returns None for lines that don't match — those are continuation
+    lines (Traceback frames, multi-line stack), which the caller
+    should attach to the previous timestamped record.
+    """
+    m = _LOG_TIMESTAMP_RE.match(line)
+    if not m:
+        return None
+    try:
+        # The format omits timezone — engine logs in local time per
+        # pebble/log.py. Treat as UTC for the comparison so we don't
+        # drift around DST boundaries; the absolute precision is fine
+        # for "did this happen in the last N hours".
+        return datetime.fromisoformat(m.group(1)).replace(tzinfo=timezone.utc)
+    except Exception:
+        return None
+
+
+def section_engine_log(window_hours: int) -> Section:
+    """Tail engine.err.log, parse the pebble-logger timestamps, and
+    surface ERROR / WARN lines that fired within the window.
+
+    Lines without a timestamp prefix (e.g. Traceback frames) attach to
+    the most-recent timestamped line so they ride the same window
+    decision — a traceback whose root error is inside the window gets
+    surfaced; one whose root is outside gets dropped.
     """
     if not ENGINE_ERR.exists():
         return Section(
@@ -186,10 +213,10 @@ def section_engine_log(window_hours: int) -> Section:
             lines=["(no engine.err.log yet — engine never started, or fresh checkout)"],
         )
 
-    # Cap at last 5MB to bound memory on weeks-old logs.
-    # If the file is smaller than the cap, just read the whole thing —
-    # `seek(-bytes, 2)` errors on small files because the negative
-    # offset from end would land before byte 0.
+    # Cap at last 5MB to bound memory on weeks-old logs. If the file is
+    # smaller than the cap, just read the whole thing — `seek(-bytes, 2)`
+    # errors on small files because the negative offset from end would
+    # land before byte 0.
     size = ENGINE_ERR.stat().st_size
     cap = 5 * 1024 * 1024
     with ENGINE_ERR.open("rb") as f:
@@ -197,15 +224,37 @@ def section_engine_log(window_hours: int) -> Section:
             f.seek(-cap, 2)
         tail = f.read().decode("utf-8", errors="replace")
 
+    since = _since(window_hours)
+
+    # Bucket lines into records. A record is one timestamped line plus
+    # any untimestamped continuation lines that follow it (stack traces).
+    records: list[dict] = []
+    current_ts: Optional[datetime] = None
+    current_in_window = False
+    for raw in tail.splitlines():
+        ts = _line_timestamp(raw)
+        if ts is not None:
+            current_ts = ts
+            current_in_window = ts >= since
+            records.append({"ts": ts, "in_window": current_in_window, "lines": [raw]})
+        elif records and current_in_window:
+            # Continuation of the previous record — attach (only if the
+            # parent's in the window, otherwise we'd capture stack
+            # frames from old errors).
+            records[-1]["lines"].append(raw)
+
     errors, warnings, noise = [], [], []
-    for line in tail.splitlines():
-        if any(p.search(line) for p in _NOISE_PATTERNS):
-            noise.append(line)
+    for rec in records:
+        if not rec["in_window"]:
             continue
-        if any(p.search(line) for p in _ERR_PATTERNS):
-            errors.append(line)
-        elif any(p.search(line) for p in _WARN_PATTERNS):
-            warnings.append(line)
+        body = "\n".join(rec["lines"])
+        if any(p.search(body) for p in _NOISE_PATTERNS):
+            noise.append(body)
+            continue
+        if any(p.search(body) for p in _ERR_PATTERNS):
+            errors.append(body)
+        elif any(p.search(body) for p in _WARN_PATTERNS):
+            warnings.append(body)
 
     severity = (
         "critical" if errors    else
@@ -215,26 +264,32 @@ def section_engine_log(window_hours: int) -> Section:
 
     lines: list[str] = []
     if errors:
-        lines.append(f"**{len(errors)} error line(s)** — top 5 most recent:")
-        for ln in errors[-5:]:
-            lines.append(f"    `{ln.strip()[:200]}`")
+        lines.append(f"**{len(errors)} error record(s)** in the last {window_hours}h — top 5 most recent:")
+        for body in errors[-5:]:
+            first_line = body.splitlines()[0] if body else ""
+            lines.append(f"    `{first_line.strip()[:200]}`")
     if warnings:
-        lines.append(f"\n**{len(warnings)} warning(s)** — top 3 most recent:")
-        for ln in warnings[-3:]:
-            lines.append(f"    `{ln.strip()[:200]}`")
+        lines.append(f"\n**{len(warnings)} warning(s)** in the last {window_hours}h — top 3 most recent:")
+        for body in warnings[-3:]:
+            first_line = body.splitlines()[0] if body else ""
+            lines.append(f"    `{first_line.strip()[:200]}`")
     if noise:
-        lines.append(f"\n_({len(noise)} suppressed noise lines: deprecation / resource warnings)_")
+        lines.append(f"\n_({len(noise)} suppressed noise records in window: deprecation / resource warnings)_")
     if not errors and not warnings:
-        lines.append("✓ No errors or warnings in the last log scan.")
+        # Two sub-cases worth distinguishing for the brief reader:
+        if not records:
+            lines.append("✓ engine.err.log exists but has no timestamped records — "
+                         "probably hasn't run since restart, or the logger format changed.")
+        elif not any(r["in_window"] for r in records):
+            lines.append(f"✓ No errors or warnings in the last {window_hours}h "
+                         f"({len(records)} older records present, outside window).")
+        else:
+            lines.append(f"✓ No errors or warnings in the last {window_hours}h.")
 
-    lines.append(
-        f"\n_Note: lines aren't timestamped, so the {window_hours}h "
-        "window is reported as context — not used for filtering. "
-        "Last 5MB of engine.err.log scanned._"
-    )
     return Section(
         title="Engine errors", severity=severity, lines=lines,
-        meta={"error_count": len(errors), "warn_count": len(warnings)},
+        meta={"error_count": len(errors), "warn_count": len(warnings),
+              "records_in_window": sum(1 for r in records if r["in_window"])},
     )
 
 

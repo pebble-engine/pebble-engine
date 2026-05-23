@@ -45,11 +45,16 @@ def test_engine_log_missing_file_is_info_not_crash(temp_root):
     assert "no engine.err.log yet" in "\n".join(section.lines)
 
 
+def _now_iso() -> str:
+    """ISO timestamp in the same format pebble/log.py emits."""
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S")
+
+
 def test_engine_log_picks_up_errors(temp_root):
     err_log = temp_root / "engine.err.log"
     err_log.write_text(
-        "2026-05-23 10:00:00 INFO   normal line\n"
-        "2026-05-23 10:01:00 ERROR  something exploded\n"
+        f"{_now_iso()} INFO  normal line\n"
+        f"{_now_iso()} ERROR something exploded\n"
         "Traceback (most recent call last):\n"
         "  File \"foo.py\", line 1, in <module>\n"
         "    raise ValueError('boom')\n"
@@ -58,13 +63,14 @@ def test_engine_log_picks_up_errors(temp_root):
     )
     section = mb.section_engine_log(window_hours=24)
     assert section.severity == "critical"
-    assert section.meta["error_count"] >= 2   # ERROR line + Traceback line
+    # One ERROR record (the traceback frames attach to it, not separate)
+    assert section.meta["error_count"] == 1
 
 
 def test_engine_log_warnings_only_is_warn(temp_root):
     err_log = temp_root / "engine.err.log"
     err_log.write_text(
-        "2026-05-23 10:00:00 WARNING  cookie path missing trailing slash\n",
+        f"{_now_iso()} WARN  cookie path missing trailing slash\n",
         encoding="utf-8",
     )
     section = mb.section_engine_log(window_hours=24)
@@ -76,12 +82,49 @@ def test_engine_log_noise_patterns_suppressed(temp_root):
     """DeprecationWarning shouldn't push the section to warn."""
     err_log = temp_root / "engine.err.log"
     err_log.write_text(
-        "DeprecationWarning: foo will be removed in v2\n",
+        f"{_now_iso()} WARN  DeprecationWarning: foo will be removed in v2\n",
         encoding="utf-8",
     )
     section = mb.section_engine_log(window_hours=24)
     assert section.severity == "ok"
     assert section.meta["warn_count"] == 0
+
+
+def test_engine_log_filters_old_records_out(temp_root):
+    """Errors older than the window should NOT bump severity."""
+    err_log = temp_root / "engine.err.log"
+    # Build a log with one old error (8 days ago) and nothing recent
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=8)).strftime("%Y-%m-%dT%H:%M:%S")
+    err_log.write_text(
+        f"{old_ts} ERROR ancient explosion (should not surface)\n",
+        encoding="utf-8",
+    )
+    section = mb.section_engine_log(window_hours=24)
+    assert section.severity == "ok"
+    assert section.meta["error_count"] == 0
+    # Brief mentions the older record count for honesty
+    assert "outside window" in "\n".join(section.lines)
+
+
+def test_engine_log_traceback_attaches_to_parent_in_window(temp_root):
+    """Untimestamped continuation lines belong to the previous record's
+    in-window decision. A traceback under a recent ERROR comes through;
+    a traceback under an old error stays buried."""
+    err_log = temp_root / "engine.err.log"
+    old_ts = (datetime.now(timezone.utc) - timedelta(days=8)).strftime("%Y-%m-%dT%H:%M:%S")
+    err_log.write_text(
+        f"{old_ts} ERROR old issue (out of window)\n"
+        f"  File 'old.py', line 1\n"
+        f"OldError: old\n"
+        f"{_now_iso()} ERROR recent issue (in window)\n"
+        f"  File 'new.py', line 1\n"
+        f"NewError: new\n",
+        encoding="utf-8",
+    )
+    section = mb.section_engine_log(window_hours=24)
+    assert section.severity == "critical"
+    # Only the recent record counts
+    assert section.meta["error_count"] == 1
 
 
 # ---------------------------------------------------------------------------
