@@ -488,53 +488,49 @@ export function WorkspaceShell() {
             canvas is full-bleed). */}
         {showLeftRail && <DashboardSidebar />}
 
-        {/* Center column — phase-specific content. AnimatePresence mode="wait"
-            ensures the outgoing phase finishes its exit before the incoming
-            one mounts. */}
+        {/* Center column — phase-specific content.
+            Phase 58e (2026-05-22): removed the AnimatePresence + motion.div
+            wrap. With React 19 + framer-motion in this project, the wrap
+            mounted the new key in `hidden` initial state (opacity 0,
+            translateY 24px) and never animated to `visible` — leaving the
+            workspace permanently invisible whenever you navigated between
+            phases. Plain conditional rendering works. If we want the
+            cinematic transition back later, wrap individual phase
+            components with their own motion.div with explicit transitions
+            rather than relying on AnimatePresence at the shell level. */}
         <div className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}>
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={phase}
-              variants={safePhaseVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}
-            >
-              {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
-              {phase === "design"  && (
-                <EditPhase
-                  ref={editPhaseRef}
-                  build={build}
-                  plan={plan}
-                  onPublish={() => setPhase("publish")}
-                />
-              )}
-              {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
-              {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
-              {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
-              {phase === "draft"   && (
-                <DraftPhase
-                  done={generateDone}
-                  error={generateError}
-                  sseEvents={sseEvents}
-                  onRetry={() => handleGenerate(() => Promise.resolve({} as GenerateResponse))}
-                  onEnrich={(answers) => { chatAnswersRef.current = answers; }}
-                />
-              )}
-              {phase === "ready"   && (
-                <ReadyPhase
-                  build={build}
-                  elapsedSeconds={buildElapsedSec ?? undefined}
-                  onOpenEditor={() => setPhase("design")}
-                  onPublish={() => setPhase("publish")}
-                />
-              )}
-              {(phase as string) === "integrations" && (
-                <IntegrationsPhase onBack={() => setPhase("design")} />
-              )}
-            </motion.div>
-          </AnimatePresence>
+          {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
+          {phase === "design"  && (
+            <EditPhase
+              ref={editPhaseRef}
+              build={build}
+              plan={plan}
+              onPublish={() => setPhase("publish")}
+            />
+          )}
+          {phase === "publish" && <PublishPhase build={build} onBack={() => setPhase("design")} />}
+          {phase === "idea"    && <IdeaPhase  onAdvance={handleAdvanceFromIdea} />}
+          {phase === "plan"    && <PlanPhase  onBack={handleBackFromPlan} planFirst={brief.planFirst === true} onGenerate={handleGenerate} />}
+          {phase === "draft"   && (
+            <DraftPhase
+              done={generateDone}
+              error={generateError}
+              sseEvents={sseEvents}
+              onRetry={() => handleGenerate(() => Promise.resolve({} as GenerateResponse))}
+              onEnrich={(answers) => { chatAnswersRef.current = answers; }}
+            />
+          )}
+          {phase === "ready"   && (
+            <ReadyPhase
+              build={build}
+              elapsedSeconds={buildElapsedSec ?? undefined}
+              onOpenEditor={() => setPhase("design")}
+              onPublish={() => setPhase("publish")}
+            />
+          )}
+          {(phase as string) === "integrations" && (
+            <IntegrationsPhase onBack={() => setPhase("design")} />
+          )}
         </div>
       </div>
 
