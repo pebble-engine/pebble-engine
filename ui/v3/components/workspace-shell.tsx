@@ -594,7 +594,9 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
             workspace now feels like a coherent product surface across all
             logged-in routes, not a wizard. Hidden on welcome (the marketing
             canvas is full-bleed). */}
-        {showLeftRail && <DashboardSidebar />}
+        {showLeftRail && (
+          <DashboardSidebar plan={phase === "design" ? plan : null} />
+        )}
 
         {/* Center column — phase-specific content.
             Phase 58e (2026-05-22): removed the AnimatePresence + motion.div

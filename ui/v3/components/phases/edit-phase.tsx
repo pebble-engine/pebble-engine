@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Edit3,
   Palette,
-  Rocket,
   Smile,
   Award,
   Sparkles,
@@ -50,7 +49,6 @@ import {
   type DiffSummary,
 } from "@/lib/api";
 import { DiffPanel } from "@/components/workspace/diff-panel";
-import { BuildIntegrityChecklist } from "@/components/workspace/build-integrity-checklist";
 
 /**
  * Design phase — the iframe preview + refine chips + visual editor +
@@ -441,77 +439,85 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
 
   return (
     <>
-      {/* Center — site preview iframe */}
-      <main className="flex-1 bg-background p-6 relative overflow-hidden flex flex-col">
+      {/* Center — full-bleed site preview iframe. No outer padding so the
+          iframe fills edge-to-edge. The chrome strip (URL bar + device
+          toggle) sits flush at the top of the preview area. */}
+      <main className="flex-1 bg-background relative overflow-hidden flex flex-col">
+        {/* Chrome strip — URL pill + device toggle. Flush to the top of
+            the preview area (no outer padding on <main>). */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.99 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-          className="flex-1 rounded-2xl border border-border bg-card shadow-[var(--shadow-1)] overflow-hidden flex flex-col"
+          className="h-10 bg-accent flex items-center px-4 gap-2 border-b border-border shrink-0"
         >
-          <div className="h-10 bg-accent flex items-center px-4 gap-2 border-b border-border">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-border" />
-              <div className="w-3 h-3 rounded-full bg-border opacity-60" />
-              <div className="w-3 h-3 rounded-full bg-border opacity-30" />
-            </div>
-            <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
-              {slugForUrl}.pebbleapp.ai
-            </div>
-            {/* Desktop / mobile device toggle. Mobile constrains the iframe
-                wrapper to ~390px so the user can verify the responsive
-                layout without resizing their actual browser window. */}
-            <div className="flex items-center gap-0.5 bg-background border border-border rounded-full p-0.5">
-              <button
-                onClick={() => setDevice("desktop")}
-                aria-label="Desktop preview"
-                aria-pressed={device === "desktop"}
-                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
-                  device === "desktop"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                <Monitor className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setDevice("mobile")}
-                aria-label="Mobile preview"
-                aria-pressed={device === "mobile"}
-                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
-                  device === "mobile"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-              </button>
-            </div>
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-border" />
+            <div className="w-3 h-3 rounded-full bg-border opacity-60" />
+            <div className="w-3 h-3 rounded-full bg-border opacity-30" />
           </div>
-          <div className={`flex-1 bg-background flex justify-center ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
-            <iframe
-              src={previewUrl}
-              className={`bg-white transition-[max-width] duration-300 ease-out ${
-                device === "mobile"
-                  ? "w-full max-w-[390px] rounded-2xl border border-border shadow-[var(--shadow-1)]"
-                  : "w-full max-w-none"
+          <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
+            {slugForUrl}.pebbleapp.ai
+          </div>
+          {/* Desktop / mobile device toggle. Mobile constrains the iframe
+              wrapper to ~390px so the user can verify the responsive
+              layout without resizing their actual browser window. */}
+          <div className="flex items-center gap-0.5 bg-background border border-border rounded-full p-0.5">
+            <button
+              onClick={() => setDevice("desktop")}
+              aria-label="Desktop preview"
+              aria-pressed={device === "desktop"}
+              className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
+                device === "desktop"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
-              style={{ height: "100%" }}
-              title="Site preview"
-            />
+            >
+              <Monitor className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setDevice("mobile")}
+              aria-label="Mobile preview"
+              aria-pressed={device === "mobile"}
+              className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
+                device === "mobile"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+            </button>
           </div>
         </motion.div>
 
-        {/* Refinement chips bar */}
+        {/* Full-bleed iframe — fills the remaining space below the chrome strip */}
+        <div className={`flex-1 bg-background flex justify-center overflow-hidden ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
+          <iframe
+            src={previewUrl}
+            className={`bg-white transition-[max-width] duration-300 ease-out ${
+              device === "mobile"
+                ? "w-full max-w-[390px] rounded-2xl border border-border shadow-[var(--shadow-1)]"
+                : "w-full max-w-none"
+            }`}
+            style={{ height: "100%" }}
+            title="Site preview"
+          />
+        </div>
+
+        {/* Refinement chips dock — bottom-left anchored, left-edge of the
+            preview area (respects left-rail width via CSS var). Does NOT
+            span the full width; max-w-max keeps it compact so the right
+            60%+ of the preview stays completely unobstructed.
+            --right-rail-w is no longer used (right rail removed). */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
-          className="fixed bottom-6 flex flex-col items-center gap-2 pointer-events-none"
-          style={{ left: 'var(--left-rail-w, 240px)', right: 'var(--right-rail-w, 320px)' }}
+          className="fixed bottom-6 flex flex-col items-start gap-2 pointer-events-none max-w-max"
+          style={{ left: 'calc(var(--left-rail-w, 240px) + 16px)' }}
         >
-          <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto`}>
-            ✨ Style tweaks are free — click an element on the preview or pick a chip below
+          <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto whitespace-nowrap`}>
+            ✨ Style tweaks are free — click an element or pick a chip
           </p>
           {/* Phase 50 — block suggestion chips. One quick row of the most-
               wanted "Add testimonials / pricing / FAQ / stats / newsletter"
@@ -551,7 +557,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
               Keyword-matched to existing refinements so no extra LLM call for simple
               requests. Falls back to a friendly suggestion if unrecognised. */}
           <form
-            className="pointer-events-auto bg-card border border-border shadow-lg rounded-full px-4 py-2 flex gap-2 items-center w-full max-w-xl"
+            className="pointer-events-auto bg-card border border-border shadow-lg rounded-full px-4 py-2 flex gap-2 items-center w-80"
             onSubmit={(e) => { e.preventDefault(); handleChatEdit(); }}
           >
             <input
@@ -577,26 +583,35 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         </motion.div>
       </main>
 
-      {/* Right rail — swaps between Launch Setup and Visual Editor */}
-      <AnimatePresence mode="wait">
-        {selected ? (
-          <VisualEditorPanel
-            key="editor"
-            selected={selected}
-            onClose={() => setSelected(null)}
-            onText={handleTextEdit}
-            onFontSize={handleFontSizeStep}
-            onColor={handleColor}
-            onFontFamily={handleFontFamily}
-            onImageSwap={handleImageSwap}
-          />
-        ) : (
-          <LaunchSetupPanel
-            key="setup"
-            plan={plan}
-            slug={build?.slug ?? null}
-            onGoLive={onPublish}
-          />
+      {/* Visual Editor overlay — slides in from the right edge of the preview
+          area when the user clicks an element in the iframe. Absolute-
+          positioned over the preview (not a flex sibling) so it doesn't
+          consume layout space. Backdrop gives it a layered feel. */}
+      <AnimatePresence>
+        {selected && (
+          <>
+            {/* Semi-transparent backdrop — clicking it closes the panel */}
+            <motion.div
+              key="editor-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
+              onClick={() => setSelected(null)}
+              className="fixed inset-0 bg-charcoal/20 z-30 pointer-events-auto"
+              style={{ left: 'var(--left-rail-w, 240px)' }}
+            />
+            <VisualEditorPanel
+              key="editor"
+              selected={selected}
+              onClose={() => setSelected(null)}
+              onText={handleTextEdit}
+              onFontSize={handleFontSizeStep}
+              onColor={handleColor}
+              onFontFamily={handleFontFamily}
+              onImageSwap={handleImageSwap}
+            />
+          </>
         )}
       </AnimatePresence>
 
@@ -670,112 +685,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
 });
 
 // ---------------------------------------------------------------------------
-// LaunchSetupPanel — right rail when no element is selected
-// ---------------------------------------------------------------------------
-
-function LaunchSetupPanel({
-  plan,
-  slug,
-  onGoLive,
-}: {
-  plan: PebblePlan | null;
-  slug: string | null;
-  onGoLive: () => void;
-}) {
-  // Phase 36 — Track publishable from the BuildIntegrityChecklist's onResult.
-  // The Go Live button stays clickable either way; non-publishable just
-  // shows an inline warning the user can acknowledge. Hard-blocking
-  // would make us unable to ship the publish-anyway override path.
-  const [publishable, setPublishable] = useState<boolean | null>(null);
-
-  return (
-    <motion.aside
-      initial={{ opacity: 0, x: 8 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 8 }}
-      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-      className="flex flex-col gap-3 p-4 w-[320px] bg-card border-l border-border overflow-y-auto"
-    >
-      <div className="mb-4 px-1">
-        <h2 className={`${type.heading.m} text-primary`}>Launch Setup</h2>
-        <p className={`${type.caption} opacity-70`}>
-          {plan ? `${plan.setup_needs.filter((s) => s.status !== "auto").length} items remaining` : "Loading..."}
-        </p>
-      </div>
-
-      {/* Phase 36 — Build Integrity checklist. Reuses the existing eval suite
-          via /api/projects/<slug>/integrity. 10 items animate pending → green
-          before publish. Surfaces hidden infra quality as a confidence ritual. */}
-      {slug && (
-        <BuildIntegrityChecklist
-          slug={slug}
-          onResult={(r) => setPublishable(r.publishable)}
-          className="mb-2"
-        />
-      )}
-      <div className="space-y-2 flex-1">
-        {plan?.setup_needs.map((s, i) => {
-          const byId = new Map(plan.setup_needs.map((it) => [it.id, it]));
-          const blockingDeps = (s.dependencies || [])
-            .map((id) => byId.get(id))
-            .filter((d) => !!d && d.status !== "auto");
-          return (
-            <motion.div
-              key={s.id}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
-              className={`p-3 rounded-lg border flex flex-col gap-1 ${
-                s.status === "auto"
-                  ? "bg-background/60 border-border/60 opacity-80"
-                  : "bg-background border-border"
-              }`}
-              title={s.notes}
-            >
-              <div className="flex justify-between items-center">
-                <span className={type.label}>{s.label}</span>
-                <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                    s.status === "auto"
-                      ? "bg-earth/20 text-earth-deep"
-                      : s.status === "pending"
-                        ? "bg-spark/15 text-spark-deep"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {s.status === "auto" ? "Auto-done" : s.status === "pending" ? "Coming soon" : "You'll do this"}
-                </span>
-              </div>
-              {blockingDeps.length > 0 && (
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  Unlocks after: {blockingDeps.map((d) => d!.label).join(" + ")}
-                </p>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-      <div className="pt-3 mt-auto border-t border-border">
-        {publishable === false && (
-          <p className={`${type.caption} text-amber-300 mb-2 px-1`}>
-            Some integrity checks need attention. You can still publish — the
-            publish dialog has an override path.
-          </p>
-        )}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={onGoLive}
-          className={`${interactions.button} w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2`}
-        >
-          <Rocket className="w-4 h-4" /> Go Live
-        </motion.button>
-      </div>
-    </motion.aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// VisualEditorPanel — right rail when an element on the preview is selected
+// VisualEditorPanel — absolute overlay when an element on the preview is selected
 // ---------------------------------------------------------------------------
 
 function VisualEditorPanel({
@@ -825,7 +735,7 @@ function VisualEditorPanel({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 16 }}
       transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
-      className="flex flex-col gap-4 p-5 w-[360px] bg-card border-l border-border overflow-y-auto"
+      className="fixed top-16 bottom-0 right-0 w-[360px] flex flex-col gap-4 p-5 bg-card border-l border-border overflow-y-auto z-40 shadow-[var(--shadow-2)]"
     >
       <div className="flex justify-between items-start">
         <div>

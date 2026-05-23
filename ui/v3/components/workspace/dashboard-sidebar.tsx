@@ -32,9 +32,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Star,
-  Clock,
-  Search as SearchIcon,
   Sparkles,
   Plug,
   Users,
@@ -44,6 +41,7 @@ import {
   Plus,
   Coins,
   ChevronRight,
+  MessageSquare,
 } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -55,12 +53,13 @@ import {
   type UsageSummary,
   type SubscriptionState,
 } from "@/lib/api";
-import { getUserProfile, clearBriefForNewProject } from "@/lib/state";
+import { getUserProfile, clearBriefForNewProject, type PebblePlan } from "@/lib/state";
 import { useRouter } from "next/navigation";
+import { LaunchSetupRail } from "@/components/workspace/launch-setup-rail";
 
 type IconType = typeof Home;
 
-export function DashboardSidebar() {
+export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
   const pathname = usePathname() || "";
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [usage, setUsage] = useState<UsageSummary | null>(null);
@@ -96,95 +95,115 @@ export function DashboardSidebar() {
     .slice(0, 4);
 
   return (
-    <aside className="w-[240px] bg-card border-r border-border p-5 flex flex-col gap-1 min-h-[calc(100vh-4rem)]">
-      {/* Workspace label — Base44 calls this the workspace switcher. We
-          don't have multi-workspace support yet, so it's read-only. */}
-      <div className="mb-5 px-1">
-        <p className={`${type.mono} text-muted-foreground`}>
-          {firstName ? `${firstName}'s` : "Your"} workspace
-        </p>
+    <aside className="w-[240px] bg-card border-r border-border flex flex-col h-full overflow-hidden">
+      {/* Scrollable content — flex-col + overflow-y-auto so the footer
+          stays pinned at the bottom even on short viewports (6.7 risk). */}
+      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-1">
+        {/* Workspace label */}
+        <div className="mb-4 px-1">
+          <p className={`${type.mono} text-muted-foreground`}>
+            {firstName ? `${firstName}'s` : "Your"} workspace
+          </p>
+        </div>
+
+        {/* Pebble chatbot button — placeholder for future chat panel.
+            Fires a postMessage so workspace-shell can intercept without
+            prop-drilling through the sidebar. */}
+        <button
+          onClick={() => {
+            window.postMessage({ type: "pebble-chat-open" }, "*");
+          }}
+          className={`${interactions.chip} w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-primary/10 text-primary hover:bg-primary/20 mb-2`}
+        >
+          <MessageSquare className="w-4 h-4 shrink-0" />
+          Ask Pebble
+        </button>
+
+        {/* Primary nav */}
+        <NavLink href="/dashboard" Icon={Home} label="Home" active={pathname === "/dashboard"} />
+        <NavLink
+          href="/dashboard?view=all"
+          Icon={Sparkles}
+          label="All designs"
+          active={false /* same destination as Home for now */}
+        />
+        <NavLink href="/templates" Icon={Compass} label="Templates" active={pathname.startsWith("/templates")} />
+        <NavLink href="/integrations" Icon={Plug} label="Integrations" active={pathname.startsWith("/integrations")} />
+
+        {/* Community — expandable. The chevron rotates 90° when open. */}
+        <NavLink
+          href="/community"
+          Icon={Users}
+          label="Community"
+          active={pathname === "/community"}
+          rightSlot={
+            <ChevronRight
+              className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${communityOpen ? "rotate-90" : ""}`}
+            />
+          }
+        />
+        {communityOpen && (
+          <div className="ml-3 mt-1 mb-1 flex flex-col gap-1 border-l border-border pl-3">
+            <SubNavLink
+              href="/community/launchpad"
+              Icon={Compass}
+              label="Launchpad"
+              active={pathname.startsWith("/community/launchpad")}
+            />
+            <SubNavLink
+              href="/community/hire-a-partner"
+              Icon={Briefcase}
+              label="Hire a Partner"
+              active={pathname.startsWith("/community/hire-a-partner")}
+            />
+            <SubNavLink
+              href="/community/affiliate"
+              Icon={Gift}
+              label="Affiliate Program"
+              active={pathname.startsWith("/community/affiliate")}
+            />
+          </div>
+        )}
+
+        {/* Favorites drawer — top starred. Empty state matches Base44. */}
+        <SectionHeader>Favorites</SectionHeader>
+        {favorites.length === 0 ? (
+          <p className={`${type.caption} px-3 py-2 leading-snug`}>
+            No favorites yet —<br />star a design to pin it here.
+          </p>
+        ) : (
+          favorites.map((p) => (
+            <ProjectLink key={p.slug} project={p} />
+          ))
+        )}
+
+        {/* Recents drawer — newest first. "View all" goes back to dashboard. */}
+        <SectionHeader>Recents</SectionHeader>
+        {recents.length === 0 ? (
+          <p className={`${type.caption} px-3 py-2 leading-snug`}>
+            Nothing yet — <Link href="/workspace#phase=welcome" className="underline">start your first design</Link>.
+          </p>
+        ) : (
+          <>
+            {recents.map((p) => (
+              <ProjectLink key={p.slug} project={p} />
+            ))}
+            <Link
+              href="/dashboard"
+              className={`${type.caption} px-3 py-1.5 hover:text-foreground transition-colors`}
+            >
+              View all →
+            </Link>
+          </>
+        )}
+
+        {/* Launch Setup checklist — rendered when plan is available (design
+            phase). LaunchSetupRail renders nothing when plan is null. */}
+        <LaunchSetupRail plan={plan ?? null} />
       </div>
 
-      {/* Primary nav */}
-      <NavLink href="/dashboard" Icon={Home} label="Home" active={pathname === "/dashboard"} />
-      <NavLink
-        href="/dashboard?view=all"
-        Icon={Sparkles}
-        label="All designs"
-        active={false /* same destination as Home for now */}
-      />
-      <NavLink href="/templates" Icon={Compass} label="Templates" active={pathname.startsWith("/templates")} />
-      <NavLink href="/integrations" Icon={Plug} label="Integrations" active={pathname.startsWith("/integrations")} />
-
-      {/* Community — expandable. The chevron rotates 90° when open. */}
-      <NavLink
-        href="/community"
-        Icon={Users}
-        label="Community"
-        active={pathname === "/community"}
-        rightSlot={
-          <ChevronRight
-            className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${communityOpen ? "rotate-90" : ""}`}
-          />
-        }
-      />
-      {communityOpen && (
-        <div className="ml-3 mt-1 mb-1 flex flex-col gap-1 border-l border-border pl-3">
-          <SubNavLink
-            href="/community/launchpad"
-            Icon={Compass}
-            label="Launchpad"
-            active={pathname.startsWith("/community/launchpad")}
-          />
-          <SubNavLink
-            href="/community/hire-a-partner"
-            Icon={Briefcase}
-            label="Hire a Partner"
-            active={pathname.startsWith("/community/hire-a-partner")}
-          />
-          <SubNavLink
-            href="/community/affiliate"
-            Icon={Gift}
-            label="Affiliate Program"
-            active={pathname.startsWith("/community/affiliate")}
-          />
-        </div>
-      )}
-
-      {/* Favorites drawer — top starred. Empty state matches Base44. */}
-      <SectionHeader>Favorites</SectionHeader>
-      {favorites.length === 0 ? (
-        <p className={`${type.caption} px-3 py-2 leading-snug`}>
-          No favorites yet —<br />star a design to pin it here.
-        </p>
-      ) : (
-        favorites.map((p) => (
-          <ProjectLink key={p.slug} project={p} />
-        ))
-      )}
-
-      {/* Recents drawer — newest first. "View all" goes back to dashboard. */}
-      <SectionHeader>Recents</SectionHeader>
-      {recents.length === 0 ? (
-        <p className={`${type.caption} px-3 py-2 leading-snug`}>
-          Nothing yet — <Link href="/workspace#phase=welcome" className="underline">start your first design</Link>.
-        </p>
-      ) : (
-        <>
-          {recents.map((p) => (
-            <ProjectLink key={p.slug} project={p} />
-          ))}
-          <Link
-            href="/dashboard"
-            className={`${type.caption} px-3 py-1.5 hover:text-foreground transition-colors`}
-          >
-            View all →
-          </Link>
-        </>
-      )}
-
-      {/* Footer — Upgrade or Usage. Active subscription = no upgrade prompt. */}
-      <div className="mt-auto pt-4 border-t border-border space-y-3">
+      {/* Footer — pinned at bottom, never scrolls away. */}
+      <div className="p-5 pt-4 border-t border-border space-y-3">
         {subscription !== null && !subscription?.plan && (() => {
           const published = projects.filter((p) => p.publish != null).length;
           const FREE_LIMIT = 2;
