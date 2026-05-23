@@ -16,12 +16,14 @@ import {
   getLastBuild,
   getPlan,
   setLastBuild,
+  setBrief as storeBrief,
+  setPlan as storePlan,
   patchBrief,
   clearBriefForNewProject,
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
-import { streamGenerateSite, enrichContent, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { streamGenerateSite, enrichContent, fetchProjectState, type GenerateResponse, type SSEEvent } from "@/lib/api";
 import { type CollectedAnswer } from "@/components/phases/build-chat";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
@@ -82,7 +84,7 @@ const useIsomorphicLayoutEffect =
    the top of the main content area (hidden on welcome + design). */
 
 
-export function WorkspaceShell() {
+export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   const router = useRouter();
   const pathname = usePathname();
   // The route is the source of truth for the *initial* phase, but the URL
@@ -251,6 +253,47 @@ export function WorkspaceShell() {
     handleGenerate(() => Promise.resolve({} as GenerateResponse));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // When the URL provides a slug (we're at /workspace/<slug>), fetch the
+  // full project state from the engine. Without this, opening a project
+  // from the sidebar would render with the PREVIOUS project's brief/plan
+  // still in localStorage — a real bug pre-fix.
+  //
+  // We skip the fetch when localStorage already matches the requested
+  // slug (the sidebar click flow stamps it before navigating), so we
+  // don't pay the round-trip when the data is already warm.
+  useEffect(() => {
+    if (!slugProp) return;
+    const cached = getLastBuild();
+    const cachedBrief = getBrief();
+    if (cached?.slug === slugProp && cachedBrief?.business_name) return;
+
+    void (async () => {
+      try {
+        const state = await fetchProjectState(slugProp);
+        // Write to the persistence layer (localStorage) first so all
+        // downstream consumers keep working (history drawer, refine, etc.).
+        storeBrief(state.brief as Brief);
+        if (state.plan) storePlan(state.plan);
+        setLastBuild({
+          slug:        state.slug,
+          preview_url: `/preview/${state.slug}/`,
+          saved_to:    `output/${state.slug}/`,
+          file_count:  0,
+        });
+        // Refresh React state from localStorage so the UI re-renders
+        // with the freshly-fetched data.
+        setBuild(getLastBuild());
+        setBrief(getBrief());
+        setPlan(getPlan());
+      } catch (e) {
+        console.error("[workspace] failed to load project state:", e);
+        // Bounce to dashboard rather than render a half-loaded shell.
+        router.push("/dashboard");
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slugProp]);
 
   function handleAdvanceFromWelcome() {
     const currentBrief = getBrief();
