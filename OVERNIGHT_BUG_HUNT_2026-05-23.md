@@ -190,6 +190,35 @@ $ python -m pytest -q
 - `test_get_integrations_{401_when_signed_out, 403_when_signed_in_as_other_user, 200_when_owner}` (3)
 - `test_enrich_content_*` (4 new file `test_enrich_auth.py`)
 
+## Post-restart Supabase MCP advisor pass (2026-05-23 morning)
+
+Wired Supabase MCP via OAuth flow. First call to `get_advisors` surfaced
+**8 security findings** on the live Pebble Supabase project. Triaged and
+6 fixed via a single dashboard SQL run; 2 deferred with explicit
+reasoning.
+
+### Fixed (6 advisors closed via one migration)
+
+1. `function_search_path_mutable` on `public.set_updated_at` — pinned `search_path TO 'public', 'pg_catalog'`
+2. `function_search_path_mutable` on `public.protect_plan_tier` — same pin
+3. `anon_security_definer_function_executable` on `public.handle_new_user` — REVOKE EXECUTE from anon/auth/public
+4. `anon_security_definer_function_executable` on `public.rls_auto_enable` — same revoke
+5. `authenticated_security_definer_function_executable` on `public.handle_new_user` — same revoke
+6. `authenticated_security_definer_function_executable` on `public.rls_auto_enable` — same revoke
+
+All four functions are TRIGGER (or event_trigger) functions invoked by
+Postgres internally — they were never meant to be RPC-callable from
+anon/authenticated sessions. Zero runtime impact from the REVOKE
+(verified by reading function bodies first via `execute_sql` against
+`pg_proc`).
+
+`get_advisors` re-run after migration: 8 → 2 findings. ✓
+
+### Deferred (explicit "known, accepted")
+
+7. `rls_policy_always_true` on `public.waitlist` (Allow anonymous inserts INSERT policy with `WITH CHECK true`) — **intentional**. The waitlist signup form is designed to accept any visitor's email. If abuse becomes a real problem, gate via Cloudflare Turnstile or a Pebble-side per-IP rate limiter; not adding either today.
+8. `auth_leaked_password_protection` (HaveIBeenPwned check) — **gated behind Supabase Pro ($25/mo).** Pre-launch with ~0 real users, the attack class (user picks weak password, attacker later compromises via credential stuffing) has ~0 blast radius. Add "upgrade Supabase to Pro" to the launch checklist alongside Sentry / domains / etc. Free DIY alternative (client-side HaveIBeenPwned k-anonymity check in v3 signup form) is on file — ~30 lines, ~80% as effective — invoke if a free defense becomes warranted before paid upgrade.
+
 ## Not yet investigated / next pass
 
 If the loop fires again on Test 3 / Test 4:

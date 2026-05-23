@@ -187,10 +187,22 @@ This project uses Claude Code skills as part of the workflow. Invoke these when 
 | Memory feels stale (~quarterly) | `consolidate-memory` |
 | Setting / hook / config request | `update-config` |
 
-**NOT installed locally** — if a trigger fires for one of these, install or use the substitute:
-- `security-review` → use `superpowers:dispatching-parallel-agents` + `superpowers:systematic-debugging` until installed
+**Other built-in / Claude Code skills** (discovered post-restart on 2026-05-23 — these ARE installed and were just invisible until Claude Code reloaded):
+
+| Trigger | Skill |
+|---|---|
+| Before merging anything sensitive — security pass on pending changes | `security-review` |
+| Reviewing a PR (PR URL or branch diff) | `review` |
+| Reviewing your own changes for reuse / quality / efficiency before commit | `code-review` |
+| Verify a change actually works end-to-end by running the app | `verify` |
+| Initializing a NEW CLAUDE.md on a new project | `init` |
+| Editing Anthropic-SDK / prompt-caching code | `claude-api` |
+| Recurring task (poll, watch, periodic check) | `loop` |
+| Schedule a remote cron-style agent | `schedule` |
+| Reduce permission prompts by allowlisting common reads | `fewer-permission-prompts` |
+
+**Truly NOT installed** — substitutes only:
 - `simplify` → fold into normal pre-commit review; no dedicated skill ships in the superpowers bundle
-- `claude-api` → spawn the `claude-code-guide` agent (defined in Agent tool) for SDK / prompt-caching questions
 
 Invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
 
