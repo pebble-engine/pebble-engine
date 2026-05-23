@@ -137,7 +137,16 @@ def _write_enriched_meta(site_dir: Path, facts: list[dict]) -> None:
 # ---------------------------------------------------------------------------
 
 def run_enrich_content(handler) -> None:
-    """POST /api/enrich-content."""
+    """POST /api/enrich-content.
+
+    Mutates files inside ``<output>/<slug>/site/`` (phone/location/services
+    rewrites + a snapshot for rollback). MUST be owner-gated — without it
+    any anon caller could inject phone numbers, addresses, or service text
+    into someone else's published site by guessing the slug.
+
+    Phase 58e (2026-05-22) — added require_project_owner. Caught during
+    the overnight bug-hunt sweep of slug-taking POST handlers.
+    """
     try:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
@@ -156,6 +165,14 @@ def run_enrich_content(handler) -> None:
         handler._json(400, {"error": "slug is required"}); return
     if not isinstance(raw_facts, list):
         handler._json(400, {"error": "facts must be an array"}); return
+
+    # Auth gate — must come AFTER slug+body validation so we keep the
+    # existing 400 responses for malformed payloads, but BEFORE any
+    # filesystem touch. require_project_owner returns the validated
+    # uid on success and writes 400/401/403/404 on failure.
+    from pebble.security import require_project_owner
+    if require_project_owner(handler, slug) is None:
+        return
 
     # Validate & normalise facts.
     facts: list[dict] = []
