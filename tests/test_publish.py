@@ -97,9 +97,13 @@ def _post(base: str, path: str, body: dict | None = None) -> tuple[int, dict | s
         except Exception: return e.code, body_text
 
 
-def _get(base: str, path: str) -> tuple[int, dict | str, dict]:
+def _get(base: str, path: str, cookie: str | None = None) -> tuple[int, dict | str, dict]:
+    # Phase 58e (2026-05-22) — added optional cookie for the /api/projects
+    # dashboard-listing tests that now require auth.
+    req = urllib.request.Request(f"{base}{path}",
+                                  headers={"Cookie": cookie} if cookie else {})
     try:
-        with urllib.request.urlopen(f"{base}{path}", timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=10) as resp:
             data = resp.read()
             headers = dict(resp.headers.items())
             try: return resp.status, json.loads(data.decode("utf-8")), headers
@@ -108,6 +112,24 @@ def _get(base: str, path: str) -> tuple[int, dict | str, dict]:
         body_text = e.read().decode("utf-8", errors="replace")
         try: return e.code, json.loads(body_text), dict(e.headers.items() if e.headers else {})
         except Exception: return e.code, body_text, {}
+
+
+def _signup_and_get_cookie(base: str, email: str = "u@example.com",
+                           password: str = "valid-password") -> str:
+    """Sign up via the legacy auth endpoint and extract the session cookie.
+
+    Used for tests that need to hit signed-in-only endpoints like the
+    dashboard listing (/api/projects) without needing a real Supabase
+    instance.
+    """
+    data = json.dumps({"email": email, "password": password}).encode("utf-8")
+    req = urllib.request.Request(f"{base}/api/auth/signup", data=data,
+                                  headers={"Content-Type": "application/json"},
+                                  method="POST")
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        sc = resp.headers.get("Set-Cookie") or ""
+    # First semicolon-separated chunk is the name=value pair we want.
+    return sc.split(";", 1)[0] if sc else ""
 
 
 def _seed_project(output: Path, slug: str, files: dict[str, str], brief: dict | None = None) -> Path:
@@ -327,7 +349,11 @@ def test_dashboard_summary_includes_publish_after_publishing(engine_server):
     _seed_project(out, "good-co", {"app/page.tsx": "x"},
                   brief={"business_name": "Good Co"})
     _post(engine_server["base"], "/api/publish", {"slug": "good-co"})
-    status, body, _ = _get(engine_server["base"], "/api/projects")
+    # Phase 58e — /api/projects now requires auth. Unclaimed projects
+    # (no _user_id) appear for any signed-in user, so a fresh signup is
+    # sufficient to see "good-co" in the listing.
+    cookie = _signup_and_get_cookie(engine_server["base"])
+    status, body, _ = _get(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     assert body["count"] == 1
     proj = body["projects"][0]
