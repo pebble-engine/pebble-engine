@@ -228,7 +228,24 @@ export function WorkspaceShell() {
 
   function handleAdvanceFromWelcome() {
     const currentBrief = getBrief();
-    console.log("[pebble.shell] handleAdvanceFromWelcome — pathname:", pathname, "planFirst:", currentBrief.planFirst, "has_brief:", !!(currentBrief.business_name || currentBrief.extra_context));
+    console.log("[pebble.shell] handleAdvanceFromWelcome — pathname:", pathname, "planFirst:", currentBrief.planFirst, "has_brief:", !!(currentBrief.business_name || currentBrief.extra_context), "authed:", !!authUser);
+
+    // Phase 58a / Phase 54c — signup gate. Unauthenticated visitors must
+    // sign up before they can land on /workspace (proxy.ts middleware
+    // would otherwise bounce them to /login, which feels broken — they
+    // submitted a Build prompt, not a Sign In). Route to /signup with
+    // ?redirect=/workspace so the brief is preserved in localStorage and
+    // they autostart on return. Wait for auth to resolve so we don't
+    // accidentally signup-route a logged-in user whose session is still
+    // hydrating.
+    if (!authLoading && !authUser && pathname === "/") {
+      console.log("[pebble.shell] signed out — routing to /signup with redirect back to /workspace");
+      // Ensure the autostart flag is set so /workspace kicks off the
+      // build automatically after signup completes.
+      sessionStorage.setItem("pebble.autostart", "1");
+      router.push(`/signup?redirect=${encodeURIComponent("/workspace")}`);
+      return;
+    }
 
     if (currentBrief.planFirst === true) {
       // Plan mode: show the plan preview before building.
