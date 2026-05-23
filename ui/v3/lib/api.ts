@@ -141,6 +141,7 @@ export type SSEEvent =
 export async function streamGenerateSite(
   brief: Brief,
   onEvent: (e: SSEEvent) => void,
+  signal?: AbortSignal,
 ): Promise<GenerateResponse> {
   // Include the Supabase session token when available so the engine can
   // associate the build with the authenticated user (publish limit check,
@@ -157,10 +158,17 @@ export async function streamGenerateSite(
     // No Supabase available — proceed as anonymous
   }
 
+  // Phase 58f (2026-05-23) — accept an AbortSignal so the caller can
+  // cancel the stream when the user navigates away mid-build. Without
+  // this, the SSE stream stayed open after unmount and onEvent kept
+  // poking setState on unmounted components ("Can't update state on
+  // unmounted component" warning) AND the engine kept running the
+  // build, burning credits the user wasn't watching.
   const resp = await fetch(engineUrl("/api/generate-stream"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader },
     body: JSON.stringify(brief),
+    signal,
   });
 
   if (!resp.ok) {

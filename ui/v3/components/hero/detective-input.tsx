@@ -362,10 +362,20 @@ function useTypewriterPlaceholder(active: boolean): string {
    Returns the index of the currently-displayed suggestion + an "epoch"
    counter that AnimatePresence keys off of to fade between them. */
 function useRotatingSuggestion(active: boolean, intervalMs = 4000) {
-  const [idx, setIdx] = React.useState(() =>
-    Math.floor(Math.random() * ROTATING_SUGGESTIONS.length),
-  );
+  // Phase 58f (2026-05-23): start at index 0 deterministically so the
+  // server-rendered HTML matches the client's first render. The
+  // previous Math.random() in the useState initializer fired during
+  // SSR with one seed and during hydration with another, tripping
+  // React's hydration-mismatch warning ("Hydration failed because the
+  // initial UI does not match what was rendered on the server"). We
+  // randomize on mount inside the effect instead — the very first
+  // paint shows index 0 (visible for a single frame, essentially
+  // unnoticeable), then jumps to a random index, then rotates normally.
+  const [idx, setIdx] = React.useState(0);
   React.useEffect(() => {
+    // On mount: pick a random starting index so successive pageloads
+    // don't always start on the same suggestion.
+    setIdx(Math.floor(Math.random() * ROTATING_SUGGESTIONS.length));
     if (!active) return;
     const id = window.setInterval(() => {
       setIdx((cur) => (cur + 1) % ROTATING_SUGGESTIONS.length);

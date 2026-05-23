@@ -55,7 +55,8 @@ import {
   type UsageSummary,
   type SubscriptionState,
 } from "@/lib/api";
-import { getUserProfile } from "@/lib/state";
+import { getUserProfile, setLastBuild } from "@/lib/state";
+import { useRouter } from "next/navigation";
 
 type IconType = typeof Home;
 
@@ -158,7 +159,7 @@ export function DashboardSidebar() {
         </p>
       ) : (
         favorites.map((p) => (
-          <ProjectLink key={p.slug} slug={p.slug} name={p.business_name} />
+          <ProjectLink key={p.slug} project={p} />
         ))
       )}
 
@@ -171,7 +172,7 @@ export function DashboardSidebar() {
       ) : (
         <>
           {recents.map((p) => (
-            <ProjectLink key={p.slug} slug={p.slug} name={p.business_name} />
+            <ProjectLink key={p.slug} project={p} />
           ))}
           <Link
             href="/dashboard"
@@ -308,15 +309,34 @@ function SectionHeader({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ProjectLink({ slug, name }: { slug: string; name: string }) {
+function ProjectLink({ project }: { project: ProjectSummary }) {
+  // Phase 58f bug fix (2026-05-23): the previous version used
+  // ``<Link href="/workspace?slug=...">``, but workspace-shell never read
+  // the ``?slug=`` query param — it always renders whatever is in
+  // ``localStorage.pebble.lastBuild`` (set by the dashboard's
+  // ``openProject``). Clicking a sidebar project loaded the LAST opened
+  // project, not the clicked one. Mirror the dashboard's pattern:
+  // stamp setLastBuild() first, then navigate.
+  const router = useRouter();
+  function open(e: React.MouseEvent) {
+    e.preventDefault();
+    setLastBuild({
+      slug:        project.slug,
+      preview_url: project.preview_url,
+      saved_to:    `output/${project.slug}/`,
+      file_count:  project.file_count,
+    });
+    router.push("/workspace");
+  }
   return (
-    <Link
-      href={`/workspace?slug=${encodeURIComponent(slug)}`}
+    <a
+      href="/workspace"
+      onClick={open}
       className={`${interactions.chip} flex items-center gap-2 px-3 py-1.5 rounded-md text-xs text-muted-foreground hover:text-foreground truncate`}
-      title={name}
+      title={project.business_name}
     >
       <span className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
-      <span className="truncate">{name}</span>
-    </Link>
+      <span className="truncate">{project.business_name}</span>
+    </a>
   );
 }
