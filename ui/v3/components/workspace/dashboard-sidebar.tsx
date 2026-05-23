@@ -228,6 +228,18 @@ export function DashboardSidebar() {
           // renders the WelcomePhase inside the workspace shell so the
           // prompt input is available end-to-end.
           href="/workspace#phase=welcome"
+          // Clear stale brief/build/plan so the user gets a TRUE fresh
+          // start. Without this, the workspace shell would hydrate the
+          // previous brief from localStorage and (in the worst case)
+          // auto-rebuild it.
+          onClick={() => {
+            try {
+              localStorage.removeItem("pebble.brief");
+              localStorage.removeItem("pebble.lastBuild");
+              localStorage.removeItem("pebble.plan");
+              sessionStorage.removeItem("pebble.autostart");
+            } catch { /* storage disabled — fine */ }
+          }}
           className={`${interactions.button} flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold`}
         >
           <Plus className="w-4 h-4" />

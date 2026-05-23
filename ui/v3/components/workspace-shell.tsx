@@ -204,33 +204,31 @@ export function WorkspaceShell() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Phase 56a + 58a: auto-start generation when the user clicked Build from
-  // the landing page. Two signals trigger this — either is sufficient:
-  //   1. sessionStorage("pebble.autostart") === "1" (the explicit signal
-  //      set by handleAdvanceFromWelcome before router.push)
-  //   2. Self-healing: we're on /workspace, the brief has content, and
-  //      there's no build yet. This covers the case where the flag was
-  //      lost (e.g. cross-tab navigation, refresh during transition,
-  //      or a previous handleGenerate that errored before completing).
+  // Phase 56a + 58b: auto-start generation when the user clicked Build from
+  // the landing page. STRICT: only the explicit pebble.autostart flag triggers
+  // a build. Previously had a self-healing "fire on /workspace mount if brief
+  // exists" branch — but that auto-built stale briefs every time the user
+  // navigated to /workspace from the dashboard, even when they wanted a
+  // FRESH idea capture. Bad UX (and bad for the user's wallet — every fire
+  // is a billed build).
+  //
   // The planFirst escape hatch: if the user explicitly chose plan-first
   // mode, don't autostart — they want to see the plan preview first.
   useEffect(() => {
     const flagSet = sessionStorage.getItem("pebble.autostart") === "1";
+    if (!flagSet) return;
     sessionStorage.removeItem("pebble.autostart");
 
     const currentBrief = getBrief();
     const currentBuild = getLastBuild();
     const hasBrief = !!(currentBrief.business_name || currentBrief.extra_context);
     const wantsPlan = currentBrief.planFirst === true;
-    const onWorkspace = pathname === "/workspace";
 
     if (wantsPlan) return;
     if (!hasBrief) return;
     if (currentBuild) return;
 
-    if (flagSet || onWorkspace) {
-      handleGenerate(() => Promise.resolve({} as GenerateResponse));
-    }
+    handleGenerate(() => Promise.resolve({} as GenerateResponse));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
