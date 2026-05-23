@@ -12,8 +12,9 @@
 
 import React from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutGrid } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 
 /** Anchor links shown in the nav. Hashes match the section IDs in
     welcome-phase.tsx (#how, #looks, #pricing, #start). */
@@ -71,6 +72,12 @@ function PebbleMark({ className = "" }: { className?: string }) {
 export function LandingNav() {
   const [open, setOpen] = React.useState(false);
   const scrolled = useScrolled(10);
+  // Phase 58b — when the user is signed in, the nav must reflect that.
+  // Previously the right-side CTAs were always "Sign In" + "Get Started",
+  // so a signed-in user returning to the landing page sees them and clicks
+  // Sign In thinking they're signed out → re-OAuth loop → confusion.
+  const { user, loading: authLoading } = useAuth();
+  const isAuthed = !authLoading && !!user;
 
   React.useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
@@ -141,31 +148,65 @@ export function LandingNav() {
           ))}
         </div>
 
-        {/* CTAs right (md+) */}
+        {/* CTAs right (md+) — auth-aware. Signed-in users see Dashboard
+            instead of Sign In + Get Started so the nav reflects reality
+            and they don't double-OAuth out of confusion. */}
         <div className="hidden md:flex items-center gap-2 flex-shrink-0">
-          <Link
-            href="/login"
-            className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-full border border-border px-4 py-2",
-              "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
-              "hover:bg-accent transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            )}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className={cn(
-              "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
-              "text-[15px] font-semibold tracking-tight text-white",
-              "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
-              "hover:brightness-110 transition-[filter] duration-150",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
-            )}
-          >
-            Get Started
-          </Link>
+          {isAuthed ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-border px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
+                  "hover:bg-accent transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/workspace"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-white",
+                  "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
+                  "hover:brightness-110 transition-[filter] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                )}
+                title={user?.email ?? undefined}
+              >
+                Start a build
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full border border-border px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
+                  "hover:bg-accent transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                )}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-white",
+                  "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
+                  "hover:brightness-110 transition-[filter] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                )}
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle (≤md) */}
@@ -213,28 +254,58 @@ export function LandingNav() {
             ))}
           </div>
           <div className="flex flex-col gap-2 pb-6">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className={cn(
-                "inline-flex items-center justify-center rounded-full border border-border w-full py-3",
-                "text-lg font-semibold text-foreground bg-transparent",
-                "hover:bg-accent transition-colors",
-              )}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              onClick={() => setOpen(false)}
-              className={cn(
-                "inline-flex items-center justify-center rounded-full w-full py-3",
-                "text-lg font-semibold text-background bg-foreground",
-                "hover:opacity-90 transition-opacity",
-              )}
-            >
-              Get Started
-            </Link>
+            {isAuthed ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 rounded-full border border-border w-full py-3",
+                    "text-lg font-semibold text-foreground bg-transparent",
+                    "hover:bg-accent transition-colors",
+                  )}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/workspace"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full w-full py-3",
+                    "text-lg font-semibold text-background bg-foreground",
+                    "hover:opacity-90 transition-opacity",
+                  )}
+                >
+                  Start a build
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full border border-border w-full py-3",
+                    "text-lg font-semibold text-foreground bg-transparent",
+                    "hover:bg-accent transition-colors",
+                  )}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full w-full py-3",
+                    "text-lg font-semibold text-background bg-foreground",
+                    "hover:opacity-90 transition-opacity",
+                  )}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>
