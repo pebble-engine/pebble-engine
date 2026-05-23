@@ -55,6 +55,25 @@ const PROTECTED_PREFIXES = [
   "/publish",
 ] as const;
 
+/**
+ * Routes that make sense only for SIGNED-OUT visitors. Signed-in users
+ * landing on these get bounced to /dashboard so the marketing/auth
+ * surfaces don't get in their way every time they open the app.
+ *
+ *  /            marketing landing — signed-in users have already converted
+ *  /login       sign-in form — they're already signed in
+ *  /signup      account creation — they already have an account
+ *  /forgot      password recovery — irrelevant when authenticated
+ *  /reset       password reset — irrelevant when authenticated
+ *
+ * Notably EXCLUDED (still accessible while signed in):
+ *  /auth/callback OAuth handler — MUST process the code regardless of state
+ *  /pricing       pricing page — useful for upgrades
+ *  /trust /help   public reference pages
+ *  /migrate       URL ingestion — useful for adding new sites
+ */
+const GUEST_ONLY_ROUTES = ["/", "/login", "/signup", "/forgot", "/reset"] as const;
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -108,6 +127,17 @@ export async function updateSession(request: NextRequest) {
     // A hash fragment cannot shift origin via router.push, so a
     // crafted `#//evil.com` just sets the URL hash on /workspace.
     url.searchParams.set("redirect", path + (request.nextUrl.hash || ""));
+    return NextResponse.redirect(url);
+  }
+
+  // Phase 58b — signed-in users should never see the marketing landing
+  // or auth surfaces. Bounce to /dashboard. Marc's mental model: "the
+  // landing page flows to signing in. instead of bouncing back to landing
+  // page it should direct you to dashboard always."
+  if (user && (GUEST_ONLY_ROUTES as readonly string[]).includes(path)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    url.search = ""; // drop any ?redirect= query
     return NextResponse.redirect(url);
   }
 
