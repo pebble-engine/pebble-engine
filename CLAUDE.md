@@ -149,20 +149,50 @@ Brand-extract image ingestion: `pebble/server/brand_extract.py` accepts `multipa
 
 ## Skills to invoke at specific triggers (Pebble-specific reminder system)
 
-This project uses Claude Code skills as part of the workflow. Invoke these when their trigger fires — don't wait to be asked.
+This project uses Claude Code skills as part of the workflow. Invoke these when their trigger fires — don't wait to be asked. Reconciled against the actual installed skill inventory on 2026-05-23 (the original aspirational entries had several names that didn't exist).
 
-| Trigger | Skill to invoke |
+**Confirmed installed via the `superpowers` plugin** (`C:\Users\marci\.claude\plugins\cache\claude-plugins-official\superpowers\5.1.0\skills\`):
+
+| Trigger | Skill (exact name to pass to the Skill tool) |
 |---|---|
-| Before any release / before launching the SaaS | `security-review` |
-| When designing a new pebble-specific helper (e.g. pebble-launch-check, pebble-customer-debug) | `skill-creator` |
-| When editing code that touches the Anthropic SDK or prompt-caching | `claude-api` |
-| After non-trivial edits, before commit | `simplify` |
-| When the user opens a PR or asks for review | `review` |
-| When user needs spreadsheets / decks / PDFs / docs (e.g. revenue projections, pitch deck) | `xlsx` / `pptx` / `pdf` / `docx` |
-| Memory feels stale (~quarterly) | `consolidate-memory` |
-| User reports a setting issue or wants hooks | `update-config` |
+| Starting any non-trivial feature / multi-step change | `superpowers:writing-plans` |
+| Executing a previously-written plan | `superpowers:executing-plans` |
+| 3+ independent failures / unrelated bugs in different domains | `superpowers:dispatching-parallel-agents` |
+| New module being written / TDD requested | `superpowers:test-driven-development` |
+| Debugging a bug (esp. multi-system or non-obvious root cause) | `superpowers:systematic-debugging` |
+| Before claiming a task done — verify the change actually worked | `superpowers:verification-before-completion` |
+| User opens a PR or asks for review | `superpowers:requesting-code-review` |
+| Receiving a PR review — how to triage and act on comments | `superpowers:receiving-code-review` |
+| Before merge / push — branch cleanup, commit hygiene, rebase | `superpowers:finishing-a-development-branch` |
+| Big feature with many independent subtasks worth subagents | `superpowers:subagent-driven-development` |
+| Brainstorming product or architecture options | `superpowers:brainstorming` |
+| Working inside a git worktree (we usually are — branch isolation) | `superpowers:using-git-worktrees` |
+| Designing a new pebble-specific reusable instruction set | `superpowers:writing-skills` |
 
-These are skills available in the session — invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
+**User-scope skills** (`C:\Users\marci\.claude\skills\`):
+
+| Trigger | Skill |
+|---|---|
+| Editing Stripe integrations (billing endpoints, webhook handlers, price IDs) | `stripe-best-practices` |
+| Spinning up a new Stripe-backed flow from scratch | `stripe-projects` |
+| Stripe SDK version bump or API-version migration | `upgrade-stripe` |
+| Anything UI/UX-design-adjacent (DNA cards, landing page, workspace shell) | `ui-ux-pro-max` (from `ui-ux-pro-max-skill` plugin) |
+| Marc says "design like Linear" or wants Linear-style polish | `linear-design` |
+
+**Built-in / Anthropic-published** (try invoking; available out of the box on most Claude Code setups):
+
+| Trigger | Skill |
+|---|---|
+| User needs spreadsheets / decks / PDFs / docs (revenue projections, pitch deck) | `xlsx` / `pptx` / `pdf` / `docx` |
+| Memory feels stale (~quarterly) | `consolidate-memory` |
+| Setting / hook / config request | `update-config` |
+
+**NOT installed locally** — if a trigger fires for one of these, install or use the substitute:
+- `security-review` → use `superpowers:dispatching-parallel-agents` + `superpowers:systematic-debugging` until installed
+- `simplify` → fold into normal pre-commit review; no dedicated skill ships in the superpowers bundle
+- `claude-api` → spawn the `claude-code-guide` agent (defined in Agent tool) for SDK / prompt-caching questions
+
+Invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
 
 ## The three-tool workflow
 
