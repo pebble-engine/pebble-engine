@@ -483,6 +483,34 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
         appendLog(`Running 32 quality checks before you see it.`, "step");
         setActiveIdx(4);
         break;
+      case "repair_started": {
+        // AUTO_REPAIR kicked in — baseline eval failed something. Without
+        // these events the build feed goes silent for 60-120s while the
+        // repair LLM call runs; users assume the build is stuck. Stay on
+        // the "Checking my work" step icon — we're still in the same
+        // phase conceptually, just doing more of it.
+        const n = latest.data.failed_count ?? 0;
+        const noun = n === 1 ? "issue" : "issues";
+        appendLog(`Caught ${n} ${noun} — let me fix them before you see the draft.`, "info");
+        setActiveIdx(4);
+        break;
+      }
+      case "repair_round": {
+        const r = latest.data.round ?? 1;
+        const max = latest.data.max_rounds ?? 2;
+        appendLog(`Fix attempt ${r} of ${max} — rewriting the affected files.`, "step");
+        setActiveIdx(4);
+        break;
+      }
+      case "repair_done": {
+        if (latest.data.improved) {
+          appendLog(`Fixed it. ${latest.data.final_score} checks now pass.`, "ok");
+        } else {
+          appendLog(`Couldn't auto-fix every check, but the site still works — you can keep editing.`, "info");
+        }
+        setActiveIdx(4);
+        break;
+      }
       case "done":
         appendLog(`Done. Your draft is ready to view.`, "ok");
         setActiveIdx(STEPS.length - 1);

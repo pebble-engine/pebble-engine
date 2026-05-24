@@ -1034,7 +1034,13 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         _emit("evaluating", {})
         try:
             from pebble.repair import repair_build as _repair_build
-            rep = _repair_build(slug=slug, max_rounds=2, client=client, skip_compile=True)
+            rep = _repair_build(
+                slug=slug,
+                max_rounds=2,
+                client=client,
+                skip_compile=True,
+                progress_cb=_emit,
+            )
             repair_info.update({
                 "baseline_score": rep.baseline_score,
                 "final_score": rep.final_score,

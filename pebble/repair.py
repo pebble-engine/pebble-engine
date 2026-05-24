@@ -538,6 +538,7 @@ def repair_build(
     client=None,
     output_dir: Optional[Path] = None,
     allow_provider_fallback: bool = True,
+    progress_cb=None,
 ) -> RepairReport:
     """Run the critique-and-fix loop on a build.
 
@@ -553,7 +554,22 @@ def repair_build(
     attempt one retry — preferring the alternate provider if configured
     (handles non-determinism + cross-provider quality variance). Set False
     to halt immediately on any non-improvement (the old behavior).
+
+    ``progress_cb``, if provided, is called as ``progress_cb(event_type, data)``
+    at three milestones so callers (notably the SSE build stream) can show
+    repair progress to the end user instead of going silent for 60-120s
+    while the repair LLM call runs. Emits: ``repair_started`` (once, only
+    when there's something to fix), ``repair_round`` (per round, before the
+    LLM call), and ``repair_done`` (once at end). Failures inside the
+    callback are silently swallowed.
     """
+    def _emit(event_type: str, data: dict) -> None:
+        if progress_cb is None:
+            return
+        try:
+            progress_cb(event_type, data)
+        except Exception:
+            pass
     out_root = output_dir or OUTPUT_DIR
     build_dir = out_root / slug
     if not build_dir.exists() or not (build_dir / "brief.json").exists():
@@ -589,6 +605,16 @@ def repair_build(
     best_pass = baseline_pass
     best_label = baseline_label
 
+    # Surface to the UI that repair is starting. Without this the live
+    # build feed goes silent for 60-120s while the repair LLM call runs,
+    # and the user assumes the build is stuck. The event includes the
+    # failed-check count so the UI can show "Pebble caught 3 issues…".
+    _emit("repair_started", {
+        "baseline_score": baseline_label,
+        "failed_count": len(failed_now),
+        "max_rounds": max_rounds,
+    })
+
     for round_no in range(1, max_rounds + 1):
         if not failed_now:
             break
@@ -596,6 +622,13 @@ def repair_build(
         prompt_preview = build_repair_prompt(ctx, failed_now)
         files_targeted = sorted({
             f for r in failed_now for f in files_for_failure(r, ctx.site_dir)
+        })
+
+        _emit("repair_round", {
+            "round": round_no,
+            "max_rounds": max_rounds,
+            "score_before": best_label,
+            "failed_count": len(failed_now),
         })
 
         if dry_run:
@@ -763,6 +796,17 @@ def repair_build(
 
     report.final_score = best_label
     _write_history(build_dir, report)
+
+    # One final event so the UI can stop showing the repair-in-progress
+    # state. The "improved" bool lets the UI distinguish "all clear, fixed
+    # X issues" from "some issues remain" without re-parsing the rounds.
+    _emit("repair_done", {
+        "baseline_score": baseline_label,
+        "final_score": best_label,
+        "rounds_run": len(report.rounds),
+        "improved": best_pass > baseline_pass,
+    })
+
     return report
 
 

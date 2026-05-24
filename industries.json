@@ -2504,5 +2504,36 @@
       "auto_play_audio",
       "recipe_popup_wall"
     ]
+  },
+  "indie_bookstore_in_portland": {
+    "emotion": "nostalgia, comfort, community, intellectual curiosity",
+    "visual_style": "warm editorial, texture-rich, cozy photo-forward",
+    "hero_type": "video",
+    "video_keyword": "cozy indie bookstore rain",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#3A4F41",
+      "accent": "#D47B38",
+      "background": "#F4EFE6"
+    },
+    "tone": "cozy, inviting, literary, grounded",
+    "key_sections": [
+      "hero",
+      "curated_collections",
+      "upcoming_events",
+      "staff_reviews",
+      "visit_info"
+    ],
+    "trust_signals": [
+      "independently owned & operated",
+      "expert staff recommendations",
+      "community event partnerships"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "aggressive_email_popups",
+      "generic_stock_photography",
+      "corporate_typography"
+    ]
   }
 }

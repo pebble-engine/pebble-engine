@@ -122,6 +122,14 @@ export type SSEEvent =
   | { type: "preview_ready"; data: { slug: string; url: string } }
   | { type: "writing";    data: { file_count: number } }
   | { type: "evaluating"; data: Record<string, never> }
+  // 2026-05-23: AUTO_REPAIR visibility — surface the critique-and-fix
+  // rounds so the build feed doesn't go silent for 60-120s while repair
+  // runs. `repair_started` fires only when the baseline eval failed
+  // something; `repair_round` fires once per round before the LLM call;
+  // `repair_done` fires once after the loop completes.
+  | { type: "repair_started"; data: { baseline_score: string; failed_count: number; max_rounds: number } }
+  | { type: "repair_round";   data: { round: number; max_rounds: number; score_before: string; failed_count: number } }
+  | { type: "repair_done";    data: { baseline_score: string; final_score: string; rounds_run: number; improved: boolean } }
   | { type: "done";       data: GenerateResponse }
   | { type: "error";      data: { error: string } };
 

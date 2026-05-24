@@ -6,14 +6,21 @@ reads from that queue and yields SSE frames to FastAPI's
 StreamingResponse.
 
 Event types emitted (in order):
-  started    {"slug": str}
-  industry   {"key": str | null}
-  style      {"dna_label": str, "dna_id": str}
-  generating {"model": str, "max_tokens": int}
-  writing    {"file_count": int}
-  evaluating {}                    (only when PEBBLE_AUTO_REPAIR=true)
-  done       {full GenerateResponse payload}
-  error      {"error": str}        (then stream closes)
+  started        {"slug": str}
+  industry       {"key": str | null}
+  style          {"dna_label": str, "dna_id": str}
+  generating     {"model": str, "max_tokens": int}
+  writing        {"file_count": int}
+  evaluating     {}                       (only when PEBBLE_AUTO_REPAIR=true)
+  repair_started {"baseline_score": str, "failed_count": int, "max_rounds": int}
+                                          (only when AUTO_REPAIR fires AND
+                                           the baseline eval had failures)
+  repair_round   {"round": int, "max_rounds": int, "score_before": str,
+                  "failed_count": int}    (per round, before the LLM call)
+  repair_done    {"baseline_score": str, "final_score": str,
+                  "rounds_run": int, "improved": bool}
+  done           {full GenerateResponse payload}
+  error          {"error": str}           (then stream closes)
 """
 from __future__ import annotations
 
