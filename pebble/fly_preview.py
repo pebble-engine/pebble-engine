@@ -374,6 +374,20 @@ def _cli() -> int:
     p_destroy = sub.add_parser("destroy", help="Tear down a project's Fly app")
     p_destroy.add_argument("slug")
 
+    p_migrate = sub.add_parser(
+        "migrate-all",
+        help="Bulk-deploy every project in output/ that has package.json. "
+             "Use once after flipping PEBBLE_PREVIEW_BACKEND=fly so existing "
+             "projects also have Fly apps.",
+    )
+    p_migrate.add_argument("--org", default="personal")
+    p_migrate.add_argument("--root", help="Repo root (default: cwd)")
+    p_migrate.add_argument("--dry-run", action="store_true",
+                           help="List what would deploy without actually deploying")
+    p_migrate.add_argument("--sleep", type=int, default=10,
+                           help="Seconds to wait between deploys (default 10). "
+                                "Spreads out Fly API calls so we don't hammer them.")
+
     args = parser.parse_args()
 
     # Load .env so FLY_API_TOKEN + sibling vars are available
@@ -431,6 +445,55 @@ def _cli() -> int:
             return 1
         print("✓ destroyed" if ok else "✗ destroy failed")
         return 0 if ok else 1
+
+    if args.cmd == "migrate-all":
+        import time as _time
+        root = Path(args.root) if args.root else (
+            Path(os.environ.get("PEBBLE_BRIEF_ROOT", "")) or Path.cwd()
+        )
+        output_dir = root / "output"
+        if not output_dir.exists():
+            print(f"✗ {output_dir} does not exist", file=sys.stderr)
+            return 1
+        # Find every project that has a package.json — those are the ones
+        # that can actually run next dev on Fly.
+        candidates: list[tuple[str, Path]] = []
+        for project_dir in sorted(output_dir.iterdir()):
+            if not project_dir.is_dir():
+                continue
+            site = project_dir / "site"
+            if (site / "package.json").exists():
+                candidates.append((project_dir.name, site))
+        if not candidates:
+            print("No project directories with site/package.json found.")
+            return 0
+        print(f"Found {len(candidates)} project(s) eligible for Fly deploy:")
+        for slug, _ in candidates:
+            print(f"  - {slug}")
+        if args.dry_run:
+            print("\n(dry-run; nothing deployed)")
+            return 0
+        print(f"\nDeploying — {args.sleep}s between calls so Fly's rate limits stay happy.\n")
+        succeeded, failed = 0, 0
+        for i, (slug, site) in enumerate(candidates):
+            print(f"[{i+1}/{len(candidates)}] {slug} → ", end="", flush=True)
+            try:
+                r = deploy_project(slug, site, org=args.org)
+            except RuntimeError as exc:
+                print(f"✗ {exc}")
+                failed += 1
+                continue
+            if r.ok:
+                print(f"✓ {r.elapsed:.1f}s → {r.url}")
+                succeeded += 1
+            else:
+                print(f"✗ {(r.error or '').splitlines()[0][:100]}")
+                failed += 1
+            # Don't sleep after the last one
+            if i < len(candidates) - 1 and args.sleep > 0:
+                _time.sleep(args.sleep)
+        print(f"\nDone — {succeeded} succeeded, {failed} failed.")
+        return 0 if failed == 0 else 1
 
     return 2
 
