@@ -298,6 +298,37 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     return () => window.clearInterval(id);
   }, [slugProp]);
 
+  // Local-mode pre-warm. When PEBBLE_PREVIEW_BACKEND=local (the default
+  // for Marc's pre-launch testers), `/preview/<slug>/` triggers the
+  // engine's on-demand `next dev` auto-start. First hit pays the full
+  // npm install + dev-server boot cost (~10-60s); subsequent hits are
+  // instant because dev_registry caches the URL.
+  //
+  // Without this useEffect, the cold-start cost is visible to the user:
+  // they open /workspace/<slug> from the sidebar, the shell mounts, the
+  // EditPhase iframe loads /preview/<slug>/, and they stare at a blank
+  // frame for 10-60s. With this, we kick the warmup off in parallel with
+  // fetchProjectState so the wait happens BEHIND the welcome/draft
+  // animation — by the time the user lands on Design phase, the dev
+  // server is hot.
+  //
+  // Same-origin fetch (no `mode: no-cors`) so the engine actually sees
+  // the request and runs the on-demand starter. HEAD keeps response
+  // small. Failures are silent — engine offline, slug not yet built,
+  // proxy down all collapse to "no pre-warm; iframe handles it" — the
+  // existing fallback path still works, this is purely additive.
+  //
+  // One-shot per slug change. Unlike the Fly keep-alive (4-min interval
+  // to defeat auto-stop), the local dev server stays warm forever once
+  // started, so a one-shot is enough.
+  useEffect(() => {
+    if (!slugProp) return;
+    fetch(`/preview/${encodeURIComponent(slugProp)}/`, {
+      method: "HEAD",
+      credentials: "omit",
+    }).catch(() => { /* engine offline / slug not built — iframe handles fallback */ });
+  }, [slugProp]);
+
   // FRESH idea capture. Bad UX (and bad for the user's wallet — every fire
   // is a billed build).
   //
