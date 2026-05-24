@@ -97,7 +97,7 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Premium-tier beauty, wellness, and editorial-luxury brands. Light cream/mint surfaces. Generous whitespace. Magazine-style asymmetric layouts.",
-      "tier": "free",
+      "tier": "premium",
       "preview_url": "http://127.0.0.1:3063",
       "preview_pages": [
         {
@@ -155,7 +155,7 @@
         "body": "Inter"
       },
       "best_for": "Warm, tactile brands where the product is craft — bakery, café, restaurant, deli, florist. Tilted-photo Y2K cream palette with filterable menu / catalog section.",
-      "tier": "free",
+      "tier": "premium",
       "preview_url": "http://127.0.0.1:3065",
       "preview_pages": [
         {
@@ -210,7 +210,7 @@
         "body": "DM Sans"
       },
       "best_for": "Authority instructor brands — trainer, dojo, coach, security consultant. Tactical crimson + gold-gradient with full-bleed video hero and animated stats.",
-      "tier": "free",
+      "tier": "premium",
       "preview_url": "http://127.0.0.1:3066",
       "preview_pages": [
         {
@@ -266,7 +266,7 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Dramatic dark personal-brand portfolios where the work is the product. Blackletter wordmarks, gold accents, corner-bracket photo frames. Tattoo, music, motorcycle, leather craft, whiskey.",
-      "tier": "free",
+      "tier": "premium",
       "preview_url": "http://127.0.0.1:3064",
       "preview_pages": [
         {
@@ -320,7 +320,7 @@
         "body": "Inter"
       },
       "best_for": "Urban luxury real estate + adjacent high-touch brokerages. Cinematic vermilion-slab editorial, mix-blend-difference navbar, photo-grid hero, numbered slab dividers.",
-      "tier": "free",
+      "tier": "premium",
       "preview_url": "http://127.0.0.1:3067",
       "preview_pages": [
         {
@@ -455,7 +455,7 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Warm, feminine beauty + spa brands. Inviting, intimate, premium.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "luxe_beauty_aubergine",
@@ -495,7 +495,7 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Mysterious, evening-luxury brands — perfume, jewelry, premium skincare.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "ink_studio_oxblood",
@@ -532,7 +532,7 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Old-world craft brands — tattoo, leather, whiskey, cigar lounge, vintage.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "ink_studio_steel",
@@ -569,7 +569,7 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Workshop / fabrication / metal craft — industrial precision, dark mood.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "artisan_kitchen_navy",
@@ -608,7 +608,7 @@
         "body": "Karla"
       },
       "best_for": "Coastal coffee shops + light cafes. Cream + navy + warm amber.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "artisan_kitchen_olive",
@@ -647,7 +647,7 @@
         "body": "Merriweather"
       },
       "best_for": "Mediterranean / Italian / trattoria — slow food + olive-oil-warm hospitality.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "instructor_pro_navy",
@@ -683,7 +683,7 @@
         "body": "Atkinson Hyperlegible"
       },
       "best_for": "Executive coaching, leadership development, professional services authority.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "instructor_pro_forest",
@@ -719,7 +719,7 @@
         "body": "Barlow"
       },
       "best_for": "Wilderness guiding, outdoor adventure, survival training, eco-lodges.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "boutique_brokerage_sage",
@@ -754,7 +754,7 @@
         "body": "Josefin Sans"
       },
       "best_for": "Rural / countryside luxury real estate. Calm, considered, less urban.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "boutique_brokerage_navy",
@@ -789,7 +789,7 @@
         "body": "Inter"
       },
       "best_for": "Yacht-club / old-money urban-coastal real estate. Greenwich, Newport, Annapolis vibe.",
-      "tier": "free"
+      "tier": "premium"
     },
     {
       "id": "cinematic_hero",

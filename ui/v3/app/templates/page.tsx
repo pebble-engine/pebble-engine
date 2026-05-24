@@ -241,27 +241,42 @@ function TemplateCard({
             </p>
           </div>
         )}
-        <div className="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-foreground/85 text-background text-xs uppercase tracking-wider z-10">
+        {/* Tier badge — top-left. "Pro" for premium templates so users
+            read it as a plan-gate signal, not a price tag. Free stays Free. */}
+        <div className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wider z-10 ${
+          normalizeTier(t.tier) === "premium"
+            ? "bg-violet-600/95 text-white"
+            : normalizeTier(t.tier) === "public"
+              ? "bg-emerald-600/95 text-white"
+              : "bg-foreground/85 text-background"
+        }`}>
           {(() => {
             const tier = normalizeTier(t.tier);
             if (tier === "free") return "Free";
-            if (tier === "premium") return "Premium";
+            if (tier === "premium") return "Pro";
             return "Public";
           })()}
         </div>
+        {/* Lock overlay on premium — visual cue that this needs a paid plan.
+            Tap-through still opens the preview; the InstantiateDialog gates
+            on actual subscription server-side. */}
+        {normalizeTier(t.tier) === "premium" && (
+          <div className="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-600/95 text-white shadow-lg">
+            <Lock className="w-3.5 h-3.5" aria-hidden />
+          </div>
+        )}
       </div>
+      {/* Simplified body — name + tagline + ≤2 industries.
+          Marc 2026-05-24: dropped the vibe codename ("GLOW EMERALD DUAL-THEME")
+          and reduced visible industries from 4 to 2 — the cards were reading
+          as walls of tag chips. Names should carry the gallery, not metadata. */}
       <div className="p-5">
-        <div className="flex items-baseline justify-between gap-2 mb-1">
-          <h3 className={`${type.dashboard.heading.m}`}>{t.name}</h3>
-        </div>
-        <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-2`}>
-          {t.vibe}
-        </p>
-        <p className={`${type.body.s} text-muted-foreground line-clamp-2 mb-3`}>
+        <h3 className={`${type.dashboard.heading.m} mb-2`}>{t.name}</h3>
+        <p className={`${type.body.s} text-muted-foreground line-clamp-1 mb-3`}>
           {t.tagline}
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {t.applicable_industries.slice(0, 4).map((ind) => (
+          {t.applicable_industries.slice(0, 2).map((ind) => (
             <span
               key={ind}
               className={`${type.mono} px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground`}
@@ -269,9 +284,9 @@ function TemplateCard({
               {ind}
             </span>
           ))}
-          {t.applicable_industries.length > 4 && (
+          {t.applicable_industries.length > 2 && (
             <span className={`${type.mono} px-2 py-0.5 rounded-full text-xs text-muted-foreground`}>
-              +{t.applicable_industries.length - 4} more
+              +{t.applicable_industries.length - 2}
             </span>
           )}
         </div>
@@ -719,41 +734,80 @@ function TierTabButton({
 // Until then we surface the value prop + capture interest so users know
 // it's coming and we don't leave an empty grid feeling broken.
 function PublicTabPlaceholder() {
+  // 2026-05-24: rewritten from passive "coming soon" → 3 active creator
+  // CTAs. Marc wanted this section to invite community contributions
+  // instead of advertising vaporware. Each CTA hits a different intent
+  // (ready-now / idea-stage / total-newcomer) so no one falls through.
   return (
-    <section className="max-w-2xl mx-auto">
-      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+    <section className="max-w-3xl mx-auto">
+      <div className="rounded-2xl border border-border bg-card p-8 md:p-10 text-center">
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
           <Upload className="w-5 h-5 text-primary" />
         </div>
         <h2 className={`${type.dashboard.display.m} text-foreground mb-2`}>
-          Public templates — coming soon
+          Built something? Show the community.
         </h2>
-        <p className={`${type.body.m} text-muted-foreground mb-6`}>
-          Anyone can publish a template here. Designers, agencies, or just builders who want
-          their work seen. Make it free, or set a price and earn a share every time someone uses it.
+        <p className={`${type.body.m} text-muted-foreground mb-8 max-w-xl mx-auto`}>
+          Pebble&apos;s catalog is open to designers, agencies, and builders. Ship a finished template,
+          pitch us an idea, or just start designing in our framework — every contributor gets credit
+          on every install.
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-left">
-          <div className="space-y-1">
-            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Share</p>
-            <p className={`${type.body.s} text-foreground`}>Upload your design once, earn forever.</p>
-          </div>
-          <div className="space-y-1">
-            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Price</p>
-            <p className={`${type.body.s} text-foreground`}>Free, or set your own. We take a small cut.</p>
-          </div>
-          <div className="space-y-1">
-            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Reach</p>
-            <p className={`${type.body.s} text-foreground`}>Every Pebble customer sees you.</p>
-          </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+          {/* CTA 1 — ready-now: full template upload */}
+          <a
+            href="mailto:hello@getpebble.net?subject=Pebble%20—%20I%20want%20to%20submit%20a%20template&body=Tell%20us%20about%20your%20template%3A%20industry%2C%20design%20vibe%2C%20link%20to%20a%20live%20demo%20or%20Figma%20file."
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Submit a template
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              Already have a finished design? Send us the live URL or Figma file.
+              Approved templates ship with your credit and a revenue share.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Open contact →
+            </span>
+          </a>
+
+          {/* CTA 2 — idea-stage: pitch / collaborate */}
+          <a
+            href="mailto:hello@getpebble.net?subject=Pebble%20—%20Template%20idea&body=My%20industry%20%2F%20idea%3A%0A%0AWhat%20it%20should%20feel%20like%3A%0A%0AReferences%20%2F%20inspiration%3A"
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Share an idea
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              Have a template idea but no time to build it? Tell us the industry + vibe.
+              We&apos;ll build it and credit you as the originator.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Pitch us →
+            </span>
+          </a>
+
+          {/* CTA 3 — total newcomer: get started */}
+          <a
+            href="/community/launchpad"
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Get started
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              New to designing for Pebble? Start here — quick docs on our template system,
+              the DNA model, and how the engine renders your work.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Open Launchpad →
+            </span>
+          </a>
         </div>
-        <a
-          href="mailto:hello@getpebble.net?subject=Pebble%20Public%20Templates%20—%20notify%20me"
-          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          Notify me when it ships
-        </a>
-        <p className={`${type.mono} text-xs text-muted-foreground mt-3`}>
-          Already designing for Pebble? Reply to that email and we&apos;ll pull you into the early-uploader cohort.
+
+        <p className={`${type.mono} text-xs text-muted-foreground mt-8`}>
+          Every approved contributor earns 30% of every install of their template, recurring.
         </p>
       </div>
     </section>
