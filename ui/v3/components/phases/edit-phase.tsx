@@ -504,83 +504,19 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
           />
         </div>
 
-        {/* Refinement chips dock — bottom-left anchored, left-edge of the
-            preview area (respects left-rail width via CSS var). Does NOT
-            span the full width; max-w-max keeps it compact so the right
-            60%+ of the preview stays completely unobstructed.
-            --right-rail-w is no longer used (right rail removed). */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
-          className="fixed bottom-6 flex flex-col items-start gap-2 pointer-events-none max-w-max"
-          style={{ left: 'calc(var(--left-rail-w, 240px) + 16px)' }}
-        >
-          <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto whitespace-nowrap`}>
-            ✨ Style tweaks are free — click an element or pick a chip
-          </p>
-          {/* Phase 50 — block suggestion chips. One quick row of the most-
-              wanted "Add testimonials / pricing / FAQ / stats / newsletter"
-              additions, fed by /api/blocks. The full library remains one
-              click away via "Browse all sections" → BlockGallery modal. */}
-          <SuggestionChips
-            busyBlockId={busyBlockId}
-            onInsert={(blockId) => handleInsertBlock(blockId)}
-            onBrowseAll={() => setGalleryOpen(true)}
-          />
-          <nav className="bg-card border border-border shadow-lg rounded-full px-3 py-2 flex gap-1 pointer-events-auto">
-            {REFINE_CHIPS.map((c) => {
-              const isBusy = busyRefinement === c.id;
-              return (
-                <motion.button
-                  key={c.id}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={isBusy || busyRefinement !== null}
-                  onClick={() => handleRefine(c.id)}
-                  className={`${interactions.chip} relative text-muted-foreground px-4 py-2 flex items-center gap-2 hover:text-foreground rounded-full disabled:opacity-50 ${type.label}`}
-                >
-                  <c.Icon className="w-4 h-4" />
-                  {isBusy ? "Applying…" : c.label}
-                  {/* billable indicator: green dot if free, amber if billable */}
-                  <span
-                    className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-card ${
-                      c.billable ? "bg-spark" : "bg-earth"
-                    }`}
-                    title={c.billable ? "Uses credits" : "Free tweak"}
-                  />
-                </motion.button>
-              );
-            })}
-          </nav>
-
-          {/* Phase 57 — AI chat bar: plain-English edits routed through /api/chat-edit.
-              Keyword-matched to existing refinements so no extra LLM call for simple
-              requests. Falls back to a friendly suggestion if unrecognised. */}
-          <form
-            className="pointer-events-auto bg-card border border-border shadow-lg rounded-full px-4 py-2 flex gap-2 items-center w-80"
-            onSubmit={(e) => { e.preventDefault(); handleChatEdit(); }}
-          >
-            <input
-              type="text"
-              value={chatMessage}
-              onChange={(e) => setChatMessage(e.target.value)}
-              placeholder='Ask a change… "Make it friendlier"'
-              disabled={chatBusy || !build?.slug}
-              className="flex-1 bg-transparent text-sm placeholder:text-muted-foreground focus:outline-none min-w-0 disabled:opacity-50"
-            />
-            <button
-              type="submit"
-              disabled={!chatMessage.trim() || chatBusy || !build?.slug}
-              className={`${interactions.iconButton} w-7 h-7 rounded-full flex items-center justify-center bg-primary text-primary-foreground disabled:opacity-40`}
-              aria-label="Send"
-            >
-              {chatBusy
-                ? <span className="w-3 h-3 border-2 border-primary-foreground/40 border-t-primary-foreground rounded-full animate-spin" />
-                : <Send className="w-3.5 h-3.5" />
-              }
-            </button>
-          </form>
-        </motion.div>
+        {/* 2026-05-23: Bottom chips dock REMOVED per Marc's design directive.
+            The "STYLE TWEAKS ARE FREE" eyebrow, refinement chips (Make it
+            friendlier / More professional / Simpler / Magic Palette Shift /
+            Add booking), SuggestionChips (Add testimonials / pricing / etc),
+            and "Ask a change…" chat bar all lived here. They cluttered the
+            preview surface. Edits now come from:
+              1. Click any element in the preview → VisualEditorPanel slides
+                 in from the right (font / color / font-size)
+              2. The icons next to the URL bar at the top of the preview
+                 (desktop / mobile / publish-status toggle)
+              3. "+ Add section" button in the TopNav (block insertion)
+            handleRefine / handleChatEdit / handleInsertBlock callbacks are
+            kept for future re-wiring if a different surface needs them. */}
       </main>
 
       {/* Visual Editor overlay — slides in from the right edge of the preview
