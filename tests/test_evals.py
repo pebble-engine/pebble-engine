@@ -79,7 +79,10 @@ def good_build(tmp_path: Path) -> Path:
         "sans: ['var(--font-inter)', 'Inter', 'sans-serif'], "
         "display: ['Cormorant Garamond', 'serif'] } } } }"
     )
-    (site / "postcss.config.js").write_text("module.exports = {}")
+    (site / "postcss.config.mjs").write_text(
+        "const config = { plugins: { tailwindcss: {}, autoprefixer: {} } };\n"
+        "export default config;\n"
+    )
     (site / "next.config.mjs").write_text("/** @type {import('next').NextConfig} */\nexport default {};\n")
     (site / "app" / "layout.tsx").write_text(
         'import { Inter } from "next/font/google";\n'
@@ -117,6 +120,7 @@ def good_build(tmp_path: Path) -> Path:
         '}'
     )
     (site / "app" / "globals.css").write_text(
+        "@tailwind base;\n@tailwind components;\n@tailwind utilities;\n\n"
         ":root { --color-bg: #0A0A0A; --color-accent: #FF3A1F; "
         "--color-accent-glow: rgba(255,58,31,0.20); --glass-blur: 12px; }\n"
         "body { font-family: var(--font-inter), Inter, sans-serif; "

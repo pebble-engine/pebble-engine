@@ -712,7 +712,7 @@ REQUIRED_FILES = (
     "package.json",
     "tsconfig.json",
     "tailwind.config.ts",
-    "postcss.config.js",
+    "postcss.config.mjs",
     "next.config.mjs",
     "app/layout.tsx",
     "app/page.tsx",
@@ -1190,6 +1190,78 @@ def tailwind_directives_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 18c. globals_css_imported_in_layout — FOUNDATION
+#
+# Added 2026-05-23 from audit C2. The Tailwind directives bug had a
+# sibling: if app/layout.tsx is missing `import "./globals.css";`,
+# Next.js never processes the file. Tailwind directives + design tokens
+# + .liquid-glass all exist on disk but never reach the browser. Same
+# symptom (plain-HTML render) but every CSS-content eval passes. The
+# import is one line — if the LLM drops it under token pressure, the
+# build silently ships a styleless site.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("app/layout.tsx",))
+def globals_css_imported_in_layout(ctx: BuildContext) -> CheckResult:
+    """`app/layout.tsx` MUST contain `import "./globals.css"`. Without it,
+    Next.js never processes globals.css and all styles disappear."""
+    if not ctx.site_dir.exists():
+        return CheckResult("globals_css_imported_in_layout", "skip", "no site directory")
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult("globals_css_imported_in_layout", "fail", "app/layout.tsx missing")
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if re.search(r"""import\s+['"]\./globals\.css['"]""", text):
+        return CheckResult(
+            "globals_css_imported_in_layout", "pass",
+            "`import './globals.css'` found in app/layout.tsx",
+        )
+    return CheckResult(
+        "globals_css_imported_in_layout", "fail",
+        "app/layout.tsx missing `import './globals.css'` — without this import "
+        "Next.js never processes the CSS file and the site renders as plain HTML.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 18d. postcss_config_is_esm — FOUNDATION
+#
+# Added 2026-05-23 from audit C3. We require postcss.config.mjs (.mjs
+# extension forces ESM) — but Node will silently treat `module.exports = ...`
+# in an .mjs file as nothing exported. PostCSS then crashes with
+# "Your custom PostCSS configuration must export a `plugins` key" and
+# Tailwind never runs. Same plain-HTML symptom. Caught by checking that
+# the .mjs file uses `export default`, not `module.exports`.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("postcss.config.mjs",))
+def postcss_config_is_esm(ctx: BuildContext) -> CheckResult:
+    """`postcss.config.mjs` must use ESM `export default`, not CJS `module.exports`."""
+    if not ctx.site_dir.exists():
+        return CheckResult("postcss_config_is_esm", "skip", "no site directory")
+    mjs = ctx.site_dir / "postcss.config.mjs"
+    if not mjs.exists():
+        return CheckResult("postcss_config_is_esm", "fail", "postcss.config.mjs missing")
+    text = mjs.read_text(encoding="utf-8", errors="ignore")
+    if re.search(r"\bmodule\.exports\s*=", text):
+        return CheckResult(
+            "postcss_config_is_esm", "fail",
+            "postcss.config.mjs uses CommonJS `module.exports` in an ESM file — "
+            "must use `export default { plugins: { tailwindcss: {}, autoprefixer: {} } }`. "
+            "Without ESM syntax, PostCSS sees an empty config and Tailwind never runs.",
+        )
+    if "export default" not in text:
+        return CheckResult(
+            "postcss_config_is_esm", "fail",
+            "postcss.config.mjs has no `export default` statement — PostCSS won't load it",
+        )
+    return CheckResult(
+        "postcss_config_is_esm", "pass",
+        "postcss.config.mjs uses ESM `export default`",
+    )
+
+
+# ---------------------------------------------------------------------------
 # 19. animation_components_present — FOUNDATION
 # ---------------------------------------------------------------------------
 
@@ -1338,6 +1410,24 @@ def animated_heading_screen_reader_safe(ctx: BuildContext) -> CheckResult:
     stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
     has_sr_only = bool(_SR_ONLY_RE.search(stripped))
     has_aria_hidden = bool(_ARIA_HIDDEN_TRUE_RE.search(stripped))
+
+    # Audit C4 (2026-05-23): structural check. aria-hidden="true" on the
+    # <h1> itself hides the entire subtree including the sr-only text from
+    # screen readers — exactly the bug the markers were supposed to prevent.
+    # The presence check passes (both markers exist) but the page has no
+    # heading announced to AT. Catch it by inspecting the <h1> opening tag.
+    H1_OPEN_RE = re.compile(r"<h1\b([^>]*?)>", re.DOTALL)
+    for m in H1_OPEN_RE.finditer(stripped):
+        attrs = m.group(1) or ""
+        if "aria-hidden" in attrs:
+            return CheckResult(
+                "animated_heading_screen_reader_safe", "fail",
+                "AnimatedHeading puts aria-hidden on the <h1> itself — this hides "
+                "the inner sr-only text from screen readers too, defeating the "
+                "split-semantics-from-decoration pattern. Put aria-hidden=\"true\" "
+                "on the inner per-char wrapper span, not on the <h1>.",
+                details={"violation": "aria-hidden on h1"},
+            )
 
     if has_sr_only and has_aria_hidden:
         return CheckResult(
@@ -4480,6 +4570,10 @@ ALL_CHECKS = [
     inter_font_global,
     inter_font_applied,
     liquid_glass_class_present,
+    # Tailwind / CSS pipeline (Marc's 3-broken-sites-in-a-row bug + audit 2026-05-23)
+    tailwind_directives_present,
+    globals_css_imported_in_layout,
+    postcss_config_is_esm,
     animation_components_present,
     client_components_have_directive,
     prefers_reduced_motion_respected,

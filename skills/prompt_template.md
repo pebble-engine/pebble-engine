@@ -264,7 +264,7 @@ import {{ Inter }} from "next/font/google";
 import type {{ Metadata }} from "next";
 import {{ Footer }} from "@/components/layout/Footer";
 import {{ GrainOverlay }} from "@/components/ui/GrainOverlay";
-import "./globals.css";
+import "./globals.css"; // MANDATORY — without this line Next.js never processes globals.css and the site renders as plain HTML with browser defaults. Eval `globals_css_imported_in_layout` will fail the build.
 
 const inter = Inter({{
   subsets: ["latin"],
@@ -1078,7 +1078,7 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 | reduced-motion | `@media (prefers-reduced-motion: reduce)` in globals.css disabling animation-duration AND transition-duration to 0.01ms |
 | AnimatedHeading respects reduced-motion | Component reads `window.matchMedia("(prefers-reduced-motion: reduce)")` on mount and skips per-char delays when set |
 | FadeIn respects reduced-motion | Same — renders at final opacity immediately when user has reduced-motion set |
-| AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>` |
+| AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>`. **The `<h1>` itself MUST NEVER carry `aria-hidden="true"` — that hides the entire subtree including the sr-only text from screen readers, leaving the page with no announced heading. Put `aria-hidden="true"` on the inner per-char wrapper span only.** Eval `animated_heading_screen_reader_safe` fails the build if `<h1>` carries `aria-hidden`. |
 | Focus-visible on interactives | Every `<a>` / `<button>` with a `className` (hero CTAs, navbar links, Call Us pill) carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` |
 | Form input labels | Every `<input>` / `<textarea>` / `<select>` has `aria-label="..."` OR an associated `<label htmlFor="...">`. Placeholder text does NOT count. |
 | Icon-only interactives | Any `<button>` or `<a>` whose sole child is an icon component (e.g. `<X />`, `<ChevronRight />`) needs `aria-label="..."` or `title="..."` |
