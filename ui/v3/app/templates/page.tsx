@@ -351,7 +351,15 @@ function PreviewPane({
   }, [current.id]);
 
   const active = pages[activeIdx] ?? pages[0];
-  const iframeSrc = `${current.preview_url ?? ""}${active.path}`;
+  // Templates with absolute preview_urls (legacy localhost:3199 entries) load
+  // as-is. Engine-served static-export URLs (/preview-template/<id>/...) need
+  // the engine origin prefixed so the iframe resolves to port 8000, not v3's
+  // port 3001. Mirror the ENGINE_BASE logic from lib/api.ts exactly.
+  const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+  const previewUrl = current.preview_url ?? "";
+  const iframeSrc = previewUrl.startsWith("/")
+    ? `${ENGINE_BASE}${previewUrl}${active.path}`
+    : `${previewUrl}${active.path}`;
 
   const handleUseTemplate = async () => {
     setCheckingAuth(true);

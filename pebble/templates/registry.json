@@ -819,7 +819,7 @@
       },
       "best_for": "Service-industry businesses where trust + availability are the headline selling points. Full-bleed photo carries emotion; tight CTA anchors action.",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_hero",
+      "preview_url": "/preview-template/cinematic_hero/",
       "preview_pages": [
         {
           "label": "Home",
@@ -869,7 +869,7 @@
       },
       "best_for": "Licensed local plumbers who need to convey trust and availability in one glance",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_plumber",
+      "preview_url": "/preview-template/cinematic_plumber/",
       "preview_pages": [
         {
           "label": "Home",
@@ -934,7 +934,7 @@
       },
       "best_for": "Licensed HVAC companies who need to convey fast, expert, reliable service",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_hvac",
+      "preview_url": "/preview-template/cinematic_hvac/",
       "preview_pages": [
         {
           "label": "Home",
@@ -1001,7 +1001,7 @@
       },
       "best_for": "Licensed GCs who lead with fixed-price accountability and trust",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_construction",
+      "preview_url": "/preview-template/cinematic_construction/",
       "preview_pages": [
         {
           "label": "Home",
@@ -1067,7 +1067,7 @@
       },
       "best_for": "Local landscapers offering weekly maintenance routes and seasonal installation packages",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_landscaper",
+      "preview_url": "/preview-template/cinematic_landscaper/",
       "preview_pages": [
         {
           "label": "Home",
@@ -1132,7 +1132,7 @@
       },
       "best_for": "Small-batch dog groomers who want to differentiate on calm, anxiety-friendly care",
       "tier": "free",
-      "preview_url": "http://localhost:3199/cinematic_dog_groomer",
+      "preview_url": "/preview-template/cinematic_dog_groomer/",
       "preview_pages": [
         {
           "label": "Home",
