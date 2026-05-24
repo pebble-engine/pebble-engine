@@ -263,6 +263,14 @@ def route_post(handler) -> None:
             # customer's business name/services. Free-tier-friendly.
             from pebble.server.templates_api import run_instantiate_template
             run_instantiate_template(handler)
+        elif handler.path == "/api/template-match":
+            # Phase F1 (2026-05-24) — deterministic top-N template ranking.
+            # Scores every template against (prompt, business_type) via cheap
+            # token-overlap signals. No LLM, ~5ms. Public endpoint (no auth).
+            # The funnel uses this after signup to surface 3 templates instead
+            # of dumping the user into the full gallery — reduces bounce.
+            from pebble.server.template_match import run_template_match
+            run_template_match(handler)
         elif handler.path == "/api/chat":
             # 2026-05-23 — Pebble assistant multi-turn chat for the
             # Control Center side-panel. GPT-4o-mini via OpenRouter.
