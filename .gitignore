@@ -26,6 +26,7 @@ pebble/templates/*/node_modules/
 pebble/templates/*/.next/
 pebble/templates/*/.turbo/
 pebble/templates/*/dist/
+pebble/templates/*/out/
 pebble/templates/*/next-env.d.ts
 pebble/templates/*/tsconfig.tsbuildinfo
 
