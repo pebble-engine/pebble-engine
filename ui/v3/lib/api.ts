@@ -296,6 +296,11 @@ export type ProjectSummary = {
   file_count: number;
   starred: boolean;
   preview_url: string;
+  /** 2026-05-23: hero screenshot URL for the dashboard card. Null
+   *  when the post-build screenshot pipeline hasn't run yet (in-
+   *  flight builds or older projects from before screenshots were
+   *  enabled). Render a DNA-colored placeholder when missing. */
+  screenshot_url: string | null;
   design_dna: string | null;
   publish?: {
     kind:        "zip" | "cloudflare";

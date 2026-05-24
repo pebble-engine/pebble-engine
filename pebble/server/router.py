@@ -167,6 +167,12 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/analytics")]
             from pebble.server.analytics import run_get_summary
             run_get_summary(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/screenshot"):
+            # 2026-05-23 — serve the project's hero screenshot for the
+            # dashboard project cards. Owner-gated. PNG content-type.
+            slug = handler.path[len("/api/projects/"):-len("/screenshot")]
+            from pebble.server.projects import run_get_screenshot
+            run_get_screenshot(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrity"):
             # Phase 36 (2026-05-21) — curated 10-check pre-launch checklist
             # for the workspace's publish gate. Owner-gated. Read-only.

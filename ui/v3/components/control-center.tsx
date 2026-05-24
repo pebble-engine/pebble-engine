@@ -1,21 +1,25 @@
 "use client";
 
 /**
- * ControlCenter — split-pane shell for the Pebble app (2026-05-23).
+ * ControlCenter — three-pane shell for the Pebble app (2026-05-23 rev 2).
  *
- * Marc's design-night pivot. The dashboard becomes a two-column shell:
- *   - LEFT  (~480px): PebbleChat — the assistant the user talks to.
- *   - RIGHT (fills):  the actual route content (project grid, templates,
- *                     integrations, etc.) inside the canvas.
+ * Marc's updated mockup put the chat panel on the RIGHT (narrower,
+ * ~340px) and kept the existing DashboardSidebar on the LEFT. The
+ * canvas takes the middle. So the shell is:
  *
- * The chat persists across pane changes for the lifetime of the
- * dashboard mount. The right canvas swaps to whatever child it's
- * handed — so the same component can host /dashboard, and later wrap
- * /designs, /templates, etc.
+ *   [ DashboardSidebar (240px) ] [ canvas (flex-1) ] [ PebbleChat (340px) ]
  *
- * Mobile (< md): the chat tucks into a slide-up drawer triggered by a
- * floating "Ask Pebble" button. The canvas takes the full viewport so
- * a thumb-driven user isn't squeezed into 200px of preview.
+ * The left sidebar is a slot so other routes can supply their own
+ * sidebar (or none) without rewriting the shell. The right chat
+ * panel is owned here — it's the always-present assistant surface
+ * Marc wants users to trust as the catch-all "find anything" lane.
+ *
+ * Mobile (< lg):
+ *   - Sidebar collapses behind a drawer (existing DashboardSidebar
+ *     behavior — it shrinks to a hamburger).
+ *   - Chat panel tucks into a slide-up sheet triggered by a floating
+ *     "Ask Peblet" pill that sits over the canvas.
+ *   - Canvas is full-width so the user isn't squeezed into 200px.
  */
 
 import { useState } from "react";
@@ -23,53 +27,59 @@ import { MessageSquare, X } from "lucide-react";
 import { PebbleChat } from "@/components/pebble-chat";
 
 export type ControlCenterProps = {
-  /** Right-side content — the route the user is currently looking at. */
+  /** Middle column — the actual route content the user is looking at. */
   children: React.ReactNode;
-  /** Opening line spoken by Pebble. Pass per-route copy so the
-   *  assistant greets in context ("Welcome back to your dashboard"
-   *  vs "Browsing templates? I can help filter"). */
+  /** Optional left sidebar. Most authed routes pass a DashboardSidebar
+   *  here; some pages (workspace shell) want to omit. */
+  leftSidebar?: React.ReactNode;
+  /** Opening line spoken by Peblet on mount. Per-route copy lets the
+   *  greeting feel context-aware ("Welcome back to your dashboard" vs
+   *  "Browsing templates? I can help filter"). */
   greeting?: string;
 };
 
-export function ControlCenter({ children, greeting }: ControlCenterProps) {
-  // Mobile drawer state. Always closed on first render so the user
-  // sees the canvas first; they tap the floating button to open chat.
+export function ControlCenter({ children, leftSidebar, greeting }: ControlCenterProps) {
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
   return (
-    <div className="flex h-screen-safe w-full overflow-hidden bg-background">
-      {/* Desktop chat panel — always visible on md+. The fixed width
-          matches Marc's mockup (~500px) and keeps the canvas the
-          dominant surface. */}
-      <aside className="hidden md:flex md:w-[460px] lg:w-[500px] shrink-0 h-full">
-        <PebbleChat greeting={greeting} />
-      </aside>
+    <div className="flex h-full w-full overflow-hidden bg-background">
+      {/* LEFT — workspace sidebar. Hidden under lg; the existing
+          DashboardSidebar handles its own mobile drawer pattern. */}
+      {leftSidebar && (
+        <aside className="hidden lg:flex shrink-0 h-full">
+          {leftSidebar}
+        </aside>
+      )}
 
-      {/* Right canvas — fills remaining width. Scrolls independently
-          of the chat so a long page doesn't push the input off-screen. */}
-      <section className="flex-1 h-full overflow-y-auto bg-background">
+      {/* MIDDLE — canvas. Scrolls independently so a long page
+          doesn't push the chat input off-screen. */}
+      <section className="flex-1 h-full overflow-y-auto bg-background min-w-0">
         {children}
       </section>
 
-      {/* Mobile floating Ask Pebble button. Hidden when the drawer
-          is open; the drawer's own close button takes over then. */}
+      {/* RIGHT — chat panel on desktop. Narrower than the canvas
+          so it feels like a companion, not a hijacker. */}
+      <aside className="hidden lg:flex lg:w-[340px] xl:w-[360px] shrink-0 h-full">
+        <PebbleChat greeting={greeting} />
+      </aside>
+
+      {/* Mobile floating "Ask Peblet" pill — opens the chat sheet. */}
       {!mobileChatOpen && (
         <button
           type="button"
           onClick={() => setMobileChatOpen(true)}
-          className="md:hidden fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-foreground text-background shadow-2xl font-semibold text-sm"
-          aria-label="Open Pebble chat"
+          className="lg:hidden fixed bottom-6 right-6 z-40 inline-flex items-center gap-2 px-4 py-3 rounded-full bg-foreground text-background shadow-2xl font-semibold text-sm"
+          aria-label="Open Peblet chat"
         >
           <MessageSquare className="w-4 h-4" />
-          Ask Pebble
+          Ask Peblet
         </button>
       )}
 
-      {/* Mobile slide-up drawer. Covers the bottom 80% of the viewport;
-          chat behaves identically to the desktop panel inside it. */}
+      {/* Mobile slide-up sheet — chat behaves identically inside. */}
       {mobileChatOpen && (
         <div
-          className="md:hidden fixed inset-0 z-50 flex flex-col bg-black/40"
+          className="lg:hidden fixed inset-0 z-50 flex flex-col bg-black/40"
           onClick={() => setMobileChatOpen(false)}
         >
           <div

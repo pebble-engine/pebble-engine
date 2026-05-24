@@ -175,18 +175,28 @@ def run_list_projects(handler) -> None:
             except Exception:
                 inbox = None
 
+        # 2026-05-23: hero screenshot for the dashboard card. Only set
+        # when the file exists so the v3 ProjectCard can show a clean
+        # fallback (DNA-colored placeholder) for in-flight or screenshot-
+        # less builds. Post-build pipeline writes 01-hero.png alongside
+        # 02-trust, 03-services, etc.; we surface the hero shot only.
+        screenshot_url = None
+        if (project_dir / "screenshots" / "01-hero.png").exists():
+            screenshot_url = f"/api/projects/{project_dir.name}/screenshot"
+
         projects.append({
-            "slug":          project_dir.name,
-            "business_name": brief.get("business_name", project_dir.name),
-            "business_type": brief.get("business_type") or brief.get("industry"),
-            "built_at":      built_at or _project_mtime(project_dir),
-            "file_count":    file_count,
-            "starred":       starred,
-            "preview_url":   f"/preview/{project_dir.name}/",
-            "design_dna":    brief.get("_design_dna"),
-            "publish":       publish_summary,
-            "domain":        domain,
-            "inbox":         inbox,
+            "slug":           project_dir.name,
+            "business_name":  brief.get("business_name", project_dir.name),
+            "business_type":  brief.get("business_type") or brief.get("industry"),
+            "built_at":       built_at or _project_mtime(project_dir),
+            "file_count":     file_count,
+            "starred":        starred,
+            "preview_url":    f"/preview/{project_dir.name}/",
+            "screenshot_url": screenshot_url,
+            "design_dna":     brief.get("_design_dna"),
+            "publish":        publish_summary,
+            "domain":         domain,
+            "inbox":          inbox,
         })
 
     # Newest first
@@ -618,3 +628,45 @@ def run_claim_project(handler, slug: str) -> None:
     })
     if not already_owned:
         _log_engagement(caller_uid, "project_claimed")
+
+
+# --------- GET /api/projects/<slug>/screenshot ---------
+
+def run_get_screenshot(handler, slug: str) -> None:
+    """Serve the project's hero screenshot for the dashboard card.
+
+    Owner-gated. Returns the raw PNG bytes of output/<slug>/screenshots/
+    01-hero.png. Returns 404 when the screenshot doesn't exist yet — the
+    v3 ProjectCard handles that with a DNA-colored placeholder.
+
+    Path validation: the slug goes through ``require_project_owner``
+    which calls validate_slug; on success the file is fetched from a
+    fixed sub-path. No directory traversal is possible.
+    """
+    uid = require_project_owner(handler, slug)
+    if uid is None:
+        return  # require_project_owner already wrote the response
+
+    shot_path = _output_dir() / slug / "screenshots" / "01-hero.png"
+    if not shot_path.exists() or not shot_path.is_file():
+        handler._json(404, {"error": "screenshot not available"})
+        return
+
+    try:
+        data = shot_path.read_bytes()
+    except Exception as e:
+        log.warning("screenshot read failed for %s: %s", slug, e)
+        handler._json(500, {"error": "screenshot read failed"})
+        return
+
+    # Manual response — Pebble engine doesn't have a helper for binary
+    # bodies. Mirrors the pattern used for the preview file serving.
+    handler.send_response(200)
+    handler.send_header("Content-Type", "image/png")
+    handler.send_header("Content-Length", str(len(data)))
+    # Cache for 5 min — short enough that a rebuild refreshes quickly,
+    # long enough that the dashboard grid doesn't re-fetch on every
+    # render. Per-user owner-gated, so private cache only.
+    handler.send_header("Cache-Control", "private, max-age=300")
+    handler.end_headers()
+    handler.wfile.write(data)

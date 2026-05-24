@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { ControlCenter } from "@/components/control-center";
+import { DashboardSidebar } from "@/components/workspace/dashboard-sidebar";
+import { PebletMascot } from "@/components/peblet-mascot";
 import { useAuth } from "@/components/auth-provider";
 import { getUserProfile } from "@/lib/state";
 import { type } from "@/lib/type";
@@ -134,26 +136,41 @@ export default function DashboardPage() {
   });
   const visible = filter === "recents" ? filtered.slice(0, 6) : filtered;
 
+  const profile = typeof window !== "undefined" ? getUserProfile() : { firstName: "" };
+  const displayName = profile.firstName || (user?.email?.split("@")[0]) || "";
+
   return (
     <div className="flex flex-col h-screen-safe">
       <TopNav projectName="Dashboard" />
       <div className="flex-1 min-h-0">
-      <ControlCenter greeting={greeting}>
+      <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
+          {/* Welcome banner — Marc's 2026-05-23 mockup: warm header
+              with a wave emoji + tagline that anchors the page as
+              "your home base" rather than "a folder of designs." */}
+          <header className="space-y-1">
+            <p className="text-sm font-semibold text-muted-foreground">
+              Welcome back{displayName ? `, ${displayName}` : ""}! <span aria-hidden>👋</span>
+            </p>
+            <h1 className={`${type.display.m} text-foreground`}>Dashboard</h1>
+            <p className={`${type.body.s} text-muted-foreground`}>
+              Here&apos;s what&apos;s happening with your projects.
+            </p>
+          </header>
           {/* Phase 45 — page-local filter chips sit in the main area now
               (not the sidebar). The sidebar is shared across workspace
               pages and shouldn't carry per-page state. These three chips
               are the same All / Starred / Recents view as before. */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h1 className={`${type.display.m} text-foreground`}>
-                {filter === "starred" ? "Starred designs" : filter === "recents" ? "Recently built" : "All designs"}
-              </h1>
+              <h2 className={`${type.heading.l} text-foreground`}>
+                {filter === "starred" ? "Starred" : filter === "recents" ? "Recently built" : "Your projects"}
+              </h2>
               <p className={`${type.body.s} text-muted-foreground mt-1`}>
                 {loading
-                  ? "Loading your designs…"
-                  : `${visible.length} ${visible.length === 1 ? "design" : "designs"}`}
+                  ? "Loading your projects…"
+                  : `${visible.length} ${visible.length === 1 ? "project" : "projects"}`}
               </p>
             </div>
             <div className="flex items-center gap-3 flex-wrap">
@@ -510,17 +527,25 @@ function ProjectCard({
         visible: { opacity: 1, y: 0 },
       }}
       exit={{ opacity: 0, scale: 0.96 }}
-      className={`${interactions.card} bg-card border border-border rounded-2xl p-5 flex flex-col gap-3 cursor-pointer relative group`}
+      className={`${interactions.card} bg-card border border-border rounded-2xl overflow-hidden flex flex-col cursor-pointer relative group`}
       onClick={() => !deletePending && onOpen()}
       tabIndex={0}
     >
-      <div className="absolute top-3 right-3 flex items-center gap-1">
+      {/* Hero image — pulled from the engine's post-build screenshot.
+          Falls back to a DNA-tinted gradient block when the screenshot
+          isn't ready yet (in-flight build) or pre-dates the
+          screenshot pipeline. 2026-05-23. */}
+      <ProjectHero p={p} />
+
+      {/* Top-right actions sit over the hero corner so they don't
+          push the title around. */}
+      <div className="absolute top-3 right-3 flex items-center gap-1 z-10">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onToggleStar();
           }}
-          className={`${interactions.iconButton} w-8 h-8 rounded-full flex items-center justify-center`}
+          className={`${interactions.iconButton} w-8 h-8 rounded-full flex items-center justify-center bg-card/85 backdrop-blur-sm border border-border/60`}
           aria-label={p.starred ? "Unstar" : "Star"}
         >
           <Star
@@ -532,15 +557,16 @@ function ProjectCard({
             e.stopPropagation();
             onRequestDelete();
           }}
-          className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground"
+          className="w-8 h-8 rounded-full flex items-center justify-center bg-card/85 backdrop-blur-sm border border-border/60 hover:bg-destructive/10 hover:text-destructive transition-colors text-muted-foreground"
           aria-label="Delete project"
         >
           <Trash2 className="w-4 h-4" />
         </button>
       </div>
 
+      <div className="p-5 flex-1 flex flex-col gap-3">
       <div className="flex-1 min-w-0">
-        <h3 className={`${type.heading.m} text-foreground truncate pr-16`}>
+        <h3 className={`${type.heading.m} text-foreground truncate`}>
           {p.business_name}
         </h3>
         {p.business_type && (
@@ -616,6 +642,7 @@ function ProjectCard({
           Preview <ExternalLink className="w-3 h-3" />
         </a>
       </div>
+      </div>
 
       {/* Inline delete confirmation — fewer modals = faster to undo your mind */}
       <AnimatePresence>
@@ -651,6 +678,68 @@ function ProjectCard({
   );
 }
 
+// 2026-05-23: Hero image for project cards. Pulls from the engine's
+// /api/projects/<slug>/screenshot endpoint, which serves the post-
+// build Playwright capture. Falls back to a DNA-tinted gradient so
+// in-flight builds (no screenshot yet) and old projects from before
+// the screenshot pipeline still look intentional rather than broken.
+function ProjectHero({ p }: { p: ProjectSummary }) {
+  const [errored, setErrored] = useState(false);
+  const showImage = p.screenshot_url && !errored;
+
+  // DNA-tinted gradient palette — picks a deterministic two-color
+  // stop based on the DNA name so each project's fallback is at
+  // least unique within the grid. Matches no specific design DNA
+  // color tokens — these are just visual filler.
+  const dnaSlug = (p.design_dna || p.slug).toLowerCase();
+  const palettes: Array<[string, string]> = [
+    ["#1e293b", "#475569"], // slate
+    ["#1a1a2e", "#16213e"], // navy
+    ["#3a1c1c", "#5c2c2c"], // burgundy
+    ["#1c2e1a", "#2c5c2c"], // forest
+    ["#2c1c3a", "#4a2c5c"], // plum
+    ["#3a2e1a", "#5c4a2c"], // amber
+  ];
+  const idx = Math.abs(
+    dnaSlug.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0)
+  ) % palettes.length;
+  const [c1, c2] = palettes[idx];
+
+  return (
+    <div
+      className="relative aspect-[16/10] w-full overflow-hidden bg-muted"
+      style={{
+        background: !showImage
+          ? `linear-gradient(135deg, ${c1}, ${c2})`
+          : undefined,
+      }}
+    >
+      {showImage && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={p.screenshot_url!}
+          alt={`${p.business_name} preview`}
+          className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+          loading="lazy"
+          onError={() => setErrored(true)}
+        />
+      )}
+      {!showImage && (
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <p
+            className="text-2xl font-bold text-white/70 px-4 text-center truncate max-w-[80%]"
+            style={{ textShadow: "0 1px 2px rgba(0,0,0,0.3)" }}
+          >
+            {p.business_name}
+          </p>
+        </div>
+      )}
+      {/* Bottom gradient so the title underneath always has contrast */}
+      <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-card/40 to-transparent pointer-events-none" />
+    </div>
+  );
+}
+
 function EmptyState({ filter, query }: { filter: Filter; query: string }) {
   if (query) {
     return (
@@ -670,17 +759,35 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
       </div>
     );
   }
+  // Funny all-empty state — Marc 2026-05-23: "add a funny landing
+  // area where it says 'Boy it sure does look empty in here' or
+  // something like that when they delete all projects or have an
+  // empty folder." Peblet mascot + warm copy + clear next-step CTA.
   return (
-    <div className="text-center py-20">
-      <FolderOpen className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-      <p className={`${type.heading.l} text-foreground`}>Nothing here yet.</p>
-      <p className={`${type.body.s} text-muted-foreground mt-2 mb-6`}>Let&apos;s build your first site.</p>
-      <Link
-        href="/workspace#phase=welcome"
-        className={`${interactions.button} inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold`}
-      >
-        <Plus className="w-4 h-4" /> Start something new
-      </Link>
+    <div className="text-center py-16 px-6 rounded-2xl border border-dashed border-border bg-card/50">
+      <div className="mb-4 flex justify-center">
+        <PebletMascot size="md" animate />
+      </div>
+      <p className={`${type.heading.l} text-foreground`}>
+        Boy, it sure does look empty in here.
+      </p>
+      <p className={`${type.body.s} text-muted-foreground mt-2 mb-6 max-w-sm mx-auto`}>
+        Want to fix that together? I can walk you through your first build, or you can pick a template and customize it.
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-2">
+        <Link
+          href="/workspace#phase=welcome"
+          className={`${interactions.button} inline-flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-full text-sm font-semibold`}
+        >
+          <Plus className="w-4 h-4" /> Start something new
+        </Link>
+        <Link
+          href="/templates"
+          className={`${interactions.button} inline-flex items-center gap-2 bg-card border border-border text-foreground px-5 py-2 rounded-full text-sm font-semibold`}
+        >
+          Browse templates
+        </Link>
+      </div>
     </div>
   );
 }

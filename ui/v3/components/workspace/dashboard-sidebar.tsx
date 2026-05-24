@@ -41,6 +41,7 @@ import {
   Coins,
   ChevronRight,
   MessageSquare,
+  FolderOpen,
 } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -118,15 +119,17 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
           Ask Pebble
         </button>
 
-        {/* Primary nav. "All designs" lived here briefly as a separate
-            entry, but it routed to the same destination as Home and
-            duplicated the project grid the dashboard already shows.
-            Marc's 2026-05-23 call: drop it. Home shows all designs +
-            the new interactive feed; Templates owns the gallery of
-            things-you-could-start-from. */}
-        <NavLink href="/dashboard" Icon={Home} label="Home" active={pathname === "/dashboard"} />
-        <NavLink href="/templates" Icon={Compass} label="Templates" active={pathname.startsWith("/templates")} />
-        <NavLink href="/integrations" Icon={Plug} label="Integrations" active={pathname.startsWith("/integrations")} />
+        {/* Primary nav. 2026-05-23 update: re-added Projects as a
+            distinct entry from Templates per Marc's Control-Center
+            mockup. Projects = your own builds (links into the project
+            grid on the dashboard). Templates = starting points to
+            clone. They're different verbs — earlier confusion was
+            specifically about the All-designs link being a no-op,
+            not about whether the distinction should exist. */}
+        <NavLink href="/dashboard"    Icon={Home}       label="Dashboard"     active={pathname === "/dashboard"} />
+        <NavLink href="/projects"     Icon={FolderOpen} label="Projects"      active={pathname.startsWith("/projects")} />
+        <NavLink href="/templates"    Icon={Compass}    label="Templates"     active={pathname.startsWith("/templates")} />
+        <NavLink href="/integrations" Icon={Plug}       label="Integrations"  active={pathname.startsWith("/integrations")} />
 
         {/* Community — expandable. The chevron rotates 90° when open. */}
         <NavLink
