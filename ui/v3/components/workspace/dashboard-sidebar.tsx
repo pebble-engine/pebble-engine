@@ -32,7 +32,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Home,
-  Sparkles,
   Plug,
   Users,
   Compass,
@@ -119,14 +118,13 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
           Ask Pebble
         </button>
 
-        {/* Primary nav */}
+        {/* Primary nav. "All designs" lived here briefly as a separate
+            entry, but it routed to the same destination as Home and
+            duplicated the project grid the dashboard already shows.
+            Marc's 2026-05-23 call: drop it. Home shows all designs +
+            the new interactive feed; Templates owns the gallery of
+            things-you-could-start-from. */}
         <NavLink href="/dashboard" Icon={Home} label="Home" active={pathname === "/dashboard"} />
-        <NavLink
-          href="/dashboard?view=all"
-          Icon={Sparkles}
-          label="All designs"
-          active={false /* same destination as Home for now */}
-        />
         <NavLink href="/templates" Icon={Compass} label="Templates" active={pathname.startsWith("/templates")} />
         <NavLink href="/integrations" Icon={Plug} label="Integrations" active={pathname.startsWith("/integrations")} />
 

@@ -17,6 +17,11 @@ import {
   Mail,
   FolderOpen,
   Search,
+  Sparkles,
+  Compass,
+  Users,
+  BookOpen,
+  ArrowRight,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/workspace/dashboard-layout";
 import { type } from "@/lib/type";
@@ -147,6 +152,25 @@ export default function DashboardPage() {
             </div>
           </div>
 
+          {/* Home tiles — sit above the project grid on /dashboard so the
+              page feels like a living surface, not just a folder. Three
+              actions wired to real destinations:
+                · Templates  → /templates  (browse + clone, instant starts)
+                · Community  → /community  (showcase + partner + affiliate)
+                · Guides     → /learn      (placeholder — see footnote)
+              Marc's 2026-05-23 brief: Home should be the most energetic,
+              welcoming surface. These tiles + the inbox of designs below
+              accomplish the "interactive Home" ask without forcing a
+              blog/CMS investment up front. /learn lands on a friendly
+              "coming soon" stub for now — easy to replace with real
+              content (or a remote-loaded post feed) without touching
+              this surface again.
+              Only renders on filter="all" (the Home view); Starred and
+              Recents views hide it so they stay focused on the slice. */}
+          {!loading && filter === "all" && (
+            <HomeTiles hasProjects={projects.length > 0} />
+          )}
+
           {loading && (
             <div className="text-center py-20 text-muted-foreground">Loading…</div>
           )}
@@ -186,6 +210,134 @@ export default function DashboardPage() {
         </div>
       </div>
     </DashboardLayout>
+  );
+}
+
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// HomeTiles — interactive Home-section content for /dashboard.
+//
+// Three persistent action cards (Templates / Get inspired / Pebble guides)
+// plus one rotating "tip of the day" so the surface doesn't feel static.
+// Marc's 2026-05-23 brief: "Home section and community section need to be
+// the most energetic, welcoming." This is the first energy beat — a
+// dense, color-forward strip above the project grid that gives the user
+// somewhere to go BESIDES their own designs.
+//
+// Why tile + rotating tip rather than a full blog feed: a real CMS is a
+// project on its own. The tile pattern gets the right energy on screen
+// today without committing to authored content. When we DO start writing
+// articles, the third tile points at /learn and that page can grow into
+// the feed without touching the dashboard again.
+//
+// When the user has no projects yet, the first tile gently nudges
+// toward Templates (faster way to ship than building from scratch).
+// When they have projects, all three tiles stay the same — we don't
+// hide them after first build, because returning to ideas / tips is
+// what makes the dashboard a habit.
+// ---------------------------------------------------------------------------
+
+const PEBBLE_TIPS = [
+  "Cmd-K opens the command palette from anywhere in the workspace.",
+  "Star a design to pin it to the sidebar — great for the one you're showing investors.",
+  "Hit the version-history icon any time — every refinement is undoable.",
+  "Click any element on the preview to edit its text, color, or size in place.",
+  "Drop in a section from the gallery when you want a new block without writing a brief.",
+  "Custom domain only takes one DNS record — Setup walks you through it.",
+];
+
+function HomeTiles({ hasProjects }: { hasProjects: boolean }) {
+  // Per-mount tip pick — refreshes every dashboard visit so the same
+  // tip doesn't stare back at the user every time.
+  const [tipIdx, setTipIdx] = useState(0);
+  useEffect(() => {
+    setTipIdx(Math.floor(Math.random() * PEBBLE_TIPS.length));
+  }, []);
+
+  return (
+    <section className="space-y-3">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <HomeTile
+          href="/templates"
+          Icon={Compass}
+          eyebrow="Templates"
+          title={hasProjects ? "Start from a proven shape" : "Skip the blank page"}
+          body="Browse cinematic, industry-tuned starting points. One click clones and customizes for your business."
+          accent="from-[#3054ff]/15 to-[#3054ff]/0"
+        />
+        <HomeTile
+          href="/community/launchpad"
+          Icon={Sparkles}
+          eyebrow="Get inspired"
+          title="See what others built"
+          body="Real sites from the Pebble community. Steal the structure, swap in your story."
+          accent="from-amber-500/15 to-amber-500/0"
+        />
+        <HomeTile
+          href="/community"
+          Icon={Users}
+          eyebrow="Community"
+          title="Meet other builders"
+          body="Affiliates, partners, launch help. Connect with people building alongside you."
+          accent="from-emerald-500/15 to-emerald-500/0"
+        />
+      </div>
+
+      {/* Rotating tip strip — small dose of interactivity. Cycles on
+          dashboard mount; no autoplay timer so it doesn't pull focus
+          from the project grid below. */}
+      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-card/60">
+        <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
+        <p className="text-sm text-muted-foreground flex-1">
+          <span className="text-foreground font-semibold">Pebble tip</span>
+          <span className="mx-2 opacity-40">·</span>
+          {PEBBLE_TIPS[tipIdx]}
+        </p>
+        <button
+          type="button"
+          onClick={() => setTipIdx((i) => (i + 1) % PEBBLE_TIPS.length)}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
+          aria-label="Show another Pebble tip"
+        >
+          Next →
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function HomeTile({
+  href, Icon, eyebrow, title, body, accent,
+}: {
+  href: string;
+  Icon: typeof Home;
+  eyebrow: string;
+  title: string;
+  body: string;
+  /** Tailwind gradient-from / gradient-to fragment, e.g. "from-blue-500/15 to-blue-500/0". */
+  accent: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`${interactions.card} group relative overflow-hidden rounded-xl border border-border bg-card p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors`}
+    >
+      <div className={`absolute inset-0 -z-0 bg-gradient-to-br ${accent} opacity-100 group-hover:opacity-100 transition-opacity`} />
+      <div className="relative z-10 flex items-center gap-2">
+        <Icon className="w-4 h-4 text-foreground" />
+        <span className="text-[11px] uppercase tracking-widest font-semibold text-muted-foreground">
+          {eyebrow}
+        </span>
+      </div>
+      <div className="relative z-10 flex flex-col gap-1.5">
+        <h3 className="text-base font-bold text-foreground leading-tight">{title}</h3>
+        <p className="text-sm text-muted-foreground leading-snug">{body}</p>
+      </div>
+      <div className="relative z-10 mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors">
+        Open <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      </div>
+    </Link>
   );
 }
 
