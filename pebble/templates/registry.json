@@ -923,6 +923,30 @@
       },
       "best_for": "Diesel / fleet / military-spec / heavy-duty mechanics. Disciplined precision.",
       "tier": "free"
+    },
+    {
+      "id":                    "cinematic_hero",
+      "directory":             "pebble/templates/cinematic_hero",
+      "name":                  "Cinematic Hero",
+      "tagline":               "Light cinematic. Full-bleed photo + bottom-left CTA.",
+      "vibe":                  "Cinematic Real-Estate Listing (Light)",
+      "source_dna":            "cinematic_hero",
+      "applicable_industries": [
+        "service provider", "local trades", "home services",
+        "real estate", "automotive detailer"
+      ],
+      "preview_image":         "/templates-preview/cinematic_hero.png",
+      "color_swatches":        ["#fafaf9", "#18181b", "#d97706", "#b45309"],
+      "fonts": { "display": "Archivo Black", "body": "Inter", "mono": "JetBrains Mono" },
+      "best_for":              "Service-industry businesses where trust + availability are the headline selling points. Full-bleed photo carries emotion; tight CTA anchors action.",
+      "tier":                  "free",
+      "preview_url":           "http://localhost:3199/cinematic_hero",
+      "preview_pages": [
+        { "label": "Home",     "path": "/"        },
+        { "label": "About",    "path": "/about"   },
+        { "label": "Services", "path": "/services"},
+        { "label": "Contact",  "path": "/contact" }
+      ]
     }
   ],
   "_planned_next": []
