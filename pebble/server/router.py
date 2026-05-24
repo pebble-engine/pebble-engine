@@ -218,6 +218,8 @@ def route_get(handler) -> None:
             run_process_email_drip(handler)
         elif handler.path.startswith("/dist/"):
             handler._handle_serve_dist()
+        elif handler.path.startswith("/preview-template/"):
+            handler._handle_preview_template()
         elif handler.path.startswith("/preview/"):
             handler._handle_preview()
         else:

@@ -1992,6 +1992,71 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 pass  # fall through to plain serve
         self._serve_file(site_file, ct)
 
+    def _handle_preview_template(self):
+        """Serve pre-built static template previews from pebble/templates/<id>/out/.
+
+        Path shape: /preview-template/<template_id>/<rel-path>
+        - Bare /preview-template/<id>/ resolves to out/index.html.
+        - Directory paths resolve to <dir>/index.html (matches next.js
+          trailingSlash: true output).
+        - Files are served with content-type by extension (same map as
+          _handle_preview).
+        - Path-traversal attempts are rejected: the resolved file MUST stay
+          inside out/.
+
+        Built by `python -m pebble.templates.export <template_id>`. If out/
+        doesn't exist (export never run, or template just added), returns 404
+        with an operator-facing message.
+        """
+        rest = self.path[len("/preview-template/"):]
+        if not rest:
+            self.send_response(404); self.end_headers(); return
+        template_id, _, rel = rest.partition("/")
+        if not re.fullmatch(r"[a-z0-9_]+", template_id or ""):
+            self._json(400, {"error": "invalid template_id"}); return
+
+        try:
+            from pebble.templates.export import template_dir
+            tdir = template_dir(template_id)
+        except (KeyError, FileNotFoundError):
+            self._json(404, {"error": "template not found"}); return
+
+        out_root = (tdir / "out").resolve()
+        if not out_root.is_dir():
+            self._json(404, {
+                "error": "template not yet exported",
+                "hint":  f"run: python -m pebble.templates.export {template_id}",
+            }); return
+
+        rel = rel or "index.html"
+        candidate = (out_root / rel).resolve()
+
+        # Path-traversal guard — the resolved file MUST stay inside out_root.
+        try:
+            candidate.relative_to(out_root)
+        except ValueError:
+            self._json(403, {"error": "path outside template root"}); return
+
+        if candidate.is_dir():
+            candidate = candidate / "index.html"
+        if not candidate.is_file():
+            self.send_response(404); self.end_headers(); return
+
+        ext = candidate.suffix.lstrip(".").lower()
+        ct_map = {
+            "html": "text/html", "htm": "text/html",
+            "css": "text/css", "js": "application/javascript",
+            "json": "application/json", "svg": "image/svg+xml",
+            "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+            "gif": "image/gif", "ico": "image/x-icon", "webp": "image/webp",
+            "woff": "font/woff", "woff2": "font/woff2",
+            "txt": "text/plain", "xml": "application/xml",
+        }
+        ct = ct_map.get(ext, "application/octet-stream")
+        if ct.startswith("text/") or ct in ("application/javascript", "application/json", "image/svg+xml", "application/xml"):
+            ct += "; charset=utf-8"
+        self._serve_file(candidate, ct)
+
     @staticmethod
     def _inject_html(html: str, snippet: str) -> str:
         """Insert *snippet* (raw HTML) just before </body>.
