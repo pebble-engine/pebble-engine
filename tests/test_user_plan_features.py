@@ -55,10 +55,24 @@ def test_published_sites_cap_removed():
         assert user_plan.PLAN_LIMITS[tier]["published_sites"] == -1
 
 
-def test_get_feature_helper_exists():
-    """get_feature(user_id, key) → typed lookup, fail-soft default."""
-    assert user_plan.get_feature("free",    "integrations_allowed") == []
-    assert user_plan.get_feature("starter", "white_label") is False
-    assert user_plan.get_feature("pro",     "api_access")  is True
-    # Unknown feature → safe default
-    assert user_plan.get_feature("pro", "made_up_key") is False
+def test_get_feature_helper_exists(monkeypatch):
+    """get_feature(user_id, key) → resolves plan via get_user_plan, fail-soft default."""
+    plan_to_return = {"value": "free"}
+    monkeypatch.setattr(user_plan, "get_user_plan", lambda uid: plan_to_return["value"])
+
+    plan_to_return["value"] = "free"
+    assert user_plan.get_feature("u-test", "integrations_allowed") == []
+
+    plan_to_return["value"] = "starter"
+    assert user_plan.get_feature("u-test", "white_label") is False
+
+    plan_to_return["value"] = "pro"
+    assert user_plan.get_feature("u-test", "api_access")  is True
+
+    # Unknown feature → safe default (False)
+    plan_to_return["value"] = "pro"
+    assert user_plan.get_feature("u-test", "made_up_key") is False
+
+    # Unknown plan → fail-soft to free (which has integrations_allowed == [])
+    plan_to_return["value"] = "nonsense_plan"
+    assert user_plan.get_feature("u-test", "integrations_allowed") == []

@@ -1470,7 +1470,8 @@ export type IntegrationId =
   | "google-maps"
   | "social"
   | "cookie-consent"
-  | "custom-code";
+  | "custom-code"
+  | "stripe";
 
 export type IntegrationRecord = {
   enabled: boolean;

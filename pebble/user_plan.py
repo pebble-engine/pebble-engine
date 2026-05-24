@@ -606,11 +606,12 @@ def gate_response(
     return body
 
 
-def get_feature(plan: str, key: str):
-    """Look up a feature flag for a plan tier with safe fallback.
+def get_feature(user_id: str, key: str):
+    """Look up a feature flag for a user's current plan tier.
 
-    Returns the matching value from PLAN_LIMITS[plan][key], or a safe
-    "default off" value if the plan or key is unknown:
+    Resolves the user's plan via :func:`get_user_plan`, then returns
+    ``PLAN_LIMITS[plan][key]`` — or a fail-soft default if the plan or
+    key is unknown:
 
       - missing list  → []
       - missing bool  → False
@@ -620,7 +621,12 @@ def get_feature(plan: str, key: str):
     Fail-soft so that an unknown feature can never accidentally grant
     access (defaults to "off"). Adding a new feature requires updating
     PLAN_LIMITS for every tier — there is no implicit inheritance.
+
+    Mirrors :func:`get_limit`'s signature so server code reads
+    consistently: ``get_feature(caller_uid, "stripe_checkout")``,
+    ``get_limit(caller_uid, "custom_domains")``.
     """
+    plan = get_user_plan(user_id) or "free"
     tier = PLAN_LIMITS.get(plan) or PLAN_LIMITS["free"]
     if key not in tier:
         return False
