@@ -1,5 +1,6 @@
 import { ContactForm } from "@/components/forms/ContactForm";
 import { CallChip } from "@/components/ui/CallChip";
+import { Reveal } from "@/components/ui/Reveal";
 import {
   EMAIL,
   ADDRESS,
@@ -10,6 +11,7 @@ import {
 export function Contact() {
   return (
     <section id="contact" className="relative py-20 sm:py-28">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <div className="grid gap-12 lg:grid-cols-5">
           <div className="lg:col-span-2 space-y-7">
@@ -54,6 +56,7 @@ export function Contact() {
           </div>
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

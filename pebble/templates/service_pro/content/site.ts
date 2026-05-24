@@ -162,6 +162,33 @@ export const ADDRESS = "[BUSINESS ADDRESS], Long Island, NY";
 export const HOURS = "Mon–Fri 7:30AM–6PM · Sat 8AM–2PM";
 export const SERVICE_AREAS = ["Nassau County", "Suffolk County"];
 
+// Gallery page headers (GALLERY_IMAGES array is defined above)
+export const GALLERY_HEADLINE = "Recent work.";
+export const GALLERY_SUBLINE  = "Real jobs, real customers. Tap any photo to see the details.";
+
+// Process page headers (PROCESS_STEPS array is defined above)
+export const PROCESS_HEADLINE = "How it works.";
+export const PROCESS_SUBLINE  = "From your first call to job-done, here's exactly what to expect — no mystery, no surprises.";
+
+// FAQ page
+export const FAQ_HEADLINE = "Common questions.";
+export const FAQ_SUBLINE  = "If your question isn't here, just ask — we usually reply within the hour.";
+export type FAQItem = { q: string; a: string };
+export const FAQ_ITEMS: FAQItem[] = [
+  { q: "Do you charge for estimates?",       a: "[No — every estimate is free, in writing, with no obligation. We come look, you decide.]" },
+  { q: "Are you licensed and insured?",      a: "[Yes — fully licensed (#[license number]) and insured up to $[amount] for your protection.]" },
+  { q: "How fast can you come out?",         a: "[Same-day in most cases for emergencies. Standard appointments usually 1-3 business days out.]" },
+  { q: "What forms of payment do you take?", a: "[Cash, check, all major cards, and we offer financing on jobs over $[amount].]" },
+  { q: "Do you offer a guarantee?",          a: "[Yes — [N]-year workmanship guarantee on all installations, [N] days on repairs.]" },
+  { q: "What areas do you serve?",           a: "[See our service area page for the full list of cities. Generally [region] within [N] miles of [city].]" },
+];
+
+// Service area page
+export const SERVICE_AREA_HEADLINE = "Where we work.";
+export const SERVICE_AREA_SUBLINE  = "Local, family-owned, and proud of it. If your town isn't listed, give us a call — we may still be able to help.";
+export const SERVICE_AREA_MAP_EMBED = "";  // Customer adds Google Maps embed URL
+export const SERVICE_AREA_CITIES: string[] = [];  // Customer fills in
+
 // Footer
 export const FOOTER_TAGLINE = "Premium service. Long Island.";
 export const FOOTER_NAV = [
@@ -174,6 +201,10 @@ export const FOOTER_NAV = [
 // Navigation
 export const NAV_LINKS = [
   { label: "Services", href: "/services" },
+  { label: "Gallery", href: "/gallery" },
+  { label: "Process", href: "/process" },
+  { label: "Service Area", href: "/service-area" },
+  { label: "FAQ", href: "/faq" },
   { label: "About", href: "/about" },
   { label: "Contact", href: "/contact" },
 ];

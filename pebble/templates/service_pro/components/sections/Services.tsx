@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import { Reveal } from "@/components/ui/Reveal";
 import { ServiceCard } from "@/components/ui/ServiceCard";
 import { SERVICES } from "@/content/site";
 
@@ -8,6 +9,7 @@ export function Services() {
 
   return (
     <section id="services" className="relative py-20 sm:py-28">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -35,6 +37,7 @@ export function Services() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

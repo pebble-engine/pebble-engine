@@ -1,5 +1,6 @@
 "use client";
 import { motion } from "framer-motion";
+import { Reveal } from "@/components/ui/Reveal";
 import { TESTIMONIALS } from "@/content/site";
 
 /**
@@ -12,6 +13,7 @@ export function Testimonials() {
 
   return (
     <section id="testimonials" className="relative py-20 sm:py-28">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -48,6 +50,7 @@ export function Testimonials() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }
