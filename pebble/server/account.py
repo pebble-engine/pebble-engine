@@ -21,8 +21,10 @@ import re
 import secrets
 import shutil
 import sys
+import threading
 import urllib.error
 import urllib.request
+import zipfile
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -36,7 +38,12 @@ from pebble.auth_admin import (
     validate_access_token,
 )
 from pebble.log import log
-from pebble.security import RateLimiter, client_ip as _client_ip, safe_user_id as _safe_uid
+from pebble.security import (
+    RateLimiter,
+    client_ip as _client_ip,
+    require_user,
+    safe_user_id as _safe_uid,
+)
 
 
 _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
@@ -46,6 +53,15 @@ _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
 # first time) but tight enough to thwart brute-forcing the current-password
 # challenge in a stolen-session attack.
 _password_change_limiter = RateLimiter(rate=5 / 3600.0, burst=5)
+
+# Rate limit: 1 export per user per 24h (zipping is expensive + an email
+# floods inbox if hammered).
+_data_export_limiter = RateLimiter(rate=1 / 86400.0, burst=1)
+
+# Module-level OUTPUT_DIR for testability — tests monkeypatch this attribute.
+# The private _output_dir() helper remains for the older functions that were
+# written before this attribute existed.
+OUTPUT_DIR: Path = Path(__file__).parent.parent.parent.resolve() / "output"
 
 
 def _reset_delete_rate_limiter_for_tests() -> None:
@@ -999,3 +1015,234 @@ def run_confirm_email_change(handler) -> None:
         "ok": True,
         "message": "Email updated. Sign in again with your new address.",
     })
+
+
+# ─── POST /api/account/export-request ────────────────────────────────────────
+# ─── GET  /api/account/export-download  ──────────────────────────────────────
+
+
+def _reset_data_export_limiter_for_tests() -> None:
+    """Test hook — clear the bucket between tests so rate-limit assertions
+    are hermetic. Production callers never reach this."""
+    global _data_export_limiter
+    _data_export_limiter = RateLimiter(rate=1 / 86400.0, burst=1)
+
+
+def _exports_dir(user_id: str) -> Path:
+    """Return the per-user exports directory under OUTPUT_DIR/.exports/."""
+    return OUTPUT_DIR / ".exports" / user_id
+
+
+def _build_export_zip(user_id: str, user_email: str,
+                      handler_ua: str, handler_ip: str) -> None:
+    """Background-thread worker: walk OUTPUT_DIR for the user's projects,
+    zip + write a manifest + send the download email + write audit log.
+
+    Runs in a daemon thread; never raises (exceptions are caught + logged).
+    """
+    try:
+        ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        exports = _exports_dir(user_id)
+        exports.mkdir(parents=True, exist_ok=True)
+        zip_path = exports / f"pebble-export-{ts}.zip"
+
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            # Add user's projects (walk OUTPUT_DIR top-level dirs).
+            for proj_dir in OUTPUT_DIR.iterdir():
+                if not proj_dir.is_dir() or proj_dir.name.startswith("."):
+                    continue
+                brief = proj_dir / "brief.json"
+                if not brief.is_file():
+                    continue
+                try:
+                    data = json.loads(brief.read_text(encoding="utf-8"))
+                    if data.get("_user_id") != user_id:
+                        continue
+                except Exception:
+                    continue
+                # Add every file under this project (exclude rebuild artifacts).
+                for fp in proj_dir.rglob("*"):
+                    if not fp.is_file():
+                        continue
+                    rel = fp.relative_to(OUTPUT_DIR)
+                    parts = rel.parts
+                    if any(p in ("node_modules", ".next", "out", ".turbo") for p in parts):
+                        continue
+                    try:
+                        zf.write(fp, arcname=str(rel))
+                    except Exception:
+                        pass  # one bad file shouldn't kill the export
+
+            # Add the user's .users/<id>/ directory (subscription, profile).
+            user_root = OUTPUT_DIR / ".users" / user_id
+            if user_root.is_dir():
+                for fp in user_root.rglob("*"):
+                    if fp.is_file():
+                        rel = fp.relative_to(OUTPUT_DIR)
+                        try:
+                            zf.write(fp, arcname=str(rel))
+                        except Exception:
+                            pass
+
+        # Generate single-use token + manifest (24h expiry).
+        token = secrets.token_urlsafe(32)
+        expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
+        manifest_path = exports / f"pebble-export-{ts}.manifest.json"
+        manifest_path.write_text(json.dumps({
+            "token":        token,
+            "zip_path":     str(zip_path),
+            "user_id":      user_id,
+            "expires_at":   expires_at,
+            "requested_at": datetime.now(timezone.utc).isoformat(),
+        }), encoding="utf-8")
+
+        # Send email with download link.
+        download_url = (
+            f"https://www.pebbleapp.ai/api/account/export-download?token={token}"
+        )
+        try:
+            from pebble.email import send_data_export_ready
+            send_data_export_ready(user_email, download_url)
+        except Exception as email_exc:
+            log.warning("[account] export email failed for %s: %s",
+                        _redact(user_email), email_exc)
+
+        # Audit log (no handler context in this thread — use log_event).
+        from pebble.audit_log import log_event
+        log_event(
+            user_id=user_id,
+            event_type="data_export_delivered",
+            ip=handler_ip or None,
+            user_agent=handler_ua or None,
+            metadata={"zip_size_bytes": zip_path.stat().st_size},
+        )
+    except Exception as exc:
+        log.exception("[account] export-zip worker failed for %s: %s",
+                      user_id, exc)
+        from pebble.audit_log import log_event
+        log_event(
+            user_id=user_id,
+            event_type="data_export_failed",
+            ip=handler_ip or None,
+            user_agent=handler_ua or None,
+            metadata={"error": str(exc)[:200]},
+        )
+        try:
+            from pebble.email import send_data_export_failed
+            send_data_export_failed(user_email)
+        except Exception:
+            pass
+
+
+def run_request_data_export(handler) -> None:
+    """POST /api/account/export-request — kicks off the background zip
+    + emails the user a download link. Rate-limited 1/24h per user."""
+    user = require_user(handler)
+    if not user:
+        return  # require_user already responded 401/503
+
+    if not _data_export_limiter.allow(user["id"]):
+        handler._json(429, {
+            "error": "Already requested an export in the last 24 hours. Check your email."
+        })
+        return
+
+    # Immediate audit log (synchronous — we have the handler here).
+    from pebble.audit_log import log_event_for_handler
+    log_event_for_handler(
+        handler=handler, user_id=user["id"],
+        event_type="data_export_requested", metadata={},
+    )
+
+    # Capture handler context BEFORE the thread starts (the handler is
+    # gone once we return; the thread needs the IP/UA frozen at request time).
+    handler_ua = (handler.headers.get("User-Agent") or "")[:512]
+    xff = handler.headers.get("X-Forwarded-For", "") or ""
+    handler_ip = xff.split(",")[0].strip() if xff else handler.client_address[0]
+
+    t = threading.Thread(
+        target=_build_export_zip,
+        args=(user["id"], user["email"], handler_ua, handler_ip),
+        daemon=True,
+    )
+    t.start()
+
+    handler._json(200, {
+        "ok": True,
+        "message": (
+            "Your data export is being prepared. "
+            "We'll email you a download link in a few minutes."
+        ),
+    })
+
+
+def run_download_export(handler) -> None:
+    """GET /api/account/export-download?token=<token> — streams the zip."""
+    from urllib.parse import urlparse, parse_qs
+    qs = parse_qs(urlparse(handler.path).query)
+    token = (qs.get("token", [""])[0] or "").strip()
+    if not token:
+        handler._json(400, {"error": "token required"})
+        return
+
+    # Scan .exports/*/manifest files for the matching token.
+    exports_root = OUTPUT_DIR / ".exports"
+    if not exports_root.is_dir():
+        handler._json(404, {"error": "token not found"})
+        return
+
+    matched_manifest = None
+    matched_data: Optional[dict] = None
+    for user_dir in exports_root.iterdir():
+        if not user_dir.is_dir():
+            continue
+        for mp in user_dir.glob("*.manifest.json"):
+            try:
+                data = json.loads(mp.read_text(encoding="utf-8"))
+                if data.get("token") == token:
+                    matched_manifest = mp
+                    matched_data = data
+                    break
+            except Exception:
+                continue
+        if matched_manifest:
+            break
+
+    if matched_manifest is None or matched_data is None:
+        handler._json(404, {"error": "token not found"})
+        return
+
+    # Expiry check.
+    try:
+        expires = datetime.fromisoformat(matched_data["expires_at"])
+        if datetime.now(timezone.utc) > expires:
+            handler._json(410, {
+                "error": "Download link has expired. Request a new export."
+            })
+            return
+    except Exception:
+        handler._json(400, {"error": "invalid manifest"})
+        return
+
+    zip_path = Path(matched_data["zip_path"])
+    if not zip_path.is_file():
+        handler._json(404, {"error": "export file is no longer available"})
+        return
+
+    # Stream the zip with proper download headers.
+    size = zip_path.stat().st_size
+    handler.send_response(200)
+    handler.send_header("Content-Type", "application/zip")
+    handler.send_header(
+        "Content-Disposition",
+        f'attachment; filename="{zip_path.name}"',
+    )
+    handler.send_header("Content-Length", str(size))
+    handler.send_header("Cache-Control", "no-store")
+    handler.end_headers()
+    with zip_path.open("rb") as f:
+        while True:
+            chunk = f.read(64 * 1024)
+            if not chunk:
+                break
+            handler.wfile.write(chunk)

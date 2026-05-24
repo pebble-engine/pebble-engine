@@ -217,6 +217,13 @@ def route_get(handler) -> None:
             # Single-use token confirm — no auth required (user clicks from email).
             from pebble.server.account import run_confirm_email_change
             run_confirm_email_change(handler)
+        elif handler.path.startswith("/api/account/export-download"):
+            # GDPR Article 20 — streams the zip identified by a single-use
+            # 24h token. No auth required (the token IS the auth — the link
+            # was emailed to the account holder). Token must be present and
+            # unexpired; 404 unknown, 410 expired.
+            from pebble.server.account import run_download_export
+            run_download_export(handler)
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
@@ -412,6 +419,12 @@ def route_post(handler) -> None:
             # email to NEW address. Per-user rate-limited 3/24h.
             from pebble.server.account import run_request_email_change
             run_request_email_change(handler)
+        elif handler.path == "/api/account/export-request":
+            # GDPR Article 20 — kicks off a background zip of the user's
+            # projects + account data and emails a single-use download link.
+            # Rate-limited 1/24h per user (zipping is expensive).
+            from pebble.server.account import run_request_data_export
+            run_request_data_export(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url

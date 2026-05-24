@@ -673,6 +673,67 @@ def send_email_change_completed(*, old_email: str, new_email: str,
                 sender=sender)
 
 
+def send_data_export_ready(email: str, download_url: str,
+                           sender: Optional[EmailSender] = None) -> dict:
+    """Sent when the user's data export zip is ready. Includes the
+    24h-expiring download URL. No payload data in the email itself
+    (the zip lives on the engine, not as an attachment)."""
+    subject = "Your Pebble data export is ready"
+    text = (
+        "Your Pebble data export is ready. Click the link below to "
+        "download the ZIP file:\n\n"
+        f"{download_url}\n\n"
+        "This link expires in 24 hours. It includes all your projects, "
+        "account information, subscription details, and activity log.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Your Pebble data export is ready.</p>"
+        "<p>Click the button below to download your ZIP file. "
+        "The link is good for <strong>24 hours</strong>.</p>"
+        f'<p><a href="{_escape_html(download_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Download my data</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(download_url)}</code></p>'
+        "<p>The ZIP includes all your projects, account information, "
+        "subscription details, and activity log.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_data_export_failed(email: str,
+                            sender: Optional[EmailSender] = None) -> dict:
+    """Sent when the background zip job failed. Tells the user to try
+    again or contact support."""
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    settings_url = f"{base}/settings"
+    subject = "Your Pebble data export couldn't be prepared"
+    text = (
+        "We hit a problem preparing your Pebble data export. Please "
+        "try requesting it again from your Settings → Data tab:\n\n"
+        f"  {settings_url}\n\n"
+        "If it fails a second time, please email support@pebbleapp.ai "
+        "and we'll prepare it manually.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>We hit a problem preparing your Pebble data export.</p>"
+        "<p>Please try requesting it again from your Settings:</p>"
+        f'<p><a href="{_escape_html(settings_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Go to Settings</a></p>'
+        "<p>If it fails a second time, please email "
+        '<a href="mailto:support@pebbleapp.ai">support@pebbleapp.ai</a> '
+        "and we'll prepare it manually.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
 __all__ = [
     "EmailError",
     "EmailMessage",
@@ -692,6 +753,8 @@ __all__ = [
     "send_account_deletion_scheduled",
     "send_email_change_confirmation",
     "send_email_change_completed",
+    "send_data_export_ready",
+    "send_data_export_failed",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.
