@@ -137,8 +137,16 @@ export default function DashboardPage() {
   });
   const visible = filter === "recents" ? filtered.slice(0, 6) : filtered;
 
-  const profile = typeof window !== "undefined" ? getUserProfile() : { firstName: "" };
-  const displayName = profile.firstName || (user?.email?.split("@")[0]) || "";
+  // Hydration-safe display name. getUserProfile() reads from sessionStorage,
+  // which is empty on the server — so rendering `${firstName}` during SSR
+  // and then again after client mount caused "Welcome back!" → "Welcome back,
+  // Marc!" mismatch warnings. Defer the name to a post-mount render so the
+  // server HTML and the first client render agree.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
+  const displayName = mounted
+    ? (getUserProfile().firstName || user?.email?.split("@")[0] || "")
+    : "";
 
   // TopNav right slot — Marc's 2026-05-23 mockup: "+ New project"
   // button (primary, jumps into the welcome flow) + notification bell

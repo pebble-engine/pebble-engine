@@ -109,7 +109,14 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* Next.js 16 won't execute raw <script> tags rendered as React
+            children. The blessed pattern for a pre-paint init like this
+            is <Script strategy="beforeInteractive"> — injected into the
+            HTML stream before hydration so the dark-mode class lands
+            before first paint (no light-to-dark flash). */}
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
