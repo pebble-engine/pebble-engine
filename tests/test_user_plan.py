@@ -82,7 +82,9 @@ def test_get_user_plan_handles_corrupt_json(_isolate):
 # ---------- get_limit / has_feature ---------------------------------------
 
 def test_limits_free_matches_pricing_page(_isolate):
-    assert user_plan.get_limit("freebie", "published_sites") == 1
+    # 2026-05-24: published_sites cap deprecated — now -1 (unlimited in
+    # PLAN_LIMITS), clamped to HARD_CEILINGS value of 100 by get_limit().
+    assert user_plan.get_limit("freebie", "published_sites") == 100
     assert user_plan.get_limit("freebie", "ai_refinements_per_month") == 30
     assert user_plan.get_limit("freebie", "custom_domains") == 0
     assert user_plan.get_limit("freebie", "drop_in_sections_allowed") is False
@@ -93,7 +95,9 @@ def test_limits_free_matches_pricing_page(_isolate):
 
 def test_limits_starter(_isolate):
     _write_sub(_isolate, "u1", "starter")
-    assert user_plan.get_limit("u1", "published_sites") == 5
+    # 2026-05-24: published_sites cap deprecated — now -1 (unlimited in
+    # PLAN_LIMITS), clamped to HARD_CEILINGS value of 100 by get_limit().
+    assert user_plan.get_limit("u1", "published_sites") == 100
     assert user_plan.get_limit("u1", "ai_refinements_per_month") == 150
     assert user_plan.get_limit("u1", "custom_domains") == 1
     assert user_plan.get_limit("u1", "resend_email_forms") is True
