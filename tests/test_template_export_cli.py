@@ -58,10 +58,12 @@ def test_template_dir_rejects_unknown_id():
 def test_source_files_byte_identical_after_successful_export():
     """Critical safety test: source files must not be modified by the CLI."""
     tdir = template_export.template_dir("cinematic_hero")
-    config_path = tdir / "next.config.mjs"
+    config_path  = tdir / "next.config.mjs"
     contact_path = tdir / "app" / "actions" / "contact.ts"
-    before_config = _sha(config_path)
+    site_ts_path = tdir / "content" / "site.ts"
+    before_config  = _sha(config_path)
     before_contact = _sha(contact_path)
+    before_site_ts = _sha(site_ts_path) if site_ts_path.is_file() else None
 
     # Mock subprocess.run so we don't actually build; simulate out/ existing by
     # patching the out.is_dir check inside export_template using a targeted mock.
@@ -83,15 +85,19 @@ def test_source_files_byte_identical_after_successful_export():
 
     assert _sha(config_path) == before_config, "next.config.mjs was not restored"
     assert _sha(contact_path) == before_contact, "contact.ts was not restored"
+    if before_site_ts is not None:
+        assert _sha(site_ts_path) == before_site_ts, "content/site.ts was not restored"
 
 
 def test_source_files_byte_identical_after_failed_export():
     """Even on build failure, the try/finally must restore source files."""
     tdir = template_export.template_dir("cinematic_hero")
-    config_path = tdir / "next.config.mjs"
+    config_path  = tdir / "next.config.mjs"
     contact_path = tdir / "app" / "actions" / "contact.ts"
-    before_config = _sha(config_path)
+    site_ts_path = tdir / "content" / "site.ts"
+    before_config  = _sha(config_path)
     before_contact = _sha(contact_path)
+    before_site_ts = _sha(site_ts_path) if site_ts_path.is_file() else None
 
     with patch.object(subprocess, "run") as mock_run:
         mock_run.side_effect = subprocess.CalledProcessError(1, "npx next build")
@@ -100,15 +106,19 @@ def test_source_files_byte_identical_after_failed_export():
 
     assert _sha(config_path) == before_config, "next.config.mjs was not restored after failure"
     assert _sha(contact_path) == before_contact, "contact.ts was not restored after failure"
+    if before_site_ts is not None:
+        assert _sha(site_ts_path) == before_site_ts, "content/site.ts was not restored after failure"
 
 
 def test_source_files_byte_identical_after_runtime_error():
     """Even if next build exits 0 but out/ doesn't appear, restoration must happen."""
     tdir = template_export.template_dir("cinematic_hero")
-    config_path = tdir / "next.config.mjs"
+    config_path  = tdir / "next.config.mjs"
     contact_path = tdir / "app" / "actions" / "contact.ts"
-    before_config = _sha(config_path)
+    site_ts_path = tdir / "content" / "site.ts"
+    before_config  = _sha(config_path)
     before_contact = _sha(contact_path)
+    before_site_ts = _sha(site_ts_path) if site_ts_path.is_file() else None
 
     out_path = tdir / "out"
     original_is_dir = Path.is_dir
@@ -126,6 +136,48 @@ def test_source_files_byte_identical_after_runtime_error():
 
     assert _sha(config_path) == before_config, "next.config.mjs was not restored after RuntimeError"
     assert _sha(contact_path) == before_contact, "contact.ts was not restored after RuntimeError"
+    if before_site_ts is not None:
+        assert _sha(site_ts_path) == before_site_ts, "content/site.ts was not restored after RuntimeError"
+
+
+# ---------------------------------------------------------------------------
+# --all filter tests — must never touch non-cinematic templates
+# ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# _preview_site_ts unit tests
+# ---------------------------------------------------------------------------
+
+
+def test_preview_site_ts_rewrites_absolute_image_paths():
+    """Asset paths like "/hero.jpg" must be prefixed; other strings must not be touched."""
+    sample = '''
+export const HERO_BG_IMAGE = "/hero.jpg";
+export const ABOUT_PHOTO = "/about.jpg";
+export const SOME_URL = "https://example.com/photo.jpg";
+export const ALREADY_PREFIXED = "/preview-template/old/img.jpg";
+export const NOT_AN_IMAGE = "/contact";
+export const GALLERY = [{ src: "/gallery/01.jpg", alt: "x" }];
+'''
+    out = template_export._preview_site_ts(sample, "cinematic_plumber")
+    assert '"/preview-template/cinematic_plumber/hero.jpg"' in out
+    assert '"/preview-template/cinematic_plumber/about.jpg"' in out
+    assert '"/preview-template/cinematic_plumber/gallery/01.jpg"' in out
+    # Non-image absolute paths untouched (basePath in next.config handles those)
+    assert '"/contact"' in out
+    # Absolute URLs untouched
+    assert '"https://example.com/photo.jpg"' in out
+    # Already-prefixed paths untouched (idempotent re-run safety)
+    assert '"/preview-template/old/img.jpg"' in out
+
+
+def test_preview_site_ts_is_idempotent():
+    """Running the rewrite twice produces the same result as once."""
+    sample = 'const X = "/hero.jpg";'
+    once   = template_export._preview_site_ts(sample, "cinematic_hero")
+    twice  = template_export._preview_site_ts(once,   "cinematic_hero")
+    assert once == twice
 
 
 # ---------------------------------------------------------------------------

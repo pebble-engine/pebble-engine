@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -94,6 +95,28 @@ export async function submitContact(formData: FormData): Promise<Result> {
 """
 
 
+_SITE_TS_ASSET_RE = re.compile(
+    r'"(/(?!preview-template/)[^"]+\.(?:jpg|jpeg|png|webp|svg|gif|avif))"'
+)
+
+
+def _preview_site_ts(original: str, template_id: str) -> str:
+    """Rewrite absolute public-folder asset paths in site.ts so they
+    resolve under the engine's /preview-template/<id>/ route.
+
+    Why: Next.js basePath rewrites internal Next routes + _next/static
+    URLs at build time, but does NOT touch string constants. The Hero
+    and Gallery components do <img src={HERO_BG_IMAGE}> where
+    HERO_BG_IMAGE = "/hero.jpg" — that gets rendered verbatim into the
+    static HTML and 404s when served under /preview-template/<id>/.
+
+    This rewrite is applied transiently to the file during a preview
+    build; the original site.ts is restored via try/finally so customer
+    instantiations get the customer-friendly absolute paths."""
+    base = f"/preview-template/{template_id}"
+    return _SITE_TS_ASSET_RE.sub(lambda m: f'"{base}{m.group(1)}"', original)
+
+
 def _load_registry() -> dict:
     with REGISTRY_PATH.open(encoding="utf-8") as f:
         return json.load(f)
@@ -120,10 +143,18 @@ def template_dir(template_id: str) -> Path:
 def _paths_to_swap(tdir: Path, template_id: str) -> list[tuple[Path, str]]:
     """The (path, preview_content) pairs swapped during a preview build.
     Each path's pre-existing content is restored via try/finally."""
-    return [
+    swaps: list[tuple[Path, str]] = [
         (tdir / "next.config.mjs",                _preview_next_config(template_id)),
         (tdir / "app" / "actions" / "contact.ts", _PREVIEW_CONTACT_STUB),
     ]
+    # site.ts: derived from current content (rewrite absolute asset paths).
+    # Defensive guard: every cinematic_* template has content/site.ts, but
+    # a direct invocation on a non-cinematic template might not.
+    site_ts = tdir / "content" / "site.ts"
+    if site_ts.is_file():
+        original = site_ts.read_text(encoding="utf-8")
+        swaps.append((site_ts, _preview_site_ts(original, template_id)))
+    return swaps
 
 
 def export_template(template_id: str, *, skip_install: bool = False) -> Path:
@@ -132,21 +163,25 @@ def export_template(template_id: str, *, skip_install: bool = False) -> Path:
     tdir = template_dir(template_id)
     swaps = _paths_to_swap(tdir, template_id)
 
-    # Capture original contents (None if file doesn't exist).
-    originals: list[tuple[Path, str | None]] = []
+    # Capture original contents as raw bytes (None if file doesn't exist).
+    # Using bytes avoids any platform newline translation on Windows — the
+    # restore is guaranteed byte-identical regardless of line-ending style.
+    originals: list[tuple[Path, bytes | None]] = []
     for path, _preview in swaps:
         if path.is_file():
-            originals.append((path, path.read_text(encoding="utf-8")))
+            originals.append((path, path.read_bytes()))
         else:
             originals.append((path, None))
 
     try:
-        # Write previews.
+        # Write previews. Preview content is generated as Python str (LF-only);
+        # write with newline="" to avoid Windows \r\n translation so the build
+        # tool sees consistent line endings. (Next.js tolerates both.)
         for (path, preview_content), (_, original) in zip(swaps, originals):
             if original is not None:
                 # Only swap files that exist — don't create new ones that
                 # the source didn't have.
-                path.write_text(preview_content, encoding="utf-8")
+                path.write_text(preview_content, encoding="utf-8", newline="")
 
         # Install if needed.
         if not skip_install and not (tdir / "node_modules").exists():
@@ -175,7 +210,10 @@ def export_template(template_id: str, *, skip_install: bool = False) -> Path:
         for path, original in originals:
             if original is not None:
                 try:
-                    path.write_text(original, encoding="utf-8")
+                    # write_bytes restores the exact byte sequence captured
+                    # before the swap, guaranteeing byte-identical restoration
+                    # even on Windows where write_text would translate \n→\r\n.
+                    path.write_bytes(original)
                 except OSError as e:
                     restore_errors.append((path, e))
         if restore_errors:
