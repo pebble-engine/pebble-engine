@@ -23,7 +23,10 @@ import {
   BookOpen,
   ArrowRight,
 } from "lucide-react";
-import { DashboardLayout } from "@/components/workspace/dashboard-layout";
+import { TopNav } from "@/components/top-nav";
+import { ControlCenter } from "@/components/control-center";
+import { useAuth } from "@/components/auth-provider";
+import { getUserProfile } from "@/lib/state";
 import { type } from "@/lib/type";
 import {
   listProjects,
@@ -39,6 +42,7 @@ type Filter = "all" | "starred" | "recents";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [activity, setActivity] = useState<ActivityRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,6 +53,20 @@ export default function DashboardPage() {
   useEffect(() => {
     void refresh();
   }, []);
+
+  // 2026-05-23: Per-session greeting from Pebble. Computed once at
+  // mount so the assistant introduces itself when the user lands on
+  // the dashboard, then the conversation continues from there. Uses
+  // the local profile first-name when known so it feels personal,
+  // falls back to a clean generic when not.
+  const greeting = (() => {
+    const name = (typeof window !== "undefined" ? getUserProfile().firstName : "") || "";
+    const hour = new Date().getHours();
+    const tod = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
+    if (name) return `Good ${tod}, ${name}. I'm Pebble — your AI assistant. Want me to take you somewhere, or should I tell you what's new?`;
+    if (user) return `Good ${tod}. I'm Pebble — your AI assistant. Ask me to navigate, explain something, or help you take action.`;
+    return "Hi, I'm Pebble. Sign in and I'll help you build, navigate, and manage your sites.";
+  })();
 
   async function refresh() {
     setLoading(true);
@@ -117,8 +135,11 @@ export default function DashboardPage() {
   const visible = filter === "recents" ? filtered.slice(0, 6) : filtered;
 
   return (
-    <DashboardLayout topNavLabel="Designs">
-      <div className="p-8">
+    <div className="flex flex-col h-screen-safe">
+      <TopNav projectName="Dashboard" />
+      <div className="flex-1 min-h-0">
+      <ControlCenter greeting={greeting}>
+      <div className="p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* Phase 45 — page-local filter chips sit in the main area now
               (not the sidebar). The sidebar is shared across workspace
@@ -209,7 +230,9 @@ export default function DashboardPage() {
           )}
         </div>
       </div>
-    </DashboardLayout>
+      </ControlCenter>
+      </div>
+    </div>
   );
 }
 

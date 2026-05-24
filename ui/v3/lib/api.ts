@@ -359,6 +359,47 @@ export async function fetchBotMessage(
   return postJSON("/api/bot-message", { intent, context });
 }
 
+// ---------- /api/chat (Pebble Control Center assistant, 2026-05-23) --------
+//
+// Multi-turn chat with the in-app Pebble assistant. Conversation history
+// is owned by the client (kept in React state for the session). The
+// server is stateless — every call sends the full visible history so
+// the assistant has context.
+//
+// `navigate_to` is a safe in-sitemap path the UI should router.push().
+// `confirm_action` is a destructive intent that the UI must prompt the
+//   user to confirm before executing (never auto-fired by this call).
+
+export type ChatMessage = {
+  role:    "user" | "assistant";
+  content: string;
+};
+
+export type ChatSitemapEntry = {
+  path:  string;
+  label: string;
+};
+
+export type ChatConfirmAction = {
+  key:   "open_billing_portal" | "delete_account";
+  label: string;
+};
+
+export type ChatResponse = {
+  reply:          string;
+  navigate_to:    string | null;
+  confirm_action: ChatConfirmAction | null;
+  /** True when the LLM call failed and the reply is a canned fallback. */
+  fallback?:      boolean;
+};
+
+export async function sendChat(
+  messages: ChatMessage[],
+  sitemap?: ChatSitemapEntry[],
+): Promise<ChatResponse> {
+  return postJSON("/api/chat", { messages, sitemap });
+}
+
 // ---------- /api/projects/<slug>/integrity (Phase 36, 2026-05-21) ----------
 //
 // Pre-launch checklist. Runs the curated 10-eval subset against a build

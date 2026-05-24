@@ -234,6 +234,14 @@ def route_post(handler) -> None:
             # customer's business name/services. Free-tier-friendly.
             from pebble.server.templates_api import run_instantiate_template
             run_instantiate_template(handler)
+        elif handler.path == "/api/chat":
+            # 2026-05-23 — Pebble assistant multi-turn chat for the
+            # Control Center side-panel. GPT-4o-mini via OpenRouter.
+            # Returns strict JSON with reply + optional navigate_to +
+            # confirm_action so the frontend acts on intent rather
+            # than parsing free text.
+            from pebble.server.chat import run_chat
+            run_chat(handler)
         elif handler.path == "/api/bot-message":
             # Phase 25b (2026-05-20) — bot persona narration. Cheap GPT-4o-mini
             # call returning short text (greeting / status / suggested chips)
