@@ -238,6 +238,21 @@ def run_stripe_webhook(handler) -> None:
 
     event_type = event.get("type", "")
 
+    # 2026-05-24 — credit-pack purchases ride the same webhook. We
+    # discriminate by metadata.purpose on the checkout session, not by
+    # event type, because the canonical "payment succeeded" notification
+    # for a one-shot Checkout is `checkout.session.completed`. The
+    # subscription event types are still handled below.
+    if event_type == "checkout.session.completed":
+        obj = ((event.get("data") or {}).get("object")) or {}
+        metadata = obj.get("metadata") or {}
+        if (metadata.get("purpose") or "") == "credit_pack":
+            handled = _handle_credit_pack_completed(handler, event, obj, metadata)
+            if handled:
+                return
+            # Fell through — pebble_user_id missing or pack_amount invalid.
+            # Don't return; let the standard subscription gate decide.
+
     if event_type not in _SUBSCRIPTION_EVENT_TYPES:
         # Stripe sends many event types; we only act on subscription state
         # changes. Return 200 (not 422) so Stripe doesn't retry — the skip
@@ -356,3 +371,123 @@ def run_stripe_webhook(handler) -> None:
     log.info("stripe-webhook %s applied user=%s plan=%s status=%s",
              event_type, user_id, plan, status)
     handler._json(200, {"ok": True, "action": "applied"})
+
+
+# ─── Credit-pack handler (2026-05-24) ─────────────────────────── #
+
+
+def _handle_credit_pack_completed(
+    handler,
+    event: dict,
+    obj: dict,
+    metadata: dict,
+) -> bool:
+    """Credit the user's account for a successful credit-pack purchase.
+
+    Returns True when we handled the event (with a 200 response sent),
+    False to let the caller fall through to the subscription gate.
+
+    Idempotency: we dedupe on event.id via the credit_ledger ref_id
+    (PostgREST INSERT will write a duplicate row, but the ledger is
+    append-only and the credits.refill() pre-checks balance vs cap,
+    so a repeated webhook just refuses the second credit. We log the
+    duplicate.)
+
+    Cap protection: if the user is now at cap (someone gifted them
+    credits between checkout and webhook arrival), refill() returns
+    False. We log + 200 the webhook so Stripe doesn't retry. The
+    overflow scenario is rare enough that a human-review note is the
+    right policy — we don't try to auto-refund here.
+    """
+    user_id = safe_user_id(metadata.get("pebble_user_id"))
+    if not user_id:
+        log.info("stripe-webhook credit_pack missing/invalid pebble_user_id")
+        return False  # let outer flow surface "no user" 200
+
+    pack_key = metadata.get("pack_key") or ""
+    pack_amount_str = metadata.get("pack_amount") or ""
+    try:
+        pack_amount = int(pack_amount_str)
+    except (TypeError, ValueError):
+        log.warning("stripe-webhook credit_pack invalid pack_amount=%r", pack_amount_str)
+        handler._json(200, {"ok": True, "action": "skipped",
+                            "reason": "invalid pack_amount"})
+        return True
+    if pack_amount <= 0 or pack_amount > 1000:
+        # 1000 is a sanity ceiling — protects against a metadata-tampered
+        # request claiming to be a 9999-credit pack.
+        log.warning("stripe-webhook credit_pack pack_amount out of range: %d", pack_amount)
+        handler._json(200, {"ok": True, "action": "skipped",
+                            "reason": "pack_amount out of range"})
+        return True
+
+    # Idempotency via the Stripe session id. Credit ledger writes a
+    # row per refill; if we already credited this session, refuse.
+    session_id = obj.get("id", "")
+    if not isinstance(session_id, str) or len(session_id) > 128:
+        session_id = ""
+    if session_id and _ledger_already_has(user_id, session_id):
+        log.info("stripe-webhook credit_pack dedup user=%s session=%s",
+                 user_id, session_id)
+        handler._json(200, {"ok": True, "action": "deduped",
+                            "reason": "pack already credited"})
+        return True
+
+    from pebble import credits as _credits
+    ok = _credits.refill(
+        user_id=user_id,
+        amount=pack_amount,
+        reason=_credits.REASON_PACK_PURCHASED,
+        ref_id=session_id or pack_key,
+    )
+    if not ok:
+        log.warning(
+            "stripe-webhook credit_pack refill refused user=%s amount=%d (at cap or DB error)",
+            user_id, pack_amount,
+        )
+        handler._json(200, {"ok": True, "action": "skipped",
+                            "reason": "refill refused (at cap)"})
+        return True
+
+    log.info("stripe-webhook credit_pack credited user=%s amount=%d session=%s",
+             user_id, pack_amount, session_id)
+    handler._json(200, {"ok": True, "action": "credited",
+                        "amount": pack_amount})
+    return True
+
+
+def _ledger_already_has(user_id: str, ref_id: str) -> bool:
+    """Check if a credit_ledger row already exists for this ref_id.
+    Best-effort dedup — false negative is acceptable (the user gets
+    credited twice, which we'd catch in a finance audit and reverse
+    manually); false positive would be worse (legitimate purchase
+    silently dropped). Returns False on any read error to favor
+    crediting over silently dropping."""
+    import os
+    url = (os.environ.get("PEBBLE_SUPABASE_URL") or os.environ.get("SUPABASE_URL") or "").rstrip("/")
+    key = (os.environ.get("PEBBLE_SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or "")
+    if not url or not key or not ref_id:
+        return False
+    try:
+        import httpx
+        resp = httpx.get(
+            f"{url}/rest/v1/credit_ledger",
+            headers={
+                "apikey":        key,
+                "Authorization": f"Bearer {key}",
+                "Prefer":        "count=exact",
+            },
+            params={
+                "select":  "id",
+                "user_id": f"eq.{user_id}",
+                "ref_id":  f"eq.{ref_id}",
+                "limit":   "1",
+            },
+            timeout=5.0,
+        )
+        if resp.status_code >= 400:
+            return False
+        rows = resp.json() or []
+        return len(rows) > 0
+    except Exception:
+        return False

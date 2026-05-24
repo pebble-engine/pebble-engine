@@ -127,6 +127,12 @@ def route_get(handler) -> None:
             # events for the user from Supabase.
             from pebble.server.notifications import run_list_notifications
             run_list_notifications(handler)
+        elif handler.path == "/api/credits":
+            # 2026-05-24 — credits balance + ledger + pack catalog.
+            # Lazy-inits the user's credits row on first read so a
+            # brand-new signup sees their plan's grant immediately.
+            from pebble.server.credits_api import run_get_credits
+            run_get_credits(handler)
         elif handler.path == "/api/community/feed":
             # 2026-05-24 — public events list for the /community page.
             # Public read (no auth) — visibility filter on the table
@@ -265,6 +271,12 @@ def route_post(handler) -> None:
             # than parsing free text.
             from pebble.server.chat import run_chat
             run_chat(handler)
+        elif handler.path == "/api/credits/purchase":
+            # 2026-05-24 — credit-pack Stripe Checkout. Pre-validates
+            # cap BEFORE creating the session so a user near the 400
+            # ceiling never pays for credits that wouldn't fit.
+            from pebble.server.credits_api import run_purchase_pack
+            run_purchase_pack(handler)
         elif handler.path == "/api/notifications/read-all":
             # 2026-05-24 — must come BEFORE the /<id>/read pattern
             # below or "/read-all" gets mis-parsed as an event id.

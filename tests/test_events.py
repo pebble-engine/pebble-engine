@@ -74,34 +74,37 @@ def test_record_rejects_private_without_user_id():
     assert result is None
 
 
-def test_record_allows_public_without_user_id():
+def test_record_allows_public_without_user_id(monkeypatch):
     """System-wide public events (tips, announcements) don't require
-    a user_id. The helper still returns None because Supabase isn't
-    configured in tests, but the early-return guard shouldn't trip."""
-    # is_configured returns False without env vars, so we expect None
-    # from the network step, not from the validation step. Indirectly
-    # verified by the fact that this doesn't raise.
+    a user_id. The early-return guard shouldn't trip even when no
+    user_id is passed. Force is_configured to False so the test is
+    deterministic regardless of whether the dev's .env has Supabase
+    creds loaded."""
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     result = events.record(
         user_id=None,
         kind=events.KIND_TIP,
         title="x",
         visibility=events.VISIBILITY_PUBLIC,
     )
-    assert result is None  # because Supabase not configured in tests
+    assert result is None  # Supabase explicitly disabled — bails after config check
 
 
 # ── list helpers fail-soft on missing config ───────────────────── #
 
 
-def test_list_user_unread_returns_empty_without_config():
+def test_list_user_unread_returns_empty_without_config(monkeypatch):
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     assert events.list_user_unread("any-uid") == []
 
 
-def test_list_user_all_returns_empty_without_config():
+def test_list_user_all_returns_empty_without_config(monkeypatch):
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     assert events.list_user_all("any-uid") == []
 
 
-def test_list_public_recent_returns_empty_without_config():
+def test_list_public_recent_returns_empty_without_config(monkeypatch):
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     assert events.list_public_recent() == []
 
 
@@ -115,7 +118,8 @@ def test_list_user_unread_returns_empty_for_missing_user_id():
 # ── mark_read fail-soft ────────────────────────────────────────── #
 
 
-def test_mark_read_returns_false_without_config():
+def test_mark_read_returns_false_without_config(monkeypatch):
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     assert events.mark_read("uid", "eid") is False
 
 
@@ -124,5 +128,6 @@ def test_mark_read_returns_false_for_missing_args():
     assert events.mark_read("uid", "") is False
 
 
-def test_mark_all_read_returns_zero_without_config():
+def test_mark_all_read_returns_zero_without_config(monkeypatch):
+    monkeypatch.setattr(events, "is_configured", lambda: False)
     assert events.mark_all_read("uid") == 0
