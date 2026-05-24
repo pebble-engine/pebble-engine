@@ -57,7 +57,7 @@ function ConfirmEmailContent() {
         {status === "loading" ? (
           <>
             <div className="mx-auto w-12 h-12 rounded-full bg-muted animate-pulse" />
-            <h1 className={`${type.dashboard.display.s} text-foreground`}>Confirming…</h1>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>Confirming…</h1>
             <p className={`${type.body.s} text-muted-foreground`}>
               Verifying your confirmation link, just a moment.
             </p>
@@ -65,7 +65,7 @@ function ConfirmEmailContent() {
         ) : status === "ok" ? (
           <>
             <CheckCircle className="mx-auto w-12 h-12 text-primary" />
-            <h1 className={`${type.dashboard.display.s} text-foreground`}>Email updated</h1>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>Email updated</h1>
             <p className={`${type.body.s} text-muted-foreground`}>{message}</p>
             <Link
               href="/auth/login"
@@ -77,7 +77,7 @@ function ConfirmEmailContent() {
         ) : (
           <>
             <XCircle className="mx-auto w-12 h-12 text-destructive" />
-            <h1 className={`${type.dashboard.display.s} text-foreground`}>Could not confirm</h1>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>Could not confirm</h1>
             <p className={`${type.body.s} text-muted-foreground`}>{message}</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
               <Link
