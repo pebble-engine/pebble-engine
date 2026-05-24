@@ -19,6 +19,7 @@ export const SERVICES: Service[] = [
   { id: "svc-1", title: "Weekly Maintenance",  description: "Mowing, edging, blowing, and seasonal adjustments. Same crew every visit — they get to know your yard.", icon: "Leaf"     },
   { id: "svc-2", title: "Landscape Design",    description: "Custom plant selection, bed design, and installation. Water-wise choices for your zone, installed to last.", icon: "Sprout"   },
   { id: "svc-3", title: "Seasonal Cleanups",   description: "Spring prep and fall shutdown. Mulch, pruning, gutter cleaning, and leaf removal included.",               icon: "TreePine" },
+  { id: "svc-4", title: "Irrigation & Drainage", description: "Sprinkler install + repair, French-drain installation, water-wise upgrades that pay for themselves in the first summer.", icon: "Droplets" },
 ];
 
 export const ABOUT_PHOTO_IMAGE = "/about.jpg";
@@ -31,6 +32,7 @@ export const TRUST_BADGES: Trust[] = [
   { label: "INSURED",      sub: "Up to $[amount]"             },
   { label: "5-STAR RATED", sub: "[N]+ Google reviews"         },
   { label: "FAMILY-OWNED", sub: "Serving [city] since [year]" },
+  { label: "WATER-WISE",   sub: "Certified [your local water authority]" },
 ];
 
 export const TESTIMONIAL_QUOTE  = "[A 1-2 sentence testimonial in your customer's voice. Specific results > generic praise. Include a real first name and last initial.]";
@@ -82,6 +84,8 @@ export const FAQ_ITEMS: FAQItem[] = [
   { q: "What forms of payment do you take?", a: "[Cash, check, all major cards, and we offer financing on jobs over $[amount].]" },
   { q: "Do you offer a guarantee?",          a: "[Yes — [N]-year workmanship guarantee on all installations, [N] days on repairs.]" },
   { q: "What areas do you serve?",           a: "[See our service area page for the full list of cities. Generally [region] within [N] miles of [city].]" },
+  { q: "Do you handle HOA approvals?",        a: "[Yes — we've worked with [N]+ HOAs in [city]. We submit the architectural review packet so you don't have to.]" },
+  { q: "What's your weekly route schedule?",  a: "[We assign you a fixed day and approximate time window. Same crew every visit. We text 30 minutes before arrival.]" },
 ];
 
 // --- Service area page ---
