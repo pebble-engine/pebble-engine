@@ -2061,6 +2061,41 @@ class PebbleHandler(BaseHTTPRequestHandler):
         ct = ct_map.get(ext, "application/octet-stream")
         if ct.startswith("text/") or ct in ("application/javascript", "application/json", "image/svg+xml", "application/xml"):
             ct += "; charset=utf-8"
+
+        # HTML responses: rewrite root-relative href/src/action attributes
+        # to be prefixed with the basePath. Next.js's `basePath` correctly
+        # prefixes <Link> hrefs and _next/static asset URLs, but it does
+        # NOT prefix raw <a href="/about">, <img src={SITE_HERO}>, or
+        # <form action="/contact">. Without this rewrite, clicking a nav
+        # link inside the iframe navigates to http://localhost:8000/about
+        # (404) instead of http://localhost:8000/preview-template/<id>/about.
+        # The regex only matches root-relative URLs (start with "/")
+        # that don't already begin with the basePath — idempotent.
+        if ext in ("html", "htm"):
+            try:
+                raw = candidate.read_text(encoding="utf-8")
+                base = f"/preview-template/{template_id}"
+                # Match href=, src=, action= where the value starts with "/"
+                # but not "/preview-template/..." (already prefixed) and not
+                # "//..." (protocol-relative) and not "/_next/..." (already
+                # basePath'd by Next.js).
+                rewritten = re.sub(
+                    r'(href|src|action)="/(?!preview-template/|_next/|/)',
+                    rf'\1="{base}/',
+                    raw,
+                )
+                data = rewritten.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", ct)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            except Exception as e:
+                log.warning("[preview-template] HTML rewrite failed for %s: %s", template_id, e)
+                # Fall through to plain serve below
+
         self._serve_file(candidate, ct)
 
     @staticmethod

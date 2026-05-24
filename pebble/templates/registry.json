@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "_comment": "Template registry — Phase 31. Each entry points to a tokenized Next.js project in pebble/templates/<id>/ that we can instantiate for customers via a focused content-swap LLM call (~$0.005). DNA inspiration drawn from Marc's client HTMLs but every shipped template is an original brand. See pebble/templates/dna/<source_dna>.json for the design language each template inherits.",
+  "_comment": "Template registry \u2014 Phase 31. Each entry points to a tokenized Next.js project in pebble/templates/<id>/ that we can instantiate for customers via a focused content-swap LLM call (~$0.005). DNA inspiration drawn from Marc's client HTMLs but every shipped template is an original brand. See pebble/templates/dna/<source_dna>.json for the design language each template inherits.",
   "templates": [
     {
       "id": "service_pro",
@@ -39,7 +39,7 @@
       },
       "best_for": "Service-industry businesses where the buyer wants TRUST + AVAILABILITY signals (no-contracts, same-day, pet-safe). Dark default with optional light theme toggle.",
       "tier": "free",
-      "preview_url": "http://127.0.0.1:3062",
+      "preview_url": "/preview-template/service_pro/",
       "preview_pages": [
         {
           "label": "Home",
@@ -98,7 +98,7 @@
       },
       "best_for": "Premium-tier beauty, wellness, and editorial-luxury brands. Light cream/mint surfaces. Generous whitespace. Magazine-style asymmetric layouts.",
       "tier": "premium",
-      "preview_url": "http://127.0.0.1:3063",
+      "preview_url": "/preview-template/luxe_beauty/",
       "preview_pages": [
         {
           "label": "Home",
@@ -154,9 +154,9 @@
         "display": "Fraunces",
         "body": "Inter"
       },
-      "best_for": "Warm, tactile brands where the product is craft — bakery, café, restaurant, deli, florist. Tilted-photo Y2K cream palette with filterable menu / catalog section.",
+      "best_for": "Warm, tactile brands where the product is craft \u2014 bakery, caf\u00e9, restaurant, deli, florist. Tilted-photo Y2K cream palette with filterable menu / catalog section.",
       "tier": "premium",
-      "preview_url": "http://127.0.0.1:3065",
+      "preview_url": "/preview-template/artisan_kitchen/",
       "preview_pages": [
         {
           "label": "Home",
@@ -209,9 +209,9 @@
         "display": "Outfit",
         "body": "DM Sans"
       },
-      "best_for": "Authority instructor brands — trainer, dojo, coach, security consultant. Tactical crimson + gold-gradient with full-bleed video hero and animated stats.",
+      "best_for": "Authority instructor brands \u2014 trainer, dojo, coach, security consultant. Tactical crimson + gold-gradient with full-bleed video hero and animated stats.",
       "tier": "premium",
-      "preview_url": "http://127.0.0.1:3066",
+      "preview_url": "/preview-template/instructor_pro/",
       "preview_pages": [
         {
           "label": "Home",
@@ -267,7 +267,7 @@
       },
       "best_for": "Dramatic dark personal-brand portfolios where the work is the product. Blackletter wordmarks, gold accents, corner-bracket photo frames. Tattoo, music, motorcycle, leather craft, whiskey.",
       "tier": "premium",
-      "preview_url": "http://127.0.0.1:3064",
+      "preview_url": "/preview-template/ink_studio/",
       "preview_pages": [
         {
           "label": "Home",
@@ -321,7 +321,7 @@
       },
       "best_for": "Urban luxury real estate + adjacent high-touch brokerages. Cinematic vermilion-slab editorial, mix-blend-difference navbar, photo-grid hero, numbered slab dividers.",
       "tier": "premium",
-      "preview_url": "http://127.0.0.1:3067",
+      "preview_url": "/preview-template/boutique_brokerage/",
       "preview_pages": [
         {
           "label": "Home",
@@ -376,7 +376,7 @@
         "display": "IBM Plex Sans",
         "body": "IBM Plex Sans"
       },
-      "best_for": "B2B / corporate service providers — bonded, insured, white-collar trades.",
+      "best_for": "B2B / corporate service providers \u2014 bonded, insured, white-collar trades.",
       "tier": "free"
     },
     {
@@ -414,7 +414,7 @@
         "display": "Lora",
         "body": "Raleway"
       },
-      "best_for": "Landscaping, lawn care, garden services — warm, organic, light-mode native.",
+      "best_for": "Landscaping, lawn care, garden services \u2014 warm, organic, light-mode native.",
       "tier": "free"
     },
     {
@@ -494,7 +494,7 @@
         "body": "Didact Gothic",
         "accent": "Pinyon Script"
       },
-      "best_for": "Mysterious, evening-luxury brands — perfume, jewelry, premium skincare.",
+      "best_for": "Mysterious, evening-luxury brands \u2014 perfume, jewelry, premium skincare.",
       "tier": "premium"
     },
     {
@@ -531,7 +531,7 @@
         "body": "Crimson Text",
         "accent": "Bebas Neue"
       },
-      "best_for": "Old-world craft brands — tattoo, leather, whiskey, cigar lounge, vintage.",
+      "best_for": "Old-world craft brands \u2014 tattoo, leather, whiskey, cigar lounge, vintage.",
       "tier": "premium"
     },
     {
@@ -568,7 +568,7 @@
         "body": "Space Mono",
         "accent": "Bebas Neue"
       },
-      "best_for": "Workshop / fabrication / metal craft — industrial precision, dark mood.",
+      "best_for": "Workshop / fabrication / metal craft \u2014 industrial precision, dark mood.",
       "tier": "premium"
     },
     {
@@ -646,7 +646,7 @@
         "display": "Abril Fatface",
         "body": "Merriweather"
       },
-      "best_for": "Mediterranean / Italian / trattoria — slow food + olive-oil-warm hospitality.",
+      "best_for": "Mediterranean / Italian / trattoria \u2014 slow food + olive-oil-warm hospitality.",
       "tier": "premium"
     },
     {
@@ -844,7 +844,7 @@
       "directory": "pebble/templates/cinematic_plumber",
       "name": "Pipe & Cistern Co.",
       "tagline": "Cinematic plumbing hero. Same-day. Slate + deep-blue accent.",
-      "vibe": "Cinematic Real-Estate Listing — Plumbing",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Plumbing",
       "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "plumber",
@@ -910,7 +910,7 @@
       "directory": "pebble/templates/cinematic_hvac",
       "name": "Cool Crew HVAC",
       "tagline": "Cinematic HVAC hero. Cyan accent. Same-day service.",
-      "vibe": "Cinematic Real-Estate Listing — HVAC",
+      "vibe": "Cinematic Real-Estate Listing \u2014 HVAC",
       "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "hvac",
@@ -975,7 +975,7 @@
       "directory": "pebble/templates/cinematic_construction",
       "name": "Steelhouse Build Co.",
       "tagline": "Cinematic construction hero. Safety-orange accent. Fixed-price.",
-      "vibe": "Cinematic Real-Estate Listing — Construction",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Construction",
       "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "construction",
@@ -1042,7 +1042,7 @@
       "directory": "pebble/templates/cinematic_landscaper",
       "name": "Greenwell Yards Co.",
       "tagline": "Cinematic landscape hero. Lime accent. Weekly routes + full installs.",
-      "vibe": "Cinematic Real-Estate Listing — Landscaping",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Landscaping",
       "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "landscaper",
@@ -1108,7 +1108,7 @@
       "directory": "pebble/templates/cinematic_dog_groomer",
       "name": "Hush & Wag Grooming",
       "tagline": "Cinematic dog-groomer hero. Pink accent. Small-batch, anxiety-friendly.",
-      "vibe": "Cinematic Real-Estate Listing — Pet Grooming",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Pet Grooming",
       "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "dog groomer",
