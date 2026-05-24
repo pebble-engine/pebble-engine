@@ -1842,6 +1842,37 @@ class PebbleHandler(BaseHTTPRequestHandler):
             self._serve_subscription_lapse_page()
             return
 
+        # 2026-05-23 — Fly.io backend (env-gated, falls back to local).
+        # When PEBBLE_PREVIEW_BACKEND=fly, route /preview/<slug>/... to
+        # https://pebble-preview-<slug>.fly.dev/. Public_mode skips this
+        # because public subdomain visitors should always see the published
+        # site (Cloudflare Pages), never a workspace dev preview.
+        #
+        # No app-exists pre-check — that would add a 1-3s flyctl roundtrip
+        # per request. Instead, try the proxy with a generous timeout (Fly
+        # cold-wake takes ~50s). If the app doesn't exist, _proxy_to_dev
+        # returns False (DNS fail or connection refused) and we fall through
+        # to local dev_registry / static-file handling. This keeps the env
+        # toggle SAFE — flipping to "fly" never breaks projects that haven't
+        # been deployed to Fly yet.
+        preview_backend = os.environ.get("PEBBLE_PREVIEW_BACKEND", "local").strip().lower()
+        if preview_backend == "fly" and not public_mode:
+            try:
+                from pebble.fly_preview import preview_url as _fly_preview_url
+                fly_url = _fly_preview_url(slug)
+                slug_prefix = "/preview/" + parts[0]
+                forward_path = self.path[len(slug_prefix):] or "/"
+                # 90s timeout = cold-wake budget (firecracker 3s + init 10s +
+                # next dev startup 16s + first-page compile 25s + buffer).
+                # Once the machine is warm, 5-7s typical.
+                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=90):
+                    return
+                # Proxy failed — fall through to local path so we don't break
+                # workspaces for projects that haven't been Fly-provisioned.
+                log.info("[fly] proxy returned False for %s, falling back to local", slug)
+            except Exception as exc:
+                log.info("[fly] proxy errored for %s, falling back to local: %s", slug, exc)
+
         # If a live `next dev` process is registered for this slug, proxy to
         # it so SSR routes work (Next.js apps have no compiled index.html on
         # disk — static-file serving would 404). Falls through to static
@@ -1977,7 +2008,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
             return html + tag
         return html[:idx] + tag + html[idx:]
 
-    def _proxy_to_dev(self, dev_url: str, forward_path: str) -> bool:
+    def _proxy_to_dev(self, dev_url: str, forward_path: str, remote_timeout: int = 10) -> bool:
         """Forward GET *forward_path* to the running next dev server at *dev_url*.
 
         Injects the visual-edit bridge into HTML responses (workspace iframe
@@ -1986,14 +2017,23 @@ class PebbleHandler(BaseHTTPRequestHandler):
         overlay). Returns True on success. The caller must not write any
         HTTP response on False — the connection state is clean (no bytes
         sent).
+
+        2026-05-23: added scheme detection so the same path can proxy to
+        Fly.io's HTTPS preview machines (e.g. pebble-preview-<slug>.fly.dev).
+        ``remote_timeout`` extends the default 10s for cold-wake scenarios —
+        Fly hallpass can hold the connection up to ~60s while the machine
+        boots + next dev compiles the first page.
         """
         import http.client
         from urllib.parse import urlsplit
         public_mode = bool(getattr(self, "_public_subdomain_mode", False))
         parsed = urlsplit(dev_url)
-        conn: http.client.HTTPConnection | None = None
+        conn: http.client.HTTPConnection | http.client.HTTPSConnection | None = None
         try:
-            conn = http.client.HTTPConnection(parsed.netloc, timeout=10)
+            if parsed.scheme == "https":
+                conn = http.client.HTTPSConnection(parsed.netloc, timeout=remote_timeout)
+            else:
+                conn = http.client.HTTPConnection(parsed.netloc, timeout=remote_timeout)
             conn.request("GET", forward_path)
             resp = conn.getresponse()
             data = resp.read()
