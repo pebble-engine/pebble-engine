@@ -969,6 +969,73 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "cinematic_construction",
+      "directory": "pebble/templates/cinematic_construction",
+      "name": "Steelhouse Build Co.",
+      "tagline": "Cinematic construction hero. Safety-orange accent. Fixed-price.",
+      "vibe": "Cinematic Real-Estate Listing — Construction",
+      "source_dna": "cinematic_construction",
+      "applicable_industries": [
+        "construction",
+        "general contractor",
+        "home builder",
+        "home addition",
+        "remodel contractor",
+        "kitchen remodel",
+        "bath remodel",
+        "custom homes"
+      ],
+      "preview_image": "/templates-preview/cinematic_construction.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#ea580c",
+        "#c2410c"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed GCs who lead with fixed-price accountability and trust",
+      "tier": "free",
+      "preview_url": "http://localhost:3199/cinematic_construction",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
     }
   ],
   "_planned_next": []
