@@ -9,6 +9,7 @@ import { useAuth } from "@/components/auth-provider";
 import { safeRedirect } from "@/lib/safe-redirect";
 import { MarketingShell, MarketingCard } from "@/components/marketing-shell";
 import { Field, OAuthButton } from "@/components/auth/auth-fields";
+import { TurnstileWidget } from "@/components/turnstile-widget";
 import { type } from "@/lib/type";
 
 export default function SignupPage() {
@@ -31,6 +32,12 @@ function SignupForm() {
   const [submitting, setSubmitting] = useState(false);
   const [oauthBusy, setOauthBusy] = useState<"google" | "github" | null>(null);
   const [done, setDone] = useState(false);
+  // 2026-05-24 — Turnstile token + disposable-email gate. The widget
+  // pumps a fresh token in via onToken; we POST it to
+  // /api/auth/precheck right before calling Supabase signUp. Without
+  // a token the submit button stays disabled. The DEV_BYPASS sentinel
+  // unlocks the form when NEXT_PUBLIC_TURNSTILE_SITE_KEY isn't set.
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const redirect = safeRedirect(params.get("redirect"));
 
@@ -45,8 +52,27 @@ function SignupForm() {
       setError("Passwords don't match.");
       return;
     }
+    if (!turnstileToken) {
+      setError("Please complete the verification challenge.");
+      return;
+    }
     setSubmitting(true);
     try {
+      // 2026-05-24 — server-side gate: Turnstile + disposable email.
+      // Runs BEFORE Supabase signup so a bot's email never reaches
+      // Supabase Auth (no half-created accounts, no confirmation
+      // email spend on doomed signups).
+      const precheckResp = await fetch("/api/auth/precheck", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify({ token: turnstileToken, email: email.trim() }),
+      });
+      const precheck = (await precheckResp.json()) as { ok: boolean; reason?: string };
+      if (!precheck.ok) {
+        setError(precheck.reason || "Verification failed. Please try again.");
+        setSubmitting(false);
+        return;
+      }
       await signUp(email, password, firstName.trim() || undefined);
       setDone(true);
     } catch (e) {
@@ -196,6 +222,13 @@ function SignupForm() {
               minLength={8}
             />
 
+            {/* Cloudflare Turnstile — invisible CAPTCHA. Pumps a
+                short-lived token via onToken; the submit handler
+                ships it to /api/auth/precheck. In dev (no site key
+                in .env) the widget fires DEV_BYPASS immediately so
+                the form is usable without Cloudflare wiring. */}
+            <TurnstileWidget onToken={setTurnstileToken} />
+
             {error && (
               <div role="alert" className="bg-destructive/10 border border-destructive/40 rounded-lg p-3 text-destructive text-sm">
                 {error}
@@ -204,7 +237,7 @@ function SignupForm() {
 
             <button
               type="submit"
-              disabled={submitting || oauthBusy !== null}
+              disabled={submitting || oauthBusy !== null || !turnstileToken}
               className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#3054ff] hover:bg-[#2040e0] px-6 py-3 text-base font-medium text-white transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {submitting ? (

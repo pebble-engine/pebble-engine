@@ -23,7 +23,8 @@ import {
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
-import { streamGenerateSite, enrichContent, fetchProjectState, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { streamGenerateSite, enrichContent, fetchProjectState, CreditError, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { PaywallModal, type PaywallReason } from "@/components/paywall-modal";
 import { type CollectedAnswer } from "@/components/phases/build-chat";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
@@ -98,6 +99,11 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   const [generateDone, setGenerateDone] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [sseEvents, setSseEvents] = useState<SSEEvent[]>([]);
+  // 2026-05-24 Free tier restructure: when /api/generate(-stream) refuses
+  // with code:"credits_low", route the response into PaywallModal instead
+  // of the generic error path so the user sees Balance/Needed math and a
+  // real Upgrade/Templates choice. null when no paywall is showing.
+  const [paywallReason, setPaywallReason] = useState<PaywallReason | null>(null);
   // Phase 49 — elapsed seconds for the build. Captured at the moment we
   // kick off /api/generate-stream so the Ready-phase summary can show
   // "Built in 47s". Cleared on new generation.
@@ -550,6 +556,22 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         }, 600);
       })
       .catch((e: Error) => {
+        // Credit-paywall envelope (Free tier can't afford a 10-credit
+        // build): surface the PaywallModal with the server-supplied
+        // math instead of the generic "Build failed" error. Bounce the
+        // user back to welcome so the draft animation doesn't keep
+        // spinning behind the modal — when they dismiss "Maybe later"
+        // they land somewhere they can act, not a frozen build screen.
+        if (e instanceof CreditError) {
+          setPaywallReason({
+            balance: e.balance,
+            needed:  e.needed,
+            action:  e.action,
+            message: e.serverMessage || e.message,
+          });
+          setPhase("welcome");
+          return;
+        }
         setGenerateError(e.message || "Build failed");
       })
       .finally(() => {
@@ -732,6 +754,17 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
           onPlanSelected={() => setNeedsPlanPick(false)}
         />
       )}
+
+      {/* Credit paywall — fired when /api/generate(-stream) returns 402
+          with code:"credits_low". Shown over the workspace shell. Visible
+          on welcome too (Free user clicks Build, paywall surfaces, user
+          stays on the landing canvas). The modal's own buttons route to
+          /pricing or /templates; "Maybe later" just dismisses. */}
+      <PaywallModal
+        open={paywallReason !== null}
+        reason={paywallReason}
+        onClose={() => setPaywallReason(null)}
+      />
     </div>
     </MotionConfig>
   );

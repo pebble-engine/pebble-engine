@@ -30,6 +30,66 @@ export class PlanLimitError extends Error {
   }
 }
 
+/**
+ * Raised for 402 responses carrying the {code: "credits_low"} envelope
+ * the engine /api/generate(-stream) returns when the caller can't afford
+ * the build (Free tier restructure, 2026-05-24). Carries the data the
+ * v3 PaywallModal needs to render the explanation: balance, needed,
+ * action, message. The PaywallModal differentiates "you ran out" from
+ * "plan limit hit" — the latter is PlanLimitError (handled by the
+ * plan-picker modal flow), this one routes to the credit paywall.
+ */
+export class CreditError extends Error {
+  balance:      number | null;
+  needed:       number;
+  action:       string;
+  upgradeUrl:   string;
+  templatesUrl: string;
+  serverMessage: string;
+  constructor(opts: {
+    message:       string;
+    balance:       number | null;
+    needed:        number;
+    action:        string;
+    upgradeUrl:    string;
+    templatesUrl:  string;
+    serverMessage: string;
+  }) {
+    super(opts.message);
+    this.name          = "CreditError";
+    this.balance       = opts.balance;
+    this.needed        = opts.needed;
+    this.action        = opts.action;
+    this.upgradeUrl    = opts.upgradeUrl;
+    this.templatesUrl  = opts.templatesUrl;
+    this.serverMessage = opts.serverMessage;
+  }
+}
+
+type CreditLow402 = {
+  error?:         string;
+  code?:          string;
+  balance?:       number | null;
+  needed?:        number;
+  action?:        string;
+  message?:       string;
+  upgrade_url?:   string;
+  templates_url?: string;
+};
+
+function tryCreditError(payload: CreditLow402): CreditError | null {
+  if (payload.code !== "credits_low") return null;
+  return new CreditError({
+    message:       payload.error || "Not enough credits to start this build.",
+    balance:       typeof payload.balance === "number" ? payload.balance : null,
+    needed:        typeof payload.needed  === "number" ? payload.needed  : 10,
+    action:        typeof payload.action  === "string" ? payload.action  : "full_engine_build",
+    upgradeUrl:    typeof payload.upgrade_url   === "string" ? payload.upgrade_url   : "/pricing",
+    templatesUrl:  typeof payload.templates_url === "string" ? payload.templates_url : "/templates",
+    serverMessage: typeof payload.message === "string" ? payload.message : "",
+  });
+}
+
 async function getAuthHeader(): Promise<Record<string, string>> {
   try {
     const { createClient } = await import("./supabase/client");
@@ -51,10 +111,12 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
   if (!resp.ok) {
-    const payload = json as { error?: string; upgrade_url?: string };
+    const payload = json as CreditLow402;
     const err = payload.error || `HTTP ${resp.status}`;
-    if (resp.status === 402 && payload.upgrade_url) {
-      throw new PlanLimitError(err, payload.upgrade_url);
+    if (resp.status === 402) {
+      const creditError = tryCreditError(payload);
+      if (creditError) throw creditError;
+      if (payload.upgrade_url) throw new PlanLimitError(err, payload.upgrade_url);
     }
     throw new Error(err);
   }
@@ -181,11 +243,16 @@ export async function streamGenerateSite(
 
   if (!resp.ok) {
     const text = await resp.text();
-    let payload: { error?: string; upgrade_url?: string };
-    try { payload = JSON.parse(text); } catch { payload = { error: text || `HTTP ${resp.status}` }; }
+    let payload: CreditLow402;
+    try { payload = JSON.parse(text) as CreditLow402; } catch { payload = { error: text || `HTTP ${resp.status}` }; }
     const err = payload.error || `HTTP ${resp.status}`;
-    if (resp.status === 402 && payload.upgrade_url) {
-      throw new PlanLimitError(err, payload.upgrade_url);
+    if (resp.status === 402) {
+      // Credit-paywall envelope (Free tier can't afford a build) takes
+      // precedence over PlanLimitError so the UI can render the credit
+      // math + Upgrade/Templates split instead of the generic plan-gate.
+      const creditError = tryCreditError(payload);
+      if (creditError) throw creditError;
+      if (payload.upgrade_url) throw new PlanLimitError(err, payload.upgrade_url);
     }
     throw new Error(err);
   }
