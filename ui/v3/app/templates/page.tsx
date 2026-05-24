@@ -14,10 +14,10 @@
  * marketing framing because it works. The carrot routes lowest-commitment
  * users into the cheapest, most-likely-to-look-good path.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Check, X, Loader2, Eye, ExternalLink } from "lucide-react";
+import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Lock, Upload } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
 import {
@@ -28,6 +28,20 @@ import {
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type Brief } from "@/lib/state";
 
+// 2026-05-23: tier-tab model. Marc's design-night ask was three tabs —
+// Free / Premium / Public — where Public is user-uploaded with a
+// revenue split. The backend registry still emits some templates with
+// the legacy tier="paid"; we treat that as "premium" client-side via
+// `normalizeTier()` below, so the UI tabs don't depend on a backend
+// rename.
+type TierTab = "free" | "premium" | "public";
+
+function normalizeTier(t: TemplateSummary["tier"]): TierTab {
+  if (t === "paid" || t === "premium") return "premium";
+  if (t === "public") return "public";
+  return "free";
+}
+
 export default function TemplatesPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<TemplateSummary[] | null>(null);
@@ -37,12 +51,23 @@ export default function TemplatesPage() {
   // before clicking "Use this template" → instantiate dialog.
   const [previewing, setPreviewing] = useState<TemplateSummary | null>(null);
   const [picked, setPicked] = useState<TemplateSummary | null>(null);
+  const [activeTab, setActiveTab] = useState<TierTab>("free");
 
   useEffect(() => {
     listTemplates()
       .then((res) => setTemplates(res.templates))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
+
+  // Pre-bucket once per templates load so the tab counters + filtered
+  // list don't recompute every keystroke.
+  const buckets = useMemo(() => {
+    const out: Record<TierTab, TemplateSummary[]> = { free: [], premium: [], public: [] };
+    (templates ?? []).forEach((t) => out[normalizeTier(t.tier)].push(t));
+    return out;
+  }, [templates]);
+
+  const visible = buckets[activeTab];
 
   return (
     <div className="min-h-screen-safe flex flex-col bg-background text-foreground">
@@ -73,15 +98,62 @@ export default function TemplatesPage() {
           </div>
         )}
 
-        {templates && templates.length === 0 && (
+        {/* Tier tabs — Free / Premium / Public. Counts reflect what's
+            actually in each bucket; Public is intentionally empty today
+            (marketplace upload flow not yet built) and renders a
+            dedicated "coming soon + waitlist" panel rather than an
+            empty grid. Marc's 2026-05-23 brief: Public templates are
+            user-uploaded with a revenue split. */}
+        {templates && (
+          <div className="flex items-center justify-center gap-1.5 mb-8">
+            <TierTabButton
+              active={activeTab === "free"}
+              count={buckets.free.length}
+              onClick={() => setActiveTab("free")}
+            >
+              Free
+            </TierTabButton>
+            <TierTabButton
+              active={activeTab === "premium"}
+              count={buckets.premium.length}
+              onClick={() => setActiveTab("premium")}
+            >
+              Premium
+            </TierTabButton>
+            <TierTabButton
+              active={activeTab === "public"}
+              count={buckets.public.length}
+              onClick={() => setActiveTab("public")}
+            >
+              Public
+            </TierTabButton>
+          </div>
+        )}
+
+        {/* Empty states + grid per tab */}
+        {templates && activeTab === "public" && buckets.public.length === 0 && (
+          <PublicTabPlaceholder />
+        )}
+
+        {templates && activeTab === "premium" && buckets.premium.length === 0 && (
+          <div className="text-center text-muted-foreground py-16 max-w-md mx-auto">
+            <Lock className="w-6 h-6 mx-auto mb-3 opacity-40" />
+            <p className={`${type.heading.m} text-foreground mb-1`}>No premium templates yet</p>
+            <p className={type.body.s}>
+              Pebble-curated paid templates are coming. For now, every Free template ships ready to customize.
+            </p>
+          </div>
+        )}
+
+        {templates && activeTab === "free" && buckets.free.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
             <p className={type.body.m}>No templates available yet.</p>
           </div>
         )}
 
-        {templates && templates.length > 0 && (
+        {templates && visible.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((t, i) => (
+            {visible.map((t, i) => (
               <TemplateCard
                 key={t.id}
                 template={t}
@@ -170,7 +242,12 @@ function TemplateCard({
           </div>
         )}
         <div className="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-foreground/85 text-background text-xs uppercase tracking-wider z-10">
-          {t.tier === "free" ? "Free" : "Pro"}
+          {(() => {
+            const tier = normalizeTier(t.tier);
+            if (tier === "free") return "Free";
+            if (tier === "premium") return "Premium";
+            return "Public";
+          })()}
         </div>
       </div>
       <div className="p-5">
@@ -600,5 +677,85 @@ function FieldLabel({
       </span>
       {children}
     </label>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// Tier tab + Public placeholder (2026-05-23)                          //
+// ------------------------------------------------------------------ //
+
+function TierTabButton({
+  active, count, onClick, children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+        active
+          ? "bg-foreground text-background"
+          : "bg-card border border-border text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <span>{children}</span>
+      <span
+        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold ${
+          active ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+// Public tab: when the marketplace ships (user uploads + revenue split),
+// this placeholder gets replaced with a real listing + an upload CTA.
+// Until then we surface the value prop + capture interest so users know
+// it's coming and we don't leave an empty grid feeling broken.
+function PublicTabPlaceholder() {
+  return (
+    <section className="max-w-2xl mx-auto">
+      <div className="rounded-2xl border border-border bg-card p-8 text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+          <Upload className="w-5 h-5 text-primary" />
+        </div>
+        <h2 className={`${type.display.m} text-foreground mb-2`}>
+          Public templates — coming soon
+        </h2>
+        <p className={`${type.body.m} text-muted-foreground mb-6`}>
+          Anyone can publish a template here. Designers, agencies, or just builders who want
+          their work seen. Make it free, or set a price and earn a share every time someone uses it.
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 text-left">
+          <div className="space-y-1">
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Share</p>
+            <p className={`${type.body.s} text-foreground`}>Upload your design once, earn forever.</p>
+          </div>
+          <div className="space-y-1">
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Price</p>
+            <p className={`${type.body.s} text-foreground`}>Free, or set your own. We take a small cut.</p>
+          </div>
+          <div className="space-y-1">
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground`}>Reach</p>
+            <p className={`${type.body.s} text-foreground`}>Every Pebble customer sees you.</p>
+          </div>
+        </div>
+        <a
+          href="mailto:hello@getpebble.net?subject=Pebble%20Public%20Templates%20—%20notify%20me"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-foreground text-background text-sm font-semibold hover:opacity-90 transition-opacity"
+        >
+          Notify me when it ships
+        </a>
+        <p className={`${type.mono} text-xs text-muted-foreground mt-3`}>
+          Already designing for Pebble? Reply to that email and we&apos;ll pull you into the early-uploader cohort.
+        </p>
+      </div>
+    </section>
   );
 }

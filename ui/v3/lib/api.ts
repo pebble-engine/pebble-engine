@@ -508,7 +508,11 @@ export type TemplateSummary = {
   color_swatches: string[];
   fonts: { display: string; body: string; accent?: string };
   best_for: string;
-  tier: "free" | "paid";
+  // 2026-05-23: extended from {free, paid} to support {premium, public}.
+  // - "paid" is legacy; backend still emits it. UI treats it as "premium".
+  // - "premium" = Pebble-curated paid templates (future).
+  // - "public"  = user-uploaded (future, revenue-share with uploader).
+  tier: "free" | "paid" | "premium" | "public";
   // Phase 32a (2026-05-20) — live preview iframe target. In dev, points to
   // a localhost port serving the template's instantiated showcase. In prod,
   // points to a cloud-hosted preview URL. Pages list drives the tabs in
