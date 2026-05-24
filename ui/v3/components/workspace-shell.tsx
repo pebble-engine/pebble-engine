@@ -255,6 +255,40 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   // a build. Previously had a self-healing "fire on /workspace mount if brief
   // exists" branch — but that auto-built stale briefs every time the user
   // navigated to /workspace from the dashboard, even when they wanted a
+  // 2026-05-23 — Task D of Fly.io integration. Keep-alive ping.
+  //
+  // Fly machines auto-stop after 5 min of no HTTP traffic. While the user
+  // is actively editing in a workspace, we want the Fly preview machine
+  // to stay warm — otherwise every refine/visual-edit hits a cold wake
+  // (50s) instead of a hot proxy (2-3s). HEAD-ping the preview URL every
+  // 4 min while the workspace tab is visible. The ping flows through
+  // engine `/preview/<slug>/` → Fly proxy → Fly auto-start refresh; cost
+  // is negligible (one request per 4 min per active user).
+  //
+  // No-op when there's no slug yet (welcome / idea / draft phases — no
+  // preview to keep warm). No-op when the browser tab is hidden
+  // (visibilityState !== "visible") so background tabs don't burn Fly
+  // resources. Re-arms when the user returns to the tab.
+  //
+  // Harmless when PEBBLE_PREVIEW_BACKEND=local — the request just hits
+  // the local engine, which is always running anyway.
+  useEffect(() => {
+    if (!slugProp) return;
+    const ping = () => {
+      if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
+      // HEAD avoids transferring the full HTML response — we just need
+      // the request to reset Fly's idle timer.
+      fetch(`/preview/${encodeURIComponent(slugProp)}/`, { method: "HEAD", credentials: "omit" })
+        .catch(() => { /* preview down — not our problem in the keep-alive path */ });
+    };
+    // Fire one immediately so the machine starts warming before the
+    // iframe load + first refine, then every 4 min thereafter (under
+    // Fly's 5-min idle window).
+    ping();
+    const id = window.setInterval(ping, 4 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, [slugProp]);
+
   // FRESH idea capture. Bad UX (and bad for the user's wallet — every fire
   // is a billed build).
   //
