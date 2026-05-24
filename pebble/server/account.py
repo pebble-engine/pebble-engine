@@ -481,9 +481,46 @@ def run_delete_account(handler) -> None:
         return
 
     # New deletion request — enter cooling-off period.
+
+    # Cancel any active Stripe subscription FIRST so we stop billing the
+    # user immediately. If this fails (Stripe down, sub already gone), we
+    # log the failure but proceed — the user pressed delete and deserves
+    # the account-scrub regardless.
+    from pebble.audit_log import log_event_for_handler
+
+    sub_path = _output_dir() / ".users" / user_id / "subscription.json"
+    if sub_path.is_file():
+        try:
+            sub_data = json.loads(sub_path.read_text(encoding="utf-8"))
+            sub_id  = sub_data.get("stripe_subscription_id")
+            status  = sub_data.get("status")
+            if sub_id and status in ("active", "trialing", "past_due"):
+                ok = _cancel_stripe_subscription(sub_id)
+                log_event_for_handler(
+                    handler=handler, user_id=user_id,
+                    event_type="stripe_subscription_canceled" if ok else "stripe_subscription_cancel_failed",
+                    metadata={"subscription_id": sub_id, "prior_status": status},
+                )
+        except Exception as e:
+            log.warning("[account] could not parse subscription.json for %s: %s", user_id, e)
+
     scheduled_for = _write_pending_deletion(user_id, user_email)
     days = _cooling_days()
     log.info("account deletion scheduled for %s (in %d days)", _redact(user_email), days)
+
+    # Audit log + scheduled-deletion email (both best-effort)
+    log_event_for_handler(
+        handler=handler, user_id=user_id,
+        event_type="account_delete_requested",
+        metadata={"cooling_off_ends": scheduled_for},
+    )
+    try:
+        from pebble.email import send_account_deletion_scheduled
+        send_account_deletion_scheduled(user_email, cooling_off_ends=scheduled_for)
+    except Exception as e:
+        log.warning("[account] deletion-scheduled email failed for %s: %s",
+                    _redact(user_email), e)
+
     handler._json(200, {
         "ok": True,
         "scheduled": True,
@@ -542,6 +579,29 @@ def run_cancel_deletion(handler) -> None:
             else "No pending deletion to cancel."
         ),
     })
+
+
+def _cancel_stripe_subscription(subscription_id: str) -> bool:
+    """Cancel a Stripe subscription immediately (no period-end prorate).
+    Returns True on success, False on any failure (logs but never raises).
+
+    Immediate cancel rather than at-period-end because the user is
+    leaving — they shouldn't pay for unused time after clicking delete.
+
+    Called only when subscription.json shows status in (active, trialing,
+    past_due) so we don't try to re-cancel an already-canceled sub.
+    """
+    try:
+        import stripe
+        stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+        stripe.Subscription.delete(subscription_id)
+        return True
+    except KeyError:
+        log.warning("[account] STRIPE_SECRET_KEY not set — skipping cancel")
+        return False
+    except Exception as e:
+        log.warning("[account] stripe cancel failed for %s: %s", subscription_id, e)
+        return False
 
 
 def _redact(email: str) -> str:

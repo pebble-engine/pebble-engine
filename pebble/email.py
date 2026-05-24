@@ -551,6 +551,55 @@ def send_password_changed_notification(email: str, sender: Optional[EmailSender]
     return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
 
 
+def send_account_deletion_scheduled(email: str, cooling_off_ends: str,
+                                    sender: Optional[EmailSender] = None) -> dict:
+    """Notify a user that their account is scheduled for permanent
+    deletion in 14 days. Includes a 'Cancel deletion' CTA pointing
+    at the settings page so they can change their mind during the
+    grace period.
+
+    cooling_off_ends is an ISO timestamp; we render it in plain English
+    for the email body."""
+    base = _base_url()
+    settings_url = f"{base}/settings"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble account is scheduled for deletion"
+    text = (
+        f"Your Pebble account is scheduled to be permanently deleted on "
+        f"{cooling_off_ends}.\n\n"
+        f"During this 14-day cooling-off period, you can cancel the "
+        f"deletion by signing into {settings_url} "
+        f"and clicking 'Cancel deletion.'\n\n"
+        f"Once the deletion executes, all your projects, files, and "
+        f"account data will be permanently removed. If you had a paid "
+        f"subscription, it has been canceled — you will not be billed "
+        f"again.\n\n"
+        f"If you didn't request this deletion, please reset your "
+        f"password immediately at {forgot_url} "
+        f"and email support@pebbleapp.ai.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        "<p>Your Pebble account is scheduled to be permanently deleted on "
+        f"<strong>{_escape_html(cooling_off_ends)}</strong>.</p>"
+        "<p>During this 14-day cooling-off period, you can cancel the deletion:</p>"
+        f'<p><a href="{_escape_html(settings_url)}" style="background:#1F1D1A;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Cancel deletion</a></p>"
+        "<p>Once the deletion executes, all your projects, files, and account data "
+        "will be permanently removed. If you had a paid subscription, it has been "
+        "canceled — you will not be billed again.</p>"
+        "<p>If you <strong>didn't</strong> request this deletion, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        '<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we can '
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
+
+
 __all__ = [
     "EmailError",
     "EmailMessage",
@@ -567,6 +616,7 @@ __all__ = [
     "send_password_reset",
     "send_password_reset_async",
     "send_password_changed_notification",
+    "send_account_deletion_scheduled",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.
