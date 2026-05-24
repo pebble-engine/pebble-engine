@@ -102,6 +102,29 @@ _INDUSTRY_KEYWORDS: dict[str, str] = {
     "music_studio":          "music studio",
     "art_gallery":           "art gallery",
     "ceramics_studio":       "ceramics pottery",
+    # 2026-05-24 — top-10 service industries added per funnel restructure.
+    # These are the highest-volume signup industries that previously fell
+    # to the generic "modern business" fallback.
+    "plumber":               "plumber pipes",
+    "plumbing":              "plumber pipes",
+    "hvac":                  "hvac air conditioning",
+    "electrician":           "electrician wiring",
+    "landscaper":            "landscaping garden",
+    "landscaping":           "landscaping garden",
+    "dog_groomer":           "dog grooming",
+    "dog_grooming":          "dog grooming",
+    "dentist":               "dental office",
+    "photographer":          "photographer camera",
+    "pest_control":          "pest control",
+    "lawn_care":             "lawn care mowing",
+    "tree_service":          "tree service arborist",
+    "carpet_cleaning":       "carpet cleaning",
+    "house_cleaning":        "house cleaning",
+    "pressure_washing":      "pressure washing",
+    "solar_installer":       "solar panels installation",
+    "junk_removal":          "junk removal truck",
+    "moving_company":        "moving company truck",
+    "home_inspection":       "home inspection inspector",
 }
 
 
@@ -192,29 +215,39 @@ def _check_urls_parallel(urls: Iterable[str]) -> dict[str, bool]:
 
 
 # ---------------------------------------------------------------------------
-# Pexels API
+# Multi-source image providers (2026-05-24 reliability upgrade)
+#
+# Pre-2026-05-24 this module only knew how to fetch from Pexels. When
+# Pexels had an outage (which happened twice in the same week — Marc
+# flagged 2 generations shipped without images) the whole repair path
+# silently fell back to "leave broken URLs in place." Disaster.
+#
+# Now we fan out to THREE sources in parallel with a shared budget:
+#   1. Pixabay  — 6,000 req/hr free, no attribution required, primary
+#   2. Pexels   — 200 req/hr free, attribution requested, secondary
+#   3. Unsplash — 50/hr demo / 5,000/hr prod, attribution required, tertiary
+#
+# Race-to-first-success: whichever returns a non-empty result first wins.
+# Failures from one source never block the others. If all three fail
+# (no keys configured, or all three outages at once), we return [] and
+# the caller leaves the original URL in place — same fail-soft behaviour
+# as before, but the probability of three simultaneous outages is
+# effectively zero.
+#
+# Per-keyword cache shared across providers so a successful Pixabay
+# result for "plumber" won't trigger redundant Pexels/Unsplash calls
+# on subsequent broken-URL repairs in the same build.
 # ---------------------------------------------------------------------------
 
-_pexels_cache: dict[str, list[str]] = {}
-_pexels_cache_lock = threading.Lock()
+_pool_cache: dict[str, list[str]] = {}
+_pool_cache_lock = threading.Lock()
 
 
 def _fetch_pexels_urls_for_keyword(keyword: str, count: int = 12) -> list[str]:
-    """Return a list of real Pexels image URLs for the keyword, via the
-    Pexels API. Cached per-keyword for the lifetime of the process to
-    keep multi-repair builds cheap.
-
-    Returns empty list if PEXELS_API_KEY is missing or the request fails.
-    """
-    with _pexels_cache_lock:
-        if keyword in _pexels_cache:
-            return _pexels_cache[keyword]
-
+    """Pexels API client. Returns [] on any failure (missing key, 4xx, timeout)."""
     api_key = os.environ.get("PEXELS_API_KEY", "").strip()
     if not api_key:
-        log.warning("[image-fallback] PEXELS_API_KEY not set — can't repair 404s")
         return []
-
     qs = urllib.parse.urlencode({"query": keyword, "per_page": count, "orientation": "landscape"})
     url = f"https://api.pexels.com/v1/search?{qs}"
     try:
@@ -224,25 +257,162 @@ def _fetch_pexels_urls_for_keyword(keyword: str, count: int = 12) -> list[str]:
         })
         with urllib.request.urlopen(req, timeout=_PEXELS_TIMEOUT_S) as r:
             if r.status != 200:
-                log.warning("[image-fallback] pexels search returned %s for %r", r.status, keyword)
                 return []
             payload = json.loads(r.read().decode("utf-8"))
     except Exception as exc:
-        log.warning("[image-fallback] pexels search failed for %r: %s", keyword, exc)
+        log.warning("[image-fallback] pexels failed for %r: %s", keyword, exc)
         return []
-
     photos = payload.get("photos") or []
-    # Prefer the "large" size; fall back to "original" or "medium" if missing.
     urls: list[str] = []
     for p in photos:
         src = p.get("src") or {}
         u = src.get("large2x") or src.get("large") or src.get("original") or src.get("medium")
         if isinstance(u, str) and u:
             urls.append(u)
-
-    with _pexels_cache_lock:
-        _pexels_cache[keyword] = urls
     return urls
+
+
+def _fetch_pixabay_urls_for_keyword(keyword: str, count: int = 12) -> list[str]:
+    """Pixabay API client. Returns [] on any failure.
+
+    Pixabay returns `webformatURL` (~640px) and `largeImageURL` (1280px+);
+    we prefer largeImageURL for hero placement quality. Free tier: 6,000
+    req/hr, no attribution required for our use.
+    """
+    api_key = os.environ.get("PIXABAY_API_KEY", "").strip()
+    if not api_key:
+        return []
+    qs = urllib.parse.urlencode({
+        "key":         api_key,
+        "q":           keyword,
+        "per_page":    max(3, min(count, 200)),  # Pixabay min 3, max 200
+        "orientation": "horizontal",
+        "image_type":  "photo",
+        "safesearch":  "true",
+    })
+    url = f"https://pixabay.com/api/?{qs}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "PebbleEngine/1.0"})
+        with urllib.request.urlopen(req, timeout=_PEXELS_TIMEOUT_S) as r:
+            if r.status != 200:
+                return []
+            payload = json.loads(r.read().decode("utf-8"))
+    except Exception as exc:
+        log.warning("[image-fallback] pixabay failed for %r: %s", keyword, exc)
+        return []
+    hits = payload.get("hits") or []
+    urls: list[str] = []
+    for h in hits:
+        u = h.get("largeImageURL") or h.get("webformatURL")
+        if isinstance(u, str) and u:
+            urls.append(u)
+    return urls
+
+
+def _fetch_unsplash_urls_for_keyword(keyword: str, count: int = 12) -> list[str]:
+    """Unsplash API client. Returns [] on any failure.
+
+    Demo tier: 50 req/hr. Production tier (after free approval): 5,000/hr.
+    Attribution requested but not enforced. We pull the `regular` size
+    (~1080px) which is plenty for hero placement.
+    """
+    access_key = os.environ.get("UNSPLASH_ACCESS_KEY", "").strip()
+    if not access_key:
+        return []
+    qs = urllib.parse.urlencode({
+        "query":       keyword,
+        "per_page":    max(1, min(count, 30)),  # Unsplash max 30
+        "orientation": "landscape",
+        "content_filter": "high",
+    })
+    url = f"https://api.unsplash.com/search/photos?{qs}"
+    try:
+        req = urllib.request.Request(url, headers={
+            "Authorization": f"Client-ID {access_key}",
+            "Accept-Version": "v1",
+            "User-Agent": "PebbleEngine/1.0",
+        })
+        with urllib.request.urlopen(req, timeout=_PEXELS_TIMEOUT_S) as r:
+            if r.status != 200:
+                return []
+            payload = json.loads(r.read().decode("utf-8"))
+    except Exception as exc:
+        log.warning("[image-fallback] unsplash failed for %r: %s", keyword, exc)
+        return []
+    results = payload.get("results") or []
+    urls: list[str] = []
+    for p in results:
+        urls_obj = p.get("urls") or {}
+        u = urls_obj.get("regular") or urls_obj.get("full") or urls_obj.get("small")
+        if isinstance(u, str) and u:
+            urls.append(u)
+    return urls
+
+
+# Source order: Pixabay first because it's the most generous free tier
+# and the most reliable in our recent outages. Pexels second (current
+# primary, but rate-limited). Unsplash third (highest quality but
+# tightest free tier).
+#
+# Stored as (name, function_attr_name) instead of (name, function_ref) so
+# that test code can monkeypatch the providers via patch.object(ifb, ...)
+# and have the patches actually take effect inside _fetch_replacement_pool.
+# A direct reference would be captured at import time and survive patching.
+_PROVIDER_NAMES = (
+    ("pixabay",  "_fetch_pixabay_urls_for_keyword"),
+    ("pexels",   "_fetch_pexels_urls_for_keyword"),
+    ("unsplash", "_fetch_unsplash_urls_for_keyword"),
+)
+
+
+def _fetch_replacement_pool(keyword: str, count: int = 12) -> list[str]:
+    """Fan out across all configured image providers in parallel, return
+    the first non-empty result. Per-keyword cached so subsequent
+    repairs in the same build don't re-hit the network.
+
+    If every provider returns empty (no keys configured, or all three
+    outages at once), returns []. Caller treats this as "leave URL in
+    place" — same fail-soft semantics as the pre-2026-05-24 module.
+    """
+    with _pool_cache_lock:
+        if keyword in _pool_cache:
+            return _pool_cache[keyword]
+
+    # Resolve provider callables at call time (NOT import time) so that
+    # monkeypatch.setattr(ifb, "_fetch_pixabay_urls_for_keyword", ...)
+    # in tests actually reroutes the call.
+    import sys as _sys
+    _mod = _sys.modules[__name__]
+    providers = [(name, getattr(_mod, attr)) for (name, attr) in _PROVIDER_NAMES]
+
+    # All three providers run concurrently. as_completed yields whichever
+    # finishes first — if it returned a non-empty list, we take it and
+    # cancel the rest. This minimizes latency: one slow provider can't
+    # block a fast one.
+    pool: list[str] = []
+    winning_source = "none"
+    with ThreadPoolExecutor(max_workers=len(providers)) as ex:
+        futures = {ex.submit(fn, keyword, count): name for (name, fn) in providers}
+        for fut in as_completed(futures):
+            name = futures[fut]
+            try:
+                urls = fut.result(timeout=_PEXELS_TIMEOUT_S + 1)
+            except Exception as exc:
+                log.warning("[image-fallback] %s provider raised: %s", name, exc)
+                urls = []
+            if urls:
+                pool = urls
+                winning_source = name
+                # Cancel the still-running providers — we have what we need.
+                for other_fut in futures:
+                    if other_fut is not fut:
+                        other_fut.cancel()
+                break
+
+    log.info("[image-fallback] pool for %r from %s: %d urls", keyword, winning_source, len(pool))
+    with _pool_cache_lock:
+        _pool_cache[keyword] = pool
+    return pool
 
 
 # ---------------------------------------------------------------------------
@@ -306,11 +476,12 @@ def validate_and_repair_images(site_dir: Path, industry: Optional[str]) -> dict:
     log.warning("[image-fallback] %d of %d image URLs failed validation; attempting repair",
                 len(broken), len(all_urls))
 
-    # 3. Fetch replacement pool from Pexels.
+    # 3. Fetch replacement pool. Fans out to Pixabay + Pexels + Unsplash
+    #    in parallel; whichever returns first wins. See _fetch_replacement_pool.
     keyword = _keyword_for_industry(industry)
-    pool = _fetch_pexels_urls_for_keyword(keyword, count=max(12, len(broken)))
+    pool = _fetch_replacement_pool(keyword, count=max(12, len(broken)))
     if not pool:
-        log.warning("[image-fallback] no replacement pool available — leaving %d broken URLs in place", len(broken))
+        log.warning("[image-fallback] all 3 image providers returned empty — leaving %d broken URLs in place", len(broken))
         report["urls_unrepaired"] = len(broken)
         return report
 
