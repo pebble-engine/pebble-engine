@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { LifeBuoy, Plus, Pencil, Sparkles } from "lucide-react";
+import { ArrowLeft, LifeBuoy, Plus, Pencil, Sparkles } from "lucide-react";
 import { ThemeToggle } from "./theme-toggle";
 import { AuthMenu } from "./auth-menu";
 import { type } from "@/lib/type";
@@ -40,6 +41,37 @@ export function TopNav({
   const [draft, setDraft] = useState(projectName ?? "");
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // 2026-05-24 — universal back affordance. Users hit secondary pages
+  // (community sub-routes, integrations, settings, /workspace/<slug>,
+  // legal pages, help) with no obvious way back to where they came from.
+  // Browser back works but isn't visible on the page. This is the
+  // explicit UI version.
+  //
+  // Hidden on the "root" surfaces the sidebar already gets users to:
+  // the landing, the dashboard home base, auth pages (those have their
+  // own flows), and /workspace's welcome phase (the prompt entry hero
+  // shouldn't have a back button competing with the Build CTA).
+  const router = useRouter();
+  const pathname = usePathname() || "";
+  const NO_BACK_PATHS = new Set([
+    "/", "/dashboard", "/login", "/signup", "/forgot", "/reset",
+  ]);
+  // /workspace without a slug is the welcome-phase entry — no back. But
+  // /workspace/<slug> (deep-linked into an existing project) SHOULD show
+  // back so users can return to the dashboard list.
+  const showBack = !NO_BACK_PATHS.has(pathname) && pathname !== "/workspace";
+
+  const handleBack = () => {
+    // history.length > 1 means there's somewhere to go back to. The
+    // initial-load case (user opened the link in a new tab) falls
+    // through to /dashboard as a sensible home.
+    if (typeof window !== "undefined" && window.history.length > 1) {
+      router.back();
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
   // Keep local draft in sync when the parent's projectName changes
   // (e.g. on a new project or after a rename elsewhere).
   useEffect(() => {
@@ -72,6 +104,18 @@ export function TopNav({
       className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)]"
     >
       <div className="flex items-center gap-4">
+        {showBack && (
+          <button
+            type="button"
+            onClick={handleBack}
+            aria-label="Back"
+            title="Back"
+            className={`${interactions.iconButton} inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-sm text-white/75 hover:text-white hover:bg-white/10 transition-colors`}
+          >
+            <ArrowLeft className="w-4 h-4" aria-hidden />
+            <span className="hidden md:inline">Back</span>
+          </button>
+        )}
         <Link
           href="/"
           className="inline-flex items-center px-3 py-1.5 rounded-full bg-stone-900/40 backdrop-blur-xl border border-white/15 text-lg font-semibold"
