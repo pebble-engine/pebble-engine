@@ -2012,7 +2012,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
         if not rest:
             self.send_response(404); self.end_headers(); return
         template_id, _, rel = rest.partition("/")
-        if not re.fullmatch(r"[a-z0-9_]+", template_id or ""):
+        if not re.fullmatch(r"[a-z0-9_]{1,64}", template_id or ""):
             self._json(400, {"error": "invalid template_id"}); return
 
         try:

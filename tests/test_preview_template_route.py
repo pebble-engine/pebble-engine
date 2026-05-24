@@ -71,21 +71,31 @@ def test_preview_template_400s_invalid_template_id(engine_base):
 
 
 def test_preview_template_rejects_path_traversal(engine_base):
-    """Walking out of the template dir must not leak filesystem contents."""
-    status, _, _ = _get(engine_base, "/preview-template/cinematic_hero/../../../README.md")
-    # Either resolved-out-of-bounds (403) or normalised by HTTP and 404. Both safe.
-    assert status in (400, 403, 404)
-
-
-def test_preview_template_404s_when_out_dir_missing(engine_base, monkeypatch, tmp_path):
-    """If a template exists but hasn't been exported yet, return 404 with a hint."""
-    # Use a sentinel template that's in the registry but whose out/ we KNOW doesn't exist.
-    # cinematic_landscaper is a good candidate IF it hasn't been exported yet — check first.
-    skin_out = REPO_ROOT / "pebble/templates/cinematic_landscaper/out"
-    if skin_out.is_dir():
-        pytest.skip("cinematic_landscaper has been exported; this test needs an unexported template")
-    status, body, _ = _get(engine_base, "/preview-template/cinematic_landscaper/")
-    assert status == 404
-    # Optional: verify the operator-facing hint mentions the export command
+    """Walking out of the template dir must be rejected by the resolve() guard.
+    Pin to 403 specifically — accepting 404 too would mask a regression where
+    the file simply happens not to exist."""
+    status, body, _ = _get(engine_base, "/preview-template/cinematic_hero/../../../README.md")
+    assert status == 403, f"expected 403, got {status}: {body!r}"
     body_text = body.decode("utf-8", errors="replace")
-    assert "export" in body_text.lower()
+    assert "outside template root" in body_text
+
+
+def test_preview_template_404s_when_out_dir_missing(engine_base, tmp_path, monkeypatch):
+    """If a template is registered but hasn't been exported (no out/), return
+    404 with an operator hint. Hermetic: uses tmp_path so it doesn't depend on
+    which templates have been exported on the dev machine."""
+    fake_dir = tmp_path / "fake_template"
+    fake_dir.mkdir()
+    # Note: out/ is intentionally NOT created
+    from pebble.templates import export as template_export_mod
+
+    def _fake_template_dir(tid):
+        if tid == "synthetic_unexported":
+            return fake_dir
+        raise KeyError(tid)
+
+    monkeypatch.setattr(template_export_mod, "template_dir", _fake_template_dir)
+    status, body, _ = _get(engine_base, "/preview-template/synthetic_unexported/")
+    assert status == 404
+    body_text = body.decode("utf-8", errors="replace")
+    assert "export" in body_text.lower(), f"missing operator hint: {body_text!r}"
