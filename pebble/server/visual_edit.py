@@ -628,6 +628,15 @@ def run_visual_edit(handler) -> None:
     # Per-user engagement signal (T17). NEVER pass op/text/color/etc.
     _log_engagement(caller_uid, "visual_edit_used")
 
+    # 2026-05-23 — Task C of Fly.io integration. Push the post-edit state
+    # to the Fly app so the next /preview hit reflects the click-to-edit
+    # change. No-ops when PEBBLE_PREVIEW_BACKEND isn't "fly".
+    try:
+        from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+        _fly_bg_deploy(slug, site_dir)
+    except Exception as _exc:
+        log.info("[fly] background deploy hook errored after visual-edit for %s: %s", slug, _exc)
+
 
 # ---- Iframe bridge script --------------------------------------------------
 

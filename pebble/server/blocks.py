@@ -197,3 +197,11 @@ def run_insert_block(handler, slug: str) -> None:
     })
     # Per-user engagement signal (T17). NEVER pass block_id or rendered content.
     _log_engagement(caller_uid, "block_inserted")
+
+    # 2026-05-23 — Task C of Fly.io integration. Push to Fly after block insert.
+    # No-ops when PEBBLE_PREVIEW_BACKEND isn't "fly".
+    try:
+        from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+        _fly_bg_deploy(slug, site_dir)
+    except Exception as _exc:
+        log.info("[fly] background deploy hook errored after block-insert for %s: %s", slug, _exc)

@@ -233,3 +233,11 @@ def run_chat_edit(handler) -> None:
         "refinement_count": refinement_count_after,
     })
     _log_engagement(caller_uid, "chat_edit_used")
+
+    # 2026-05-23 — Task C of Fly.io integration. Push to Fly after chat edit.
+    # No-ops when PEBBLE_PREVIEW_BACKEND isn't "fly".
+    try:
+        from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+        _fly_bg_deploy(slug, site_dir)
+    except Exception as _exc:
+        log.info("[fly] background deploy hook errored after chat-edit for %s: %s", slug, _exc)
