@@ -1304,6 +1304,45 @@ export async function fetchSubscription(): Promise<SubscriptionState> {
   return json as SubscriptionState;
 }
 
+// ---------- /api/account/invoices -----------------------------------------
+
+export type Invoice = {
+  id:           string;
+  number:       string | null;
+  amount_cents: number;
+  currency:     string;
+  status:       string;
+  created_at:   string;   // ISO-8601
+  pdf_url:      string | null;
+  hosted_url:   string | null;
+};
+
+/**
+ * Fetch the calling user's last 12 Stripe invoices.
+ * Returns an empty array for free-tier users (no subscription yet) —
+ * never throws for "no subscription" so the UI can render a friendly
+ * "No invoices yet" state without a try/catch.
+ */
+export async function fetchInvoices(): Promise<Invoice[]> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/account/invoices"), {
+    headers: { "Authorization": `Bearer ${session.access_token}` },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return ((json as { invoices?: Invoice[] }).invoices) ?? [];
+}
+
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------
 
 export type AnalyticsSummary = {

@@ -227,6 +227,12 @@ def route_get(handler) -> None:
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
+        elif handler.path == "/api/account/invoices":
+            # B4 — invoice history for the Billing tab. Returns last 12
+            # Stripe invoices for subscribed users; {invoices: []} for
+            # free-tier (no customer ID yet). Never 404.
+            from pebble.server.billing_api import run_get_invoice_history
+            run_get_invoice_history(handler)
         elif handler.path == "/api/internal/process-email-drip":
             from pebble.server.internal import run_process_email_drip
             run_process_email_drip(handler)

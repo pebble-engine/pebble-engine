@@ -1,22 +1,25 @@
 "use client";
 
 /**
- * Billing tab — plan display, next charge date, Stripe portal link.
- * Reads existing /api/billing/subscription via fetchSubscription helper.
- * Invoice history is a B4 placeholder.
+ * Billing tab — plan card, renewal date, invoice history, Stripe portal.
+ *
+ * B1: plan badge + portal button.
+ * B4: enriched plan card, invoice table (last 12), "Change plan" CTA.
  */
 
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { CreditCard } from "lucide-react";
+import { CreditCard, Download } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import {
   createCheckoutSession,
   fetchSubscription,
+  fetchInvoices,
   openBillingPortal,
   type SubscriptionState,
+  type Invoice,
 } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 
@@ -42,6 +45,25 @@ function planBadge(sub: SubscriptionState | null): string {
   return label;
 }
 
+function formatAmount(cents: number, currency: string): string {
+  try {
+    return new Intl.NumberFormat(undefined, {
+      style: "currency",
+      currency: currency.toUpperCase(),
+    }).format(cents / 100);
+  } catch {
+    return `${(cents / 100).toFixed(2)} ${currency.toUpperCase()}`;
+  }
+}
+
+function formatInvoiceDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString(undefined, {
+      year: "numeric", month: "short", day: "numeric",
+    });
+  } catch { return iso; }
+}
+
 // ── component ─────────────────────────────────────────────────────────────────
 
 export function BillingTab() {
@@ -56,6 +78,11 @@ export function BillingTab() {
   const [billingLoading, setBillingLoading] = useState(false);
   const [subscription, setSubscription]     = useState<SubscriptionState | null>(null);
   const [subLoading, setSubLoading]         = useState(true);
+
+  // ── invoice state ──────────────────────────────────────────────────────────
+  const [invoices, setInvoices]           = useState<Invoice[]>([]);
+  const [invoicesLoading, setInvoicesLoading] = useState(true);
+  const [invoiceError, setInvoiceError]   = useState<string | null>(null);
 
   // ── load subscription ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -88,6 +115,25 @@ export function BillingTab() {
     return () => { cancelled = true; if (timerId !== null) clearTimeout(timerId); };
   }, [loading, user, justCheckedOut]);
 
+  // ── load invoices ──────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (loading || !user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const rows = await fetchInvoices();
+        if (!cancelled) setInvoices(rows);
+      } catch (err) {
+        if (!cancelled) setInvoiceError(
+          err instanceof Error ? err.message : "Couldn't load invoices."
+        );
+      } finally {
+        if (!cancelled) setInvoicesLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [loading, user]);
+
   // ── handlers ───────────────────────────────────────────────────────────────
 
   async function onStartCheckout(plan: "starter" | "pro") {
@@ -117,6 +163,8 @@ export function BillingTab() {
 
   return (
     <div className="space-y-8">
+
+      {/* ── Plan card ──────────────────────────────────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -153,7 +201,16 @@ export function BillingTab() {
         {billingError && <p className={`${type.body.s} text-destructive`} role="alert">{billingError}</p>}
 
         <div className="flex flex-wrap items-center gap-3">
-          {subscription ? (
+          {/* Change plan CTA — always visible */}
+          <Link
+            href="/pricing"
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-foreground hover:bg-accent"
+          >
+            {subscription ? "Change plan" : "Choose a plan →"}
+          </Link>
+
+          {/* Portal button — only for users with a subscription */}
+          {subscription && (
             <button
               type="button" onClick={onManageBilling} disabled={billingLoading}
               className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -161,14 +218,8 @@ export function BillingTab() {
               <CreditCard className="w-4 h-4" />
               {billingLoading ? "Opening…" : "Manage billing"}
             </button>
-          ) : (
-            <Link
-              href="/pricing"
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
-              Choose a plan →
-            </Link>
           )}
+
           <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
             Back to dashboard
           </Link>
@@ -200,16 +251,85 @@ export function BillingTab() {
         )}
       </motion.section>
 
-      {/* ── Invoice history placeholder (B4) ─────────────────────────────── */}
+      {/* ── Invoice history ────────────────────────────────────────────────── */}
       <motion.section
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, delay: 0.04 }}
-        className="rounded-2xl border border-border bg-card p-6 space-y-3"
+        className="rounded-2xl border border-border bg-card p-6 space-y-4"
       >
-        <h2 className={`${type.dashboard.heading.l} text-foreground`}>Usage history</h2>
-        <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
-          Usage history coming soon
-        </div>
+        <h2 className={`${type.dashboard.heading.l} text-foreground`}>Invoice history</h2>
+        <p className={`${type.body.s} text-muted-foreground`}>
+          Your last {invoices.length > 0 ? invoices.length : 12} invoices from Stripe.
+          {" "}PDF links open in a new tab.
+        </p>
+
+        {invoicesLoading ? (
+          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            Loading invoices…
+          </div>
+        ) : invoiceError ? (
+          <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm text-destructive">
+            {invoiceError}
+          </div>
+        ) : invoices.length === 0 ? (
+          <div className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+            No invoices yet. They&apos;ll appear here once you subscribe.
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40">
+                <tr>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Date</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Invoice #</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Amount</th>
+                  <th className="px-4 py-2.5 text-left text-xs font-medium text-muted-foreground uppercase tracking-wide">Status</th>
+                  <th className="px-4 py-2.5 text-right text-xs font-medium text-muted-foreground uppercase tracking-wide"></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {invoices.map((inv) => (
+                  <tr key={inv.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      {formatInvoiceDate(inv.created_at)}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-foreground">
+                      {inv.number ?? inv.id.slice(0, 12)}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap">
+                      {formatAmount(inv.amount_cents, inv.currency)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        inv.status === "paid"
+                          ? "bg-green-500/10 text-green-700 dark:text-green-400"
+                          : inv.status === "open"
+                          ? "bg-yellow-500/10 text-yellow-700 dark:text-yellow-400"
+                          : "bg-muted text-muted-foreground"
+                      }`}>
+                        {inv.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {inv.pdf_url && (
+                        <a
+                          href={inv.pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                          aria-label={`Download PDF for invoice ${inv.number ?? inv.id}`}
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                          PDF
+                        </a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </motion.section>
     </div>
   );
