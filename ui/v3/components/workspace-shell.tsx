@@ -276,10 +276,19 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     if (!slugProp) return;
     const ping = () => {
       if (typeof document !== "undefined" && document.visibilityState !== "visible") return;
-      // HEAD avoids transferring the full HTML response — we just need
-      // the request to reset Fly's idle timer.
-      fetch(`/preview/${encodeURIComponent(slugProp)}/`, { method: "HEAD", credentials: "omit" })
-        .catch(() => { /* preview down — not our problem in the keep-alive path */ });
+      // Ping Fly DIRECTLY rather than through the engine proxy. Two reasons:
+      //   1. Engine proxy has a 20s timeout (small to keep user-facing
+      //      preview requests snappy). A keep-alive that has to wake a
+      //      cold machine takes 60-90s, which exceeds engine's budget.
+      //   2. Direct Fly hit triggers their auto-start in the background
+      //      without blocking the engine. By the time the user clicks
+      //      something that triggers /preview/, Fly is already warming.
+      // Harmless in PEBBLE_PREVIEW_BACKEND=local mode — fetch hits a
+      // non-existent app, DNS resolves, returns Fly's 404 page, we drop
+      // it. ~$0 cost regardless of backend.
+      const flyUrl = `https://pebble-preview-${encodeURIComponent(slugProp)}.fly.dev/`;
+      fetch(flyUrl, { method: "HEAD", mode: "no-cors", credentials: "omit" })
+        .catch(() => { /* DNS miss in local mode is expected */ });
     };
     // Fire one immediately so the machine starts warming before the
     // iframe load + first refine, then every 4 min thereafter (under

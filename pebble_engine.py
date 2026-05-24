@@ -1862,10 +1862,15 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 fly_url = _fly_preview_url(slug)
                 slug_prefix = "/preview/" + parts[0]
                 forward_path = self.path[len(slug_prefix):] or "/"
-                # 90s timeout = cold-wake budget (firecracker 3s + init 10s +
-                # next dev startup 16s + first-page compile 25s + buffer).
-                # Once the machine is warm, 5-7s typical.
-                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=90):
+                # 20s timeout, NOT 90s. Originally tried 90s to cover cold
+                # wakes, but that made EVERY request wait 90s before falling
+                # back to local — terrible UX. With 20s we get:
+                #   - Warm Fly (2-7s typical) → proxy succeeds quickly
+                #   - Cold Fly (50-90s) → timeout at 20s, fall back to local
+                #     immediately. The keep-alive ping in the workspace hits
+                #     Fly DIRECTLY (cross-origin) to wake it without blocking
+                #     user-facing requests on the wake-up window.
+                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=20):
                     return
                 # Proxy failed — fall through to local path so we don't break
                 # workspaces for projects that haven't been Fly-provisioned.
