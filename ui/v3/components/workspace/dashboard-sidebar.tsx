@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * DashboardSidebar — Phase 45 (2026-05-22).
+ * DashboardSidebar — Phase 45 (2026-05-22). Updated Phase 56a (2026-05-24).
  *
  * Shared left-nav chrome for every "logged-in workspace" surface:
  * /dashboard, /integrations, /community/*. Modelled on Base44's
@@ -10,12 +10,19 @@
  * verb-icon nav rows, then a Favorites + Recents drawer at the bottom,
  * then the Upgrade-your-plan footer.
  *
+ * Phase 56a: NLM adversarial review found 9 top-level nav items
+ * overwhelming vs. Lovable (5) and Base44 (6). Consolidated to 5:
+ *   1. Projects   2. Templates   3. Inbox   4. Resources (dropdown)
+ *   5. Settings
+ * Resources groups: Integrations · Community · Hire a Partner ·
+ *   Launchpad · Affiliate Program
+ * No routes deleted — every secondary item still has its own page.
+ *
  * Why a shared component (not inlining in every page):
  *   - the sidebar isn't trivially state-light — Favorites + Recents
  *     pull live project data, the Upgrade footer reads the subscription
- *     sentinel, and the Community sub-nav expands based on pathname.
- *   - Marc has 3 more pages to add behind it (Integrations, Community,
- *     and the Plan-mode entry point in Phase 46) — re-implementing this
+ *     sentinel, and the Resources sub-nav expands based on pathname.
+ *   - Marc has 3 more pages to add behind it — re-implementing this
  *     in each page would explode in 4 different ways.
  *
  * Why the data fetching lives HERE and not in a context:
@@ -31,17 +38,20 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Home,
+  FolderOpen,
+  LayoutGrid,
+  Inbox,
+  Settings,
+  ChevronDown,
   Plug,
   Users,
-  Compass,
   Briefcase,
   Gift,
+  Rocket,
+  BookOpen,
   Plus,
   Coins,
-  ChevronRight,
   MessageSquare,
-  FolderOpen,
 } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -57,7 +67,40 @@ import { getUserProfile, clearBriefForNewProject, type PebblePlan } from "@/lib/
 import { useRouter } from "next/navigation";
 import { LaunchSetupRail } from "@/components/workspace/launch-setup-rail";
 
-type IconType = typeof Home;
+// ---------------------------------------------------------------------------
+// Nav shape — single source of truth consumed by both the desktop sidebar
+// and the (future) mobile sheet. Adding items here propagates everywhere.
+// ---------------------------------------------------------------------------
+
+type NavChild = {
+  label: string;
+  href: string;
+  icon: React.ElementType;
+};
+
+type NavItem =
+  | { label: string; href: string; icon: React.ElementType; children?: never }
+  | { label: string; href?: never;  icon: React.ElementType; children: NavChild[] };
+
+const NAV_ITEMS: NavItem[] = [
+  { label: "Projects",  href: "/dashboard",   icon: FolderOpen },
+  { label: "Templates", href: "/templates",   icon: LayoutGrid },
+  { label: "Inbox",     href: "/inbox",       icon: Inbox },
+  {
+    label: "Resources",
+    icon: BookOpen,
+    children: [
+      { label: "Integrations",    href: "/integrations",          icon: Plug },
+      { label: "Community",       href: "/community",             icon: Users },
+      { label: "Hire a Partner",  href: "/community/hire-a-partner", icon: Briefcase },
+      { label: "Launchpad",       href: "/community/launchpad",   icon: Rocket },
+      { label: "Affiliate Program", href: "/community/affiliate", icon: Gift },
+    ],
+  },
+  { label: "Settings",  href: "/settings",    icon: Settings },
+];
+
+// ---------------------------------------------------------------------------
 
 export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
   const pathname = usePathname() || "";
@@ -66,10 +109,10 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
   const [subscription, setSubscription] = useState<SubscriptionState | null>(null);
   const [firstName, setFirstName] = useState<string | null>(null);
 
-  // Community sub-nav expands when the current path is anywhere under
-  // /community. Sticky-open even on Launchpad/Hire/Affiliate so the
-  // user always sees their location in the tree.
-  const communityOpen = pathname.startsWith("/community");
+  // Resources dropdown — open when ANY child route is active.
+  const resourcesChildren = (NAV_ITEMS.find((i) => i.label === "Resources") as Extract<NavItem, { children: NavChild[] }>).children;
+  const resourcesDefaultOpen = resourcesChildren.some((c) => pathname.startsWith(c.href));
+  const [resourcesOpen, setResourcesOpen] = useState(resourcesDefaultOpen);
 
   useEffect(() => {
     setFirstName(getUserProfile().firstName || null);
@@ -149,52 +192,68 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
           Ask Pebble
         </button>
 
-        {/* Primary nav. 2026-05-23 update: re-added Projects as a
-            distinct entry from Templates per Marc's Control-Center
-            mockup. Projects = your own builds (links into the project
-            grid on the dashboard). Templates = starting points to
-            clone. They're different verbs — earlier confusion was
-            specifically about the All-designs link being a no-op,
-            not about whether the distinction should exist. */}
-        <NavLink href="/dashboard"    Icon={Home}       label="Dashboard"     active={pathname === "/dashboard"} />
-        <NavLink href="/projects"     Icon={FolderOpen} label="Projects"      active={pathname.startsWith("/projects")} />
-        <NavLink href="/templates"    Icon={Compass}    label="Templates"     active={pathname.startsWith("/templates")} />
-        <NavLink href="/integrations" Icon={Plug}       label="Integrations"  active={pathname.startsWith("/integrations")} />
-
-        {/* Community — expandable. The chevron rotates 90° when open. */}
-        <NavLink
-          href="/community"
-          Icon={Users}
-          label="Community"
-          active={pathname === "/community"}
-          rightSlot={
-            <ChevronRight
-              className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${communityOpen ? "rotate-90" : ""}`}
-            />
+        {/* Primary nav — 5 top-level items (Phase 56a consolidation).
+            NAV_ITEMS drives the render so adding items is one-line.
+            "Resources" is the only group item — it renders an inline
+            accordion rather than a popover so the sidebar stays simple
+            and matches the existing expand pattern from Phase 45. */}
+        {NAV_ITEMS.map((item) => {
+          if (item.children) {
+            // Group item — renders a button + collapsible child list.
+            const anyChildActive = item.children.some((c) => pathname.startsWith(c.href));
+            return (
+              <React.Fragment key={item.label}>
+                <button
+                  type="button"
+                  onClick={() => setResourcesOpen((o) => !o)}
+                  aria-expanded={resourcesOpen}
+                  className={`${interactions.chip} w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${
+                    anyChildActive
+                      ? "bg-primary/15 text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <span className="flex items-center gap-2">
+                    <item.icon className="w-4 h-4" />
+                    {item.label}
+                  </span>
+                  <ChevronDown
+                    className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${
+                      resourcesOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {resourcesOpen && (
+                  <div className="ml-3 mt-1 mb-1 flex flex-col gap-1 border-l border-border pl-3">
+                    {item.children.map((child) => (
+                      <SubNavLink
+                        key={child.href}
+                        href={child.href}
+                        Icon={child.icon}
+                        label={child.label}
+                        active={pathname.startsWith(child.href)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </React.Fragment>
+            );
           }
-        />
-        {communityOpen && (
-          <div className="ml-3 mt-1 mb-1 flex flex-col gap-1 border-l border-border pl-3">
-            <SubNavLink
-              href="/community/launchpad"
-              Icon={Compass}
-              label="Launchpad"
-              active={pathname.startsWith("/community/launchpad")}
+          // Direct link item.
+          const active =
+            item.href === "/dashboard"
+              ? pathname === "/dashboard" || pathname === "/" || pathname.startsWith("/projects")
+              : pathname.startsWith(item.href);
+          return (
+            <NavLink
+              key={item.label}
+              href={item.href}
+              Icon={item.icon}
+              label={item.label}
+              active={active}
             />
-            <SubNavLink
-              href="/community/hire-a-partner"
-              Icon={Briefcase}
-              label="Hire a Partner"
-              active={pathname.startsWith("/community/hire-a-partner")}
-            />
-            <SubNavLink
-              href="/community/affiliate"
-              Icon={Gift}
-              label="Affiliate Program"
-              active={pathname.startsWith("/community/affiliate")}
-            />
-          </div>
-        )}
+          );
+        })}
 
         {/* Favorites drawer — top starred. Empty state matches Base44. */}
         <SectionHeader>Favorites</SectionHeader>
@@ -304,28 +363,24 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
 // ---------------------------------------------------------------------------
 
 function NavLink({
-  href, Icon, label, active, rightSlot,
+  href, Icon, label, active,
 }: {
   href: string;
-  Icon: IconType;
+  Icon: React.ElementType;
   label: string;
   active: boolean;
-  rightSlot?: React.ReactNode;
 }) {
   return (
     <Link
       href={href}
-      className={`${interactions.chip} flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${
+      className={`${interactions.chip} flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold ${
         active
           ? "bg-primary/15 text-primary"
           : "text-muted-foreground hover:text-foreground"
       }`}
     >
-      <span className="flex items-center gap-2">
-        <Icon className="w-4 h-4" />
-        {label}
-      </span>
-      {rightSlot}
+      <Icon className="w-4 h-4" />
+      {label}
     </Link>
   );
 }
@@ -334,7 +389,7 @@ function SubNavLink({
   href, Icon, label, active,
 }: {
   href: string;
-  Icon: IconType;
+  Icon: React.ElementType;
   label: string;
   active: boolean;
 }) {
