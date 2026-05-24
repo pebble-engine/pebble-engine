@@ -299,6 +299,58 @@ def destroy(slug: str) -> bool:
     return True
 
 
+# Module-level lock + dedup map so two concurrent build pipelines (rare but
+# possible if Marc retries during a slow LLM round) don't kick off two
+# deploys for the same slug. Daemon threads = won't block engine shutdown.
+import threading as _threading
+_DEPLOY_LOCK   = _threading.Lock()
+_IN_FLIGHT_DEPLOYS: dict[str, _threading.Thread] = {}
+
+
+def deploy_in_background(slug: str, site_dir: Path, org: str = "personal") -> bool:
+    """Fire-and-forget deploy. Returns True if a thread was started (or one
+    is already running for this slug); False on hard pre-check failures.
+
+    Errors during the actual deploy are logged and dropped — the build
+    pipeline must not be blocked by Fly hiccups. The engine's _handle_preview
+    falls back to local previews gracefully when the Fly app doesn't exist.
+    """
+    if os.environ.get("PEBBLE_PREVIEW_BACKEND", "").strip().lower() != "fly":
+        return False  # Backend not enabled; nothing to do
+    if not (site_dir / "package.json").exists():
+        log.info("[fly] skipping background deploy for %s — no package.json", slug)
+        return False
+
+    with _DEPLOY_LOCK:
+        existing = _IN_FLIGHT_DEPLOYS.get(slug)
+        if existing and existing.is_alive():
+            log.info("[fly] deploy already in flight for %s, skipping duplicate", slug)
+            return True
+
+        def _runner() -> None:
+            try:
+                log.info("[fly] background deploy starting for %s", slug)
+                result = deploy_project(slug, site_dir, org=org)
+                if result.ok:
+                    log.info("[fly] background deploy OK for %s in %.1fs → %s",
+                             slug, result.elapsed, result.url)
+                else:
+                    log.warning("[fly] background deploy FAILED for %s in %.1fs: %s",
+                                slug, result.elapsed, (result.error or "")[:300])
+            except Exception as exc:
+                log.warning("[fly] background deploy crashed for %s: %s", slug, exc)
+            finally:
+                with _DEPLOY_LOCK:
+                    _IN_FLIGHT_DEPLOYS.pop(slug, None)
+
+        thread = _threading.Thread(
+            target=_runner, daemon=True, name=f"fly-deploy-{slug}",
+        )
+        _IN_FLIGHT_DEPLOYS[slug] = thread
+        thread.start()
+        return True
+
+
 # ─────────────────────────────────────────────────────────────────
 # CLI — `python -m pebble.fly_preview <cmd> <slug>`
 # ─────────────────────────────────────────────────────────────────

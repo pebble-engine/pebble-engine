@@ -998,6 +998,21 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                 _reg_dev(slug, server_info["url"])
             except Exception:
                 pass
+            # 2026-05-23 — Task B of Fly.io integration. When
+            # PEBBLE_PREVIEW_BACKEND=fly, kick off a background deploy of
+            # this slug to Fly.io so future /preview/<slug>/ hits route to
+            # the per-project Fly app instead of the local next dev. The
+            # local next dev still runs (above) for the immediate post-
+            # build window AND as the fallback if Fly is unreachable —
+            # engine's _handle_preview tries Fly first, falls through to
+            # the dev_registry URL gracefully. deploy_in_background no-ops
+            # when the backend env var isn't set, so this is safe to call
+            # unconditionally.
+            try:
+                from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+                _fly_bg_deploy(slug, site_dir)
+            except Exception as _exc:
+                log.info("[fly] background deploy hook errored for %s: %s", slug, _exc)
             # Phase A.5: now that next dev is up + registered, surface
             # preview_ready as the HONEST event the frontend was waiting
             # for. Frontend hides the button until this fires.
