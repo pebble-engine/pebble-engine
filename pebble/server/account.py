@@ -5,16 +5,20 @@ deprecated in Phase A.5). All routes here validate the caller's Supabase
 access token via the Bearer JWT before any privileged action.
 
 Routes:
-- GET  /api/account/profile         — fetch profile (name, timezone, deletion status)
-- POST /api/account/profile         — update profile fields (first_name, display_name, timezone)
-- POST /api/account/delete          — schedule GDPR deletion (14-day soft-delete)
-- POST /api/account/cancel-deletion — cancel a pending soft-delete
-- POST /api/account/change-password — re-auth + password update with audit log + notification
+- GET  /api/account/profile              — fetch profile (name, timezone, deletion status)
+- POST /api/account/profile              — update profile fields (first_name, display_name, timezone)
+- POST /api/account/delete               — schedule GDPR deletion (14-day soft-delete)
+- POST /api/account/cancel-deletion      — cancel a pending soft-delete
+- POST /api/account/change-password      — re-auth + password update with audit log + notification
+- POST /api/account/change-email-request — re-auth + write pending token + send confirm email
+- GET  /api/account/change-email-confirm — single-use token confirm → Supabase admin updateUser
 """
 from __future__ import annotations
 
 import json
 import os
+import re
+import secrets
 import shutil
 import sys
 import urllib.error
@@ -734,4 +738,264 @@ def run_change_password(handler) -> None:
     handler._json(200, {
         "ok": True,
         "message": "Password updated. Other sessions have been signed out.",
+    })
+
+
+# ─── POST /api/account/change-email-request ──────────────────────────────────
+# ─── GET  /api/account/change-email-confirm  ─────────────────────────────────
+
+# Per-user rate limit: 3 email-change requests / 24h. Tight because each
+# request sends an email and writes a pending file; abuse pattern is a
+# stolen-session attacker burning through addresses looking for one
+# whose mailbox they control.
+_email_change_request_limiter = RateLimiter(rate=3 / 86400.0, burst=3)
+
+_EMAIL_CHANGE_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+_PENDING_EMAIL_CHANGE_TTL = timedelta(hours=24)
+
+
+def _reset_email_change_limiter_for_tests() -> None:
+    """Test hook — clear the bucket between tests so rate-limit assertions
+    are hermetic. Production callers never reach this."""
+    global _email_change_request_limiter
+    _email_change_request_limiter = RateLimiter(rate=3 / 86400.0, burst=3)
+
+
+def _pending_email_change_path(user_id: str) -> Path:
+    safe = _safe_uid(user_id)
+    if not safe:
+        raise ValueError(f"invalid user_id: {user_id!r}")
+    return _output_dir() / ".users" / safe / "email_change_pending.json"
+
+
+def _update_user_email(user_id: str, new_email: str) -> bool:
+    """Use Supabase service-role admin API to update the user's email.
+    Sets email_confirm=true so the user doesn't have to re-verify on
+    Supabase's side (we already verified by token). Returns True on
+    success. Logs but never raises on failure."""
+    try:
+        from pebble.auth_admin import _env_url, _env_service_role
+        import urllib.parse as _up
+        url = f"{_env_url()}/auth/v1/admin/users/{_up.quote(user_id)}"
+        data = json.dumps({"email": new_email, "email_confirm": True}).encode()
+        key = _env_service_role()
+        req = urllib.request.Request(url, data=data, method="PUT", headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "User-Agent": "PebbleEngine/1.0 (+https://pebbleapp.ai)",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status in (200, 201, 204)
+    except Exception as exc:
+        log.warning("[account] _update_user_email failed for %s: %s",
+                    user_id[:8] if user_id else "?", exc)
+        return False
+
+
+def _get_user_email_from_supabase(user_id: str) -> Optional[str]:
+    """Fetch the current email for a user via Supabase admin GET.
+    Returns None if unavailable (network failure, missing key, etc.)."""
+    try:
+        from pebble.auth_admin import _env_url, _env_service_role
+        import urllib.parse as _up
+        url = f"{_env_url()}/auth/v1/admin/users/{_up.quote(user_id)}"
+        key = _env_service_role()
+        req = urllib.request.Request(url, headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "User-Agent": "PebbleEngine/1.0 (+https://pebbleapp.ai)",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+            return body.get("email") or None
+    except Exception as exc:
+        log.warning("[account] _get_user_email_from_supabase failed for %s: %s",
+                    user_id[:8] if user_id else "?", exc)
+        return None
+
+
+def _send_email_change_confirmation_safe(*, new_email: str, token: str,
+                                         current_email: str) -> None:
+    """Best-effort wrapper — logs warning on failure, never raises."""
+    try:
+        from pebble.email import send_email_change_confirmation
+        send_email_change_confirmation(new_email=new_email, token=token,
+                                       current_email=current_email)
+    except Exception as exc:
+        log.warning("[account] confirmation email failed: %s", exc)
+
+
+def _send_email_change_completed_safe(*, old_email: str, new_email: str) -> None:
+    """Best-effort wrapper — logs warning on failure, never raises."""
+    try:
+        from pebble.email import send_email_change_completed
+        send_email_change_completed(old_email=old_email, new_email=new_email)
+    except Exception as exc:
+        log.warning("[account] old-email notification failed: %s", exc)
+
+
+def run_request_email_change(handler) -> None:
+    """POST /api/account/change-email-request — { current_password, new_email }.
+
+    Re-authenticates the user, writes a pending file with a single-use
+    token, sends confirmation email to the NEW address. Per-user
+    rate-limited 3/24h."""
+    from pebble.security import require_user
+    user = require_user(handler)
+    if not user:
+        return  # require_user already responded
+
+    if not _email_change_request_limiter.allow(user["id"]):
+        handler._json(429, {"error": "Too many email-change requests. Try again tomorrow."})
+        return
+
+    try:
+        length = int(handler.headers.get("Content-Length", "0") or "0")
+        body = json.loads(handler.rfile.read(min(length, 8192)).decode("utf-8"))
+    except Exception:
+        handler._json(400, {"error": "invalid JSON body"})
+        return
+
+    if not isinstance(body, dict):
+        handler._json(400, {"error": "invalid body"})
+        return
+
+    current_pw = (body.get("current_password") or "").strip()
+    new_email = (body.get("new_email") or "").strip().lower()
+    if not current_pw or not new_email:
+        handler._json(400, {"error": "current_password and new_email required"})
+        return
+    if not _EMAIL_CHANGE_RE.match(new_email):
+        handler._json(400, {"error": "new_email is not a valid address"})
+        return
+    if new_email == (user.get("email") or "").lower():
+        handler._json(400, {"error": "new_email is the same as current email"})
+        return
+
+    ok, err = _reauth_user(user["email"], current_pw)
+    if not ok:
+        from pebble.audit_log import log_event_for_handler
+        log_event_for_handler(handler=handler, user_id=user["id"],
+                              event_type="email_change_request_failed",
+                              metadata={"reason": "wrong_current_password"})
+        handler._json(401, {"error": "current password is incorrect"})
+        return
+
+    # Write pending file (single-use token, 24h TTL).
+    token = secrets.token_urlsafe(32)
+    now = datetime.now(timezone.utc)
+    expires = now + _PENDING_EMAIL_CHANGE_TTL
+    pending = {
+        "token":        token,
+        "new_email":    new_email,
+        "user_id":      user["id"],
+        "requested_at": now.isoformat(),
+        "expires_at":   expires.isoformat(),
+    }
+    p = _pending_email_change_path(user["id"])
+    p.parent.mkdir(parents=True, exist_ok=True)
+    tmp = p.with_suffix(".tmp")
+    tmp.write_text(json.dumps(pending), encoding="utf-8")
+    tmp.replace(p)
+
+    # Audit log + confirmation email to NEW address (both best-effort).
+    from pebble.audit_log import log_event_for_handler
+    log_event_for_handler(handler=handler, user_id=user["id"],
+                          event_type="email_change_requested",
+                          metadata={"new_email_redacted": _redact(new_email)})
+
+    _send_email_change_confirmation_safe(
+        new_email=new_email,
+        token=token,
+        current_email=user["email"],
+    )
+
+    handler._json(200, {
+        "ok": True,
+        "message": (
+            f"We sent a confirmation link to {new_email}. "
+            "Open it within 24 hours to complete the change."
+        ),
+    })
+
+
+def run_confirm_email_change(handler) -> None:
+    """GET /api/account/change-email-confirm?token=… — single-use token
+    lookup, calls Supabase admin to update email, sends notification to
+    OLD address, deletes pending file."""
+    from urllib.parse import urlparse, parse_qs
+    raw_path = getattr(handler, "_raw_path", handler.path)
+    qs = parse_qs(urlparse(raw_path).query)
+    token = (qs.get("token", [""])[0] or "").strip()
+    if not token:
+        handler._json(400, {"error": "token required"})
+        return
+
+    # Scan pending files for the matching token.
+    users_root = _output_dir() / ".users"
+    if not users_root.is_dir():
+        handler._json(404, {"error": "token not found or already used"})
+        return
+
+    matched_path: Optional[Path] = None
+    matched_data: Optional[dict] = None
+    for sub in users_root.iterdir():
+        if not sub.is_dir():
+            continue
+        candidate = sub / "email_change_pending.json"
+        if not candidate.is_file():
+            continue
+        try:
+            data = json.loads(candidate.read_text(encoding="utf-8"))
+            if data.get("token") == token:
+                matched_path = candidate
+                matched_data = data
+                break
+        except Exception:
+            continue
+
+    if matched_path is None or matched_data is None:
+        handler._json(404, {"error": "token not found or already used"})
+        return
+
+    # Expiry check — clean up the file either way.
+    try:
+        expires = datetime.fromisoformat(matched_data["expires_at"])
+        if datetime.now(timezone.utc) > expires:
+            matched_path.unlink(missing_ok=True)
+            handler._json(400, {"error": "token expired — request a new email-change"})
+            return
+    except Exception:
+        handler._json(400, {"error": "invalid pending token"})
+        return
+
+    new_email = matched_data["new_email"]
+    user_id   = matched_data["user_id"]
+
+    # Fetch the OLD email so we can send the 'wasn't you?' notification.
+    old_email = _get_user_email_from_supabase(user_id) or ""
+
+    if not _update_user_email(user_id, new_email):
+        handler._json(500, {"error": "could not update email — try again in a moment"})
+        return
+
+    # Delete pending file (token is consumed).
+    matched_path.unlink(missing_ok=True)
+
+    # Audit log + notification to OLD address (both best-effort).
+    from pebble.audit_log import log_event_for_handler
+    log_event_for_handler(handler=handler, user_id=user_id,
+                          event_type="email_change_confirmed",
+                          metadata={
+                              "old_email_redacted": _redact(old_email) if old_email else None,
+                              "new_email_redacted": _redact(new_email),
+                          })
+
+    if old_email:
+        _send_email_change_completed_safe(old_email=old_email, new_email=new_email)
+
+    handler._json(200, {
+        "ok": True,
+        "message": "Email updated. Sign in again with your new address.",
     })

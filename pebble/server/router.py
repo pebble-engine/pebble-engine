@@ -210,6 +210,10 @@ def route_get(handler) -> None:
         elif handler.path == "/api/account/profile":
             from pebble.server.account import run_get_profile
             run_get_profile(handler)
+        elif handler.path.startswith("/api/account/change-email-confirm"):
+            # Single-use token confirm — no auth required (user clicks from email).
+            from pebble.server.account import run_confirm_email_change
+            run_confirm_email_change(handler)
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
@@ -400,6 +404,11 @@ def route_post(handler) -> None:
             # notification email. Per-user rate-limited to 5/hour.
             from pebble.server.account import run_change_password
             run_change_password(handler)
+        elif handler.path == "/api/account/change-email-request":
+            # Re-auth challenge + single-use pending token + confirmation
+            # email to NEW address. Per-user rate-limited 3/24h.
+            from pebble.server.account import run_request_email_change
+            run_request_email_change(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url

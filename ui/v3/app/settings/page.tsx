@@ -23,6 +23,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  Mail,
   Settings as SettingsIcon,
   User,
 } from "lucide-react";
@@ -149,6 +150,14 @@ function SettingsPageContent() {
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword]         = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // ── email-change state ─────────────────────────────────────────────────────
+  const [showEmailChange, setShowEmailChange] = useState(false);
+  const [emailChangePw, setEmailChangePw]     = useState("");
+  const [newEmail, setNewEmail]               = useState("");
+  const [emailChangeError, setEmailChangeError]   = useState<string | null>(null);
+  const [emailChangeSuccess, setEmailChangeSuccess] = useState<string | null>(null);
+  const [emailChangeSubmitting, setEmailChangeSubmitting] = useState(false);
 
   // ── delete zone visibility ─────────────────────────────────────────────────
   const [showDeleteZone, setShowDeleteZone] = useState(false);
@@ -284,6 +293,47 @@ function SettingsPageContent() {
       setPwError(err instanceof Error ? err.message : "Password update failed.");
     } finally {
       setPwSubmitting(false);
+    }
+  }
+
+  async function onChangeEmail(e: React.FormEvent) {
+    e.preventDefault();
+    setEmailChangeError(null);
+    setEmailChangeSuccess(null);
+    if (!emailChangePw) { setEmailChangeError("Please enter your current password."); return; }
+    if (!newEmail || !newEmail.includes("@")) {
+      setEmailChangeError("Please enter a valid email address."); return;
+    }
+    if (newEmail.toLowerCase() === (user?.email ?? "").toLowerCase()) {
+      setEmailChangeError("New email must differ from your current email."); return;
+    }
+    setEmailChangeSubmitting(true);
+    try {
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) { setEmailChangeError("Please sign in again."); return; }
+      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+      const resp = await fetch(`${ENGINE_BASE}/api/account/change-email-request`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ current_password: emailChangePw, new_email: newEmail }),
+      });
+      const result = await resp.json();
+      if (resp.ok) {
+        setEmailChangePw("");
+        setNewEmail("");
+        setShowEmailChange(false);
+        setEmailChangeSuccess(result.message || "Confirmation email sent. Check your new inbox.");
+      } else {
+        setEmailChangeError(result.error || "Could not send confirmation email. Please try again.");
+      }
+    } catch (err) {
+      setEmailChangeError(err instanceof Error ? err.message : "Request failed.");
+    } finally {
+      setEmailChangeSubmitting(false);
     }
   }
 
@@ -494,6 +544,77 @@ function SettingsPageContent() {
             <div className="space-y-1">
               <p className={type.caption}>Signed in as</p>
               <p className="text-foreground font-medium">{user.email}</p>
+            </div>
+
+            {/* Email-change success banner */}
+            {emailChangeSuccess && (
+              <div className="rounded-xl border border-primary/30 bg-primary/5 p-3">
+                <p className={`${type.body.s} text-primary`}>{emailChangeSuccess}</p>
+              </div>
+            )}
+
+            {/* Change email toggle */}
+            <div>
+              <button
+                type="button"
+                onClick={() => { setShowEmailChange(v => !v); setEmailChangeError(null); setEmailChangeSuccess(null); }}
+                className={`flex items-center gap-1.5 ${type.body.s} text-muted-foreground hover:text-foreground`}
+              >
+                <Mail className="w-3.5 h-3.5" />
+                Change email address
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showEmailChange ? "rotate-180" : ""}`} />
+              </button>
+              <AnimatePresence>
+                {showEmailChange && (
+                  <motion.div
+                    key="email-change-zone"
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <form onSubmit={onChangeEmail} className="mt-4 p-4 rounded-xl border border-border bg-background/60 space-y-3">
+                      <p className={`${type.body.s} text-muted-foreground`}>
+                        We'll send a confirmation link to your new address. Click it within 24 hours to complete the change.
+                      </p>
+                      <label className="block">
+                        <span className={`${type.label} text-muted-foreground`}>Current password</span>
+                        <input
+                          type="password"
+                          value={emailChangePw}
+                          onChange={(e) => setEmailChangePw(e.target.value)}
+                          required
+                          autoComplete="current-password"
+                          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </label>
+                      <label className="block">
+                        <span className={`${type.label} text-muted-foreground`}>New email address</span>
+                        <input
+                          type="email"
+                          value={newEmail}
+                          onChange={(e) => setNewEmail(e.target.value)}
+                          required
+                          autoComplete="email"
+                          placeholder="new@example.com"
+                          className="mt-1 w-full rounded-lg border border-border bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                      </label>
+                      {emailChangeError && (
+                        <p className={`${type.body.s} text-destructive`} role="alert">{emailChangeError}</p>
+                      )}
+                      <button
+                        type="submit"
+                        disabled={emailChangeSubmitting}
+                        className="inline-flex items-center rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {emailChangeSubmitting ? "Sending…" : "Send confirmation link"}
+                      </button>
+                    </form>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
 
             {/* Deletion scheduled banner */}

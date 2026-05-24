@@ -600,6 +600,79 @@ def send_account_deletion_scheduled(email: str, cooling_off_ends: str,
     return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
 
 
+def send_email_change_confirmation(*, new_email: str, token: str,
+                                   current_email: str,
+                                   sender: Optional[EmailSender] = None) -> dict:
+    """Sent to the NEW address. Confirm-by-clicking pattern.
+
+    Subject signals the action ('Confirm…') so the recipient knows
+    it's safe even if they don't recognize the sender. Link is good
+    for 24 hours (enforced by the engine's pending file TTL).
+    """
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    confirm_url = f"{base}/settings/confirm-email?token={token}"
+    subject = "Confirm your new Pebble email address"
+    text = (
+        f"You requested an email-address change on your Pebble account "
+        f"(currently {current_email}).\n\n"
+        f"To confirm this change, click the link below within 24 hours:\n\n"
+        f"  {confirm_url}\n\n"
+        f"If you didn't request this, ignore this email — no change will "
+        f"be made. The link expires automatically.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        "<p>You requested an email-address change on your Pebble account "
+        f"(currently <strong>{_escape_html(current_email)}</strong>).</p>"
+        "<p>To confirm this change, click the button below. The link is good "
+        "for <strong>24 hours</strong>.</p>"
+        f'<p><a href="{_escape_html(confirm_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Confirm email change</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(confirm_url)}</code></p>'
+        "<p>If you didn't request this, ignore this email — no change will be made.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=new_email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_email_change_completed(*, old_email: str, new_email: str,
+                                 sender: Optional[EmailSender] = None) -> dict:
+    """Sent to the OLD address AFTER the change executes. Tells a
+    real customer their email was just changed, so if it wasn't them
+    they can recover via password reset."""
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble account email was just changed"
+    text = (
+        f"Your Pebble account email was changed from {old_email} to {new_email}.\n\n"
+        f"If this was you, no action needed — sign in with your new address.\n\n"
+        f"If this wasn't you, reset your password immediately at "
+        f"  {forgot_url}\n\n"
+        f"then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        f"<p>Your Pebble account email was changed from "
+        f"<strong>{_escape_html(old_email)}</strong> to "
+        f"<strong>{_escape_html(new_email)}</strong>.</p>"
+        "<p>If this was you, no action needed — sign in with your new address.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" '
+        f'style="background:#c0392b;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Reset my password</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(forgot_url)}</code></p>'
+        '<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we can '
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=old_email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
 __all__ = [
     "EmailError",
     "EmailMessage",
@@ -617,6 +690,8 @@ __all__ = [
     "send_password_reset_async",
     "send_password_changed_notification",
     "send_account_deletion_scheduled",
+    "send_email_change_confirmation",
+    "send_email_change_completed",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.

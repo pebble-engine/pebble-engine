@@ -1,0 +1,307 @@
+"""E2E test for the email-change flow.
+
+POST /api/account/change-email-request:
+- Requires bearer JWT.
+- Re-authenticates with current_password.
+- Validates new_email format.
+- Writes pending file + sends confirmation email to NEW address.
+- Writes audit_log email_change_requested.
+- Per-user rate limit: 3/day.
+
+GET /api/account/change-email-confirm?token=...:
+- Looks up the pending file by token.
+- Rejects expired tokens.
+- Calls Supabase admin updateUser to change email.
+- Writes audit_log email_change_confirmed.
+- Sends notification to OLD address.
+- Deletes the pending file.
+"""
+from __future__ import annotations
+
+import io
+import json
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+from unittest.mock import patch
+
+import pytest
+
+import pebble.server.account as account_mod
+from pebble.server import account as account_server
+
+# ── fixtures ──────────────────────────────────────────────────────────────────
+
+_FAKE_USER = {"id": "u-email-test-001", "email": "old@example.com"}
+
+
+@pytest.fixture(autouse=True)
+def _supabase_env(monkeypatch):
+    monkeypatch.setenv("PEBBLE_SUPABASE_URL", "https://proj.supabase.co")
+    monkeypatch.setenv("PEBBLE_SUPABASE_SERVICE_ROLE_KEY", "service-role-jwt-fake")
+    monkeypatch.setenv("PEBBLE_SUPABASE_ANON_KEY", "anon-key-fake")
+    monkeypatch.delenv("SUPABASE_URL", raising=False)
+    monkeypatch.delenv("SUPABASE_SERVICE_ROLE_KEY", raising=False)
+    monkeypatch.delenv("SUPABASE_ANON_KEY", raising=False)
+    monkeypatch.delenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", raising=False)
+
+
+@pytest.fixture(autouse=True)
+def _reset_email_change_limiter():
+    account_mod._reset_email_change_limiter_for_tests()
+    yield
+
+
+@pytest.fixture()
+def output_dir(tmp_path, monkeypatch):
+    monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
+    return tmp_path
+
+
+# ── fake handler ──────────────────────────────────────────────────────────────
+
+def _make_handler(body: dict | None = None, path: str = "/api/account/change-email-request"):
+    raw = json.dumps(body or {}).encode()
+    h = _FakeHandler(raw, path=path)
+    return h
+
+
+class _FakeHandler:
+    def __init__(self, body: bytes = b"{}", path: str = "/api/account/change-email-request",
+                 client_ip: str = "127.0.0.1"):
+        self.path = path
+        self.headers: dict = {
+            "Authorization": "Bearer ey.fake.jwt",
+            "Content-Length": str(len(body)),
+            "Content-Type": "application/json",
+        }
+        self.client_address = (client_ip, 12345)
+        self.rfile = io.BytesIO(body)
+        self.status: int | None = None
+        self.json_body: dict | None = None
+
+    def _json(self, status: int, payload: dict, extra_headers=None):
+        self.status = status
+        self.json_body = payload
+
+
+# ── request tests ─────────────────────────────────────────────────────────────
+
+def test_request_rejects_wrong_current_password(tmp_path, monkeypatch, output_dir):
+    """Wrong current_password → 401, no pending file written, no email."""
+    monkeypatch.setattr("pebble.security.require_user", lambda h: _FAKE_USER)
+    monkeypatch.setattr(account_mod, "_reauth_user", lambda email, pw: (False, "wrong password"))
+
+    email_calls = []
+    monkeypatch.setattr(account_mod, "_send_email_change_confirmation_safe",
+                        lambda **kw: email_calls.append(kw))
+
+    audit_calls = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_calls.append(kw))
+
+    body = {"current_password": "wrongpass", "new_email": "new@example.com"}
+    h = _make_handler(body)
+    account_server.run_request_email_change(h)
+
+    assert h.status == 401
+    assert "incorrect" in (h.json_body or {}).get("error", "")
+
+    pending = output_dir / ".users" / _FAKE_USER["id"] / "email_change_pending.json"
+    assert not pending.exists(), "pending file must NOT be written on auth failure"
+    assert len(email_calls) == 0, "no email should be sent on auth failure"
+    assert any(c.get("event_type") == "email_change_request_failed" for c in audit_calls)
+
+
+def test_request_writes_pending_file_and_sends_confirm_email(tmp_path, monkeypatch, output_dir):
+    """Happy path: pending file written, confirmation email sent to NEW
+    address, audit log entry made."""
+    monkeypatch.setattr("pebble.security.require_user", lambda h: _FAKE_USER)
+    monkeypatch.setattr(account_mod, "_reauth_user", lambda email, pw: (True, None))
+
+    email_calls = []
+    monkeypatch.setattr(account_mod, "_send_email_change_confirmation_safe",
+                        lambda **kw: email_calls.append(kw))
+
+    audit_calls = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_calls.append(kw))
+
+    body = {"current_password": "correctpass", "new_email": "new@example.com"}
+    h = _make_handler(body)
+    account_server.run_request_email_change(h)
+
+    assert h.status == 200, f"expected 200, got {h.status}: {h.json_body}"
+    assert h.json_body.get("ok") is True
+
+    # Pending file must exist with the right shape
+    pending_path = output_dir / ".users" / _FAKE_USER["id"] / "email_change_pending.json"
+    assert pending_path.exists(), "pending file must be written"
+    data = json.loads(pending_path.read_text(encoding="utf-8"))
+    assert "token" in data and len(data["token"]) >= 32
+    assert data["new_email"] == "new@example.com"
+    assert data["user_id"] == _FAKE_USER["id"]
+    assert "expires_at" in data
+    assert "requested_at" in data
+
+    # Confirmation email sent to NEW address
+    assert len(email_calls) == 1
+    assert email_calls[0]["new_email"] == "new@example.com"
+    assert "token" in email_calls[0]
+
+    # Audit log
+    assert any(c.get("event_type") == "email_change_requested" for c in audit_calls)
+
+
+def test_request_rejects_invalid_email_format(tmp_path, monkeypatch, output_dir):
+    """new_email lacking @ → 400."""
+    monkeypatch.setattr("pebble.security.require_user", lambda h: _FAKE_USER)
+    monkeypatch.setattr(account_mod, "_reauth_user", lambda email, pw: (True, None))
+
+    body = {"current_password": "correctpass", "new_email": "notanemail"}
+    h = _make_handler(body)
+    account_server.run_request_email_change(h)
+
+    assert h.status == 400
+    assert "valid" in (h.json_body or {}).get("error", "").lower()
+
+
+def test_request_rate_limited_after_3_per_day(tmp_path, monkeypatch, output_dir):
+    """4th request from same user → 429."""
+    monkeypatch.setattr("pebble.security.require_user", lambda h: _FAKE_USER)
+    monkeypatch.setattr(account_mod, "_reauth_user", lambda email, pw: (True, None))
+    monkeypatch.setattr(account_mod, "_send_email_change_confirmation_safe", lambda **kw: None)
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler", lambda **kw: None)
+
+    body = {"current_password": "correctpass", "new_email": "new@example.com"}
+
+    # 3 requests succeed
+    for _ in range(3):
+        h = _make_handler(body)
+        account_server.run_request_email_change(h)
+        # Each call overwrites the pending file — that's fine
+
+    # 4th request should be rate-limited
+    h = _make_handler(body)
+    account_server.run_request_email_change(h)
+    assert h.status == 429, f"expected 429, got {h.status}: {h.json_body}"
+
+
+# ── confirm tests ─────────────────────────────────────────────────────────────
+
+def _seed_pending(output_dir: Path, token: str, new_email: str, user_id: str,
+                  expired: bool = False) -> Path:
+    """Write a pending file for confirm-flow tests."""
+    now = datetime.now(timezone.utc)
+    if expired:
+        expires = now - timedelta(hours=25)
+    else:
+        expires = now + timedelta(hours=24)
+    data = {
+        "token": token,
+        "new_email": new_email,
+        "user_id": user_id,
+        "requested_at": now.isoformat(),
+        "expires_at": expires.isoformat(),
+    }
+    user_dir = output_dir / ".users" / user_id
+    user_dir.mkdir(parents=True, exist_ok=True)
+    p = user_dir / "email_change_pending.json"
+    p.write_text(json.dumps(data), encoding="utf-8")
+    return p
+
+
+def test_confirm_with_valid_token_updates_email(tmp_path, monkeypatch, output_dir):
+    """Token in pending file → Supabase admin called, audit logged,
+    notification sent to OLD email, pending file deleted."""
+    token = "valid-token-abc123"
+    pending = _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"])
+
+    monkeypatch.setattr(account_mod, "_update_user_email",
+                        lambda user_id, new_email: True)
+
+    get_email_calls = []
+    monkeypatch.setattr(account_mod, "_get_user_email_from_supabase",
+                        lambda uid: get_email_calls.append(uid) or "old@example.com")
+
+    audit_calls = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_calls.append(kw))
+
+    notify_calls = []
+    monkeypatch.setattr(account_mod, "_send_email_change_completed_safe",
+                        lambda **kw: notify_calls.append(kw))
+
+    h = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
+    account_server.run_confirm_email_change(h)
+
+    assert h.status == 200, f"expected 200, got {h.status}: {h.json_body}"
+    assert h.json_body.get("ok") is True
+
+    # Pending file deleted
+    assert not pending.exists(), "pending file must be deleted after successful confirm"
+
+    # Audit log
+    assert any(c.get("event_type") == "email_change_confirmed" for c in audit_calls)
+
+    # Notification sent to OLD email
+    assert len(notify_calls) == 1
+    assert notify_calls[0]["old_email"] == "old@example.com"
+    assert notify_calls[0]["new_email"] == "new@example.com"
+
+
+def test_confirm_with_expired_token_rejected(tmp_path, monkeypatch, output_dir):
+    """Token > 24h old → 400, pending file deleted (cleanup), no Supabase call."""
+    token = "expired-token-xyz"
+    pending = _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"], expired=True)
+
+    update_calls = []
+    monkeypatch.setattr(account_mod, "_update_user_email",
+                        lambda uid, email: update_calls.append((uid, email)) or True)
+
+    audit_calls = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_calls.append(kw))
+
+    h = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
+    account_server.run_confirm_email_change(h)
+
+    assert h.status == 400
+    assert "expired" in (h.json_body or {}).get("error", "").lower()
+
+    # Pending file cleaned up even on expiry
+    assert not pending.exists(), "expired pending file must be deleted (cleanup)"
+
+    # Supabase NOT called
+    assert len(update_calls) == 0
+
+
+def test_confirm_with_unknown_token_rejected(tmp_path, monkeypatch, output_dir):
+    """Token not in any pending file → 404."""
+    # No pending file seeded
+    h = _FakeHandler(path="/api/account/change-email-confirm?token=nonexistent-token")
+    account_server.run_confirm_email_change(h)
+
+    assert h.status == 404
+
+
+def test_confirm_token_is_single_use(tmp_path, monkeypatch, output_dir):
+    """After successful confirm, re-using the same token → 404 (file deleted)."""
+    token = "single-use-token-456"
+    _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"])
+
+    monkeypatch.setattr(account_mod, "_update_user_email",
+                        lambda uid, email: True)
+    monkeypatch.setattr(account_mod, "_get_user_email_from_supabase",
+                        lambda uid: "old@example.com")
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler", lambda **kw: None)
+    monkeypatch.setattr(account_mod, "_send_email_change_completed_safe", lambda **kw: None)
+
+    # First use succeeds
+    h1 = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
+    account_server.run_confirm_email_change(h1)
+    assert h1.status == 200
+
+    # Second use: file is gone → 404
+    h2 = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
+    account_server.run_confirm_email_change(h2)
+    assert h2.status == 404
