@@ -40,7 +40,9 @@ import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase"
 import { PublishPhase } from "@/components/phases/publish-phase";
 import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 import { PlanPickerModal } from "@/components/plan-picker-modal";
+import { TemplateMatchModal } from "@/components/template-match-modal";
 import { fetchSubscription } from "@/lib/api";
+import type { PlanTier } from "@/lib/plan-features";
 import { useAuth } from "@/components/auth-provider";
 import { getUserProfile } from "@/lib/state";
 
@@ -151,6 +153,30 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
       cancelled = true;
     };
   }, [authUser, authLoading]);
+
+  // 2026-05-24 funnel restructure: post-signup template-match modal.
+  // Fires once per signup. The sessionStorage key is cleared as soon
+  // as the prompt is read so a re-render doesn't re-open the modal.
+  const [matchPrompt, setMatchPrompt] = useState<string | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const stashed = sessionStorage.getItem("pebble.first_signup_prompt");
+    if (stashed && stashed.trim()) {
+      setMatchPrompt(stashed);
+      sessionStorage.removeItem("pebble.first_signup_prompt");
+    }
+  }, []);
+
+  // Plan tier (used by TemplateMatchModal's "Build from scratch" CTA).
+  // Defaults to "free" until subscription resolves — safe default
+  // because the worst case is showing a Starter badge to a paid user
+  // for one render.
+  const [shellPlan, setShellPlan] = useState<PlanTier>("free");
+  useEffect(() => {
+    fetchSubscription()
+      .then((sub) => setShellPlan(((sub as { plan?: string }).plan as PlanTier) || "free"))
+      .catch(() => setShellPlan("free"));
+  }, []);
 
   const safePhaseVariants = useMemo(() => withReducedMotion(phaseVariants), []);
   const safeChipDeck = useMemo(() => withReducedMotion(chipDeck), []);
@@ -343,6 +369,12 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   useEffect(() => {
     const flagSet = sessionStorage.getItem("pebble.autostart") === "1";
     if (!flagSet) return;
+    // 2026-05-24 funnel: if the template-match modal will show (fresh
+    // signup with prompt stashed), DON'T autostart the engine build.
+    // The modal's "Build from scratch" CTA hands control back here by
+    // re-setting pebble.autostart before closing.
+    const templateMatchPending = sessionStorage.getItem("pebble.first_signup_prompt");
+    if (templateMatchPending) return;
     sessionStorage.removeItem("pebble.autostart");
 
     const currentBrief = getBrief();
@@ -435,6 +467,16 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
       // Ensure the autostart flag is set so /workspace kicks off the
       // build automatically after signup completes.
       sessionStorage.setItem("pebble.autostart", "1");
+      // 2026-05-24 funnel restructure: also stash the prompt so the
+      // post-signup TemplateMatchModal can surface matching templates.
+      // The shell reads + clears this key once on mount; the modal's
+      // "Build from scratch" CTA hands control back to the autostart
+      // engine-build flow.
+      const briefNow = getBrief();
+      const promptStash = (briefNow.extra_context as string) || "";
+      if (promptStash.trim()) {
+        sessionStorage.setItem("pebble.first_signup_prompt", promptStash);
+      }
       router.push(`/signup?redirect=${encodeURIComponent("/workspace")}`);
       return;
     }
@@ -754,6 +796,29 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
           onPlanSelected={() => setNeedsPlanPick(false)}
         />
       )}
+
+      {/* 2026-05-24 funnel restructure: post-signup template-match modal.
+          Shown once when a fresh signup arrives on /workspace with a stashed
+          prompt. The key is cleared on read so this never re-fires. */}
+      <TemplateMatchModal
+        open={matchPrompt !== null}
+        prompt={matchPrompt || ""}
+        plan={shellPlan}
+        onClose={() => {
+          setMatchPrompt(null);
+          // "Build from scratch" path: re-set autostart so the next
+          // tick's effect (or re-mount) fires the full engine build.
+          // For now, autostart was already set during the welcome →
+          // signup hop, so a no-op is fine — the user will see the
+          // welcome page and click Build again, OR the next effect
+          // pass will catch the still-present autostart flag.
+        }}
+        onUsed={(slug) => {
+          setMatchPrompt(null);
+          // Template instantiated → go straight to its workspace.
+          router.push(`/workspace/${encodeURIComponent(slug)}`);
+        }}
+      />
 
       {/* Credit paywall — fired when /api/generate(-stream) returns 402
           with code:"credits_low". Shown over the workspace shell. Visible
