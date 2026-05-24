@@ -1,0 +1,26 @@
+{
+  "dna_id": "cinematic_landscaper",
+  "name": "Cinematic Hero",
+  "vibe": "Light cinematic with full-bleed photo hero and bottom-left CTA stack. Real-estate-listing inspired.",
+  "hero_pattern": "fullbleed_photo_bottomleft_cta_light",
+  "palette": {
+    "background": "#fafaf9",
+    "text_primary": "#18181b",
+    "text_secondary": "#52525b",
+    "accent": "#65a30d",
+    "accent_dark": "#4d7c0f"
+  },
+  "fonts": {
+    "display": "Archivo Black",
+    "body": "Inter",
+    "mono": "JetBrains Mono"
+  },
+  "signature_moves": [
+    "Full-bleed hero photo with dark gradient overlay",
+    "Bottom-left content anchor (not centered)",
+    "Archivo Black uppercase H1",
+    "Accent-tinted pill chip above headline",
+    "Two-CTA row (primary filled + secondary outlined)",
+    "Light page bg below the hero (off-white / charcoal text)"
+  ]
+}

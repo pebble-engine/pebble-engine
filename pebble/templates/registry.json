@@ -1036,6 +1036,72 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "cinematic_landscaper",
+      "directory": "pebble/templates/cinematic_landscaper",
+      "name": "Greenwell Yards Co.",
+      "tagline": "Cinematic landscape hero. Lime accent. Weekly routes + full installs.",
+      "vibe": "Cinematic Real-Estate Listing — Landscaping",
+      "source_dna": "cinematic_landscaper",
+      "applicable_industries": [
+        "landscaper",
+        "landscaping",
+        "lawn care",
+        "garden design",
+        "yard maintenance",
+        "tree service",
+        "irrigation installer"
+      ],
+      "preview_image": "/templates-preview/cinematic_landscaper.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#65a30d",
+        "#4d7c0f"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Local landscapers offering weekly maintenance routes and seasonal installation packages",
+      "tier": "free",
+      "preview_url": "http://localhost:3199/cinematic_landscaper",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
     }
   ],
   "_planned_next": []
