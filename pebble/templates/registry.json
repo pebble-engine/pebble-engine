@@ -838,6 +838,72 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "cinematic_plumber",
+      "directory": "pebble/templates/cinematic_plumber",
+      "name": "Pipe & Cistern Co.",
+      "tagline": "Cinematic plumbing hero. Same-day. Slate + deep-blue accent.",
+      "vibe": "Cinematic Real-Estate Listing — Plumbing",
+      "source_dna": "cinematic_plumber",
+      "applicable_industries": [
+        "plumber",
+        "plumbing",
+        "drain cleaning",
+        "water heater service",
+        "leak detection",
+        "sewer service",
+        "pipe repair"
+      ],
+      "preview_image": "/templates-preview/cinematic_plumber.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#0369a1",
+        "#075985"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed local plumbers who need to convey trust and availability in one glance",
+      "tier": "free",
+      "preview_url": "http://localhost:3199/cinematic_plumber",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
     }
   ],
   "_planned_next": []
