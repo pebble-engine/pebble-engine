@@ -1179,7 +1179,13 @@ The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` hea
 - `config/brand.config.ts`, `config/motion.config.ts`
 - `next.config.mjs` (NOT `.ts` — and the file body must be PLAIN JS, not TypeScript: `/** @type {{import('next').NextConfig}} */` JSDoc, no `import type`, no `: NextConfig` annotation)
 - `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
-- `app/globals.css` — must begin with the `:root {{}}` CSS token block (all 12 `--color-*` + `--glass-blur` + fonts), then `.liquid-glass` (Code Pattern 2b), then `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` and `background: var(--color-bg)`
+- `app/globals.css` — **MUST start with these THREE lines, NO exceptions, NO blank line before them**:
+  ```css
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  ```
+  Without these three directives at the top, Tailwind generates ZERO utility classes and every `bg-primary`, `text-foreground`, `flex`, `p-8`, etc. in the TSX evaluates to nothing — the page renders as plain HTML with browser defaults (blue underlined links, no layout, no spacing). After those three lines, then the `:root {{}}` CSS token block (all 12 `--color-*` + `--glass-blur` + fonts), then `.liquid-glass` (Code Pattern 2b), then `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` and `background: var(--color-bg)`
 - `postcss.config.mjs` (the `.mjs` extension is REQUIRED — `.js` breaks with "Your custom PostCSS configuration must export a `plugins` key" because Node treats `.js` without `package.json` `"type": "module"` as CommonJS, and the `export default` syntax silently fails. The `.mjs` extension forces ESM. Body: `const config = {{ plugins: {{ tailwindcss: {{}}, autoprefixer: {{}} }} }}; export default config;`)
 - `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
 - `app/icon.svg` — branded favicon via Next.js App Router file convention; Next.js auto-generates the `<link rel="icon">` tag — no `metadata.icons` config needed. Use a simple SVG with the business initial or a relevant icon shape. Eval `favicon_defined` verifies this file exists.

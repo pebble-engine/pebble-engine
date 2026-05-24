@@ -1150,6 +1150,46 @@ def liquid_glass_class_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 18b. tailwind_directives_present — FOUNDATION
+#
+# Added 2026-05-23 after Marc found 3 sites in a row that rendered as plain
+# HTML (default blue underlined links, no spacing, browser-default fonts).
+# Root cause: globals.css was missing the @tailwind base/components/utilities
+# directives at the top, so Tailwind injected zero utility classes and every
+# `bg-primary`, `flex`, `text-foreground`, etc. in TSX evaluated to nothing.
+# The prompt template said "must BEGIN with the :root {} CSS token block",
+# which the LLM took literally and skipped the directives. This eval catches
+# the regression deterministically — no humans-in-the-loop required.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("app/globals.css",))
+def tailwind_directives_present(ctx: BuildContext) -> CheckResult:
+    """`app/globals.css` must contain `@tailwind base`, `@tailwind components`,
+    and `@tailwind utilities` directives. Without them Tailwind generates no
+    utility CSS and the entire site renders with browser defaults."""
+    if not ctx.site_dir.exists():
+        return CheckResult("tailwind_directives_present", "skip", "no site directory")
+
+    css_path = ctx.site_dir / "app" / "globals.css"
+    if not css_path.exists():
+        return CheckResult("tailwind_directives_present", "fail", "app/globals.css missing")
+
+    text = css_path.read_text(encoding="utf-8", errors="ignore")
+    required = ("@tailwind base", "@tailwind components", "@tailwind utilities")
+    missing = [d for d in required if d not in text]
+    if missing:
+        return CheckResult(
+            "tailwind_directives_present", "fail",
+            f"app/globals.css missing required directive(s): {', '.join(missing)}. "
+            f"Without these Tailwind injects no utilities and the site renders as plain HTML.",
+        )
+    return CheckResult(
+        "tailwind_directives_present", "pass",
+        "all three @tailwind directives present in app/globals.css",
+    )
+
+
+# ---------------------------------------------------------------------------
 # 19. animation_components_present — FOUNDATION
 # ---------------------------------------------------------------------------
 
