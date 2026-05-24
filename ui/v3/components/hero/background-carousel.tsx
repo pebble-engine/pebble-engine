@@ -37,7 +37,7 @@ const SLIDES: Slide[] = [
   { src: "/templates-preview/ink_studio_oxblood.png", label: "Ink Studio",         dna: "Velvet Lounge",       industry: "Tattoo · Art Studio" },
   { src: "/templates-preview/luxe_beauty_aubergine.png", label: "Luxe Beauty",     dna: "Postmodern Max",      industry: "Salon · Beauty" },
   { src: "/templates-preview/service_pro_navy.png",  label: "Service Pro",        dna: "Industrial Freight",   industry: "Contractor · Services" },
-  { src: "/templates-preview/honest_garage_rust.png", label: "Honest Garage",     dna: "Industrial Freight",   industry: "Automotive" },
+  { src: "/templates-preview/cinematic_hero.png",     label: "Cinematic Hero",    dna: "Cinematic Light",      industry: "Service business" },
   { src: "/templates-preview/instructor_pro_forest.png", label: "Instructor Pro", dna: "Swiss Magazine",       industry: "Coach · Educator" },
   { src: "/templates-preview/artisan_kitchen_olive.png", label: "Artisan Kitchen — Olive", dna: "Garden Press", industry: "Restaurant · Cafe" },
 ];

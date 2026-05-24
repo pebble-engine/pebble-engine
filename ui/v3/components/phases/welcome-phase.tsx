@@ -116,9 +116,9 @@ const TEMPLATE_TILES = [
   { label: "Boutique Brokerage · Navy",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_navy.png" },
   { label: "Boutique Brokerage · Sage",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_sage.png" },
   // Honest garage — automotive
-  { label: "Honest Garage",              feel: "Automotive",   preview: "/templates-preview/honest_garage.png"           },
-  { label: "Honest Garage · Rust",       feel: "Automotive",   preview: "/templates-preview/honest_garage_rust.png"      },
-  { label: "Honest Garage · Military",   feel: "Automotive",   preview: "/templates-preview/honest_garage_military.png"  },
+  { label: "Cinematic Hero",             feel: "Service light", preview: "/templates-preview/cinematic_hero.png"          },
+  { label: "Ink Studio · Oxblood",       feel: "Tattoo dark",   preview: "/templates-preview/ink_studio_oxblood.png"      },
+  { label: "Artisan Kitchen · Olive",    feel: "Restaurant",    preview: "/templates-preview/artisan_kitchen_olive.png"   },
   // Ink studio — tattoo / art
   { label: "Ink Studio",                 feel: "Tattoo studio",preview: "/templates-preview/ink_studio.png"              },
   { label: "Ink Studio · Oxblood",       feel: "Tattoo studio",preview: "/templates-preview/ink_studio_oxblood.png"      },
@@ -152,7 +152,7 @@ const DNAS = [
   { label: "Garden Press",          colors: ["#f5f0e1", "#5b6f4a", "#8b6f47", "#2a2a1f"], feel: "Botanical · considered",       preview: "/templates-preview/artisan_kitchen.png"     },
   { label: "Velvet Lounge",         colors: ["#1a0f1f", "#722f4a", "#c4a058", "#f3e5cc"], feel: "Intimate · candlelit",         preview: "/templates-preview/ink_studio_oxblood.png"  },
   { label: "Tactile Y2K",           colors: ["#ffe4ec", "#f0e6d2", "#a8c8e8", "#3d3d3d"], feel: "Soft · organic",               preview: "/templates-preview/luxe_beauty_rose.png"    },
-  { label: "Industrial Freight",    colors: ["#1f1f1f", "#f97316", "#9ca3af", "#fef3c7"], feel: "Utilitarian · blocky",         preview: "/templates-preview/honest_garage_rust.png"  },
+  { label: "Cinematic Light",       colors: ["#fafaf9", "#18181b", "#d97706", "#b45309"], feel: "Light real-estate cinematic",  preview: "/templates-preview/cinematic_hero.png"      },
   { label: "Marina",                colors: ["#0c2340", "#ffffff", "#c9a96e", "#a8c8d8"], feel: "Salt-air premium",             preview: "/templates-preview/boutique_brokerage_navy.png" },
   { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered",               preview: "/templates-preview/ink_studio.png"          },
 ] as const;

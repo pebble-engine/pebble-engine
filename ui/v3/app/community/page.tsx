@@ -115,12 +115,12 @@ const ACTIVITY: Array<{
 // When user uploads ship in Launchpad we'll mix in submissions
 // alongside our own examples.
 const SHOWCASE = [
-  { name: "Honest Garage",        kind: "Auto repair",       image: "/templates-preview/honest_garage.png",        href: "/templates" },
+  { name: "Cinematic Hero",       kind: "Service business",  image: "/templates-preview/cinematic_hero.png",       href: "/templates" },
   { name: "Ink Studio",           kind: "Tattoo & arts",     image: "/templates-preview/ink_studio.png",            href: "/templates" },
   { name: "Artisan Kitchen",      kind: "Restaurant",        image: "/templates-preview/artisan_kitchen.png",       href: "/templates" },
   { name: "Boutique Brokerage",   kind: "Real estate",       image: "/templates-preview/boutique_brokerage.png",    href: "/templates" },
   { name: "Instructor Pro",       kind: "Coach / educator",  image: "/templates-preview/instructor_pro.png",        href: "/templates" },
-  { name: "Honest Garage (Rust)", kind: "Auto, warm variant", image: "/templates-preview/honest_garage_rust.png",   href: "/templates" },
+  { name: "Instructor Pro",       kind: "Coach / educator",   image: "/templates-preview/instructor_pro.png",       href: "/templates" },
 ];
 
 const ACTIVITY_COLORS: Record<ActivityKind, string> = {
