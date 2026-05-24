@@ -180,7 +180,10 @@ def test_webhook_triggers_welcome_email_on_profile_insert(with_secret, captured_
     webhook.run_supabase_webhook(h)
     assert h.status == 200
     assert h.json_body["action"] == "welcome_sent"
-    assert h.json_body["email"] == "marc@example.com"
+    # Security smoke M5 (commit 82c0d42): response body redacts the email
+    # so Supabase webhook-delivery logs don't capture raw PII. The actual
+    # email send (captured_send below) still uses the real address.
+    assert h.json_body["email"] == "m***@example.com"
     assert captured_send == [("marc@example.com", "Marc")]
 
 

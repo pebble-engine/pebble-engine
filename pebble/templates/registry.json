@@ -797,7 +797,7 @@
       "name": "Cinematic Hero",
       "tagline": "Light cinematic. Full-bleed photo + bottom-left CTA.",
       "vibe": "Cinematic Real-Estate Listing (Light)",
-      "source_dna": "cinematic_hero",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "service provider",
         "local trades",
@@ -845,7 +845,7 @@
       "name": "Pipe & Cistern Co.",
       "tagline": "Cinematic plumbing hero. Same-day. Slate + deep-blue accent.",
       "vibe": "Cinematic Real-Estate Listing — Plumbing",
-      "source_dna": "cinematic_plumber",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "plumber",
         "plumbing",
@@ -911,7 +911,7 @@
       "name": "Cool Crew HVAC",
       "tagline": "Cinematic HVAC hero. Cyan accent. Same-day service.",
       "vibe": "Cinematic Real-Estate Listing — HVAC",
-      "source_dna": "cinematic_hvac",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "hvac",
         "air conditioning",
@@ -976,7 +976,7 @@
       "name": "Steelhouse Build Co.",
       "tagline": "Cinematic construction hero. Safety-orange accent. Fixed-price.",
       "vibe": "Cinematic Real-Estate Listing — Construction",
-      "source_dna": "cinematic_construction",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "construction",
         "general contractor",
@@ -1043,7 +1043,7 @@
       "name": "Greenwell Yards Co.",
       "tagline": "Cinematic landscape hero. Lime accent. Weekly routes + full installs.",
       "vibe": "Cinematic Real-Estate Listing — Landscaping",
-      "source_dna": "cinematic_landscaper",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "landscaper",
         "landscaping",
@@ -1109,7 +1109,7 @@
       "name": "Hush & Wag Grooming",
       "tagline": "Cinematic dog-groomer hero. Pink accent. Small-batch, anxiety-friendly.",
       "vibe": "Cinematic Real-Estate Listing — Pet Grooming",
-      "source_dna": "cinematic_dog_groomer",
+      "source_dna": "cinematic_real_estate",
       "applicable_industries": [
         "dog groomer",
         "dog grooming",
