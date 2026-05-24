@@ -137,7 +137,7 @@ export default function ProjectsPage() {
             <div className="max-w-5xl mx-auto space-y-6">
               <header className="flex items-end justify-between gap-4 flex-wrap">
                 <div>
-                  <h1 className={`${type.display.m} text-foreground`}>Your projects</h1>
+                  <h1 className={`${type.dashboard.display.m} text-foreground`}>Your projects</h1>
                   <p className={`${type.body.s} text-muted-foreground mt-1`}>
                     {loading
                       ? "Loading your projects…"
@@ -243,7 +243,7 @@ function ProjectsEmptyState({
     return (
       <div className="text-center py-16">
         <Search className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-        <p className={`${type.heading.l} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
+        <p className={`${type.dashboard.heading.l} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Try a different name or industry.</p>
       </div>
     );
@@ -252,7 +252,7 @@ function ProjectsEmptyState({
     return (
       <div className="text-center py-16">
         <Star className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-        <p className={`${type.heading.l} text-foreground`}>Nothing starred yet.</p>
+        <p className={`${type.dashboard.heading.l} text-foreground`}>Nothing starred yet.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Click the star icon on any project to keep it handy.</p>
       </div>
     );
@@ -265,7 +265,7 @@ function ProjectsEmptyState({
       <div className="mb-4 flex justify-center">
         <PebletMascot size="md" animate />
       </div>
-      <p className={`${type.heading.l} text-foreground`}>
+      <p className={`${type.dashboard.heading.l} text-foreground`}>
         {totalProjects === 0
           ? "Boy, it sure does look empty in here."
           : "Nothing in this view yet."}
@@ -334,7 +334,7 @@ function ProjectCard({
       </div>
       <div className="p-5 flex-1 flex flex-col gap-3">
         <div className="flex-1 min-w-0">
-          <h3 className={`${type.heading.m} text-foreground truncate`}>{p.business_name}</h3>
+          <h3 className={`${type.dashboard.heading.m} text-foreground truncate`}>{p.business_name}</h3>
           {p.business_type && (
             <p className={`${type.mono} text-muted-foreground mt-1`}>
               {p.business_type.replace(/_/g, " ")}
@@ -397,7 +397,7 @@ function ProjectCard({
             className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl border border-destructive/40 flex flex-col items-center justify-center text-center p-5 gap-3"
           >
             <Trash2 className="w-6 h-6 text-destructive" />
-            <p className={`${type.heading.m} text-foreground`}>Delete {p.business_name}?</p>
+            <p className={`${type.dashboard.heading.m} text-foreground`}>Delete {p.business_name}?</p>
             <p className={`${type.caption} -mt-1`}>All snapshots and files are removed permanently.</p>
             <div className="flex gap-2 mt-1">
               <button onClick={onCancelDelete} className={`${interactions.button} bg-card border border-border text-foreground px-4 py-2 rounded-lg text-sm font-semibold`}>

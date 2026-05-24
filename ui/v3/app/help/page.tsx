@@ -32,7 +32,7 @@ export default function HelpPage() {
             <div className="w-14 h-14 rounded-full bg-primary/10 text-primary mx-auto flex items-center justify-center">
               <LifeBuoy className="w-7 h-7" />
             </div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold tracking-tight text-foreground">
+            <h1 className="font-display-sans text-4xl md:text-5xl font-bold tracking-tight text-foreground">
               How can we help?
             </h1>
             <p className="text-muted-foreground">
@@ -53,7 +53,7 @@ export default function HelpPage() {
                   <t.Icon className="w-5 h-5" />
                 </div>
                 <div>
-                  <p className="font-display text-base font-semibold text-foreground">{t.title}</p>
+                  <p className="font-display-sans text-base font-semibold text-foreground">{t.title}</p>
                   <p className="text-xs text-muted-foreground mt-0.5">{t.lead}</p>
                 </div>
               </a>
@@ -160,7 +160,7 @@ export default function HelpPage() {
           {/* Full FAQ */}
           {FAQ_BY_SECTION.map((section) => (
             <section key={section.title} className="space-y-3">
-              <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">
+              <h2 className="font-display-sans text-2xl font-bold tracking-tight text-foreground">
                 {section.title}
               </h2>
               <FaqAccordion items={section.items} />
@@ -170,7 +170,7 @@ export default function HelpPage() {
           {/* Contact */}
           <section className="border-t border-border pt-10 text-center space-y-3">
             <Mail className="w-6 h-6 mx-auto text-muted-foreground" />
-            <h2 className="font-display text-xl font-semibold text-foreground">
+            <h2 className="font-display-sans text-xl font-semibold text-foreground">
               Still stuck?
             </h2>
             <p className="text-sm text-muted-foreground">
@@ -198,7 +198,7 @@ function TopicSection({
     <section id={id} className="space-y-3 scroll-mt-24">
       <div className="flex items-center gap-2 pt-2">
         <Icon className="w-5 h-5 text-primary" />
-        <h2 className="font-display text-2xl font-bold tracking-tight text-foreground">{title}</h2>
+        <h2 className="font-display-sans text-2xl font-bold tracking-tight text-foreground">{title}</h2>
       </div>
       <div className="prose prose-sm dark:prose-invert max-w-none space-y-3 text-foreground leading-relaxed">
         {children}

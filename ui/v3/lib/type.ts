@@ -36,6 +36,34 @@ export const type = {
     m: "text-lg font-semibold leading-snug",
     s: "text-base font-semibold leading-snug",
   },
+  /**
+   * 2026-05-24 — Dashboard typography roles. Inter Tight at extreme bold
+   * weights for hero numbers / page titles / section headings. Used by
+   * /dashboard, /projects, /templates, /integrations, /community,
+   * /inbox, /settings, /help, /admin, /migrate, and the /not-found,
+   * /error pages.
+   *
+   * KEEP IN SYNC with display.* / heading.* — same size scale, same
+   * tracking, different family + heavier weights. Swap in dashboard
+   * files by replacing `type.display.l` → `type.dashboard.display.l`
+   * (etc.) — geometry stays the same, only the font changes.
+   *
+   * Cormorant + display.* / heading.* survive for marketing landing +
+   * workspace build phases (welcome, plan, ready, publish) where the
+   * editorial luxe is intentional.
+   */
+  dashboard: {
+    display: {
+      xl: "font-display-sans text-5xl md:text-6xl font-extrabold tracking-tight leading-[1.05]",
+      l:  "font-display-sans text-4xl md:text-5xl font-extrabold tracking-tight leading-[1.1]",
+      m:  "font-display-sans text-2xl md:text-3xl font-bold tracking-tight leading-[1.2]",
+    },
+    heading: {
+      l: "font-display-sans text-xl md:text-2xl font-bold tracking-tight leading-snug",
+      m: "font-display-sans text-lg font-bold tracking-tight leading-snug",
+      s: "font-display-sans text-base font-bold tracking-tight leading-snug",
+    },
+  },
   body: {
     l: "text-lg leading-relaxed",
     m: "text-base leading-relaxed",

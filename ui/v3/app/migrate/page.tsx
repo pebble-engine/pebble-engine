@@ -109,7 +109,7 @@ export default function MigratePage() {
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-secondary/15 text-secondary text-xs font-semibold uppercase tracking-widest">
               <Sparkles className="w-3 h-3" /> Already have a URL in mind?
             </div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground">
+            <h1 className="font-display-sans text-4xl md:text-5xl font-bold text-foreground">
               {mode === "migrate"
                 ? "Bring your site over without retyping it."
                 : "Borrow a look you love."}
@@ -446,7 +446,7 @@ function InspireResult({ data, onContinue }: { data: InspireResponse; onContinue
             <div className="flex items-center gap-3 p-3 rounded-xl bg-secondary/10 border border-secondary/30">
               <Sparkles className="w-5 h-5 text-secondary flex-shrink-0" aria-hidden />
               <div>
-                <p className="font-display text-base font-semibold text-foreground">
+                <p className="font-display-sans text-base font-semibold text-foreground">
                   {extract.suggested_dna.label}
                 </p>
                 <p className="text-xs text-muted-foreground italic">

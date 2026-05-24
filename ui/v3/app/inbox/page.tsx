@@ -117,7 +117,7 @@ function InboxForSlug({ slug }: { slug: string }) {
         </div>
         <div className="p-4 border-b border-border">
           <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Inbox</p>
-          <p className="font-display text-xl font-bold text-foreground truncate">{slug}</p>
+          <p className="font-display-sans text-xl font-bold text-foreground truncate">{slug}</p>
           <p className="text-xs text-muted-foreground mt-1">{items.length} submission{items.length === 1 ? "" : "s"}</p>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -164,7 +164,7 @@ function InboxForSlug({ slug }: { slug: string }) {
         ) : !selected ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
             <InboxIcon className="w-10 h-10 mb-2 opacity-50" />
-            <p className="font-display text-xl text-foreground">Pick a submission</p>
+            <p className="font-display-sans text-xl text-foreground">Pick a submission</p>
             <p className="text-sm">{items.length === 0 ? "There aren't any yet." : "Click one on the left."}</p>
           </div>
         ) : (
@@ -326,7 +326,7 @@ function InboxRoute() {
       <div className="flex-1 flex items-center justify-center text-center px-6">
         <div className="max-w-md space-y-3">
           <InboxIcon className="w-10 h-10 mx-auto text-muted-foreground" />
-          <h1 className="font-display text-3xl text-foreground">Pick a project</h1>
+          <h1 className="font-display-sans text-3xl text-foreground">Pick a project</h1>
           <p className="text-muted-foreground text-sm">
             Open any project from the <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link>;
             its inbox shows submissions to its contact form.

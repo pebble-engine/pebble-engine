@@ -257,7 +257,7 @@ export default function CommunityHomePage() {
                     <p className={`${type.mono} text-xs uppercase tracking-widest text-primary font-bold`}>
                       Pebble Community
                     </p>
-                    <h1 className={`${type.display.l} text-foreground leading-tight`}>
+                    <h1 className={`${type.dashboard.display.l} text-foreground leading-tight`}>
                       You&apos;re not building alone.
                     </h1>
                     <p className={`${type.body.m} text-muted-foreground max-w-xl`}>
@@ -311,7 +311,7 @@ export default function CommunityHomePage() {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-3 flex-wrap">
                   <div>
-                    <h2 className={`${type.heading.l} text-foreground`}>This week in Pebble</h2>
+                    <h2 className={`${type.dashboard.heading.l} text-foreground`}>This week in Pebble</h2>
                     <p className={`${type.body.s} text-muted-foreground mt-1`}>
                       Launches, features, fresh tips, and 38 new builders joining the conversation.
                     </p>
@@ -336,7 +336,7 @@ export default function CommunityHomePage() {
                         {ACTIVITY_LABELS[a.kind]}
                       </span>
                       <div className="flex-1 min-w-0">
-                        <p className={`${type.heading.m} text-foreground leading-tight`}>{a.title}</p>
+                        <p className={`${type.dashboard.heading.m} text-foreground leading-tight`}>{a.title}</p>
                         {a.body && (
                           <p className={`${type.body.s} text-muted-foreground mt-1 leading-snug`}>
                             {a.body}
@@ -353,7 +353,7 @@ export default function CommunityHomePage() {
               <section className="space-y-4">
                 <div className="flex items-end justify-between gap-3 flex-wrap">
                   <div>
-                    <h2 className={`${type.heading.l} text-foreground`}>Showcase</h2>
+                    <h2 className={`${type.dashboard.heading.l} text-foreground`}>Showcase</h2>
                     <p className={`${type.body.s} text-muted-foreground mt-1`}>
                       Real sites built with Pebble. Steal the structure, swap in your story.
                     </p>
@@ -391,7 +391,7 @@ export default function CommunityHomePage() {
 
               {/* PILLARS — the three sub-routes, elevated */}
               <section className="space-y-4">
-                <h2 className={`${type.heading.l} text-foreground`}>Three ways to get involved</h2>
+                <h2 className={`${type.dashboard.heading.l} text-foreground`}>Three ways to get involved</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <Pillar
                     href="/community/launchpad"
@@ -481,7 +481,7 @@ function Pillar({
         <Icon className="w-6 h-6" />
       </div>
       <div className="relative z-10">
-        <h3 className={`${type.heading.m} text-foreground`}>{title}</h3>
+        <h3 className={`${type.dashboard.heading.m} text-foreground`}>{title}</h3>
         <p className={`${type.body.s} text-muted-foreground mt-1 leading-snug`}>{blurb}</p>
       </div>
       <span className={`${type.label} text-foreground/80 group-hover:text-foreground mt-auto relative z-10 inline-flex items-center gap-1`}>

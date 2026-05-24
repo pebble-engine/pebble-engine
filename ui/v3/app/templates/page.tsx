@@ -78,7 +78,7 @@ export default function TemplatesPage() {
             <Sparkles className="w-3.5 h-3.5" />
             <span className={`${type.mono} uppercase tracking-wider`}>Templates are free</span>
           </div>
-          <h1 className={`${type.display.l} mb-3`}>Start with a template</h1>
+          <h1 className={`${type.dashboard.display.l} mb-3`}>Start with a template</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-2xl mx-auto`}>
             Hand-curated designs across industries. Pick one, fill in your business info,
             ship in under a minute. Customize anything after.
@@ -138,7 +138,7 @@ export default function TemplatesPage() {
         {templates && activeTab === "premium" && buckets.premium.length === 0 && (
           <div className="text-center text-muted-foreground py-16 max-w-md mx-auto">
             <Lock className="w-6 h-6 mx-auto mb-3 opacity-40" />
-            <p className={`${type.heading.m} text-foreground mb-1`}>No premium templates yet</p>
+            <p className={`${type.dashboard.heading.m} text-foreground mb-1`}>No premium templates yet</p>
             <p className={type.body.s}>
               Pebble-curated paid templates are coming. For now, every Free template ships ready to customize.
             </p>
@@ -230,7 +230,7 @@ function TemplateCard({
         {showFallback && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <p
-              className={`${type.display.m} opacity-90 px-4 text-center`}
+              className={`${type.dashboard.display.m} opacity-90 px-4 text-center`}
               style={{
                 fontFamily: t.fonts?.display
                   ? `'${t.fonts.display}', serif`
@@ -252,7 +252,7 @@ function TemplateCard({
       </div>
       <div className="p-5">
         <div className="flex items-baseline justify-between gap-2 mb-1">
-          <h3 className={`${type.heading.m}`}>{t.name}</h3>
+          <h3 className={`${type.dashboard.heading.m}`}>{t.name}</h3>
         </div>
         <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-2`}>
           {t.vibe}
@@ -376,7 +376,7 @@ function PreviewPane({
             <p className={`${type.mono} text-[10px] uppercase tracking-wider text-white/50`}>
               {current.vibe}
             </p>
-            <h2 className={`${type.heading.m} text-white truncate`}>{current.name}</h2>
+            <h2 className={`${type.dashboard.heading.m} text-white truncate`}>{current.name}</h2>
           </div>
         </div>
 
@@ -577,7 +577,7 @@ function InstantiateDialog({
             <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-1`}>
               {template.vibe}
             </p>
-            <h2 className={`${type.heading.l}`}>Use {template.name}</h2>
+            <h2 className={`${type.dashboard.heading.l}`}>Use {template.name}</h2>
           </div>
           <button
             type="button"
@@ -725,7 +725,7 @@ function PublicTabPlaceholder() {
         <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
           <Upload className="w-5 h-5 text-primary" />
         </div>
-        <h2 className={`${type.display.m} text-foreground mb-2`}>
+        <h2 className={`${type.dashboard.display.m} text-foreground mb-2`}>
           Public templates — coming soon
         </h2>
         <p className={`${type.body.m} text-muted-foreground mb-6`}>

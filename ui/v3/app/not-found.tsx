@@ -17,7 +17,7 @@ export default function NotFound() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 0.08, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="font-display text-[18vw] leading-none font-bold tracking-tight text-foreground -mb-8 select-none"
+          className="font-display-sans text-[18vw] leading-none font-bold tracking-tight text-foreground -mb-8 select-none"
           aria-hidden="true"
         >
           404
@@ -30,7 +30,7 @@ export default function NotFound() {
           className="space-y-6"
         >
           <div className="space-y-3">
-            <h1 className="font-display text-3xl md:text-4xl font-bold text-foreground">
+            <h1 className="font-display-sans text-3xl md:text-4xl font-bold text-foreground">
               We haven&apos;t built this corner yet.
             </h1>
             <p className="text-lg text-muted-foreground max-w-md mx-auto">

@@ -116,7 +116,7 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className={`${type.display.m} text-foreground`}>Support tooling</h1>
+              <h1 className={`${type.dashboard.display.m} text-foreground`}>Support tooling</h1>
               <p className={`${type.body.s} text-muted-foreground mt-1`}>
                 Read-only — to grant access add an email to <code className="font-mono text-xs">PEBBLE_ADMIN_EMAIL</code> in <code className="font-mono text-xs">.env</code>.
               </p>

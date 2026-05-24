@@ -371,7 +371,7 @@ function SettingsPageContent() {
             <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center">
               <SettingsIcon className="w-6 h-6" />
             </div>
-            <h1 className={`${type.display.m} text-foreground`}>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>
               Settings
             </h1>
             <p className="text-muted-foreground">
@@ -387,7 +387,7 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <User className="w-5 h-5 text-muted-foreground" />
-              <h2 className={`font-display ${type.heading.l}`}>Profile</h2>
+              <h2 className={`${type.dashboard.heading.l}`}>Profile</h2>
             </div>
 
             {/* Avatar + email */}
@@ -469,7 +469,7 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <User className="w-5 h-5 text-muted-foreground" />
-              <h2 className={`font-display ${type.heading.l}`}>Account</h2>
+              <h2 className={`${type.dashboard.heading.l}`}>Account</h2>
             </div>
 
             <div className="space-y-1">
@@ -565,7 +565,7 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <Lock className="w-5 h-5 text-muted-foreground" />
-              <h2 className={`font-display ${type.heading.l}`}>Change password</h2>
+              <h2 className={`${type.dashboard.heading.l}`}>Change password</h2>
             </div>
             <form onSubmit={onChangePassword} className="space-y-3">
               <label className="block">
@@ -629,7 +629,7 @@ function SettingsPageContent() {
           >
             <div className="flex items-center gap-2 text-foreground">
               <CreditCard className="w-5 h-5 text-muted-foreground" />
-              <h2 className={`font-display ${type.heading.l}`}>Billing</h2>
+              <h2 className={`${type.dashboard.heading.l}`}>Billing</h2>
             </div>
             {subLoading && justCheckedOut ? (
               <div className="space-y-1">

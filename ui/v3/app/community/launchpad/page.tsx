@@ -24,7 +24,7 @@ export default function LaunchpadPage() {
           <div className="inline-flex w-16 h-16 rounded-2xl bg-primary/10 text-primary items-center justify-center mx-auto">
             <Compass className="w-7 h-7" />
           </div>
-          <h1 className={`${type.display.l} text-foreground`}>Launchpad is on the runway.</h1>
+          <h1 className={`${type.dashboard.display.l} text-foreground`}>Launchpad is on the runway.</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-xl mx-auto`}>
             A public gallery where Pebble builders showcase what they shipped —
             with the build story, the DNA they used, and a one-click "remix this"

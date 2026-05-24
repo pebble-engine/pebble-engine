@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel } from "next/font/google";
+import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel, Inter_Tight } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
@@ -24,6 +24,20 @@ const cinzel = Cinzel({
   variable: "--font-cinzel",
   subsets: ["latin"],
   weight: ["400", "600"],
+});
+
+// Dashboard display font — Inter Tight (Linear / Stripe / Vercel-docs feel).
+// 2026-05-24 — Marc wanted the dashboard pages unified on a bold professional
+// sans for hero numbers + page titles + section headings. Inter Tight is the
+// de-facto SaaS workspace font — tight geometric sans, weights up to 900,
+// reads as confident and crisp without the editorial luxe of Cormorant.
+// ONLY used on /dashboard, /projects, /templates, /integrations, /community,
+// /inbox, /settings, /help, /admin, /migrate. Marketing landing + workspace
+// build phases keep Cormorant for cinematic feel.
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800", "900"],
 });
 
 // Body font — Plus Jakarta Sans (geometric humanist sans).
@@ -91,7 +105,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

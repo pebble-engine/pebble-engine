@@ -211,7 +211,7 @@ export default function IntegrationsPage() {
             <div className="max-w-5xl mx-auto space-y-10">
               <header className="space-y-1">
                 <p className="text-sm font-semibold text-muted-foreground">Integrations</p>
-                <h1 className={`${type.display.m} text-foreground`}>Connect the tools you already use.</h1>
+                <h1 className={`${type.dashboard.display.m} text-foreground`}>Connect the tools you already use.</h1>
                 <p className={`${type.body.s} text-muted-foreground max-w-xl`}>
                   Payments, email, analytics, scheduling — wire them up once and they
                   work everywhere your site does.
@@ -221,7 +221,7 @@ export default function IntegrationsPage() {
               {groupOrder.filter((g) => grouped[g]).map((group) => (
                 <section key={group} className="space-y-4">
                   <div className="flex items-baseline justify-between gap-3">
-                    <h2 className={`${type.heading.l} text-foreground`}>{group}</h2>
+                    <h2 className={`${type.dashboard.heading.l} text-foreground`}>{group}</h2>
                     <p className={type.caption}>
                       {grouped[group].length} {grouped[group].length === 1 ? "integration" : "integrations"}
                     </p>

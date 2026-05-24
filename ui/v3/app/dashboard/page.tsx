@@ -171,7 +171,7 @@ export default function DashboardPage() {
             <p className="text-sm font-semibold text-muted-foreground">
               Welcome back{displayName ? `, ${displayName}` : ""}! <span aria-hidden>👋</span>
             </p>
-            <h1 className={`${type.display.m} text-foreground`}>Dashboard</h1>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>Dashboard</h1>
             <p className={`${type.body.s} text-muted-foreground`}>
               Here&apos;s what&apos;s happening with your projects.
             </p>
@@ -182,7 +182,7 @@ export default function DashboardPage() {
               are the same All / Starred / Recents view as before. */}
           <div className="flex items-center justify-between gap-4 flex-wrap">
             <div>
-              <h2 className={`${type.heading.l} text-foreground`}>
+              <h2 className={`${type.dashboard.heading.l} text-foreground`}>
                 {filter === "starred" ? "Starred" : filter === "recents" ? "Recently built" : "Your projects"}
               </h2>
               <p className={`${type.body.s} text-muted-foreground mt-1`}>
@@ -626,7 +626,7 @@ function ProjectCard({
 
       <div className="p-5 flex-1 flex flex-col gap-3">
       <div className="flex-1 min-w-0">
-        <h3 className={`${type.heading.m} text-foreground truncate`}>
+        <h3 className={`${type.dashboard.heading.m} text-foreground truncate`}>
           {p.business_name}
         </h3>
         {p.business_type && (
@@ -715,7 +715,7 @@ function ProjectCard({
             className="absolute inset-0 bg-card/95 backdrop-blur-sm rounded-2xl border border-destructive/40 flex flex-col items-center justify-center text-center p-5 gap-3"
           >
             <Trash2 className="w-6 h-6 text-destructive" />
-            <p className={`${type.heading.m} text-foreground`}>Delete {p.business_name}?</p>
+            <p className={`${type.dashboard.heading.m} text-foreground`}>Delete {p.business_name}?</p>
             <p className={`${type.caption} -mt-1`}>All snapshots and files are removed permanently.</p>
             <div className="flex gap-2 mt-1">
               <button
@@ -805,7 +805,7 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
     return (
       <div className="text-center py-16">
         <Search className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-        <p className={`${type.heading.l} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
+        <p className={`${type.dashboard.heading.l} text-foreground`}>No matches for &ldquo;{query}&rdquo;.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Try a different name or industry.</p>
       </div>
     );
@@ -814,7 +814,7 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
     return (
       <div className="text-center py-16">
         <Star className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
-        <p className={`${type.heading.l} text-foreground`}>Nothing starred yet.</p>
+        <p className={`${type.dashboard.heading.l} text-foreground`}>Nothing starred yet.</p>
         <p className={`${type.body.s} text-muted-foreground mt-2`}>Click the star icon on any project to keep it handy.</p>
       </div>
     );
@@ -828,7 +828,7 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
       <div className="mb-4 flex justify-center">
         <PebletMascot size="md" animate />
       </div>
-      <p className={`${type.heading.l} text-foreground`}>
+      <p className={`${type.dashboard.heading.l} text-foreground`}>
         Boy, it sure does look empty in here.
       </p>
       <p className={`${type.body.s} text-muted-foreground mt-2 mb-6 max-w-sm mx-auto`}>
