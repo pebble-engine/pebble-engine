@@ -40,6 +40,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import {
+  fetchSubscription,
   getIntegrations,
   saveIntegration,
   deleteIntegration,
@@ -47,6 +48,9 @@ import {
   type IntegrationRecord,
   type IntegrationsMap,
 } from "@/lib/api";
+import { LockedFeature } from "@/components/locked-feature";
+import { TierBadge } from "@/components/tier-badge";
+import { canUseIntegration, minTierFor, type PlanTier } from "@/lib/plan-features";
 import { getLastBuild } from "@/lib/state";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -152,11 +156,13 @@ type CardState = "idle" | "saving" | "saved" | "error";
 function IntegrationCard({
   def,
   record,
+  plan,
   onSave,
   onRemove,
 }: {
   def:      IntegrationDef;
   record:   IntegrationRecord | undefined;
+  plan:     PlanTier;
   onSave:   (id: IntegrationId, enabled: boolean, config: Record<string, string>) => Promise<void>;
   onRemove: (id: IntegrationId) => Promise<void>;
 }) {
@@ -239,6 +245,9 @@ function IntegrationCard({
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[9px] font-bold uppercase tracking-widest">
                 <Check className="w-2.5 h-2.5" /> Live
               </span>
+            )}
+            {plan !== "pro" && !canUseIntegration(plan, def.id) && (
+              <TierBadge tier={minTierFor(def.id) as "starter" | "pro"} className="ml-2" />
             )}
           </div>
           <p className={`${type.body.s} text-muted-foreground mt-0.5 leading-relaxed`}>
@@ -345,6 +354,19 @@ export function IntegrationsPhase({ onBack }: Props) {
   const [integrations, setIntegrations] = useState<IntegrationsMap>({});
   const [loading, setLoading] = useState(true);
 
+  // 2026-05-24 funnel restructure: tier gate. Free user sees ALL cards
+  // but each is wrapped in LockedFeature showing an upgrade CTA. Starter
+  // user sees 4 unlocked + 3 still locked (stripe/custom-code/social).
+  // Pro user sees everything live. Plan defaults to "free" until the
+  // subscription fetch resolves — safer than defaulting to "pro" and
+  // briefly showing un-gated cards before the gate kicks in.
+  const [plan, setPlan] = useState<PlanTier>("free");
+  useEffect(() => {
+    fetchSubscription()
+      .then((sub) => setPlan((sub.plan as PlanTier) || "free"))
+      .catch(() => setPlan("free"));
+  }, []);
+
   const safeMotion = withReducedMotion(fadeUp);
 
   // Load saved integrations on mount
@@ -429,15 +451,28 @@ export function IntegrationsPhase({ onBack }: Props) {
             animate="visible"
             className="grid grid-cols-1 lg:grid-cols-2 gap-4"
           >
-            {INTEGRATIONS.map((def) => (
-              <IntegrationCard
-                key={def.id}
-                def={def}
-                record={integrations[def.id]}
-                onSave={handleSave}
-                onRemove={handleRemove}
-              />
-            ))}
+            {INTEGRATIONS.map((def) => {
+              // Per-integration tier gate. minTierFor() resolves to "starter"
+              // (whatsapp/booking/google-maps/cookie-consent) or "pro" (stripe/
+              // custom-code/social) based on PLAN_LIMITS.
+              const requires = minTierFor(def.id) as "starter" | "pro";
+              return (
+                <LockedFeature
+                  key={def.id}
+                  plan={plan}
+                  requires={requires}
+                  featureLabel={def.name}
+                >
+                  <IntegrationCard
+                    def={def}
+                    record={integrations[def.id]}
+                    plan={plan}
+                    onSave={handleSave}
+                    onRemove={handleRemove}
+                  />
+                </LockedFeature>
+              );
+            })}
           </motion.div>
         )}
 
