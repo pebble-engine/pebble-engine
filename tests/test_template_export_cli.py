@@ -126,3 +126,31 @@ def test_source_files_byte_identical_after_runtime_error():
 
     assert _sha(config_path) == before_config, "next.config.mjs was not restored after RuntimeError"
     assert _sha(contact_path) == before_contact, "contact.ts was not restored after RuntimeError"
+
+
+# ---------------------------------------------------------------------------
+# --all filter tests — must never touch non-cinematic templates
+# ---------------------------------------------------------------------------
+
+
+def test_main_all_filters_to_cinematic_templates_only():
+    """--all must NEVER pick non-cinematic templates. If this regresses,
+    a stray invocation could clobber the entire production template fleet."""
+    all_ids   = template_export.list_exportable_template_ids()
+    cinematic = [i for i in all_ids if i.startswith("cinematic_")]
+    other     = [i for i in all_ids if not i.startswith("cinematic_")]
+    assert len(cinematic) >= 6,  "Expected at least 6 cinematic_* templates in the registry"
+    assert len(other)     >= 1,  "Expected non-cinematic templates to exist (else this test is vacuous)"
+
+    # Mock to avoid actually running builds, then capture which ids _main iterates over.
+    seen: list[str] = []
+    def _fake_export(tid: str, *, skip_install: bool = False) -> Path:
+        seen.append(tid)
+        return Path("/tmp/fake")
+    with patch.object(template_export, "export_template", side_effect=_fake_export):
+        rc = template_export._main(["--all", "--skip-install"])
+    assert rc == 0
+    assert set(seen) == set(cinematic), \
+        f"--all leaked outside cinematic_*: extras={set(seen) - set(cinematic)}"
+    for tid in other:
+        assert tid not in seen, f"non-cinematic template {tid} was about to be clobbered"

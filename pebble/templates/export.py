@@ -16,6 +16,19 @@ Run from repo root:
     python -m pebble.templates.export cinematic_hero
     python -m pebble.templates.export --all
     python -m pebble.templates.export --all --skip-install
+
+Operational envelope:
+    - Run one template at a time, or via --all serially. The transient
+      mutation has no concurrency guard; parallel invocations on the
+      same template can race.
+    - Python's try/finally restore handles normal exits, exceptions,
+      and SIGINT/Ctrl-C. It does NOT handle SIGKILL, OS crashes, or
+      power loss. After such an abort, run `git diff pebble/templates/`
+      and revert any leftover preview state via `git checkout HEAD -- <path>`
+      before the next customer instantiation.
+    - If a restore itself fails (disk full, AV lock), the CLI raises
+      RuntimeError with the affected paths. The recovery is the same:
+      revert via git.
 """
 from __future__ import annotations
 
@@ -145,10 +158,25 @@ def export_template(template_id: str, *, skip_install: bool = False) -> Path:
             raise RuntimeError(f"next build for {template_id} did not produce out/")
         return out
     finally:
-        # ALWAYS restore originals — even if build failed.
+        # ALWAYS restore originals — even if build failed. Wrap each write
+        # individually so one OSError doesn't abort the rest of the restore.
+        # Source-file safety is the module's load-bearing invariant; any
+        # leftover preview state would get cloned into customer projects.
+        restore_errors: list[tuple[Path, OSError]] = []
         for path, original in originals:
             if original is not None:
-                path.write_text(original, encoding="utf-8")
+                try:
+                    path.write_text(original, encoding="utf-8")
+                except OSError as e:
+                    restore_errors.append((path, e))
+        if restore_errors:
+            pretty = "\n  ".join(f"{p}: {e}" for p, e in restore_errors)
+            raise RuntimeError(
+                f"RESTORE FAILED — source files may be left in preview-build state.\n"
+                f"  {pretty}\n"
+                f"Inspect with: git status pebble/templates/ — restore manually via "
+                f"`git checkout HEAD -- <path>` before next instantiation."
+            )
 
 
 def _main(argv: list[str] | None = None) -> int:
