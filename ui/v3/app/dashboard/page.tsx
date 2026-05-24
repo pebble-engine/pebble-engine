@@ -27,6 +27,7 @@ import { TopNav } from "@/components/top-nav";
 import { ControlCenter } from "@/components/control-center";
 import { DashboardSidebar } from "@/components/workspace/dashboard-sidebar";
 import { PebletMascot } from "@/components/peblet-mascot";
+import { NotificationBell } from "@/components/notification-bell";
 import { useAuth } from "@/components/auth-provider";
 import { getUserProfile } from "@/lib/state";
 import { type } from "@/lib/type";
@@ -139,9 +140,26 @@ export default function DashboardPage() {
   const profile = typeof window !== "undefined" ? getUserProfile() : { firstName: "" };
   const displayName = profile.firstName || (user?.email?.split("@")[0]) || "";
 
+  // TopNav right slot — Marc's 2026-05-23 mockup: "+ New project"
+  // button (primary, jumps into the welcome flow) + notification bell
+  // with badge. Both surface on every dashboard-shell route so the
+  // primary actions never go missing as the user navigates around.
+  const topRightSlot = (
+    <div className="flex items-center gap-2">
+      <Link
+        href="/workspace#phase=welcome"
+        className={`${interactions.button} inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition-opacity`}
+      >
+        <Plus className="w-4 h-4" />
+        New project
+      </Link>
+      <NotificationBell />
+    </div>
+  );
+
   return (
     <div className="flex flex-col h-screen-safe">
-      <TopNav projectName="Dashboard" />
+      <TopNav projectName="Dashboard" rightSlot={topRightSlot} />
       <div className="flex-1 min-h-0">
       <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
