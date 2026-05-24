@@ -39,6 +39,15 @@ const devConnectSrc = isDev
   ? " http://localhost:8000 http://127.0.0.1:8000 ws://localhost:* ws://127.0.0.1:*"
   : "";
 
+// Extra frame-src hosts when running locally so the template-gallery
+// iframe (loads from engine /preview-template/<id>/) renders. v3 is on
+// :3001, engine is on :8000 → cross-origin frame → CSP frame-src must
+// list it explicitly. In prod the engine is *.up.railway.app which is
+// already in the base frame-src list below.
+const devFrameSrc = isDev
+  ? " http://localhost:8000 http://127.0.0.1:8000"
+  : "";
+
 const SECURITY_HEADERS = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options",        value: "SAMEORIGIN" },
@@ -53,7 +62,7 @@ const SECURITY_HEADERS = [
       "font-src 'self' data:",
       "img-src 'self' data: blob: https:",
       `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com${devConnectSrc}`,
-      "frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com",
+      `frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com${devFrameSrc}`,
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self' https://accounts.google.com https://github.com https://*.supabase.co",
