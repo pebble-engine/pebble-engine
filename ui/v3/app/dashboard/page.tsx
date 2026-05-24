@@ -306,57 +306,55 @@ const PEBBLE_TIPS = [
 ];
 
 function HomeTiles({ hasProjects }: { hasProjects: boolean }) {
-  // Per-mount tip pick — refreshes every dashboard visit so the same
-  // tip doesn't stare back at the user every time.
+  // Per-mount tip pick — refreshes every dashboard visit.
   const [tipIdx, setTipIdx] = useState(0);
   useEffect(() => {
     setTipIdx(Math.floor(Math.random() * PEBBLE_TIPS.length));
   }, []);
 
+  // 2026-05-24 de-card-ify. Marc: "doesn't like AI slop and a bunch of
+  // borders and cards." Replaced the 3-equal-tile grid with a
+  // magazine-style layout: one large hero promo (left, 60%) + two
+  // compact secondary promos (right, stacked). No card borders — the
+  // gradients themselves carry the affordance, and the absence of
+  // border-on-rest makes the page feel composed instead of catalogued.
+  // The rotating Pebble tip became a single-line inline-on-page item
+  // (in the page header area), so this section is just three actions
+  // not three actions + a fourth bordered strip.
   return (
-    <section className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <HomeTile
-          href="/templates"
-          Icon={Compass}
-          eyebrow="Templates"
-          title={hasProjects ? "Start from a proven shape" : "Skip the blank page"}
-          body="Browse cinematic, industry-tuned starting points. One click clones and customizes for your business."
-          accent="from-[#3054ff]/15 to-[#3054ff]/0"
-        />
-        <HomeTile
+    <section className="grid grid-cols-1 lg:grid-cols-5 gap-3">
+      <HeroPromo
+        href="/templates"
+        eyebrow="Templates"
+        title={hasProjects ? "Start from a proven shape" : "Skip the blank page"}
+        body="Cinematic, industry-tuned starting points. One click clones the design and customizes for your business — under a minute, no blank-page paralysis."
+        cta="Browse templates"
+      />
+      <div className="lg:col-span-2 grid grid-rows-2 gap-3">
+        <CompactPromo
           href="/community/launchpad"
-          Icon={Sparkles}
           eyebrow="Get inspired"
           title="See what others built"
-          body="Real sites from the Pebble community. Steal the structure, swap in your story."
-          accent="from-amber-500/15 to-amber-500/0"
+          accent="amber"
         />
-        <HomeTile
+        <CompactPromo
           href="/community"
-          Icon={Users}
           eyebrow="Community"
           title="Meet other builders"
-          body="Affiliates, partners, launch help. Connect with people building alongside you."
-          accent="from-emerald-500/15 to-emerald-500/0"
+          accent="emerald"
         />
       </div>
-
-      {/* Rotating tip strip — small dose of interactivity. Cycles on
-          dashboard mount; no autoplay timer so it doesn't pull focus
-          from the project grid below. */}
-      <div className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-card/60">
-        <BookOpen className="w-4 h-4 text-muted-foreground shrink-0" />
-        <p className="text-sm text-muted-foreground flex-1">
-          <span className="text-foreground font-semibold">Pebble tip</span>
-          <span className="mx-2 opacity-40">·</span>
-          {PEBBLE_TIPS[tipIdx]}
-        </p>
+      {/* Pebble tip strip moves into the section as an unbordered
+          full-width row below the promo grid. Less card-on-card. */}
+      <div className="lg:col-span-5 flex items-center gap-2.5 pt-2">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-primary">Peblet tip</span>
+        <span className="text-muted-foreground/40">·</span>
+        <p className="text-sm text-muted-foreground flex-1 truncate">{PEBBLE_TIPS[tipIdx]}</p>
         <button
           type="button"
           onClick={() => setTipIdx((i) => (i + 1) % PEBBLE_TIPS.length)}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
-          aria-label="Show another Pebble tip"
+          aria-label="Show another Peblet tip"
         >
           Next →
         </button>
@@ -365,35 +363,74 @@ function HomeTiles({ hasProjects }: { hasProjects: boolean }) {
   );
 }
 
-function HomeTile({
-  href, Icon, eyebrow, title, body, accent,
+// HeroPromo — left/large promo block. Editorial layout: huge title,
+// no border, gradient background. Marc's de-card-ify ask in shape.
+function HeroPromo({
+  href, eyebrow, title, body, cta,
 }: {
   href: string;
-  Icon: typeof Home;
   eyebrow: string;
   title: string;
   body: string;
-  /** Tailwind gradient-from / gradient-to fragment, e.g. "from-blue-500/15 to-blue-500/0". */
-  accent: string;
+  cta: string;
 }) {
   return (
     <Link
       href={href}
-      className={`${interactions.card} group relative overflow-hidden rounded-xl border border-border bg-card p-5 flex flex-col gap-3 hover:border-primary/40 transition-colors`}
+      className="group lg:col-span-3 relative overflow-hidden rounded-2xl p-7 md:p-9 flex flex-col justify-between min-h-[220px]"
+      style={{
+        background: "linear-gradient(135deg, rgba(48,84,255,0.18) 0%, rgba(48,84,255,0.04) 60%, transparent 100%)",
+      }}
     >
-      <div className={`absolute inset-0 -z-0 bg-gradient-to-br ${accent} opacity-100 group-hover:opacity-100 transition-opacity`} />
-      <div className="relative z-10 flex items-center gap-2">
-        <Icon className="w-4 h-4 text-foreground" />
-        <span className="text-[11px] uppercase tracking-widest font-semibold text-muted-foreground">
-          {eyebrow}
+      {/* Decorative blob */}
+      <div aria-hidden className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-primary/25 blur-3xl" />
+      <div aria-hidden className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-violet-500/20 blur-3xl" />
+
+      <div className="relative">
+        <p className="text-[11px] uppercase tracking-widest font-bold text-primary">{eyebrow}</p>
+        <h3 className="text-2xl md:text-3xl font-bold text-foreground leading-tight mt-2 tracking-tight">
+          {title}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-snug mt-2 max-w-md">
+          {body}
+        </p>
+      </div>
+      <div className="relative pt-5">
+        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground group-hover:gap-2.5 transition-all">
+          {cta} <ArrowRight className="w-4 h-4" />
         </span>
       </div>
-      <div className="relative z-10 flex flex-col gap-1.5">
-        <h3 className="text-base font-bold text-foreground leading-tight">{title}</h3>
-        <p className="text-sm text-muted-foreground leading-snug">{body}</p>
+    </Link>
+  );
+}
+
+// CompactPromo — small upper-right secondary promo. Lighter weight
+// than the hero, still no border.
+function CompactPromo({
+  href, eyebrow, title, accent,
+}: {
+  href: string;
+  eyebrow: string;
+  title: string;
+  accent: "amber" | "emerald";
+}) {
+  const palette = accent === "amber"
+    ? "linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.04) 60%, transparent 100%)"
+    : "linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0.04) 60%, transparent 100%)";
+  const dot = accent === "amber" ? "bg-amber-500" : "bg-emerald-500";
+  return (
+    <Link
+      href={href}
+      className="group relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between min-h-[100px]"
+      style={{ background: palette }}
+    >
+      <div className="flex items-center gap-1.5">
+        <span className={`inline-block w-1.5 h-1.5 rounded-full ${dot}`} />
+        <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/80">{eyebrow}</p>
       </div>
-      <div className="relative z-10 mt-auto inline-flex items-center gap-1.5 text-sm font-semibold text-foreground/80 group-hover:text-foreground transition-colors">
-        Open <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
+      <div className="flex items-end justify-between gap-3 mt-2">
+        <h4 className="text-base font-bold text-foreground leading-tight">{title}</h4>
+        <ArrowRight className="w-4 h-4 text-foreground/60 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
       </div>
     </Link>
   );
@@ -545,7 +582,12 @@ function ProjectCard({
         visible: { opacity: 1, y: 0 },
       }}
       exit={{ opacity: 0, scale: 0.96 }}
-      className={`${interactions.card} bg-card border border-border rounded-2xl overflow-hidden flex flex-col cursor-pointer relative group`}
+      // 2026-05-24 de-card-ify: dropped border-on-rest. The hero image
+      // is now the dominant element; the card identity comes from
+      // overflow-hidden + rounded-2xl + hover ring (instead of a
+      // permanent border ringing every project). Reads as Spotify-
+      // album-grid rather than data-tile-catalog.
+      className={`${interactions.card} bg-card rounded-2xl overflow-hidden flex flex-col cursor-pointer relative group ring-1 ring-transparent hover:ring-primary/30 transition-shadow shadow-sm hover:shadow-md`}
       onClick={() => !deletePending && onOpen()}
       tabIndex={0}
     >
