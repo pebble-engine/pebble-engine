@@ -69,6 +69,17 @@ export async function POST(req: NextRequest) {
   // is set and we always require a valid token.
   const secret = (process.env.TURNSTILE_SECRET_KEY || "").trim();
   if (!secret) {
+    // 2026-05-24 security smoke I6: in production this is a P0 misconfig
+    // (signup gate open to bots). Fail-closed with 503 so the issue is
+    // loud + observable in Sentry. In dev we keep the bypass so local
+    // signup flow works without Cloudflare wiring.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[precheck] PROD: TURNSTILE_SECRET_KEY missing — refusing signups");
+      return NextResponse.json(
+        { ok: false, reason: "Verification system unavailable. Please try again in a moment." },
+        { status: 503 },
+      );
+    }
     console.warn("[precheck] TURNSTILE_SECRET_KEY not set — skipping verify (dev fallback)");
     return NextResponse.json({ ok: true, fallback: "no_turnstile_configured" });
   }

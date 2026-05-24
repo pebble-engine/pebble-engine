@@ -200,7 +200,9 @@ def run_supabase_webhook(handler) -> None:
 
     log.info("welcome email queued for %s (first_name_len=%d)",
              redacted, len(first_name) if first_name else 0)
-    handler._json(200, {"ok": True, "action": "welcome_sent", "email": email})
+    # 2026-05-24 security smoke M5: redact raw email in response so it
+    # doesn't land in Supabase webhook-delivery logs as PII.
+    handler._json(200, {"ok": True, "action": "welcome_sent", "email": redacted})
 
 
 def _clean_first_name(raw: Any) -> Optional[str]:

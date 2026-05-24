@@ -124,8 +124,25 @@ def match_templates(
 
 
 def run_template_match(handler) -> None:
-    """Handle POST /api/template-match. Public endpoint (no auth)."""
+    """Handle POST /api/template-match. Public endpoint (no auth).
+
+    2026-05-24 security smoke I2: per-IP rate limit added. Reuses
+    plan_limiter (20 burst / 1 per 10s) — same envelope as bot-message
+    + brand-extract. Without this, the endpoint accepts unbounded
+    requests; scoring is cheap (~5ms) but the single-threaded engine
+    can still be drowned. 429 with retry-after on rate breach.
+    """
     import json
+    from pebble.security import client_ip, plan_limiter
+
+    ip = client_ip(handler) or ""
+    if not plan_limiter.allow(ip):
+        handler._json(429, {
+            "error": "Too many requests. Please slow down.",
+            "retry_after_seconds": 10,
+        })
+        return
+
     try:
         length = int(handler.headers.get("Content-Length", "0"))
     except ValueError:
