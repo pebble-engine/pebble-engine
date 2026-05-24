@@ -57,19 +57,26 @@ export default function DashboardPage() {
     void refresh();
   }, []);
 
-  // 2026-05-23: Per-session greeting from Pebble. Computed once at
-  // mount so the assistant introduces itself when the user lands on
-  // the dashboard, then the conversation continues from there. Uses
-  // the local profile first-name when known so it feels personal,
-  // falls back to a clean generic when not.
-  const greeting = (() => {
-    const name = (typeof window !== "undefined" ? getUserProfile().firstName : "") || "";
+  // 2026-05-23: Per-session greeting from Pebble. Computed in useEffect
+  // (NOT during render) because both the name lookup and the time-of-day
+  // calculation differ between SSR and CSR — the server renders the
+  // generic guest greeting; the client hydrates with localStorage profile
+  // + browser timezone and the strings diverge, triggering React's
+  // hydration-mismatch warning. The neutral guest greeting is the SSR
+  // initial state; the personalized one settles in after mount.
+  const [greeting, setGreeting] = useState(
+    "Hi, I'm Pebble. Sign in and I'll help you build, navigate, and manage your sites.",
+  );
+  useEffect(() => {
+    const name = getUserProfile().firstName || "";
     const hour = new Date().getHours();
     const tod = hour < 12 ? "morning" : hour < 18 ? "afternoon" : "evening";
-    if (name) return `Good ${tod}, ${name}. I'm Pebble — your AI assistant. Want me to take you somewhere, or should I tell you what's new?`;
-    if (user) return `Good ${tod}. I'm Pebble — your AI assistant. Ask me to navigate, explain something, or help you take action.`;
-    return "Hi, I'm Pebble. Sign in and I'll help you build, navigate, and manage your sites.";
-  })();
+    if (name) {
+      setGreeting(`Good ${tod}, ${name}. I'm Pebble — your AI assistant. Want me to take you somewhere, or should I tell you what's new?`);
+    } else if (user) {
+      setGreeting(`Good ${tod}. I'm Pebble — your AI assistant. Ask me to navigate, explain something, or help you take action.`);
+    }
+  }, [user]);
 
   async function refresh() {
     setLoading(true);

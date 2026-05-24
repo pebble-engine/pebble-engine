@@ -109,14 +109,17 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <head>
-        {/* Next.js 16 won't execute raw <script> tags rendered as React
-            children. The blessed pattern for a pre-paint init like this
-            is <Script strategy="beforeInteractive"> — injected into the
-            HTML stream before hydration so the dark-mode class lands
-            before first paint (no light-to-dark flash). */}
-        <Script id="theme-init" strategy="beforeInteractive">
-          {THEME_INIT_SCRIPT}
-        </Script>
+        {/* Theme-flash prevention runs before hydration. In Next.js 15+
+            App Router, <Script strategy="beforeInteractive"> emits a
+            React warning when placed inside <head> ("Encountered a script
+            tag while rendering React component"). The blessed pattern
+            is dangerouslySetInnerHTML on a raw <script> tag — it's
+            written straight to the HTML stream so the dark-mode class
+            lands before first paint, no React-render lifecycle involved. */}
+        <script
+          id="theme-init"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
       </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
