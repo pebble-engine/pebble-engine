@@ -12,7 +12,7 @@
 
 import React from "react";
 import Link from "next/link";
-import { Menu, X, LayoutGrid } from "lucide-react";
+import { Menu, X, LayoutGrid, ChevronDown, Sparkles, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/components/auth-provider";
 
@@ -51,21 +51,135 @@ function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string)
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/** Pebble brand mark for the nav. */
+/** Pebble brand mark for the nav.
+ *
+ *  Unauthed (or auth still loading): plain link back to the landing top.
+ *
+ *  Authed: button that opens a dropdown with quick-jumps into the app
+ *  (dashboard, start a build) + sign out. Marc's 2026-05-23 request —
+ *  a returning logged-in user looking at the landing page should be
+ *  able to launch back into product surfaces from the most prominent
+ *  affordance on the page (the brand mark itself), not just from the
+ *  right-side CTA. */
 function PebbleMark({ className = "" }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      onClick={(e) => handleAnchorClick(e, "#")}
-      className={cn(
-        "inline-flex items-center text-[28px] font-extrabold tracking-tight text-foreground",
-        "hover:text-foreground/85 transition-colors",
-        className,
-      )}
-      aria-label="Pebble — home"
-    >
+  const { user, loading: authLoading, signOut } = useAuth();
+  const isAuthed = !authLoading && !!user;
+  const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Click-outside closes the menu. Same pattern as components/auth-menu.tsx.
+  React.useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  // Esc closes the menu when it has focus.
+  React.useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const markText = (
+    <>
       Pebble<span aria-hidden className="text-[#3054ff]">.</span>
-    </Link>
+    </>
+  );
+  const markClasses = cn(
+    "inline-flex items-center text-[28px] font-extrabold tracking-tight text-foreground",
+    "hover:text-foreground/85 transition-colors",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md",
+    className,
+  );
+
+  if (!isAuthed) {
+    return (
+      <Link
+        href="/"
+        onClick={(e) => handleAnchorClick(e, "#")}
+        className={markClasses}
+        aria-label="Pebble — home"
+      >
+        {markText}
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(markClasses, "gap-1.5 cursor-pointer")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={open ? "Close Pebble menu" : "Open Pebble menu"}
+      >
+        {markText}
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-150",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className={cn(
+            "absolute left-0 mt-2 w-64 z-50 overflow-hidden",
+            "rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(31,29,26,0.18)]",
+          )}
+        >
+          {user?.email && (
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Signed in as
+              </p>
+              <p className="text-sm font-semibold text-foreground truncate mt-0.5">
+                {user.email}
+              </p>
+            </div>
+          )}
+          <Link
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+          >
+            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+            Open dashboard
+          </Link>
+          <Link
+            href="/workspace"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+          >
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            Start something new
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              setOpen(false);
+              await signOut();
+            }}
+            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors border-t border-border"
+          >
+            <LogOut className="h-4 w-4 text-muted-foreground" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 

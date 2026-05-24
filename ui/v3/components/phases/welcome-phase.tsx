@@ -893,7 +893,12 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px]"
         />
 
-        {/* "welcome to Pebble." — pinned small at top so the rotating headline owns the hero */}
+        {/* Header lockup pinned small at top. Marc's 2026-05-23 request:
+            returning logged-in users see "welcome back" instead of the
+            first-time "welcome to Pebble." so the landing reflects the
+            relationship Pebble has with them. Auth gate uses the same
+            useAuth() that drives the nav dropdown — single source of
+            truth, no localStorage / cookie heuristics. */}
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
@@ -901,64 +906,117 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="absolute top-20 sm:top-24 left-0 right-0 flex items-center justify-center z-10"
         >
           <div className="flex items-baseline gap-1.5">
-            <span className="text-muted-foreground text-xs sm:text-sm">welcome to</span>
+            <span className="text-muted-foreground text-xs sm:text-sm">
+              {!authLoading && user ? "welcome back to" : "welcome to"}
+            </span>
             <span className="text-sm sm:text-base font-semibold text-foreground">Pebble.</span>
           </div>
         </motion.div>
 
         <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
 
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
-          className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
-        >
-          Let&apos;s build your{" "}
-          <MotionConfig reducedMotion="never">
-            {/* Fixed-width slot sized to the widest word ("presence").
-                Rotating word is left-aligned inside it — short words
-                leave empty space to the right, long words fit exactly.
-                The sentence never reflows or shifts position. */}
-            <span
-              className="relative inline-block align-baseline"
-              style={{ paddingTop: "0.12em", paddingBottom: "0.42em", marginTop: "-0.12em", marginBottom: "-0.42em" }}
-            >
-              <span aria-hidden className="invisible select-none">presence</span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={ROTATING_WORDS[wordIdx]}
-                  initial={{ opacity: 0, y: 5 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    backgroundPosition: ["0% 0%", "200% 0%"],
-                  }}
-                  exit={{ opacity: 0, y: -5 }}
-                  transition={{
-                    opacity: { duration: 0.5, ease: EASE_CINEMATIC },
-                    y:       { duration: 0.5, ease: EASE_CINEMATIC },
-                    backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
-                  }}
-                  className="absolute left-1/2 -translate-x-1/2 top-[0.12em] pb-[0.3em] bg-clip-text text-transparent whitespace-nowrap"
-                  style={shimmerForegroundStyle}
-                >
-                  {ROTATING_WORDS[wordIdx]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-          </MotionConfig>
-        </motion.h1>
+        {!authLoading && user ? (
+          /* Returning-user hero. Drops the rotating word (they already
+             know what Pebble does) in favor of a personal welcome that
+             nudges them toward the dashboard OR a new build. The
+             detective-input search bar that renders further down still
+             works the same — they can type a new prompt OR use the
+             dashboard CTA below to manage existing designs. */
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
+            className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
+          >
+            Welcome back
+            {firstName ? <>, <span style={shimmerForegroundStyle} className="bg-clip-text text-transparent">{firstName}</span></> : null}
+            <span className="text-muted-foreground">.</span>
+          </motion.h1>
+        ) : (
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
+            className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
+          >
+            Let&apos;s build your{" "}
+            <MotionConfig reducedMotion="never">
+              {/* Fixed-width slot sized to the widest word ("presence").
+                  Rotating word is left-aligned inside it — short words
+                  leave empty space to the right, long words fit exactly.
+                  The sentence never reflows or shifts position. */}
+              <span
+                className="relative inline-block align-baseline"
+                style={{ paddingTop: "0.12em", paddingBottom: "0.42em", marginTop: "-0.12em", marginBottom: "-0.42em" }}
+              >
+                <span aria-hidden className="invisible select-none">presence</span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ROTATING_WORDS[wordIdx]}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      backgroundPosition: ["0% 0%", "200% 0%"],
+                    }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{
+                      opacity: { duration: 0.5, ease: EASE_CINEMATIC },
+                      y:       { duration: 0.5, ease: EASE_CINEMATIC },
+                      backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
+                    }}
+                    className="absolute left-1/2 -translate-x-1/2 top-[0.12em] pb-[0.3em] bg-clip-text text-transparent whitespace-nowrap"
+                    style={shimmerForegroundStyle}
+                  >
+                    {ROTATING_WORDS[wordIdx]}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </MotionConfig>
+          </motion.h1>
+        )}
 
-        {/* Short punchy quote above CTA — swap text here if needed */}
+        {/* Short punchy quote above CTA — text swaps for returning users
+            to match the welcome-back framing above. */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
           className="text-2xl sm:text-4xl font-extrabold text-foreground max-w-xl"
         >
-          The world needs what you do.
+          {!authLoading && user
+            ? "Pick up where you left off — or start something new."
+            : "The world needs what you do."}
         </motion.p>
+
+        {/* Returning-user quick action: jump straight to the dashboard.
+            Sits above the detective-input so users who came back to
+            manage existing designs (not start a new one) have a
+            one-click path. Hidden for unauthed visitors. */}
+        {!authLoading && user && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-3"
+          >
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+            >
+              Open dashboard
+            </Link>
+            {resumeName && (
+              <button
+                type="button"
+                onClick={handleResume}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Resume &ldquo;{resumeName}&rdquo; →
+              </button>
+            )}
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
