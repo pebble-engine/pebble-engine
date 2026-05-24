@@ -518,6 +518,39 @@ def send_password_reset_async(email: str, reset_url: str, sender: Optional[Email
     return send_async(render_password_reset(email, reset_url), sender=sender)
 
 
+def send_password_changed_notification(email: str, sender: Optional[EmailSender] = None) -> dict:
+    """Notifies the user that their password was just changed. Sent
+    AFTER the change succeeds so a real customer who didn't initiate
+    it knows immediately and can recover via the password-reset flow.
+
+    Includes a 'If this wasn't you' CTA pointing at /auth/forgot. Short
+    enough to read on a phone notification."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble password was just changed"
+    text = (
+        "Your Pebble password was changed a moment ago.\n\n"
+        "If this was you, no action needed.\n\n"
+        "If this wasn't you, reset your password immediately:\n"
+        f"  {forgot_url}\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Your Pebble password was changed a moment ago.</p>"
+        "<p>If this was you, no action needed.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#1F1D1A;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Or paste: <code>{_escape_html(forgot_url)}</code></p>'
+        "<p style=\"font-size:13px;color:#666\">Then email support@pebbleapp.ai so we can "
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
+
+
 __all__ = [
     "EmailError",
     "EmailMessage",
@@ -533,6 +566,7 @@ __all__ = [
     "send_welcome_async",
     "send_password_reset",
     "send_password_reset_async",
+    "send_password_changed_notification",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.

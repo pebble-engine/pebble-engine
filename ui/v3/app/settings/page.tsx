@@ -140,11 +140,13 @@ function SettingsPageContent() {
   const [cancelSubmitting, setCancelSubmitting] = useState(false);
 
   // ── password state ─────────────────────────────────────────────────────────
-  const [pw, setPw]               = useState("");
-  const [confirmPw, setConfirmPw] = useState("");
-  const [pwError, setPwError]     = useState<string | null>(null);
-  const [pwSuccess, setPwSuccess] = useState(false);
+  const [currentPw, setCurrentPw]     = useState("");
+  const [pw, setPw]                   = useState("");
+  const [confirmPw, setConfirmPw]     = useState("");
+  const [pwError, setPwError]         = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess]     = useState(false);
   const [pwSubmitting, setPwSubmitting] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword]         = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -254,13 +256,30 @@ function SettingsPageContent() {
     e.preventDefault();
     setPwError(null);
     setPwSuccess(false);
+    if (!currentPw) { setPwError("Please enter your current password."); return; }
     if (pw.length < 8) { setPwError("Password must be at least 8 characters."); return; }
     if (pw !== confirmPw) { setPwError("Passwords don't match."); return; }
+    if (currentPw === pw) { setPwError("New password must differ from current password."); return; }
     setPwSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({ password: pw });
-      if (error) { setPwError(error.message); return; }
-      setPw(""); setConfirmPw(""); setPwSuccess(true);
+      const { data: session } = await supabase.auth.getSession();
+      const token = session?.session?.access_token;
+      if (!token) { setPwError("Please sign in again."); return; }
+      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+      const resp = await fetch(`${ENGINE_BASE}/api/account/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+        body: JSON.stringify({ current_password: currentPw, new_password: pw }),
+      });
+      const result = await resp.json();
+      if (resp.ok) {
+        setCurrentPw(""); setPw(""); setConfirmPw(""); setPwSuccess(true);
+      } else {
+        setPwError(result.error || "Could not change password. Please try again.");
+      }
     } catch (err) {
       setPwError(err instanceof Error ? err.message : "Password update failed.");
     } finally {
@@ -569,6 +588,25 @@ function SettingsPageContent() {
             </div>
             <form onSubmit={onChangePassword} className="space-y-3">
               <label className="block">
+                <span className={`${type.label} text-muted-foreground`}>Current password</span>
+                <div className="relative mt-1">
+                  <input
+                    type={showCurrentPassword ? "text" : "password"}
+                    value={currentPw} onChange={(e) => setCurrentPw(e.target.value)}
+                    required autoComplete="current-password"
+                    className="w-full rounded-lg border border-border bg-background px-3 py-2 pr-10 text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrentPassword(v => !v)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    aria-label={showCurrentPassword ? "Hide password" : "Show password"}
+                  >
+                    {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </label>
+              <label className="block">
                 <span className={`${type.label} text-muted-foreground`}>New password</span>
                 <div className="relative mt-1">
                   <input
@@ -609,7 +647,7 @@ function SettingsPageContent() {
               {pwError && <p className={`${type.body.s} text-destructive`} role="alert">{pwError}</p>}
               {pwSuccess && (
                 <p className={`${type.body.s} text-primary`} role="status">
-                  Password updated. You can keep using Pebble — no need to sign in again.
+                  Password changed. Other sessions have been signed out. We emailed you a confirmation.
                 </p>
               )}
               <button

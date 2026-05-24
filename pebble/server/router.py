@@ -395,6 +395,11 @@ def route_post(handler) -> None:
             # user explicitly picks Free / Starter / Pro / Enterprise.
             from pebble.server.account import run_select_plan
             run_select_plan(handler)
+        elif handler.path == "/api/account/change-password":
+            # Re-auth challenge + admin-API password update + audit log +
+            # notification email. Per-user rate-limited to 5/hour.
+            from pebble.server.account import run_change_password
+            run_change_password(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url

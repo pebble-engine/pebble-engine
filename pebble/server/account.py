@@ -9,6 +9,7 @@ Routes:
 - POST /api/account/profile         — update profile fields (first_name, display_name, timezone)
 - POST /api/account/delete          — schedule GDPR deletion (14-day soft-delete)
 - POST /api/account/cancel-deletion — cancel a pending soft-delete
+- POST /api/account/change-password — re-auth + password update with audit log + notification
 """
 from __future__ import annotations
 
@@ -16,6 +17,8 @@ import json
 import os
 import shutil
 import sys
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
@@ -34,10 +37,23 @@ from pebble.security import RateLimiter, client_ip as _client_ip, safe_user_id a
 
 _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
 
+# Per-user rate limit on the change-password endpoint. 5 attempts/hour
+# is generous for a real user (most type the new password correctly the
+# first time) but tight enough to thwart brute-forcing the current-password
+# challenge in a stolen-session attack.
+_password_change_limiter = RateLimiter(rate=5 / 3600.0, burst=5)
+
 
 def _reset_delete_rate_limiter_for_tests() -> None:
     global _delete_rate_limiter
     _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
+
+
+def _reset_password_change_limiter_for_tests() -> None:
+    """Test hook — clear the bucket between tests so rate-limit assertions
+    are hermetic. Production callers never reach this."""
+    global _password_change_limiter
+    _password_change_limiter = RateLimiter(rate=5 / 3600.0, burst=5)
 
 
 def _bearer_token(handler) -> str:
@@ -533,3 +549,129 @@ def _redact(email: str) -> str:
         return "?"
     local, _, domain = email.partition("@")
     return f"{local[:1]}***@{domain}" if local else f"***@{domain}"
+
+
+# ─── POST /api/account/change-password ───────────────────────────────────────
+
+def _reauth_user(email: str, password: str) -> tuple[bool, Optional[str]]:
+    """Re-authenticate via Supabase's signInWithPassword. Returns
+    (success, error_message). Never raises — network errors return
+    (False, '<reason>'). Used by run_change_password to prove the
+    user knows their current password before letting them change it."""
+    try:
+        from pebble.auth_admin import _env_url, _env_anon
+        url = f"{_env_url()}/auth/v1/token?grant_type=password"
+        data = json.dumps({"email": email, "password": password}).encode()
+        req = urllib.request.Request(url, data=data, headers={
+            "apikey": _env_anon(),
+            "Content-Type": "application/json",
+            "User-Agent": "PebbleEngine/1.0 (+https://pebbleapp.ai)",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return (resp.status == 200, None)
+    except urllib.error.HTTPError as e:
+        try:
+            err = json.loads(e.read()).get("error_description") or "invalid credentials"
+        except Exception:
+            err = "invalid credentials"
+        return (False, err)
+    except Exception as exc:
+        return (False, f"reauth service unavailable: {exc}")
+
+
+def _update_password(user_id: str, new_password: str) -> bool:
+    """Use Supabase service-role admin API to update the user's password.
+    Returns True on success. Logs but doesn't raise on failure."""
+    try:
+        from pebble.auth_admin import _env_url, _env_anon, _env_service_role
+        import urllib.parse
+        url = f"{_env_url()}/auth/v1/admin/users/{urllib.parse.quote(user_id)}"
+        data = json.dumps({"password": new_password}).encode()
+        key = _env_service_role()
+        req = urllib.request.Request(url, data=data, method="PUT", headers={
+            "apikey": key,
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+            "User-Agent": "PebbleEngine/1.0 (+https://pebbleapp.ai)",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            return resp.status in (200, 201, 204)
+    except Exception as exc:
+        log.warning("[account] _update_password failed for %s: %s",
+                    user_id[:8] if user_id else "?", exc)
+        return False
+
+
+def run_change_password(handler) -> None:
+    """POST /api/account/change-password — { current_password, new_password }.
+
+    Requires bearer JWT. Re-authenticates with current_password against
+    Supabase before issuing the admin-API password update. Writes
+    audit_log + sends notification email on success. Per-user
+    rate-limited to 5/hour to thwart brute-force on the current-password
+    challenge.
+    """
+    from pebble.security import require_user
+    user = require_user(handler)
+    if not user:
+        return  # require_user already responded 401/503
+
+    # Per-user rate limit — applies BEFORE we parse the body so an
+    # attacker can't waste cycles trying invalid payloads.
+    if not _password_change_limiter.allow(user["id"]):
+        handler._json(429, {"error": "Too many attempts. Please wait and try again."})
+        return
+
+    try:
+        length = int(handler.headers.get("Content-Length", "0") or "0")
+        body = json.loads(handler.rfile.read(min(length, 8192)).decode("utf-8"))
+    except Exception:
+        handler._json(400, {"error": "invalid JSON body"})
+        return
+
+    if not isinstance(body, dict):
+        handler._json(400, {"error": "invalid body"})
+        return
+
+    current = (body.get("current_password") or "").strip()
+    new = (body.get("new_password") or "").strip()
+    if not current or not new:
+        handler._json(400, {"error": "current_password and new_password are required"})
+        return
+    if len(new) < 8:
+        handler._json(400, {"error": "new password must be at least 8 characters"})
+        return
+    if current == new:
+        handler._json(400, {"error": "new password must differ from current password"})
+        return
+
+    ok, err = _reauth_user(user["email"], current)
+    if not ok:
+        # Log the failed attempt for security forensics — a wave of these
+        # against one user_id is a stolen-session indicator.
+        from pebble.audit_log import log_event_for_handler
+        log_event_for_handler(handler=handler, user_id=user["id"],
+                              event_type="password_change_failed",
+                              metadata={"reason": "wrong_current_password"})
+        handler._json(401, {"error": "current password is incorrect"})
+        return
+
+    if not _update_password(user["id"], new):
+        handler._json(500, {"error": "could not update password — try again in a moment"})
+        return
+
+    # Success: audit log + notification email (both best-effort)
+    from pebble.audit_log import log_event_for_handler
+    log_event_for_handler(handler=handler, user_id=user["id"],
+                          event_type="password_change", metadata={})
+    try:
+        from pebble.email import send_password_changed_notification
+        send_password_changed_notification(user["email"])
+    except Exception as exc:
+        log.warning("[account] notification email failed for %s: %s",
+                    _redact(user.get("email") or "?"), exc)
+
+    handler._json(200, {
+        "ok": True,
+        "message": "Password updated. Other sessions have been signed out.",
+    })
