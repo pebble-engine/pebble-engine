@@ -95,10 +95,40 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
     .slice(0, 4);
 
   return (
-    <aside className="w-[240px] bg-card border-r border-border flex flex-col h-full overflow-hidden">
+    <aside className="relative w-[240px] bg-card border-r border-border flex flex-col h-full overflow-hidden">
+      {/* 2026-05-24 polish: subtle ambient texture so the sidebar doesn't
+          read as flat. Two stacked layers, both pointer-events-none and
+          behind the nav content:
+            1. Vertical gradient — primary tint fading to transparent.
+            2. Floating spec-dots — slow ambient drift in the upper area.
+          Skip both under prefers-reduced-motion via the .ambient-drift
+          class which respects the media query in its keyframe block. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 bg-gradient-to-b from-primary/8 via-transparent to-violet-500/5"
+      />
+      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <span className="absolute top-[12%] left-[18%] w-1 h-1 rounded-full bg-primary/40 ambient-drift" />
+        <span className="absolute top-[22%] right-[24%] w-1.5 h-1.5 rounded-full bg-primary/30 ambient-drift-slow" />
+        <span className="absolute top-[38%] left-[40%] w-1 h-1 rounded-full bg-violet-500/35 ambient-drift" />
+        <span className="absolute top-[58%] right-[12%] w-1 h-1 rounded-full bg-pink-500/30 ambient-drift-slow" />
+        <span className="absolute top-[74%] left-[14%] w-1.5 h-1.5 rounded-full bg-primary/25 ambient-drift" />
+      </div>
+      <style>{`
+        @keyframes ambient-drift-kf {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0.7; }
+          50%      { transform: translateY(-8px) translateX(4px); opacity: 1; }
+        }
+        .ambient-drift      { animation: ambient-drift-kf 8s ease-in-out infinite; }
+        .ambient-drift-slow { animation: ambient-drift-kf 14s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .ambient-drift, .ambient-drift-slow { animation: none; }
+        }
+      `}</style>
+
       {/* Scrollable content — flex-col + overflow-y-auto so the footer
           stays pinned at the bottom even on short viewports (6.7 risk). */}
-      <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-1">
+      <div className="relative flex-1 overflow-y-auto p-5 flex flex-col gap-1">
         {/* Workspace label */}
         <div className="mb-4 px-1">
           <p className={`${type.mono} text-muted-foreground`}>

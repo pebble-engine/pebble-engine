@@ -281,19 +281,51 @@ export function PebbleChat({ greeting }: PebbleChatProps) {
   return (
     <div className="flex h-full flex-col bg-card border-l border-border">
       {/* Hero — Peblet mascot + identity. Shared across all tabs so
-          the assistant's presence stays anchored. */}
-      <header className="flex flex-col items-center text-center px-4 pt-5 pb-4 border-b border-border shrink-0 bg-gradient-to-b from-primary/8 to-transparent">
-        <div className="flex items-center justify-between w-full mb-2">
+          the assistant's presence stays anchored. 2026-05-24 polish:
+          richer ambient backdrop — a radial glow behind the mascot
+          plus a few drifting particles so the hero feels alive
+          without burning CPU on a video. */}
+      <header className="relative flex flex-col items-center text-center px-4 pt-5 pb-4 border-b border-border shrink-0 bg-gradient-to-b from-primary/10 via-violet-500/5 to-transparent overflow-hidden">
+        {/* Soft radial glow behind the mascot */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-primary/25 blur-3xl"
+        />
+        {/* Drift particles — only in the header so the chat scroll area stays calm */}
+        <div aria-hidden className="pointer-events-none absolute inset-0">
+          <span className="absolute top-[18%] left-[14%] w-1 h-1 rounded-full bg-primary/50 ambient-drift" />
+          <span className="absolute top-[28%] right-[16%] w-1.5 h-1.5 rounded-full bg-pink-500/40 ambient-drift-slow" />
+          <span className="absolute top-[48%] left-[24%] w-1 h-1 rounded-full bg-violet-500/45 ambient-drift" />
+          <span className="absolute top-[62%] right-[22%] w-1 h-1 rounded-full bg-primary/40 ambient-drift-slow" />
+        </div>
+        <style>{`
+          @keyframes peblet-drift-kf {
+            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.75; }
+            50%      { transform: translateY(-6px) translateX(3px); opacity: 1; }
+          }
+          .ambient-drift      { animation: peblet-drift-kf 7s ease-in-out infinite; }
+          .ambient-drift-slow { animation: peblet-drift-kf 12s ease-in-out infinite; }
+          @media (prefers-reduced-motion: reduce) {
+            .ambient-drift, .ambient-drift-slow { animation: none; }
+          }
+        `}</style>
+
+        <div className="relative flex items-center justify-between w-full mb-2">
           <div className="flex items-center gap-1.5">
-            <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span className="relative inline-flex">
+              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span className="absolute inset-0 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping opacity-60" />
+            </span>
             <p className="text-sm font-bold text-foreground leading-none">Peblet</p>
           </div>
-          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground px-2 py-0.5 rounded-full border border-border">
+          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground px-2 py-0.5 rounded-full border border-border bg-card/60 backdrop-blur-sm">
             AI Assistant
           </span>
         </div>
-        <PebletMascot size="lg" animate />
-        <div className="mt-3 space-y-1">
+        <div className="relative">
+          <PebletMascot size="lg" animate />
+        </div>
+        <div className="relative mt-3 space-y-1">
           <p className="text-base font-bold text-foreground">
             Hi{user ? "" : " there"}! I&apos;m Peblet <span className="inline-block">👋</span>
           </p>
