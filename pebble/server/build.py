@@ -323,6 +323,42 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
             # because of a sentinel read error.
             log.warning("plan-selection gate check failed: %s", e)
 
+    # 2026-05-24 Free tier restructure: engine-build-from-brief now
+    # requires sufficient credits (10 per build). Free tier gets 5
+    # credits/month → cannot afford this → directed to templates.
+    # Paid plans cover it from monthly grant. We PRE-check (refuse
+    # before any LLM cost) AND post-spend (after success). Fail-closed
+    # only when Supabase is reachable; if credits.is_configured()
+    # returns False (local dev / outage), we fail-OPEN so dev work
+    # keeps moving — the Supabase gate is the real enforcement layer.
+    if generate and caller_uid:
+        try:
+            from pebble import credits as _credits
+            if _credits.is_configured():
+                balance = _credits.get_balance(caller_uid)
+                if balance is None:
+                    # Fresh user — lazy init their row then re-read.
+                    row = _credits.get_or_init_row(caller_uid)
+                    balance = int(row.get("balance") or 0) if row else 0
+                if balance < _credits.COST_FULL_ENGINE_BUILD:
+                    handler._json(402, {
+                        "error":         "insufficient credits",
+                        "code":          "credits_low",
+                        "balance":       balance,
+                        "needed":        _credits.COST_FULL_ENGINE_BUILD,
+                        "action":        "full_engine_build",
+                        "message":       (
+                            f"A full engine build costs {_credits.COST_FULL_ENGINE_BUILD} credits "
+                            f"and you have {balance}. Upgrade for more, or start from a template "
+                            f"(those only cost {_credits.COST_TEMPLATE_INSTANTIATE})."
+                        ),
+                        "upgrade_url":   "/pricing",
+                        "templates_url": "/templates",
+                    })
+                    return
+        except Exception as e:
+            log.warning("[credits] build gate check errored (failing open): %s", e)
+
     ds_text = ""
     if generate_design_system:
         try:
@@ -1100,6 +1136,26 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
             )
     except Exception as e:
         log.warning("events.record failed for build_completed: %s", e)
+
+    # 2026-05-24 — credit spend. We spend AFTER the build succeeds
+    # (the pre-check at the top of run_build refuses insufficient
+    # balance before any LLM cost). Failure to record the spend is
+    # logged but doesn't fail the request — under-billing beats
+    # breaking a build the user already saw succeed.
+    try:
+        from pebble import credits as _credits
+        if caller_uid:
+            spent = _credits.spend(
+                user_id=caller_uid,
+                amount=_credits.COST_FULL_ENGINE_BUILD,
+                reason=_credits.REASON_FULL_BUILD,
+                ref_id=slug,
+            )
+            if not spent:
+                log.warning("[credits] build spend skipped for user=%s slug=%s (Supabase miss or stale balance)",
+                            caller_uid[:8], slug)
+    except Exception as e:
+        log.warning("[credits] build spend errored: %s", e)
 
     # Post-first-build email drip (Ch 11.6). schedule_drip() is idempotent —
     # it no-ops if the drip file already exists, so rebuilds don't reset the

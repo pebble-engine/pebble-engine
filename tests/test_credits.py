@@ -47,6 +47,39 @@ def test_default_hard_cap_is_400():
     assert credits.DEFAULT_HARD_CAP == 400
 
 
+def test_free_grant_cannot_afford_full_build():
+    """2026-05-24 free tier: a free signup should NOT have enough
+    credits to run a full engine build. This is the structural gate
+    that pushes free users toward templates."""
+    free_grant = credits.PLAN_GRANTS["free"]
+    full_build_cost = credits.COST_FULL_ENGINE_BUILD
+    assert free_grant < full_build_cost, (
+        f"Free grant ({free_grant}) shouldn't cover a full build ({full_build_cost})"
+    )
+
+
+def test_starter_grant_covers_at_least_one_full_build():
+    """Starter buyers should be able to run at least one engine build
+    on their monthly grant, or the tier feels useless."""
+    assert credits.PLAN_GRANTS["starter"] >= credits.COST_FULL_ENGINE_BUILD
+
+
+def test_cost_for_known_actions():
+    """The cost_for() lookup should resolve every action the engine
+    references — typos here cause silent under-billing."""
+    assert credits.cost_for("template_instantiate") == credits.COST_TEMPLATE_INSTANTIATE
+    assert credits.cost_for("refinement")           == credits.COST_REFINEMENT
+    assert credits.cost_for("brand_extract")        == credits.COST_BRAND_EXTRACT
+    assert credits.cost_for("full_engine_build")    == credits.COST_FULL_ENGINE_BUILD
+
+
+def test_cost_for_unknown_action_defaults_to_one():
+    """Defensive default for forward compatibility — a new action
+    added in the engine before the costs table catches up should
+    bill 1 credit rather than 0 (which would let it slip free)."""
+    assert credits.cost_for("brand_new_action_xyz") == 1
+
+
 # ── Reason constant allowlists ─────────────────────────────────── #
 
 

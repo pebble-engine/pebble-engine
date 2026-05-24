@@ -57,31 +57,67 @@ from pebble.log import log
 
 DEFAULT_HARD_CAP = 400
 
+# 2026-05-24 Free tier restructure (Marc): Free signup no longer
+# includes the engine-build-from-brief path. Free users get templates
+# + small tweaks; the engine is paid-only. New monthly grants reflect
+# this — 5 credits = 5 template uses OR 5 refinements, but not enough
+# to fund a 10-credit full engine build. Bot LLM-burn cost drops ~20×.
 PLAN_GRANTS: dict[str, int] = {
-    "free":    20,
+    "free":    5,
     "starter": 100,
     "pro":     400,
 }
 
 PLAN_CAPS: dict[str, int] = {
-    "free":    100,
+    "free":    20,    # was 100 — tighter so free can't stockpile then mass-spend
     "starter": 400,
     "pro":     400,
 }
 
 
+# 2026-05-24 — credit costs per action. Single source of truth for
+# pricing surfaces (paywall modals, settings, plan picker) AND for
+# the engine's spend() calls. Changing a cost = changing one constant.
+COST_TEMPLATE_INSTANTIATE = 1
+COST_REFINEMENT            = 1
+COST_BRAND_EXTRACT         = 2
+COST_FULL_ENGINE_BUILD     = 10   # the new gate — Free tier can't afford this
+COST_BLOCK_INSERT          = 0    # deterministic, no LLM
+COST_VISUAL_EDIT           = 0    # deterministic, no LLM
+COST_CHAT_MESSAGE          = 0    # rate-limited but free (LLM cost trivial)
+
+
+def cost_for(action: str) -> int:
+    """Map action name → credit cost. Used by the v3 paywall preview
+    (shows the cost on each button) and the engine's spend gates."""
+    costs = {
+        "template_instantiate": COST_TEMPLATE_INSTANTIATE,
+        "refinement":           COST_REFINEMENT,
+        "brand_extract":        COST_BRAND_EXTRACT,
+        "full_engine_build":    COST_FULL_ENGINE_BUILD,
+        "block_insert":         COST_BLOCK_INSERT,
+        "visual_edit":          COST_VISUAL_EDIT,
+        "chat":                 COST_CHAT_MESSAGE,
+    }
+    return costs.get(action, 1)
+
+
 # ─── Spend reason constants — pinned so callers can't typo ────────── #
 
-REASON_REFINEMENT      = "refinement"
-REASON_BLOCK_INSERT    = "block_insert"
-REASON_REGENERATE      = "regenerate"
-REASON_PACK_PURCHASED  = "pack_purchased"
-REASON_MONTHLY_REFILL  = "monthly_refill"
-REASON_ADMIN_GRANT     = "admin_grant"
-REASON_SIGNUP_GRANT    = "signup_grant"
+REASON_REFINEMENT           = "refinement"
+REASON_BLOCK_INSERT         = "block_insert"
+REASON_REGENERATE           = "regenerate"
+REASON_FULL_BUILD           = "full_build"
+REASON_BRAND_EXTRACT        = "brand_extract"
+REASON_TEMPLATE_INSTANTIATE = "template_instantiate"
+REASON_PACK_PURCHASED       = "pack_purchased"
+REASON_MONTHLY_REFILL       = "monthly_refill"
+REASON_ADMIN_GRANT          = "admin_grant"
+REASON_SIGNUP_GRANT         = "signup_grant"
 
 VALID_SPEND_REASONS = {
     REASON_REFINEMENT, REASON_BLOCK_INSERT, REASON_REGENERATE,
+    REASON_FULL_BUILD, REASON_BRAND_EXTRACT, REASON_TEMPLATE_INSTANTIATE,
 }
 VALID_REFILL_REASONS = {
     REASON_PACK_PURCHASED, REASON_MONTHLY_REFILL,
@@ -434,10 +470,21 @@ __all__ = [
     "DEFAULT_HARD_CAP",
     "PLAN_GRANTS",
     "PLAN_CAPS",
+    "cost_for",
+    "COST_TEMPLATE_INSTANTIATE",
+    "COST_REFINEMENT",
+    "COST_BRAND_EXTRACT",
+    "COST_FULL_ENGINE_BUILD",
+    "COST_BLOCK_INSERT",
+    "COST_VISUAL_EDIT",
+    "COST_CHAT_MESSAGE",
     # Reason constants
     "REASON_REFINEMENT",
     "REASON_BLOCK_INSERT",
     "REASON_REGENERATE",
+    "REASON_FULL_BUILD",
+    "REASON_BRAND_EXTRACT",
+    "REASON_TEMPLATE_INSTANTIATE",
     "REASON_PACK_PURCHASED",
     "REASON_MONTHLY_REFILL",
     "REASON_ADMIN_GRANT",

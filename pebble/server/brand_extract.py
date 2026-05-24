@@ -180,6 +180,57 @@ def _parse_multipart(handler) -> tuple[dict | None, list[bytes], str | None]:
     return fields, images, None
 
 
+def _is_safe_url(url: str) -> tuple[bool, str]:
+    """SSRF defense — refuse URLs whose host is local / RFC1918 /
+    link-local / loopback / Pebble's own domain. Resolves the host
+    via DNS so an attacker can't sneak past with a public DNS name
+    that A-records to 127.0.0.1.
+
+    Returns (ok, error_message). Marc 2026-05-24 security review:
+    closes the "scraper hits internal services through us" angle.
+    """
+    import ipaddress
+    import socket
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False, "invalid URL"
+    scheme = (parsed.scheme or "").lower()
+    if scheme not in ("http", "https"):
+        return False, "URL must be http or https"
+    host = (parsed.hostname or "").lower()
+    if not host:
+        return False, "URL missing host"
+
+    # Blocklist by suffix (catch obvious "our own infra" cases).
+    BLOCKED_HOSTS = {"localhost", "metadata.google.internal", "169.254.169.254"}
+    if host in BLOCKED_HOSTS:
+        return False, "internal host blocked"
+    BLOCKED_SUFFIXES = (".pebbleapp.ai", ".internal", ".local")
+    if any(host.endswith(s) for s in BLOCKED_SUFFIXES):
+        return False, "internal host blocked"
+
+    # Resolve to IPs and reject any private / loopback / link-local /
+    # multicast / reserved range.
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except socket.gaierror:
+        return False, "host resolution failed"
+    for info in infos:
+        addr = info[4][0]
+        try:
+            ip_obj = ipaddress.ip_address(addr)
+        except ValueError:
+            continue
+        if (ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local
+            or ip_obj.is_multicast or ip_obj.is_reserved
+            or ip_obj.is_unspecified):
+            return False, "host resolves to internal address"
+    return True, ""
+
+
 def run_brand_extract(handler) -> None:
     """POST /api/brand-extract"""
     ip = client_ip(handler)
@@ -203,6 +254,10 @@ def run_brand_extract(handler) -> None:
         url = (fields or {}).get("url", "").strip()
         if not url:
             handler._json(400, {"error": "url is required"})
+            return
+        ok, why = _is_safe_url(url)
+        if not ok:
+            handler._json(400, {"error": f"url refused: {why}"})
             return
 
         mode_raw = (fields or {}).get("mode", "brand")
@@ -243,6 +298,10 @@ def run_brand_extract(handler) -> None:
     url = body.get("url")
     if not isinstance(url, str) or not url.strip():
         handler._json(400, {"error": "url is required"})
+        return
+    ok, why = _is_safe_url(url.strip())
+    if not ok:
+        handler._json(400, {"error": f"url refused: {why}"})
         return
 
     # Phase 38a — mode flag. "brand" (default) extracts business facts;

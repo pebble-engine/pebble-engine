@@ -420,7 +420,7 @@ def run_refine(handler) -> None:
             from pebble import credits as _credits
             spent = _credits.spend(
                 user_id=caller_uid,
-                amount=1,
+                amount=_credits.COST_REFINEMENT,
                 reason=_credits.REASON_REFINEMENT,
                 ref_id=slug,
             )
