@@ -904,6 +904,71 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "cinematic_hvac",
+      "directory": "pebble/templates/cinematic_hvac",
+      "name": "Cool Crew HVAC",
+      "tagline": "Cinematic HVAC hero. Cyan accent. Same-day service.",
+      "vibe": "Cinematic Real-Estate Listing — HVAC",
+      "source_dna": "cinematic_hvac",
+      "applicable_industries": [
+        "hvac",
+        "air conditioning",
+        "heating",
+        "furnace repair",
+        "duct cleaning",
+        "heat pump installer"
+      ],
+      "preview_image": "/templates-preview/cinematic_hvac.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#0891b2",
+        "#0e7490"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed HVAC companies who need to convey fast, expert, reliable service",
+      "tier": "free",
+      "preview_url": "http://localhost:3199/cinematic_hvac",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
     }
   ],
   "_planned_next": []
