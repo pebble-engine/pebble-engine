@@ -1102,6 +1102,71 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "cinematic_dog_groomer",
+      "directory": "pebble/templates/cinematic_dog_groomer",
+      "name": "Hush & Wag Grooming",
+      "tagline": "Cinematic dog-groomer hero. Pink accent. Small-batch, anxiety-friendly.",
+      "vibe": "Cinematic Real-Estate Listing — Pet Grooming",
+      "source_dna": "cinematic_dog_groomer",
+      "applicable_industries": [
+        "dog groomer",
+        "dog grooming",
+        "pet grooming",
+        "mobile dog grooming",
+        "cat grooming",
+        "pet spa"
+      ],
+      "preview_image": "/templates-preview/cinematic_dog_groomer.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#db2777",
+        "#be185d"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Small-batch dog groomers who want to differentiate on calm, anxiety-friendly care",
+      "tier": "free",
+      "preview_url": "http://localhost:3199/cinematic_dog_groomer",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
     }
   ],
   "_planned_next": []
