@@ -24,8 +24,14 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Sparkles, Users, Rocket, CreditCard, BookOpen, type LucideIcon } from "lucide-react";
+import {
+  fetchNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  type NotificationItem,
+} from "@/lib/api";
 
-type NotificationKind = "welcome" | "community" | "template" | "tip" | "billing" | "system";
+type NotificationKind = "welcome" | "community" | "template" | "tip" | "billing" | "system" | string;
 
 type Notification = {
   id:    string;
@@ -36,6 +42,9 @@ type Notification = {
   href?: string;
   /** ISO timestamp — used to sort newest-first. */
   at:    string;
+  /** True when the row came from Supabase (so we use the server's
+   *  read-state instead of localStorage). */
+  remote?: boolean;
 };
 
 // Seed list. Marc 2026-05-23: pre-populate with welcome + community-
@@ -117,17 +126,68 @@ const ICON_FOR: Record<NotificationKind, LucideIcon> = {
   system:    Bell,
 };
 
+// Map an event kind from the server to the NotificationKind we use
+// for icon coloring. Unknowns fall back to "system" so the bell never
+// breaks on a new kind we haven't styled yet.
+function mapKind(kind: string): NotificationKind {
+  if (kind === "build_completed" || kind === "site_published") return "system";
+  if (kind === "joined_pebble") return "welcome";
+  if (kind === "template_used" || kind === "template_submitted") return "template";
+  if (kind === "tip") return "tip";
+  if (kind === "welcome") return "welcome";
+  return "system";
+}
+
+// Build a deep link from a server event's `meta` payload. Falls back
+// to /dashboard when we can't deduce one.
+function hrefFor(item: NotificationItem): string {
+  const meta = item.meta || {};
+  if (typeof meta.slug === "string" && meta.slug) {
+    return `/workspace/${encodeURIComponent(meta.slug)}`;
+  }
+  if (typeof meta.url === "string" && meta.url.startsWith("http")) {
+    return meta.url;
+  }
+  return "/dashboard";
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
+  // localStorage read-state for the SEED rows (no server-side row to
+  // mark). Server events get their read-state from Supabase via the
+  // is_read field returned by /api/notifications.
+  const [seedReadIds, setSeedReadIds] = useState<Set<string>>(() => new Set());
+  // Server-side notifications. Empty array means either no events yet
+  // OR the fetch failed; the bell merges these with SEED so the user
+  // always sees SOMETHING the first time they log in.
+  const [serverItems, setServerItems] = useState<NotificationItem[]>([]);
+  const [serverUnread, setServerUnread] = useState<number>(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  // Hydrate read-state from localStorage on mount. Done in useEffect
-  // not useState init so the SSR + first-client renders match (no
-  // hydration mismatch flicker).
+  // Hydrate localStorage seed-read state + fetch server items on mount.
   useEffect(() => {
-    setReadIds(loadReadIds());
+    setSeedReadIds(loadReadIds());
+    void refresh();
   }, []);
+
+  async function refresh() {
+    try {
+      const res = await fetchNotifications();
+      setServerItems(res.notifications || []);
+      setServerUnread(res.unread_count || 0);
+    } catch {
+      // 401 (signed out) or 500 — silently leave server list empty.
+      // Seed notifications still render so the bell is never blank.
+      setServerItems([]);
+      setServerUnread(0);
+    }
+  }
+
+  // Re-fetch when the dropdown opens so the bell stays fresh without
+  // a noisy polling loop. Cheap (one tiny GET).
+  useEffect(() => {
+    if (open) void refresh();
+  }, [open]);
 
   // Click-outside closes the dropdown.
   useEffect(() => {
@@ -149,20 +209,62 @@ export function NotificationBell() {
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
-  const unread = SEED.filter((n) => !readIds.has(n.id));
-  const unreadCount = unread.length;
+  // Combine server rows + local SEED. Server rows surface first
+  // because they're the real signal; SEED nudges go below.
+  const merged: Array<Notification & { isUnread: boolean }> = [
+    ...serverItems.map((s) => ({
+      id:       s.id,
+      kind:     mapKind(s.kind),
+      title:    s.title,
+      body:     s.body || "",
+      href:     hrefFor(s),
+      at:       s.created_at,
+      remote:   true,
+      isUnread: !s.is_read,
+    })),
+    ...SEED.map((n) => ({
+      ...n,
+      remote:   false,
+      isUnread: !seedReadIds.has(n.id),
+    })),
+  ];
+  const unreadCount = serverUnread + SEED.filter((n) => !seedReadIds.has(n.id)).length;
 
-  const markRead = (id: string) => {
-    const next = new Set(readIds);
-    next.add(id);
-    setReadIds(next);
-    persistReadIds(next);
+  const markRead = async (item: { id: string; remote?: boolean }) => {
+    if (item.remote) {
+      // Optimistically flip the row + decrement the badge before the
+      // network round-trip; the API call is fire-and-forget on success
+      // because we already updated state.
+      setServerItems((prev) => prev.map((s) => s.id === item.id ? { ...s, is_read: true } : s));
+      setServerUnread((c) => Math.max(0, c - 1));
+      try {
+        await markNotificationRead(item.id);
+      } catch {
+        // If the network call failed, the local state still shows
+        // read — Marc gets to click again, which will retry. Not
+        // worth a rollback dance for a notification.
+      }
+    } else {
+      const next = new Set(seedReadIds);
+      next.add(item.id);
+      setSeedReadIds(next);
+      persistReadIds(next);
+    }
   };
 
-  const markAllRead = () => {
-    const next = new Set(SEED.map((n) => n.id));
-    setReadIds(next);
-    persistReadIds(next);
+  const markAllRead = async () => {
+    // Local seed first (instant).
+    const seedAll = new Set(SEED.map((n) => n.id));
+    setSeedReadIds(seedAll);
+    persistReadIds(seedAll);
+    // Then server.
+    setServerItems((prev) => prev.map((s) => ({ ...s, is_read: true })));
+    setServerUnread(0);
+    try {
+      await markAllNotificationsRead();
+    } catch {
+      // Best-effort; same reasoning as markRead above.
+    }
   };
 
   return (
@@ -207,9 +309,9 @@ export function NotificationBell() {
           </div>
 
           <ul className="max-h-[420px] overflow-y-auto">
-            {SEED.map((n) => {
-              const Icon = ICON_FOR[n.kind];
-              const isUnread = !readIds.has(n.id);
+            {merged.map((n) => {
+              const Icon = ICON_FOR[n.kind] ?? Bell;
+              const isUnread = n.isUnread;
               const content = (
                 <div className="flex items-start gap-3 px-4 py-3 hover:bg-accent transition-colors cursor-pointer">
                   <span
@@ -226,23 +328,23 @@ export function NotificationBell() {
                       </p>
                       {isUnread && <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary shrink-0" />}
                     </div>
-                    <p className="text-xs text-muted-foreground mt-1 leading-snug">{n.body}</p>
+                    {n.body && <p className="text-xs text-muted-foreground mt-1 leading-snug">{n.body}</p>}
                   </div>
                 </div>
               );
               return (
-                <li key={n.id}>
+                <li key={`${n.remote ? "r" : "s"}-${n.id}`}>
                   {n.href ? (
                     <Link
                       href={n.href}
-                      onClick={() => { markRead(n.id); setOpen(false); }}
+                      onClick={() => { void markRead(n); setOpen(false); }}
                     >
                       {content}
                     </Link>
                   ) : (
                     <button
                       type="button"
-                      onClick={() => markRead(n.id)}
+                      onClick={() => void markRead(n)}
                       className="w-full text-left"
                     >
                       {content}

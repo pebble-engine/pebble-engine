@@ -405,6 +405,57 @@ export async function sendChat(
   return postJSON("/api/chat", { messages, sitemap });
 }
 
+// ---------- /api/notifications (Supabase-backed bell feed, 2026-05-24) -----
+
+export type NotificationItem = {
+  id:         string;
+  kind:       string;
+  title:      string;
+  body:       string | null;
+  meta:       Record<string, unknown> | null;
+  created_at: string;
+  is_read:    boolean;
+};
+
+export async function fetchNotifications(): Promise<{ notifications: NotificationItem[]; unread_count: number }> {
+  return getJSON("/api/notifications");
+}
+
+export async function markNotificationRead(eventId: string): Promise<{ ok: boolean }> {
+  return postJSON(`/api/notifications/${encodeURIComponent(eventId)}/read`, {});
+}
+
+export async function markAllNotificationsRead(): Promise<{ ok: boolean; marked: number }> {
+  return postJSON("/api/notifications/read-all", {});
+}
+
+// ---------- /api/community (Supabase-backed feed + stats, 2026-05-24) ------
+
+export type CommunityFeedEvent = {
+  id:         string;
+  kind:       string;
+  title:      string;
+  body:       string | null;
+  meta:       Record<string, unknown> | null;
+  created_at: string;
+};
+
+export async function fetchCommunityFeed(): Promise<{ events: CommunityFeedEvent[]; count: number }> {
+  return getJSON("/api/community/feed");
+}
+
+export type CommunityStats = {
+  total_users:        number;
+  total_sites:        number;
+  launches_this_week: number;
+  templates_count:    number;
+  refreshed_at:       string;
+};
+
+export async function fetchCommunityStats(): Promise<{ stats: CommunityStats | null; fallback?: boolean }> {
+  return getJSON("/api/community/stats");
+}
+
 // ---------- /api/projects/<slug>/integrity (Phase 36, 2026-05-21) ----------
 //
 // Pre-launch checklist. Runs the curated 10-eval subset against a build

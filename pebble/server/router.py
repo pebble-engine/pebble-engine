@@ -122,6 +122,23 @@ def route_get(handler) -> None:
             handler._handle_usage_summary()
         elif handler.path == "/api/activity":
             handler._handle_activity_feed()
+        elif handler.path == "/api/notifications":
+            # 2026-05-24 — bell badge feed. Auth-gated. Reads private
+            # events for the user from Supabase.
+            from pebble.server.notifications import run_list_notifications
+            run_list_notifications(handler)
+        elif handler.path == "/api/community/feed":
+            # 2026-05-24 — public events list for the /community page.
+            # Public read (no auth) — visibility filter on the table
+            # is what enforces privacy.
+            from pebble.server.community_feed import run_community_feed
+            run_community_feed(handler)
+        elif handler.path == "/api/community/stats":
+            # 2026-05-24 — single-row cached snapshot of community
+            # numbers (total users, sites, launches this week,
+            # template count). 15-min refresh-on-stale.
+            from pebble.server.community_feed import run_community_stats
+            run_community_stats(handler)
         elif (handler.path.startswith("/api/projects/")
               and "/" not in handler.path[len("/api/projects/"):]):
             slug = handler.path[len("/api/projects/"):]
@@ -248,6 +265,15 @@ def route_post(handler) -> None:
             # than parsing free text.
             from pebble.server.chat import run_chat
             run_chat(handler)
+        elif handler.path == "/api/notifications/read-all":
+            # 2026-05-24 — must come BEFORE the /<id>/read pattern
+            # below or "/read-all" gets mis-parsed as an event id.
+            from pebble.server.notifications import run_mark_all_read
+            run_mark_all_read(handler)
+        elif handler.path.startswith("/api/notifications/") and handler.path.endswith("/read"):
+            from pebble.server.notifications import run_mark_read
+            event_id = handler.path[len("/api/notifications/"):-len("/read")]
+            run_mark_read(handler, event_id)
         elif handler.path == "/api/bot-message":
             # Phase 25b (2026-05-20) — bot persona narration. Cheap GPT-4o-mini
             # call returning short text (greeting / status / suggested chips)

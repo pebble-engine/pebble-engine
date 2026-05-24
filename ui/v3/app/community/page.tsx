@@ -21,7 +21,7 @@
  * X in the community" don't have to scroll — they ask.
  */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -43,6 +43,12 @@ import { PebletMascot } from "@/components/peblet-mascot";
 import { NotificationBell } from "@/components/notification-bell";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
+import {
+  fetchCommunityFeed,
+  fetchCommunityStats,
+  type CommunityFeedEvent,
+  type CommunityStats,
+} from "@/lib/api";
 
 // Community stats. Marc 2026-05-23: numbers visible enough to be
 // social-proof-y without being so specific that they're embarrassing
@@ -133,7 +139,87 @@ const ACTIVITY_LABELS: Record<ActivityKind, string> = {
   discussion: "Discussion",
 };
 
+// 2026-05-24 — server-side feed integration. The page tries to fetch
+// real events + stats on mount. If either fails (Supabase offline,
+// 5xx, etc.) we fall back to the hardcoded seeds above so the page
+// never shows an empty state on a real outage. When the real feed
+// has fewer than 5 items, we pad with seed entries to keep the
+// visual rhythm consistent until the community is large enough.
+
+function useCommunityData() {
+  const [serverEvents, setServerEvents] = useState<CommunityFeedEvent[] | null>(null);
+  const [serverStats, setServerStats] = useState<CommunityStats | null>(null);
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetchCommunityFeed();
+        setServerEvents(res.events || []);
+      } catch {
+        setServerEvents([]);
+      }
+      try {
+        const res = await fetchCommunityStats();
+        setServerStats(res.stats || null);
+      } catch {
+        setServerStats(null);
+      }
+    })();
+  }, []);
+  return { serverEvents, serverStats };
+}
+
+// Translate a server kind ('site_published') into the activity-feed
+// kind colors we already styled.
+function mapEventKind(kind: string): ActivityKind {
+  if (kind === "site_published" || kind === "build_completed") return "launch";
+  if (kind === "template_used" || kind === "template_submitted") return "feature";
+  if (kind === "tip") return "tip";
+  if (kind === "joined_pebble") return "join";
+  return "discussion";
+}
+
+// Translate an ISO timestamp into a "2h ago" / "3d ago" string so the
+// feed reads naturally without us needing a date-fns dep.
+function relativeTime(iso: string): string {
+  try {
+    const then = new Date(iso).getTime();
+    const diff = (Date.now() - then) / 1000;
+    if (diff < 60) return "just now";
+    if (diff < 3600) return `${Math.floor(diff / 60)} min ago`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)} hours ago`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)} days ago`;
+    return new Date(iso).toLocaleDateString();
+  } catch {
+    return "";
+  }
+}
+
 export default function CommunityHomePage() {
+  const { serverEvents, serverStats } = useCommunityData();
+
+  // Merge: server events first, fill to 5 with seed if we're light.
+  const liveActivity = (() => {
+    const fromServer = (serverEvents || []).map((e) => ({
+      id:    `srv-${e.id}`,
+      kind:  mapEventKind(e.kind),
+      title: e.title,
+      body:  e.body || "",
+      meta:  relativeTime(e.created_at),
+    }));
+    if (fromServer.length >= 5) return fromServer.slice(0, 5);
+    const padding = ACTIVITY.slice(0, 5 - fromServer.length);
+    return [...fromServer, ...padding];
+  })();
+
+  // Stats: prefer live values, fall back to seed for any missing field.
+  const liveStats = serverStats
+    ? [
+        { label: "Builders building",  value: serverStats.total_users.toLocaleString() + "+",          Icon: Users     },
+        { label: "Templates to remix", value: serverStats.templates_count.toString(),                  Icon: Sparkles  },
+        { label: "Launches this week", value: serverStats.launches_this_week.toString(),               Icon: Rocket    },
+      ]
+    : STATS;
+
   const topRightSlot = (
     <div className="flex items-center gap-2">
       <Link
@@ -195,9 +281,9 @@ export default function CommunityHomePage() {
                   </div>
                 </div>
 
-                {/* Stats strip */}
+                {/* Stats strip — Supabase-backed, falls back to seed */}
                 <div className="relative mt-8 grid grid-cols-3 gap-3">
-                  {STATS.map((s) => {
+                  {liveStats.map((s) => {
                     const Icon = s.Icon;
                     return (
                       <div
@@ -239,7 +325,7 @@ export default function CommunityHomePage() {
                 </div>
 
                 <ul className="space-y-2">
-                  {ACTIVITY.map((a) => (
+                  {liveActivity.map((a) => (
                     <li
                       key={a.id}
                       className={`${interactions.card} bg-card border border-border rounded-xl p-4 flex items-start gap-3`}
@@ -251,9 +337,11 @@ export default function CommunityHomePage() {
                       </span>
                       <div className="flex-1 min-w-0">
                         <p className={`${type.heading.m} text-foreground leading-tight`}>{a.title}</p>
-                        <p className={`${type.body.s} text-muted-foreground mt-1 leading-snug`}>
-                          {a.body}
-                        </p>
+                        {a.body && (
+                          <p className={`${type.body.s} text-muted-foreground mt-1 leading-snug`}>
+                            {a.body}
+                          </p>
+                        )}
                       </div>
                       <p className={`${type.caption} shrink-0 hidden sm:block`}>{a.meta}</p>
                     </li>

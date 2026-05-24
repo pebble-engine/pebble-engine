@@ -1080,6 +1080,27 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     # NEVER pass slug / business_type / industry / DNA — just the event name.
     _log_engagement(answers.get("_user_id"), "build_completed")
 
+    # 2026-05-24 — also write to the persistent events table so the
+    # bell + community feed reflect this build. Fire-and-forget; if
+    # Supabase is unreachable the helper logs + returns None, never
+    # raises. Private event (just for this user) since a brand-new
+    # build isn't auto-public — the user has to publish to surface it.
+    try:
+        from pebble import events as _events
+        user_id = answers.get("_user_id")
+        if user_id:
+            business_name = answers.get("business_name") or slug
+            _events.record(
+                user_id=user_id,
+                kind=_events.KIND_BUILD_COMPLETED,
+                title=f"{business_name} is ready to review",
+                body=f"Your site has been built. Open the workspace to refine, publish, or share.",
+                visibility=_events.VISIBILITY_PRIVATE,
+                meta={"slug": slug},
+            )
+    except Exception as e:
+        log.warning("events.record failed for build_completed: %s", e)
+
     # Post-first-build email drip (Ch 11.6). schedule_drip() is idempotent —
     # it no-ops if the drip file already exists, so rebuilds don't reset the
     # clock. Only fires for authenticated users whose email we resolved above.
