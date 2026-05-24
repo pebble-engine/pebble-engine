@@ -1262,6 +1262,101 @@ def postcss_config_is_esm(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 18e. internal_component_imports_resolve — FOUNDATION
+#
+# Added 2026-05-23 after Marc hit a build that imported `@/components/sections/Hero`
+# but the LLM never emitted the corresponding Hero.tsx file. Next.js returned
+# HTTP 500 on every page render with "Module not found: Can't resolve
+# '@/components/sections/Hero'" — the build looked superficially complete (page.tsx
+# exists, package.json exists, all foundation files exist) but the runtime crashes
+# immediately because a referenced section component file was never written.
+#
+# This eval scans every .tsx/.ts file under app/ and components/ for imports
+# starting with `@/components/`, then verifies each resolves to an actual file on
+# disk. The repair loop catches the failure and re-prompts the LLM to emit the
+# missing component(s).
+# ---------------------------------------------------------------------------
+
+_IMPORT_FROM_AT_COMPONENTS_RE = re.compile(
+    r"""from\s+['"](@/components/[^'"]+)['"]"""
+)
+
+
+@check_metadata(static_files=("app",))
+def internal_component_imports_resolve(ctx: BuildContext) -> CheckResult:
+    """Every `from "@/components/..."` import in app/ and components/ must
+    point to an actual file on disk. Missing referenced components cause
+    Next.js to return HTTP 500 on every page render — the build looks
+    complete but the site is completely broken at runtime."""
+    if not ctx.site_dir.exists():
+        return CheckResult("internal_component_imports_resolve", "skip", "no site directory")
+
+    scan_roots = []
+    for sub in ("app", "components"):
+        d = ctx.site_dir / sub
+        if d.exists():
+            scan_roots.append(d)
+    if not scan_roots:
+        return CheckResult(
+            "internal_component_imports_resolve", "skip",
+            "no app/ or components/ directories to scan",
+        )
+
+    # The `@/` alias maps to the project root (tsconfig.json paths: {"@/*": ["./*"]}),
+    # so `@/components/sections/Hero` resolves to `site_dir/components/sections/Hero.tsx`
+    # (Next.js / TS try .tsx, .ts, .jsx, .js extensions in order).
+    candidate_exts = (".tsx", ".ts", ".jsx", ".js")
+    missing: list[tuple[str, str]] = []  # (importer_path, missing_module)
+
+    for root in scan_roots:
+        for tsx_path in root.rglob("*"):
+            if not tsx_path.is_file():
+                continue
+            if tsx_path.suffix not in (".tsx", ".ts", ".jsx", ".js"):
+                continue
+            try:
+                text = tsx_path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            for m in _IMPORT_FROM_AT_COMPONENTS_RE.finditer(text):
+                module = m.group(1)              # e.g. "@/components/sections/Hero"
+                rel    = module[len("@/"):]      # "components/sections/Hero"
+                base   = ctx.site_dir / rel
+                # Resolution attempts (matches TS/Next defaults):
+                # 1. base + each extension
+                # 2. base/index + each extension
+                resolved = any((base.with_suffix(ext)).exists() for ext in candidate_exts)
+                if not resolved and base.is_dir():
+                    resolved = any((base / f"index{ext}").exists() for ext in candidate_exts)
+                if not resolved:
+                    importer = tsx_path.relative_to(ctx.site_dir).as_posix()
+                    missing.append((importer, module))
+
+    if missing:
+        # Dedupe by missing module so the message is readable when many files
+        # reference the same missing component.
+        modules_to_importers: dict[str, list[str]] = {}
+        for importer, module in missing:
+            modules_to_importers.setdefault(module, []).append(importer)
+        lines = [
+            f"  - {module} (imported by {', '.join(sorted(set(imps))[:3])})"
+            for module, imps in sorted(modules_to_importers.items())
+        ]
+        return CheckResult(
+            "internal_component_imports_resolve", "fail",
+            "Missing component file(s) referenced by `@/components/...` imports — "
+            "Next.js will return HTTP 500 on every page render. Emit the missing "
+            "files in their full @/components/<path>.tsx form:\n" + "\n".join(lines),
+            details={"missing": modules_to_importers},
+        )
+
+    return CheckResult(
+        "internal_component_imports_resolve", "pass",
+        "all @/components/* imports resolve to existing files",
+    )
+
+
+# ---------------------------------------------------------------------------
 # 19. animation_components_present — FOUNDATION
 # ---------------------------------------------------------------------------
 
@@ -4574,6 +4669,7 @@ ALL_CHECKS = [
     tailwind_directives_present,
     globals_css_imported_in_layout,
     postcss_config_is_esm,
+    internal_component_imports_resolve,
     animation_components_present,
     client_components_have_directive,
     prefers_reduced_motion_respected,
