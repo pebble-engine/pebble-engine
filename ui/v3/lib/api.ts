@@ -707,6 +707,27 @@ export async function instantiateTemplate(
   return postJSON("/api/instantiate-template", { template_id, brief });
 }
 
+// ---------- /api/template-match (Phase F1, 2026-05-24) --------------------
+//
+// Score templates against a free-text prompt + optional business_type.
+// Used by the post-signup TemplateMatchModal to surface the top-N
+// templates instead of dumping the user into the full gallery.
+// Deterministic, ~5ms. See pebble/server/template_match.py.
+
+export type TemplateMatch = {
+  template_id: string;
+  score:       number;
+  reason:      string;
+};
+
+export async function matchTemplates(
+  prompt: string,
+  business_type?: string,
+  max_results: number = 3,
+): Promise<{ matches: TemplateMatch[] }> {
+  return postJSON("/api/template-match", { prompt, business_type, max_results });
+}
+
 // ---------- /api/history + /api/rollback (new) -----------------------------
 
 export type HistorySnapshot = {
