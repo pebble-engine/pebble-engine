@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/ui/Reveal";
 import {
   Wrench,
   Hammer,
@@ -40,6 +41,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 
 export function Services() {
   return (
+    <Reveal>
     <section className="py-24">
       <div className="max-w-6xl mx-auto px-8">
         <p className="text-[var(--color-accent)] text-xs font-bold uppercase tracking-[0.18em] mb-2">
@@ -71,5 +73,6 @@ export function Services() {
         </div>
       </div>
     </section>
+    </Reveal>
   );
 }

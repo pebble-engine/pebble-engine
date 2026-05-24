@@ -1,7 +1,9 @@
+import { Reveal } from "@/components/ui/Reveal";
 import { TESTIMONIAL_QUOTE, TESTIMONIAL_AUTHOR } from "@/content/site";
 
 export function Testimonials() {
   return (
+    <Reveal>
     <section className="py-24 bg-[var(--color-surface-2)]">
       <div className="max-w-3xl mx-auto px-8 text-center">
         <p
@@ -18,5 +20,6 @@ export function Testimonials() {
         </p>
       </div>
     </section>
+    </Reveal>
   );
 }

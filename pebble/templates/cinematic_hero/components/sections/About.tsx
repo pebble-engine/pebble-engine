@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/ui/Reveal";
 import Image from "next/image";
 import {
   ABOUT_PHOTO_IMAGE,
@@ -10,6 +11,7 @@ export function About() {
   const paragraphs = ABOUT_BODY.split("\n\n").filter(Boolean);
 
   return (
+    <Reveal>
     <section className="py-24">
       <div className="max-w-6xl mx-auto px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
@@ -57,5 +59,6 @@ export function About() {
         </div>
       </div>
     </section>
+    </Reveal>
   );
 }

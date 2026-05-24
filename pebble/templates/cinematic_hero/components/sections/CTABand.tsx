@@ -1,3 +1,4 @@
+import { Reveal } from "@/components/ui/Reveal";
 import {
   CTA_BAND_HEADLINE,
   CTA_BAND_BODY,
@@ -7,6 +8,7 @@ import {
 
 export function CTABand() {
   return (
+    <Reveal>
     <section className="bg-[var(--color-accent)] text-white">
       <div className="max-w-5xl mx-auto px-8 py-16 md:py-24 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
         <div className="max-w-xl">
@@ -25,5 +27,6 @@ export function CTABand() {
         </a>
       </div>
     </section>
+    </Reveal>
   );
 }
