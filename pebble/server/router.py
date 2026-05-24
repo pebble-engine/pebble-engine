@@ -210,6 +210,9 @@ def route_get(handler) -> None:
         elif handler.path == "/api/account/profile":
             from pebble.server.account import run_get_profile
             run_get_profile(handler)
+        elif handler.path.startswith("/api/account/activity"):
+            from pebble.server.audit_log_api import run_get_activity
+            run_get_activity(handler)
         elif handler.path.startswith("/api/account/change-email-confirm"):
             # Single-use token confirm — no auth required (user clicks from email).
             from pebble.server.account import run_confirm_email_change
