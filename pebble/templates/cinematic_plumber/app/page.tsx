@@ -12,10 +12,10 @@ export default function HomePage() {
       <Navbar />
       <main className="flex-1">
         <Hero />
+        <CTABand />
         <Services />
         <About />
         <Testimonials />
-        <CTABand />
       </main>
       <Footer />
     </>
