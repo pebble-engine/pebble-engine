@@ -6,6 +6,7 @@ is responsible for I/O shape (JSON in/out, validation, error mapping).
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -100,21 +101,36 @@ def run_list_projects(handler) -> None:
 
         meta_path = project_dir / "build_meta.json"
         built_at = None
+        meta_file_count = None
         if meta_path.exists():
             try:
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 built_at = meta.get("built_at")
+                # run_build stamps file_count into build_meta on every
+                # successful build, so the dashboard list call can just
+                # read it instead of walking the filesystem. With 20
+                # projects each having ~11k node_modules files, the walk
+                # used to take 30-50s per dashboard load.
+                mc = meta.get("file_count")
+                if isinstance(mc, int):
+                    meta_file_count = mc
             except Exception:
                 pass
 
         # Starred state is a single zero-byte sentinel file. Simple, durable.
         starred = (project_dir / ".starred").exists()
 
-        # File count under site/ — gives the UI something to show even
-        # before a build_meta is written.
-        file_count = 0
-        if site_dir.exists():
-            file_count = sum(1 for p in site_dir.rglob("*") if p.is_file())
+        # Prefer the cached count from build_meta.json (sub-millisecond).
+        # Fall back to a depth-limited walk only when meta is missing or
+        # malformed — typical for an in-flight build or a hand-edited
+        # output. The fallback skips node_modules / .next so it counts
+        # SOURCE files only, not the 11k-file npm install per project.
+        file_count = meta_file_count if meta_file_count is not None else 0
+        if meta_file_count is None and site_dir.exists():
+            skip_dirs = {"node_modules", ".next", ".turbo", ".vercel"}
+            for root, dirs, files in os.walk(site_dir):
+                dirs[:] = [d for d in dirs if d not in skip_dirs]
+                file_count += len(files)
 
         # Latest publish (zip or cloudflare) — drives the dashboard
         # "Published" badge. Tiny file, cheap to read per row.
