@@ -71,6 +71,114 @@ const FACTS: Array<(c: BuildCtx) => string | null> = [
   () => `The whole site loads on a 3G connection in under 2 seconds.`,
 ];
 
+/**
+ * humanizeBuildEvent — translate the engine's raw file-path SSE events into
+ * customer-readable build-feed lines.
+ *
+ * Marc's feedback 2026-05-23: "A non-technical bookstore owner has no idea
+ * what `components/ui/AnimatedHeading.tsx` means." So instead of streaming
+ * file paths into the live feed, we map them to friendly verbs that describe
+ * what Pebble is actually doing right now ("Drawing your hero section…").
+ *
+ * Coverage:
+ *  - All foundation components (ui/, layout/, sections/, forms/)
+ *  - All page routes (homepage + named industry pages)
+ *  - Config files (next.config, tailwind, postcss, package.json, etc.)
+ *  - Server actions + lib helpers
+ *  - Sensible fallback for anything unmapped (uses the file basename)
+ *
+ * Returns a string starting with a leading "+ " so the existing tone styling
+ * (green check) reads naturally in the live feed.
+ */
+function humanizeBuildEvent(fpath: string): string {
+  // Page routes — homepage gets a special label; named pages get title-cased.
+  if (fpath === "app/page.tsx") return "+ Building the homepage";
+  const pageMatch = fpath.match(/^app\/([^/]+)\/page\.tsx$/);
+  if (pageMatch) {
+    const name = pageMatch[1]
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return `+ Adding the ${name} page`;
+  }
+
+  // Exact-match lookup for the foundation files. Anything not in this map
+  // falls through to the regex section / basename fallback below.
+  const exact: Record<string, string> = {
+    // Sections — the most user-facing
+    "components/sections/Hero.tsx":         "+ Drawing your hero section",
+    "components/sections/TrustBar.tsx":     "+ Adding trust signals",
+    "components/sections/Services.tsx":     "+ Listing your services",
+    "components/sections/SocialProof.tsx":  "+ Adding customer proof",
+    "components/sections/Testimonials.tsx": "+ Pulling in testimonials",
+    "components/sections/Pricing.tsx":      "+ Setting up pricing",
+    "components/sections/FAQ.tsx":          "+ Writing the FAQ",
+    "components/sections/Stats.tsx":        "+ Adding stats strip",
+    "components/sections/CTA.tsx":          "+ Adding the call-to-action",
+    "components/sections/Features.tsx":     "+ Listing features",
+    "components/sections/Gallery.tsx":      "+ Adding the gallery",
+    "components/sections/Booking.tsx":      "+ Wiring up booking",
+    // Layout
+    "components/layout/Navbar.tsx":         "+ Building the navigation",
+    "components/layout/Footer.tsx":         "+ Building the footer",
+    // UI primitives
+    "components/ui/AnimatedHeading.tsx":    "+ Animating the headline",
+    "components/ui/FadeIn.tsx":             "+ Adding fade animations",
+    "components/ui/ScrollReveal.tsx":       "+ Wiring scroll reveals",
+    "components/ui/GlassCard.tsx":          "+ Adding glass-effect cards",
+    "components/ui/MagneticButton.tsx":     "+ Adding interactive buttons",
+    "components/ui/SectionHeader.tsx":      "+ Styling section headers",
+    "components/ui/GrainOverlay.tsx":       "+ Applying texture",
+    // Forms
+    "components/forms/ContactForm.tsx":     "+ Wiring the contact form",
+    // App shell + style
+    "app/layout.tsx":                       "+ Setting up the page shell",
+    "app/globals.css":                      "+ Setting up styles",
+    "app/sitemap.ts":                       "+ Building the SEO sitemap",
+    "app/robots.ts":                        "+ Setting search-engine rules",
+    "app/icon.svg":                         "+ Drawing the favicon",
+    "app/actions/contact.ts":               "+ Wiring the contact form logic",
+    // Lib helpers
+    "lib/utils.ts":                         "+ Adding helper utilities",
+    "lib/email.ts":                         "+ Wiring the email service",
+    "lib/motion.ts":                        "+ Setting up animations",
+    // Config / brand
+    "config/brand.config.ts":               "+ Recording your brand settings",
+    "config/motion.config.ts":              "+ Configuring motion preferences",
+    "tailwind.config.ts":                   "+ Configuring the design system",
+    "next.config.mjs":                      "+ Configuring Next.js",
+    "postcss.config.mjs":                   "+ Configuring CSS pipeline",
+    "tsconfig.json":                        "+ Configuring TypeScript",
+    "package.json":                         "+ Listing dependencies",
+    ".env.example":                         "+ Documenting environment variables",
+    "vercel.json":                          "+ Configuring Vercel deployment",
+    "README.md":                            "+ Writing the README",
+    ".gitignore":                           "+ Configuring git",
+  };
+  if (exact[fpath]) return exact[fpath];
+
+  // Generic section / layout / ui buckets for files we didn't pre-map
+  if (fpath.startsWith("components/sections/")) {
+    const name = fpath.replace(/^components\/sections\//, "").replace(/\.tsx?$/, "");
+    return `+ Adding the ${name} section`;
+  }
+  if (fpath.startsWith("components/layout/")) {
+    const name = fpath.replace(/^components\/layout\//, "").replace(/\.tsx?$/, "");
+    return `+ Building the ${name.toLowerCase()}`;
+  }
+  if (fpath.startsWith("components/ui/")) {
+    const name = fpath.replace(/^components\/ui\//, "").replace(/\.tsx?$/, "");
+    return `+ Adding ${name}`;
+  }
+  if (fpath.startsWith("app/actions/")) {
+    return `+ Wiring the server action`;
+  }
+
+  // Fallback: just show the file basename without the path noise.
+  const base = fpath.split("/").pop() || fpath;
+  return `+ ${base}`;
+}
+
+
 const STEPS: ThinkingStep[] = [
   { id: "industry", Icon: Search,       label: "Reading your industry",  detail: "Looking up what websites for your type of business usually include." },
   { id: "style",    Icon: Palette,      label: "Choosing a style",       detail: "Picking a visual style that matches the feeling you chose." },
@@ -319,7 +427,10 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
         // we're still in that phase.
         if (latest.data.name) {
           const fpath = String(latest.data.name);
-          appendLog(`+ ${fpath}`, "ok");
+          // 2026-05-23: humanize the file path so non-technical owners can
+          // follow along. Maps `components/ui/AnimatedHeading.tsx` to
+          // "Animating the headline" etc. See humanizeBuildEvent above.
+          appendLog(humanizeBuildEvent(fpath), "ok");
           // Phase 25a — checkmark a page in the Plan Reveal site-structure
           // list as soon as its file lands. Patterns: `app/page.tsx` is
           // the homepage; `app/<route>/page.tsx` is the named page.
