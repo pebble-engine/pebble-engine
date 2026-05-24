@@ -520,7 +520,14 @@ function PreviewPane({
             src={iframeSrc}
             className="w-full h-full rounded-lg border border-white/10 bg-white"
             title={`${current.name} ${active.label} preview`}
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            // allow-downloads is required because Next.js static export
+            // (basePath: "/preview-template/<id>") triggers a "download"
+            // sandbox check on font preload / image-asset prefetches that
+            // get classified as attachments by Chrome's heuristic. Without
+            // it the iframe body stays empty even when the engine returns 200.
+            // allow-popups + allow-popups-to-escape-sandbox so target=_blank
+            // links from inside the preview (e.g. "View live") open properly.
+            sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox"
           />
         ) : current.preview_image ? (
           // eslint-disable-next-line @next/next/no-img-element

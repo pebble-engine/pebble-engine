@@ -40,12 +40,15 @@ const devConnectSrc = isDev
   : "";
 
 // Extra frame-src hosts when running locally so the template-gallery
-// iframe (loads from engine /preview-template/<id>/) renders. v3 is on
-// :3001, engine is on :8000 → cross-origin frame → CSP frame-src must
-// list it explicitly. In prod the engine is *.up.railway.app which is
-// already in the base frame-src list below.
+// iframe renders. v3 is on :3001 and several iframe sources exist:
+//   - Engine static-export previews:   http://localhost:8000/preview-template/...
+//   - Per-template legacy dev servers: http://127.0.0.1:3060-3199 range
+//     (service_pro, luxe_beauty, ink_studio, etc. spin up on those ports)
+// CSP port-wildcards (http://localhost:*) cover both without enumerating.
+// In prod, *.up.railway.app + customer subdomains are already covered
+// by the base frame-src list below.
 const devFrameSrc = isDev
-  ? " http://localhost:8000 http://127.0.0.1:8000"
+  ? " http://localhost:* http://127.0.0.1:*"
   : "";
 
 const SECURITY_HEADERS = [
