@@ -131,8 +131,15 @@ def main() -> int:
     args = parser.parse_args()
 
     if not MASTER_ENV.is_file():
-        print(f"error: master .env not found at {MASTER_ENV}", file=sys.stderr)
-        return 1
+        # No master .env (CI/Vercel build, fresh clone, or first-run dev).
+        # That's NOT an error — env vars on those platforms come from the
+        # platform's own variable config, not a checked-in file. We only
+        # exit 1 if --strict is passed (e.g. for explicit Marc-side audits
+        # where a missing master env IS a misconfiguration).
+        msg = f"sync_env.py: no master .env at {MASTER_ENV} — nothing to sync."
+        if not args.quiet:
+            print(msg, file=sys.stderr)
+        return 0
 
     master_content = MASTER_ENV.read_text(encoding="utf-8", errors="replace")
     v3_content     = _V3_HEADER + master_content

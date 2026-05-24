@@ -2028,7 +2028,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 "hint":  f"run: python -m pebble.templates.export {template_id}",
             }); return
 
-        rel = rel or "index.html"
+        # Strip any leading slashes so `rel` is always relative. Without this,
+        # a double-slash URL ("/preview-template/<id>//") gives rel="/" which
+        # Path treats as ABSOLUTE — (out_root / "/").resolve() jumps to the
+        # filesystem root and the traversal guard then 403's a legitimate
+        # request. v3 sometimes concatenates preview_url (trailing /) with
+        # active.path (leading /) and produces exactly that double-slash.
+        rel = rel.lstrip("/") or "index.html"
         candidate = (out_root / rel).resolve()
 
         # Path-traversal guard — the resolved file MUST stay inside out_root.

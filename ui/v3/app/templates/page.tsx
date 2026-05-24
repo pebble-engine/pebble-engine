@@ -357,9 +357,15 @@ function PreviewPane({
   // port 3001. Mirror the ENGINE_BASE logic from lib/api.ts exactly.
   const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
   const previewUrl = current.preview_url ?? "";
+  // Both preview_url and active.path may carry a leading/trailing slash —
+  // naive concat ("/preview-template/<id>/" + "/about") emits a double slash
+  // that the engine's path-traversal guard interprets as an absolute path
+  // and 403s ("path outside template root"). Normalize once here.
+  const trimmedPath = (active.path || "").replace(/^\/+/, "");
+  const trimmedPreview = previewUrl.replace(/\/+$/, "");
   const iframeSrc = previewUrl.startsWith("/")
-    ? `${ENGINE_BASE}${previewUrl}${active.path}`
-    : `${previewUrl}${active.path}`;
+    ? `${ENGINE_BASE}${trimmedPreview}/${trimmedPath}`
+    : `${trimmedPreview}/${trimmedPath}`;
 
   const handleUseTemplate = async () => {
     setCheckingAuth(true);
