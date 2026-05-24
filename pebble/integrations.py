@@ -35,6 +35,7 @@ INTEGRATION_IDS = frozenset({
     "social",
     "cookie-consent",
     "custom-code",
+    "stripe",
 })
 
 

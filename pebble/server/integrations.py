@@ -74,6 +74,34 @@ def run_post_integration(handler, slug: str) -> None:
     if not isinstance(config, dict):
         handler._json(400, {"error": "config must be an object"}); return
 
+    # 2026-05-24 funnel restructure: tier gate. Free has no integrations
+    # at all; starter has 4 (whatsapp/booking/google-maps/cookie-consent);
+    # pro has all 7. Authoritative check — the v3 client also gates the
+    # UI but the API must refuse independently.
+    from pebble import user_plan as _user_plan
+    allowed = _user_plan.get_feature(owner, "integrations_allowed")
+    if integration_id not in allowed:
+        min_tier = (
+            "starter"
+            if integration_id in _user_plan.PLAN_LIMITS["starter"]["integrations_allowed"]
+            else "pro"
+        )
+        pretty = {
+            "whatsapp": "WhatsApp", "booking": "Booking link",
+            "google-maps": "Google Maps", "cookie-consent": "Cookie consent",
+            "stripe": "Stripe Checkout", "custom-code": "Custom code",
+            "social": "Social embeds",
+        }.get(integration_id, integration_id)
+        handler._json(402, {
+            "error":         "tier locked",
+            "code":          "tier_locked",
+            "feature":       integration_id,
+            "min_tier":      min_tier,
+            "message":       f"The {pretty} integration is part of {min_tier.capitalize()}. Upgrade to unlock.",
+            "upgrade_url":   "/pricing",
+        })
+        return
+
     try:
         saved = save_integration(slug, integration_id, enabled, config)
     except Exception as exc:
