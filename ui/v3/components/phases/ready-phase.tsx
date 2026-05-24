@@ -29,6 +29,8 @@ import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 import { STANDARD_S, EASE_QUIET } from "@/lib/motion";
 import { getPlan, type PebblePlan } from "@/lib/state";
+import { FirstBuildCelebration } from "@/components/first-build-celebration";
+import { listProjects } from "@/lib/api";
 
 type Props = {
   /** Build response — slug + preview_url + file_count. */
@@ -49,6 +51,26 @@ type Props = {
 export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [autoAdvanceIn, setAutoAdvanceIn] = useState<number | null>(12);
+
+  // 2026-05-24 funnel: post-build dopamine moment. Mounts once per
+  // user (gated by both project count == 1 AND localStorage sentinel).
+  // The highest-converting moment in any SaaS funnel.
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("pebble.first_build_celebrated") === "1") return;
+    let cancelled = false;
+    listProjects()
+      .then((r) => {
+        if (cancelled) return;
+        if (r.projects && r.projects.length === 1) {
+          setCelebrating(true);
+          localStorage.setItem("pebble.first_build_celebrated", "1");
+        }
+      })
+      .catch(() => { /* never block on this */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Load the cached plan so we can list pages + DNA + business name.
   // Falls back gracefully if the cache is empty (rare — plan is set during
@@ -207,6 +229,11 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
           Everything is editable later. Nothing about this is final.
         </motion.p>
       </motion.div>
+
+      <FirstBuildCelebration
+        open={celebrating}
+        onClose={() => setCelebrating(false)}
+      />
     </main>
   );
 }
