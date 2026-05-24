@@ -49,14 +49,23 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 REGISTRY_PATH = REPO_ROOT / "pebble" / "templates" / "registry.json"
 
 
-_PREVIEW_NEXT_CONFIG = """/** @type {import('next').NextConfig} */
+def _preview_next_config(template_id: str) -> str:
+    """Generate the preview-build next.config.mjs string for one template.
+
+    basePath: "/preview-template/<id>" makes all internal assets resolve
+    correctly when the engine serves the out/ dir at that path. Without
+    basePath the HTML emits absolute paths like <img src="/hero.jpg">
+    which 404 because the engine looks for them at the root rather than
+    under /preview-template/<id>/."""
+    return f"""/** @type {{import('next').NextConfig}} */
 // Pebble preview-build config — written by pebble.templates.export.
 // The committed next.config.mjs is restored after the build completes.
-const nextConfig = {
+const nextConfig = {{
   output: "export",
   trailingSlash: true,
-  images: { unoptimized: true },
-};
+  basePath: "/preview-template/{template_id}",
+  images: {{ unoptimized: true }},
+}};
 export default nextConfig;
 """
 
@@ -108,11 +117,11 @@ def template_dir(template_id: str) -> Path:
     raise KeyError(template_id)
 
 
-def _paths_to_swap(tdir: Path) -> list[tuple[Path, str]]:
+def _paths_to_swap(tdir: Path, template_id: str) -> list[tuple[Path, str]]:
     """The (path, preview_content) pairs swapped during a preview build.
     Each path's pre-existing content is restored via try/finally."""
     return [
-        (tdir / "next.config.mjs", _PREVIEW_NEXT_CONFIG),
+        (tdir / "next.config.mjs",                _preview_next_config(template_id)),
         (tdir / "app" / "actions" / "contact.ts", _PREVIEW_CONTACT_STUB),
     ]
 
@@ -121,7 +130,7 @@ def export_template(template_id: str, *, skip_install: bool = False) -> Path:
     """Run a static-export build for one template. Returns the path to out/.
     Source files are byte-identical before and after this call (try/finally)."""
     tdir = template_dir(template_id)
-    swaps = _paths_to_swap(tdir)
+    swaps = _paths_to_swap(tdir, template_id)
 
     # Capture original contents (None if file doesn't exist).
     originals: list[tuple[Path, str | None]] = []
