@@ -577,3 +577,55 @@ def test_webhook_writes_atomically(with_secret, output_root, verified_event, mon
     assert src.endswith(".tmp")
     assert dst.endswith("subscription.json")
 
+
+# ---- Re-subscription dedup (Fix 1, 2026-05-24) ----------------------------
+
+def test_webhook_ignores_late_event_for_old_subscription(
+    with_secret, output_root, verified_event,
+):
+    """Dedup-by-event-id alone misses the re-subscription window:
+
+      1. User has sub_A active.
+      2. User cancels sub_A and re-subscribes with sub_B.
+      3. The .deleted event for sub_A is retried hours later (different
+         event.id from the .created of sub_B). Without subscription_id
+         scoping, the late .deleted would overwrite sub_B's "active"
+         state with sub_A's "canceled" — silently downgrading the user.
+
+    Fix: webhook must drop any event whose subscription_id is NOT the
+    one we currently track for the user. (We already log multi-sub
+    transitions; if the subscription IDs simply differ, it's an
+    out-of-band event for a previous sub, not a new one.)
+    """
+    from pebble.server import stripe_webhook
+
+    # Seed sentinel: user is on sub_B (active, "pro")
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
+        event_type="customer.subscription.created",
+        event_id="evt_b_created", event_created=3000,
+        plan="pro", status="active", subscription_id="sub_B",
+    )))
+
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    before = json.loads(sentinel.read_text(encoding="utf-8"))
+    assert before["stripe_subscription_id"] == "sub_B"
+    assert before["status"] == "active"
+
+    # Late retry: sub_A.deleted arrives long after sub_B.created. Its
+    # event.created is NEWER (post-real-time retry), so the existing
+    # out-of-order stale check doesn't catch it. event.id is unique so
+    # the dedup-by-event-id also doesn't fire. Only the
+    # subscription-id-mismatch check can save us.
+    stripe_webhook.run_stripe_webhook(verified_event(_subscription_event(
+        event_type="customer.subscription.deleted",
+        event_id="evt_a_deleted_retry", event_created=4000,
+        plan="starter", status="canceled", subscription_id="sub_A",
+    )))
+
+    after = json.loads(sentinel.read_text(encoding="utf-8"))
+    # sub_B remains on file, status remains active — the stale
+    # deletion of sub_A was ignored.
+    assert after["stripe_subscription_id"] == "sub_B"
+    assert after["status"] == "active"
+    assert after["plan"] == "pro"
+

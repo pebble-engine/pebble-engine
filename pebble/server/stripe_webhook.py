@@ -285,6 +285,9 @@ def run_stripe_webhook(handler) -> None:
     event_created_raw = event.get("created")
     event_created = event_created_raw if isinstance(event_created_raw, int) else 0
 
+    sub_id_raw = obj.get("id", "")
+    subscription_id = sub_id_raw if isinstance(sub_id_raw, str) and len(sub_id_raw) <= 128 else ""
+
     existing = _read_existing_sentinel(user_id)
     if existing is not None:
         if event_id_raw and existing.get("last_event_id") == event_id_raw:
@@ -311,6 +314,40 @@ def run_stripe_webhook(handler) -> None:
                                 "reason": "stale event"})
             return
 
+        # Fix 1 (2026-05-24): dedup-by-event-id alone misses the
+        # re-subscription window. If a user cancels sub_A and re-
+        # subscribes with sub_B, a LATE retry of sub_A.deleted has:
+        #   - a different event.id from sub_B's events (dedup misses)
+        #   - a later .created timestamp than sub_B's events (stale
+        #     check misses — the retry happens after sub_B was created)
+        # Only checking the subscription_id catches this class. Late
+        # events for a sub OTHER than the one we currently track are
+        # ignored — the user has already moved on.
+        #
+        # Exception: customer.subscription.created always wins. A new
+        # .created event IS the legitimate signal that a re-subscription
+        # happened; without this exception, the user would be stuck on
+        # the canceled sub_A sentinel forever.
+        prior_sub_id = existing.get("stripe_subscription_id") or ""
+        if (
+            event_type != "customer.subscription.created"
+            and prior_sub_id
+            and subscription_id
+            and prior_sub_id != subscription_id
+        ):
+            # Redact full sub IDs in the log line — same rationale as
+            # the multi-sub warning below (NLM round 3 R3.C1).
+            prior_short = prior_sub_id[-4:]
+            new_short = subscription_id[-4:]
+            log.info(
+                "stripe-webhook %s ignored late event for user=%s "
+                "sub=...%s (current sub on file is ...%s)",
+                event_type, user_id, new_short, prior_short,
+            )
+            handler._json(200, {"ok": True, "action": "skipped",
+                                "reason": "event for non-current subscription"})
+            return
+
     plan = metadata.get("pebble_plan") or "unknown"
     if not isinstance(plan, str) or len(plan) > 32:
         plan = "unknown"
@@ -330,8 +367,8 @@ def run_stripe_webhook(handler) -> None:
             raw_period_end = items[0].get("current_period_end")
     period_end = raw_period_end if isinstance(raw_period_end, int) else None
 
-    sub_id_raw = obj.get("id", "")
-    subscription_id = sub_id_raw if isinstance(sub_id_raw, str) and len(sub_id_raw) <= 128 else ""
+    # subscription_id was extracted earlier (above the existing-sentinel
+    # block) so the Fix 1 mismatch check can use it. Don't re-derive here.
 
     cus_id_raw = obj.get("customer", "")
     customer_id = cus_id_raw if isinstance(cus_id_raw, str) and len(cus_id_raw) <= 128 else ""
