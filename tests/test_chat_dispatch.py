@@ -87,3 +87,41 @@ def test_dispatch_ops_dict_has_expected_keys():
     assert "font-size" in DISPATCH_OPS
     assert "palette-swap" in DISPATCH_OPS
     assert "image-swap" in DISPATCH_OPS
+
+
+def test_safe_dispatch_font_size_delta_zero_is_valid():
+    # delta=0 is a valid (no-op) value — must NOT be rejected
+    raw = {"op": "font-size", "params": {"delta": 0}}
+    result = _safe_dispatch(raw, current_slug="proj-abc")
+    assert result is not None
+    assert result["params"]["delta"] == 0
+
+
+def test_safe_dispatch_image_swap_valid():
+    raw = {
+        "op": "image-swap",
+        "params": {"original_src": "https://example.com/old.jpg", "new_src": "https://example.com/new.jpg"},
+    }
+    result = _safe_dispatch(raw, current_slug="proj-abc")
+    assert result is not None
+    assert result["params"]["new_src"] == "https://example.com/new.jpg"
+    assert result["params"]["slug"] == "proj-abc"
+
+
+def test_safe_dispatch_image_swap_rejects_javascript_url():
+    raw = {
+        "op": "image-swap",
+        "params": {"original_src": "https://example.com/old.jpg", "new_src": "javascript:alert(1)"},
+    }
+    result = _safe_dispatch(raw, current_slug="proj-abc")
+    assert result is None
+
+
+def test_safe_dispatch_image_swap_rejects_http_url():
+    # We only allow https:// for security
+    raw = {
+        "op": "image-swap",
+        "params": {"original_src": "https://example.com/old.jpg", "new_src": "http://example.com/new.jpg"},
+    }
+    result = _safe_dispatch(raw, current_slug="proj-abc")
+    assert result is None

@@ -132,9 +132,12 @@ def _safe_dispatch(raw: object, current_slug: str | None) -> dict | None:
     # prompt-injection attacks from sneaking extra fields through.
     clean_params: dict = {k: v for k, v in params_raw.items() if k in allowed_keys}
 
-    # Validate required params are present and non-empty.
+    # Validate required params are present and not None/missing.
+    # Use `is None` check (not falsiness) so delta=0 and new_color=""
+    # are handled correctly — 0 is a valid font-size delta.
     for req in spec["required_params"]:
-        if req not in clean_params or not clean_params[req]:
+        val = clean_params.get(req)
+        if val is None or (isinstance(val, str) and not val.strip()):
             return None  # LLM didn't provide enough info — don't dispatch
 
     # palette-swap: validate hex values, wrap into "palette" key that
@@ -148,6 +151,12 @@ def _safe_dispatch(raw: object, current_slug: str | None) -> dict | None:
         if not palette:
             return None  # no valid colors — decline
         clean_params = {"palette": palette}
+
+    # image-swap: validate that new_src uses https:// (prevent javascript: etc.)
+    if op == "image-swap":
+        new_src = clean_params.get("new_src", "")
+        if not isinstance(new_src, str) or not new_src.lower().startswith("https://"):
+            return None  # reject non-HTTPS and dangerous schemes (javascript:, file:, etc.)
 
     # The slug always comes from the server, never from the LLM output.
     clean_params["slug"] = current_slug
