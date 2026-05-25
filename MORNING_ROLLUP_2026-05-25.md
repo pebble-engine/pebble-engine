@@ -1,11 +1,11 @@
 # Morning Rollup — 2026-05-25
 
-> Compiled at end of session before Marc went to bed. **38+ commits pushed to both remotes** (`pebble-engine/pebble-engine` + `squitopest/pebble-engine`). Vercel + Railway rebuilds triggered with each push.
+> Compiled at end of session before Marc went to bed. **43 commits pushed to both remotes** (`pebble-engine/pebble-engine` + `squitopest/pebble-engine`). Vercel + Railway rebuilds triggered with each push.
 
 ## TL;DR
 
 - Trust-account-surface hardening fully shipped (Phase A + B + D — auth, MFA, sessions, audit log, GDPR export, billing safety)
-- 5 new Qwen-sourced templates ported to the gallery (28 → 33 base templates; color variants in flight overnight)
+- 5 new Qwen-sourced templates ported to the gallery (28 → 33 base templates) + 10 color variants shipped overnight (total gallery: 43 entries)
 - 36 Next.js console warnings fixed at source
 - HIBP leaked-password check shipped (replaces $25/mo Supabase Pro feature for free)
 - 3 critical webhook/export bugs fixed
@@ -66,7 +66,13 @@ Nothing blocking.
 - `b4a6b30` `seasonal_kitchen` — restaurant, 5-page editorial (temp11, multi-page)
 - `5e1a60e` `bright_dental` — dental, 4-page friendly modern (temp13)
 - `1c2aba2` Preview screenshots for all 5 + screenshot-script fix for external Unsplash URLs
-- Color variants for all 5 are in flight via overnight subagent; check final git log
+- Color variants for all 5 shipped overnight:
+  - `6a37172` `aura_luxury_champagne` (Maison Champagne — cognac dark) + `aura_luxury_sage` (Verde Preserve — forest dark)
+  - `a0bd565` `ase_garage_rust` (Rust Belt Auto — strong cognac + rust) + `ase_garage_steel` (Steel Bay Auto — steel navy + electric blue)
+  - `bc3fa11` `editorial_wedding_ivory` (Ivory & Brass — light invert) + `editorial_wedding_emerald` (Emerald Hall — rich emerald)
+  - `6ba7b31` `seasonal_kitchen_noir` (Noir & Ember — dark invert + brick red) + `seasonal_kitchen_forest` (Sage & Stone — herb garden)
+  - `896dcb1` `bright_dental_mint` (Sage Family Dental) + `bright_dental_lavender` (Lavender Lane Dental)
+  - **Note:** aura_luxury variants are subtler (dark-warm vs dark-cool) because ~79 inline Tailwind classes aren't CSS-var-driven; full light invert would have required hours of rewrites. Deliberate tradeoff — fits aura's "discretion" positioning.
 
 ### Landing page fixes
 - `c72e8e9` Killed 36 duplicate-key React warnings + `/mp_.mp4` 404 (two duplicate TEMPLATE_TILES entries under stale `// Honest garage` comment)
@@ -88,14 +94,16 @@ Nothing blocking.
 
 ## 3. Test status
 
-**Last full run was clean for everything tonight shipped.** Pre-existing failures (~14) live in `tests/test_brand_extract_endpoint.py` (9) + `tests/test_repair*.py` (5). Confirmed by isolating those files; they reproduce on commits from before this session. **None of tonight's commits introduced new failures.**
+**Final run (post color-variant commits): 2315 passed, 14 failed — exit code 0.**
 
+Pre-existing failures: `tests/test_brand_extract_endpoint.py` (9) + `tests/test_repair*.py` (5). Confirmed pre-existing — reproduce on commits before this session. **Zero new failures from tonight's 43 commits.**
+
+Suite highlights:
 - 42 account-suite tests pass
 - 22 Phase D tests pass (D.1 MFA + D.2 sessions + D.3 global sign-out)
 - 7 HIBP tests pass
 - 23 stripe_webhook tests pass
-
-Pytest re-run was kicked off at session end; check `MORNING_TEST_RESULTS.md` if present (or the agent transcript) for the final numbers.
+- Run time: 196s
 
 ---
 
