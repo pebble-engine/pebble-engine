@@ -1,0 +1,77 @@
+{
+  "dna_id": "wedding_editorial",
+  "vibe_label": "Cinematic Editorial Noir",
+  "source_brand": "Qwen 3.6 wedding source",
+  "source_industry": "wedding photography",
+  "applicable_industries": [
+    "wedding photography",
+    "wedding photographer",
+    "engagement photographer",
+    "elopement photographer",
+    "fine art photographer",
+    "destination wedding photographer",
+    "wedding videographer",
+    "wedding planner (luxury)",
+    "wedding florist (luxury)",
+    "bridal designer",
+    "boutique wedding venue",
+    "wedding stationery (luxury)"
+  ],
+  "palette": {
+    "bg":        "#0a0a0a",
+    "fg":        "#f5f1e8",
+    "primary":   "#b08d57",
+    "secondary": "#d4a574",
+    "accent":    "#b08d57",
+    "muted":     "rgba(245,241,232,0.6)",
+    "border":    "rgba(245,241,232,0.1)",
+    "extras": {
+      "noir":  "#0a0a0a",
+      "cream": "#f5f1e8",
+      "brass": "#b08d57",
+      "sepia": "#d4a574"
+    }
+  },
+  "fonts": {
+    "display": "Cormorant Garamond",
+    "body":    "Manrope",
+    "accent":  null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Manrope:wght@400;500;700&display=swap",
+  "hero_pattern": "fullbleed_bw_hero_with_slow_zoom_and_italic_headline",
+  "hero_signature": "Full-bleed grayscale wedding photo at brightness-50 with top-to-bottom noir gradient. 6s alternating slow-zoom (scale 1.0 -> 1.05) keyframe on the image. Centered Cormorant Garamond italic semibold headline at 5xl-8xl. Below: brass-gold italic Cormorant CTA pill with cream hover state.",
+  "section_flow": [
+    {"id": "navbar",         "type": "fixed_transparent_shrink_on_scroll",         "notes": "Fixed nav. Cormorant italic wordmark left. Manrope link list center with underline-grow after:pseudo-elements. Italic Cormorant 'Inquire' link in brass on the right. Shrinks + adds bg/blur after 50px scroll."},
+    {"id": "hero",           "type": "fullbleed_bw_hero_with_slow_zoom",           "notes": "See hero_signature."},
+    {"id": "featured_story", "type": "sticky_horizontal_scroll_gallery",           "notes": "Outer wrapper is (slideCount * 100)vh tall. Inner is sticky h-screen with a horizontal Framer Motion flex track driven by useScroll progress: x = useTransform(scrollYProgress, [0,1], ['0%', '-(n-1)*100%']). 6 slides: intro card (couple/venue/quote + portrait), 4 photo cards (75vh grayscale brightness-75), outro italic quote."},
+    {"id": "gallery_grid",   "type": "css_masonry_3col_with_brass_overlay",         "notes": "CSS columns masonry (1/2/3 col at sm/md/lg). Each tile is grayscale brightness-75 with an opacity-0 hover overlay revealing italic brass couple name + uppercase tracked venue/date."},
+    {"id": "about",          "type": "two_col_portrait_left_quote_right",          "notes": "Grayscale 3:4 portrait left. Brass kicker + italic Cormorant headline + italic blockquote + supporting paragraph right."},
+    {"id": "packages",       "type": "three_card_collections_with_popular_brass",  "notes": "3 columns. Center 'Most Popular' card has solid brass border + brass-tinted bg + brass-glow shadow + brass header badge. Side cards border-cream with brass-color italic title. Each shows price (4xl bold tracking-tight) + duration + ✦-bulleted features + brass-gold reserve-this-date CTA."},
+    {"id": "process",        "type": "four_step_numbered_with_brass_hairline",      "notes": "4 columns. Vertical brass hairline behind. Each column: italic brass 5xl numeral + medium 18px title + small body."},
+    {"id": "testimonials",   "type": "stacked_italic_pull_quotes",                  "notes": "3 stacked quotes. Each: italic Cormorant 2xl brass quote + uppercase tracked-widest small attribution."},
+    {"id": "inquiry",        "type": "two_partner_form_with_cream_inputs",          "notes": "Form layout: Partner One / Partner Two row, Email / Wedding Date row, Venue full-width, Story textarea, How-did-you-find-us select. All inputs are transparent with cream/30 bottom borders that turn brass on focus."},
+    {"id": "footer",         "type": "two_col_brand_left_instagram_grid_right",     "notes": "Italic Cormorant studio name + cream/50 tagline + brass email link. Right: 3x2 instagram preview grid (grayscale aspect-square) with a 'View Instagram' tile."}
+  ],
+  "notable_features": [
+    "Slow-zoom hero keyframe (scale 1.0 -> 1.05 over 6s alternate)",
+    "Sticky-horizontal-scroll story section driven by Framer Motion useScroll + useTransform",
+    "CSS columns masonry portfolio grid (break-inside-avoid)",
+    "Brass-gold italic Cormorant button pattern (cream hover, brass-glow shadow on lift)",
+    "Underline-grow link hovers via after:pseudo width transition",
+    "Most-Popular package tier with solid brass border + brass-tinted bg + brass-glow shadow",
+    "Italic Cormorant pull-quote testimonials as standalone scroll moments",
+    "Transparent form inputs with cream/30 bottom borders (focus -> brass)",
+    "Grayscale brightness-75 on all photography (cinematic mood)",
+    "Top-to-bottom noir gradient overlay on hero (anchor-the-headline)"
+  ],
+  "motion_vocabulary": [
+    "Reveal: opacity 0->1 + y 24->0 over 1s with [0.22,1,0.36,1] easing on viewport-enter, once-only",
+    "Hero CTA delayed-fade: 0.8s opacity entrance with 0.8s delay after headline",
+    "Slow-zoom: keyframe scale 1.0 -> 1.05 over 6s, infinite alternate, cubic-bezier(0.22,1,0.36,1)",
+    "Sticky horizontal track: x = useTransform(scrollYProgress, [0,1], ['0%', '-(n-1)*100%'])",
+    "Brass button hover: translateY(-2px) + brass drop-shadow",
+    "Masonry overlay: opacity 0 -> 1 + brightness 0.75 -> 1 + grayscale 1 -> 0 over 700ms",
+    "prefers-reduced-motion: reduce -> all transitions clamped to 0.01ms; slow-zoom keyframe disabled"
+  ],
+  "tailwind_extras_inline_css": ".btn-brass (brass bg, noir text, italic Cormorant, hover cream + translateY + brass glow). .form-input-ed (transparent + cream/30 bottom border, brass on focus). .hero-zoom (slow-zoom keyframe). .masonry-ed + .masonry-item-ed (CSS columns 1/2/3 with break-inside avoid). Tokens: --color-noir, --color-cream, --color-brass, --color-sepia, --font-display (Cormorant Garamond), --font-sans (Manrope)."
+}

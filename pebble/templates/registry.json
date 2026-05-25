@@ -1326,6 +1326,42 @@
       "preview_pages": [
         { "label": "Home", "path": "/" }
       ]
+    },
+    {
+      "id": "editorial_wedding",
+      "directory": "pebble/templates/editorial_wedding",
+      "name": "Editorial Wedding Studio",
+      "tagline": "Cinematic dark editorial wedding photography. Sticky horizontal story + masonry gallery + brass collections.",
+      "vibe": "Noir + Cream + Brass Editorial",
+      "source_dna": "wedding_editorial",
+      "applicable_industries": [
+        "wedding photography",
+        "engagement photographer",
+        "elopement photographer",
+        "fine art photographer",
+        "destination wedding photographer",
+        "wedding videographer",
+        "wedding planner (luxury)",
+        "boutique wedding venue",
+        "bridal designer"
+      ],
+      "preview_image": "/templates-preview/editorial_wedding.png",
+      "color_swatches": [
+        "#0a0a0a",
+        "#f5f1e8",
+        "#b08d57",
+        "#d4a574"
+      ],
+      "fonts": {
+        "display": "Cormorant Garamond",
+        "body": "Manrope"
+      },
+      "best_for": "Editorial wedding and fine-art photographers. Cinematic dark theme with slow-zoom hero, sticky horizontal story scroll, masonry portfolio, brass-gold collection tiers.",
+      "tier": "premium",
+      "preview_url": "/preview-template/editorial_wedding/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
     }
   ],
   "_planned_next": []
