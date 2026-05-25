@@ -48,6 +48,12 @@ export function FloatingPeblet({ greeting, projectContext }: FloatingPebletProps
   // Track open state for handleDragEnd closure to avoid stale values.
   const openRef = useRef(false);
 
+  // Distinguish drag-release from real click. Framer Motion fires onClick
+  // on the inner button after onDragEnd, which would otherwise open the
+  // panel every time the user drags. onDragStart only fires once the drag
+  // threshold is crossed (~3px), so it reliably marks real drags.
+  const wasDraggedRef = useRef(false);
+
   // Close button ref for focus management when panel opens.
   const closeBtnRef = useRef<HTMLButtonElement>(null);
 
@@ -99,6 +105,9 @@ export function FloatingPeblet({ greeting, projectContext }: FloatingPebletProps
       drag
       dragMomentum={false}
       style={{ x: motionX, y: motionY, position: "fixed", zIndex: 9999 }}
+      onDragStart={() => {
+        wasDraggedRef.current = true;
+      }}
       onDragEnd={handleDragEnd}
       className="touch-none"
       role="complementary"
@@ -115,6 +124,11 @@ export function FloatingPeblet({ greeting, projectContext }: FloatingPebletProps
             transition={{ duration: 0.15 }}
             type="button"
             onClick={() => {
+              // If this click is the tail of a drag, swallow it and reset.
+              if (wasDraggedRef.current) {
+                wasDraggedRef.current = false;
+                return;
+              }
               setOpen(true);
               openRef.current = true;
             }}
