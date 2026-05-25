@@ -1,0 +1,97 @@
+"use client";
+
+/**
+ * MetallicPebbleLogo — animated CSS metallic "P" with light-ray background
+ * and a repeating shine sweep. Pure CSS / Framer Motion — no images.
+ *
+ * Used in the dashboard empty state and potentially on /pricing and /landing.
+ */
+
+import { motion } from "framer-motion";
+
+type Size = "sm" | "md" | "lg";
+
+const SIZE: Record<Size, { container: string; text: string }> = {
+  sm: { container: "w-16 h-16", text: "text-[4.5rem]" },
+  md: { container: "w-24 h-24", text: "text-[6.5rem]" },
+  lg: { container: "w-32 h-32", text: "text-[9rem]" },
+};
+
+export type MetallicPebbleLogoProps = {
+  size?: Size;
+  className?: string;
+};
+
+export function MetallicPebbleLogo({
+  size = "lg",
+  className = "",
+}: MetallicPebbleLogoProps) {
+  const { container, text } = SIZE[size];
+
+  return (
+    <div
+      className={`relative flex items-center justify-center overflow-hidden ${container} ${className}`}
+      aria-hidden="true"
+    >
+      {/* ── Conic-gradient light rays (subtle radial burst) ── */}
+      <div
+        className="absolute inset-0"
+        style={{
+          background: `conic-gradient(
+            from 0deg at 50% 50%,
+            transparent 0deg,
+            rgba(255,255,255,0.06) 15deg,
+            transparent 30deg,
+            rgba(255,255,255,0.04) 55deg,
+            transparent 70deg,
+            rgba(255,255,255,0.06) 90deg,
+            transparent 105deg,
+            rgba(255,255,255,0.04) 130deg,
+            transparent 150deg,
+            rgba(255,255,255,0.06) 175deg,
+            transparent 190deg,
+            rgba(255,255,255,0.04) 215deg,
+            transparent 235deg,
+            rgba(255,255,255,0.06) 260deg,
+            transparent 275deg,
+            rgba(255,255,255,0.04) 305deg,
+            transparent 325deg,
+            rgba(255,255,255,0.06) 350deg,
+            transparent 360deg
+          )`,
+        }}
+      />
+
+      {/* ── Metallic "P" — gradient clipped to text ── */}
+      <span
+        className={`relative z-10 font-bold leading-none select-none ${text}`}
+        style={{
+          background:
+            "linear-gradient(135deg, #888 0%, #ccc 18%, #f0f0f0 33%, #ddd 48%, #888 65%, #bbb 82%, #999 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          fontFamily: "Georgia, 'Times New Roman', serif",
+        }}
+      >
+        P
+      </span>
+
+      {/* ── Animated shine sweep — slides left-to-right, repeats ── */}
+      <motion.div
+        className="absolute top-0 bottom-0 w-1/2 pointer-events-none z-20"
+        style={{
+          background:
+            "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)",
+        }}
+        animate={{ left: ["-50%", "150%"] }}
+        transition={{
+          duration: 1.6,
+          repeat: Infinity,
+          repeatDelay: 4,
+          ease: [0.22, 1, 0.36, 1],
+        }}
+      />
+    </div>
+  );
+}
