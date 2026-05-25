@@ -1,0 +1,82 @@
+@import "tailwindcss";
+
+@theme {
+  --color-noir:    #fbf7ee;
+  --color-cream:   #1f1a14;
+  --color-brass:   #a47236;
+  --color-sepia:   #c89460;
+  --color-background: var(--color-noir);
+  --color-foreground: var(--color-cream);
+
+  --font-display: var(--font-cormorant), Georgia, serif;
+  --font-sans:    var(--font-manrope), system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-noir);
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+@keyframes ed-slow-zoom {
+  0%   { transform: scale(1.0); }
+  100% { transform: scale(1.05); }
+}
+
+.hero-zoom {
+  animation: ed-slow-zoom 6s cubic-bezier(0.22, 1, 0.36, 1) infinite alternate;
+}
+
+.btn-brass {
+  background: var(--color-brass);
+  color: var(--color-noir);
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 600;
+  padding: 0.8rem 2.5rem;
+  transition: all 0.3s;
+  display: inline-block;
+  text-decoration: none;
+}
+.btn-brass:hover {
+  background: var(--color-cream);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(164, 114, 54, 0.4);
+}
+
+.form-input-ed {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(31, 26, 20, 0.3);
+  padding: 1.25rem 0;
+  color: var(--color-cream);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color 0.3s;
+  width: 100%;
+}
+.form-input-ed:focus { border-bottom-color: var(--color-brass); }
+.form-input-ed::placeholder { color: rgba(31, 26, 20, 0.4); }
+
+.masonry-ed { column-count: 1; column-gap: 1rem; }
+@media (min-width: 640px)  { .masonry-ed { column-count: 2; } }
+@media (min-width: 1024px) { .masonry-ed { column-count: 3; } }
+.masonry-item-ed { break-inside: avoid; margin-bottom: 1rem; position: relative; overflow: hidden; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+  .hero-zoom { animation: none; }
+}

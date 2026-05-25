@@ -1,0 +1,26 @@
+{
+  "dna_id":       "wedding_editorial",
+  "name":         "Editorial Wedding Photographer",
+  "vibe":         "Dark editorial cinema. Noir + cream + brass. Slow-zoom hero, sticky horizontal gallery, masonry portfolio.",
+  "hero_pattern": "fullbleed_bw_hero_with_slow_zoom_and_italic_headline",
+  "palette": {
+    "noir":   "#0a0a0a",
+    "cream":  "#f5f1e8",
+    "brass":  "#b08d57",
+    "sepia":  "#d4a574"
+  },
+  "fonts": {
+    "display": "Cormorant Garamond",
+    "body":    "Manrope"
+  },
+  "signature_moves": [
+    "Italic Cormorant headlines at 5xl-8xl with grayscale brightness-40 hero photo",
+    "Slow-zoom hero (1.0 -> 1.05 over 6s alternate)",
+    "Sticky horizontal gallery driven by vertical scroll (400vh outer, sticky 100vh inner)",
+    "Masonry portfolio grid with brass overlay caption on hover",
+    "Italic Cormorant pull-quote testimonials in brass on noir",
+    "3-collection pricing card stack with brass-bordered Most Popular tier",
+    "Brass-gold CTAs with italic Cormorant + cream hover state",
+    "Underline-grow link hovers via after:transition pseudo elements"
+  ]
+}
