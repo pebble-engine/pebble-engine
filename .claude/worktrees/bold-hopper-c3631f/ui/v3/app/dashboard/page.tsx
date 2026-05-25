@@ -1149,68 +1149,146 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
       </div>
     );
   }
-  // Cinematic 2-column empty state — MetallicPebbleLogo on left, CTA cards on right.
-  // Marc 2026-05-25: upgraded from centered mascot to a split layout that feels
-  // premium rather than apologetic. The logo grounds the brand; the cards give
-  // two clear first actions without crowding.
+  // Cinematic empty state — centered metallic P hero + Recent Activity rail.
+  // Marc 2026-05-25 v2: rebuilt to match the design ref. The P is the
+  // focal point (god-ray light shafts, particle field, asset slot at
+  // /dashboard/metallic-p.png with CSS fallback). The Activity rail
+  // grounds the page so it doesn't feel like a screensaver.
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 py-8 px-2">
-      {/* ── Left: logo + copy ── */}
-      <div className="flex flex-col items-center lg:items-start justify-center gap-5 px-4 lg:px-6">
-        <MetallicPebbleLogo size="lg" />
-        <div className="text-center lg:text-left">
-          <p className={`${type.mono} text-[10px] uppercase tracking-widest text-muted-foreground mb-2`}>
-            Pebble
-          </p>
-          <h2 className={`${type.dashboard.heading.l} text-foreground leading-tight mb-3`}>
-            Boy, it sure does look<br className="hidden lg:block" /> empty in here.
-          </h2>
-          <p className={`${type.body.s} text-muted-foreground max-w-sm`}>
-            Ready when you are. Build something that looks like you, not a template.
-          </p>
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-6 py-4">
+      {/* ── CENTER: Cinematic P hero ── */}
+      <DashboardEmptyHero />
+
+      {/* ── RIGHT: Recent Activity rail ── */}
+      <DashboardActivityRail />
+    </div>
+  );
+}
+
+// ── DashboardEmptyHero — centered metallic P + light shafts + CTAs ──
+function DashboardEmptyHero() {
+  // Particles are generated client-side after mount to avoid SSR hydration
+  // mismatch from Math.random(). Fade-in effect is a nice side-benefit.
+  const [particles, setParticles] = useState<Array<{ x: number; y: number; size: number; opacity: number; delay: number }>>([]);
+  useEffect(() => {
+    setParticles(
+      Array.from({ length: 50 }, () => ({
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() * 2 + 0.5,
+        opacity: Math.random() * 0.6 + 0.2,
+        delay: Math.random() * 2,
+      })),
+    );
+  }, []);
+
+  return (
+    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 min-h-[520px] flex flex-col items-center justify-center px-6 py-10">
+      {/* God-ray light shafts — radial spotlight from above-center */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `
+            radial-gradient(ellipse 60% 70% at 50% 30%, rgba(255,255,255,0.18), transparent 70%),
+            radial-gradient(ellipse 30% 50% at 50% 0%, rgba(255,255,255,0.25), transparent 60%)
+          `,
+        }}
+      />
+      {/* Conic light rays — subtle */}
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: `conic-gradient(
+            from 180deg at 50% 30%,
+            transparent 0deg,
+            rgba(255,255,255,0.05) 15deg,
+            transparent 30deg,
+            rgba(255,255,255,0.07) 60deg,
+            transparent 75deg,
+            rgba(255,255,255,0.05) 105deg,
+            transparent 120deg,
+            transparent 240deg,
+            rgba(255,255,255,0.05) 255deg,
+            transparent 270deg,
+            rgba(255,255,255,0.07) 300deg,
+            transparent 315deg,
+            rgba(255,255,255,0.05) 345deg,
+            transparent 360deg
+          )`,
+        }}
+      />
+      {/* Particle field */}
+      {particles.map((p, i) => (
+        <motion.span
+          key={i}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: p.opacity }}
+          transition={{ duration: 1.5, delay: p.delay }}
+          className="absolute rounded-full bg-white pointer-events-none"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+          }}
+        />
+      ))}
+      {/* Big metallic P — uses image asset if present, CSS fallback otherwise */}
+      <div className="relative z-10 mb-6">
+        <MetallicPebbleLogo size="xl" imageSrc="/dashboard/metallic-p.png" />
+      </div>
+      {/* Copy */}
+      <div className="relative z-10 text-center max-w-md">
+        <h2 className={`${type.dashboard.heading.l} text-white mb-2`}>
+          No projects created yet.
+        </h2>
+        <p className={`${type.body.s} text-white/60 mb-8`}>
+          Ready to start building? Create your first website or explore templates.
+        </p>
+        {/* CTAs — centered side-by-side */}
+        <div className="flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/workspace#phase=welcome"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold shadow-xl hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <Plus className="w-4 h-4" /> Start something new
+          </Link>
+          <Link
+            href="/templates"
+            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/5 border border-white/30 text-white/90 text-sm font-semibold backdrop-blur-sm hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+          >
+            <Search className="w-4 h-4" /> Browse templates
+          </Link>
         </div>
       </div>
-
-      {/* ── Right: CTA cards ── */}
-      <div className="flex flex-col gap-4 justify-center px-4">
-        {/* Primary — start from scratch */}
-        <Link
-          href="/workspace#phase=welcome"
-          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-foreground flex items-center justify-center shrink-0">
-              <Plus className="w-5 h-5 text-background" />
-            </div>
-            <div>
-              <p className={`${type.dashboard.heading.m} text-foreground mb-1`}>Start something new</p>
-              <p className={`${type.body.s} text-muted-foreground`}>
-                Describe your business and we&apos;ll build a site in under a minute.
-              </p>
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        </Link>
-
-        {/* Secondary — templates */}
-        <Link
-          href="/templates"
-          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
-        >
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5 text-foreground" />
-            </div>
-            <div>
-              <p className={`${type.dashboard.heading.m} text-foreground mb-1`}>Browse templates</p>
-              <p className={`${type.body.s} text-muted-foreground`}>
-                Start from a hand-curated design and swap in your content.
-              </p>
-            </div>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent to-foreground/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-        </Link>
-      </div>
     </div>
+  );
+}
+
+// ── DashboardActivityRail — Recent Activity panel ──
+function DashboardActivityRail() {
+  // Placeholder seed data — when real audit-log integration ships, this
+  // hook can swap to fetching from the audit-log API.
+  const items = [
+    { label: "User logged in",   meta: "1 minute ago" },
+    { label: "Viewed templates", meta: "1 hour ago" },
+    { label: "Settings updated", meta: "Yesterday" },
+  ];
+  return (
+    <aside className="rounded-2xl border border-border bg-card p-5 h-fit">
+      <h3 className={`${type.dashboard.heading.m} text-foreground mb-4`}>
+        Recent Activity
+      </h3>
+      <ul className="space-y-3">
+        {items.map((it) => (
+          <li key={it.label} className="flex flex-col">
+            <span className={`${type.body.s} text-foreground`}>{it.label}</span>
+            <span className={`${type.caption} text-muted-foreground`}>{it.meta}</span>
+          </li>
+        ))}
+      </ul>
+    </aside>
   );
 }
