@@ -39,4 +39,8 @@ uvicorn[standard]>=0.29
 # sessions), and the one-shot bootstrap pebble/stripe_bootstrap.py.
 # Tests stub the SDK entirely; this dep is only needed for the live runtime
 # and the bootstrap CLI.
-stripe>=8.0
+#
+# Pinned to <16 because stripe_webhook.py explicitly documents SDK-15.x
+# compatibility workarounds (search for "SDK-15" in that file). A blind
+# `pip install -U` to 16.x could land breakage with no warning.
+stripe>=8.0,<16.0
