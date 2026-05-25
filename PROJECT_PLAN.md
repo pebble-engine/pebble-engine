@@ -279,25 +279,26 @@ Supabase exclusively).
                                      server-side). Verify the portal config
                                      allows plan changes between our two
                                      prices.
-[x] 9.7  $99 setup-call product    → Shipped 2026-05-18. Stripe one-time
-         product "Pebble Setup Call" ($99) added to stripe_bootstrap.py
-         (SETUP_CALLS list + ensure_setup_call + find_existing_one_time_price).
-         POST /api/checkout/create-session now accepts plan="setup_call" and
-         creates a mode="payment" session (no subscription_data). Success
-         redirects to PEBBLE_SETUP_CALL_LINK (e.g. Calendly) if set, else
-         falls back to /billing/success. /pricing shows a "Need hands-on help?"
-         card below the plan grid. Run python -m pebble.stripe_bootstrap to
-         create the product in Stripe and paste PEBBLE_STRIPE_SETUP_PRICE_ID
-         into .env. Set PEBBLE_SETUP_CALL_LINK to your calendar URL.
-         Webhook: checkout.session.completed fires a Resend confirmation
-         email with the calendar link (non-fatal if email fails). Marc must
-         also subscribe checkout.session.completed in Stripe Dashboard and
-         update the stripe listen command — see .env.example.
+[ ] 9.7  $99 setup-call product    → RETRACTED 2026-05-24 after code audit.
+         Originally marked shipped 2026-05-18, but the audit found NO
+         setup_call entry in pebble/server/stripe_checkout.py:_PRICE_ENV
+         (whitelist is {starter, pro}) and NO SETUP_CALLS/ensure_setup_call
+         symbols in pebble/stripe_bootstrap.py. Either the work was reverted
+         or this line got ahead of reality. Marc's call (2026-05-24): park as
+         future backlog; CLAUDE.md API table now reflects the {starter, pro}
+         reality.
+         When revisited (sketch only — verify before relying on it):
+           - Add "setup_call" → "PEBBLE_STRIPE_SETUP_PRICE_ID" to _PRICE_ENV
+           - Route mode="payment" success → PEBBLE_SETUP_CALL_LINK
+           - Add SETUP_CALLS + ensure_setup_call to stripe_bootstrap.py
+           - Wire checkout.session.completed → Resend confirmation email
+           - Subscribe checkout.session.completed in Stripe Dashboard +
+             update stripe listen command in .env.example
 ```
 
 Outstanding before launch:
 - Marc fixes STRIPE_WEBHOOK_SECRET in .env (currently has an rk_test_ pasted into the slot; should be `whsec_` from `stripe listen`).
-- Marc runs `python -m pebble.stripe_bootstrap` and pastes the THREE PEBBLE_STRIPE_*_PRICE_ID values into .env (starter, pro, setup_call).
+- Marc runs `python -m pebble.stripe_bootstrap` and pastes the TWO PEBBLE_STRIPE_*_PRICE_ID values into .env (starter, pro). (setup_call retracted from active surface — see 9.7 above.)
 - Marc installs Stripe CLI (`scoop install stripe` on Windows; winget is NOT supported per Stripe's docs).
 - E2E test together: `stripe listen --forward-to localhost:8000/api/internal/stripe-webhook`, then v3 /settings → "Manage billing" → card 4242 4242 4242 4242.
 

@@ -220,7 +220,7 @@ export function InboxSettings({ slug }: { slug: string }) {
         <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">
           Inbox settings · {slug}
         </p>
-        <h1 className="font-display text-3xl font-bold text-foreground">
+        <h1 className="font-display-sans text-3xl font-bold text-foreground">
           Outbound delivery
         </h1>
         <p className="text-sm text-muted-foreground">
@@ -233,7 +233,7 @@ export function InboxSettings({ slug }: { slug: string }) {
       {/* --- Webhook section --- */}
       <section className="space-y-4 bg-card border border-border rounded-2xl p-6">
         <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold text-foreground">
+          <h2 className="font-display-sans text-xl font-bold text-foreground">
             Webhook URL
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -288,7 +288,7 @@ export function InboxSettings({ slug }: { slug: string }) {
       {/* --- Autoresponder section --- */}
       <section className="space-y-4 bg-card border border-border rounded-2xl p-6">
         <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold text-foreground">
+          <h2 className="font-display-sans text-xl font-bold text-foreground">
             Auto-reply to submitters
           </h2>
           <p className="text-sm text-muted-foreground">
@@ -399,7 +399,7 @@ export function InboxSettings({ slug }: { slug: string }) {
         */}
       <section className="space-y-4 bg-card border-2 border-destructive/40 rounded-2xl p-6">
         <div className="space-y-1">
-          <h2 className="font-display text-xl font-bold text-destructive">
+          <h2 className="font-display-sans text-xl font-bold text-destructive">
             Danger zone
           </h2>
           <p className="text-sm text-muted-foreground">

@@ -14,10 +14,10 @@
  * marketing framing because it works. The carrot routes lowest-commitment
  * users into the cheapest, most-likely-to-look-good path.
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Sparkles, Check, X, Loader2, Eye, ExternalLink } from "lucide-react";
+import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Lock, Upload } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
 import {
@@ -26,7 +26,21 @@ import {
   type TemplateSummary,
 } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
-import { setLastBuild, type Brief } from "@/lib/state";
+import { type Brief } from "@/lib/state";
+
+// 2026-05-23: tier-tab model. Marc's design-night ask was three tabs —
+// Free / Premium / Public — where Public is user-uploaded with a
+// revenue split. The backend registry still emits some templates with
+// the legacy tier="paid"; we treat that as "premium" client-side via
+// `normalizeTier()` below, so the UI tabs don't depend on a backend
+// rename.
+type TierTab = "free" | "premium" | "public";
+
+function normalizeTier(t: TemplateSummary["tier"]): TierTab {
+  if (t === "paid" || t === "premium") return "premium";
+  if (t === "public") return "public";
+  return "free";
+}
 
 export default function TemplatesPage() {
   const router = useRouter();
@@ -37,12 +51,23 @@ export default function TemplatesPage() {
   // before clicking "Use this template" → instantiate dialog.
   const [previewing, setPreviewing] = useState<TemplateSummary | null>(null);
   const [picked, setPicked] = useState<TemplateSummary | null>(null);
+  const [activeTab, setActiveTab] = useState<TierTab>("free");
 
   useEffect(() => {
     listTemplates()
       .then((res) => setTemplates(res.templates))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
+
+  // Pre-bucket once per templates load so the tab counters + filtered
+  // list don't recompute every keystroke.
+  const buckets = useMemo(() => {
+    const out: Record<TierTab, TemplateSummary[]> = { free: [], premium: [], public: [] };
+    (templates ?? []).forEach((t) => out[normalizeTier(t.tier)].push(t));
+    return out;
+  }, [templates]);
+
+  const visible = buckets[activeTab];
 
   return (
     <div className="min-h-screen-safe flex flex-col bg-background text-foreground">
@@ -53,7 +78,7 @@ export default function TemplatesPage() {
             <Sparkles className="w-3.5 h-3.5" />
             <span className={`${type.mono} uppercase tracking-wider`}>Templates are free</span>
           </div>
-          <h1 className={`${type.display.l} mb-3`}>Start with a template</h1>
+          <h1 className={`${type.dashboard.display.l} mb-3`}>Start with a template</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-2xl mx-auto`}>
             Hand-curated designs across industries. Pick one, fill in your business info,
             ship in under a minute. Customize anything after.
@@ -73,15 +98,62 @@ export default function TemplatesPage() {
           </div>
         )}
 
-        {templates && templates.length === 0 && (
+        {/* Tier tabs — Free / Premium / Public. Counts reflect what's
+            actually in each bucket; Public is intentionally empty today
+            (marketplace upload flow not yet built) and renders a
+            dedicated "coming soon + waitlist" panel rather than an
+            empty grid. Marc's 2026-05-23 brief: Public templates are
+            user-uploaded with a revenue split. */}
+        {templates && (
+          <div className="flex items-center justify-center gap-1.5 mb-8">
+            <TierTabButton
+              active={activeTab === "free"}
+              count={buckets.free.length}
+              onClick={() => setActiveTab("free")}
+            >
+              Free
+            </TierTabButton>
+            <TierTabButton
+              active={activeTab === "premium"}
+              count={buckets.premium.length}
+              onClick={() => setActiveTab("premium")}
+            >
+              Premium
+            </TierTabButton>
+            <TierTabButton
+              active={activeTab === "public"}
+              count={buckets.public.length}
+              onClick={() => setActiveTab("public")}
+            >
+              Public
+            </TierTabButton>
+          </div>
+        )}
+
+        {/* Empty states + grid per tab */}
+        {templates && activeTab === "public" && buckets.public.length === 0 && (
+          <PublicTabPlaceholder />
+        )}
+
+        {templates && activeTab === "premium" && buckets.premium.length === 0 && (
+          <div className="text-center text-muted-foreground py-16 max-w-md mx-auto">
+            <Lock className="w-6 h-6 mx-auto mb-3 opacity-40" />
+            <p className={`${type.dashboard.heading.m} text-foreground mb-1`}>No premium templates yet</p>
+            <p className={type.body.s}>
+              Pebble-curated paid templates are coming. For now, every Free template ships ready to customize.
+            </p>
+          </div>
+        )}
+
+        {templates && activeTab === "free" && buckets.free.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
             <p className={type.body.m}>No templates available yet.</p>
           </div>
         )}
 
-        {templates && templates.length > 0 && (
+        {templates && visible.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {templates.map((t, i) => (
+            {visible.map((t, i) => (
               <TemplateCard
                 key={t.id}
                 template={t}
@@ -158,7 +230,7 @@ function TemplateCard({
         {showFallback && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <p
-              className={`${type.display.m} opacity-90 px-4 text-center`}
+              className={`${type.dashboard.display.m} opacity-90 px-4 text-center`}
               style={{
                 fontFamily: t.fonts?.display
                   ? `'${t.fonts.display}', serif`
@@ -169,22 +241,42 @@ function TemplateCard({
             </p>
           </div>
         )}
-        <div className="absolute top-3 left-3 px-2 py-0.5 rounded-full bg-foreground/85 text-background text-xs uppercase tracking-wider z-10">
-          {t.tier === "free" ? "Free" : "Pro"}
+        {/* Tier badge — top-left. "Pro" for premium templates so users
+            read it as a plan-gate signal, not a price tag. Free stays Free. */}
+        <div className={`absolute top-3 left-3 px-2.5 py-0.5 rounded-full text-xs uppercase tracking-wider z-10 ${
+          normalizeTier(t.tier) === "premium"
+            ? "bg-violet-600/95 text-white"
+            : normalizeTier(t.tier) === "public"
+              ? "bg-emerald-600/95 text-white"
+              : "bg-foreground/85 text-background"
+        }`}>
+          {(() => {
+            const tier = normalizeTier(t.tier);
+            if (tier === "free") return "Free";
+            if (tier === "premium") return "Pro";
+            return "Public";
+          })()}
         </div>
+        {/* Lock overlay on premium — visual cue that this needs a paid plan.
+            Tap-through still opens the preview; the InstantiateDialog gates
+            on actual subscription server-side. */}
+        {normalizeTier(t.tier) === "premium" && (
+          <div className="absolute top-3 right-3 z-10 inline-flex items-center justify-center w-7 h-7 rounded-full bg-violet-600/95 text-white shadow-lg">
+            <Lock className="w-3.5 h-3.5" aria-hidden />
+          </div>
+        )}
       </div>
+      {/* Simplified body — name + tagline + ≤2 industries.
+          Marc 2026-05-24: dropped the vibe codename ("GLOW EMERALD DUAL-THEME")
+          and reduced visible industries from 4 to 2 — the cards were reading
+          as walls of tag chips. Names should carry the gallery, not metadata. */}
       <div className="p-5">
-        <div className="flex items-baseline justify-between gap-2 mb-1">
-          <h3 className={`${type.heading.m}`}>{t.name}</h3>
-        </div>
-        <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-2`}>
-          {t.vibe}
-        </p>
-        <p className={`${type.body.s} text-muted-foreground line-clamp-2 mb-3`}>
+        <h3 className={`${type.dashboard.heading.m} mb-2`}>{t.name}</h3>
+        <p className={`${type.body.s} text-muted-foreground line-clamp-1 mb-3`}>
           {t.tagline}
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {t.applicable_industries.slice(0, 4).map((ind) => (
+          {t.applicable_industries.slice(0, 2).map((ind) => (
             <span
               key={ind}
               className={`${type.mono} px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground`}
@@ -192,9 +284,9 @@ function TemplateCard({
               {ind}
             </span>
           ))}
-          {t.applicable_industries.length > 4 && (
+          {t.applicable_industries.length > 2 && (
             <span className={`${type.mono} px-2 py-0.5 rounded-full text-xs text-muted-foreground`}>
-              +{t.applicable_industries.length - 4} more
+              +{t.applicable_industries.length - 2}
             </span>
           )}
         </div>
@@ -259,7 +351,21 @@ function PreviewPane({
   }, [current.id]);
 
   const active = pages[activeIdx] ?? pages[0];
-  const iframeSrc = `${current.preview_url ?? ""}${active.path}`;
+  // Templates with absolute preview_urls (legacy localhost:3199 entries) load
+  // as-is. Engine-served static-export URLs (/preview-template/<id>/...) need
+  // the engine origin prefixed so the iframe resolves to port 8000, not v3's
+  // port 3001. Mirror the ENGINE_BASE logic from lib/api.ts exactly.
+  const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+  const previewUrl = current.preview_url ?? "";
+  // Both preview_url and active.path may carry a leading/trailing slash —
+  // naive concat ("/preview-template/<id>/" + "/about") emits a double slash
+  // that the engine's path-traversal guard interprets as an absolute path
+  // and 403s ("path outside template root"). Normalize once here.
+  const trimmedPath = (active.path || "").replace(/^\/+/, "");
+  const trimmedPreview = previewUrl.replace(/\/+$/, "");
+  const iframeSrc = previewUrl.startsWith("/")
+    ? `${ENGINE_BASE}${trimmedPreview}/${trimmedPath}`
+    : `${trimmedPreview}/${trimmedPath}`;
 
   const handleUseTemplate = async () => {
     setCheckingAuth(true);
@@ -299,7 +405,7 @@ function PreviewPane({
             <p className={`${type.mono} text-[10px] uppercase tracking-wider text-white/50`}>
               {current.vibe}
             </p>
-            <h2 className={`${type.heading.m} text-white truncate`}>{current.name}</h2>
+            <h2 className={`${type.dashboard.heading.m} text-white truncate`}>{current.name}</h2>
           </div>
         </div>
 
@@ -414,7 +520,14 @@ function PreviewPane({
             src={iframeSrc}
             className="w-full h-full rounded-lg border border-white/10 bg-white"
             title={`${current.name} ${active.label} preview`}
-            sandbox="allow-scripts allow-same-origin allow-forms"
+            // allow-downloads is required because Next.js static export
+            // (basePath: "/preview-template/<id>") triggers a "download"
+            // sandbox check on font preload / image-asset prefetches that
+            // get classified as attachments by Chrome's heuristic. Without
+            // it the iframe body stays empty even when the engine returns 200.
+            // allow-popups + allow-popups-to-escape-sandbox so target=_blank
+            // links from inside the preview (e.g. "View live") open properly.
+            sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox"
           />
         ) : current.preview_image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -476,9 +589,7 @@ function InstantiateDialog({
       if (!res.ok || !res.slug) {
         throw new Error(res.swap_message || "Template instantiation failed");
       }
-      // Persist as the user's "last build" so the workspace can pick it up
-      setLastBuild({ slug: res.slug, businessName: businessName.trim() });
-      router.push(`/workspace?slug=${encodeURIComponent(res.slug)}`);
+      router.push(`/workspace/${encodeURIComponent(res.slug)}`);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
       setSubmitting(false);
@@ -502,7 +613,7 @@ function InstantiateDialog({
             <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-1`}>
               {template.vibe}
             </p>
-            <h2 className={`${type.heading.l}`}>Use {template.name}</h2>
+            <h2 className={`${type.dashboard.heading.l}`}>Use {template.name}</h2>
           </div>
           <button
             type="button"
@@ -602,5 +713,124 @@ function FieldLabel({
       </span>
       {children}
     </label>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// Tier tab + Public placeholder (2026-05-23)                          //
+// ------------------------------------------------------------------ //
+
+function TierTabButton({
+  active, count, onClick, children,
+}: {
+  active: boolean;
+  count: number;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
+        active
+          ? "bg-foreground text-background"
+          : "bg-card border border-border text-muted-foreground hover:text-foreground"
+      }`}
+    >
+      <span>{children}</span>
+      <span
+        className={`inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-bold ${
+          active ? "bg-background/20 text-background" : "bg-muted text-muted-foreground"
+        }`}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+// Public tab: when the marketplace ships (user uploads + revenue split),
+// this placeholder gets replaced with a real listing + an upload CTA.
+// Until then we surface the value prop + capture interest so users know
+// it's coming and we don't leave an empty grid feeling broken.
+function PublicTabPlaceholder() {
+  // 2026-05-24: rewritten from passive "coming soon" → 3 active creator
+  // CTAs. Marc wanted this section to invite community contributions
+  // instead of advertising vaporware. Each CTA hits a different intent
+  // (ready-now / idea-stage / total-newcomer) so no one falls through.
+  return (
+    <section className="max-w-3xl mx-auto">
+      <div className="rounded-2xl border border-border bg-card p-8 md:p-10 text-center">
+        <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-primary/10 mb-4">
+          <Upload className="w-5 h-5 text-primary" />
+        </div>
+        <h2 className={`${type.dashboard.display.m} text-foreground mb-2`}>
+          Built something? Show the community.
+        </h2>
+        <p className={`${type.body.m} text-muted-foreground mb-8 max-w-xl mx-auto`}>
+          Pebble&apos;s catalog is open to designers, agencies, and builders. Ship a finished template,
+          pitch us an idea, or just start designing in our framework — every contributor gets credit
+          on every install.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-left">
+          {/* CTA 1 — ready-now: full template upload */}
+          <a
+            href="mailto:hello@getpebble.net?subject=Pebble%20—%20I%20want%20to%20submit%20a%20template&body=Tell%20us%20about%20your%20template%3A%20industry%2C%20design%20vibe%2C%20link%20to%20a%20live%20demo%20or%20Figma%20file."
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Submit a template
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              Already have a finished design? Send us the live URL or Figma file.
+              Approved templates ship with your credit and a revenue share.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Open contact →
+            </span>
+          </a>
+
+          {/* CTA 2 — idea-stage: pitch / collaborate */}
+          <a
+            href="mailto:hello@getpebble.net?subject=Pebble%20—%20Template%20idea&body=My%20industry%20%2F%20idea%3A%0A%0AWhat%20it%20should%20feel%20like%3A%0A%0AReferences%20%2F%20inspiration%3A"
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Share an idea
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              Have a template idea but no time to build it? Tell us the industry + vibe.
+              We&apos;ll build it and credit you as the originator.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Pitch us →
+            </span>
+          </a>
+
+          {/* CTA 3 — total newcomer: get started */}
+          <a
+            href="/community/launchpad"
+            className="group rounded-xl border border-border bg-background p-5 hover:border-primary/60 hover:bg-card transition-colors flex flex-col"
+          >
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-primary mb-2`}>
+              Get started
+            </p>
+            <p className={`${type.body.s} text-foreground mb-auto`}>
+              New to designing for Pebble? Start here — quick docs on our template system,
+              the DNA model, and how the engine renders your work.
+            </p>
+            <span className="text-xs font-semibold text-primary mt-3 group-hover:underline">
+              Open Launchpad →
+            </span>
+          </a>
+        </div>
+
+        <p className={`${type.mono} text-xs text-muted-foreground mt-8`}>
+          Every approved contributor earns 30% of every install of their template, recurring.
+        </p>
+      </div>
+    </section>
   );
 }

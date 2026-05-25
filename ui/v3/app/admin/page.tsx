@@ -42,7 +42,19 @@ type AdminEngagementRow = {
 type Tab = "users" | "projects" | "errors" | "engagement";
 
 async function adminFetch<T>(path: string): Promise<T> {
-  const resp = await fetch(path);
+  // Phase 58e (2026-05-22) — must send the Supabase access token; the
+  // engine's _require_admin only reads `Authorization: Bearer <jwt>`
+  // (and the legacy pebble_session cookie, which v3 never sets). Without
+  // this header every admin tab was 401'ing for the v3 admin page even
+  // when the caller's email was in PEBBLE_ADMIN_EMAIL.
+  let authHeader: Record<string, string> = {};
+  try {
+    const { createClient } = await import("@/lib/supabase/client");
+    const supabase = createClient();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session?.access_token) authHeader = { "Authorization": `Bearer ${session.access_token}` };
+  } catch { /* not authenticated — endpoint will 401 */ }
+  const resp = await fetch(path, { headers: authHeader });
   const text = await resp.text();
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
@@ -104,7 +116,7 @@ export default function AdminPage() {
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
-              <h1 className={`${type.display.m} text-foreground`}>Support tooling</h1>
+              <h1 className={`${type.dashboard.display.m} text-foreground`}>Support tooling</h1>
               <p className={`${type.body.s} text-muted-foreground mt-1`}>
                 Read-only — to grant access add an email to <code className="font-mono text-xs">PEBBLE_ADMIN_EMAIL</code> in <code className="font-mono text-xs">.env</code>.
               </p>

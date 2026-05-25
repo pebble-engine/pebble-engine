@@ -84,9 +84,16 @@ def engine_server(tmp_path, monkeypatch):
         server.server_close()
 
 
-def _request(method: str, base: str, path: str, body: dict | None = None) -> tuple[int, dict | str]:
+def _request(method: str, base: str, path: str, body: dict | None = None,
+             cookie: str | None = None) -> tuple[int, dict | str]:
+    # Phase 58e (2026-05-22) — optional cookie param for the auth-gated
+    # /api/projects dashboard-listing assertion at the bottom of this file.
     data = json.dumps(body).encode("utf-8") if body is not None else None
-    headers = {"Content-Type": "application/json"} if data else {}
+    headers: dict[str, str] = {}
+    if data:
+        headers["Content-Type"] = "application/json"
+    if cookie:
+        headers["Cookie"] = cookie
     req = urllib.request.Request(f"{base}{path}", data=data, headers=headers, method=method)
     try:
         with urllib.request.urlopen(req, timeout=5) as resp:
@@ -97,6 +104,19 @@ def _request(method: str, base: str, path: str, body: dict | None = None) -> tup
         text = e.read().decode("utf-8", errors="replace")
         try: return e.code, json.loads(text)
         except Exception: return e.code, text
+
+
+def _signup_and_get_cookie(base: str, email: str = "u@example.com",
+                           password: str = "valid-password") -> str:
+    """Sign up via the legacy auth endpoint and return the session cookie.
+    Used for tests that need to hit signed-in-only endpoints."""
+    data = json.dumps({"email": email, "password": password}).encode("utf-8")
+    req = urllib.request.Request(f"{base}/api/auth/signup", data=data,
+                                  headers={"Content-Type": "application/json"},
+                                  method="POST")
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        sc = resp.headers.get("Set-Cookie") or ""
+    return sc.split(";", 1)[0] if sc else ""
 
 
 def _seed_project(output: Path, slug: str) -> Path:
@@ -241,7 +261,11 @@ def test_dashboard_summary_includes_domain_after_attach(engine_server):
     _seed_project(engine_server["output"], "good-co")
     _request("POST", engine_server["base"], "/api/projects/good-co/domain",
              {"host": "example.com"})
-    status, body = _request("GET", engine_server["base"], "/api/projects")
+    # Phase 58e — /api/projects now requires auth. Unclaimed projects
+    # (no _user_id) appear for any signed-in user, so a fresh signup is
+    # sufficient to see "good-co" in the listing.
+    cookie = _signup_and_get_cookie(engine_server["base"])
+    status, body = _request("GET", engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     proj = next(p for p in body["projects"] if p["slug"] == "good-co")
     assert proj["domain"]["host"] == "example.com"

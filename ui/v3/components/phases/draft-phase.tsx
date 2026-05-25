@@ -11,13 +11,16 @@ import {
   CheckSquare,
   CheckCircle2,
   AlertCircle,
-  Droplet,
   Circle,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
   type LucideIcon,
 } from "lucide-react";
 import { type SSEEvent, fetchBotMessage } from "@/lib/api";
-import { dropletPulse, fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
+import { fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
+import { BuildChatPanel, type CollectedAnswer } from "./build-chat";
 
 /**
  * Draft phase — "Pebble is building your draft."
@@ -68,6 +71,114 @@ const FACTS: Array<(c: BuildCtx) => string | null> = [
   () => `The whole site loads on a 3G connection in under 2 seconds.`,
 ];
 
+/**
+ * humanizeBuildEvent — translate the engine's raw file-path SSE events into
+ * customer-readable build-feed lines.
+ *
+ * Marc's feedback 2026-05-23: "A non-technical bookstore owner has no idea
+ * what `components/ui/AnimatedHeading.tsx` means." So instead of streaming
+ * file paths into the live feed, we map them to friendly verbs that describe
+ * what Pebble is actually doing right now ("Drawing your hero section…").
+ *
+ * Coverage:
+ *  - All foundation components (ui/, layout/, sections/, forms/)
+ *  - All page routes (homepage + named industry pages)
+ *  - Config files (next.config, tailwind, postcss, package.json, etc.)
+ *  - Server actions + lib helpers
+ *  - Sensible fallback for anything unmapped (uses the file basename)
+ *
+ * Returns a string starting with a leading "+ " so the existing tone styling
+ * (green check) reads naturally in the live feed.
+ */
+function humanizeBuildEvent(fpath: string): string {
+  // Page routes — homepage gets a special label; named pages get title-cased.
+  if (fpath === "app/page.tsx") return "+ Building the homepage";
+  const pageMatch = fpath.match(/^app\/([^/]+)\/page\.tsx$/);
+  if (pageMatch) {
+    const name = pageMatch[1]
+      .replace(/-/g, " ")
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+    return `+ Adding the ${name} page`;
+  }
+
+  // Exact-match lookup for the foundation files. Anything not in this map
+  // falls through to the regex section / basename fallback below.
+  const exact: Record<string, string> = {
+    // Sections — the most user-facing
+    "components/sections/Hero.tsx":         "+ Drawing your hero section",
+    "components/sections/TrustBar.tsx":     "+ Adding trust signals",
+    "components/sections/Services.tsx":     "+ Listing your services",
+    "components/sections/SocialProof.tsx":  "+ Adding customer proof",
+    "components/sections/Testimonials.tsx": "+ Pulling in testimonials",
+    "components/sections/Pricing.tsx":      "+ Setting up pricing",
+    "components/sections/FAQ.tsx":          "+ Writing the FAQ",
+    "components/sections/Stats.tsx":        "+ Adding stats strip",
+    "components/sections/CTA.tsx":          "+ Adding the call-to-action",
+    "components/sections/Features.tsx":     "+ Listing features",
+    "components/sections/Gallery.tsx":      "+ Adding the gallery",
+    "components/sections/Booking.tsx":      "+ Wiring up booking",
+    // Layout
+    "components/layout/Navbar.tsx":         "+ Building the navigation",
+    "components/layout/Footer.tsx":         "+ Building the footer",
+    // UI primitives
+    "components/ui/AnimatedHeading.tsx":    "+ Animating the headline",
+    "components/ui/FadeIn.tsx":             "+ Adding fade animations",
+    "components/ui/ScrollReveal.tsx":       "+ Wiring scroll reveals",
+    "components/ui/GlassCard.tsx":          "+ Adding glass-effect cards",
+    "components/ui/MagneticButton.tsx":     "+ Adding interactive buttons",
+    "components/ui/SectionHeader.tsx":      "+ Styling section headers",
+    "components/ui/GrainOverlay.tsx":       "+ Applying texture",
+    // Forms
+    "components/forms/ContactForm.tsx":     "+ Wiring the contact form",
+    // App shell + style
+    "app/layout.tsx":                       "+ Setting up the page shell",
+    "app/globals.css":                      "+ Setting up styles",
+    "app/sitemap.ts":                       "+ Building the SEO sitemap",
+    "app/robots.ts":                        "+ Setting search-engine rules",
+    "app/icon.svg":                         "+ Drawing the favicon",
+    "app/actions/contact.ts":               "+ Wiring the contact form logic",
+    // Lib helpers
+    "lib/utils.ts":                         "+ Adding helper utilities",
+    "lib/email.ts":                         "+ Wiring the email service",
+    "lib/motion.ts":                        "+ Setting up animations",
+    // Config / brand
+    "config/brand.config.ts":               "+ Recording your brand settings",
+    "config/motion.config.ts":              "+ Configuring motion preferences",
+    "tailwind.config.ts":                   "+ Configuring the design system",
+    "next.config.mjs":                      "+ Configuring Next.js",
+    "postcss.config.mjs":                   "+ Configuring CSS pipeline",
+    "tsconfig.json":                        "+ Configuring TypeScript",
+    "package.json":                         "+ Listing dependencies",
+    ".env.example":                         "+ Documenting environment variables",
+    "vercel.json":                          "+ Configuring Vercel deployment",
+    "README.md":                            "+ Writing the README",
+    ".gitignore":                           "+ Configuring git",
+  };
+  if (exact[fpath]) return exact[fpath];
+
+  // Generic section / layout / ui buckets for files we didn't pre-map
+  if (fpath.startsWith("components/sections/")) {
+    const name = fpath.replace(/^components\/sections\//, "").replace(/\.tsx?$/, "");
+    return `+ Adding the ${name} section`;
+  }
+  if (fpath.startsWith("components/layout/")) {
+    const name = fpath.replace(/^components\/layout\//, "").replace(/\.tsx?$/, "");
+    return `+ Building the ${name.toLowerCase()}`;
+  }
+  if (fpath.startsWith("components/ui/")) {
+    const name = fpath.replace(/^components\/ui\//, "").replace(/\.tsx?$/, "");
+    return `+ Adding ${name}`;
+  }
+  if (fpath.startsWith("app/actions/")) {
+    return `+ Wiring the server action`;
+  }
+
+  // Fallback: just show the file basename without the path noise.
+  const base = fpath.split("/").pop() || fpath;
+  return `+ ${base}`;
+}
+
+
 const STEPS: ThinkingStep[] = [
   { id: "industry", Icon: Search,       label: "Reading your industry",  detail: "Looking up what websites for your type of business usually include." },
   { id: "style",    Icon: Palette,      label: "Choosing a style",       detail: "Picking a visual style that matches the feeling you chose." },
@@ -88,11 +199,17 @@ type Props = {
    *  build feed and checklist advance from real engine milestones instead
    *  of the scripted fallback animation. */
   sseEvents?: SSEEvent[];
+  /** Called when the user clicks "Try again" in the error banner.
+   *  Shell wires this to handleGenerate for a clean retry. */
+  onRetry?: () => void;
+  /** Called with collected chat answers when the build finishes (or right
+   *  away with [] if no answers). Shell fires enrichContent in the bg. */
+  onEnrich?: (answers: CollectedAnswer[]) => void;
 };
 
 type LogLine = { ts: string; text: string; tone: "info" | "ok" | "step" };
 
-export function DraftPhase({ error, done, sseEvents }: Props) {
+export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props) {
   const [activeIdx, setActiveIdx] = useState(0);
   const [logLines, setLogLines] = useState<LogLine[]>([]);
   const [readyPulsing, setReadyPulsing] = useState(false);
@@ -104,6 +221,9 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   // streaming in. Engine emits this once per build.
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewReadyAt, setPreviewReadyAt] = useState<number | null>(null);
+  // Collapsible live build feed — expanded by default; user can collapse
+  // if they don't want to read the event stream.
+  const [feedOpen, setFeedOpen] = useState(true);
   // Phase 25a (2026-05-20) — Plan Reveal state. Webild-parity move: each
   // piece animates in as its SSE event arrives, so the user sees the
   // bot's plan unfolding in the first 10-15 seconds instead of a blank
@@ -125,7 +245,6 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   const startTsRef = useRef<number>(Date.now());
   const notifiedRef = useRef(false);
 
-  const safeDropletPulse = useMemo(() => withReducedMotion(dropletPulse), []);
   const safeFadeUp = useMemo(() => withReducedMotion(fadeUp), []);
 
   // Elapsed-time ticker. Increments once per second from mount until `done`
@@ -198,9 +317,23 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   }, [done, error]);
 
   // Auto-scroll the build feed when new lines arrive.
+  //
+  // Two design choices:
+  //   1. behavior: "auto" (instant), not "smooth". A multi-page build
+  //      fires 50+ SSE events in seconds; smooth-scrolling each one
+  //      queues animations that stack up, the panel gets stuck mid-
+  //      animation, and user-initiated scrolls get stomped.
+  //   2. Pin-to-bottom only: if the user has scrolled UP to read an
+  //      earlier line, don't snap them back to the bottom on every new
+  //      event. We treat "within 80px of bottom" as still pinned (so
+  //      the tiny gap from a chip-row layout shift doesn't bail).
   useEffect(() => {
-    if (feedRef.current) {
-      feedRef.current.scrollTo({ top: feedRef.current.scrollHeight, behavior: "smooth" });
+    const el = feedRef.current;
+    if (!el) return;
+    const slack = 80; // px from bottom that still counts as pinned
+    const pinned = el.scrollHeight - el.scrollTop - el.clientHeight < slack;
+    if (pinned) {
+      el.scrollTo({ top: el.scrollHeight, behavior: "auto" });
     }
   }, [logLines]);
 
@@ -294,7 +427,10 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         // we're still in that phase.
         if (latest.data.name) {
           const fpath = String(latest.data.name);
-          appendLog(`+ ${fpath}`, "ok");
+          // 2026-05-23: humanize the file path so non-technical owners can
+          // follow along. Maps `components/ui/AnimatedHeading.tsx` to
+          // "Animating the headline" etc. See humanizeBuildEvent above.
+          appendLog(humanizeBuildEvent(fpath), "ok");
           // Phase 25a — checkmark a page in the Plan Reveal site-structure
           // list as soon as its file lands. Patterns: `app/page.tsx` is
           // the homepage; `app/<route>/page.tsx` is the named page.
@@ -347,6 +483,34 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         appendLog(`Running 32 quality checks before you see it.`, "step");
         setActiveIdx(4);
         break;
+      case "repair_started": {
+        // AUTO_REPAIR kicked in — baseline eval failed something. Without
+        // these events the build feed goes silent for 60-120s while the
+        // repair LLM call runs; users assume the build is stuck. Stay on
+        // the "Checking my work" step icon — we're still in the same
+        // phase conceptually, just doing more of it.
+        const n = latest.data.failed_count ?? 0;
+        const noun = n === 1 ? "issue" : "issues";
+        appendLog(`Caught ${n} ${noun} — let me fix them before you see the draft.`, "info");
+        setActiveIdx(4);
+        break;
+      }
+      case "repair_round": {
+        const r = latest.data.round ?? 1;
+        const max = latest.data.max_rounds ?? 2;
+        appendLog(`Fix attempt ${r} of ${max} — rewriting the affected files.`, "step");
+        setActiveIdx(4);
+        break;
+      }
+      case "repair_done": {
+        if (latest.data.improved) {
+          appendLog(`Fixed it. ${latest.data.final_score} checks now pass.`, "ok");
+        } else {
+          appendLog(`Couldn't auto-fix every check, but the site still works — you can keep editing.`, "info");
+        }
+        setActiveIdx(4);
+        break;
+      }
       case "done":
         appendLog(`Done. Your draft is ready to view.`, "ok");
         setActiveIdx(STEPS.length - 1);
@@ -383,7 +547,24 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
   }, [error]);
 
   return (
-    <main className="relative flex-1 flex flex-col items-center pt-10 pb-12 px-4 w-full overflow-y-auto">
+    <div className="flex-1 flex overflow-hidden w-full relative">
+
+      {/* ── Left column: Pebble chat (md+ only) ──────────────────────────────
+          Hidden on mobile — the build status already fills the screen.
+          The panel keeps the user engaged by asking 3 quick questions
+          while the engine builds, then feeds the answers to /api/enrich-content
+          immediately after the build finishes. */}
+      <div className="hidden md:flex md:w-[340px] shrink-0 p-4 border-r border-border">
+        <BuildChatPanel
+          sseEvents={sseEvents ?? []}
+          done={!!done}
+          error={error ?? null}
+          onAnswers={(answers) => onEnrich?.(answers)}
+        />
+      </div>
+
+      {/* ── Right column: build status ──────────────────────────────────── */}
+      <main className="relative flex-1 flex flex-col items-center pt-10 pb-12 px-4 overflow-y-auto">
       {/* Ambient brand photo — ripple-cream evokes the calm of waiting
           while the engine builds. Dimmed so the foreground reads cleanly. */}
       <Image
@@ -395,52 +576,36 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         className="pointer-events-none object-cover opacity-15 dark:opacity-10"
       />
 
-      {/* Cinematic entrance stagger: droplet → headline → subhead. */}
+      {/* Build status header — clean, bold, no logo fluff. */}
       <motion.section
         initial="hidden"
         animate="visible"
         variants={{
           hidden:  {},
-          visible: { transition: { staggerChildren: 0.12, delayChildren: 0 } },
+          visible: { transition: { staggerChildren: 0.1, delayChildren: 0 } },
         }}
-        className="mb-8 text-center"
+        className="mb-8 text-center w-full max-w-lg"
       >
-        {/* Smooth scale pulse — no rotate. Rotating a small glyph by ±6°
-            sub-pixel-jitters the anti-aliasing and reads as "stutter" even
-            when Framer is hitting 60fps. A pure scale animation on an SVG
-            stays GPU-accelerated and visually clean. The pebble-ripple
-            blob behind comes from the .pebble-ripple CSS keyframe. */}
-        <div className="pebble-ripple relative w-24 h-24 mx-auto mb-4 flex items-center justify-center">
-          <motion.div
-            variants={safeDropletPulse}
-            animate="rest"
-            className="text-secondary relative z-10"
-            style={{ willChange: "transform" }}
-          >
-            <Droplet className="w-14 h-14 fill-current" strokeWidth={1.5} />
-          </motion.div>
-        </div>
         <motion.h1
           variants={safeFadeUp}
-          className={`${type.display.m} text-foreground`}
+          className="text-3xl md:text-4xl font-extrabold tracking-tight text-foreground leading-tight"
         >
-          {botGreeting || "Hang out while Pebble builds your masterpiece."}
+          {planName ? (
+            <>Building <span className="text-[#3054ff]">{planName}</span>&hellip;</>
+          ) : (
+            "Building your site…"
+          )}
         </motion.h1>
-        <motion.p
-          variants={safeFadeUp}
-          className={`${type.body.s} text-muted-foreground mt-2 max-w-md mx-auto`}
-        >
-          You can switch to another tab — we'll ping you when it's ready. Usually 2–3 minutes.
-        </motion.p>
+
         <motion.div
           variants={safeFadeUp}
-          className="mt-4 inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border bg-card/60"
+          className="mt-5 inline-flex items-center gap-2.5 px-4 py-2 rounded-full border border-border bg-card/60 backdrop-blur-sm"
         >
           <span
-            className="w-1.5 h-1.5 rounded-full bg-foreground animate-pulse"
+            className={`w-2 h-2 rounded-full ${done ? "bg-emerald-500" : "bg-[#3054ff] animate-pulse"}`}
             aria-hidden
           />
-          <span className={`${type.mono} text-muted-foreground`}>
+          <span className="font-mono text-sm font-semibold text-muted-foreground">
             {done ? `Finished in ${formatElapsed(elapsedSec)}` : `Building — ${formatElapsed(elapsedSec)}`}
           </span>
         </motion.div>
@@ -668,18 +833,18 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
                 </motion.div>
                 <div>
                   <p
-                    className={`${type.label} flex items-center gap-2 ${state === "active" ? "text-primary" : "text-foreground"}`}
+                    className={`text-[15px] font-bold leading-snug flex items-center gap-2 ${state === "active" ? "text-[#3054ff]" : state === "done" ? "text-foreground" : "text-muted-foreground"}`}
                   >
                     {step.label}
                     {state === "active" && (
                       <motion.span
-                        className="w-2 h-2 rounded-full bg-primary"
+                        className="w-2 h-2 rounded-full bg-[#3054ff]"
                         animate={{ opacity: [0.3, 1, 0.3] }}
-                        transition={{ duration: SLOW_S * 2, repeat: Infinity }} // SLOW_S*2 = 1.4s — intentional slow pulse
+                        transition={{ duration: SLOW_S * 2, repeat: Infinity }}
                       />
                     )}
                   </p>
-                  <p className={`${type.caption} mt-1`}>{step.detail}</p>
+                  <p className="text-sm text-muted-foreground mt-0.5 leading-snug">{step.detail}</p>
                 </div>
               </motion.div>
             );
@@ -687,9 +852,9 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         </div>
       </section>
 
-      {/* Live build feed — visible by default so the user can SEE the
-          engine working. Eliminates the "is it frozen?" panic.
-          Entrance stagger: fades up after the checklist settles (~0.92s delay). */}
+      {/* Live build feed — collapsible. Expanded by default so the user
+          sees real engine milestones, but can collapse if they'd rather
+          not read the stream. Entrance after checklist settles. */}
       <motion.section
         variants={safeFadeUp}
         initial="hidden"
@@ -697,46 +862,84 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
         transition={{ delay: 0.92, duration: STANDARD_S, ease: EASE_CINEMATIC }}
         className="w-full max-w-2xl"
       >
-        <div className="flex items-center justify-between mb-2 px-1">
-          <p className={`${type.mono} text-muted-foreground`}>
-            Live build feed
-          </p>
-          <p className={`${type.mono} text-muted-foreground/60`}>
-            {logLines.length} events
-          </p>
-        </div>
-        <div
-          ref={feedRef}
-          className="bg-charcoal/95 dark:bg-stone/80 text-pebble rounded-xl p-4 font-mono text-[11px] leading-relaxed h-64 overflow-y-auto border border-charcoal/50"
-        >
-          {logLines.length === 0 && (
-            <p className="text-pebble/50">Waiting for the first event...</p>
-          )}
-          <AnimatePresence initial={false}>
-            {logLines.map((line, i) => (
-              <motion.p
-                key={i}
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: MICRO_S, ease: EASE_CINEMATIC }}
-                className="whitespace-pre-wrap break-all"
-              >
-                <span className="text-pebble/40">[{line.ts}]</span>{" "}
-                <span
-                  className={
-                    line.tone === "ok"
-                      ? "text-sage"
-                      : line.tone === "step"
-                        ? "text-spark-deep font-semibold"
-                        : "text-pebble"
-                  }
+        {/* Feed header with collapse toggle */}
+        <div className="flex items-center justify-between mb-3 px-1">
+          <div className="flex items-center gap-2.5">
+            <p className="text-sm font-bold text-foreground uppercase tracking-wide">
+              Live Build Feed
+            </p>
+            <AnimatePresence>
+              {logLines.length > 0 && (
+                <motion.span
+                  key="count"
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="text-xs font-bold bg-muted px-2 py-0.5 rounded-full text-muted-foreground tabular-nums"
                 >
-                  {line.text}
-                </span>
-              </motion.p>
-            ))}
-          </AnimatePresence>
+                  {logLines.length}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </div>
+          <button
+            type="button"
+            onClick={() => setFeedOpen((o) => !o)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors px-2.5 py-1.5 rounded-lg hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            {feedOpen ? (
+              <><ChevronUp className="w-3.5 h-3.5" /> Collapse</>
+            ) : (
+              <><ChevronDown className="w-3.5 h-3.5" /> Expand</>
+            )}
+          </button>
         </div>
+
+        {/* Collapsible body */}
+        <AnimatePresence initial={false}>
+          {feedOpen && (
+            <motion.div
+              key="feed-body"
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.24, ease: EASE_CINEMATIC }}
+              style={{ overflow: "hidden" }}
+            >
+              <div
+                ref={feedRef}
+                className="bg-[#111] text-[#e8e4dc] rounded-xl p-4 font-mono text-[13px] leading-relaxed h-60 overflow-y-auto border border-[#222]"
+              >
+                {logLines.length === 0 && (
+                  <p className="text-[#888] text-[13px]">Waiting for first event…</p>
+                )}
+                <AnimatePresence initial={false}>
+                  {logLines.map((line, i) => (
+                    <motion.p
+                      key={i}
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: MICRO_S, ease: EASE_CINEMATIC }}
+                      className="whitespace-pre-wrap break-all mb-0.5"
+                    >
+                      <span className="text-[#555] text-[11px]">[{line.ts}]</span>{" "}
+                      <span
+                        className={
+                          line.tone === "ok"
+                            ? "text-emerald-400 font-semibold"
+                            : line.tone === "step"
+                              ? "text-[#6b8aff] font-bold"
+                              : "text-[#e8e4dc]"
+                        }
+                      >
+                        {line.text}
+                      </span>
+                    </motion.p>
+                  ))}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.section>
 
       {/* Rotating "Did you know?" card — the engagement honey. Pulls
@@ -787,16 +990,29 @@ export function DraftPhase({ error, done, sseEvents }: Props) {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
-            className="mt-6 p-4 bg-destructive/10 border border-destructive/40 rounded-lg text-destructive text-sm max-w-2xl flex items-start gap-3"
+            className="mt-6 w-full max-w-2xl"
           >
-            <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
-            <div>
-              <p className="font-semibold">Build failed.</p>
-              <p className="text-xs opacity-80 mt-1">{error}</p>
+            <div className="p-5 bg-destructive/10 border border-destructive/30 rounded-2xl flex items-start gap-4">
+              <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
+              <div className="flex-1 min-w-0">
+                <p className="text-base font-bold text-destructive">Build failed</p>
+                <p className="text-sm text-destructive/80 mt-1 leading-relaxed break-words">{error}</p>
+                {onRetry && (
+                  <button
+                    type="button"
+                    onClick={onRetry}
+                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold hover:bg-foreground/90 transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    Try again
+                  </button>
+                )}
+              </div>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </main>
+      </main>
+    </div>
   );
 }

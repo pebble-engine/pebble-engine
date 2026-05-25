@@ -6,7 +6,6 @@ import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
 import { RotatingPebbleLogo, shimmerForegroundStyle, PEBBLE_LANGS } from "@/components/hero/rotating-pebble-logo";
-import { TrustSeal } from "@/components/trust/trust-seal";
 import { PromptInputBox } from "@/components/ui/ai-prompt-box";
 import { BackgroundCarousel } from "@/components/hero/background-carousel"; // eslint-disable-line @typescript-eslint/no-unused-vars -- kept for quick revert
 import { ShuffleHeroBackdrop } from "@/components/hero/shuffle-grid";
@@ -85,18 +84,18 @@ const ROTATING_WORDS = [
 const STEPS = [
   {
     Icon: Sparkles,
-    title: "Start with an idea",
-    body: "Describe your business in your own words. No jargon. No templates to wade through.",
+    title: "Describe your business",
+    body: "Plain words. No jargon.",
   },
   {
     Icon: Palette,
     title: "Pebble builds it live",
-    body: "Watch your site come together piece by piece, with every choice explained.",
+    body: "Watch it come together in real time.",
   },
   {
     Icon: Rocket,
     title: "Refine and publish",
-    body: "Edit anything with a click. Publish when you're ready. Change it anytime.",
+    body: "Click to edit. Publish when ready.",
   },
 ];
 
@@ -116,10 +115,8 @@ const TEMPLATE_TILES = [
   { label: "Boutique Brokerage",         feel: "Real estate",  preview: "/templates-preview/boutique_brokerage.png"      },
   { label: "Boutique Brokerage · Navy",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_navy.png" },
   { label: "Boutique Brokerage · Sage",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_sage.png" },
-  // Honest garage — automotive
-  { label: "Honest Garage",              feel: "Automotive",   preview: "/templates-preview/honest_garage.png"           },
-  { label: "Honest Garage · Rust",       feel: "Automotive",   preview: "/templates-preview/honest_garage_rust.png"      },
-  { label: "Honest Garage · Military",   feel: "Automotive",   preview: "/templates-preview/honest_garage_military.png"  },
+  // Cinematic Hero — generic service-business hero (no color variants)
+  { label: "Cinematic Hero",             feel: "Service light", preview: "/templates-preview/cinematic_hero.png"          },
   // Ink studio — tattoo / art
   { label: "Ink Studio",                 feel: "Tattoo studio",preview: "/templates-preview/ink_studio.png"              },
   { label: "Ink Studio · Oxblood",       feel: "Tattoo studio",preview: "/templates-preview/ink_studio_oxblood.png"      },
@@ -153,7 +150,7 @@ const DNAS = [
   { label: "Garden Press",          colors: ["#f5f0e1", "#5b6f4a", "#8b6f47", "#2a2a1f"], feel: "Botanical · considered",       preview: "/templates-preview/artisan_kitchen.png"     },
   { label: "Velvet Lounge",         colors: ["#1a0f1f", "#722f4a", "#c4a058", "#f3e5cc"], feel: "Intimate · candlelit",         preview: "/templates-preview/ink_studio_oxblood.png"  },
   { label: "Tactile Y2K",           colors: ["#ffe4ec", "#f0e6d2", "#a8c8e8", "#3d3d3d"], feel: "Soft · organic",               preview: "/templates-preview/luxe_beauty_rose.png"    },
-  { label: "Industrial Freight",    colors: ["#1f1f1f", "#f97316", "#9ca3af", "#fef3c7"], feel: "Utilitarian · blocky",         preview: "/templates-preview/honest_garage_rust.png"  },
+  { label: "Cinematic Light",       colors: ["#fafaf9", "#18181b", "#d97706", "#b45309"], feel: "Light real-estate cinematic",  preview: "/templates-preview/cinematic_hero.png"      },
   { label: "Marina",                colors: ["#0c2340", "#ffffff", "#c9a96e", "#a8c8d8"], feel: "Salt-air premium",             preview: "/templates-preview/boutique_brokerage_navy.png" },
   { label: "Postmodern Maximalist", colors: ["#ff006e", "#3a86ff", "#ffbe0b", "#000000"], feel: "Loud · layered",               preview: "/templates-preview/ink_studio.png"          },
 ] as const;
@@ -185,56 +182,79 @@ const PRICING_TIERS: readonly PricingTier[] = [
     name: "Free",
     monthly: 0,
     yearly: 0,
-    desc: "See what Pebble can do.",
-    highlights: ["1 site", "30 AI refinements/mo", "pebble.app subdomain", "Unlimited cosmetic edits"],
+    desc: "Try Pebble. Build from a template, edit the look, share what you made.",
+    highlights: [
+      "5 credits/month",
+      "Templates only (1 credit each)",
+      "pebbleapp.ai subdomain",
+      "Unlimited Canva-style edits",
+    ],
     details: [
-      { category: "Sites & publishing", items: ["1 generated site", "Free pebble.app subdomain", "Contact form on every site"] },
-      { category: "Editing",             items: ["Visual click-to-edit (unlimited)", "Color + style swaps (unlimited)", "30 AI refinements/month", "60-second undo refund"] },
-      { category: "Support",             items: ["Community support"] },
+      { category: "Credits",      items: ["5 credits/month", "Hard cap 20", "Templates: 1 credit each", "Engine builds: not available"] },
+      { category: "Hosting",      items: ["<your-name>.pebbleapp.ai subdomain", "\"Built with Pebble\" badge"] },
+      { category: "Editing",      items: ["Visual click-to-edit (free)", "Color + style swaps (free)", "30 AI refinements/month"] },
+      { category: "Integrations", items: ["—"] },
+      { category: "Support",      items: ["Community forum"] },
     ],
     cta: "Start free",
   },
   {
     name: "Starter",
-    monthly: 19,
-    yearly: 190,
-    desc: "For one real business.",
-    highlights: ["5 sites", "150 AI refinements/mo (rollover)", "1 custom domain", "Real email forms"],
-    details: [
-      { category: "Sites & publishing", items: ["5 generated sites", "1 custom domain", "Real email forms (Resend-backed)"] },
-      { category: "Editing",             items: ["Everything in Free", "150 AI refinements/month", "Rollover up to 300", "+100 Launch Bonus on first month"] },
-      { category: "Forms & analytics",   items: ["Form submissions inbox"] },
-      { category: "Support",             items: ["Email support"] },
+    monthly: 19.99,
+    yearly: 199,
+    desc: "Ready to make it real. Custom domain, real forms, the integrations you actually need.",
+    highlights: [
+      "100 credits/month",
+      "~10 engine builds/month",
+      "Custom domain",
+      "WhatsApp, Booking, Maps integrations",
     ],
-    cta: "Start free trial",
+    details: [
+      { category: "Credits",      items: ["100 credits/month", "Hard cap 400", "Engine builds: 10 credits each", "Templates: 1 credit each"] },
+      { category: "Hosting",      items: ["Custom domain", "Pebble badge removable"] },
+      { category: "Editing",      items: ["Everything in Free", "150 AI refinements/month", "Brand-extract from any URL"] },
+      { category: "Integrations", items: ["WhatsApp button", "Booking link", "Google Maps", "Cookie consent banner"] },
+      { category: "Forms",        items: ["Real email forms (Resend-backed)", "Lead inbox", "Auto-responder emails"] },
+      { category: "Support",      items: ["48-hr email", "7-day money-back guarantee"] },
+    ],
+    cta: "Start with Starter",
     stripePlan: "starter",
-    featured: true,
   },
   {
     name: "Pro",
     monthly: 49,
     yearly: 490,
-    desc: "For agencies + serial builders.",
-    highlights: ["Unlimited sites", "400 AI refinements/mo (rollover)", "5 custom domains", "Priority builds"],
-    details: [
-      { category: "Sites & publishing", items: ["Unlimited sites", "5 custom domains", "Multi-page sites (About, FAQ, …)", "Drop-in section library"] },
-      { category: "Editing",             items: ["Everything in Starter", "400 AI refinements/month", "Rollover up to 800", "Priority generation queue"] },
-      { category: "Forms & analytics",   items: ["7-day site analytics"] },
-      { category: "Support",             items: ["Priority email support"] },
+    desc: "The full toolkit. Stripe Checkout, custom code, white-label, API access.",
+    highlights: [
+      "400 credits/month",
+      "~40 engine builds/month",
+      "Stripe Checkout on your site",
+      "White-label + API access",
     ],
-    cta: "Start free trial",
+    details: [
+      { category: "Credits",      items: ["400 credits/month", "Hard cap 400", "Unlimited brand-extract from URL", "Priority generation queue"] },
+      { category: "Hosting",      items: ["Custom domain", "White-label (no Pebble badge)"] },
+      { category: "Editing",      items: ["Everything in Starter", "400 AI refinements/month", "Drop-in section library"] },
+      { category: "Integrations", items: ["Everything in Starter", "Stripe Checkout on your site", "Custom code blocks", "Social embeds"] },
+      { category: "Analytics",    items: ["Per-site analytics", "Multi-site dashboard", "Referrer + top-paths breakdown"] },
+      { category: "API",          items: ["Programmatic /v1/sites endpoint", "API key in settings"] },
+      { category: "Support",      items: ["24-hr priority", "Monthly office hours with the team", "14-day money-back guarantee"] },
+    ],
+    cta: "Go Pro",
     stripePlan: "pro",
+    featured: true,
   },
   {
     name: "Enterprise",
     monthly: null,
     yearly: null,
-    desc: "For teams + white-label.",
-    highlights: ["Everything in Pro", "Unlimited domains + white-label", "Team workspace + SSO", "Dedicated support + SLA"],
+    desc: "For teams + white-label at scale.",
+    highlights: ["Everything in Pro", "Unlimited credits", "Team workspace + SSO", "Dedicated support + SLA"],
     details: [
-      { category: "Sites & publishing", items: ["Everything in Pro", "Unlimited custom domains", "White-label (remove Pebble branding)"] },
-      { category: "Team",                items: ["Multi-seat workspace", "SSO / SAML", "Role-based access"] },
-      { category: "Support",             items: ["Dedicated success manager", "Custom SLA", "Onboarding + training"] },
+      { category: "Credits",      items: ["Unlimited credits", "No monthly cap", "Bulk template instantiation"] },
+      { category: "Hosting",      items: ["Unlimited custom domains", "Full white-label (remove all Pebble branding)"] },
+      { category: "Team",         items: ["Multi-seat workspace", "SSO / SAML", "Role-based access"] },
+      { category: "Support",      items: ["Dedicated success manager", "Custom SLA", "Onboarding + training", "30-day money-back guarantee"] },
     ],
     cta: "Contact us",
     ctaHref: "mailto:hello@pebble.app",
@@ -480,7 +500,7 @@ export function WelcomePhase({ onAdvance }: Props) {
   const [stripeError, setStripeError] = useState<string | null>(null);
   const [stripeErrorTierId, setStripeErrorTierId] = useState<string | null>(null);
   const [sub, setSub] = useState<SubscriptionState | null | "loading">("loading");
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   useEffect(() => {
     if (!user) { setSub(null); return; }
@@ -894,61 +914,130 @@ export function WelcomePhase({ onAdvance }: Props) {
           className="pointer-events-none absolute bottom-0 right-[15%] w-[500px] h-[500px] bg-[#c8d4e8]/50 blur-[120px]"
         />
 
-        <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
+        {/* Header lockup pinned small at top. Marc's 2026-05-23 request:
+            returning logged-in users see "welcome back" instead of the
+            first-time "welcome to Pebble." so the landing reflects the
+            relationship Pebble has with them. Auth gate uses the same
+            useAuth() that drives the nav dropdown — single source of
+            truth, no localStorage / cookie heuristics. */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="flex items-baseline justify-center gap-2"
+          transition={{ duration: 0.5 }}
+          className="absolute top-20 sm:top-24 left-0 right-0 flex items-center justify-center z-10"
         >
-          <span className="text-muted-foreground text-lg sm:text-xl">welcome to</span>
-          <span className="text-2xl sm:text-3xl font-semibold text-foreground">Pebble.</span>
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-muted-foreground text-xs sm:text-sm">
+              {!authLoading && user ? "welcome back to" : "welcome to"}
+            </span>
+            <span className="text-sm sm:text-base font-semibold text-foreground">Pebble.</span>
+          </div>
         </motion.div>
 
-        <motion.h1
-          initial={{ opacity: 0, scale: 0.92 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
-          className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
-        >
-          Let&apos;s build your{" "}
-          <MotionConfig reducedMotion="never">
-            <span className="relative inline-block align-baseline">
-              {/* "presence" is the widest word — sets the reserved slot width */}
-              <span aria-hidden className="invisible">presence</span>
-              <AnimatePresence mode="wait">
-                <motion.span
-                  key={ROTATING_WORDS[wordIdx]}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    backgroundPosition: ["0% 0%", "200% 0%"],
-                  }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{
-                    opacity: { duration: 0.5, ease: EASE_CINEMATIC },
-                    y:       { duration: 0.5, ease: EASE_CINEMATIC },
-                    backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
-                  }}
-                  className="absolute left-0 right-0 top-0 text-center bg-clip-text text-transparent"
-                  style={shimmerForegroundStyle}
-                >
-                  {ROTATING_WORDS[wordIdx]}
-                </motion.span>
-              </AnimatePresence>
-            </span>
-          </MotionConfig>
-        </motion.h1>
+        <div className="relative z-10 min-h-screen-safe flex flex-col items-center justify-center text-center px-4 max-w-5xl mx-auto py-20 space-y-10">
 
+        {!authLoading && user ? (
+          /* Returning-user hero. Drops the rotating word (they already
+             know what Pebble does) in favor of a personal welcome that
+             nudges them toward the dashboard OR a new build. The
+             detective-input search bar that renders further down still
+             works the same — they can type a new prompt OR use the
+             dashboard CTA below to manage existing designs. */
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
+            className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
+          >
+            Welcome back
+            {firstName ? <>, <span style={shimmerForegroundStyle} className="bg-clip-text text-transparent">{firstName}</span></> : null}
+            <span className="text-muted-foreground">.</span>
+          </motion.h1>
+        ) : (
+          <motion.h1
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.2, duration: 0.6, ease: EASE_CINEMATIC }}
+            className="font-semibold text-5xl sm:text-7xl lg:text-[96px] leading-[0.95] tracking-tighter text-foreground"
+          >
+            Let&apos;s build your{" "}
+            <MotionConfig reducedMotion="never">
+              {/* Fixed-width slot sized to the widest word ("presence").
+                  Rotating word is left-aligned inside it — short words
+                  leave empty space to the right, long words fit exactly.
+                  The sentence never reflows or shifts position. */}
+              <span
+                className="relative inline-block align-baseline"
+                style={{ paddingTop: "0.12em", paddingBottom: "0.42em", marginTop: "-0.12em", marginBottom: "-0.42em" }}
+              >
+                <span aria-hidden className="invisible select-none">presence</span>
+                <AnimatePresence mode="wait">
+                  <motion.span
+                    key={ROTATING_WORDS[wordIdx]}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{
+                      opacity: 1,
+                      y: 0,
+                      backgroundPosition: ["0% 0%", "200% 0%"],
+                    }}
+                    exit={{ opacity: 0, y: -5 }}
+                    transition={{
+                      opacity: { duration: 0.5, ease: EASE_CINEMATIC },
+                      y:       { duration: 0.5, ease: EASE_CINEMATIC },
+                      backgroundPosition: { duration: 3, repeat: Infinity, ease: "linear" },
+                    }}
+                    className="absolute left-1/2 -translate-x-1/2 top-[0.12em] pb-[0.3em] bg-clip-text text-transparent whitespace-nowrap"
+                    style={shimmerForegroundStyle}
+                  >
+                    {ROTATING_WORDS[wordIdx]}
+                  </motion.span>
+                </AnimatePresence>
+              </span>
+            </MotionConfig>
+          </motion.h1>
+        )}
+
+        {/* Short punchy quote above CTA — text swaps for returning users
+            to match the welcome-back framing above. */}
         <motion.p
           initial={{ opacity: 0 }}
-          animate={{ opacity: 0.75 }}
+          animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.6 }}
-          className="text-lg sm:text-xl leading-[1.65] text-foreground max-w-xl"
+          className="text-2xl sm:text-4xl font-extrabold text-foreground max-w-xl"
         >
-          One click can change everything.
+          {!authLoading && user
+            ? "Pick up where you left off — or start something new."
+            : "The world needs what you do."}
         </motion.p>
+
+        {/* Returning-user quick action: jump straight to the dashboard.
+            Sits above the detective-input so users who came back to
+            manage existing designs (not start a new one) have a
+            one-click path. Hidden for unauthed visitors. */}
+        {!authLoading && user && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="flex flex-wrap items-center justify-center gap-3"
+          >
+            <Link
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 rounded-full border border-border px-5 py-2.5 text-sm font-semibold text-foreground bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+            >
+              Open dashboard
+            </Link>
+            {resumeName && (
+              <button
+                type="button"
+                onClick={handleResume}
+                className="inline-flex items-center justify-center rounded-full px-5 py-2.5 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Resume &ldquo;{resumeName}&rdquo; →
+              </button>
+            )}
+          </motion.div>
+        )}
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -991,13 +1080,13 @@ export function WelcomePhase({ onAdvance }: Props) {
                   // on mobile, retains the cinematic feel on desktop.
                   className="group flex items-center gap-2 sm:gap-4 pl-5 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-3 bg-foreground rounded-full"
                 >
-                  <span className="font-semibold text-base sm:text-2xl text-background">Start Building Free</span>
+                  <span className="font-extrabold text-lg sm:text-3xl text-background">Start Building Free</span>
                   <span className="w-10 h-10 sm:w-14 sm:h-14 rounded-full bg-[#3054ff] group-hover:bg-[#1e3aff] flex items-center justify-center transition-colors">
                     <ArrowRight className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                   </span>
                 </motion.button>
-                <p className={`${type.caption} text-muted-foreground/80`}>
-                  No credit card needed. One site free.
+                <p className="text-sm sm:text-base font-semibold text-muted-foreground">
+                  Your first website on us. Get started now.
                 </p>
               </motion.div>
             ) : awaitingModeChoice ? (
@@ -1179,7 +1268,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                     the `planFirst` brief flag patched below). */}
                 <DetectiveInput
                   autoFocus
-                  attachLocked={!user}
+                  attachLocked={authLoading || !user}
                   onSubmit={(value, opts) => {
                     // Inspire-mode shortcut: if the user clicked "Switch to
                     // Inspired by this design" inside the input, we skip the
@@ -1193,9 +1282,9 @@ export function WelcomePhase({ onAdvance }: Props) {
                     // pipeline calls /api/plan (cheap preview, no credit
                     // spent) before any /api/generate. Workspace surfaces
                     // the plan + a "Build this" confirm step.
-                    if (opts?.planMode) {
-                      void patchBrief({ planFirst: true });
-                    }
+                    // ALWAYS write planFirst explicitly so stale state from
+                    // a previous toggle doesn't leak into the new submit.
+                    void patchBrief({ planFirst: opts?.planMode === true });
                     void handleSend(value, opts?.files);
                   }}
                 />
@@ -1272,13 +1361,16 @@ export function WelcomePhase({ onAdvance }: Props) {
           >
             <BoldSectionHeading accent="From sentence" main="to a site." />
             <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-2">
-              Watch it happen, then read what just happened.
+              Tell Pebble what you need, kick back, and relax.
             </p>
           </motion.div>
 
           {/* Video left (~40% on md+, full width on mobile) + steps right */}
           <div className="grid grid-cols-1 md:grid-cols-[42%_1fr] gap-8 sm:gap-10 md:gap-14 items-center">
-            {/* Left — looping screen recording of a real Pebble build */}
+            {/* Left — looping screen recording of a real Pebble build.
+                Restored 2026-05-24 from c0663e0^ after the tech-debt sweep
+                accidentally deleted the file but left the reference; the
+                file's back in /public/mp_.mp4. */}
             <motion.div
               initial={{ opacity: 0, y: 16 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -1295,6 +1387,7 @@ export function WelcomePhase({ onAdvance }: Props) {
                 preload="metadata"
                 className="block w-full h-auto bg-muted"
                 aria-label="A live recording of a Pebble build, from sentence to live site"
+                ref={(el) => { if (el) el.playbackRate = 1.5; }}
               />
             </motion.div>
 
@@ -1354,7 +1447,7 @@ export function WelcomePhase({ onAdvance }: Props) {
           >
             <BoldSectionHeading accent="The looks Pebble" main="can wear." />
             <p className="text-lg max-w-2xl mx-auto text-muted-foreground pt-2">
-              Eight visual personalities. Pebble picks one per build so two sites in the same industry never feel the same.
+              Choose a prebuilt template or create your own, we got you covered.
             </p>
           </motion.div>
 
@@ -1384,22 +1477,29 @@ export function WelcomePhase({ onAdvance }: Props) {
           id="pricing"
           className="relative py-16 sm:py-24"
         >
+          {/* Full-section soft blue gradient — covers heading + all pricing
+              cards. Radial from upper-centre, fades to transparent so it
+              blends into the cream/dark background above and below. */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_90%_70%_at_50%_15%,rgba(48,84,255,0.14)_0%,rgba(48,84,255,0.06)_50%,transparent_100%)]"
+          />
           <div className="flex flex-col justify-center px-4 max-w-6xl mx-auto">
           <motion.div
             className="relative text-center mb-10 space-y-4"
             {...MOBILE_FADE_PROPS}
           >
-            {/* Phase 43.15 — blue gradient glow behind the heading.
-                Absolutely positioned, blurred + saturated Pebble blue.
-                Sits behind the heading via z-stack; doesn't push layout. */}
+            {/* Tighter heading halo — the section gradient already sets the
+                blue mood; this inner glow just adds a focal punch directly
+                behind the text. Reduced opacity vs the old standalone blob. */}
             <div
               aria-hidden
-              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[90%] max-w-2xl h-[140%] rounded-full bg-[#3054ff]/25 blur-3xl"
+              className="pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[80%] max-w-xl h-[130%] rounded-full bg-[#3054ff]/15 blur-2xl"
             />
             <div className="relative">
-              <BoldSectionHeading accent="Ready for" main="takeoff?" />
-              <p className="text-lg max-w-xl mx-auto text-muted-foreground pt-3">
-                Start free. Upgrade when you need more sites or a custom domain.
+              <BoldSectionHeading accent="The hardest part is starting." main="That&apos;s why it&apos;s free." />
+              <p className="text-base max-w-md mx-auto text-muted-foreground pt-4">
+                No contracts or commitments. Cancel whenever you want.
               </p>
             </div>
 
@@ -1651,15 +1751,94 @@ export function WelcomePhase({ onAdvance }: Props) {
           </motion.div>
           </div>
 
-          {/* §6.5 — Trust Charter seal. Phase 52 (2026-05-22). Replaces
-              the three card row Marc flagged as feeling too "I made these
-              up." The new format is a single elegant certificate-style
-              seal with the rotating Pebble wordmark as the centerpiece
-              (the brand IS the attestation, like a notary mark). Three
-              chips below the wordmark identify the commitment areas
-              (GDPR · Data Rights · Security). Full charter at /trust. */}
-          <div className="max-w-5xl mx-auto px-4 mt-12 sm:mt-16 flex justify-center">
-            <TrustSeal shimmerStyle={shimmerForegroundStyle} />
+        </section>
+
+        {/* §6.5 — Transparency manifesto. "Your business is our business."
+            Replaces the TrustSeal certificate card — same commitments, but
+            full-width, cinematic, matches the BoldSectionHeading cadence of
+            the rest of the page. No card, no borders, just type and space. */}
+        <section className="py-20 sm:py-28 border-t border-border/40">
+          <div className="max-w-5xl mx-auto px-4 sm:px-8">
+
+            <motion.div
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-80px" }}
+              transition={{ duration: 0.55, ease: EASE_CINEMATIC }}
+            >
+              <BoldSectionHeading accent="your business" main="is our business." />
+            </motion.div>
+
+            {/* Credentials line — plain text, dot-separated, sits quietly
+                under the heading as proof rather than decoration. */}
+            <motion.p
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: 0.15 }}
+              className="mt-5 text-sm font-semibold text-foreground/80 tracking-wide text-center"
+            >
+              Mozilla Observatory A Grade · GDPR Ready · No Third-Party Tracking
+            </motion.p>
+
+            <div className="mt-14 sm:mt-20 grid grid-cols-1 sm:grid-cols-2 gap-x-16 gap-y-12 sm:gap-y-16">
+              {[
+                {
+                  n: "01",
+                  title: "Your code, your files",
+                  body: "Download everything anytime. Zero lock-in, no proprietary formats — the site is standard Next.js you can take anywhere.",
+                },
+                {
+                  n: "02",
+                  title: "No tracking by default",
+                  body: "We don't sell your data or run ads against you. Page analytics only run if you turn them on.",
+                },
+                {
+                  n: "03",
+                  title: "No dark patterns",
+                  body: "Cancel in two clicks. Refunds within 7 days. No renewal traps, no gotchas buried in the fine print.",
+                },
+                {
+                  n: "04",
+                  title: "Open book",
+                  body: "If something breaks on our end, we tell you first. Status page, changelog, plain English — always.",
+                },
+              ].map(({ n, title, body }, i) => (
+                <motion.div
+                  key={n}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, margin: "-60px" }}
+                  transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: i * 0.08 }}
+                >
+                  <span className="text-[11px] font-bold tracking-[0.25em] text-muted-foreground/40 select-none">
+                    {n}
+                  </span>
+                  <h3 className="mt-3 text-xl sm:text-2xl font-semibold text-foreground leading-snug">
+                    {title}
+                  </h3>
+                  <p className="mt-2.5 text-base text-muted-foreground leading-relaxed">
+                    {body}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, ease: EASE_CINEMATIC, delay: 0.35 }}
+              className="mt-14 sm:mt-20"
+            >
+              <Link
+                href="/trust"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors duration-200"
+              >
+                Read the full commitment
+                <span aria-hidden className="transition-transform group-hover:translate-x-0.5">→</span>
+              </Link>
+            </motion.div>
           </div>
         </section>
 
@@ -1677,8 +1856,8 @@ export function WelcomePhase({ onAdvance }: Props) {
         >
           <div className="flex flex-col items-center justify-center gap-10 px-4 max-w-3xl mx-auto text-center">
             <motion.div className="space-y-10" {...MOBILE_FADE_PROPS}>
-              <p className={`font-[family-name:var(--font-cormorant)] italic text-3xl sm:text-5xl text-foreground max-w-2xl mx-auto leading-tight`}>
-                Your idea is one paragraph away.
+              <p className="font-[family-name:var(--font-plus-jakarta-sans)] font-bold text-xl sm:text-2xl text-foreground max-w-2xl mx-auto leading-tight">
+                Your idea is one sentence away.
               </p>
               <motion.button
                 type="button"
@@ -1697,18 +1876,18 @@ export function WelcomePhase({ onAdvance }: Props) {
               {/* Reassurance row — concrete promises in lieu of social
                   proof we don't have yet. Subtle, dot-separated, doesn't
                   fight the headline. */}
-              <ul className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-xs sm:text-sm text-muted-foreground">
+              <ul className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs sm:text-sm text-muted-foreground">
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  Free for two live sites
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  Free to start
                 </li>
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  Yours forever — export anytime
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  No credit card required
                 </li>
                 <li className="inline-flex items-center gap-1.5">
-                  <span className="w-1 h-1 rounded-full bg-muted-foreground/50" aria-hidden />
-                  No card required
+                  <Check className="w-3.5 h-3.5 text-[#3054ff] shrink-0" aria-hidden />
+                  Cancel anytime
                 </li>
               </ul>
             </motion.div>

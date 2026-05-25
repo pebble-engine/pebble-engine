@@ -59,19 +59,31 @@ from pebble.security import safe_user_id
 #
 # Convention: -1 means "unlimited" (we want to keep ints, not float inf,
 # so JSON serialization stays clean and comparisons stay simple).
-PLAN_LIMITS: dict[str, dict[str, int | bool]] = {
+PLAN_LIMITS: dict[str, dict[str, int | bool | list[str]]] = {
     "free": {
-        "published_sites":             1,
+        # 2026-05-24: published_sites cap removed in favor of credit-based
+        # pricing — credits per build IS the cap. Kept as -1 for backwards
+        # compat with code that still reads this key.
+        "published_sites":             -1,
         "ai_refinements_per_month":    30,
         "custom_domains":              0,
         "drop_in_sections_allowed":    False,
         "resend_email_forms":          False,
         "site_analytics":              False,
-        "multi_page_sites":            True,   # Phase 54a: kept free per Marc's call
+        "multi_page_sites":            True,
         "white_label":                 False,
+        # 2026-05-24 funnel restructure:
+        "integrations_allowed":        [],
+        "stripe_checkout":             False,
+        "api_access":                  False,
+        "money_back_days":             0,
+        "priority_support":            False,
+        "remove_pebble_badge":         False,
+        "lead_inbox":                  False,
+        "form_autoresponder":          False,
     },
     "starter": {
-        "published_sites":             5,
+        "published_sites":             -1,
         "ai_refinements_per_month":    150,
         "custom_domains":              1,
         "drop_in_sections_allowed":    False,
@@ -79,16 +91,33 @@ PLAN_LIMITS: dict[str, dict[str, int | bool]] = {
         "site_analytics":              False,
         "multi_page_sites":            True,
         "white_label":                 False,
+        "integrations_allowed":        ["whatsapp", "booking", "google-maps", "cookie-consent"],
+        "stripe_checkout":             False,
+        "api_access":                  False,
+        "money_back_days":             7,
+        "priority_support":            False,
+        "remove_pebble_badge":         True,
+        "lead_inbox":                  True,
+        "form_autoresponder":          True,
     },
     "pro": {
-        "published_sites":             -1,   # unlimited
+        "published_sites":             -1,
         "ai_refinements_per_month":    400,
         "custom_domains":              5,
         "drop_in_sections_allowed":    True,
         "resend_email_forms":          True,
         "site_analytics":              True,
         "multi_page_sites":            True,
-        "white_label":                 False,
+        "white_label":                 True,
+        "integrations_allowed":        ["whatsapp", "booking", "google-maps", "cookie-consent",
+                                        "stripe", "custom-code", "social"],
+        "stripe_checkout":             True,
+        "api_access":                  True,
+        "money_back_days":             14,
+        "priority_support":            True,
+        "remove_pebble_badge":         True,
+        "lead_inbox":                  True,
+        "form_autoresponder":          True,
     },
     "enterprise": {
         "published_sites":             -1,
@@ -99,6 +128,15 @@ PLAN_LIMITS: dict[str, dict[str, int | bool]] = {
         "site_analytics":              True,
         "multi_page_sites":            True,
         "white_label":                 True,
+        "integrations_allowed":        ["whatsapp", "booking", "google-maps", "cookie-consent",
+                                        "stripe", "custom-code", "social"],
+        "stripe_checkout":             True,
+        "api_access":                  True,
+        "money_back_days":             30,
+        "priority_support":            True,
+        "remove_pebble_badge":         True,
+        "lead_inbox":                  True,
+        "form_autoresponder":          True,
     },
 }
 
@@ -566,3 +604,30 @@ def gate_response(
     if limit is not None and limit > 0:
         body["limit"] = limit
     return body
+
+
+def get_feature(user_id: str, key: str):
+    """Look up a feature flag for a user's current plan tier.
+
+    Resolves the user's plan via :func:`get_user_plan`, then returns
+    ``PLAN_LIMITS[plan][key]`` — or a fail-soft default if the plan or
+    key is unknown:
+
+      - missing list  → []
+      - missing bool  → False
+      - missing int   → 0
+
+    Used by every gated endpoint and the v3 plan-features.ts mirror.
+    Fail-soft so that an unknown feature can never accidentally grant
+    access (defaults to "off"). Adding a new feature requires updating
+    PLAN_LIMITS for every tier — there is no implicit inheritance.
+
+    Mirrors :func:`get_limit`'s signature so server code reads
+    consistently: ``get_feature(caller_uid, "stripe_checkout")``,
+    ``get_limit(caller_uid, "custom_domains")``.
+    """
+    plan = get_user_plan(user_id) or "free"
+    tier = PLAN_LIMITS.get(plan) or PLAN_LIMITS["free"]
+    if key not in tier:
+        return False
+    return tier[key]

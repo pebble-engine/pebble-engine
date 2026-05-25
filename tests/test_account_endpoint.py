@@ -350,3 +350,49 @@ def test_scrub_returns_zero_when_no_projects(tmp_path, monkeypatch):
     monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
     count = account_server._scrub_user_projects("ghost-uid")
     assert count == 0
+
+
+# ── Fix 2 (2026-05-24): corrupted pending_deletion JSON emits a warning ──────
+
+def test_read_pending_deletion_corrupted_json_logs_warning(tmp_path, monkeypatch):
+    """If pending_deletion.json is corrupted, _read_pending_deletion must:
+      - still return None (so the user is NOT treated as "deletion scheduled"),
+      - emit a log.warning so corruption surfaces in engine.err.log instead
+        of vanishing silently. Before this fix the helper swallowed all
+        errors with a bare `except Exception: return None`, and a corrupted
+        file would silently re-arm next time the user requested delete.
+
+    The pebble logger sets propagate=False, so caplog (which hooks the
+    root logger) can't see its records. Attach a temporary capture
+    handler to the pebble logger directly.
+    """
+    import logging
+
+    monkeypatch.setattr("pebble.server.account._output_dir", lambda: tmp_path)
+
+    uid = "aaaa-bbbb-cccc-dddd"
+    user_dir = tmp_path / ".users" / uid
+    user_dir.mkdir(parents=True)
+    (user_dir / "pending_deletion.json").write_text("not json {", encoding="utf-8")
+
+    pebble_logger = logging.getLogger("pebble")
+    captured: list[logging.LogRecord] = []
+
+    class _CaptureHandler(logging.Handler):
+        def emit(self, record: logging.LogRecord) -> None:
+            captured.append(record)
+
+    handler = _CaptureHandler(level=logging.WARNING)
+    pebble_logger.addHandler(handler)
+    try:
+        result = account_server._read_pending_deletion(uid)
+    finally:
+        pebble_logger.removeHandler(handler)
+
+    assert result is None, "corrupted JSON must return None (not 'deletion scheduled')"
+    warnings = [r for r in captured
+                if r.levelno >= logging.WARNING and "pending_deletion" in r.getMessage()]
+    assert warnings, (
+        f"expected log.warning about corrupted pending_deletion, "
+        f"got: {[r.getMessage() for r in captured]}"
+    )

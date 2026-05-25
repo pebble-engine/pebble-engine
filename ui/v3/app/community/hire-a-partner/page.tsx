@@ -27,7 +27,7 @@ export default function HirePartnerPage() {
           <div className="inline-flex w-16 h-16 rounded-2xl bg-primary/10 text-primary items-center justify-center mx-auto">
             <Briefcase className="w-7 h-7" />
           </div>
-          <h1 className={`${type.display.l} text-foreground`}>Pebble Partners — coming soon.</h1>
+          <h1 className={`${type.dashboard.display.l} text-foreground`}>Pebble Partners — coming soon.</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-xl mx-auto`}>
             A directory of designers and developers willing to take on custom
             Pebble work: brand refreshes, copy polish, integrations setup,

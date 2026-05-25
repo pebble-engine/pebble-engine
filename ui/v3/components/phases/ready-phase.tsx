@@ -29,6 +29,8 @@ import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 import { STANDARD_S, EASE_QUIET } from "@/lib/motion";
 import { getPlan, type PebblePlan } from "@/lib/state";
+import { FirstBuildCelebration } from "@/components/first-build-celebration";
+import { listProjects } from "@/lib/api";
 
 type Props = {
   /** Build response — slug + preview_url + file_count. */
@@ -49,6 +51,26 @@ type Props = {
 export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: Props) {
   const [plan, setPlanLocal] = useState<PebblePlan | null>(null);
   const [autoAdvanceIn, setAutoAdvanceIn] = useState<number | null>(12);
+
+  // 2026-05-24 funnel: post-build dopamine moment. Mounts once per
+  // user (gated by both project count == 1 AND localStorage sentinel).
+  // The highest-converting moment in any SaaS funnel.
+  const [celebrating, setCelebrating] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (localStorage.getItem("pebble.first_build_celebrated") === "1") return;
+    let cancelled = false;
+    listProjects()
+      .then((r) => {
+        if (cancelled) return;
+        if (r.projects && r.projects.length === 1) {
+          setCelebrating(true);
+          localStorage.setItem("pebble.first_build_celebrated", "1");
+        }
+      })
+      .catch(() => { /* never block on this */ });
+    return () => { cancelled = true; };
+  }, []);
 
   // Load the cached plan so we can list pages + DNA + business name.
   // Falls back gracefully if the cache is empty (rare — plan is set during
@@ -72,6 +94,17 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
 
   const cancelAutoAdvance = () => setAutoAdvanceIn(null);
 
+  // Cancel auto-advance on ANY key press anywhere on the page.
+  // <main onKeyDown> doesn't work because <main> isn't focusable — the
+  // listener never fires. Attach to document instead so a stray keypress
+  // (someone scanning the page) does what the user expects.
+  useEffect(() => {
+    if (autoAdvanceIn === null) return;
+    const handler = () => setAutoAdvanceIn(null);
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [autoAdvanceIn]);
+
   const businessName = plan?.meta?.business_name || "your site";
   const dnaLabel = plan?.style?.label || null;
   const pages = plan?.pages || [];
@@ -80,7 +113,6 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
     <main
       className="flex-1 overflow-y-auto flex flex-col items-center justify-center px-4 py-16"
       onMouseMove={cancelAutoAdvance}
-      onKeyDown={cancelAutoAdvance}
     >
       {/* Celebration mark — slight scale-pop on mount. */}
       <motion.div
@@ -197,6 +229,11 @@ export function ReadyPhase({ build, elapsedSeconds, onOpenEditor, onPublish }: P
           Everything is editable later. Nothing about this is final.
         </motion.p>
       </motion.div>
+
+      <FirstBuildCelebration
+        open={celebrating}
+        onClose={() => setCelebrating(false)}
+      />
     </main>
   );
 }

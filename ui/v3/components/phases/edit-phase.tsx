@@ -11,7 +11,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Edit3,
   Palette,
-  Rocket,
   Smile,
   Award,
   Sparkles,
@@ -24,6 +23,8 @@ import {
   Check,
   Monitor,
   Smartphone,
+  Image as ImageIcon,
+  Send,
   type LucideIcon,
 } from "lucide-react";
 import { BlockGallery } from "@/components/block-gallery";
@@ -40,6 +41,7 @@ import {
   rollback,
   fetchHistory,
   visualEdit,
+  chatEdit,
   pickPreviewUrl,
   type RefinementId,
   type HistorySnapshot,
@@ -47,7 +49,6 @@ import {
   type DiffSummary,
 } from "@/lib/api";
 import { DiffPanel } from "@/components/workspace/diff-panel";
-import { BuildIntegrityChecklist } from "@/components/workspace/build-integrity-checklist";
 
 /**
  * Design phase — the iframe preview + refine chips + visual editor +
@@ -119,6 +120,8 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
   const [busyBlockId, setBusyBlockId] = useState<string | null>(null);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatBusy, setChatBusy] = useState(false);
   const toastIdRef = useRef(0);
 
   function pushToast(t: Omit<Toast, "id">) {
@@ -340,6 +343,94 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
     }
   }
 
+  async function handleFontFamily(fontName: string) {
+    if (!selected || !build?.slug) return;
+    try {
+      const result = await visualEdit({
+        slug: build.slug,
+        op: "font-family",
+        pebble_id: selected.pebble_id || undefined,
+        selector_hint: selected.text || selected.className,
+        new_font_family: fontName,
+      });
+      setIframeBust((n) => n + 1);
+      pushToast({
+        kind: "success",
+        message: `Font changed to ${fontName}. Free tweak ✨`,
+        snapshotId: result.snapshot_id || undefined,
+        slug: build.slug,
+        diff: result.diff,
+      });
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Font edit failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    }
+  }
+
+  async function handleImageSwap(newSrc: string) {
+    if (!selected || !build?.slug) return;
+    try {
+      const result = await visualEdit({
+        slug: build.slug,
+        op: "image-swap",
+        pebble_id: selected.pebble_id || undefined,
+        selector_hint: selected.className,
+        original_src: selected.src ?? "",
+        new_src: newSrc,
+      });
+      setIframeBust((n) => n + 1);
+      pushToast({
+        kind: "success",
+        message: "Image swapped. Free tweak ✨",
+        snapshotId: result.snapshot_id || undefined,
+        slug: build.slug,
+        diff: result.diff,
+      });
+      setSelected(null);
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Image swap failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    }
+  }
+
+  async function handleChatEdit() {
+    if (!build?.slug || !chatMessage.trim() || chatBusy) return;
+    const msg = chatMessage.trim();
+    setChatMessage("");
+    setChatBusy(true);
+    try {
+      const result = await chatEdit(build.slug, msg);
+      if (result.matched) {
+        setIframeBust((n) => n + 1);
+        pushToast({
+          kind: "success",
+          message: result.billable
+            ? `Applied: "${msg}" (used credits)`
+            : `Applied: "${msg}" — free tweak ✨`,
+          snapshotId: result.snapshot_id || undefined,
+          slug: build.slug,
+          diff: result.diff,
+        });
+      } else {
+        pushToast({
+          kind: "error",
+          message: `Couldn't apply that yet — try: "${result.suggestion}"`,
+        });
+      }
+    } catch (e) {
+      pushToast({
+        kind: "error",
+        message: `Chat edit failed: ${e instanceof Error ? e.message : "unknown"}`,
+      });
+    } finally {
+      setChatBusy(false);
+    }
+  }
+
   const basePreview = pickPreviewUrl(build);
   const previewUrl = basePreview === "about:blank"
     ? "about:blank"
@@ -348,132 +439,115 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
 
   return (
     <>
-      {/* Center — site preview iframe */}
-      <main className="flex-1 bg-background p-6 relative overflow-hidden flex flex-col">
+      {/* Center — full-bleed site preview iframe. No outer padding so the
+          iframe fills edge-to-edge. The chrome strip (URL bar + device
+          toggle) sits flush at the top of the preview area. */}
+      <main className="flex-1 bg-background relative overflow-hidden flex flex-col">
+        {/* Chrome strip — URL pill + device toggle. Flush to the top of
+            the preview area (no outer padding on <main>). */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.99 }}
-          animate={{ opacity: 1, scale: 1 }}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
           transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-          className="flex-1 rounded-2xl border border-border bg-card shadow-[var(--shadow-1)] overflow-hidden flex flex-col"
+          className="h-10 bg-accent flex items-center px-4 gap-2 border-b border-border shrink-0"
         >
-          <div className="h-10 bg-accent flex items-center px-4 gap-2 border-b border-border">
-            <div className="flex gap-1.5">
-              <div className="w-3 h-3 rounded-full bg-border" />
-              <div className="w-3 h-3 rounded-full bg-border opacity-60" />
-              <div className="w-3 h-3 rounded-full bg-border opacity-30" />
-            </div>
-            <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
-              {slugForUrl}.pebbleapp.ai
-            </div>
-            {/* Desktop / mobile device toggle. Mobile constrains the iframe
-                wrapper to ~390px so the user can verify the responsive
-                layout without resizing their actual browser window. */}
-            <div className="flex items-center gap-0.5 bg-background border border-border rounded-full p-0.5">
-              <button
-                onClick={() => setDevice("desktop")}
-                aria-label="Desktop preview"
-                aria-pressed={device === "desktop"}
-                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
-                  device === "desktop"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                <Monitor className="w-3.5 h-3.5" />
-              </button>
-              <button
-                onClick={() => setDevice("mobile")}
-                aria-label="Mobile preview"
-                aria-pressed={device === "mobile"}
-                className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
-                  device === "mobile"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground"
-                }`}
-              >
-                <Smartphone className="w-3.5 h-3.5" />
-              </button>
-            </div>
+          <div className="flex gap-1.5">
+            <div className="w-3 h-3 rounded-full bg-border" />
+            <div className="w-3 h-3 rounded-full bg-border opacity-60" />
+            <div className="w-3 h-3 rounded-full bg-border opacity-30" />
           </div>
-          <div className={`flex-1 bg-background flex justify-center ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
-            <iframe
-              src={previewUrl}
-              className={`bg-white transition-[max-width] duration-300 ease-out ${
-                device === "mobile"
-                  ? "w-full max-w-[390px] rounded-2xl border border-border shadow-[var(--shadow-1)]"
-                  : "w-full max-w-none"
+          <div className="bg-background border border-border px-4 py-0.5 rounded-full text-xs text-muted-foreground mx-auto truncate max-w-[50%]">
+            {slugForUrl}.pebbleapp.ai
+          </div>
+          {/* Desktop / mobile device toggle. Mobile constrains the iframe
+              wrapper to ~390px so the user can verify the responsive
+              layout without resizing their actual browser window. */}
+          <div className="flex items-center gap-0.5 bg-background border border-border rounded-full p-0.5">
+            <button
+              onClick={() => setDevice("desktop")}
+              aria-label="Desktop preview"
+              aria-pressed={device === "desktop"}
+              className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
+                device === "desktop"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               }`}
-              style={{ height: "100%" }}
-              title="Site preview"
-            />
+            >
+              <Monitor className="w-3.5 h-3.5" />
+            </button>
+            <button
+              onClick={() => setDevice("mobile")}
+              aria-label="Mobile preview"
+              aria-pressed={device === "mobile"}
+              className={`${interactions.focusRing} transition-colors duration-150 ease-out w-7 h-7 rounded-full flex items-center justify-center active:scale-95 motion-reduce:active:scale-100 ${
+                device === "mobile"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+            >
+              <Smartphone className="w-3.5 h-3.5" />
+            </button>
           </div>
         </motion.div>
 
-        {/* Refinement chips bar */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: STANDARD_S, delay: 0.15, ease: EASE_CINEMATIC }}
-          className="fixed bottom-6 flex flex-col items-center gap-2 pointer-events-none"
-          style={{ left: 'var(--left-rail-w, 240px)', right: 'var(--right-rail-w, 320px)' }}
-        >
-          <p className={`${type.mono} text-muted-foreground bg-card/80 backdrop-blur px-3 py-1 rounded-full border border-border pointer-events-auto`}>
-            ✨ Style tweaks are free — click an element on the preview or pick a chip below
-          </p>
-          {/* Phase 50 — block suggestion chips. One quick row of the most-
-              wanted "Add testimonials / pricing / FAQ / stats / newsletter"
-              additions, fed by /api/blocks. The full library remains one
-              click away via "Browse all sections" → BlockGallery modal. */}
-          <SuggestionChips
-            busyBlockId={busyBlockId}
-            onInsert={(blockId) => handleInsertBlock(blockId)}
-            onBrowseAll={() => setGalleryOpen(true)}
+        {/* Full-bleed iframe — fills the remaining space below the chrome strip */}
+        <div className={`flex-1 bg-background flex justify-center overflow-hidden ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
+          <iframe
+            src={previewUrl}
+            className={`bg-white transition-[max-width] duration-300 ease-out ${
+              device === "mobile"
+                ? "w-full max-w-[390px] rounded-2xl border border-border shadow-[var(--shadow-1)]"
+                : "w-full max-w-none"
+            }`}
+            style={{ height: "100%" }}
+            title="Site preview"
           />
-          <nav className="bg-card border border-border shadow-lg rounded-full px-3 py-2 flex gap-1 pointer-events-auto">
-            {REFINE_CHIPS.map((c) => {
-              const isBusy = busyRefinement === c.id;
-              return (
-                <motion.button
-                  key={c.id}
-                  whileTap={{ scale: 0.95 }}
-                  disabled={isBusy || busyRefinement !== null}
-                  onClick={() => handleRefine(c.id)}
-                  className={`${interactions.chip} relative text-muted-foreground px-4 py-2 flex items-center gap-2 hover:text-foreground rounded-full disabled:opacity-50 ${type.label}`}
-                >
-                  <c.Icon className="w-4 h-4" />
-                  {isBusy ? "Applying…" : c.label}
-                  {/* billable indicator: green dot if free, amber if billable */}
-                  <span
-                    className={`absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full border border-card ${
-                      c.billable ? "bg-spark" : "bg-earth"
-                    }`}
-                    title={c.billable ? "Uses credits" : "Free tweak"}
-                  />
-                </motion.button>
-              );
-            })}
-          </nav>
-        </motion.div>
+        </div>
+
+        {/* 2026-05-23: Bottom chips dock REMOVED per Marc's design directive.
+            The "STYLE TWEAKS ARE FREE" eyebrow, refinement chips (Make it
+            friendlier / More professional / Simpler / Magic Palette Shift /
+            Add booking), SuggestionChips (Add testimonials / pricing / etc),
+            and "Ask a change…" chat bar all lived here. They cluttered the
+            preview surface. Edits now come from:
+              1. Click any element in the preview → VisualEditorPanel slides
+                 in from the right (font / color / font-size)
+              2. The icons next to the URL bar at the top of the preview
+                 (desktop / mobile / publish-status toggle)
+              3. "+ Add section" button in the TopNav (block insertion)
+            handleRefine / handleChatEdit / handleInsertBlock callbacks are
+            kept for future re-wiring if a different surface needs them. */}
       </main>
 
-      {/* Right rail — swaps between Launch Setup and Visual Editor */}
-      <AnimatePresence mode="wait">
-        {selected ? (
-          <VisualEditorPanel
-            key="editor"
-            selected={selected}
-            onClose={() => setSelected(null)}
-            onText={handleTextEdit}
-            onFontSize={handleFontSizeStep}
-            onColor={handleColor}
-          />
-        ) : (
-          <LaunchSetupPanel
-            key="setup"
-            plan={plan}
-            slug={build?.slug ?? null}
-            onGoLive={onPublish}
-          />
+      {/* Visual Editor overlay — slides in from the right edge of the preview
+          area when the user clicks an element in the iframe. Absolute-
+          positioned over the preview (not a flex sibling) so it doesn't
+          consume layout space. Backdrop gives it a layered feel. */}
+      <AnimatePresence>
+        {selected && (
+          <>
+            {/* Semi-transparent backdrop — clicking it closes the panel */}
+            <motion.div
+              key="editor-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
+              onClick={() => setSelected(null)}
+              className="fixed inset-0 bg-charcoal/20 z-30 pointer-events-auto"
+              style={{ left: 'var(--left-rail-w, 240px)' }}
+            />
+            <VisualEditorPanel
+              key="editor"
+              selected={selected}
+              onClose={() => setSelected(null)}
+              onText={handleTextEdit}
+              onFontSize={handleFontSizeStep}
+              onColor={handleColor}
+              onFontFamily={handleFontFamily}
+              onImageSwap={handleImageSwap}
+            />
+          </>
         )}
       </AnimatePresence>
 
@@ -547,112 +621,7 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
 });
 
 // ---------------------------------------------------------------------------
-// LaunchSetupPanel — right rail when no element is selected
-// ---------------------------------------------------------------------------
-
-function LaunchSetupPanel({
-  plan,
-  slug,
-  onGoLive,
-}: {
-  plan: PebblePlan | null;
-  slug: string | null;
-  onGoLive: () => void;
-}) {
-  // Phase 36 — Track publishable from the BuildIntegrityChecklist's onResult.
-  // The Go Live button stays clickable either way; non-publishable just
-  // shows an inline warning the user can acknowledge. Hard-blocking
-  // would make us unable to ship the publish-anyway override path.
-  const [publishable, setPublishable] = useState<boolean | null>(null);
-
-  return (
-    <motion.aside
-      initial={{ opacity: 0, x: 8 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 8 }}
-      transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-      className="flex flex-col gap-3 p-4 w-[320px] bg-card border-l border-border overflow-y-auto"
-    >
-      <div className="mb-4 px-1">
-        <h2 className={`${type.heading.m} text-primary`}>Launch Setup</h2>
-        <p className={`${type.caption} opacity-70`}>
-          {plan ? `${plan.setup_needs.filter((s) => s.status !== "auto").length} items remaining` : "Loading..."}
-        </p>
-      </div>
-
-      {/* Phase 36 — Build Integrity checklist. Reuses the existing eval suite
-          via /api/projects/<slug>/integrity. 10 items animate pending → green
-          before publish. Surfaces hidden infra quality as a confidence ritual. */}
-      {slug && (
-        <BuildIntegrityChecklist
-          slug={slug}
-          onResult={(r) => setPublishable(r.publishable)}
-          className="mb-2"
-        />
-      )}
-      <div className="space-y-2 flex-1">
-        {plan?.setup_needs.map((s, i) => {
-          const byId = new Map(plan.setup_needs.map((it) => [it.id, it]));
-          const blockingDeps = (s.dependencies || [])
-            .map((id) => byId.get(id))
-            .filter((d) => !!d && d.status !== "auto");
-          return (
-            <motion.div
-              key={s.id}
-              initial={{ opacity: 0, x: 8 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.04 * i, duration: SHORT_S, ease: EASE_CINEMATIC }}
-              className={`p-3 rounded-lg border flex flex-col gap-1 ${
-                s.status === "auto"
-                  ? "bg-background/60 border-border/60 opacity-80"
-                  : "bg-background border-border"
-              }`}
-              title={s.notes}
-            >
-              <div className="flex justify-between items-center">
-                <span className={type.label}>{s.label}</span>
-                <span
-                  className={`text-[11px] px-2 py-0.5 rounded-full font-bold uppercase ${
-                    s.status === "auto"
-                      ? "bg-earth/20 text-earth-deep"
-                      : s.status === "pending"
-                        ? "bg-spark/15 text-spark-deep"
-                        : "bg-muted text-muted-foreground"
-                  }`}
-                >
-                  {s.status === "auto" ? "Auto-done" : s.status === "pending" ? "Coming soon" : "You'll do this"}
-                </span>
-              </div>
-              {blockingDeps.length > 0 && (
-                <p className="text-[11px] text-muted-foreground leading-tight">
-                  Unlocks after: {blockingDeps.map((d) => d!.label).join(" + ")}
-                </p>
-              )}
-            </motion.div>
-          );
-        })}
-      </div>
-      <div className="pt-3 mt-auto border-t border-border">
-        {publishable === false && (
-          <p className={`${type.caption} text-amber-300 mb-2 px-1`}>
-            Some integrity checks need attention. You can still publish — the
-            publish dialog has an override path.
-          </p>
-        )}
-        <motion.button
-          whileTap={{ scale: 0.97 }}
-          onClick={onGoLive}
-          className={`${interactions.button} w-full bg-primary text-primary-foreground py-3 rounded-xl font-bold flex items-center justify-center gap-2`}
-        >
-          <Rocket className="w-4 h-4" /> Go Live
-        </motion.button>
-      </div>
-    </motion.aside>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// VisualEditorPanel — right rail when an element on the preview is selected
+// VisualEditorPanel — absolute overlay when an element on the preview is selected
 // ---------------------------------------------------------------------------
 
 function VisualEditorPanel({
@@ -661,20 +630,40 @@ function VisualEditorPanel({
   onText,
   onFontSize,
   onColor,
+  onFontFamily,
+  onImageSwap,
 }: {
   selected: PebbleSelectMessage;
   onClose: () => void;
   onText: (newText: string) => void;
   onFontSize: (delta: number) => void;
   onColor: (hex: string) => void;
+  onFontFamily: (fontName: string) => void;
+  onImageSwap: (newSrc: string) => void;
 }) {
   const [textDraft, setTextDraft] = useState(selected.text);
-  useEffect(() => { setTextDraft(selected.text); }, [selected]);
+  const [imageSrcDraft, setImageSrcDraft] = useState(selected.src ?? "");
+  useEffect(() => {
+    setTextDraft(selected.text);
+    setImageSrcDraft(selected.src ?? "");
+  }, [selected]);
 
   const PALETTE = [
     "#1F1D1A", "#205661", "#4B6548", "#C76E3A", "#5A554E",
     "#F7F3EC", "#ECE6DC", "#D8D1C5", "#EFEAE1", "#FFFFFF",
   ];
+
+  const FONT_FAMILIES = [
+    "Inter",
+    "Playfair Display",
+    "DM Sans",
+    "Lato",
+    "Space Grotesk",
+    "Merriweather",
+    "JetBrains Mono",
+  ];
+
+  const isImage = selected.tag === "img";
 
   return (
     <motion.aside
@@ -682,7 +671,7 @@ function VisualEditorPanel({
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, x: 16 }}
       transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
-      className="flex flex-col gap-4 p-5 w-[360px] bg-card border-l border-border overflow-y-auto"
+      className="fixed top-16 bottom-0 right-0 w-[360px] flex flex-col gap-4 p-5 bg-card border-l border-border overflow-y-auto z-40 shadow-[var(--shadow-2)]"
     >
       <div className="flex justify-between items-start">
         <div>
@@ -700,68 +689,136 @@ function VisualEditorPanel({
         </button>
       </div>
 
-      {/* Text editor — only show when the element actually has text content */}
-      {selected.text && selected.text.trim() && (
+      {/* Phase 56c — image swap: when an <img> is selected show URL swap controls
+          instead of text / font / color (those don't apply to images). */}
+      {isImage ? (
         <div className="space-y-2">
           <label className={`${type.eyebrow} flex items-center gap-1`}>
-            <Edit3 className="w-3 h-3" /> Text
+            <ImageIcon className="w-3 h-3" /> Swap image
           </label>
-          <textarea
-            value={textDraft}
-            onChange={(e) => setTextDraft(e.target.value)}
-            rows={Math.min(6, Math.max(2, Math.ceil(textDraft.length / 40)))}
-            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+          {selected.src && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={selected.src}
+              alt="Current image"
+              className="w-full h-24 object-cover rounded-lg border border-border"
+            />
+          )}
+          <input
+            type="url"
+            value={imageSrcDraft}
+            onChange={(e) => setImageSrcDraft(e.target.value)}
+            placeholder="https://images.unsplash.com/…"
+            className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
           />
           <button
-            onClick={() => onText(textDraft)}
-            disabled={textDraft === selected.text}
+            onClick={() => onImageSwap(imageSrcDraft)}
+            disabled={!imageSrcDraft.trim() || imageSrcDraft === selected.src}
             className={`${interactions.button} w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2`}
           >
-            <Check className="w-4 h-4" /> Save text
+            <Check className="w-4 h-4" /> Swap image
           </button>
+          <p className="text-xs text-muted-foreground italic">
+            Paste any public image URL — Unsplash, Pexels, or your own CDN.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* Text editor — only show when the element actually has text content */}
+          {selected.text && selected.text.trim() && (
+            <div className="space-y-2">
+              <label className={`${type.eyebrow} flex items-center gap-1`}>
+                <Edit3 className="w-3 h-3" /> Text
+              </label>
+              <textarea
+                value={textDraft}
+                onChange={(e) => setTextDraft(e.target.value)}
+                rows={Math.min(6, Math.max(2, Math.ceil(textDraft.length / 40)))}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <button
+                onClick={() => onText(textDraft)}
+                disabled={textDraft === selected.text}
+                className={`${interactions.button} w-full bg-primary text-primary-foreground py-2 rounded-lg text-sm font-semibold disabled:opacity-40 flex items-center justify-center gap-2`}
+              >
+                <Check className="w-4 h-4" /> Save text
+              </button>
+            </div>
+          )}
+
+          {/* Font size stepper */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <TypeIcon className="w-3 h-3" /> Font size
+            </label>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => onFontSize(-1)}
+                className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
+              >
+                <Minus className="w-4 h-4" /> Smaller
+              </button>
+              <button
+                onClick={() => onFontSize(1)}
+                className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
+              >
+                <Plus className="w-4 h-4" /> Larger
+              </button>
+            </div>
+            <p className="text-xs text-muted-foreground italic">Currently {selected.style.fontSize}</p>
+          </div>
+
+          {/* Phase 56b — font family picker (curated list of Google-safe families) */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <TypeIcon className="w-3 h-3" /> Font family
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {FONT_FAMILIES.map((font) => (
+                <button
+                  key={font}
+                  onClick={() => onFontFamily(font)}
+                  className={`${interactions.chip} px-2.5 py-1 text-xs rounded-full border border-border hover:border-primary hover:bg-accent transition-colors`}
+                  style={{ fontFamily: font }}
+                >
+                  {font}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Color picker — Pebble palette + free hex input */}
+          <div className="space-y-2">
+            <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
+              <Palette className="w-3 h-3" /> Color
+            </label>
+            <div className="grid grid-cols-5 gap-2">
+              {PALETTE.map((hex) => (
+                <button
+                  key={hex}
+                  onClick={() => onColor(hex)}
+                  className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors"
+                  style={{ backgroundColor: hex }}
+                  title={hex}
+                  aria-label={`Set color to ${hex}`}
+                />
+              ))}
+            </div>
+            {/* Phase 56b — native color picker for any hex the user wants */}
+            <div className="flex items-center gap-2 pt-1">
+              <input
+                type="color"
+                defaultValue="#205661"
+                onChange={(e) => onColor(e.target.value)}
+                className="w-8 h-8 rounded border border-border cursor-pointer bg-transparent p-0.5"
+                title="Custom color"
+                aria-label="Pick custom color"
+              />
+              <span className="text-xs text-muted-foreground">Custom color</span>
+            </div>
+          </div>
+        </>
       )}
-
-      {/* Font size stepper */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-          <TypeIcon className="w-3 h-3" /> Font size
-        </label>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => onFontSize(-1)}
-            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
-          >
-            <Minus className="w-4 h-4" /> Smaller
-          </button>
-          <button
-            onClick={() => onFontSize(1)}
-            className={`${interactions.chip} flex-1 bg-background border border-border rounded-lg py-2 flex items-center justify-center gap-1 text-sm font-semibold`}
-          >
-            <Plus className="w-4 h-4" /> Larger
-          </button>
-        </div>
-        <p className="text-xs text-muted-foreground italic">Currently {selected.style.fontSize}</p>
-      </div>
-
-      {/* Color picker — Pebble palette */}
-      <div className="space-y-2">
-        <label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-          <Palette className="w-3 h-3" /> Color
-        </label>
-        <div className="grid grid-cols-5 gap-2">
-          {PALETTE.map((hex) => (
-            <button
-              key={hex}
-              onClick={() => onColor(hex)}
-              className="aspect-square rounded-lg border-2 border-border hover:border-primary transition-colors"
-              style={{ backgroundColor: hex }}
-              title={hex}
-              aria-label={`Set color to ${hex}`}
-            />
-          ))}
-        </div>
-      </div>
 
       <div className="mt-auto pt-4 border-t border-border">
         <p className="text-[11px] text-muted-foreground italic leading-snug">
@@ -835,14 +892,20 @@ function HistoryDrawer({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <ReasonBadge reason={s.reason} />
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(s.written_at)}
+                    {/* Humanized relative time — easier to scan than an
+                        ISO date. Hover the row for the raw snapshot_id
+                        (power-user affordance via the wrapper `title`). */}
+                    <span
+                      className="text-xs text-muted-foreground"
+                      title={`${formatTimestamp(s.written_at)} · ${s.snapshot_id}`}
+                    >
+                      {formatRelativeTime(s.written_at)}
+                      {typeof s.files_count === "number" && s.files_count > 0
+                        ? ` · ${s.files_count} ${s.files_count === 1 ? "file" : "files"} changed`
+                        : ""}
                     </span>
                   </div>
                   <p className="text-sm text-foreground truncate">{s.source || s.reason}</p>
-                  <p className="text-[11px] font-mono text-muted-foreground mt-1">
-                    {s.files_count} files · {s.snapshot_id}
-                  </p>
                 </div>
                 <button
                   onClick={() => onRollback(s.snapshot_id)}
@@ -883,5 +946,28 @@ function formatTimestamp(iso: string): string {
     return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   } catch {
     return iso;
+  }
+}
+
+// Humanizes an ISO timestamp into "5 minutes ago", "2 hours ago", "yesterday",
+// etc. via Intl.RelativeTimeFormat — picks the largest unit that fits so the
+// label stays scannable. Falls back to formatTimestamp on parse failure.
+function formatRelativeTime(iso: string): string {
+  if (!iso) return "";
+  try {
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return formatTimestamp(iso);
+    const diffSec = Math.round((t - Date.now()) / 1000); // negative for the past
+    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+    const abs = Math.abs(diffSec);
+    if (abs < 45)         return rtf.format(Math.round(diffSec), "second");
+    if (abs < 60 * 45)    return rtf.format(Math.round(diffSec / 60), "minute");
+    if (abs < 3600 * 22)  return rtf.format(Math.round(diffSec / 3600), "hour");
+    if (abs < 86400 * 6)  return rtf.format(Math.round(diffSec / 86400), "day");
+    if (abs < 86400 * 27) return rtf.format(Math.round(diffSec / (86400 * 7)), "week");
+    if (abs < 86400 * 320) return rtf.format(Math.round(diffSec / (86400 * 30)), "month");
+    return rtf.format(Math.round(diffSec / (86400 * 365)), "year");
+  } catch {
+    return formatTimestamp(iso);
   }
 }

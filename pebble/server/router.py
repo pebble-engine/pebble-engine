@@ -122,6 +122,34 @@ def route_get(handler) -> None:
             handler._handle_usage_summary()
         elif handler.path == "/api/activity":
             handler._handle_activity_feed()
+        elif handler.path == "/api/notifications":
+            # 2026-05-24 — bell badge feed. Auth-gated. Reads private
+            # events for the user from Supabase.
+            from pebble.server.notifications import run_list_notifications
+            run_list_notifications(handler)
+        elif handler.path == "/api/credits":
+            # 2026-05-24 — credits balance + ledger + pack catalog.
+            # Lazy-inits the user's credits row on first read so a
+            # brand-new signup sees their plan's grant immediately.
+            from pebble.server.credits_api import run_get_credits
+            run_get_credits(handler)
+        elif handler.path == "/api/community/feed":
+            # 2026-05-24 — public events list for the /community page.
+            # Public read (no auth) — visibility filter on the table
+            # is what enforces privacy.
+            from pebble.server.community_feed import run_community_feed
+            run_community_feed(handler)
+        elif handler.path == "/api/community/stats":
+            # 2026-05-24 — single-row cached snapshot of community
+            # numbers (total users, sites, launches this week,
+            # template count). 15-min refresh-on-stale.
+            from pebble.server.community_feed import run_community_stats
+            run_community_stats(handler)
+        elif (handler.path.startswith("/api/projects/")
+              and "/" not in handler.path[len("/api/projects/"):]):
+            slug = handler.path[len("/api/projects/"):]
+            from pebble.server.projects import run_get_project_state
+            run_get_project_state(handler, slug)
         elif handler.path == "/api/admin/users":
             from pebble.server.admin import run_list_users
             run_list_users(handler)
@@ -162,23 +190,63 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/analytics")]
             from pebble.server.analytics import run_get_summary
             run_get_summary(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/screenshot"):
+            # 2026-05-23 — serve the project's hero screenshot for the
+            # dashboard project cards. Owner-gated. PNG content-type.
+            slug = handler.path[len("/api/projects/"):-len("/screenshot")]
+            from pebble.server.projects import run_get_screenshot
+            run_get_screenshot(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrity"):
             # Phase 36 (2026-05-21) — curated 10-check pre-launch checklist
             # for the workspace's publish gate. Owner-gated. Read-only.
             slug = handler.path[len("/api/projects/"):-len("/integrity")]
             from pebble.server.integrity import run_integrity_check
             run_integrity_check(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrations"):
+            # Phase 56a (2026-05-22) — list all saved integrations for a project.
+            slug = handler.path[len("/api/projects/"):-len("/integrations")]
+            from pebble.server.integrations import run_get_integrations
+            run_get_integrations(handler, slug)
         elif handler.path == "/api/account/profile":
             from pebble.server.account import run_get_profile
             run_get_profile(handler)
+        elif handler.path.startswith("/api/account/activity"):
+            from pebble.server.audit_log_api import run_get_activity
+            run_get_activity(handler)
+        elif handler.path == "/api/account/sessions":
+            # Phase D.2 (2026-05-24) — list active sessions via the
+            # public.list_user_sessions SECURITY DEFINER function
+            # (migration 008). Service-role key call; user_id forwarded
+            # explicitly so the DB function can scope server-side.
+            from pebble.server.account_sessions import run_list_sessions
+            run_list_sessions(handler)
+        elif handler.path.startswith("/api/account/change-email-confirm"):
+            # Single-use token confirm — no auth required (user clicks from email).
+            from pebble.server.account import run_confirm_email_change
+            run_confirm_email_change(handler)
+        elif handler.path.startswith("/api/account/export-download"):
+            # GDPR Article 20 — streams the zip identified by a single-use
+            # 24h token. No auth required (the token IS the auth — the link
+            # was emailed to the account holder). Token must be present and
+            # unexpired; 404 unknown, 410 expired.
+            from pebble.server.account import run_download_export
+            run_download_export(handler)
         elif handler.path == "/api/billing/subscription":
             from pebble.server.billing_subscription import run_get_subscription
             run_get_subscription(handler)
+        elif handler.path == "/api/account/invoices":
+            # B4 — invoice history for the Billing tab. Returns last 12
+            # Stripe invoices for subscribed users; {invoices: []} for
+            # free-tier (no customer ID yet). Never 404.
+            from pebble.server.billing_api import run_get_invoice_history
+            run_get_invoice_history(handler)
         elif handler.path == "/api/internal/process-email-drip":
             from pebble.server.internal import run_process_email_drip
             run_process_email_drip(handler)
         elif handler.path.startswith("/dist/"):
             handler._handle_serve_dist()
+        elif handler.path.startswith("/preview-template/"):
+            handler._handle_preview_template()
         elif handler.path.startswith("/preview/"):
             handler._handle_preview()
         else:
@@ -202,6 +270,15 @@ def route_post(handler) -> None:
             handler._handle_rollback()
         elif handler.path == "/api/refine":
             handler._handle_refine()
+        elif handler.path == "/api/chat-edit":
+            from pebble.server.chat_edit import run_chat_edit
+            run_chat_edit(handler)
+        elif handler.path == "/api/enrich-content":
+            # Phase 58a — apply build-time chat facts (phone / location /
+            # services) to an already-generated site. No LLM call — pure
+            # regex substitution. Always billable: false.
+            from pebble.server.enrich import run_enrich_content
+            run_enrich_content(handler)
         elif handler.path == "/api/visual-edit":
             handler._handle_visual_edit()
         elif handler.path == "/api/migrate":
@@ -215,6 +292,37 @@ def route_post(handler) -> None:
             # customer's business name/services. Free-tier-friendly.
             from pebble.server.templates_api import run_instantiate_template
             run_instantiate_template(handler)
+        elif handler.path == "/api/template-match":
+            # Phase F1 (2026-05-24) — deterministic top-N template ranking.
+            # Scores every template against (prompt, business_type) via cheap
+            # token-overlap signals. No LLM, ~5ms. Public endpoint (no auth).
+            # The funnel uses this after signup to surface 3 templates instead
+            # of dumping the user into the full gallery — reduces bounce.
+            from pebble.server.template_match import run_template_match
+            run_template_match(handler)
+        elif handler.path == "/api/chat":
+            # 2026-05-23 — Pebble assistant multi-turn chat for the
+            # Control Center side-panel. GPT-4o-mini via OpenRouter.
+            # Returns strict JSON with reply + optional navigate_to +
+            # confirm_action so the frontend acts on intent rather
+            # than parsing free text.
+            from pebble.server.chat import run_chat
+            run_chat(handler)
+        elif handler.path == "/api/credits/purchase":
+            # 2026-05-24 — credit-pack Stripe Checkout. Pre-validates
+            # cap BEFORE creating the session so a user near the 400
+            # ceiling never pays for credits that wouldn't fit.
+            from pebble.server.credits_api import run_purchase_pack
+            run_purchase_pack(handler)
+        elif handler.path == "/api/notifications/read-all":
+            # 2026-05-24 — must come BEFORE the /<id>/read pattern
+            # below or "/read-all" gets mis-parsed as an event id.
+            from pebble.server.notifications import run_mark_all_read
+            run_mark_all_read(handler)
+        elif handler.path.startswith("/api/notifications/") and handler.path.endswith("/read"):
+            from pebble.server.notifications import run_mark_read
+            event_id = handler.path[len("/api/notifications/"):-len("/read")]
+            run_mark_read(handler, event_id)
         elif handler.path == "/api/bot-message":
             # Phase 25b (2026-05-20) — bot persona narration. Cheap GPT-4o-mini
             # call returning short text (greeting / status / suggested chips)
@@ -286,6 +394,11 @@ def route_post(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/blocks/insert")]
             from pebble.server.blocks import run_insert_block
             run_insert_block(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/integrations"):
+            # Phase 56a (2026-05-22) — save/update one integration.
+            slug = handler.path[len("/api/projects/"):-len("/integrations")]
+            from pebble.server.integrations import run_post_integration
+            run_post_integration(handler, slug)
         elif handler.path == "/api/internal/supabase-webhook":
             from pebble.server.supabase_webhook import run_supabase_webhook
             run_supabase_webhook(handler)
@@ -309,6 +422,37 @@ def route_post(handler) -> None:
             # user explicitly picks Free / Starter / Pro / Enterprise.
             from pebble.server.account import run_select_plan
             run_select_plan(handler)
+        elif handler.path == "/api/account/change-password":
+            # Re-auth challenge + admin-API password update + audit log +
+            # notification email. Per-user rate-limited to 5/hour.
+            from pebble.server.account import run_change_password
+            run_change_password(handler)
+        elif handler.path == "/api/account/mfa-event":
+            # Phase D.1 (2026-05-24) — client-side hook for the v3
+            # SecurityTab. After Supabase mfa.verify / mfa.unenroll
+            # succeeds, the frontend posts here so the engine writes
+            # audit_log + sends notification email. event_type allow-list
+            # + 5/min rate-limit prevent abuse via stolen session.
+            from pebble.server.account_mfa import run_record_mfa_event
+            run_record_mfa_event(handler)
+        elif handler.path == "/api/account/global-signout":
+            # Phase D.3 (2026-05-24) — sign out every session for the
+            # calling user via Supabase /auth/v1/logout?scope=global.
+            # Audit row + defensive-notify email written only AFTER
+            # Supabase confirms. Per-user 3/hour rate-limit.
+            from pebble.server.account_signout import run_global_signout
+            run_global_signout(handler)
+        elif handler.path == "/api/account/change-email-request":
+            # Re-auth challenge + single-use pending token + confirmation
+            # email to NEW address. Per-user rate-limited 3/24h.
+            from pebble.server.account import run_request_email_change
+            run_request_email_change(handler)
+        elif handler.path == "/api/account/export-request":
+            # GDPR Article 20 — kicks off a background zip of the user's
+            # projects + account data and emails a single-use download link.
+            # Rate-limited 1/24h per user (zipping is expensive).
+            from pebble.server.account import run_request_data_export
+            run_request_data_export(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/forms/attachment-url"):
             slug = handler.path[len("/api/projects/"):-len("/forms/attachment-url")]
             from pebble.server.forms import run_get_attachment_signed_url
@@ -339,6 +483,13 @@ def route_delete(handler) -> None:
             from pebble.server.publish_instant import run_unpublish_instant
             run_unpublish_instant(handler)
             return
+        if handler.path.startswith("/api/account/sessions/"):
+            # Phase D.2 (2026-05-24) — DELETE /api/account/sessions/<uuid>.
+            # The handler validates the uuid shape before forwarding.
+            session_id = handler.path[len("/api/account/sessions/"):]
+            from pebble.server.account_sessions import run_revoke_session
+            run_revoke_session(handler, session_id)
+            return
         if handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_delete_domain(slug)
@@ -350,6 +501,15 @@ def route_delete(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/forms/autoresponder")]
             from pebble.server.forms import run_delete_autoresponder_config
             run_delete_autoresponder_config(handler, slug)
+        elif handler.path.startswith("/api/projects/") and "/integrations/" in handler.path:
+            # Phase 56a (2026-05-22) — DELETE /api/projects/<slug>/integrations/<id>
+            parts = handler.path[len("/api/projects/"):].split("/integrations/")
+            if len(parts) == 2:
+                slug, integration_id = parts
+                from pebble.server.integrations import run_delete_integration
+                run_delete_integration(handler, slug, integration_id)
+            else:
+                handler._send_json({"error": "Invalid integrations path"}, 400)
         elif handler.path.startswith("/api/projects/") and "/inbox/" in handler.path:
             handler._handle_inbox_delete()
         elif handler.path.startswith("/api/projects/"):

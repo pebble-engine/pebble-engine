@@ -26,6 +26,12 @@ pebble/templates/*/node_modules/
 pebble/templates/*/.next/
 pebble/templates/*/.turbo/
 pebble/templates/*/dist/
+# pebble/templates/*/out/ INTENTIONALLY tracked: Railway needs the
+# pre-built static HTML for /preview-template/<id>/ to work in prod.
+# Re-exports change ~5MB of Next.js chunk-hash filenames per template;
+# acceptable churn. Vercel ignores these files entirely (v3 bundle
+# doesn't import pebble/templates/), so the 100MB Vercel limit is
+# unaffected.
 pebble/templates/*/next-env.d.ts
 pebble/templates/*/tsconfig.tsbuildinfo
 

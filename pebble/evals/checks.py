@@ -712,7 +712,7 @@ REQUIRED_FILES = (
     "package.json",
     "tsconfig.json",
     "tailwind.config.ts",
-    "postcss.config.js",
+    "postcss.config.mjs",
     "next.config.mjs",
     "app/layout.tsx",
     "app/page.tsx",
@@ -1150,6 +1150,213 @@ def liquid_glass_class_present(ctx: BuildContext) -> CheckResult:
 
 
 # ---------------------------------------------------------------------------
+# 18b. tailwind_directives_present — FOUNDATION
+#
+# Added 2026-05-23 after Marc found 3 sites in a row that rendered as plain
+# HTML (default blue underlined links, no spacing, browser-default fonts).
+# Root cause: globals.css was missing the @tailwind base/components/utilities
+# directives at the top, so Tailwind injected zero utility classes and every
+# `bg-primary`, `flex`, `text-foreground`, etc. in TSX evaluated to nothing.
+# The prompt template said "must BEGIN with the :root {} CSS token block",
+# which the LLM took literally and skipped the directives. This eval catches
+# the regression deterministically — no humans-in-the-loop required.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("app/globals.css",))
+def tailwind_directives_present(ctx: BuildContext) -> CheckResult:
+    """`app/globals.css` must contain `@tailwind base`, `@tailwind components`,
+    and `@tailwind utilities` directives. Without them Tailwind generates no
+    utility CSS and the entire site renders with browser defaults."""
+    if not ctx.site_dir.exists():
+        return CheckResult("tailwind_directives_present", "skip", "no site directory")
+
+    css_path = ctx.site_dir / "app" / "globals.css"
+    if not css_path.exists():
+        return CheckResult("tailwind_directives_present", "fail", "app/globals.css missing")
+
+    text = css_path.read_text(encoding="utf-8", errors="ignore")
+    required = ("@tailwind base", "@tailwind components", "@tailwind utilities")
+    missing = [d for d in required if d not in text]
+    if missing:
+        return CheckResult(
+            "tailwind_directives_present", "fail",
+            f"app/globals.css missing required directive(s): {', '.join(missing)}. "
+            f"Without these Tailwind injects no utilities and the site renders as plain HTML.",
+        )
+    return CheckResult(
+        "tailwind_directives_present", "pass",
+        "all three @tailwind directives present in app/globals.css",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 18c. globals_css_imported_in_layout — FOUNDATION
+#
+# Added 2026-05-23 from audit C2. The Tailwind directives bug had a
+# sibling: if app/layout.tsx is missing `import "./globals.css";`,
+# Next.js never processes the file. Tailwind directives + design tokens
+# + .liquid-glass all exist on disk but never reach the browser. Same
+# symptom (plain-HTML render) but every CSS-content eval passes. The
+# import is one line — if the LLM drops it under token pressure, the
+# build silently ships a styleless site.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("app/layout.tsx",))
+def globals_css_imported_in_layout(ctx: BuildContext) -> CheckResult:
+    """`app/layout.tsx` MUST contain `import "./globals.css"`. Without it,
+    Next.js never processes globals.css and all styles disappear."""
+    if not ctx.site_dir.exists():
+        return CheckResult("globals_css_imported_in_layout", "skip", "no site directory")
+    layout = ctx.site_dir / "app" / "layout.tsx"
+    if not layout.exists():
+        return CheckResult("globals_css_imported_in_layout", "fail", "app/layout.tsx missing")
+    text = layout.read_text(encoding="utf-8", errors="ignore")
+    if re.search(r"""import\s+['"]\./globals\.css['"]""", text):
+        return CheckResult(
+            "globals_css_imported_in_layout", "pass",
+            "`import './globals.css'` found in app/layout.tsx",
+        )
+    return CheckResult(
+        "globals_css_imported_in_layout", "fail",
+        "app/layout.tsx missing `import './globals.css'` — without this import "
+        "Next.js never processes the CSS file and the site renders as plain HTML.",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 18d. postcss_config_is_esm — FOUNDATION
+#
+# Added 2026-05-23 from audit C3. We require postcss.config.mjs (.mjs
+# extension forces ESM) — but Node will silently treat `module.exports = ...`
+# in an .mjs file as nothing exported. PostCSS then crashes with
+# "Your custom PostCSS configuration must export a `plugins` key" and
+# Tailwind never runs. Same plain-HTML symptom. Caught by checking that
+# the .mjs file uses `export default`, not `module.exports`.
+# ---------------------------------------------------------------------------
+
+@check_metadata(static_files=("postcss.config.mjs",))
+def postcss_config_is_esm(ctx: BuildContext) -> CheckResult:
+    """`postcss.config.mjs` must use ESM `export default`, not CJS `module.exports`."""
+    if not ctx.site_dir.exists():
+        return CheckResult("postcss_config_is_esm", "skip", "no site directory")
+    mjs = ctx.site_dir / "postcss.config.mjs"
+    if not mjs.exists():
+        return CheckResult("postcss_config_is_esm", "fail", "postcss.config.mjs missing")
+    text = mjs.read_text(encoding="utf-8", errors="ignore")
+    if re.search(r"\bmodule\.exports\s*=", text):
+        return CheckResult(
+            "postcss_config_is_esm", "fail",
+            "postcss.config.mjs uses CommonJS `module.exports` in an ESM file — "
+            "must use `export default { plugins: { tailwindcss: {}, autoprefixer: {} } }`. "
+            "Without ESM syntax, PostCSS sees an empty config and Tailwind never runs.",
+        )
+    if "export default" not in text:
+        return CheckResult(
+            "postcss_config_is_esm", "fail",
+            "postcss.config.mjs has no `export default` statement — PostCSS won't load it",
+        )
+    return CheckResult(
+        "postcss_config_is_esm", "pass",
+        "postcss.config.mjs uses ESM `export default`",
+    )
+
+
+# ---------------------------------------------------------------------------
+# 18e. internal_component_imports_resolve — FOUNDATION
+#
+# Added 2026-05-23 after Marc hit a build that imported `@/components/sections/Hero`
+# but the LLM never emitted the corresponding Hero.tsx file. Next.js returned
+# HTTP 500 on every page render with "Module not found: Can't resolve
+# '@/components/sections/Hero'" — the build looked superficially complete (page.tsx
+# exists, package.json exists, all foundation files exist) but the runtime crashes
+# immediately because a referenced section component file was never written.
+#
+# This eval scans every .tsx/.ts file under app/ and components/ for imports
+# starting with `@/components/`, then verifies each resolves to an actual file on
+# disk. The repair loop catches the failure and re-prompts the LLM to emit the
+# missing component(s).
+# ---------------------------------------------------------------------------
+
+_IMPORT_FROM_AT_COMPONENTS_RE = re.compile(
+    r"""from\s+['"](@/components/[^'"]+)['"]"""
+)
+
+
+@check_metadata(static_files=("app",))
+def internal_component_imports_resolve(ctx: BuildContext) -> CheckResult:
+    """Every `from "@/components/..."` import in app/ and components/ must
+    point to an actual file on disk. Missing referenced components cause
+    Next.js to return HTTP 500 on every page render — the build looks
+    complete but the site is completely broken at runtime."""
+    if not ctx.site_dir.exists():
+        return CheckResult("internal_component_imports_resolve", "skip", "no site directory")
+
+    scan_roots = []
+    for sub in ("app", "components"):
+        d = ctx.site_dir / sub
+        if d.exists():
+            scan_roots.append(d)
+    if not scan_roots:
+        return CheckResult(
+            "internal_component_imports_resolve", "skip",
+            "no app/ or components/ directories to scan",
+        )
+
+    # The `@/` alias maps to the project root (tsconfig.json paths: {"@/*": ["./*"]}),
+    # so `@/components/sections/Hero` resolves to `site_dir/components/sections/Hero.tsx`
+    # (Next.js / TS try .tsx, .ts, .jsx, .js extensions in order).
+    candidate_exts = (".tsx", ".ts", ".jsx", ".js")
+    missing: list[tuple[str, str]] = []  # (importer_path, missing_module)
+
+    for root in scan_roots:
+        for tsx_path in root.rglob("*"):
+            if not tsx_path.is_file():
+                continue
+            if tsx_path.suffix not in (".tsx", ".ts", ".jsx", ".js"):
+                continue
+            try:
+                text = tsx_path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            for m in _IMPORT_FROM_AT_COMPONENTS_RE.finditer(text):
+                module = m.group(1)              # e.g. "@/components/sections/Hero"
+                rel    = module[len("@/"):]      # "components/sections/Hero"
+                base   = ctx.site_dir / rel
+                # Resolution attempts (matches TS/Next defaults):
+                # 1. base + each extension
+                # 2. base/index + each extension
+                resolved = any((base.with_suffix(ext)).exists() for ext in candidate_exts)
+                if not resolved and base.is_dir():
+                    resolved = any((base / f"index{ext}").exists() for ext in candidate_exts)
+                if not resolved:
+                    importer = tsx_path.relative_to(ctx.site_dir).as_posix()
+                    missing.append((importer, module))
+
+    if missing:
+        # Dedupe by missing module so the message is readable when many files
+        # reference the same missing component.
+        modules_to_importers: dict[str, list[str]] = {}
+        for importer, module in missing:
+            modules_to_importers.setdefault(module, []).append(importer)
+        lines = [
+            f"  - {module} (imported by {', '.join(sorted(set(imps))[:3])})"
+            for module, imps in sorted(modules_to_importers.items())
+        ]
+        return CheckResult(
+            "internal_component_imports_resolve", "fail",
+            "Missing component file(s) referenced by `@/components/...` imports — "
+            "Next.js will return HTTP 500 on every page render. Emit the missing "
+            "files in their full @/components/<path>.tsx form:\n" + "\n".join(lines),
+            details={"missing": modules_to_importers},
+        )
+
+    return CheckResult(
+        "internal_component_imports_resolve", "pass",
+        "all @/components/* imports resolve to existing files",
+    )
+
+
+# ---------------------------------------------------------------------------
 # 19. animation_components_present — FOUNDATION
 # ---------------------------------------------------------------------------
 
@@ -1298,6 +1505,24 @@ def animated_heading_screen_reader_safe(ctx: BuildContext) -> CheckResult:
     stripped = _LINE_COMMENT_RE.sub("", _BLOCK_COMMENT_RE.sub("", text))
     has_sr_only = bool(_SR_ONLY_RE.search(stripped))
     has_aria_hidden = bool(_ARIA_HIDDEN_TRUE_RE.search(stripped))
+
+    # Audit C4 (2026-05-23): structural check. aria-hidden="true" on the
+    # <h1> itself hides the entire subtree including the sr-only text from
+    # screen readers — exactly the bug the markers were supposed to prevent.
+    # The presence check passes (both markers exist) but the page has no
+    # heading announced to AT. Catch it by inspecting the <h1> opening tag.
+    H1_OPEN_RE = re.compile(r"<h1\b([^>]*?)>", re.DOTALL)
+    for m in H1_OPEN_RE.finditer(stripped):
+        attrs = m.group(1) or ""
+        if "aria-hidden" in attrs:
+            return CheckResult(
+                "animated_heading_screen_reader_safe", "fail",
+                "AnimatedHeading puts aria-hidden on the <h1> itself — this hides "
+                "the inner sr-only text from screen readers too, defeating the "
+                "split-semantics-from-decoration pattern. Put aria-hidden=\"true\" "
+                "on the inner per-char wrapper span, not on the <h1>.",
+                details={"violation": "aria-hidden on h1"},
+            )
 
     if has_sr_only and has_aria_hidden:
         return CheckResult(
@@ -4440,6 +4665,11 @@ ALL_CHECKS = [
     inter_font_global,
     inter_font_applied,
     liquid_glass_class_present,
+    # Tailwind / CSS pipeline (Marc's 3-broken-sites-in-a-row bug + audit 2026-05-23)
+    tailwind_directives_present,
+    globals_css_imported_in_layout,
+    postcss_config_is_esm,
+    internal_component_imports_resolve,
     animation_components_present,
     client_components_have_directive,
     prefers_reduced_motion_respected,

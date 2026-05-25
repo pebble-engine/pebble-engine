@@ -1,0 +1,30 @@
+{
+  "dna_id":       "luxury_cleaning",
+  "name":         "AURA Luxury Cleaning",
+  "vibe":         "Surgical-grade editorial dark luxury. Brushed-metal cards, parallax 3D showcases, glassmorphic spec checklists.",
+  "hero_pattern": "two_col_editorial_with_parallax_3d_showcase",
+  "palette": {
+    "background":     "#0F1115",
+    "background_alt": "#0B0C0E",
+    "card_bg":        "#161920",
+    "card_border":    "rgba(255,255,255,0.05)",
+    "text_primary":   "#ffffff",
+    "text_secondary": "#94a3b8",
+    "accent":         "#ffffff",
+    "accent_muted":   "rgba(255,255,255,0.5)"
+  },
+  "fonts": {
+    "display": "Playfair Display",
+    "body":    "Outfit"
+  },
+  "signature_moves": [
+    "Two-column editorial hero with parallax 3D showcase column",
+    "Cursor-repelling glassmorphic bubble particles in hero",
+    "Brushed-metal background card hover effect",
+    "Bento grid services (4 cards in asymmetric 7/5 + 5/7 layout)",
+    "Side-drawer service detail with inquiry form",
+    "Before/after transformation slider with clipPath reveal",
+    "Italic Playfair editorial pull-quotes with manifesto framing",
+    "Ultra-thin uppercase Outfit microtype with 0.25em+ tracking"
+  ]
+}

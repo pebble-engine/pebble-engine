@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+@theme {
+  /* lavender variant — calm lavender + cream (replaces coral with deep lavender). */
+  --color-bone:     #fbfafd;
+  --color-ice:      #ede8f6;
+  --color-navy:     #3a2e5a;
+  --color-mint:     #d6c9ee;
+  --color-coral:    #7c5fbf;
+  --color-coral-hover: #6448a3;
+  --color-slate-light: #f5f1fa;
+  --color-background: var(--color-bone);
+  --color-foreground: var(--color-navy);
+
+  --font-display: var(--font-outfit), system-ui, sans-serif;
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-bone);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); }
+
+.btn-coral {
+  background: var(--color-coral);
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 99px;
+  font-weight: 600;
+  transition: background 0.3s, transform 0.2s;
+  display: inline-block;
+  text-align: center;
+}
+.btn-coral:hover {
+  background: var(--color-coral-hover);
+  transform: scale(1.02);
+}
+
+.form-input-bd {
+  width: 100%;
+  background: white;
+  border: 2px solid var(--color-ice);
+  border-radius: 0.75rem;
+  padding: 1rem;
+  outline: none;
+  transition: border-color 0.3s, box-shadow 0.3s;
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+}
+.form-input-bd:focus {
+  border-color: var(--color-coral);
+  box-shadow: 0 0 0 4px rgba(124, 95, 191, 0.15);
+}
+
+.shadow-soft {
+  box-shadow: 0 8px 30px -10px rgba(58, 46, 90, 0.1);
+}
+
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px -8px rgba(58, 46, 90, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+}

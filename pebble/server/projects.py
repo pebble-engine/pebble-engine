@@ -6,6 +6,7 @@ is responsible for I/O shape (JSON in/out, validation, error mapping).
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,7 +16,12 @@ import shutil
 from pebble.engagement import log_event as _log_engagement
 from pebble.history import list_history, restore_snapshot
 from pebble.log import log
-from pebble.security import project_lock, require_project_owner, validate_snapshot_id
+from pebble.security import (
+    project_lock,
+    require_project_owner,
+    resolve_user_id,
+    validate_snapshot_id,
+)
 
 
 def _engine():
@@ -44,20 +50,24 @@ def _read_body(handler) -> Optional[dict]:
 def run_list_projects(handler) -> None:
     """List every project in output/ that the current user can see.
 
-    - Logged-in users see their own projects (by ``_user_id``) plus unclaimed
-      projects (no ``_user_id``). Unclaimed = anything built before auth was
-      added; they remain visible so the user doesn't lose access on first
-      login.
-    - Logged-out users see all projects (legacy behavior).
+    - Signed-in users see their own projects (by ``_user_id``) plus
+      unclaimed projects (no ``_user_id``). Unclaimed = anything built
+      before auth was added; they remain visible so the user doesn't
+      lose access on first login.
+    - Signed-out users → 401.
+
+    Phase 58e (2026-05-22) — previously fell back to "show all projects"
+    when no user could be resolved. That was a leak in two ways: anon
+    callers saw every project's slug + business_name + inbox counts,
+    AND signed-in v3 users (Bearer JWT) were also treated as anon
+    because the resolver only checked legacy cookies. Now uses the
+    shared ``resolve_user_id`` (Bearer-first, cookie-fallback) and
+    fails closed.
     """
-    # Resolve current user once. Failure to import auth is tolerated so the
-    # endpoint stays usable in environments without the auth module loaded.
-    current_uid: Optional[str] = None
-    try:
-        from pebble.server.auth import current_user_id
-        current_uid = current_user_id(handler)
-    except Exception:
-        current_uid = None
+    current_uid = resolve_user_id(handler)
+    if not current_uid:
+        handler._json(401, {"error": "sign in required"})
+        return
 
     out = _output_dir()
     if not out.exists():
@@ -91,21 +101,36 @@ def run_list_projects(handler) -> None:
 
         meta_path = project_dir / "build_meta.json"
         built_at = None
+        meta_file_count = None
         if meta_path.exists():
             try:
                 meta = json.loads(meta_path.read_text(encoding="utf-8"))
                 built_at = meta.get("built_at")
+                # run_build stamps file_count into build_meta on every
+                # successful build, so the dashboard list call can just
+                # read it instead of walking the filesystem. With 20
+                # projects each having ~11k node_modules files, the walk
+                # used to take 30-50s per dashboard load.
+                mc = meta.get("file_count")
+                if isinstance(mc, int):
+                    meta_file_count = mc
             except Exception:
                 pass
 
         # Starred state is a single zero-byte sentinel file. Simple, durable.
         starred = (project_dir / ".starred").exists()
 
-        # File count under site/ — gives the UI something to show even
-        # before a build_meta is written.
-        file_count = 0
-        if site_dir.exists():
-            file_count = sum(1 for p in site_dir.rglob("*") if p.is_file())
+        # Prefer the cached count from build_meta.json (sub-millisecond).
+        # Fall back to a depth-limited walk only when meta is missing or
+        # malformed — typical for an in-flight build or a hand-edited
+        # output. The fallback skips node_modules / .next so it counts
+        # SOURCE files only, not the 11k-file npm install per project.
+        file_count = meta_file_count if meta_file_count is not None else 0
+        if meta_file_count is None and site_dir.exists():
+            skip_dirs = {"node_modules", ".next", ".turbo", ".vercel"}
+            for root, dirs, files in os.walk(site_dir):
+                dirs[:] = [d for d in dirs if d not in skip_dirs]
+                file_count += len(files)
 
         # Latest publish (zip or cloudflare) — drives the dashboard
         # "Published" badge. Tiny file, cheap to read per row.
@@ -150,18 +175,28 @@ def run_list_projects(handler) -> None:
             except Exception:
                 inbox = None
 
+        # 2026-05-23: hero screenshot for the dashboard card. Only set
+        # when the file exists so the v3 ProjectCard can show a clean
+        # fallback (DNA-colored placeholder) for in-flight or screenshot-
+        # less builds. Post-build pipeline writes 01-hero.png alongside
+        # 02-trust, 03-services, etc.; we surface the hero shot only.
+        screenshot_url = None
+        if (project_dir / "screenshots" / "01-hero.png").exists():
+            screenshot_url = f"/api/projects/{project_dir.name}/screenshot"
+
         projects.append({
-            "slug":          project_dir.name,
-            "business_name": brief.get("business_name", project_dir.name),
-            "business_type": brief.get("business_type") or brief.get("industry"),
-            "built_at":      built_at or _project_mtime(project_dir),
-            "file_count":    file_count,
-            "starred":       starred,
-            "preview_url":   f"/preview/{project_dir.name}/",
-            "design_dna":    brief.get("_design_dna"),
-            "publish":       publish_summary,
-            "domain":        domain,
-            "inbox":         inbox,
+            "slug":           project_dir.name,
+            "business_name":  brief.get("business_name", project_dir.name),
+            "business_type":  brief.get("business_type") or brief.get("industry"),
+            "built_at":       built_at or _project_mtime(project_dir),
+            "file_count":     file_count,
+            "starred":        starred,
+            "preview_url":    f"/preview/{project_dir.name}/",
+            "screenshot_url": screenshot_url,
+            "design_dna":     brief.get("_design_dna"),
+            "publish":        publish_summary,
+            "domain":         domain,
+            "inbox":          inbox,
         })
 
     # Newest first
@@ -192,12 +227,11 @@ def run_activity_feed(handler) -> None:
     """
     # Resolve current user. Signed-out callers get 401 — fall-through
     # to "all projects" was a leak NotebookLM caught in review.
-    current_uid: Optional[str] = None
-    try:
-        from pebble.server.auth import current_user_id
-        current_uid = current_user_id(handler)
-    except Exception:
-        current_uid = None
+    # Phase 58e (2026-05-22) — switched from current_user_id (legacy
+    # cookie only) to resolve_user_id (Bearer JWT first, then cookie)
+    # so v3 Supabase-authed callers actually get their own activity
+    # instead of being treated as anon.
+    current_uid = resolve_user_id(handler)
     if not current_uid:
         handler._json(401, {"error": "sign in required"})
         return
@@ -265,6 +299,45 @@ def run_get_history(handler, slug: str) -> None:
         "slug":      slug,
         "snapshots": [e.to_dict() for e in entries],
         "count":     len(entries),
+    })
+
+
+# --------- GET /api/projects/<slug> -----------------------------------------
+
+def run_get_project_state(handler, slug: str) -> None:
+    """Return the full state of a project: slug + brief + plan + build_meta.
+
+    Used by the v3 workspace shell to populate state when a user opens
+    a project via /workspace/<slug>. Missing plan / build_meta are
+    returned as null (old projects predate them).
+
+    Auth: gated through require_project_owner. The full project state
+    includes the brief (business name, design DNA, customer answers)
+    which is sensitive enough to keep behind ownership.
+    """
+    if require_project_owner(handler, slug) is None:
+        return
+
+    project_dir = _output_dir() / slug
+
+    def _read_optional(name: str):
+        p = project_dir / name
+        if not p.exists():
+            return None
+        try:
+            data = json.loads(p.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        # Coerce non-dict payloads to None — every consumer expects a
+        # dict-or-null contract; a corrupted JSON scalar would otherwise
+        # leak through and break callers.
+        return data if isinstance(data, dict) else None
+
+    handler._json(200, {
+        "slug":       slug,
+        "brief":      _read_optional("brief.json") or {},
+        "plan":       _read_optional("plan.json"),
+        "build_meta": _read_optional("build_meta.json"),
     })
 
 
@@ -358,13 +431,20 @@ def run_toggle_star(handler, slug: str) -> None:
 # --------- GET /api/usage ---------
 
 def run_usage_summary(handler) -> None:
-    """Aggregate cost telemetry across every project for a dashboard
-    "this period: $X" indicator.
+    """Aggregate cost telemetry across the caller's projects for a
+    dashboard "this period: $X" indicator.
 
     Sums tokens_used and estimated_cost_usd from build_meta.json across
-    every project directory. Refinement and visual-edit calls don't
-    yet write their own meta files (they only update billable in their
-    HTTP response), so this is generation-only for now.
+    the caller's project directories. Refinement and visual-edit calls
+    don't yet write their own meta files (they only update billable in
+    their HTTP response), so this is generation-only for now.
+
+    Auth (Phase 58e, 2026-05-22): the endpoint used to aggregate every
+    project in output/ regardless of caller — anyone hitting /api/usage
+    saw every user's slugs + token counts + cost. Now requires a valid
+    user (Bearer JWT or legacy cookie) and scopes the aggregation to
+    that user's own + unclaimed projects (matching the dashboard
+    listing rules).
 
     Response::
 
@@ -378,6 +458,11 @@ def run_usage_summary(handler) -> None:
           ]
         }
     """
+    current_uid = resolve_user_id(handler)
+    if not current_uid:
+        handler._json(401, {"error": "sign in required"})
+        return
+
     out = _output_dir()
     if not out.exists():
         handler._json(200, {
@@ -395,6 +480,17 @@ def run_usage_summary(handler) -> None:
     for project_dir in out.iterdir():
         if not project_dir.is_dir():
             continue
+        # User-scope filter — owner must match or be unclaimed
+        # (consistent with list_projects + activity_feed).
+        brief_path = project_dir / "brief.json"
+        if brief_path.exists():
+            try:
+                brief = json.loads(brief_path.read_text(encoding="utf-8"))
+            except Exception:
+                brief = {}
+            owner = brief.get("_user_id")
+            if owner and owner != current_uid:
+                continue
         meta_path = project_dir / "build_meta.json"
         if not meta_path.exists():
             continue
@@ -532,3 +628,45 @@ def run_claim_project(handler, slug: str) -> None:
     })
     if not already_owned:
         _log_engagement(caller_uid, "project_claimed")
+
+
+# --------- GET /api/projects/<slug>/screenshot ---------
+
+def run_get_screenshot(handler, slug: str) -> None:
+    """Serve the project's hero screenshot for the dashboard card.
+
+    Owner-gated. Returns the raw PNG bytes of output/<slug>/screenshots/
+    01-hero.png. Returns 404 when the screenshot doesn't exist yet — the
+    v3 ProjectCard handles that with a DNA-colored placeholder.
+
+    Path validation: the slug goes through ``require_project_owner``
+    which calls validate_slug; on success the file is fetched from a
+    fixed sub-path. No directory traversal is possible.
+    """
+    uid = require_project_owner(handler, slug)
+    if uid is None:
+        return  # require_project_owner already wrote the response
+
+    shot_path = _output_dir() / slug / "screenshots" / "01-hero.png"
+    if not shot_path.exists() or not shot_path.is_file():
+        handler._json(404, {"error": "screenshot not available"})
+        return
+
+    try:
+        data = shot_path.read_bytes()
+    except Exception as e:
+        log.warning("screenshot read failed for %s: %s", slug, e)
+        handler._json(500, {"error": "screenshot read failed"})
+        return
+
+    # Manual response — Pebble engine doesn't have a helper for binary
+    # bodies. Mirrors the pattern used for the preview file serving.
+    handler.send_response(200)
+    handler.send_header("Content-Type", "image/png")
+    handler.send_header("Content-Length", str(len(data)))
+    # Cache for 5 min — short enough that a rebuild refreshes quickly,
+    # long enough that the dashboard grid doesn't re-fetch on every
+    # render. Per-user owner-gated, so private cache only.
+    handler.send_header("Cache-Control", "private, max-age=300")
+    handler.end_headers()
+    handler.wfile.write(data)

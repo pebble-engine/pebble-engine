@@ -73,6 +73,94 @@ load_env_file(PROJECT_ROOT / ".env")
 
 
 # --------------------------------------------------------------------------
+# SENTRY ERROR MONITORING (gated on SENTRY_DSN — no-op if unset)
+# --------------------------------------------------------------------------
+# Runs immediately after .env load so DSN is available, but before optional
+# imports so any failure there is captured. Init is cheap and idempotent.
+#
+# Defaults intentionally tuned for the free Developer tier (5K errors,
+# 5M spans, 50 replays / month) and Pebble's PII posture:
+#   - send_default_pii=False — overrides Sentry's onboarding default;
+#     matches the email-redaction posture set during the 2026-05-22
+#     overnight bug hunt (no full emails in engine.err.log either).
+#   - traces_sample_rate from env, default 1.0 in dev / 0.1 in prod.
+#   - profile_session_sample_rate=0.0 — disabled (24/7 server would
+#     produce more profiling data than the free quota allows).
+#   - enable_logs=False — Python logging volume from the build pipeline
+#     would flood the event quota. Errors still captured via the default
+#     exception integration.
+#
+# before_send hook scrubs known secret patterns (Stripe / Anthropic /
+# Supabase / OpenRouter / webhook secrets) and full email addresses from
+# event payloads — defense-in-depth on top of send_default_pii=False.
+
+_SENTRY_DSN = os.environ.get("SENTRY_DSN", "").strip()
+if _SENTRY_DSN:
+    try:
+        import re as _re_sentry
+        import sentry_sdk as _sentry_sdk
+
+        _SENTRY_ENV = os.environ.get("SENTRY_ENVIRONMENT", "development").strip() or "development"
+        _SENTRY_TRACES = float(os.environ.get(
+            "SENTRY_TRACES_SAMPLE_RATE",
+            "1.0" if _SENTRY_ENV == "development" else "0.1",
+        ))
+
+        # Patterns to scrub before anything ships to Sentry. Liberal on
+        # purpose — false positives here are cosmetic; false negatives
+        # leak secrets. Keep in sync with .env keys that hold secrets.
+        _SENTRY_SCRUBBERS = [
+            (_re_sentry.compile(r"sk-ant-api\d+-[A-Za-z0-9_-]{40,}"),  "<ANTHROPIC_KEY>"),
+            (_re_sentry.compile(r"sk_(test|live)_[A-Za-z0-9]{20,}"),    "<STRIPE_SK>"),
+            (_re_sentry.compile(r"rk_(test|live)_[A-Za-z0-9]{20,}"),    "<STRIPE_RK>"),
+            (_re_sentry.compile(r"whsec_[A-Za-z0-9]{20,}"),             "<WEBHOOK_SECRET>"),
+            # Supabase service-role / user JWTs (3-segment base64url)
+            (_re_sentry.compile(r"eyJ[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{30,}\.[A-Za-z0-9_-]{20,}"),
+                                                                         "<JWT>"),
+            (_re_sentry.compile(r"sk-or-v1-[A-Za-z0-9]{40,}"),          "<OPENROUTER_KEY>"),
+            # Email redaction — keep first char + domain for triage
+            (_re_sentry.compile(r"\b([A-Za-z0-9_.+-])[A-Za-z0-9_.+-]*@([A-Za-z0-9.-]+\.[A-Za-z]{2,})\b"),
+                                                                         r"\1***@\2"),
+        ]
+
+        def _sentry_scrub(value):
+            """Recursively walk event dicts/lists/strings, redacting matches."""
+            if isinstance(value, str):
+                for pattern, replacement in _SENTRY_SCRUBBERS:
+                    value = pattern.sub(replacement, value)
+                return value
+            if isinstance(value, dict):
+                return {k: _sentry_scrub(v) for k, v in value.items()}
+            if isinstance(value, (list, tuple)):
+                return type(value)(_sentry_scrub(v) for v in value)
+            return value
+
+        def _sentry_before_send(event, _hint):
+            # Wrap in try so a scrubber bug never blocks error reporting.
+            try:
+                return _sentry_scrub(event)
+            except Exception:
+                return event
+
+        _sentry_sdk.init(
+            dsn=_SENTRY_DSN,
+            environment=_SENTRY_ENV,
+            release=os.environ.get("SENTRY_RELEASE") or None,
+            send_default_pii=False,
+            traces_sample_rate=_SENTRY_TRACES,
+            profile_session_sample_rate=0.0,
+            enable_logs=False,
+            before_send=_sentry_before_send,
+        )
+    except Exception as _sentry_init_err:
+        # Sentry being unavailable must NEVER prevent the engine from
+        # booting. Log to the engine's own stderr (engine.err.log) and
+        # carry on — the worst case is "no error reporting today."
+        print(f"[sentry] init skipped (not fatal): {_sentry_init_err}",
+              file=sys.stderr)
+
+
+# --------------------------------------------------------------------------
 # OPTIONAL IMPORTS
 # --------------------------------------------------------------------------
 
@@ -253,7 +341,21 @@ def validate_build_payload(answers):
 
     btype = answers.get("business_type") or answers.get("industry") or ""
     if not isinstance(btype, str) or not btype.strip():
-        return None, _validation_error("business_type", "business_type (or industry) is required")
+        # Phase 58b — the welcome-phase fast-path (Phase 56a) skips the
+        # questionnaire, so it doesn't collect business_type explicitly.
+        # extra_context typically contains enough signal ("thai restaurant
+        # in seattle") for the IndustryIntelligence layer to infer the
+        # industry downstream. Accept extra_context as the fallback so
+        # those builds aren't rejected at the validation gate.
+        extra = answers.get("extra_context") or ""
+        if isinstance(extra, str) and extra.strip():
+            # Promote extra_context to business_type so all downstream
+            # consumers (industry lookup, prompt assembly, slug) see a
+            # value. The industry inference will produce a snake_case
+            # key from this free-text below.
+            answers["business_type"] = extra.strip()
+        else:
+            return None, _validation_error("business_type", "business_type (or industry) is required")
 
     for field, cap in _STRING_LIMITS.items():
         val = answers.get(field)
@@ -1740,6 +1842,42 @@ class PebbleHandler(BaseHTTPRequestHandler):
             self._serve_subscription_lapse_page()
             return
 
+        # 2026-05-23 — Fly.io backend (env-gated, falls back to local).
+        # When PEBBLE_PREVIEW_BACKEND=fly, route /preview/<slug>/... to
+        # https://pebble-preview-<slug>.fly.dev/. Public_mode skips this
+        # because public subdomain visitors should always see the published
+        # site (Cloudflare Pages), never a workspace dev preview.
+        #
+        # No app-exists pre-check — that would add a 1-3s flyctl roundtrip
+        # per request. Instead, try the proxy with a generous timeout (Fly
+        # cold-wake takes ~50s). If the app doesn't exist, _proxy_to_dev
+        # returns False (DNS fail or connection refused) and we fall through
+        # to local dev_registry / static-file handling. This keeps the env
+        # toggle SAFE — flipping to "fly" never breaks projects that haven't
+        # been deployed to Fly yet.
+        preview_backend = os.environ.get("PEBBLE_PREVIEW_BACKEND", "local").strip().lower()
+        if preview_backend == "fly" and not public_mode:
+            try:
+                from pebble.fly_preview import preview_url as _fly_preview_url
+                fly_url = _fly_preview_url(slug)
+                slug_prefix = "/preview/" + parts[0]
+                forward_path = self.path[len(slug_prefix):] or "/"
+                # 20s timeout, NOT 90s. Originally tried 90s to cover cold
+                # wakes, but that made EVERY request wait 90s before falling
+                # back to local — terrible UX. With 20s we get:
+                #   - Warm Fly (2-7s typical) → proxy succeeds quickly
+                #   - Cold Fly (50-90s) → timeout at 20s, fall back to local
+                #     immediately. The keep-alive ping in the workspace hits
+                #     Fly DIRECTLY (cross-origin) to wake it without blocking
+                #     user-facing requests on the wake-up window.
+                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=20):
+                    return
+                # Proxy failed — fall through to local path so we don't break
+                # workspaces for projects that haven't been Fly-provisioned.
+                log.info("[fly] proxy returned False for %s, falling back to local", slug)
+            except Exception as exc:
+                log.info("[fly] proxy errored for %s, falling back to local: %s", slug, exc)
+
         # If a live `next dev` process is registered for this slug, proxy to
         # it so SSR routes work (Next.js apps have no compiled index.html on
         # disk — static-file serving would 404). Falls through to static
@@ -1755,6 +1893,45 @@ class PebbleHandler(BaseHTTPRequestHandler):
                     return
         except Exception:
             pass  # fall through to static files
+
+        # On-demand warmup (2026-05-23): if no dev URL is registered AND this
+        # is a Next.js project (has package.json), kick off `next dev` in a
+        # background thread and return a self-refreshing splash so the user
+        # doesn't see a broken-image 404 in the workspace iframe. The first
+        # /preview hit after an engine restart triggers warmup; subsequent
+        # /preview hits proxy normally once the splash auto-refreshes.
+        # Skipped in public_mode — public visitors should see live content
+        # or nothing, never a workspace-internal splash.
+        if not public_mode:
+            project_dir = OUTPUT_DIR / slug
+            site_dir    = project_dir / "site"
+            if (site_dir / "package.json").exists():
+                try:
+                    from pebble.server.preview_ondemand import (
+                        render_splash_html,
+                        start_or_get,
+                    )
+                    status = start_or_get(slug, site_dir)
+                    if status == "ready":
+                        # Race: registry just got populated while we were
+                        # checking. Tell the iframe to retry — the next hit
+                        # will land on the proxy path above.
+                        self.send_response(503)
+                        self.send_header("Retry-After", "1")
+                        self.send_header("Content-Type", "text/plain; charset=utf-8")
+                        self.end_headers()
+                        self.wfile.write(b"Preview just became ready - reload"); return
+                    html = render_splash_html(slug, status).encode("utf-8")
+                    self.send_response(200)
+                    self.send_header("Content-Type", "text/html; charset=utf-8")
+                    self.send_header("Content-Length", str(len(html)))
+                    self.send_header("Cache-Control", "no-store")
+                    self.end_headers()
+                    self.wfile.write(html); return
+                except Exception:
+                    # Fall through to the original 404 path on any unexpected
+                    # error so the engine never crashes the preview path.
+                    pass
 
         site_file = OUTPUT_DIR / slug / "site" / rel
         if not site_file.exists() or not site_file.is_file():
@@ -1785,7 +1962,16 @@ class PebbleHandler(BaseHTTPRequestHandler):
         # cache so the CDN/browser can reuse responses across visitors.
         if ext in ("html", "htm"):
             try:
+                from pebble.integrations import render_all_snippets as _render_integrations
                 raw = site_file.read_text(encoding="utf-8")
+                # Phase 56a — inject active integration widgets (WhatsApp, booking,
+                # Google Maps, social rail, cookie-consent, custom code) into every
+                # HTML response. Integrations are live for both workspace preview
+                # (non-public) AND public subdomain visitors so the published site
+                # includes them. The injection is idempotent (snippets use stable IDs).
+                integration_html = _render_integrations(slug)
+                if integration_html:
+                    raw = self._inject_html(raw, integration_html)
                 if public_mode:
                     data = raw.encode("utf-8")
                     cache_header = "public, max-age=60"
@@ -1806,6 +1992,122 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 pass  # fall through to plain serve
         self._serve_file(site_file, ct)
 
+    def _handle_preview_template(self):
+        """Serve pre-built static template previews from pebble/templates/<id>/out/.
+
+        Path shape: /preview-template/<template_id>/<rel-path>
+        - Bare /preview-template/<id>/ resolves to out/index.html.
+        - Directory paths resolve to <dir>/index.html (matches next.js
+          trailingSlash: true output).
+        - Files are served with content-type by extension (same map as
+          _handle_preview).
+        - Path-traversal attempts are rejected: the resolved file MUST stay
+          inside out/.
+
+        Built by `python -m pebble.templates.export <template_id>`. If out/
+        doesn't exist (export never run, or template just added), returns 404
+        with an operator-facing message.
+        """
+        rest = self.path[len("/preview-template/"):]
+        if not rest:
+            self.send_response(404); self.end_headers(); return
+        template_id, _, rel = rest.partition("/")
+        if not re.fullmatch(r"[a-z0-9_]{1,64}", template_id or ""):
+            self._json(400, {"error": "invalid template_id"}); return
+
+        try:
+            from pebble.templates.export import template_dir
+            tdir = template_dir(template_id)
+        except (KeyError, FileNotFoundError):
+            self._json(404, {"error": "template not found"}); return
+
+        out_root = (tdir / "out").resolve()
+        if not out_root.is_dir():
+            self._json(404, {
+                "error": "template not yet exported",
+                "hint":  f"run: python -m pebble.templates.export {template_id}",
+            }); return
+
+        # Strip any leading slashes so `rel` is always relative. Without this,
+        # a double-slash URL ("/preview-template/<id>//") gives rel="/" which
+        # Path treats as ABSOLUTE — (out_root / "/").resolve() jumps to the
+        # filesystem root and the traversal guard then 403's a legitimate
+        # request. v3 sometimes concatenates preview_url (trailing /) with
+        # active.path (leading /) and produces exactly that double-slash.
+        rel = rel.lstrip("/") or "index.html"
+        candidate = (out_root / rel).resolve()
+
+        # Path-traversal guard — the resolved file MUST stay inside out_root.
+        try:
+            candidate.relative_to(out_root)
+        except ValueError:
+            self._json(403, {"error": "path outside template root"}); return
+
+        if candidate.is_dir():
+            candidate = candidate / "index.html"
+        if not candidate.is_file():
+            self.send_response(404); self.end_headers(); return
+
+        ext = candidate.suffix.lstrip(".").lower()
+        ct_map = {
+            "html": "text/html", "htm": "text/html",
+            "css": "text/css", "js": "application/javascript",
+            "json": "application/json", "svg": "image/svg+xml",
+            "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+            "gif": "image/gif", "ico": "image/x-icon", "webp": "image/webp",
+            "woff": "font/woff", "woff2": "font/woff2",
+            "txt": "text/plain", "xml": "application/xml",
+        }
+        ct = ct_map.get(ext, "application/octet-stream")
+        if ct.startswith("text/") or ct in ("application/javascript", "application/json", "image/svg+xml", "application/xml"):
+            ct += "; charset=utf-8"
+
+        # HTML responses: rewrite root-relative href/src/action attributes
+        # to be prefixed with the basePath. Next.js's `basePath` correctly
+        # prefixes <Link> hrefs and _next/static asset URLs, but it does
+        # NOT prefix raw <a href="/about">, <img src={SITE_HERO}>, or
+        # <form action="/contact">. Without this rewrite, clicking a nav
+        # link inside the iframe navigates to http://localhost:8000/about
+        # (404) instead of http://localhost:8000/preview-template/<id>/about.
+        # The regex only matches root-relative URLs (start with "/")
+        # that don't already begin with the basePath — idempotent.
+        if ext in ("html", "htm"):
+            try:
+                raw = candidate.read_text(encoding="utf-8")
+                base = f"/preview-template/{template_id}"
+                # Match href=, src=, action= where the value starts with "/"
+                # but not "/preview-template/..." (already prefixed) and not
+                # "//..." (protocol-relative) and not "/_next/..." (already
+                # basePath'd by Next.js).
+                rewritten = re.sub(
+                    r'(href|src|action)="/(?!preview-template/|_next/|/)',
+                    rf'\1="{base}/',
+                    raw,
+                )
+                data = rewritten.encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", ct)
+                self.send_header("Content-Length", str(len(data)))
+                self.send_header("Cache-Control", "no-store")
+                self.end_headers()
+                self.wfile.write(data)
+                return
+            except Exception as e:
+                log.warning("[preview-template] HTML rewrite failed for %s: %s", template_id, e)
+                # Fall through to plain serve below
+
+        self._serve_file(candidate, ct)
+
+    @staticmethod
+    def _inject_html(html: str, snippet: str) -> str:
+        """Insert *snippet* (raw HTML) just before </body>.
+        If </body> is absent, append at the end."""
+        lower = html.lower()
+        idx = lower.rfind("</body>")
+        if idx == -1:
+            return html + snippet
+        return html[:idx] + snippet + html[idx:]
+
     @staticmethod
     def _inject_bridge(html: str, script_body: str) -> str:
         """Insert the visual-edit bridge script just before </body>. If
@@ -1817,7 +2119,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
             return html + tag
         return html[:idx] + tag + html[idx:]
 
-    def _proxy_to_dev(self, dev_url: str, forward_path: str) -> bool:
+    def _proxy_to_dev(self, dev_url: str, forward_path: str, remote_timeout: int = 10) -> bool:
         """Forward GET *forward_path* to the running next dev server at *dev_url*.
 
         Injects the visual-edit bridge into HTML responses (workspace iframe
@@ -1826,14 +2128,23 @@ class PebbleHandler(BaseHTTPRequestHandler):
         overlay). Returns True on success. The caller must not write any
         HTTP response on False — the connection state is clean (no bytes
         sent).
+
+        2026-05-23: added scheme detection so the same path can proxy to
+        Fly.io's HTTPS preview machines (e.g. pebble-preview-<slug>.fly.dev).
+        ``remote_timeout`` extends the default 10s for cold-wake scenarios —
+        Fly hallpass can hold the connection up to ~60s while the machine
+        boots + next dev compiles the first page.
         """
         import http.client
         from urllib.parse import urlsplit
         public_mode = bool(getattr(self, "_public_subdomain_mode", False))
         parsed = urlsplit(dev_url)
-        conn: http.client.HTTPConnection | None = None
+        conn: http.client.HTTPConnection | http.client.HTTPSConnection | None = None
         try:
-            conn = http.client.HTTPConnection(parsed.netloc, timeout=10)
+            if parsed.scheme == "https":
+                conn = http.client.HTTPSConnection(parsed.netloc, timeout=remote_timeout)
+            else:
+                conn = http.client.HTTPConnection(parsed.netloc, timeout=remote_timeout)
             conn.request("GET", forward_path)
             resp = conn.getresponse()
             data = resp.read()

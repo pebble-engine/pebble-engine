@@ -50,6 +50,11 @@ function LoginForm() {
       router.push(redirect);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed.");
+    } finally {
+      // Reset in finally so a stuck-or-cancelled navigation never
+      // leaves the button locked in "Signing in…". Calling setState
+      // on an unmounting component (the success-then-navigate case)
+      // is a harmless no-op in React 19.
       setSubmitting(false);
     }
   }
@@ -62,6 +67,9 @@ function LoginForm() {
       else await signInWithGithub();
     } catch (e) {
       setError(e instanceof Error ? e.message : `${provider} sign-in failed.`);
+    } finally {
+      // Same reasoning as onSubmit: never let the OAuth button stay
+      // disabled if the provider redirect is blocked or slow.
       setOauthBusy(null);
     }
   }

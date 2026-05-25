@@ -3,30 +3,18 @@
 /**
  * LandingNav — Phase 40j (2026-05-21).
  *
- * Replaces the inline `TopNavBar()` that used to live inside
- * welcome-phase.tsx. Pattern adapted from a 21st.dev "header-2" Marc
- * liked: sticky pill that shrinks + adds backdrop blur + shadow once
- * the user scrolls past the threshold, with a full-screen mobile menu
- * for ≤md viewports.
- *
- * What's preserved from the old TopNavBar:
- *   - Pebble brand mark on the left, anchored to the page top
- *   - The four section-anchor links (How it works / Looks / Pricing / Start)
- *   - Smooth-scroll behavior on link click
- *   - Light-mode color palette (the landing forces light tokens)
- *
- * What's new:
- *   - Sign In (link → /login) + Get Started (primary, link → /signup)
- *     CTAs on the right, matching every other modern SaaS landing
- *   - Sticky behavior with a scroll threshold (shrinks pill at >10px)
- *   - Mobile menu toggle (hamburger / X via lucide-react)
- *   - All-section overflow scroll-lock when the mobile menu is open
+ * Phase 56 updates (2026-05-22):
+ *   - Full-width edge-to-edge bar (removed max-w-5xl / mx-auto constraint)
+ *   - Bigger text throughout (logo 26px, links + CTAs 17px)
+ *   - Blue radial gradient background matching §6 pricing section
+ *   - Gradient fades out gracefully when scrolled pill activates
  */
 
 import React from "react";
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutGrid, ChevronDown, Sparkles, LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/components/auth-provider";
 
 /** Anchor links shown in the nav. Hashes match the section IDs in
     welcome-phase.tsx (#how, #looks, #pricing, #start). */
@@ -63,48 +51,153 @@ function handleAnchorClick(e: React.MouseEvent<HTMLAnchorElement>, href: string)
   document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/** Pebble brand mark for the nav. Phase 40k (2026-05-21) — Marc's call:
-    nav uses ONE professional font end-to-end. Switched from Cinzel
-    (the global `font-logo`) to Plus Jakarta Sans (the body sans) so
-    brand + links + buttons all share the same typeface family. Heavy
-    weight + tight tracking gives the wordmark feel without needing a
-    separate serif. The cycling multilingual `RotatingPebbleLogo` stays
-    in the footer where Cinzel still has room to breathe. */
+/** Pebble brand mark for the nav.
+ *
+ *  Unauthed (or auth still loading): plain link back to the landing top.
+ *
+ *  Authed: button that opens a dropdown with quick-jumps into the app
+ *  (dashboard, start a build) + sign out. Marc's 2026-05-23 request —
+ *  a returning logged-in user looking at the landing page should be
+ *  able to launch back into product surfaces from the most prominent
+ *  affordance on the page (the brand mark itself), not just from the
+ *  right-side CTA. */
 function PebbleMark({ className = "" }: { className?: string }) {
-  return (
-    <Link
-      href="/"
-      onClick={(e) => handleAnchorClick(e, "#")}
-      className={cn(
-        "inline-flex items-center text-[22px] font-extrabold tracking-tight text-foreground",
-        "hover:text-foreground/85 transition-colors",
-        className,
-      )}
-      aria-label="Pebble — home"
-    >
+  const { user, loading: authLoading, signOut } = useAuth();
+  const isAuthed = !authLoading && !!user;
+  const [open, setOpen] = React.useState(false);
+  const containerRef = React.useRef<HTMLDivElement | null>(null);
+
+  // Click-outside closes the menu. Same pattern as components/auth-menu.tsx.
+  React.useEffect(() => {
+    if (!open) return;
+    function onDocClick(e: MouseEvent) {
+      if (!containerRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, [open]);
+
+  // Esc closes the menu when it has focus.
+  React.useEffect(() => {
+    if (!open) return;
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
+
+  const markText = (
+    <>
       Pebble<span aria-hidden className="text-[#3054ff]">.</span>
-    </Link>
+    </>
+  );
+  const markClasses = cn(
+    "inline-flex items-center text-[28px] font-extrabold tracking-tight text-foreground",
+    "hover:text-foreground/85 transition-colors",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 rounded-md",
+    className,
+  );
+
+  if (!isAuthed) {
+    return (
+      <Link
+        href="/"
+        onClick={(e) => handleAnchorClick(e, "#")}
+        className={markClasses}
+        aria-label="Pebble — home"
+      >
+        {markText}
+      </Link>
+    );
+  }
+
+  return (
+    <div ref={containerRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className={cn(markClasses, "gap-1.5 cursor-pointer")}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-label={open ? "Close Pebble menu" : "Open Pebble menu"}
+      >
+        {markText}
+        <ChevronDown
+          aria-hidden
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform duration-150",
+            open && "rotate-180",
+          )}
+        />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className={cn(
+            "absolute left-0 mt-2 w-64 z-50 overflow-hidden",
+            "rounded-2xl border border-border bg-card shadow-[0_12px_40px_rgba(31,29,26,0.18)]",
+          )}
+        >
+          {user?.email && (
+            <div className="px-4 py-3 border-b border-border">
+              <p className="text-[11px] uppercase tracking-widest text-muted-foreground">
+                Signed in as
+              </p>
+              <p className="text-sm font-semibold text-foreground truncate mt-0.5">
+                {user.email}
+              </p>
+            </div>
+          )}
+          <Link
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+          >
+            <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+            Open dashboard
+          </Link>
+          <Link
+            href="/workspace"
+            onClick={() => setOpen(false)}
+            className="flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors"
+          >
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            Start something new
+          </Link>
+          <button
+            type="button"
+            onClick={async () => {
+              setOpen(false);
+              await signOut();
+            }}
+            className="w-full text-left flex items-center gap-3 px-4 py-3 text-sm font-semibold text-foreground hover:bg-accent transition-colors border-t border-border"
+          >
+            <LogOut className="h-4 w-4 text-muted-foreground" />
+            Sign out
+          </button>
+        </div>
+      )}
+    </div>
   );
 }
 
 export function LandingNav() {
   const [open, setOpen] = React.useState(false);
   const scrolled = useScrolled(10);
+  // Phase 58b — when the user is signed in, the nav must reflect that.
+  // Previously the right-side CTAs were always "Sign In" + "Get Started",
+  // so a signed-in user returning to the landing page sees them and clicks
+  // Sign In thinking they're signed out → re-OAuth loop → confusion.
+  const { user, loading: authLoading } = useAuth();
+  const isAuthed = !authLoading && !!user;
 
-  // Lock body scroll while the mobile menu is open so the page behind
-  // doesn't scroll with finger drags.
   React.useEffect(() => {
-    if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-    return () => {
-      document.body.style.overflow = "";
-    };
+    document.body.style.overflow = open ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
   }, [open]);
 
-  // Close the mobile menu when a link is clicked.
   const handleMobileLink = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     handleAnchorClick(e, href);
     setOpen(false);
@@ -112,28 +205,37 @@ export function LandingNav() {
 
   return (
     <header
-      // Phase 40k — explicit Plus Jakarta Sans on the whole header so
-      // brand, links, and buttons share one professional typeface
-      // (matches Marc's "Efferd" reference screenshot).
       style={{ fontFamily: "var(--font-plus-jakarta-sans), system-ui, sans-serif" }}
       className={cn(
-        "sticky top-0 z-50 mx-auto w-full max-w-5xl border-b border-transparent",
-        "md:rounded-full md:border md:transition-all md:ease-out",
-        // scrolled + closed → shrunk pill with backdrop, sits 16px from top
+        // Phase 56: full-width edge-to-edge — no max-w or mx-auto in default state
+        "sticky top-0 z-50 w-full border-b border-transparent",
+        "transition-all duration-300 ease-out",
+        // Scrolled: shrink to centered pill (same as before)
         scrolled && !open && [
           "bg-card/95 supports-[backdrop-filter]:bg-card/65 backdrop-blur-xl",
-          "border-border md:top-4 md:max-w-4xl",
+          "border-border md:mx-auto md:top-4 md:rounded-full md:max-w-4xl",
           "shadow-[0_8px_32px_rgba(31,29,26,0.08)]",
         ],
-        // open mobile menu → solid surface so menu reads cleanly
         open && "bg-card/95",
       )}
     >
+      {/* Blue radial gradient — same palette as §6 pricing section.
+          Fades out when scrolled so the pill state stays clean. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute inset-0 transition-opacity duration-300",
+          "bg-[radial-gradient(ellipse_80%_160%_at_50%_0%,rgba(48,84,255,0.13)_0%,rgba(48,84,255,0.05)_55%,transparent_100%)]",
+          scrolled || open ? "opacity-0" : "opacity-100",
+        )}
+      />
+
       <nav
         className={cn(
-          "flex h-14 w-full items-center justify-between gap-3 px-4",
-          "md:h-12 md:transition-all md:ease-out",
-          scrolled && "md:px-3",
+          "relative flex h-16 w-full items-center justify-between gap-3",
+          "px-6 sm:px-10 lg:px-16",
+          "transition-all ease-out",
+          scrolled && "md:h-14 md:px-6",
         )}
         aria-label="Primary"
       >
@@ -141,14 +243,15 @@ export function LandingNav() {
         <PebbleMark />
 
         {/* Center anchor links (md+) */}
-        <div className="hidden md:flex items-center gap-1">
+        <div className="hidden md:flex items-center gap-0.5 flex-shrink min-w-0">
           {LINKS.map((link) => (
             <a
               key={link.href}
               href={link.href}
               onClick={(e) => handleAnchorClick(e, link.href)}
               className={cn(
-                "inline-flex items-center px-3.5 py-1.5 rounded-full text-[15px] font-semibold tracking-tight",
+                "inline-flex items-center whitespace-nowrap px-3 py-2 rounded-full",
+                "text-[15px] font-semibold tracking-tight",
                 "text-foreground/85 hover:text-foreground hover:bg-accent",
                 "transition-colors duration-150",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
@@ -159,30 +262,65 @@ export function LandingNav() {
           ))}
         </div>
 
-        {/* CTAs right (md+) */}
-        <div className="hidden md:flex items-center gap-2">
-          <Link
-            href="/login"
-            className={cn(
-              "inline-flex items-center justify-center rounded-full border border-border px-4 py-1.5",
-              "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
-              "hover:bg-accent transition-colors",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            )}
-          >
-            Sign In
-          </Link>
-          <Link
-            href="/signup"
-            className={cn(
-              "inline-flex items-center justify-center rounded-full px-4 py-1.5",
-              "text-[15px] font-semibold tracking-tight text-background bg-foreground",
-              "hover:opacity-90 transition-opacity",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-            )}
-          >
-            Get Started
-          </Link>
+        {/* CTAs right (md+) — auth-aware. Signed-in users see Dashboard
+            instead of Sign In + Get Started so the nav reflects reality
+            and they don't double-OAuth out of confusion. */}
+        <div className="hidden md:flex items-center gap-2 flex-shrink-0">
+          {isAuthed ? (
+            <>
+              <Link
+                href="/dashboard"
+                className={cn(
+                  "inline-flex items-center justify-center gap-1.5 whitespace-nowrap rounded-full border border-border px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
+                  "hover:bg-accent transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                )}
+              >
+                <LayoutGrid className="w-4 h-4" />
+                Dashboard
+              </Link>
+              <Link
+                href="/workspace"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-white",
+                  "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
+                  "hover:brightness-110 transition-[filter] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                )}
+                title={user?.email ?? undefined}
+              >
+                Start a build
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full border border-border px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-foreground bg-transparent",
+                  "hover:bg-accent transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                )}
+              >
+                Sign In
+              </Link>
+              <Link
+                href="/signup"
+                className={cn(
+                  "inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-2",
+                  "text-[15px] font-semibold tracking-tight text-white",
+                  "bg-[linear-gradient(135deg,#3054ff,#6b8aff)]",
+                  "hover:brightness-110 transition-[filter] duration-150",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#3054ff] focus-visible:ring-offset-2",
+                )}
+              >
+                Get Started
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile toggle (≤md) */}
@@ -202,16 +340,10 @@ export function LandingNav() {
         </button>
       </nav>
 
-      {/* Mobile full-screen menu (≤md). Anchored below the nav row, fills
-          rest of viewport. Auto-closes on link click.
-          Phase 41 (2026-05-21) — uses `bottom: 0 + env(safe-area-inset-bottom)`
-          via the .pb-safe utility on the inner so the Sign In / Get
-          Started CTAs aren't hidden under the iPhone home-indicator.
-          Also gets overscroll-behavior: contain to stop scroll chaining
-          through to the body when the menu is open. */}
+      {/* Mobile full-screen menu (≤md). */}
       <div
         className={cn(
-          "fixed top-14 left-0 right-0 bottom-0 z-50 md:hidden",
+          "fixed top-16 left-0 right-0 bottom-0 z-50 md:hidden",
           "bg-background/95 backdrop-blur-xl border-y border-border",
           "flex flex-col overflow-hidden",
           "[overscroll-behavior:contain]",
@@ -227,7 +359,7 @@ export function LandingNav() {
                 onClick={(e) => handleMobileLink(e, link.href)}
                 className={cn(
                   "inline-flex items-center justify-start px-4 py-3 rounded-xl",
-                  "text-xl font-semibold tracking-tight text-foreground",
+                  "text-2xl font-semibold tracking-tight text-foreground",
                   "hover:bg-accent transition-colors",
                 )}
               >
@@ -236,28 +368,58 @@ export function LandingNav() {
             ))}
           </div>
           <div className="flex flex-col gap-2 pb-6">
-            <Link
-              href="/login"
-              onClick={() => setOpen(false)}
-              className={cn(
-                "inline-flex items-center justify-center rounded-full border border-border w-full py-3",
-                "text-base font-medium text-foreground bg-transparent",
-                "hover:bg-accent transition-colors",
-              )}
-            >
-              Sign In
-            </Link>
-            <Link
-              href="/signup"
-              onClick={() => setOpen(false)}
-              className={cn(
-                "inline-flex items-center justify-center rounded-full w-full py-3",
-                "text-base font-semibold text-background bg-foreground",
-                "hover:opacity-90 transition-opacity",
-              )}
-            >
-              Get Started
-            </Link>
+            {isAuthed ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center gap-2 rounded-full border border-border w-full py-3",
+                    "text-lg font-semibold text-foreground bg-transparent",
+                    "hover:bg-accent transition-colors",
+                  )}
+                >
+                  <LayoutGrid className="w-5 h-5" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="/workspace"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full w-full py-3",
+                    "text-lg font-semibold text-background bg-foreground",
+                    "hover:opacity-90 transition-opacity",
+                  )}
+                >
+                  Start a build
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full border border-border w-full py-3",
+                    "text-lg font-semibold text-foreground bg-transparent",
+                    "hover:bg-accent transition-colors",
+                  )}
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/signup"
+                  onClick={() => setOpen(false)}
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-full w-full py-3",
+                    "text-lg font-semibold text-background bg-foreground",
+                    "hover:opacity-90 transition-opacity",
+                  )}
+                >
+                  Get Started
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

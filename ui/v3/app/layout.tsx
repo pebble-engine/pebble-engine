@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel } from "next/font/google";
+import { JetBrains_Mono, Cormorant, Plus_Jakarta_Sans, Cinzel, Inter_Tight } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { AuthProvider } from "@/components/auth-provider";
@@ -24,6 +24,20 @@ const cinzel = Cinzel({
   variable: "--font-cinzel",
   subsets: ["latin"],
   weight: ["400", "600"],
+});
+
+// Dashboard display font — Inter Tight (Linear / Stripe / Vercel-docs feel).
+// 2026-05-24 — Marc wanted the dashboard pages unified on a bold professional
+// sans for hero numbers + page titles + section headings. Inter Tight is the
+// de-facto SaaS workspace font — tight geometric sans, weights up to 900,
+// reads as confident and crisp without the editorial luxe of Cormorant.
+// ONLY used on /dashboard, /projects, /templates, /integrations, /community,
+// /inbox, /settings, /help, /admin, /migrate. Marketing landing + workspace
+// build phases keep Cormorant for cinematic feel.
+const interTight = Inter_Tight({
+  variable: "--font-inter-tight",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800", "900"],
 });
 
 // Body font — Plus Jakarta Sans (geometric humanist sans).
@@ -70,20 +84,16 @@ export const viewport: Viewport = {
 // Inline script applies the user's stored theme before the page paints,
 // so a dark-mode user doesn't see a flash of light theme on load.
 //
-// 2026-05-19 second pass: app DEFAULTS to DARK and the dark theme is now
-// pure neutral (true black background, white text, neutral grays). The
-// landing hero, the workspace, and the marketing body share one mono
-// identity. Light mode still exists for accessibility / user preference
-// but is no longer the auto default.
+// Phase 56a: app DEFAULTS to LIGHT — the landing and workspace both look
+// their best in light mode and that's what new visitors should see first.
+// Returning users who explicitly chose dark still get dark (stored pref wins).
 const THEME_INIT_SCRIPT = `
 (function() {
   try {
     var stored = localStorage.getItem('pebble.theme');
-    var theme = stored === 'dark' || stored === 'light' ? stored : 'dark';
+    var theme = stored === 'dark' || stored === 'light' ? stored : 'light';
     if (theme === 'dark') document.documentElement.classList.add('dark');
-  } catch (e) {
-    document.documentElement.classList.add('dark');
-  }
+  } catch (e) {}
 })();
 `;
 
@@ -95,13 +105,21 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
+      className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
-      </head>
       <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* Theme-flash prevention: <Script strategy="beforeInteractive"> is
+            injected by Next.js 15 into the server-rendered <head> before
+            React hydration, so the dark-mode class lands before first paint.
+            Using next/script avoids the React 19 warning that raw <script
+            dangerouslySetInnerHTML> triggers inside JSX. Must live in <body>
+            (not inside a bare <head> tag) — Next.js handles the placement. */}
+        <Script
+          id="theme-init"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
+        />
         <AuthProvider>
           {children}
           <CommandPalette />

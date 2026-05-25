@@ -1,6 +1,7 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Reveal } from "@/components/ui/Reveal";
 import { GALLERY_IMAGES } from "@/content/site";
 
 // Fallback Unsplash photos used until the customer drops their own files into
@@ -20,6 +21,7 @@ export function Gallery() {
 
   return (
     <section id="gallery" className="relative py-20 sm:py-28">
+      <Reveal>
       <div className="mx-auto max-w-6xl px-6">
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
@@ -52,6 +54,7 @@ export function Gallery() {
           ))}
         </div>
       </div>
+      </Reveal>
     </section>
   );
 }

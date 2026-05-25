@@ -1,0 +1,67 @@
+{
+  "dna_id": "cinematic_real_estate",
+  "vibe_label": "Cinematic Real-Estate Listing",
+  "source_brand": "Pebble cinematic_hero family",
+  "source_industry": "service business — local trades and services",
+  "applicable_industries": [
+    "plumber",
+    "hvac",
+    "electrician",
+    "construction",
+    "general contractor",
+    "landscaper",
+    "tree service",
+    "dog groomer",
+    "pet groomer",
+    "service business",
+    "trades"
+  ],
+  "palette": {
+    "bg":        "#fafaf9",
+    "fg":        "#18181b",
+    "primary":   "#d97706",
+    "secondary": "#b45309",
+    "accent":    "#d97706",
+    "muted":     "#52525b",
+    "border":    "#e7e5e4",
+    "extras": {
+      "card":         "#ffffff",
+      "input":        "#ffffff",
+      "ring":         "#d97706",
+      "hero_overlay": "linear-gradient(to top, rgba(24,24,27,0.85), rgba(24,24,27,0))"
+    }
+  },
+  "fonts": {
+    "display": "Archivo Black",
+    "body":    "Inter",
+    "accent":  "JetBrains Mono"
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Archivo+Black&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap",
+  "hero_pattern": "fullbleed_photo_bottomleft_cta_light",
+  "hero_signature": "Full-bleed industry hero photo with dark linear gradient overlay anchored at the bottom. Content stack sits bottom-left (NOT centered): accent-tinted pill chip → Archivo Black uppercase H1 → 1-2 line subline → two-CTA row (primary filled + secondary outline). Below the hero, the page transitions to a light off-white background with charcoal text — the cinematic darkness is contained to the hero only.",
+  "section_flow": [
+    {"id": "navbar",       "type": "minimal_top_nav_with_cta_pill",         "notes": "Bracketed business name on the left, 6-7 nav links centered, accent-filled CTA pill on the right. Sits transparent on the hero, swaps to light background on scroll."},
+    {"id": "hero",         "type": "fullbleed_photo_bottomleft_cta_light",  "notes": "Industry hero photo + dark linear gradient + bottom-left content anchor + accent pill chip + Archivo Black h1 + 2-CTA row."},
+    {"id": "services",     "type": "three_or_four_column_service_cards",    "notes": "Light cards on off-white background. Industry-specific service names, 2-3 sentences each, accent-colored Lucide icon."},
+    {"id": "about",        "type": "split_image_left_copy_right",           "notes": "Industry photo left, two-paragraph story right. Trust badges underneath in a 4-up row."},
+    {"id": "testimonials", "type": "single_pull_quote_with_attribution",    "notes": "One large pull quote in Archivo Black, then quieter attribution line."},
+    {"id": "cta_band",     "type": "fullwidth_dark_band_with_button",       "notes": "Dark band (matches hero overlay color), display headline, body line, single accent-filled CTA. Sits before the footer."},
+    {"id": "footer",       "type": "minimal_three_column_with_tagline",     "notes": "Tagline left, nav columns center, social/contact right."}
+  ],
+  "notable_features": [
+    "Light page background (off-white) with cinematic dark hero only",
+    "Bottom-left content anchor (anti-centered, real-estate-listing inspired)",
+    "Accent pill chip ABOVE the headline (mini-CTA / status badge)",
+    "Two-CTA row pattern (primary filled + secondary outlined)",
+    "Archivo Black uppercase H1 throughout the family",
+    "Per-industry accent color (orange base, swapped per skin: cyan HVAC, blue plumber, lime landscaper, pink groomer, safety-orange construction)",
+    "Reveal scroll-fade-up on every section via shared Reveal component (prefers-reduced-motion honored)",
+    "Gallery + Process + FAQ + Service-Area pages share the same scroll choreography"
+  ],
+  "motion_vocabulary": [
+    "Reveal component: opacity 0→1 + translateY 24→0 over 700ms with [0.22, 1, 0.36, 1] easing on viewport-enter, once-only",
+    "prefers-reduced-motion: reduce → skip the motion, render immediately",
+    "Hero photo stays static; the dark overlay is a pure CSS gradient (no animation)"
+  ],
+  "tailwind_extras_inline_css": "Color tokens via CSS variables (--accent-*) so each skin's next.config.mjs ships its own accent without rebuilding components. The Reveal component is a thin Framer Motion wrapper. The Hero component renders <img> (not next/image) so static-export with output:export works without basePath issues for public-folder assets."
+}

@@ -39,7 +39,7 @@
       },
       "best_for": "Service-industry businesses where the buyer wants TRUST + AVAILABILITY signals (no-contracts, same-day, pet-safe). Dark default with optional light theme toggle.",
       "tier": "free",
-      "preview_url": "http://127.0.0.1:3062",
+      "preview_url": "/preview-template/service_pro/",
       "preview_pages": [
         {
           "label": "Home",
@@ -97,8 +97,8 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Premium-tier beauty, wellness, and editorial-luxury brands. Light cream/mint surfaces. Generous whitespace. Magazine-style asymmetric layouts.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3063",
+      "tier": "premium",
+      "preview_url": "/preview-template/luxe_beauty/",
       "preview_pages": [
         {
           "label": "Home",
@@ -155,8 +155,8 @@
         "body": "Inter"
       },
       "best_for": "Warm, tactile brands where the product is craft \u2014 bakery, caf\u00e9, restaurant, deli, florist. Tilted-photo Y2K cream palette with filterable menu / catalog section.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3065",
+      "tier": "premium",
+      "preview_url": "/preview-template/artisan_kitchen/",
       "preview_pages": [
         {
           "label": "Home",
@@ -210,8 +210,8 @@
         "body": "DM Sans"
       },
       "best_for": "Authority instructor brands \u2014 trainer, dojo, coach, security consultant. Tactical crimson + gold-gradient with full-bleed video hero and animated stats.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3066",
+      "tier": "premium",
+      "preview_url": "/preview-template/instructor_pro/",
       "preview_pages": [
         {
           "label": "Home",
@@ -266,8 +266,8 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Dramatic dark personal-brand portfolios where the work is the product. Blackletter wordmarks, gold accents, corner-bracket photo frames. Tattoo, music, motorcycle, leather craft, whiskey.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3064",
+      "tier": "premium",
+      "preview_url": "/preview-template/ink_studio/",
       "preview_pages": [
         {
           "label": "Home",
@@ -320,8 +320,8 @@
         "body": "Inter"
       },
       "best_for": "Urban luxury real estate + adjacent high-touch brokerages. Cinematic vermilion-slab editorial, mix-blend-difference navbar, photo-grid hero, numbered slab dividers.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3067",
+      "tier": "premium",
+      "preview_url": "/preview-template/boutique_brokerage/",
       "preview_pages": [
         {
           "label": "Home",
@@ -334,63 +334,6 @@
         {
           "label": "Listings",
           "path": "/listings"
-        },
-        {
-          "label": "Contact",
-          "path": "/contact"
-        }
-      ]
-    },
-    {
-      "id": "honest_garage",
-      "directory": "pebble/templates/honest_garage",
-      "name": "Honest Axle Auto",
-      "tagline": "Diagnose. Fix. Done.",
-      "vibe": "Industrial Hazard-Stripe Stencil",
-      "source_dna": "auto_honest_diag",
-      "applicable_industries": [
-        "auto repair",
-        "mechanic shop",
-        "tire shop",
-        "transmission specialist",
-        "diesel mechanic",
-        "fleet maintenance",
-        "motorcycle repair",
-        "RV repair",
-        "auto body shop",
-        "muffler shop",
-        "oil change service",
-        "brake specialist",
-        "small-engine repair",
-        "marine engine repair"
-      ],
-      "preview_image": "/templates-preview/honest_garage.png",
-      "color_swatches": [
-        "#1A1A1A",
-        "#FFD200",
-        "#F5F5F0",
-        "#2D241D"
-      ],
-      "fonts": {
-        "display": "Anton",
-        "body": "Inter",
-        "accent": "JetBrains Mono"
-      },
-      "best_for": "Honest, blue-collar service brands where the work is straightforward and the customer wants no-BS pricing. Hazard-stripe accents, Anton stencil headings, JetBrains Mono ref-codes.",
-      "tier": "free",
-      "preview_url": "http://127.0.0.1:3068",
-      "preview_pages": [
-        {
-          "label": "Home",
-          "path": "/"
-        },
-        {
-          "label": "About",
-          "path": "/about"
-        },
-        {
-          "label": "Services",
-          "path": "/services"
         },
         {
           "label": "Contact",
@@ -434,7 +377,14 @@
         "body": "IBM Plex Sans"
       },
       "best_for": "B2B / corporate service providers \u2014 bonded, insured, white-collar trades.",
-      "tier": "free"
+      "tier": "free",
+      "preview_url": "/preview-template/service_pro_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Services", "path": "/services" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "service_pro_cream",
@@ -472,7 +422,14 @@
         "body": "Raleway"
       },
       "best_for": "Landscaping, lawn care, garden services \u2014 warm, organic, light-mode native.",
-      "tier": "free"
+      "tier": "free",
+      "preview_url": "/preview-template/service_pro_cream/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Services", "path": "/services" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "luxe_beauty_rose",
@@ -512,7 +469,14 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Warm, feminine beauty + spa brands. Inviting, intimate, premium.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/luxe_beauty_rose/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Shop", "path": "/shop" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "luxe_beauty_aubergine",
@@ -552,7 +516,14 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Mysterious, evening-luxury brands \u2014 perfume, jewelry, premium skincare.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/luxe_beauty_aubergine/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Shop", "path": "/shop" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "ink_studio_oxblood",
@@ -589,7 +560,14 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Old-world craft brands \u2014 tattoo, leather, whiskey, cigar lounge, vintage.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/ink_studio_oxblood/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Gallery", "path": "/gallery" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "ink_studio_steel",
@@ -626,7 +604,14 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Workshop / fabrication / metal craft \u2014 industrial precision, dark mood.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/ink_studio_steel/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Gallery", "path": "/gallery" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "artisan_kitchen_navy",
@@ -665,7 +650,14 @@
         "body": "Karla"
       },
       "best_for": "Coastal coffee shops + light cafes. Cream + navy + warm amber.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/artisan_kitchen_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Menu", "path": "/menu" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "artisan_kitchen_olive",
@@ -704,7 +696,14 @@
         "body": "Merriweather"
       },
       "best_for": "Mediterranean / Italian / trattoria \u2014 slow food + olive-oil-warm hospitality.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/artisan_kitchen_olive/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Menu", "path": "/menu" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "instructor_pro_navy",
@@ -740,7 +739,14 @@
         "body": "Atkinson Hyperlegible"
       },
       "best_for": "Executive coaching, leadership development, professional services authority.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/instructor_pro_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Courses", "path": "/courses" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "instructor_pro_forest",
@@ -776,7 +782,14 @@
         "body": "Barlow"
       },
       "best_for": "Wilderness guiding, outdoor adventure, survival training, eco-lodges.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/instructor_pro_forest/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Courses", "path": "/courses" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "boutique_brokerage_sage",
@@ -811,7 +824,13 @@
         "body": "Josefin Sans"
       },
       "best_for": "Rural / countryside luxury real estate. Calm, considered, less urban.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/boutique_brokerage_sage/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "boutique_brokerage_navy",
@@ -846,83 +865,971 @@
         "body": "Inter"
       },
       "best_for": "Yacht-club / old-money urban-coastal real estate. Greenwich, Newport, Annapolis vibe.",
-      "tier": "free"
+      "tier": "premium",
+      "preview_url": "/preview-template/boutique_brokerage_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
-      "id": "honest_garage_rust",
-      "directory": "pebble/templates/honest_garage_rust",
-      "name": "Rust Belt Garage",
-      "tagline": "Old-school repairs. Real work. Real prices.",
-      "vibe": "Vintage Americana Rust + Bone",
+      "id": "cinematic_hero",
+      "directory": "pebble/templates/cinematic_hero",
+      "name": "Cinematic Hero",
+      "tagline": "Light cinematic. Full-bleed photo + bottom-left CTA.",
+      "vibe": "Cinematic Real-Estate Listing (Light)",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "service provider",
+        "local trades",
+        "home services",
+        "real estate",
+        "automotive detailer"
+      ],
+      "preview_image": "/templates-preview/cinematic_hero.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#d97706",
+        "#b45309"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Service-industry businesses where trust + availability are the headline selling points. Full-bleed photo carries emotion; tight CTA anchors action.",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_hero/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "cinematic_plumber",
+      "directory": "pebble/templates/cinematic_plumber",
+      "name": "Pipe & Cistern Co.",
+      "tagline": "Cinematic plumbing hero. Same-day. Slate + deep-blue accent.",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Plumbing",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "plumber",
+        "plumbing",
+        "drain cleaning",
+        "water heater service",
+        "leak detection",
+        "sewer service",
+        "pipe repair"
+      ],
+      "preview_image": "/templates-preview/cinematic_plumber.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#0369a1",
+        "#075985"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed local plumbers who need to convey trust and availability in one glance",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_plumber/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "cinematic_hvac",
+      "directory": "pebble/templates/cinematic_hvac",
+      "name": "Cool Crew HVAC",
+      "tagline": "Cinematic HVAC hero. Cyan accent. Same-day service.",
+      "vibe": "Cinematic Real-Estate Listing \u2014 HVAC",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "hvac",
+        "air conditioning",
+        "heating",
+        "furnace repair",
+        "duct cleaning",
+        "heat pump installer"
+      ],
+      "preview_image": "/templates-preview/cinematic_hvac.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#0891b2",
+        "#0e7490"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed HVAC companies who need to convey fast, expert, reliable service",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_hvac/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "cinematic_construction",
+      "directory": "pebble/templates/cinematic_construction",
+      "name": "Steelhouse Build Co.",
+      "tagline": "Cinematic construction hero. Safety-orange accent. Fixed-price.",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Construction",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "construction",
+        "general contractor",
+        "home builder",
+        "home addition",
+        "remodel contractor",
+        "kitchen remodel",
+        "bath remodel",
+        "custom homes"
+      ],
+      "preview_image": "/templates-preview/cinematic_construction.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#ea580c",
+        "#c2410c"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Licensed GCs who lead with fixed-price accountability and trust",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_construction/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "cinematic_landscaper",
+      "directory": "pebble/templates/cinematic_landscaper",
+      "name": "Greenwell Yards Co.",
+      "tagline": "Cinematic landscape hero. Lime accent. Weekly routes + full installs.",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Landscaping",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "landscaper",
+        "landscaping",
+        "lawn care",
+        "garden design",
+        "yard maintenance",
+        "tree service",
+        "irrigation installer"
+      ],
+      "preview_image": "/templates-preview/cinematic_landscaper.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#65a30d",
+        "#4d7c0f"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Local landscapers offering weekly maintenance routes and seasonal installation packages",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_landscaper/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "cinematic_dog_groomer",
+      "directory": "pebble/templates/cinematic_dog_groomer",
+      "name": "Hush & Wag Grooming",
+      "tagline": "Cinematic dog-groomer hero. Pink accent. Small-batch, anxiety-friendly.",
+      "vibe": "Cinematic Real-Estate Listing \u2014 Pet Grooming",
+      "source_dna": "cinematic_real_estate",
+      "applicable_industries": [
+        "dog groomer",
+        "dog grooming",
+        "pet grooming",
+        "mobile dog grooming",
+        "cat grooming",
+        "pet spa"
+      ],
+      "preview_image": "/templates-preview/cinematic_dog_groomer.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#18181b",
+        "#db2777",
+        "#be185d"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "Inter",
+        "mono": "JetBrains Mono"
+      },
+      "best_for": "Small-batch dog groomers who want to differentiate on calm, anxiety-friendly care",
+      "tier": "free",
+      "preview_url": "/preview-template/cinematic_dog_groomer/",
+      "preview_pages": [
+        {
+          "label": "Home",
+          "path": "/"
+        },
+        {
+          "label": "About",
+          "path": "/about"
+        },
+        {
+          "label": "Services",
+          "path": "/services"
+        },
+        {
+          "label": "Gallery",
+          "path": "/gallery"
+        },
+        {
+          "label": "Process",
+          "path": "/process"
+        },
+        {
+          "label": "FAQ",
+          "path": "/faq"
+        },
+        {
+          "label": "Service Area",
+          "path": "/service-area"
+        },
+        {
+          "label": "Contact",
+          "path": "/contact"
+        }
+      ]
+    },
+    {
+      "id": "aura_luxury",
+      "directory": "pebble/templates/aura_luxury",
+      "name": "AURA Pristine",
+      "tagline": "Surgical-grade dark luxury. Parallax 3D hero + before/after slider + bento services.",
+      "vibe": "Editorial Dark Luxury Cleaning",
+      "source_dna": "luxury_cleaning",
+      "applicable_industries": [
+        "luxury cleaning",
+        "estate cleaning",
+        "white-glove cleaning",
+        "post-construction cleaning",
+        "commercial sanitation",
+        "art restoration",
+        "yacht cleaning",
+        "luxury hospitality",
+        "premium home services",
+        "estate management",
+        "concierge service",
+        "luxury moving"
+      ],
+      "preview_image": "/templates-preview/aura_luxury.png",
+      "color_swatches": [
+        "#0F1115",
+        "#161920",
+        "#ffffff",
+        "#94a3b8"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Outfit"
+      },
+      "best_for": "Ultra-premium service brands selling discretion and white-glove standards \u2014 estate cleaning, sanitation, restoration. Dark editorial palette with parallax 3D showcases.",
+      "tier": "premium",
+      "preview_url": "/preview-template/aura_luxury/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "ase_garage",
+      "directory": "pebble/templates/ase_garage",
+      "name": "ASE Honest Garage",
+      "tagline": "Honest mechanic positioning. Slate + yellow + brick. Before/after slider + drop-and-go process.",
+      "vibe": "Industrial Slate + Hazard Yellow",
       "source_dna": "auto_honest_diag",
       "applicable_industries": [
         "auto repair",
-        "mechanic shop",
+        "mechanic",
+        "auto service",
         "tire shop",
-        "transmission specialist",
-        "diesel mechanic",
-        "fleet maintenance",
-        "motorcycle repair",
-        "RV repair",
-        "auto body shop",
-        "muffler shop",
-        "oil change service",
-        "brake specialist",
-        "small-engine repair",
-        "marine engine repair"
+        "auto body",
+        "transmission shop",
+        "brake shop",
+        "diagnostic shop",
+        "import auto specialist",
+        "domestic auto specialist",
+        "lube and oil"
       ],
-      "preview_image": "/templates-preview/honest_garage_rust.png",
+      "preview_image": "/templates-preview/ase_garage.png",
       "color_swatches": [
-        "#1A1714",
-        "#C9501C",
-        "#E89E3C",
-        "#F4EDE0"
+        "#1e293b",
+        "#facc15",
+        "#b91c1c",
+        "#fafaf9"
       ],
       "fonts": {
-        "display": "Bebas Neue",
-        "body": "Source Sans 3",
-        "accent": "JetBrains Mono"
+        "display": "Archivo Black",
+        "body": "JetBrains Mono"
       },
-      "best_for": "Vintage / classic-car mechanics. Americana mood, warmer industrial.",
-      "tier": "free"
+      "best_for": "Independent ASE-certified auto repair shops competing on honesty + flat-fee diagnostics. Industrial slate + yellow shimmer CTAs + before/after work proof.",
+      "tier": "free",
+      "preview_url": "/preview-template/ase_garage/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
     },
     {
-      "id": "honest_garage_military",
-      "directory": "pebble/templates/honest_garage_military",
-      "name": "Foxtrot Motor Works",
-      "tagline": "Disciplined repairs. Operational standards.",
-      "vibe": "Olive Drab + Safety Orange",
+      "id": "editorial_wedding",
+      "directory": "pebble/templates/editorial_wedding",
+      "name": "Editorial Wedding Studio",
+      "tagline": "Cinematic dark editorial wedding photography. Sticky horizontal story + masonry gallery + brass collections.",
+      "vibe": "Noir + Cream + Brass Editorial",
+      "source_dna": "wedding_editorial",
+      "applicable_industries": [
+        "wedding photography",
+        "engagement photographer",
+        "elopement photographer",
+        "fine art photographer",
+        "destination wedding photographer",
+        "wedding videographer",
+        "wedding planner (luxury)",
+        "boutique wedding venue",
+        "bridal designer"
+      ],
+      "preview_image": "/templates-preview/editorial_wedding.png",
+      "color_swatches": [
+        "#0a0a0a",
+        "#f5f1e8",
+        "#b08d57",
+        "#d4a574"
+      ],
+      "fonts": {
+        "display": "Cormorant Garamond",
+        "body": "Manrope"
+      },
+      "best_for": "Editorial wedding and fine-art photographers. Cinematic dark theme with slow-zoom hero, sticky horizontal story scroll, masonry portfolio, brass-gold collection tiers.",
+      "tier": "premium",
+      "preview_url": "/preview-template/editorial_wedding/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "seasonal_kitchen",
+      "directory": "pebble/templates/seasonal_kitchen",
+      "name": "Seasonal Kitchen",
+      "tagline": "Quiet editorial dining. Italic Playfair headlines, burgundy accents, drop-cap stories, dietary-filter menus.",
+      "vibe": "Bone + Burgundy Quiet Editorial",
+      "source_dna": "restaurant_seasonal",
+      "applicable_industries": [
+        "restaurant",
+        "fine dining",
+        "tasting menu restaurant",
+        "wine bar",
+        "supper club",
+        "farm-to-table restaurant",
+        "private dining room",
+        "chef-driven restaurant",
+        "modern American restaurant",
+        "Italian trattoria",
+        "French bistro",
+        "neo-bistro",
+        "seasonal kitchen",
+        "boutique catering"
+      ],
+      "preview_image": "/templates-preview/seasonal_kitchen.png",
+      "color_swatches": [
+        "#f5f0e8",
+        "#1c1917",
+        "#7c1d1d",
+        "#b08968"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Inter"
+      },
+      "best_for": "Chef-driven restaurants and wine bars that want quiet, editorial restraint. Multi-page (Home / Menu / Events / Journal / Reservations) with dietary-filter menus, multi-room private-dining tabs, and a guest-count event inquiry stepper.",
+      "tier": "premium",
+      "preview_url": "/preview-template/seasonal_kitchen/",
+      "preview_pages": [
+        { "label": "Home",         "path": "/" },
+        { "label": "Menu",         "path": "/menu" },
+        { "label": "Events",       "path": "/events" },
+        { "label": "Journal",      "path": "/journal" },
+        { "label": "Reservations", "path": "/reservations" }
+      ]
+    },
+    {
+      "id": "bright_dental",
+      "directory": "pebble/templates/bright_dental",
+      "name": "Bright Dental",
+      "tagline": "Calm, modern dentistry. No upsells, no rushing. Friendly for kids and adults.",
+      "vibe": "Coral + Mint Friendly Modern",
+      "source_dna": "dental_friendly",
+      "applicable_industries": [
+        "dental",
+        "dentist",
+        "family dentist",
+        "pediatric dentist",
+        "orthodontist",
+        "cosmetic dentist",
+        "dental hygienist",
+        "oral surgeon",
+        "periodontist",
+        "endodontist",
+        "dental clinic",
+        "dentures and implants specialist",
+        "smile makeover practice"
+      ],
+      "preview_image": "/templates-preview/bright_dental.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#1e3a8a",
+        "#fb7185",
+        "#6ee7b7"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "Inter"
+      },
+      "best_for": "Family + pediatric dentists who want to feel calm and approachable (not corporate). Multi-page (Home / Team / FAQ / Booking) with friendly photos, mint accents, coral primary CTA, and an accordion FAQ + insurance grid.",
+      "tier": "premium",
+      "preview_url": "/preview-template/bright_dental/",
+      "preview_pages": [
+        { "label": "Home",    "path": "/" },
+        { "label": "Team",    "path": "/team" },
+        { "label": "FAQ",     "path": "/faq" },
+        { "label": "Booking", "path": "/booking" }
+      ]
+    },
+    {
+      "id": "aura_luxury_champagne",
+      "directory": "pebble/templates/aura_luxury_champagne",
+      "name": "Maison Champagne",
+      "tagline": "Warm dark luxury. Cognac base + champagne-gold accents. Hospitality-restoration energy.",
+      "vibe": "Warm Dark Luxury (Cognac + Champagne)",
+      "source_dna": "luxury_cleaning",
+      "applicable_industries": [
+        "luxury cleaning",
+        "estate cleaning",
+        "white-glove cleaning",
+        "boutique hotel housekeeping",
+        "private members club services",
+        "hospitality restoration",
+        "concierge service",
+        "luxury hospitality",
+        "estate management",
+        "luxury moving"
+      ],
+      "preview_image": "/templates-preview/aura_luxury_champagne.png",
+      "color_swatches": [
+        "#1a1410",
+        "#221a13",
+        "#d4af7a",
+        "#c9a55b"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Outfit"
+      },
+      "best_for": "Boutique hospitality and private-club restoration brands where the original cool-slate aura reads too clinical. Cognac warmth + champagne-gold secondary type.",
+      "tier": "premium",
+      "preview_url": "/preview-template/aura_luxury_champagne/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "aura_luxury_sage",
+      "directory": "pebble/templates/aura_luxury_sage",
+      "name": "Verde Preserve",
+      "tagline": "Dark luxury with botanical character. Forest base + sage-leaf accents. Plant-based premium positioning.",
+      "vibe": "Dark Botanical Luxury (Forest + Sage)",
+      "source_dna": "luxury_cleaning",
+      "applicable_industries": [
+        "luxury cleaning",
+        "estate cleaning",
+        "white-glove cleaning",
+        "plant-based cleaning",
+        "low-tox cleaning",
+        "biophilic design",
+        "wellness-leaning estate management",
+        "luxury hospitality",
+        "concierge service",
+        "art restoration"
+      ],
+      "preview_image": "/templates-preview/aura_luxury_sage.png",
+      "color_swatches": [
+        "#0f1612",
+        "#171f1a",
+        "#a8c4a0",
+        "#b8d4a8"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Outfit"
+      },
+      "best_for": "Plant-based / low-tox premium cleaning and biophilic wellness brands. Forest depth with sage accents instead of cool industrial slate.",
+      "tier": "premium",
+      "preview_url": "/preview-template/aura_luxury_sage/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "ase_garage_rust",
+      "directory": "pebble/templates/ase_garage_rust",
+      "name": "Rust Belt Auto",
+      "tagline": "Warm old-school garage. Cognac-brown base + rust-orange shimmer + burgundy emergency. Honest mechanic, brick-and-leather energy.",
+      "vibe": "Warm Industrial (Brown + Rust + Burgundy)",
       "source_dna": "auto_honest_diag",
       "applicable_industries": [
         "auto repair",
-        "mechanic shop",
-        "tire shop",
-        "transmission specialist",
-        "diesel mechanic",
-        "fleet maintenance",
-        "motorcycle repair",
-        "RV repair",
-        "auto body shop",
-        "muffler shop",
-        "oil change service",
-        "brake specialist",
-        "small-engine repair",
-        "marine engine repair"
+        "mechanic",
+        "auto service",
+        "auto body",
+        "classic car restoration",
+        "vintage auto specialist",
+        "domestic auto specialist",
+        "lube and oil"
       ],
-      "preview_image": "/templates-preview/honest_garage_military.png",
+      "preview_image": "/templates-preview/ase_garage_rust.png",
       "color_swatches": [
-        "#1A1D14",
-        "#4A5240",
-        "#FF6B1A",
-        "#EDE9DC"
+        "#2a1810",
+        "#d97444",
+        "#7c1d2e",
+        "#fafaf9"
       ],
       "fonts": {
-        "display": "Share Tech Mono",
-        "body": "Fira Code",
-        "accent": "JetBrains Mono"
+        "display": "Archivo Black",
+        "body": "JetBrains Mono"
       },
-      "best_for": "Diesel / fleet / military-spec / heavy-duty mechanics. Disciplined precision.",
-      "tier": "free"
+      "best_for": "Independent shops with old-school, brick-and-leather, restoration energy. Rust-orange shimmer CTAs over warm cognac.",
+      "tier": "free",
+      "preview_url": "/preview-template/ase_garage_rust/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "ase_garage_steel",
+      "directory": "pebble/templates/ase_garage_steel",
+      "name": "Steel Bay Auto",
+      "tagline": "Modern diagnostic shop. Steel-blue base + electric-blue shimmer + teal emergency. Tech-forward, computerized positioning.",
+      "vibe": "Cool Industrial (Steel + Electric Blue + Teal)",
+      "source_dna": "auto_honest_diag",
+      "applicable_industries": [
+        "auto repair",
+        "mechanic",
+        "auto service",
+        "transmission shop",
+        "brake shop",
+        "diagnostic shop",
+        "import auto specialist",
+        "EV repair",
+        "hybrid specialist"
+      ],
+      "preview_image": "/templates-preview/ase_garage_steel.png",
+      "color_swatches": [
+        "#1e3a5f",
+        "#3b82f6",
+        "#0d9488",
+        "#fafaf9"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "JetBrains Mono"
+      },
+      "best_for": "Modern computerized-diagnostic shops competing on equipment — EV specialists, import diagnostic shops, dealership-alternative independents.",
+      "tier": "free",
+      "preview_url": "/preview-template/ase_garage_steel/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "editorial_wedding_ivory",
+      "directory": "pebble/templates/editorial_wedding_ivory",
+      "name": "Ivory & Brass",
+      "tagline": "Daylight wedding photography. Warm ivory base + walnut text + brass accents. Light invert of the noir editorial.",
+      "vibe": "Light Editorial (Ivory + Walnut + Brass)",
+      "source_dna": "wedding_editorial",
+      "applicable_industries": [
+        "wedding photography",
+        "engagement photographer",
+        "elopement photographer",
+        "fine art photographer",
+        "daylight wedding photographer",
+        "garden wedding photographer",
+        "wedding videographer",
+        "wedding planner (boutique)",
+        "boutique wedding venue",
+        "bridal designer"
+      ],
+      "preview_image": "/templates-preview/editorial_wedding_ivory.png",
+      "color_swatches": [
+        "#fbf7ee",
+        "#1f1a14",
+        "#a47236",
+        "#c89460"
+      ],
+      "fonts": {
+        "display": "Cormorant Garamond",
+        "body": "Manrope"
+      },
+      "best_for": "Daylight-ceremony, garden-wedding, and lighter-mood editorial photographers. Same sticky horizontal story + masonry gallery + brass collection cards as the noir base, in a sunlit invert.",
+      "tier": "premium",
+      "preview_url": "/preview-template/editorial_wedding_ivory/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "editorial_wedding_emerald",
+      "directory": "pebble/templates/editorial_wedding_emerald",
+      "name": "Emerald Hall",
+      "tagline": "Jewel-tone wedding photography. Deep emerald base + cream text + brushed-brass. Old-world manor energy.",
+      "vibe": "Jewel-Tone Editorial (Emerald + Cream + Brass)",
+      "source_dna": "wedding_editorial",
+      "applicable_industries": [
+        "wedding photography",
+        "destination wedding photographer",
+        "manor wedding photographer",
+        "old-world wedding photographer",
+        "fine art photographer",
+        "wedding videographer",
+        "wedding planner (luxury)",
+        "boutique wedding venue"
+      ],
+      "preview_image": "/templates-preview/editorial_wedding_emerald.png",
+      "color_swatches": [
+        "#0a2820",
+        "#f5f0dc",
+        "#c9a96e",
+        "#dcb780"
+      ],
+      "fonts": {
+        "display": "Cormorant Garamond",
+        "body": "Manrope"
+      },
+      "best_for": "Old-world venues, manor weddings, destination-photographers who want the dark drama of noir but with a richer, warmer jewel-tone base.",
+      "tier": "premium",
+      "preview_url": "/preview-template/editorial_wedding_emerald/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
+    },
+    {
+      "id": "seasonal_kitchen_noir",
+      "directory": "pebble/templates/seasonal_kitchen_noir",
+      "name": "Noir & Ember",
+      "tagline": "Dark editorial dining. Candlelit charcoal base + bone text + brick-red accents. Tasting room energy.",
+      "vibe": "Dark Editorial Dining (Charcoal + Bone + Brick)",
+      "source_dna": "restaurant_seasonal",
+      "applicable_industries": [
+        "restaurant",
+        "fine dining",
+        "tasting menu restaurant",
+        "wine bar",
+        "supper club",
+        "chef-driven restaurant",
+        "speakeasy",
+        "modern American restaurant",
+        "Italian trattoria (evening)",
+        "neo-bistro",
+        "boutique catering"
+      ],
+      "preview_image": "/templates-preview/seasonal_kitchen_noir.png",
+      "color_swatches": [
+        "#14110f",
+        "#f5f0e8",
+        "#c44545",
+        "#d4a574"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Inter"
+      },
+      "best_for": "Candlelit tasting rooms, supper clubs, and chef-driven concepts. Same multi-page layout (Home / Menu / Events / Journal / Reservations) in a moody night-side invert of the bone original.",
+      "tier": "premium",
+      "preview_url": "/preview-template/seasonal_kitchen_noir/",
+      "preview_pages": [
+        { "label": "Home",         "path": "/" },
+        { "label": "Menu",         "path": "/menu" },
+        { "label": "Events",       "path": "/events" },
+        { "label": "Journal",      "path": "/journal" },
+        { "label": "Reservations", "path": "/reservations" }
+      ]
+    },
+    {
+      "id": "seasonal_kitchen_forest",
+      "directory": "pebble/templates/seasonal_kitchen_forest",
+      "name": "Sage & Stone",
+      "tagline": "Farm-driven dining. Oat-cream base + deep forest text + moss-green accents. Herb-garden energy.",
+      "vibe": "Herb Garden (Oat + Forest + Moss + Amber)",
+      "source_dna": "restaurant_seasonal",
+      "applicable_industries": [
+        "restaurant",
+        "farm-to-table restaurant",
+        "vegetarian restaurant",
+        "vegan restaurant",
+        "garden-to-table restaurant",
+        "biodynamic restaurant",
+        "modern American restaurant",
+        "supper club",
+        "seasonal kitchen",
+        "boutique catering",
+        "wellness retreat dining"
+      ],
+      "preview_image": "/templates-preview/seasonal_kitchen_forest.png",
+      "color_swatches": [
+        "#f4efe3",
+        "#1f2e21",
+        "#2d5a3d",
+        "#c89b3c"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Inter"
+      },
+      "best_for": "Farm-driven, foraged-greens, garden-to-table concepts where green replaces the wine-cellar burgundy. Same multi-page layout as the bone original.",
+      "tier": "premium",
+      "preview_url": "/preview-template/seasonal_kitchen_forest/",
+      "preview_pages": [
+        { "label": "Home",         "path": "/" },
+        { "label": "Menu",         "path": "/menu" },
+        { "label": "Events",       "path": "/events" },
+        { "label": "Journal",      "path": "/journal" },
+        { "label": "Reservations", "path": "/reservations" }
+      ]
+    },
+    {
+      "id": "bright_dental_mint",
+      "directory": "pebble/templates/bright_dental_mint",
+      "name": "Sage Family Dental",
+      "tagline": "Calm sage-toned dentistry. Mint-cream base + forest text + sage primary CTA. Wellness-leaning calm.",
+      "vibe": "Calming Sage + Mint",
+      "source_dna": "dental_friendly",
+      "applicable_industries": [
+        "dental",
+        "dentist",
+        "family dentist",
+        "pediatric dentist",
+        "holistic dentist",
+        "biological dentist",
+        "wellness-focused dental practice",
+        "cosmetic dentist",
+        "dental hygienist",
+        "dental clinic"
+      ],
+      "preview_image": "/templates-preview/bright_dental_mint.png",
+      "color_swatches": [
+        "#f7faf6",
+        "#1f4a3a",
+        "#4f9d76",
+        "#a7dcc1"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "Inter"
+      },
+      "best_for": "Calm, holistic, wellness-leaning dental practices where the navy/coral combo feels too sharp. Multi-page layout matches the base.",
+      "tier": "premium",
+      "preview_url": "/preview-template/bright_dental_mint/",
+      "preview_pages": [
+        { "label": "Home",    "path": "/" },
+        { "label": "Team",    "path": "/team" },
+        { "label": "FAQ",     "path": "/faq" },
+        { "label": "Booking", "path": "/booking" }
+      ]
+    },
+    {
+      "id": "bright_dental_lavender",
+      "directory": "pebble/templates/bright_dental_lavender",
+      "name": "Lavender Lane Dental",
+      "tagline": "Sensory-friendly dentistry. Pale violet base + plum text + lavender primary CTA. Spa-not-exam-room energy.",
+      "vibe": "Calm Lavender + Cream",
+      "source_dna": "dental_friendly",
+      "applicable_industries": [
+        "dental",
+        "dentist",
+        "family dentist",
+        "pediatric dentist",
+        "sensory-friendly dental practice",
+        "anxiety-aware dental practice",
+        "cosmetic dentist",
+        "smile makeover practice",
+        "dental clinic"
+      ],
+      "preview_image": "/templates-preview/bright_dental_lavender.png",
+      "color_swatches": [
+        "#fbfafd",
+        "#3a2e5a",
+        "#7c5fbf",
+        "#d6c9ee"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "Inter"
+      },
+      "best_for": "Sensory-friendly, anxiety-aware, anti-clinical dental practices that want to feel like a spa, not an exam room. Multi-page layout matches the base.",
+      "tier": "premium",
+      "preview_url": "/preview-template/bright_dental_lavender/",
+      "preview_pages": [
+        { "label": "Home",    "path": "/" },
+        { "label": "Team",    "path": "/team" },
+        { "label": "FAQ",     "path": "/faq" },
+        { "label": "Booking", "path": "/booking" }
+      ]
     }
   ],
   "_planned_next": []

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { STANDARD_S, SHORT_S, SLOW_S, EASE_CINEMATIC, EASE_QUIET } from "@/lib/motion";
 import { type } from "@/lib/type";
@@ -613,11 +613,24 @@ function DomainPanel({ slug }: { slug: string }) {
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  // Two-step confirm for Remove: first click arms it for 5s, second click
+  // inside that window actually detaches. Stops one-click silent detachment
+  // of the live domain (which would stop the site resolving for visitors).
+  const [removeArmed, setRemoveArmed] = useState(false);
+  const removeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!open || !slug) return;
     fetchDomain(slug).then(setState).catch(() => setState(null));
   }, [open, slug]);
+
+  // Clear the armed-state timer on unmount so we don't leak / fire on a
+  // dead component.
+  useEffect(() => {
+    return () => {
+      if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    };
+  }, []);
 
   async function handleAttach() {
     if (!host.trim() || !slug) return;
@@ -633,8 +646,24 @@ function DomainPanel({ slug }: { slug: string }) {
     }
   }
 
+  function armRemove() {
+    setRemoveArmed(true);
+    if (removeTimerRef.current) clearTimeout(removeTimerRef.current);
+    removeTimerRef.current = setTimeout(() => {
+      setRemoveArmed(false);
+      removeTimerRef.current = null;
+    }, 5000);
+  }
+
   async function handleDetach() {
     if (!slug || !state?.domain) return;
+    // First click arms; second click within 5s actually removes.
+    if (!removeArmed) { armRemove(); return; }
+    if (removeTimerRef.current) {
+      clearTimeout(removeTimerRef.current);
+      removeTimerRef.current = null;
+    }
+    setRemoveArmed(false);
     setBusy(true); setError(null);
     try {
       await removeDomain(slug);
@@ -695,9 +724,17 @@ function DomainPanel({ slug }: { slug: string }) {
               <button
                 onClick={handleDetach}
                 disabled={busy}
-                className={`bg-card border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40 px-3 py-2 rounded-lg flex items-center gap-1 disabled:opacity-50 ${type.label}`}
+                className={`px-3 py-2 rounded-lg flex items-center gap-1 disabled:opacity-50 transition-colors ${type.label} ${
+                  removeArmed
+                    ? "bg-destructive text-destructive-foreground border border-destructive"
+                    : "bg-card border border-border text-muted-foreground hover:text-destructive hover:border-destructive/40"
+                }`}
+                title={removeArmed
+                  ? "Click again to detach this domain"
+                  : "Detach custom domain (requires confirmation)"}
               >
-                <Trash2 className="w-3 h-3" /> Remove
+                <Trash2 className="w-3 h-3" />
+                {removeArmed ? "Click again to remove" : "Remove"}
               </button>
             </div>
 

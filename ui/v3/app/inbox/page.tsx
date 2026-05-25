@@ -21,12 +21,20 @@ function InboxForSlug({ slug }: { slug: string }) {
   const [loading, setLoading] = useState(true);
   const [selected, setSelected] = useState<Submission | null>(null);
   const [view, setView] = useState<"submissions" | "settings">("submissions");
+  // Surface a one-line error banner. Previously every fetch error was
+  // swallowed with `catch {}` — meaning a 401 / 500 / network blip
+  // would silently revert the UI to its old state (e.g. a "deleted"
+  // item re-appears after refresh) and look like a ghost bug. Now we
+  // tell the user what happened so they can retry or escalate.
+  const [opError, setOpError] = useState<string | null>(null);
 
   async function refresh() {
     setLoading(true);
     try {
       const r = await fetchInbox(slug);
       setItems(r.submissions);
+    } catch (e) {
+      setOpError(e instanceof Error ? `Failed to load inbox: ${e.message}` : "Failed to load inbox");
     } finally {
       setLoading(false);
     }
@@ -37,7 +45,14 @@ function InboxForSlug({ slug }: { slug: string }) {
   async function open(sub: Submission) {
     setSelected(sub);
     if (!sub.read) {
-      try { await markSubmissionRead(slug, sub.id, true); refresh(); } catch {}
+      try {
+        await markSubmissionRead(slug, sub.id, true);
+        refresh();
+      } catch (e) {
+        setOpError(e instanceof Error
+          ? `Couldn't mark as read: ${e.message}`
+          : "Couldn't mark as read");
+      }
     }
   }
 
@@ -47,10 +62,30 @@ function InboxForSlug({ slug }: { slug: string }) {
       await deleteSubmission(slug, sub.id);
       setSelected(null);
       refresh();
-    } catch {}
+    } catch (e) {
+      setOpError(e instanceof Error
+        ? `Couldn't delete: ${e.message}`
+        : "Couldn't delete this submission");
+    }
   }
 
   return (
+    <div className="flex flex-1 overflow-hidden flex-col">
+      {/* Error banner — only renders when an inbox operation failed.
+          Dismissible. Sits above the columns so the user sees it
+          regardless of which pane they're looking at. */}
+      {opError && (
+        <div className="bg-amber-50 border-b border-amber-200 text-amber-900 px-4 py-2 text-sm flex items-center justify-between">
+          <span>{opError}</span>
+          <button
+            onClick={() => setOpError(null)}
+            className="text-amber-700 hover:text-amber-900 font-semibold ml-4"
+            aria-label="Dismiss error"
+          >
+            ×
+          </button>
+        </div>
+      )}
     <div className="flex flex-1 overflow-hidden">
       <aside className="w-[360px] border-r border-border bg-card flex flex-col">
         <div className="p-4 border-b border-border flex items-center justify-between">
@@ -82,7 +117,7 @@ function InboxForSlug({ slug }: { slug: string }) {
         </div>
         <div className="p-4 border-b border-border">
           <p className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Inbox</p>
-          <p className="font-display text-xl font-bold text-foreground truncate">{slug}</p>
+          <p className="font-display-sans text-xl font-bold text-foreground truncate">{slug}</p>
           <p className="text-xs text-muted-foreground mt-1">{items.length} submission{items.length === 1 ? "" : "s"}</p>
         </div>
         <div className="flex-1 overflow-y-auto">
@@ -129,7 +164,7 @@ function InboxForSlug({ slug }: { slug: string }) {
         ) : !selected ? (
           <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground gap-2">
             <InboxIcon className="w-10 h-10 mb-2 opacity-50" />
-            <p className="font-display text-xl text-foreground">Pick a submission</p>
+            <p className="font-display-sans text-xl text-foreground">Pick a submission</p>
             <p className="text-sm">{items.length === 0 ? "There aren't any yet." : "Click one on the left."}</p>
           </div>
         ) : (
@@ -179,6 +214,7 @@ function InboxForSlug({ slug }: { slug: string }) {
           </AnimatePresence>
         )}
       </main>
+    </div>
     </div>
   );
 }
@@ -290,7 +326,7 @@ function InboxRoute() {
       <div className="flex-1 flex items-center justify-center text-center px-6">
         <div className="max-w-md space-y-3">
           <InboxIcon className="w-10 h-10 mx-auto text-muted-foreground" />
-          <h1 className="font-display text-3xl text-foreground">Pick a project</h1>
+          <h1 className="font-display-sans text-3xl text-foreground">Pick a project</h1>
           <p className="text-muted-foreground text-sm">
             Open any project from the <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link>;
             its inbox shows submissions to its contact form.

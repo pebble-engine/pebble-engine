@@ -53,26 +53,59 @@ def _require_admin(handler) -> Optional[str]:
 
     401 for un-signed-in callers, 403 for signed-in non-admins, 503 when
     no admins are configured (so the support surface defaults closed).
+
+    Phase 58e (2026-05-22) — accepts BOTH auth paths:
+      1. Supabase Bearer JWT (what v3 admin pages send) — pulls email
+         out of the Supabase user dict directly.
+      2. Legacy session cookie — falls back to find_user_by_id.
+
+    Previously this only checked the legacy cookie, so v3 admins were
+    rejected with 401 even when their email was in PEBBLE_ADMIN_EMAIL.
+    Same root cause as the /api/projects + /api/usage leak (caught in
+    the same overnight bug-hunt sweep).
     """
     allow = admin_emails()
     if not allow:
         handler._json(503, {"error": "Admin tools disabled. Set PEBBLE_ADMIN_EMAIL in .env."})
         return None
-    try:
-        from pebble.server.auth import current_user_id
-        from pebble.auth import find_user_by_id
-    except Exception:
-        handler._json(500, {"error": "auth subsystem unavailable"}); return None
 
-    uid = current_user_id(handler)
-    if not uid:
-        handler._json(401, {"error": "sign in required"}); return None
-    user = find_user_by_id(uid)
-    if not user:
-        handler._json(401, {"error": "sign in required"}); return None
-    if user.email.lower() not in allow:
+    # 1. Supabase Bearer JWT path — the dict includes `email` directly.
+    email: Optional[str] = None
+    raw_auth = (handler.headers.get("Authorization", "") or "").strip()
+    if raw_auth.lower().startswith("bearer ") and len(raw_auth) > 7:
+        try:
+            from pebble import auth_admin
+            if auth_admin.is_configured():
+                try:
+                    supabase_user = auth_admin.validate_access_token(raw_auth[7:].strip())
+                    if isinstance(supabase_user, dict):
+                        e = supabase_user.get("email")
+                        if isinstance(e, str) and e:
+                            email = e
+                except auth_admin.AdminError:
+                    # GoTrue unreachable — fall through to legacy path.
+                    pass
+        except Exception:
+            pass
+
+    # 2. Legacy session-cookie path — look up email via find_user_by_id.
+    if not email:
+        try:
+            from pebble.server.auth import current_user_id
+            from pebble.auth import find_user_by_id
+        except Exception:
+            handler._json(500, {"error": "auth subsystem unavailable"}); return None
+        uid = current_user_id(handler)
+        if not uid:
+            handler._json(401, {"error": "sign in required"}); return None
+        user = find_user_by_id(uid)
+        if not user:
+            handler._json(401, {"error": "sign in required"}); return None
+        email = user.email
+
+    if email.lower() not in allow:
         handler._json(403, {"error": "not authorized"}); return None
-    return user.email
+    return email
 
 
 # --------- GET /api/admin/users -------------------------------------------

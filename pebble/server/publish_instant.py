@@ -468,6 +468,42 @@ def run_publish_instant(handler) -> None:
         "elapsed_seconds":  round(time.time() - started, 3),
     })
 
+    # 2026-05-24 — record a public site_published event so the
+    # community feed reflects this launch + the user's bell pings.
+    # Fire-and-forget; failures here never block the publish response.
+    try:
+        from pebble import events as _events
+        # Read business_name from the project's brief.json if available.
+        brief_path = _engine().OUTPUT_DIR / slug / "brief.json"
+        business_name = slug
+        if brief_path.exists():
+            try:
+                brief = json.loads(brief_path.read_text(encoding="utf-8"))
+                business_name = (brief.get("business_name") or slug)
+            except Exception:
+                pass
+        public_url = _public_url(subdomain)
+        # PRIVATE notification to the owner ("Your site is live!").
+        _events.record(
+            user_id=uid,
+            kind=_events.KIND_SITE_PUBLISHED,
+            title=f"{business_name} is live",
+            body=f"Your site is now reachable at {public_url}.",
+            visibility=_events.VISIBILITY_PRIVATE,
+            meta={"slug": slug, "url": public_url},
+        )
+        # PUBLIC event for the community feed ("Marc just launched X").
+        _events.record(
+            user_id=uid,
+            kind=_events.KIND_SITE_PUBLISHED,
+            title=f"{business_name} just launched",
+            body=f"A new site went live on Pebble.",
+            visibility=_events.VISIBILITY_PUBLIC,
+            meta={"slug": slug, "url": public_url, "business_name": business_name},
+        )
+    except Exception as e:
+        log.warning("events.record failed for site_published: %s", e)
+
 
 def _write_sentinel_atomic(path: Path, data: dict) -> None:
     """Write the sentinel via temp-file + rename for atomicity."""

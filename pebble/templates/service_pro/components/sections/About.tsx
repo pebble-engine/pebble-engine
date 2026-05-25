@@ -1,12 +1,14 @@
 "use client";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Reveal } from "@/components/ui/Reveal";
 import { Button } from "@/components/ui/Button";
 import { ABOUT_HEADING, ABOUT_BODY, RATING_VALUE, RATING_COUNT } from "@/content/site";
 
 export function About() {
   return (
     <section id="about" className="relative py-20 sm:py-28">
+      <Reveal>
       <div className="mx-auto grid max-w-6xl gap-12 px-6 lg:grid-cols-2 lg:items-center">
         <motion.div
           initial={{ opacity: 0, x: -16 }}
@@ -53,6 +55,7 @@ export function About() {
           <div className="absolute inset-0 bg-gradient-to-t from-bg/60 via-transparent to-transparent" />
         </motion.div>
       </div>
+      </Reveal>
     </section>
   );
 }

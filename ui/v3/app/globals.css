@@ -64,6 +64,11 @@
                       rotating Pebble wordmark in nav + footer */
   --font-sans: var(--font-plus-jakarta-sans), system-ui, -apple-system, sans-serif;
   --font-display: var(--font-cormorant), Georgia, serif;
+  /* 2026-05-24 — Dashboard display font. Inter Tight at 700/800/900 is
+     the de-facto SaaS workspace face (Linear, Stripe, Vercel-docs feel).
+     Generates a `font-display-sans` Tailwind utility via Tailwind v4's
+     @theme inference. ONLY used by type.dashboard.* roles. */
+  --font-display-sans: var(--font-inter-tight), "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
   --font-logo: var(--font-cinzel), Georgia, serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, monospace;
 
@@ -354,9 +359,11 @@ html {
   }
 }
 
-*:focus-visible {
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
+@layer base {
+  *:focus-visible {
+    outline: 2px solid var(--color-ring);
+    outline-offset: 2px;
+  }
 }
 
 /* Animation utility: the rippling pebble glyph used on the thinking screen. */

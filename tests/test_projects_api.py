@@ -74,6 +74,22 @@ def fake_output(tmp_path, monkeypatch):
     monkeypatch.setattr(projects, "require_project_owner", bypass)
     monkeypatch.setattr(refine, "require_project_owner", bypass)
     monkeypatch.setattr(visual_edit, "require_project_owner", bypass)
+    # Phase 58e (2026-05-22) — /api/projects + /api/usage now require
+    # an authenticated user (used to fall through to "show all" on
+    # anon callers, which was a leak). The JSON-contract tests below
+    # don't pass auth headers, so short-circuit resolve_user_id too
+    # — the same way require_project_owner is bypassed above. Auth-
+    # specific behavior is exercised in test_security.py + test_http_e2e.py.
+    monkeypatch.setattr(security_mod, "resolve_user_id", lambda h: "test-user")
+    monkeypatch.setattr(projects, "resolve_user_id", lambda h: "test-user")
+    # Phase 54a (2026-05-23) — `colors` and the LLM refinements call
+    # would_exceed_quota() before doing any work. "test-user" has no real
+    # plan, so the gate would 402 every refinement. Bypass it the same way
+    # require_project_owner is bypassed; plan-gate behavior is exercised
+    # in tests/test_user_plan.py.
+    monkeypatch.setattr(refine, "would_exceed_quota",
+                        lambda uid, ev_kind, lim_key: (False, 0, 999_999))
+    monkeypatch.setattr(refine, "increment_usage", lambda uid, ev_kind: None)
     # Isolate engagement storage per test (T17). Without this every test
     # would append to a shared output/.engagement/ dir.
     monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
@@ -407,3 +423,134 @@ def test_project_delete_logs_engagement_event(fake_output):
     assert h.status == 200
     events = engagement_mod.read_user_events("test-user")
     assert any(e["event"] == "project_deleted" for e in events)
+
+
+# ---- /api/projects/<slug> (single-project state) ----------------------------
+
+def test_get_project_state_returns_brief_plan_meta(fake_output):
+    """The new GET /api/projects/<slug> bundles everything a workspace
+    needs to resume a project: slug + brief + plan + build_meta."""
+    slug = "good-co"
+    (fake_output / slug).mkdir()
+    (fake_output / slug / "brief.json").write_text(json.dumps({
+        "business_name": "Good Co",
+        "business_type": "bakery",
+        "_design_dna": "swiss_magazine",
+    }), encoding="utf-8")
+    (fake_output / slug / "plan.json").write_text(json.dumps({
+        "name": "Good Co",
+        "audience": "local",
+    }), encoding="utf-8")
+    (fake_output / slug / "build_meta.json").write_text(json.dumps({
+        "built_at": "2026-05-14T12:00:00",
+        "model": "qwen/qwen3.6-plus",
+    }), encoding="utf-8")
+    _seed_site(fake_output, slug, {"app/page.tsx": "x"})
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 200
+    body = h.json_body
+    assert body["slug"] == slug
+    assert body["brief"]["business_name"] == "Good Co"
+    assert body["plan"]["name"] == "Good Co"
+    assert body["build_meta"]["built_at"] == "2026-05-14T12:00:00"
+
+
+def test_get_project_state_404_for_unknown(fake_output):
+    h = FakeHandler()
+    projects.run_get_project_state(h, "does-not-exist")
+    assert h.status == 404
+
+
+def test_get_project_state_handles_missing_plan_gracefully(fake_output):
+    """Some old projects don't have plan.json yet. Return null for plan
+    rather than 500."""
+    slug = "ancient"
+    (fake_output / slug).mkdir()
+    (fake_output / slug / "brief.json").write_text(json.dumps({"business_name": "Ancient"}))
+    _seed_site(fake_output, slug, {"app/page.tsx": "x"})
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 200
+    assert h.json_body["plan"] is None
+    assert h.json_body["build_meta"] is None  # also missing
+
+
+def test_get_project_state_401_when_no_auth(tmp_path, monkeypatch):
+    """Pin the auth-gate behavior at the unit level. The fake_output
+    fixture bypasses require_project_owner for JSON-contract tests;
+    here we undo that to confirm the handler actually 401s on no auth."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    class FakeEngine:
+        OUTPUT_DIR = out
+    monkeypatch.setattr(projects, "_engine", lambda: FakeEngine)
+
+    # Restore the real require_project_owner (undo the fixture bypass).
+    # We import and use the actual function from security module.
+    from pebble.security import require_project_owner as real_require
+    monkeypatch.setattr(projects, "require_project_owner", real_require)
+
+    # Seed a real project so we get past the 404-doesn't-exist check
+    slug = "good-co"
+    (out / slug).mkdir()
+    (out / slug / "brief.json").write_text(json.dumps({"business_name": "Good Co"}),
+                                          encoding="utf-8")
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    # No Authorization header on FakeHandler, no cookie — should 401
+    assert h.status == 401
+
+
+def test_get_project_state_403_when_cross_tenant(tmp_path, monkeypatch):
+    """Cross-tenant isolation pin (NLM 2026-05-23 critique #8) — User B
+    must NOT be able to read User A's project. The existing auth-pin
+    only covers no-auth (401); this pins the 403 owner-mismatch path,
+    which is the real production threat (signed-in user trying to
+    enumerate other users' slugs)."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(history_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(security_mod, "_output_dir", lambda: out)
+    class FakeEngine:
+        OUTPUT_DIR = out
+    monkeypatch.setattr(projects, "_engine", lambda: FakeEngine)
+
+    # Restore the real require_project_owner (undo the fixture bypass).
+    from pebble.security import require_project_owner as real_require
+    monkeypatch.setattr(projects, "require_project_owner", real_require)
+
+    # Seed a project owned by Alice. _project_owner reads _user_id from
+    # brief.json, so stamping it there is enough to mark ownership.
+    slug = "alices-cafe"
+    (out / slug).mkdir()
+    (out / slug / "brief.json").write_text(json.dumps({
+        "business_name": "Alice's Cafe",
+        "_user_id":      "alice-uid-12345",
+    }), encoding="utf-8")
+    _seed_site(out, slug, {"app/page.tsx": "x"})
+
+    # Simulate Bob calling — resolve_user_id returns Bob's UID, but the
+    # project is owned by Alice. The handler must 403.
+    monkeypatch.setattr(security_mod, "resolve_user_id",
+                        lambda handler: "bob-uid-99999")
+
+    h = FakeHandler()
+    projects.run_get_project_state(h, slug)
+    assert h.status == 403, (
+        f"expected 403 cross-tenant block, got {h.status}: {h.json_body}"
+    )
+    # And confirm the same handler call returns 200 when Bob IS Alice
+    # (sanity — proves the test is exercising the ownership branch, not
+    # 401 or 404 by accident).
+    monkeypatch.setattr(security_mod, "resolve_user_id",
+                        lambda handler: "alice-uid-12345")
+    h2 = FakeHandler()
+    projects.run_get_project_state(h2, slug)
+    assert h2.status == 200
+    assert h2.json_body["brief"]["business_name"] == "Alice's Cafe"

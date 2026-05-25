@@ -518,6 +518,346 @@ def send_password_reset_async(email: str, reset_url: str, sender: Optional[Email
     return send_async(render_password_reset(email, reset_url), sender=sender)
 
 
+def send_password_changed_notification(email: str, sender: Optional[EmailSender] = None) -> dict:
+    """Notifies the user that their password was just changed. Sent
+    AFTER the change succeeds so a real customer who didn't initiate
+    it knows immediately and can recover via the password-reset flow.
+
+    Includes a 'If this wasn't you' CTA pointing at /auth/forgot. Short
+    enough to read on a phone notification."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble password was just changed"
+    text = (
+        "Your Pebble password was changed a moment ago.\n\n"
+        "If this was you, no action needed.\n\n"
+        "If this wasn't you, reset your password immediately:\n"
+        f"  {forgot_url}\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Your Pebble password was changed a moment ago.</p>"
+        "<p>If this was you, no action needed.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#1F1D1A;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Or paste: <code>{_escape_html(forgot_url)}</code></p>'
+        "<p style=\"font-size:13px;color:#666\">Then email support@pebbleapp.ai so we can "
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
+
+
+def send_account_deletion_scheduled(email: str, cooling_off_ends: str,
+                                    sender: Optional[EmailSender] = None) -> dict:
+    """Notify a user that their account is scheduled for permanent
+    deletion in 14 days. Includes a 'Cancel deletion' CTA pointing
+    at the settings page so they can change their mind during the
+    grace period.
+
+    cooling_off_ends is an ISO timestamp; we render it in plain English
+    for the email body."""
+    base = _base_url()
+    settings_url = f"{base}/settings"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble account is scheduled for deletion"
+    text = (
+        f"Your Pebble account is scheduled to be permanently deleted on "
+        f"{cooling_off_ends}.\n\n"
+        f"During this 14-day cooling-off period, you can cancel the "
+        f"deletion by signing into {settings_url} "
+        f"and clicking 'Cancel deletion.'\n\n"
+        f"Once the deletion executes, all your projects, files, and "
+        f"account data will be permanently removed. If you had a paid "
+        f"subscription, it has been canceled — you will not be billed "
+        f"again.\n\n"
+        f"If you didn't request this deletion, please reset your "
+        f"password immediately at {forgot_url} "
+        f"and email support@pebbleapp.ai.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        "<p>Your Pebble account is scheduled to be permanently deleted on "
+        f"<strong>{_escape_html(cooling_off_ends)}</strong>.</p>"
+        "<p>During this 14-day cooling-off period, you can cancel the deletion:</p>"
+        f'<p><a href="{_escape_html(settings_url)}" style="background:#1F1D1A;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Cancel deletion</a></p>"
+        "<p>Once the deletion executes, all your projects, files, and account data "
+        "will be permanently removed. If you had a paid subscription, it has been "
+        "canceled — you will not be billed again.</p>"
+        "<p>If you <strong>didn't</strong> request this deletion, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        '<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we can '
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html), sender=sender)
+
+
+def send_email_change_confirmation(*, new_email: str, token: str,
+                                   current_email: str,
+                                   sender: Optional[EmailSender] = None) -> dict:
+    """Sent to the NEW address. Confirm-by-clicking pattern.
+
+    Subject signals the action ('Confirm…') so the recipient knows
+    it's safe even if they don't recognize the sender. Link is good
+    for 24 hours (enforced by the engine's pending file TTL).
+    """
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    confirm_url = f"{base}/settings/confirm-email?token={token}"
+    subject = "Confirm your new Pebble email address"
+    text = (
+        f"You requested an email-address change on your Pebble account "
+        f"(currently {current_email}).\n\n"
+        f"To confirm this change, click the link below within 24 hours:\n\n"
+        f"  {confirm_url}\n\n"
+        f"If you didn't request this, ignore this email — no change will "
+        f"be made. The link expires automatically.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        "<p>You requested an email-address change on your Pebble account "
+        f"(currently <strong>{_escape_html(current_email)}</strong>).</p>"
+        "<p>To confirm this change, click the button below. The link is good "
+        "for <strong>24 hours</strong>.</p>"
+        f'<p><a href="{_escape_html(confirm_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Confirm email change</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(confirm_url)}</code></p>'
+        "<p>If you didn't request this, ignore this email — no change will be made.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=new_email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_email_change_completed(*, old_email: str, new_email: str,
+                                 sender: Optional[EmailSender] = None) -> dict:
+    """Sent to the OLD address AFTER the change executes. Tells a
+    real customer their email was just changed, so if it wasn't them
+    they can recover via password reset."""
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Your Pebble account email was just changed"
+    text = (
+        f"Your Pebble account email was changed from {old_email} to {new_email}.\n\n"
+        f"If this was you, no action needed — sign in with your new address.\n\n"
+        f"If this wasn't you, reset your password immediately at "
+        f"  {forgot_url}\n\n"
+        f"then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        f"— Pebble"
+    )
+    html = (
+        f"<p>Your Pebble account email was changed from "
+        f"<strong>{_escape_html(old_email)}</strong> to "
+        f"<strong>{_escape_html(new_email)}</strong>.</p>"
+        "<p>If this was you, no action needed — sign in with your new address.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" '
+        f'style="background:#c0392b;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Reset my password</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(forgot_url)}</code></p>'
+        '<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we can '
+        "lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=old_email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_data_export_ready(email: str, download_url: str,
+                           sender: Optional[EmailSender] = None) -> dict:
+    """Sent when the user's data export zip is ready. Includes the
+    24h-expiring download URL. No payload data in the email itself
+    (the zip lives on the engine, not as an attachment)."""
+    subject = "Your Pebble data export is ready"
+    text = (
+        "Your Pebble data export is ready. Click the link below to "
+        "download the ZIP file:\n\n"
+        f"{download_url}\n\n"
+        "This link expires in 24 hours. It includes all your projects, "
+        "account information, subscription details, and activity log.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Your Pebble data export is ready.</p>"
+        "<p>Click the button below to download your ZIP file. "
+        "The link is good for <strong>24 hours</strong>.</p>"
+        f'<p><a href="{_escape_html(download_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Download my data</a></p>'
+        f'<p style="font-size:13px;color:#666">Or paste: '
+        f'<code>{_escape_html(download_url)}</code></p>'
+        "<p>The ZIP includes all your projects, account information, "
+        "subscription details, and activity log.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_mfa_enabled_notification(email: str,
+                                  sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that two-factor auth was just turned on for their
+    account. Sent AFTER the Supabase verify step succeeds so a real
+    customer who didn't enable it (i.e. their session was compromised)
+    finds out immediately.
+
+    Defensive-notify pattern, identical shape to
+    :func:`send_password_changed_notification` — short body, recovery
+    CTA inline. Phase D.1 (2026-05-24)."""
+    base = _base_url()
+    settings_url = f"{base}/settings?tab=security"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Two-factor auth was just enabled on your Pebble account"
+    text = (
+        "Two-factor authentication was just enabled on your Pebble account.\n\n"
+        "From now on, sign-in will ask for a code from your authenticator app "
+        "in addition to your password.\n\n"
+        "If this was you, no action needed.\n\n"
+        "If this wasn't you, your account may be compromised. Reset your "
+        "password immediately:\n"
+        f"  {forgot_url}\n\n"
+        f"and review the change at {settings_url}.\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Two-factor authentication was just enabled on your Pebble account.</p>"
+        "<p>From now on, sign-in will ask for a code from your authenticator app "
+        "in addition to your password.</p>"
+        "<p>If this was you, no action needed.</p>"
+        "<p>If this <strong>wasn't</strong> you, your account may be compromised. "
+        "Reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we '
+        "can lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_mfa_disabled_notification(email: str,
+                                   sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that two-factor auth was just turned OFF. Higher-
+    risk transition than enabling — a compromised session would WANT to
+    disable MFA to keep its foothold. Sent AFTER unenroll succeeds.
+    Phase D.1 (2026-05-24)."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    settings_url = f"{base}/settings?tab=security"
+    subject = "Two-factor auth was just disabled on your Pebble account"
+    text = (
+        "Two-factor authentication was just turned OFF on your Pebble account.\n\n"
+        "From now on, only your password protects sign-in.\n\n"
+        "If this was you, you can re-enable it any time at "
+        f"{settings_url}.\n\n"
+        "If this WASN'T you, treat your account as compromised:\n"
+        f"  1. Reset your password immediately: {forgot_url}\n"
+        f"  2. Re-enable two-factor auth at {settings_url}\n"
+        "  3. Email support@pebbleapp.ai so we can review recent activity\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Two-factor authentication was just turned <strong>OFF</strong> on your "
+        "Pebble account.</p>"
+        "<p>From now on, only your password protects sign-in.</p>"
+        f'<p>If this was you, you can re-enable it any time at '
+        f'<a href="{_escape_html(settings_url)}">your security settings</a>.</p>'
+        "<p>If this <strong>wasn't</strong> you, treat your account as compromised:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then re-enable two-factor at '
+        f'<a href="{_escape_html(settings_url)}">your security settings</a> and email '
+        "support@pebbleapp.ai so we can review recent activity.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_global_signout_notification(email: str, *, device_count: int = 0,
+                                     sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that they (or someone on their account) just signed
+    out every active session. Same defensive-notify pattern as the password
+    change — a compromised attacker WON'T trigger this themselves, but a
+    real customer who didn't initiate it knows immediately to reset their
+    password. Phase D.3 (2026-05-24)."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    subject = "All devices signed out of your Pebble account"
+    summary = (
+        f"All sessions (about {device_count} device{'s' if device_count != 1 else ''}) "
+        if device_count > 0
+        else "All active sessions on your Pebble account "
+    )
+    text = (
+        f"{summary}were just signed out.\n\n"
+        "If this was you, no action needed — just sign back in on the devices "
+        "you trust.\n\n"
+        "If this wasn't you, reset your password immediately:\n"
+        f"  {forgot_url}\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        f"<p>{_escape_html(summary)}were just signed out.</p>"
+        "<p>If this was you, no action needed — just sign back in on the devices "
+        "you trust.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we '
+        "can lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_data_export_failed(email: str,
+                            sender: Optional[EmailSender] = None) -> dict:
+    """Sent when the background zip job failed. Tells the user to try
+    again or contact support."""
+    base = os.environ.get("PEBBLE_PUBLIC_URL", "").strip().rstrip("/") or "https://www.pebbleapp.ai"
+    settings_url = f"{base}/settings"
+    subject = "Your Pebble data export couldn't be prepared"
+    text = (
+        "We hit a problem preparing your Pebble data export. Please "
+        "try requesting it again from your Settings → Data tab:\n\n"
+        f"  {settings_url}\n\n"
+        "If it fails a second time, please email support@pebbleapp.ai "
+        "and we'll prepare it manually.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>We hit a problem preparing your Pebble data export.</p>"
+        "<p>Please try requesting it again from your Settings:</p>"
+        f'<p><a href="{_escape_html(settings_url)}" '
+        f'style="background:#1F1D1A;color:#fff;padding:10px 16px;border-radius:8px;'
+        f'text-decoration:none;font-weight:600">Go to Settings</a></p>'
+        "<p>If it fails a second time, please email "
+        '<a href="mailto:support@pebbleapp.ai">support@pebbleapp.ai</a> '
+        "and we'll prepare it manually.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
 __all__ = [
     "EmailError",
     "EmailMessage",
@@ -533,6 +873,15 @@ __all__ = [
     "send_welcome_async",
     "send_password_reset",
     "send_password_reset_async",
+    "send_password_changed_notification",
+    "send_account_deletion_scheduled",
+    "send_email_change_confirmation",
+    "send_email_change_completed",
+    "send_data_export_ready",
+    "send_data_export_failed",
+    "send_mfa_enabled_notification",
+    "send_mfa_disabled_notification",
+    "send_global_signout_notification",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.

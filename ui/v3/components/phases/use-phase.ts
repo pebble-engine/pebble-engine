@@ -23,9 +23,9 @@ const useIsomorphicLayoutEffect = typeof window !== "undefined" ? useLayoutEffec
  * other hash-bound state later without colliding.
  */
 
-export type Phase = "welcome" | "idea" | "plan" | "draft" | "ready" | "design" | "publish";
+export type Phase = "welcome" | "idea" | "plan" | "draft" | "ready" | "design" | "publish" | "integrations";
 
-export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready", "design", "publish"];
+export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready", "design", "publish", "integrations"];
 
 /**
  * Phase → Build-Plan-rail "stage" mapping. The rail has seven steps
@@ -34,8 +34,9 @@ export const PHASE_ORDER: Phase[] = ["welcome", "idea", "plan", "draft", "ready"
  * Idea stage, just with different chrome (welcome hides the rail, idea
  * shows the chip questionnaire).
  */
-export function phaseToStage(p: Phase): string {
-  if (p === "welcome") return "idea";
+export function phaseToStage(p: Phase | string): string {
+  if (p === "welcome")      return "idea";
+  if (p === "integrations") return "features";  // highlights "Features" nav item (Phase 56a)
   return p;
 }
 

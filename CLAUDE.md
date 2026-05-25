@@ -64,7 +64,7 @@ Environment flags that change behavior (see `.env`):
 - `pebble.email` — Resend SDK wrapper (welcome, password reset, form auto-responder).
 - `pebble.security` — rate limiters, project locks, `require_project_owner`, slug validation.
 - `pebble.server.build` — `/api/generate` and `/api/plan` request bodies. Snapshots site/ before overwriting.
-- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>/{history,star,claim}` + `/api/rollback` + DELETE. `claim` migrates anon builds onto the caller's user account (cheat-sheet inverted-onboarding pattern).
+- `pebble.server.projects` — `/api/projects` list + `/api/projects/<slug>` bundled state + `/api/projects/<slug>/{history,star,claim}` + `/api/rollback` + DELETE. `claim` migrates anon builds onto the caller's user account (cheat-sheet inverted-onboarding pattern). The bare-slug GET powers the v3 `/workspace/<slug>` deep-link route by returning `{slug, brief, plan, build_meta}` in one round-trip.
 - `pebble.server.refine` — `/api/refine`. Two refinement classes:
   - **Deterministic** (`billable: false`): `simpler` (regex palette tone-down), `colors` (rotates 5 brand-safe palettes). No LLM call. Milliseconds.
   - **LLM-backed** (`billable: true`): `friendlier`, `professional`, `booking`. Single focused LLM turn.
@@ -149,20 +149,62 @@ Brand-extract image ingestion: `pebble/server/brand_extract.py` accepts `multipa
 
 ## Skills to invoke at specific triggers (Pebble-specific reminder system)
 
-This project uses Claude Code skills as part of the workflow. Invoke these when their trigger fires — don't wait to be asked.
+This project uses Claude Code skills as part of the workflow. Invoke these when their trigger fires — don't wait to be asked. Reconciled against the actual installed skill inventory on 2026-05-23 (the original aspirational entries had several names that didn't exist).
 
-| Trigger | Skill to invoke |
+**Confirmed installed via the `superpowers` plugin** (`C:\Users\marci\.claude\plugins\cache\claude-plugins-official\superpowers\5.1.0\skills\`):
+
+| Trigger | Skill (exact name to pass to the Skill tool) |
 |---|---|
-| Before any release / before launching the SaaS | `security-review` |
-| When designing a new pebble-specific helper (e.g. pebble-launch-check, pebble-customer-debug) | `skill-creator` |
-| When editing code that touches the Anthropic SDK or prompt-caching | `claude-api` |
-| After non-trivial edits, before commit | `simplify` |
-| When the user opens a PR or asks for review | `review` |
-| When user needs spreadsheets / decks / PDFs / docs (e.g. revenue projections, pitch deck) | `xlsx` / `pptx` / `pdf` / `docx` |
-| Memory feels stale (~quarterly) | `consolidate-memory` |
-| User reports a setting issue or wants hooks | `update-config` |
+| Starting any non-trivial feature / multi-step change | `superpowers:writing-plans` |
+| Executing a previously-written plan | `superpowers:executing-plans` |
+| 3+ independent failures / unrelated bugs in different domains | `superpowers:dispatching-parallel-agents` |
+| New module being written / TDD requested | `superpowers:test-driven-development` |
+| Debugging a bug (esp. multi-system or non-obvious root cause) | `superpowers:systematic-debugging` |
+| Before claiming a task done — verify the change actually worked | `superpowers:verification-before-completion` |
+| User opens a PR or asks for review | `superpowers:requesting-code-review` |
+| Receiving a PR review — how to triage and act on comments | `superpowers:receiving-code-review` |
+| Before merge / push — branch cleanup, commit hygiene, rebase | `superpowers:finishing-a-development-branch` |
+| Big feature with many independent subtasks worth subagents | `superpowers:subagent-driven-development` |
+| Brainstorming product or architecture options | `superpowers:brainstorming` |
+| Working inside a git worktree (we usually are — branch isolation) | `superpowers:using-git-worktrees` |
+| Designing a new pebble-specific reusable instruction set | `superpowers:writing-skills` |
 
-These are skills available in the session — invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
+**User-scope skills** (`C:\Users\marci\.claude\skills\`):
+
+| Trigger | Skill |
+|---|---|
+| Editing Stripe integrations (billing endpoints, webhook handlers, price IDs) | `stripe-best-practices` |
+| Spinning up a new Stripe-backed flow from scratch | `stripe-projects` |
+| Stripe SDK version bump or API-version migration | `upgrade-stripe` |
+| Anything UI/UX-design-adjacent (DNA cards, landing page, workspace shell) | `ui-ux-pro-max` (from `ui-ux-pro-max-skill` plugin) |
+| Marc says "design like Linear" or wants Linear-style polish | `linear-design` |
+
+**Built-in / Anthropic-published** (try invoking; available out of the box on most Claude Code setups):
+
+| Trigger | Skill |
+|---|---|
+| User needs spreadsheets / decks / PDFs / docs (revenue projections, pitch deck) | `xlsx` / `pptx` / `pdf` / `docx` |
+| Memory feels stale (~quarterly) | `consolidate-memory` |
+| Setting / hook / config request | `update-config` |
+
+**Other built-in / Claude Code skills** (discovered post-restart on 2026-05-23 — these ARE installed and were just invisible until Claude Code reloaded):
+
+| Trigger | Skill |
+|---|---|
+| Before merging anything sensitive — security pass on pending changes | `security-review` |
+| Reviewing a PR (PR URL or branch diff) | `review` |
+| Reviewing your own changes for reuse / quality / efficiency before commit | `code-review` |
+| Verify a change actually works end-to-end by running the app | `verify` |
+| Initializing a NEW CLAUDE.md on a new project | `init` |
+| Editing Anthropic-SDK / prompt-caching code | `claude-api` |
+| Recurring task (poll, watch, periodic check) | `loop` |
+| Schedule a remote cron-style agent | `schedule` |
+| Reduce permission prompts by allowlisting common reads | `fewer-permission-prompts` |
+
+**Truly NOT installed** — substitutes only:
+- `simplify` → fold into normal pre-commit review; no dedicated skill ships in the superpowers bundle
+
+Invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
 
 ## The three-tool workflow
 
@@ -211,6 +253,7 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 | Method | Path | Body / Query | Purpose |
 |---|---|---|---|
 | GET | `/api/projects` | — | **List every project for the dashboard** — slug, name, type, file_count, starred, built_at |
+| GET | `/api/projects/<slug>` | — | **Bundled project state** (slug + brief + plan + build_meta) for the v3 workspace `/workspace/<slug>` deep-link route. Owner-gated. |
 | GET | `/api/projects/<slug>/history` | — | List snapshots, newest-first — for the workspace history drawer |
 | GET | `/api/projects/<slug>/analytics` | — | Page-view summary for the customer's generated site (7d window). |
 | POST | `/api/rollback` | `{ slug, snapshot_id }` | Restore a previous snapshot. Pre-rollback state is also snapshotted (undoable). |
@@ -252,7 +295,7 @@ All routes return JSON unless noted. Errors use `{ "error": "..." }` with approp
 
 | Method | Path | Body | Purpose |
 |---|---|---|---|
-| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" \| "setup_call" }` | Auth-gated (Bearer JWT). `starter`/`pro` → `mode=subscription`, returns `{url, session_id}`. `setup_call` → `mode=payment` ($99 one-time), success redirects to `PEBBLE_SETUP_CALL_LINK` (calendar). Stamps `pebble_user_id` + `pebble_plan` metadata so the webhook can route events back. |
+| POST | `/api/checkout/create-session` | `{ plan: "starter" \| "pro" }` | Auth-gated (Bearer JWT). Returns `{url, session_id}` for a Stripe Checkout subscription session. Stamps `pebble_user_id` + `pebble_plan` metadata so the webhook can route events back. *Setup-call ($99 one-time) flow is on the backlog — not yet wired.* |
 | POST | `/api/billing/portal` | — | Auth-gated. Reads `stripe_customer_id` from `output/.users/<uid>/subscription.json`, mints a Stripe Customer Portal session, returns `{url}`. 404 if no subscription. |
 | POST | `/api/internal/stripe-webhook` | Stripe event payload | HMAC-verified via `STRIPE_WEBHOOK_SECRET`. On `customer.subscription.{created,updated,deleted}` writes `output/.users/<uid>/subscription.json` with `{status, plan, stripe_customer_id, stripe_subscription_id, current_period_end, updated_at}`. Other event types 200-ignored. |
 

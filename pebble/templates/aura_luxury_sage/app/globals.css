@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background:     #0f1612;
+  --color-background-alt: #0a100c;
+  --color-card-bg:        #171f1a;
+  --color-card-border:    rgba(255,255,255,0.05);
+  --color-text-primary:   #f3f4eb;
+  --color-text-secondary: #a8c4a0;
+  --color-text-muted:     #6a8a6c;
+  --color-accent:         #b8d4a8;
+  --color-foreground:     var(--color-text-primary);
+
+  --font-sans:    var(--font-outfit), "Inter", system-ui, sans-serif;
+  --font-serif:   var(--font-playfair), Georgia, serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0f1612; }
+::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+
+/* Brushed metal card hover */
+.brushed-metal-bg {
+  background: linear-gradient(135deg, #1a241c 0%, #171f1a 50%, #0e1410 100%);
+  position: relative;
+}
+.brushed-metal-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.01) 2px, rgba(255,255,255,0.01) 4px),
+    linear-gradient(to bottom, rgba(255,255,255,0.03) 0%, transparent 100%);
+  mix-blend-mode: overlay;
+  opacity: 0.8;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+}

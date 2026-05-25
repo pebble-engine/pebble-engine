@@ -9,7 +9,6 @@ import {
   LogOut, Shield,
 } from "lucide-react";
 import { listProjects, type ProjectSummary } from "@/lib/api";
-import { setLastBuild } from "@/lib/state";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 import { useAuth } from "@/components/auth-provider";
@@ -96,8 +95,7 @@ export function CommandPalette() {
         Icon: Folder,
         keywords: `${p.business_name} ${p.slug} ${p.business_type || ""}`,
         run: () => {
-          setLastBuild({ slug: p.slug, preview_url: p.preview_url, saved_to: `output/${p.slug}/`, file_count: p.file_count });
-          router.push("/workspace");
+          router.push(`/workspace/${encodeURIComponent(p.slug)}`);
         },
       });
       if (p.inbox && p.inbox.total > 0) {

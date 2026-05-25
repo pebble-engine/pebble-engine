@@ -362,10 +362,20 @@ function useTypewriterPlaceholder(active: boolean): string {
    Returns the index of the currently-displayed suggestion + an "epoch"
    counter that AnimatePresence keys off of to fade between them. */
 function useRotatingSuggestion(active: boolean, intervalMs = 4000) {
-  const [idx, setIdx] = React.useState(() =>
-    Math.floor(Math.random() * ROTATING_SUGGESTIONS.length),
-  );
+  // Phase 58f (2026-05-23): start at index 0 deterministically so the
+  // server-rendered HTML matches the client's first render. The
+  // previous Math.random() in the useState initializer fired during
+  // SSR with one seed and during hydration with another, tripping
+  // React's hydration-mismatch warning ("Hydration failed because the
+  // initial UI does not match what was rendered on the server"). We
+  // randomize on mount inside the effect instead — the very first
+  // paint shows index 0 (visible for a single frame, essentially
+  // unnoticeable), then jumps to a random index, then rotates normally.
+  const [idx, setIdx] = React.useState(0);
   React.useEffect(() => {
+    // On mount: pick a random starting index so successive pageloads
+    // don't always start on the same suggestion.
+    setIdx(Math.floor(Math.random() * ROTATING_SUGGESTIONS.length));
     if (!active) return;
     const id = window.setInterval(() => {
       setIdx((cur) => (cur + 1) % ROTATING_SUGGESTIONS.length);
@@ -596,7 +606,7 @@ export function DetectiveInput({
       >
         {/* Animated gradient border (absolute, behind card surface) */}
         <div
-          className={cn("detective-focus-ring rounded-2xl", focused && "active")}
+          className={cn("detective-focus-ring rounded-2xl")}
           aria-hidden
         />
 
@@ -629,8 +639,9 @@ export function DetectiveInput({
               placeholder={placeholder}
               disabled={isDisabled}
               autoFocus={autoFocus}
+              style={{ outline: "none", boxShadow: "none" }}
               className={cn(
-                "w-full bg-transparent border-none outline-none focus:outline-none",
+                "w-full bg-transparent border-none outline-none focus:outline-none focus-visible:outline-none focus-visible:ring-0",
                 // Phase 40l — Marc's call: bumped down a notch from
                 // text-xl/2xl so the typewriter prompts read comfortably
                 // without dominating the card.
@@ -668,7 +679,10 @@ export function DetectiveInput({
               </button>
             )}
 
-            {/* File attach — with lock state for signed-out visitors. */}
+            {/* File attach — with lock state for signed-out visitors.
+                The button is fully disabled when locked so it can't be
+                interacted with; the wrapper div handles hover + click to
+                show the tooltip (disabled buttons swallow pointer events). */}
             <div
               className="relative shrink-0"
               onMouseEnter={() => attachLocked && setShowLockTip(true)}
@@ -677,22 +691,28 @@ export function DetectiveInput({
                 if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
                 setShowLockTip(false);
               }}
+              onClick={() => {
+                if (!attachLocked) return;
+                setShowLockTip(true);
+                if (lockTipTimer.current) clearTimeout(lockTipTimer.current);
+                lockTipTimer.current = setTimeout(() => setShowLockTip(false), 2500);
+              }}
             >
               <button
                 type="button"
                 onClick={handleFilePick}
-                disabled={isDisabled || (!attachLocked && files.length >= MAX_FILES)}
+                disabled={isDisabled || attachLocked || files.length >= MAX_FILES}
                 aria-label={attachLocked ? "Sign in to attach files" : "Attach inspiration images"}
                 title={attachLocked
-                  ? "This feature unlocks after signing in."
+                  ? "Sign in to attach files"
                   : "Attach images (logo, references, photos of your space)"}
                 className={cn(
                   "flex items-center justify-center w-10 h-10 rounded-full relative",
-                  "text-muted-foreground hover:text-foreground",
-                  "hover:bg-accent transition-colors duration-150",
-                  "disabled:opacity-40 disabled:cursor-not-allowed",
+                  "transition-colors duration-150",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  attachLocked && "opacity-70",
+                  attachLocked
+                    ? "opacity-40 cursor-not-allowed text-muted-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-accent disabled:opacity-40 disabled:cursor-not-allowed",
                 )}
               >
                 <Paperclip className="w-5 h-5" />

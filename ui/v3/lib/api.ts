@@ -30,6 +30,66 @@ export class PlanLimitError extends Error {
   }
 }
 
+/**
+ * Raised for 402 responses carrying the {code: "credits_low"} envelope
+ * the engine /api/generate(-stream) returns when the caller can't afford
+ * the build (Free tier restructure, 2026-05-24). Carries the data the
+ * v3 PaywallModal needs to render the explanation: balance, needed,
+ * action, message. The PaywallModal differentiates "you ran out" from
+ * "plan limit hit" — the latter is PlanLimitError (handled by the
+ * plan-picker modal flow), this one routes to the credit paywall.
+ */
+export class CreditError extends Error {
+  balance:      number | null;
+  needed:       number;
+  action:       string;
+  upgradeUrl:   string;
+  templatesUrl: string;
+  serverMessage: string;
+  constructor(opts: {
+    message:       string;
+    balance:       number | null;
+    needed:        number;
+    action:        string;
+    upgradeUrl:    string;
+    templatesUrl:  string;
+    serverMessage: string;
+  }) {
+    super(opts.message);
+    this.name          = "CreditError";
+    this.balance       = opts.balance;
+    this.needed        = opts.needed;
+    this.action        = opts.action;
+    this.upgradeUrl    = opts.upgradeUrl;
+    this.templatesUrl  = opts.templatesUrl;
+    this.serverMessage = opts.serverMessage;
+  }
+}
+
+type CreditLow402 = {
+  error?:         string;
+  code?:          string;
+  balance?:       number | null;
+  needed?:        number;
+  action?:        string;
+  message?:       string;
+  upgrade_url?:   string;
+  templates_url?: string;
+};
+
+function tryCreditError(payload: CreditLow402): CreditError | null {
+  if (payload.code !== "credits_low") return null;
+  return new CreditError({
+    message:       payload.error || "Not enough credits to start this build.",
+    balance:       typeof payload.balance === "number" ? payload.balance : null,
+    needed:        typeof payload.needed  === "number" ? payload.needed  : 10,
+    action:        typeof payload.action  === "string" ? payload.action  : "full_engine_build",
+    upgradeUrl:    typeof payload.upgrade_url   === "string" ? payload.upgrade_url   : "/pricing",
+    templatesUrl:  typeof payload.templates_url === "string" ? payload.templates_url : "/templates",
+    serverMessage: typeof payload.message === "string" ? payload.message : "",
+  });
+}
+
 async function getAuthHeader(): Promise<Record<string, string>> {
   try {
     const { createClient } = await import("./supabase/client");
@@ -51,10 +111,12 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
   if (!resp.ok) {
-    const payload = json as { error?: string; upgrade_url?: string };
+    const payload = json as CreditLow402;
     const err = payload.error || `HTTP ${resp.status}`;
-    if (resp.status === 402 && payload.upgrade_url) {
-      throw new PlanLimitError(err, payload.upgrade_url);
+    if (resp.status === 402) {
+      const creditError = tryCreditError(payload);
+      if (creditError) throw creditError;
+      if (payload.upgrade_url) throw new PlanLimitError(err, payload.upgrade_url);
     }
     throw new Error(err);
   }
@@ -122,6 +184,14 @@ export type SSEEvent =
   | { type: "preview_ready"; data: { slug: string; url: string } }
   | { type: "writing";    data: { file_count: number } }
   | { type: "evaluating"; data: Record<string, never> }
+  // 2026-05-23: AUTO_REPAIR visibility — surface the critique-and-fix
+  // rounds so the build feed doesn't go silent for 60-120s while repair
+  // runs. `repair_started` fires only when the baseline eval failed
+  // something; `repair_round` fires once per round before the LLM call;
+  // `repair_done` fires once after the loop completes.
+  | { type: "repair_started"; data: { baseline_score: string; failed_count: number; max_rounds: number } }
+  | { type: "repair_round";   data: { round: number; max_rounds: number; score_before: string; failed_count: number } }
+  | { type: "repair_done";    data: { baseline_score: string; final_score: string; rounds_run: number; improved: boolean } }
   | { type: "done";       data: GenerateResponse }
   | { type: "error";      data: { error: string } };
 
@@ -141,6 +211,7 @@ export type SSEEvent =
 export async function streamGenerateSite(
   brief: Brief,
   onEvent: (e: SSEEvent) => void,
+  signal?: AbortSignal,
 ): Promise<GenerateResponse> {
   // Include the Supabase session token when available so the engine can
   // associate the build with the authenticated user (publish limit check,
@@ -157,19 +228,31 @@ export async function streamGenerateSite(
     // No Supabase available — proceed as anonymous
   }
 
+  // Phase 58f (2026-05-23) — accept an AbortSignal so the caller can
+  // cancel the stream when the user navigates away mid-build. Without
+  // this, the SSE stream stayed open after unmount and onEvent kept
+  // poking setState on unmounted components ("Can't update state on
+  // unmounted component" warning) AND the engine kept running the
+  // build, burning credits the user wasn't watching.
   const resp = await fetch(engineUrl("/api/generate-stream"), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader },
     body: JSON.stringify(brief),
+    signal,
   });
 
   if (!resp.ok) {
     const text = await resp.text();
-    let payload: { error?: string; upgrade_url?: string };
-    try { payload = JSON.parse(text); } catch { payload = { error: text || `HTTP ${resp.status}` }; }
+    let payload: CreditLow402;
+    try { payload = JSON.parse(text) as CreditLow402; } catch { payload = { error: text || `HTTP ${resp.status}` }; }
     const err = payload.error || `HTTP ${resp.status}`;
-    if (resp.status === 402 && payload.upgrade_url) {
-      throw new PlanLimitError(err, payload.upgrade_url);
+    if (resp.status === 402) {
+      // Credit-paywall envelope (Free tier can't afford a build) takes
+      // precedence over PlanLimitError so the UI can render the credit
+      // math + Upgrade/Templates split instead of the generic plan-gate.
+      const creditError = tryCreditError(payload);
+      if (creditError) throw creditError;
+      if (payload.upgrade_url) throw new PlanLimitError(err, payload.upgrade_url);
     }
     throw new Error(err);
   }
@@ -280,6 +363,11 @@ export type ProjectSummary = {
   file_count: number;
   starred: boolean;
   preview_url: string;
+  /** 2026-05-23: hero screenshot URL for the dashboard card. Null
+   *  when the post-build screenshot pipeline hasn't run yet (in-
+   *  flight builds or older projects from before screenshots were
+   *  enabled). Render a DNA-colored placeholder when missing. */
+  screenshot_url: string | null;
   design_dna: string | null;
   publish?: {
     kind:        "zip" | "cloudflare";
@@ -297,6 +385,22 @@ export async function listProjects(): Promise<{ projects: ProjectSummary[]; coun
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});
+}
+
+// ---------- /api/projects/<slug> (single-project state) ---------------------
+
+export type ProjectState = {
+  slug:       string;
+  brief:      Record<string, unknown>;
+  plan:       PebblePlan | null;
+  build_meta: Record<string, unknown> | null;
+};
+
+/** Fetch the full state of one project — brief + plan + build_meta.
+ *  Used by /workspace/<slug> dynamic route to populate the shell on
+ *  mount without depending on localStorage. */
+export async function fetchProjectState(slug: string): Promise<ProjectState> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}`);
 }
 
 // ---------- /api/bot-message (Phase 25b, 2026-05-20) -----------------------
@@ -325,6 +429,137 @@ export async function fetchBotMessage(
   context: BotMessageContext,
 ): Promise<BotMessageResponse> {
   return postJSON("/api/bot-message", { intent, context });
+}
+
+// ---------- /api/chat (Pebble Control Center assistant, 2026-05-23) --------
+//
+// Multi-turn chat with the in-app Pebble assistant. Conversation history
+// is owned by the client (kept in React state for the session). The
+// server is stateless — every call sends the full visible history so
+// the assistant has context.
+//
+// `navigate_to` is a safe in-sitemap path the UI should router.push().
+// `confirm_action` is a destructive intent that the UI must prompt the
+//   user to confirm before executing (never auto-fired by this call).
+
+export type ChatMessage = {
+  role:    "user" | "assistant";
+  content: string;
+};
+
+export type ChatSitemapEntry = {
+  path:  string;
+  label: string;
+};
+
+export type ChatConfirmAction = {
+  key:   "open_billing_portal" | "delete_account";
+  label: string;
+};
+
+/** Context about the user's current project, passed to /api/chat so the
+ *  model can give project-aware replies and emit dispatch_op edits. */
+export type ChatProjectContext = {
+  /** Human-readable project name, e.g. "Acme Plumbing". */
+  name: string;
+  /** Slug used to scope dispatch_op edits — never supplied by the LLM. */
+  slug: string;
+  industry?:    string;
+  design_dna?:  string;
+  is_published?: boolean;
+};
+
+/** A deterministic edit op the chat model wants to dispatch. Mirrored
+ *  from pebble/server/chat.py DISPATCH_OPS. The frontend fires the
+ *  corresponding /api/visual-edit call automatically. */
+export type ChatDispatchOp =
+  | { op: "font-family";  params: { slug: string; new_font_family: string; selector_hint?: string } }
+  | { op: "color";        params: { slug: string; new_color: string; selector_hint?: string } }
+  | { op: "font-size";    params: { slug: string; delta: number; selector_hint?: string } }
+  | { op: "palette-swap"; params: { slug: string; palette: Record<string, string> } }
+  | { op: "image-swap";   params: { slug: string; original_src: string; new_src: string } };
+
+export type ChatResponse = {
+  reply:          string;
+  navigate_to:    string | null;
+  confirm_action: ChatConfirmAction | null;
+  /** When set, the frontend fires this visual-edit op automatically. */
+  dispatch_op:    ChatDispatchOp | null;
+  /** True when the LLM call failed and the reply is a canned fallback. */
+  fallback?:      boolean;
+};
+
+export async function sendChat(
+  messages: ChatMessage[],
+  sitemap?: ChatSitemapEntry[],
+  projectContext?: ChatProjectContext | null,
+): Promise<ChatResponse> {
+  return postJSON("/api/chat", {
+    messages,
+    sitemap,
+    ...(projectContext ? {
+      project_context: {
+        name:         projectContext.name,
+        industry:     projectContext.industry,
+        design_dna:   projectContext.design_dna,
+        is_published: projectContext.is_published,
+      },
+      // slug passed separately — used by backend to scope dispatch_op,
+      // never injected into the system prompt.
+      current_slug: projectContext.slug,
+    } : {}),
+  });
+}
+
+// ---------- /api/notifications (Supabase-backed bell feed, 2026-05-24) -----
+
+export type NotificationItem = {
+  id:         string;
+  kind:       string;
+  title:      string;
+  body:       string | null;
+  meta:       Record<string, unknown> | null;
+  created_at: string;
+  is_read:    boolean;
+};
+
+export async function fetchNotifications(): Promise<{ notifications: NotificationItem[]; unread_count: number }> {
+  return getJSON("/api/notifications");
+}
+
+export async function markNotificationRead(eventId: string): Promise<{ ok: boolean }> {
+  return postJSON(`/api/notifications/${encodeURIComponent(eventId)}/read`, {});
+}
+
+export async function markAllNotificationsRead(): Promise<{ ok: boolean; marked: number }> {
+  return postJSON("/api/notifications/read-all", {});
+}
+
+// ---------- /api/community (Supabase-backed feed + stats, 2026-05-24) ------
+
+export type CommunityFeedEvent = {
+  id:         string;
+  kind:       string;
+  title:      string;
+  body:       string | null;
+  meta:       Record<string, unknown> | null;
+  created_at: string;
+};
+
+export async function fetchCommunityFeed(): Promise<{ events: CommunityFeedEvent[]; count: number }> {
+  return getJSON("/api/community/feed");
+}
+
+export type CommunityStats = {
+  total_users:        number;
+  total_sites:        number;
+  launches_this_week: number;
+  templates_count:    number;
+  refreshed_at:       string;
+};
+
+export async function fetchCommunityStats(): Promise<{ stats: CommunityStats | null; fallback?: boolean }> {
+  return getJSON("/api/community/stats");
 }
 
 // ---------- /api/projects/<slug>/integrity (Phase 36, 2026-05-21) ----------
@@ -476,7 +711,11 @@ export type TemplateSummary = {
   color_swatches: string[];
   fonts: { display: string; body: string; accent?: string };
   best_for: string;
-  tier: "free" | "paid";
+  // 2026-05-23: extended from {free, paid} to support {premium, public}.
+  // - "paid" is legacy; backend still emits it. UI treats it as "premium".
+  // - "premium" = Pebble-curated paid templates (future).
+  // - "public"  = user-uploaded (future, revenue-share with uploader).
+  tier: "free" | "paid" | "premium" | "public";
   // Phase 32a (2026-05-20) — live preview iframe target. In dev, points to
   // a localhost port serving the template's instantiated showcase. In prod,
   // points to a cloud-hosted preview URL. Pages list drives the tabs in
@@ -505,6 +744,27 @@ export async function instantiateTemplate(
   brief: Brief,
 ): Promise<InstantiateTemplateResponse> {
   return postJSON("/api/instantiate-template", { template_id, brief });
+}
+
+// ---------- /api/template-match (Phase F1, 2026-05-24) --------------------
+//
+// Score templates against a free-text prompt + optional business_type.
+// Used by the post-signup TemplateMatchModal to surface the top-N
+// templates instead of dumping the user into the full gallery.
+// Deterministic, ~5ms. See pebble/server/template_match.py.
+
+export type TemplateMatch = {
+  template_id: string;
+  score:       number;
+  reason:      string;
+};
+
+export async function matchTemplates(
+  prompt: string,
+  business_type?: string,
+  max_results: number = 3,
+): Promise<{ matches: TemplateMatch[] }> {
+  return postJSON("/api/template-match", { prompt, business_type, max_results });
 }
 
 // ---------- /api/history + /api/rollback (new) -----------------------------
@@ -576,16 +836,19 @@ export async function refine(slug: string, refinement_id: RefinementId): Promise
 
 // ---------- /api/visual-edit (new) -----------------------------------------
 
-export type VisualEditOp = "text" | "color" | "font-size";
+export type VisualEditOp = "text" | "color" | "font-size" | "font-family" | "image-swap" | "palette-swap";
 
 // pebble_id is the data-pebble-id attribute injected at generate-time. When
 // provided, the engine does a surgical edit scoped to that exact element.
 // When absent (older builds without injection), the engine falls back to
 // the legacy substring/selector-hint heuristics.
 export type VisualEditBody =
-  | { slug: string; op: "text"; pebble_id?: string; original_text: string; new_text: string }
-  | { slug: string; op: "color"; pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
-  | { slug: string; op: "font-size"; pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number };
+  | { slug: string; op: "text";         pebble_id?: string; original_text: string; new_text: string }
+  | { slug: string; op: "color";        pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
+  | { slug: string; op: "font-size";    pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number }
+  | { slug: string; op: "font-family";  pebble_id?: string; selector_hint?: string; new_font_family: string }
+  | { slug: string; op: "image-swap";    pebble_id?: string; selector_hint?: string; original_src: string; new_src: string }
+  | { slug: string; op: "palette-swap";  palette: Record<string, string> };
 
 export type VisualEditResponse = {
   slug: string;
@@ -612,6 +875,7 @@ export type PebbleSelectMessage = {
   pebble_id: string;     // empty string when the build pre-dates id injection
   className: string;
   text: string;
+  src: string;           // populated for <img> elements (Phase 56c)
   rect: { x: number; y: number; w: number; h: number };
   style: {
     color: string;
@@ -1080,6 +1344,45 @@ export async function fetchSubscription(): Promise<SubscriptionState> {
   return json as SubscriptionState;
 }
 
+// ---------- /api/account/invoices -----------------------------------------
+
+export type Invoice = {
+  id:           string;
+  number:       string | null;
+  amount_cents: number;
+  currency:     string;
+  status:       string;
+  created_at:   string;   // ISO-8601
+  pdf_url:      string | null;
+  hosted_url:   string | null;
+};
+
+/**
+ * Fetch the calling user's last 12 Stripe invoices.
+ * Returns an empty array for free-tier users (no subscription yet) —
+ * never throws for "no subscription" so the UI can render a friendly
+ * "No invoices yet" state without a try/catch.
+ */
+export async function fetchInvoices(): Promise<Invoice[]> {
+  const { createClient } = await import("./supabase/client");
+  const supabase = createClient();
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session?.access_token) {
+    throw new Error("Not signed in.");
+  }
+  const resp = await fetch(engineUrl("/api/account/invoices"), {
+    headers: { "Authorization": `Bearer ${session.access_token}` },
+  });
+  const text = await resp.text();
+  let json: unknown;
+  try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
+  if (!resp.ok) {
+    const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
+    throw new Error(err);
+  }
+  return ((json as { invoices?: Invoice[] }).invoices) ?? [];
+}
+
 // ---------- /api/track + /api/projects/<slug>/analytics -------------------
 
 export type AnalyticsSummary = {
@@ -1258,3 +1561,95 @@ export type ProfileUpdates = {
   display_name?: string | null;
   timezone?:     string;
 };
+
+// ---------- /api/projects/<slug>/integrations (Phase 56a) -------------------
+
+export type IntegrationId =
+  | "whatsapp"
+  | "booking"
+  | "google-maps"
+  | "social"
+  | "cookie-consent"
+  | "custom-code"
+  | "stripe";
+
+export type IntegrationRecord = {
+  enabled: boolean;
+  config:  Record<string, string>;
+};
+
+export type IntegrationsMap = Partial<Record<IntegrationId, IntegrationRecord>>;
+
+/** Fetch all saved integrations for a project. */
+export async function getIntegrations(slug: string): Promise<IntegrationsMap> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/integrations`);
+}
+
+/** Save (create or update) one integration. Returns the saved record. */
+export async function saveIntegration(
+  slug:    string,
+  id:      IntegrationId,
+  enabled: boolean,
+  config:  Record<string, string>,
+): Promise<IntegrationRecord> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/integrations`, {
+    integration_id: id,
+    enabled,
+    config,
+  });
+}
+
+/** Delete a saved integration. Returns { existed: boolean }. */
+export async function deleteIntegration(
+  slug: string,
+  id:   IntegrationId,
+): Promise<{ existed: boolean }> {
+  return deleteJSON(
+    `/api/projects/${encodeURIComponent(slug)}/integrations/${encodeURIComponent(id)}`,
+  );
+}
+
+// ---------- /api/enrich-content (Phase 58a — build-time chat enrichment) -----
+//
+// Applies facts collected by BuildChatPanel (phone, services, location) to the
+// already-generated site via targeted regex replacements. Fired in the
+// background immediately after build completes — zero additional wait for the
+// user. No LLM call: pure text substitution. Always billable: false.
+
+export type EnrichFact = {
+  /** "phone" | "services" | "location" */
+  key: string;
+  value: string;
+};
+
+export type EnrichResponse = {
+  slug:          string;
+  facts_applied: number;
+  files_changed: string[];
+  snapshot_id:   string | null;
+};
+
+export async function enrichContent(
+  slug: string,
+  facts: EnrichFact[],
+): Promise<EnrichResponse> {
+  return postJSON("/api/enrich-content", { slug, facts });
+}
+
+// ---------- /api/chat-edit (Phase 57) ----------------------------------------
+
+export type ChatEditResponse =
+  | { matched: true;  billable: boolean; refinement_id: string; snapshot_id?: string; diff?: DiffSummary | null }
+  | { matched: false; billable: false;   suggestion: string };
+
+/**
+ * Natural-language edit routing. Routes common phrases ("more professional",
+ * "change the colors") to the closest /api/refine action. If the phrase
+ * doesn't map to a known refinement, returns matched:false + a suggestion.
+ */
+export async function chatEdit(
+  slug: string,
+  message: string,
+): Promise<ChatEditResponse> {
+  return postJSON("/api/chat-edit", { slug, message });
+}

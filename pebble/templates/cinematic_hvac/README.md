@@ -1,0 +1,1 @@
+cinematic_hero — light cinematic template with full-bleed photo hero and bottom-left CTA stack. Designed for service-industry businesses (plumber, hvac, contractor, landscaper, dog groomer). Skins inherit this base — they override accent color + content/site.ts + dna_source.json only.

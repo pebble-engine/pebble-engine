@@ -409,6 +409,38 @@ def run_refine(handler) -> None:
     if billable:
         refinement_count_after = increment_usage(caller_uid, "ai_refinements")
 
+    # 2026-05-24 — credit spend. We spend AFTER the refinement runs
+    # so a failure doesn't burn the user's credit. Fail-soft: on
+    # Supabase error we log but don't fail the request — operationally
+    # we'd rather under-bill than break the edit. Audit/reconcile job
+    # catches the gap (next session). Free deterministic refinements
+    # don't spend; billable ones cost 1 credit.
+    if billable:
+        try:
+            from pebble import credits as _credits
+            spent = _credits.spend(
+                user_id=caller_uid,
+                amount=_credits.COST_REFINEMENT,
+                reason=_credits.REASON_REFINEMENT,
+                ref_id=slug,
+            )
+            if not spent:
+                log.warning("[credits] refinement spend skipped for user=%s slug=%s (no balance / supabase miss)",
+                            caller_uid[:8] if caller_uid else "?", slug)
+        except Exception as _exc:
+            log.warning("[credits] refinement spend errored: %s", _exc)
+
+    # 2026-05-23 — Task C of Fly.io integration. When the operator opts
+    # into the Fly backend, push the post-refine site state to the Fly
+    # app so the next /preview hit reflects the edit. deploy_in_background
+    # no-ops when PEBBLE_PREVIEW_BACKEND isn't "fly" — safe to call from
+    # every refine path.
+    try:
+        from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+        _fly_bg_deploy(slug, site_dir)
+    except Exception as _exc:
+        log.info("[fly] background deploy hook errored after refine for %s: %s", slug, _exc)
+
     handler._json(200, {
         "slug":             slug,
         "refinement_id":    refinement_id,

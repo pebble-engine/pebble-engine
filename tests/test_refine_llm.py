@@ -62,6 +62,15 @@ def fake_engine(tmp_path, monkeypatch):
             return None
         return "test-user"
     monkeypatch.setattr(refine_mod, "require_project_owner", bypass)
+    # Phase 54a (2026-05-23) — the AI-refinement quota gate calls
+    # would_exceed_quota() before the LLM. The fake "test-user" id has no
+    # real plan, so the gate treats them as exceeding the Free monthly
+    # cap and returns 402 before the LLM ever runs. Bypass it here the
+    # same way require_project_owner is bypassed; plan-gate behavior is
+    # exercised in tests/test_user_plan.py.
+    monkeypatch.setattr(refine_mod, "would_exceed_quota",
+                        lambda uid, ev_kind, lim_key: (False, 0, 999_999))
+    monkeypatch.setattr(refine_mod, "increment_usage", lambda uid, ev_kind: None)
     # Isolate engagement storage per test (T17).
     monkeypatch.setattr(engagement_mod, "_engagement_dir", lambda: out / ".engagement")
 

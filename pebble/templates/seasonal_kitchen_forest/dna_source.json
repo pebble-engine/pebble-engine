@@ -1,0 +1,26 @@
+{
+  "dna_id":       "restaurant_seasonal",
+  "name":         "Seasonal Kitchen",
+  "vibe":         "Quiet editorial restaurant. Bone background, charcoal text, burgundy accents, warm gold detail.",
+  "hero_pattern": "fullbleed_dish_photo_with_italic_serif_anchor",
+  "palette": {
+    "bone":     "#f5f0e8",
+    "charcoal": "#1c1917",
+    "burgundy": "#7c1d1d",
+    "warmgold": "#b08968"
+  },
+  "fonts": {
+    "display": "Playfair Display",
+    "body":    "Inter"
+  },
+  "signature_moves": [
+    "Full-bleed dish photo hero with charcoal/40 overlay and parallax",
+    "Italic Playfair Display anchor headline (5xl-8xl) char-stagger entrance",
+    "Drop-cap first paragraph in story sections (burgundy initial)",
+    "Filterable menu accordion (All/Vegan/GF/DF dietary chips)",
+    "Multi-room tabbed private-dining section",
+    "Journal card grid for blog entries",
+    "Masonry interior gallery with grayscale hover-color photos",
+    "Burgundy CTA pills and bone-on-charcoal footer"
+  ]
+}

@@ -323,6 +323,42 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
             # because of a sentinel read error.
             log.warning("plan-selection gate check failed: %s", e)
 
+    # 2026-05-24 Free tier restructure: engine-build-from-brief now
+    # requires sufficient credits (10 per build). Free tier gets 5
+    # credits/month → cannot afford this → directed to templates.
+    # Paid plans cover it from monthly grant. We PRE-check (refuse
+    # before any LLM cost) AND post-spend (after success). Fail-closed
+    # only when Supabase is reachable; if credits.is_configured()
+    # returns False (local dev / outage), we fail-OPEN so dev work
+    # keeps moving — the Supabase gate is the real enforcement layer.
+    if generate and caller_uid:
+        try:
+            from pebble import credits as _credits
+            if _credits.is_configured():
+                balance = _credits.get_balance(caller_uid)
+                if balance is None:
+                    # Fresh user — lazy init their row then re-read.
+                    row = _credits.get_or_init_row(caller_uid)
+                    balance = int(row.get("balance") or 0) if row else 0
+                if balance < _credits.COST_FULL_ENGINE_BUILD:
+                    handler._json(402, {
+                        "error":         "insufficient credits",
+                        "code":          "credits_low",
+                        "balance":       balance,
+                        "needed":        _credits.COST_FULL_ENGINE_BUILD,
+                        "action":        "full_engine_build",
+                        "message":       (
+                            f"A full engine build costs {_credits.COST_FULL_ENGINE_BUILD} credits "
+                            f"and you have {balance}. Upgrade for more, or start from a template "
+                            f"(those only cost {_credits.COST_TEMPLATE_INSTANTIATE})."
+                        ),
+                        "upgrade_url":   "/pricing",
+                        "templates_url": "/templates",
+                    })
+                    return
+        except Exception as e:
+            log.warning("[credits] build gate check errored (failing open): %s", e)
+
     ds_text = ""
     if generate_design_system:
         try:
@@ -936,6 +972,25 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     except Exception as e:
         imagen_results["error"] = str(e)
 
+    # Phase 58c (2026-05-22) — image-URL validation safety net.
+    # The LLM is instructed to use real Pexels/Unsplash URLs but
+    # frequently hallucinates photo IDs that 404. Without this step,
+    # the generated site's hero collapses to gray/black boxes.
+    # HEAD-validates every Pexels/Unsplash URL, replaces 404s with
+    # real photos from the Pexels API keyed off the resolved industry.
+    # Silent on failure — never blocks the build.
+    image_repair: dict = {"enabled": False}
+    try:
+        from pebble.image_fallback import validate_and_repair_images
+        # industry_key (snake_case) is set higher up after IndustryIntelligence
+        # resolves the brief. Fall back to business_type when missing.
+        repair_industry = locals().get("industry_key") or business_type
+        image_repair = validate_and_repair_images(site_dir, repair_industry)
+        image_repair["enabled"] = True
+    except Exception as e:
+        log.warning("[postbuild] image validator crashed: %s", e)
+        image_repair["error"] = str(e)
+
     # Auto-run (npm install + next dev) gated on PEBBLE_AUTO_RUN=true
     auto_run_enabled = os.environ.get("PEBBLE_AUTO_RUN", "").strip().lower() in {"1", "true", "yes", "on"}
     server_info: dict = {"enabled": auto_run_enabled, "port": None, "url": None, "errors": []}
@@ -979,6 +1034,21 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
                 _reg_dev(slug, server_info["url"])
             except Exception:
                 pass
+            # 2026-05-23 — Task B of Fly.io integration. When
+            # PEBBLE_PREVIEW_BACKEND=fly, kick off a background deploy of
+            # this slug to Fly.io so future /preview/<slug>/ hits route to
+            # the per-project Fly app instead of the local next dev. The
+            # local next dev still runs (above) for the immediate post-
+            # build window AND as the fallback if Fly is unreachable —
+            # engine's _handle_preview tries Fly first, falls through to
+            # the dev_registry URL gracefully. deploy_in_background no-ops
+            # when the backend env var isn't set, so this is safe to call
+            # unconditionally.
+            try:
+                from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+                _fly_bg_deploy(slug, site_dir)
+            except Exception as _exc:
+                log.info("[fly] background deploy hook errored for %s: %s", slug, _exc)
             # Phase A.5: now that next dev is up + registered, surface
             # preview_ready as the HONEST event the frontend was waiting
             # for. Frontend hides the button until this fires.
@@ -1000,7 +1070,13 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
         _emit("evaluating", {})
         try:
             from pebble.repair import repair_build as _repair_build
-            rep = _repair_build(slug=slug, max_rounds=2, client=client, skip_compile=True)
+            rep = _repair_build(
+                slug=slug,
+                max_rounds=2,
+                client=client,
+                skip_compile=True,
+                progress_cb=_emit,
+            )
             repair_info.update({
                 "baseline_score": rep.baseline_score,
                 "final_score": rep.final_score,
@@ -1039,6 +1115,47 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     # (above this point any error short-circuits with a non-200 + return).
     # NEVER pass slug / business_type / industry / DNA — just the event name.
     _log_engagement(answers.get("_user_id"), "build_completed")
+
+    # 2026-05-24 — also write to the persistent events table so the
+    # bell + community feed reflect this build. Fire-and-forget; if
+    # Supabase is unreachable the helper logs + returns None, never
+    # raises. Private event (just for this user) since a brand-new
+    # build isn't auto-public — the user has to publish to surface it.
+    try:
+        from pebble import events as _events
+        user_id = answers.get("_user_id")
+        if user_id:
+            business_name = answers.get("business_name") or slug
+            _events.record(
+                user_id=user_id,
+                kind=_events.KIND_BUILD_COMPLETED,
+                title=f"{business_name} is ready to review",
+                body=f"Your site has been built. Open the workspace to refine, publish, or share.",
+                visibility=_events.VISIBILITY_PRIVATE,
+                meta={"slug": slug},
+            )
+    except Exception as e:
+        log.warning("events.record failed for build_completed: %s", e)
+
+    # 2026-05-24 — credit spend. We spend AFTER the build succeeds
+    # (the pre-check at the top of run_build refuses insufficient
+    # balance before any LLM cost). Failure to record the spend is
+    # logged but doesn't fail the request — under-billing beats
+    # breaking a build the user already saw succeed.
+    try:
+        from pebble import credits as _credits
+        if caller_uid:
+            spent = _credits.spend(
+                user_id=caller_uid,
+                amount=_credits.COST_FULL_ENGINE_BUILD,
+                reason=_credits.REASON_FULL_BUILD,
+                ref_id=slug,
+            )
+            if not spent:
+                log.warning("[credits] build spend skipped for user=%s slug=%s (Supabase miss or stale balance)",
+                            caller_uid[:8], slug)
+    except Exception as e:
+        log.warning("[credits] build spend errored: %s", e)
 
     # Post-first-build email drip (Ch 11.6). schedule_drip() is idempotent —
     # it no-ops if the drip file already exists, so rebuilds don't reset the

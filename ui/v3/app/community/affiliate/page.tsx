@@ -26,7 +26,7 @@ export default function AffiliatePage() {
           <div className="inline-flex w-16 h-16 rounded-2xl bg-primary/10 text-primary items-center justify-center mx-auto">
             <Gift className="w-7 h-7" />
           </div>
-          <h1 className={`${type.display.l} text-foreground`}>Affiliate program — in design.</h1>
+          <h1 className={`${type.dashboard.display.l} text-foreground`}>Affiliate program — in design.</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-xl mx-auto`}>
             Refer Pebble to a friend or client and earn account credit toward
             your plan when they upgrade. Simple, no third-party tracker, paid

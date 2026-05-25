@@ -88,6 +88,17 @@ def _secure_cookies() -> bool:
     return os.environ.get("PEBBLE_HTTPS", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def _redact_email(email: str) -> str:
+    """Best-effort PII-redaction for log lines: ``alice@x.com`` →
+    ``a***@x.com``. Same shape as the helper in pebble.server.account so
+    log scrubbing stays consistent. Falls back to ``"?"`` on garbage
+    input so we never crash a log path on a bad email."""
+    if not isinstance(email, str) or "@" not in email:
+        return "?"
+    local, _, domain = email.partition("@")
+    return f"{local[:1]}***@{domain}" if local else f"***@{domain}"
+
+
 def current_user_id(handler) -> Optional[str]:
     """Resolve the current user's id from the session cookie. Returns
     None for un-logged-in or expired-session requests."""
@@ -194,7 +205,10 @@ def run_signup(handler) -> None:
     try:
         send_welcome_async(user.email)
     except Exception as e:
-        log.warning("welcome email enqueue failed for %s: %s", user.email, e)
+        # Phase 58e (2026-05-22) — redact email in the log line. Logs
+        # are tail'd in /api/admin/errors and shouldn't leak full email
+        # addresses; the user.id alone is enough to correlate.
+        log.warning("welcome email enqueue failed for %s: %s", _redact_email(user.email), e)
     handler._json(
         201,
         {"user": user.to_public()},
@@ -297,7 +311,9 @@ def run_forgot(handler) -> None:
                     send_password_reset_async(user.email, reset_url)
                     sent = True
                 except Exception as e:
-                    log.warning("password reset email enqueue failed for %s: %s", user.email, e)
+                    # Same redaction as run_signup — never log full
+                    # emails to engine.err.log (Phase 58e).
+                    log.warning("password reset email enqueue failed for %s: %s", _redact_email(user.email), e)
     handler._json(200, {"ok": True, "sent": sent})
 
 

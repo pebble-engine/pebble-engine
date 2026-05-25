@@ -6,14 +6,21 @@ reads from that queue and yields SSE frames to FastAPI's
 StreamingResponse.
 
 Event types emitted (in order):
-  started    {"slug": str}
-  industry   {"key": str | null}
-  style      {"dna_label": str, "dna_id": str}
-  generating {"model": str, "max_tokens": int}
-  writing    {"file_count": int}
-  evaluating {}                    (only when PEBBLE_AUTO_REPAIR=true)
-  done       {full GenerateResponse payload}
-  error      {"error": str}        (then stream closes)
+  started        {"slug": str}
+  industry       {"key": str | null}
+  style          {"dna_label": str, "dna_id": str}
+  generating     {"model": str, "max_tokens": int}
+  writing        {"file_count": int}
+  evaluating     {}                       (only when PEBBLE_AUTO_REPAIR=true)
+  repair_started {"baseline_score": str, "failed_count": int, "max_rounds": int}
+                                          (only when AUTO_REPAIR fires AND
+                                           the baseline eval had failures)
+  repair_round   {"round": int, "max_rounds": int, "score_before": str,
+                  "failed_count": int}    (per round, before the LLM call)
+  repair_done    {"baseline_score": str, "final_score": str,
+                  "rounds_run": int, "improved": bool}
+  done           {full GenerateResponse payload}
+  error          {"error": str}           (then stream closes)
 """
 from __future__ import annotations
 
@@ -60,6 +67,20 @@ def build_stream_generator(
     def _run() -> None:
         try:
             run_build(shim, generate=True, progress_cb=_cb)
+            # If run_build short-circuited with a non-2xx response (rate
+            # limit 429, quota gate 402, auth 401, validation 400, etc.),
+            # the body was captured on the shim instead of surfacing
+            # through progress_cb. Translate it into an SSE error event
+            # so the client sees something better than the generic
+            # "Stream ended without a done event" fallback.
+            if shim.response_status >= 400:
+                err_msg = f"HTTP {shim.response_status}"
+                try:
+                    payload = json.loads((shim.binary_body or b"").decode("utf-8"))
+                    err_msg = payload.get("error") or err_msg
+                except Exception:
+                    pass
+                q.put(("error", {"error": err_msg, "status": shim.response_status}))
         except Exception as exc:
             q.put(("error", {"error": str(exc)}))
         finally:

@@ -264,7 +264,7 @@ import {{ Inter }} from "next/font/google";
 import type {{ Metadata }} from "next";
 import {{ Footer }} from "@/components/layout/Footer";
 import {{ GrainOverlay }} from "@/components/ui/GrainOverlay";
-import "./globals.css";
+import "./globals.css"; // MANDATORY — without this line Next.js never processes globals.css and the site renders as plain HTML with browser defaults. Eval `globals_css_imported_in_layout` will fail the build.
 
 const inter = Inter({{
   subsets: ["latin"],
@@ -1078,7 +1078,7 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 | reduced-motion | `@media (prefers-reduced-motion: reduce)` in globals.css disabling animation-duration AND transition-duration to 0.01ms |
 | AnimatedHeading respects reduced-motion | Component reads `window.matchMedia("(prefers-reduced-motion: reduce)")` on mount and skips per-char delays when set |
 | FadeIn respects reduced-motion | Same — renders at final opacity immediately when user has reduced-motion set |
-| AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>` |
+| AnimatedHeading screen-reader safe | `<span className="sr-only">{{text}}</span>` (semantic content for ATs) + `<span aria-hidden="true">` (decorative per-char animation) — both required inside `<h1>`. **The `<h1>` itself MUST NEVER carry `aria-hidden="true"` — that hides the entire subtree including the sr-only text from screen readers, leaving the page with no announced heading. Put `aria-hidden="true"` on the inner per-char wrapper span only.** Eval `animated_heading_screen_reader_safe` fails the build if `<h1>` carries `aria-hidden`. |
 | Focus-visible on interactives | Every `<a>` / `<button>` with a `className` (hero CTAs, navbar links, Call Us pill) carries `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-black` |
 | Form input labels | Every `<input>` / `<textarea>` / `<select>` has `aria-label="..."` OR an associated `<label htmlFor="...">`. Placeholder text does NOT count. |
 | Icon-only interactives | Any `<button>` or `<a>` whose sole child is an icon component (e.g. `<X />`, `<ChevronRight />`) needs `aria-label="..."` or `title="..."` |
@@ -1179,8 +1179,15 @@ The eval `deploy_to_vercel_scaffold` verifies BOTH the README has a `Deploy` hea
 - `config/brand.config.ts`, `config/motion.config.ts`
 - `next.config.mjs` (NOT `.ts` — and the file body must be PLAIN JS, not TypeScript: `/** @type {{import('next').NextConfig}} */` JSDoc, no `import type`, no `: NextConfig` annotation)
 - `tailwind.config.ts` — must extend `fontFamily.sans` to include `var(--font-inter)` and `Inter` so every Tailwind `font-sans` usage picks up Inter automatically
-- `app/globals.css` — must begin with the `:root {{}}` CSS token block (all 12 `--color-*` + `--glass-blur` + fonts), then `.liquid-glass` (Code Pattern 2b), then `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` and `background: var(--color-bg)`
-- `postcss.config.js`, `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
+- `app/globals.css` — **MUST start with these THREE lines, NO exceptions, NO blank line before them**:
+  ```css
+  @tailwind base;
+  @tailwind components;
+  @tailwind utilities;
+  ```
+  Without these three directives at the top, Tailwind generates ZERO utility classes and every `bg-primary`, `text-foreground`, `flex`, `p-8`, etc. in the TSX evaluates to nothing — the page renders as plain HTML with browser defaults (blue underlined links, no layout, no spacing). After those three lines, then the `:root {{}}` CSS token block (all 12 `--color-*` + `--glass-blur` + fonts), then `.liquid-glass` (Code Pattern 2b), then `body` rule setting `font-family: var(--font-inter), Inter, ui-sans-serif, system-ui, sans-serif` and `background: var(--color-bg)`
+- `postcss.config.mjs` (the `.mjs` extension is REQUIRED — `.js` breaks with "Your custom PostCSS configuration must export a `plugins` key" because Node treats `.js` without `package.json` `"type": "module"` as CommonJS, and the `export default` syntax silently fails. The `.mjs` extension forces ESM. Body: `const config = {{ plugins: {{ tailwindcss: {{}}, autoprefixer: {{}} }} }}; export default config;`)
+- `tsconfig.json`, `package.json` (must declare `resend` in dependencies), `.gitignore`
 - `app/icon.svg` — branded favicon via Next.js App Router file convention; Next.js auto-generates the `<link rel="icon">` tag — no `metadata.icons` config needed. Use a simple SVG with the business initial or a relevant icon shape. Eval `favicon_defined` verifies this file exists.
 - `app/sitemap.ts` — Next.js dynamic sitemap export. Must return an array of `{{ url, lastModified }}` entries covering every page generated in this build. Eval `sitemap_and_robots_present` verifies.
 - `app/robots.ts` — Next.js robots.txt export. Must include a `Sitemap` entry pointing to the absolute sitemap URL. Eval `sitemap_and_robots_present` verifies.

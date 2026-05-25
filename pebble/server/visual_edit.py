@@ -12,6 +12,7 @@ Edits supported (deterministic, never invoke the LLM):
 - ``text``           — replace a text node identified by a CSS selector
 - ``color``          — change a Tailwind color class or inline style fill
 - ``font-size``      — change the inline ``style="font-size"`` of an element
+- ``font-family``    — set the fontFamily inline style on an element
 
 The edit looks for the selector across every .tsx/.html/.css/.json file in
 the site/ tree and applies a precise replacement. If multiple files match
@@ -59,7 +60,13 @@ def _upsert_jsx_style(tag_text: str, prop: str, value: str) -> str:
     if is_self_closing:
         inner = inner.rstrip("/").rstrip()
 
-    camel = re.sub(r"-([a-z])", lambda m: m.group(1).upper(), prop.lower())
+    # Convert CSS-hyphenated names (font-size → fontSize) to camelCase.
+    # If the prop has no hyphens it is already camelCase — preserve it as-is
+    # so callers can pass either form ("font-family" or "fontFamily").
+    if "-" in prop:
+        camel = re.sub(r"-([a-z])", lambda m: m.group(1).upper(), prop.lower())
+    else:
+        camel = prop
 
     sm = re.search(r"\bstyle\s*=\s*\{\{([^}]*)\}\}", inner)
     if sm:
@@ -330,16 +337,269 @@ def _edit_font_size_for_selector(site_dir: Path, selector_hint: str, delta: int)
     return {"files_changed": files_changed, "ambiguous": len(files_changed) > 1}
 
 
+# Regex that matches an existing fontFamily inline-style value in JSX or HTML.
+# Captures the value so we can replace it precisely.
+_FONT_FAMILY_JSX_RE = re.compile(
+    r"fontFamily\s*:\s*['\"]([^'\"]*)['\"]"
+)
+_FONT_FAMILY_CSS_RE = re.compile(
+    r"font-family\s*:\s*([^;\"}>]+)"
+)
+
+
+def _edit_font_family_for_selector(
+    site_dir: Path, selector_hint: str, new_font_family: str
+) -> dict:
+    """Inject or update a ``fontFamily`` inline style near ``selector_hint``.
+
+    Strategy (in order):
+    1. If ``fontFamily: '...'`` already exists in JSX style near the hint,
+       replace the existing value.
+    2. If ``font-family: ...`` exists in CSS near the hint, replace it.
+    3. Otherwise, find the nearest opening JSX tag enclosing the hint text
+       and upsert a style prop via ``_upsert_jsx_style``.
+
+    Falls back gracefully — never raises.
+    """
+    if not new_font_family or not isinstance(new_font_family, str):
+        return {"files_changed": [], "error": "new_font_family is required"}
+
+    # Build the generic fallback value: "Font Name, sans-serif"
+    # The caller can pass a family string with fallbacks already — we use it
+    # verbatim. If there are no commas we append a generic fallback.
+    value = new_font_family.strip()
+    if "," not in value:
+        # Determine a sensible generic: serif families get ", serif"
+        _serif_hints = ("Playfair", "Merriweather", "Georgia", "Garamond",
+                        "EB Garamond", "Lora", "Crimson", "PT Serif")
+        _mono_hints  = ("Mono", "Code", "Courier", "Fira Code", "Source Code")
+        if any(h.lower() in value.lower() for h in _serif_hints):
+            fallback = "serif"
+        elif any(h.lower() in value.lower() for h in _mono_hints):
+            fallback = "monospace"
+        else:
+            fallback = "sans-serif"
+        value = f"{value}, {fallback}"
+
+    files_changed: list[str] = []
+
+    for f in _candidate_files(site_dir):
+        try:
+            text = f.read_text(encoding="utf-8")
+        except Exception:
+            continue
+        if selector_hint and selector_hint not in text:
+            continue
+
+        idx = text.find(selector_hint) if selector_hint else 0
+        start = max(0, idx - 300)
+        end   = min(len(text), (idx if selector_hint else 0) + 500)
+        window = text[start:end]
+
+        # --- Case 1: existing JSX fontFamily prop in the window ---
+        m_jsx = _FONT_FAMILY_JSX_RE.search(window)
+        if m_jsx:
+            new_decl = f"fontFamily: '{value}'"
+            replace_at = start + m_jsx.start()
+            replace_end = start + m_jsx.end()
+            new_text = text[:replace_at] + new_decl + text[replace_end:]
+            if new_text != text:
+                f.write_text(new_text, encoding="utf-8")
+                files_changed.append(f.relative_to(site_dir).as_posix())
+            continue
+
+        # --- Case 2: existing CSS font-family property in the window ---
+        m_css = _FONT_FAMILY_CSS_RE.search(window)
+        if m_css and f.suffix.lower() in (".css", ".html"):
+            old_val = m_css.group(1)
+            new_decl = f"font-family: {value}"
+            replace_at = start + m_css.start()
+            replace_end = start + m_css.end()
+            new_text = text[:replace_at] + new_decl + text[replace_end:]
+            if new_text != text:
+                f.write_text(new_text, encoding="utf-8")
+                files_changed.append(f.relative_to(site_dir).as_posix())
+            continue
+
+        # --- Case 3: find the opening tag that contains the hint and upsert ---
+        # Locate the start of the enclosing tag (last "<" before idx).
+        tag_start = text.rfind("<", 0, idx)
+        if tag_start == -1:
+            continue
+        # Find the closing ">" of that tag (not closing tag, just the
+        # opening angle-bracket group).
+        tag_end = text.find(">", tag_start)
+        if tag_end == -1:
+            continue
+        tag_text = text[tag_start:tag_end + 1]
+        # Skip closing tags and comments.
+        inner_tag = tag_text[1:].lstrip()
+        if inner_tag.startswith("/") or inner_tag.startswith("!"):
+            continue
+        # Only mutate .tsx / .jsx files in the fallback case.
+        if f.suffix.lower() not in (".tsx", ".jsx"):
+            continue
+        new_tag = _upsert_jsx_style(tag_text, "font-family", value)
+        if new_tag == tag_text:
+            continue
+        new_text = text[:tag_start] + new_tag + text[tag_end + 1:]
+        f.write_text(new_text, encoding="utf-8")
+        files_changed.append(f.relative_to(site_dir).as_posix())
+
+    return {
+        "files_changed": files_changed,
+        "ambiguous":     len(files_changed) > 1,
+    }
+
+
+# ---- Image-swap op --------------------------------------------------------
+
+def _edit_image_swap(site_dir: Path, original_src: str, new_src: str) -> dict:
+    """Replace every occurrence of ``original_src`` with ``new_src`` across
+    all .tsx, .ts, and .css files in the site.
+
+    This is intentionally a literal string replacement — no URL parsing or
+    path normalisation. The caller (the workspace UI) passes the src exactly
+    as it appears in the rendered DOM (``img.src`` or ``img.getAttribute("src")``),
+    so a literal match is the safest and most predictable approach.
+
+    Returns ``{files_changed: [...]}`` — ``ambiguous: false`` always because
+    image-swap intentionally replaces ALL occurrences everywhere (you want the
+    same photo swapped consistently across the site, not just one instance).
+    """
+    if not original_src or not isinstance(original_src, str):
+        return {"files_changed": [], "error": "original_src is required"}
+    if not new_src or not isinstance(new_src, str):
+        return {"files_changed": [], "error": "new_src is required"}
+
+    files_changed: list[str] = []
+    # Scan .tsx, .ts, and .css — images live in JSX props and CSS url() calls.
+    patterns = ("**/*.tsx", "**/*.ts", "**/*.css")
+    for pattern in patterns:
+        for f in site_dir.glob(pattern):
+            try:
+                text = f.read_text(encoding="utf-8")
+            except Exception:
+                continue
+            if original_src not in text:
+                continue
+            new_text = text.replace(original_src, new_src)
+            if new_text != text:
+                f.write_text(new_text, encoding="utf-8")
+                files_changed.append(f.relative_to(site_dir).as_posix())
+
+    return {
+        "files_changed": files_changed,
+        "ambiguous":     False,
+    }
+
+
+# ---- Palette-swap op (global CSS variable update) -------------------------
+
+import colorsys as _colorsys
+
+_HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+# CSS variable names we allow palette-swap to target. Ordered so that
+# the most common ones appear first for readability in the UI.
+_PALETTE_VAR_NAMES = (
+    "primary", "secondary", "accent",
+    "background", "foreground",
+    "primary-foreground", "secondary-foreground", "accent-foreground",
+    "muted", "muted-foreground",
+    "card", "card-foreground",
+    "border", "ring",
+)
+
+
+def _hex_to_hsl_css(hex_color: str) -> str:
+    """Convert #RRGGBB to Tailwind/shadcn HSL channel string 'H S% L%'."""
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+    # colorsys uses HLS order, not HSL — note the swap.
+    h_val, l_val, s_val = _colorsys.rgb_to_hls(r, g, b)
+    return f"{round(h_val * 360, 1)} {round(s_val * 100, 1)}% {round(l_val * 100, 1)}%"
+
+
+def _edit_palette_swap(site_dir: Path, palette: dict) -> dict:
+    """Update CSS custom-property values in app/globals.css.
+
+    ``palette`` maps variable names (without ``--``) to hex colors:
+        {"primary": "#1a3a6b", "secondary": "#f5a623"}
+
+    Only variables present in ``_PALETTE_VAR_NAMES`` are touched; any
+    key outside the allowlist is silently ignored so the LLM can't
+    inject arbitrary CSS.
+
+    Returns ``{files_changed: [...]}`` or ``{files_changed: [], error: "..."}``.
+    """
+    if not palette or not isinstance(palette, dict):
+        return {"files_changed": [], "error": "palette must be a non-empty dict"}
+
+    # Validate every hex value up front.
+    clean: dict[str, str] = {}
+    for key, val in palette.items():
+        if key not in _PALETTE_VAR_NAMES:
+            continue  # silently skip unknown vars
+        if not isinstance(val, str) or not _HEX_COLOR_RE.match(val):
+            return {"files_changed": [], "error": f"invalid hex color for {key!r}: {val!r}"}
+        clean[key] = val
+
+    if not clean:
+        return {"files_changed": []}
+
+    # Resolve globals.css — try the shadcn/Tailwind default location first,
+    # then fall back to a recursive search.
+    candidates = [
+        site_dir / "app" / "globals.css",
+        site_dir / "styles" / "globals.css",
+        site_dir / "globals.css",
+    ]
+    css_file: Path | None = next((p for p in candidates if p.exists()), None)
+    if css_file is None:
+        found = list(site_dir.glob("**/*.css"))
+        css_file = next((p for p in found if "globals" in p.name.lower()), None)
+    if css_file is None:
+        return {"files_changed": [], "error": "globals.css not found in site"}
+
+    try:
+        original = css_file.read_text(encoding="utf-8")
+    except Exception as e:
+        return {"files_changed": [], "error": f"could not read globals.css: {e}"}
+
+    text = original
+    for var_name, hex_val in clean.items():
+        hsl = _hex_to_hsl_css(hex_val)
+        # Match:  --primary: <old value>;
+        # The value is everything up to the next semicolon.
+        pattern = re.compile(
+            r"(--" + re.escape(var_name) + r"\s*:\s*)([^;]+)(;)"
+        )
+        text = pattern.sub(lambda m: m.group(1) + hsl + m.group(3), text)
+
+    if text == original:
+        return {"files_changed": []}
+
+    try:
+        css_file.write_text(text, encoding="utf-8")
+    except Exception as e:
+        return {"files_changed": [], "error": f"could not write globals.css: {e}"}
+
+    return {"files_changed": [css_file.relative_to(site_dir).as_posix()]}
+
+
 # ---- HTTP entry point ------------------------------------------------------
 
 def run_visual_edit(handler) -> None:
     """POST /api/visual-edit. Body shape:
 
-        { slug, op, selector_hint?, original_text?, new_text?, new_color?, delta? }
+        { slug, op, selector_hint?, original_text?, new_text?,
+          new_color?, delta?, new_font_family?, pebble_id? }
 
-    ``op`` is one of ``text`` | ``color`` | ``font-size``. The other fields
-    are op-specific. Response includes ``billable: false`` always — visual
-    edits never spend credits.
+    ``op`` is one of ``text`` | ``color`` | ``font-size`` | ``font-family`` |
+    ``image-swap`` | ``palette-swap``.
+    The other fields are op-specific. Response includes ``billable: false``
+    always — visual edits never spend credits.
     """
     try:
         length = int(handler.headers.get("Content-Length", "0"))
@@ -356,8 +616,9 @@ def run_visual_edit(handler) -> None:
     op = body.get("op")
     if not isinstance(slug, str) or not slug:
         handler._json(400, {"error": "slug is required"}); return
-    if op not in ("text", "color", "font-size"):
-        handler._json(400, {"error": "op must be 'text', 'color', or 'font-size'"}); return
+    _VALID_OPS = ("text", "color", "font-size", "font-family", "image-swap", "palette-swap")
+    if op not in _VALID_OPS:
+        handler._json(400, {"error": f"op must be one of: {', '.join(_VALID_OPS)}"}); return
 
     # Auth gate — see refine.py + the 2026-05-15 evening NLM pass.
     caller_uid = require_project_owner(handler, slug)
@@ -401,7 +662,7 @@ def run_visual_edit(handler) -> None:
                 if result is None:
                     hint = body.get("selector_hint") or body.get("original_text") or ""
                     result = _edit_color_for_selector(site_dir, hint, new_color)
-            else:  # font-size
+            elif op == "font-size":
                 new_font_size = (body.get("new_font_size") or "").strip()
                 delta = int(body.get("delta", 0))
                 if pebble_id and new_font_size:
@@ -410,6 +671,31 @@ def run_visual_edit(handler) -> None:
                 if result is None:
                     hint = body.get("selector_hint") or body.get("original_text") or ""
                     result = _edit_font_size_for_selector(site_dir, hint, delta)
+            elif op == "font-family":
+                new_font_family = (body.get("new_font_family") or "").strip()
+                if not new_font_family:
+                    handler._json(400, {"error": "new_font_family is required for font-family op"}); return
+                if pebble_id:
+                    # Pass the CSS-hyphenated name so _upsert_jsx_style's
+                    # camelCase converter produces "fontFamily" correctly.
+                    result = _edit_style_by_id(site_dir, pebble_id, manifest, "font-family", new_font_family)
+                    used_manifest = result is not None
+                if result is None:
+                    hint = body.get("selector_hint") or body.get("original_text") or ""
+                    result = _edit_font_family_for_selector(site_dir, hint, new_font_family)
+            elif op == "image-swap":
+                original_src = (body.get("original_src") or "").strip()
+                new_src_val  = (body.get("new_src") or "").strip()
+                if not original_src:
+                    handler._json(400, {"error": "original_src is required for image-swap op"}); return
+                if not new_src_val:
+                    handler._json(400, {"error": "new_src is required for image-swap op"}); return
+                result = _edit_image_swap(site_dir, original_src, new_src_val)
+            else:  # palette-swap
+                palette_raw = body.get("palette") or {}
+                if not isinstance(palette_raw, dict) or not palette_raw:
+                    handler._json(400, {"error": "palette must be a non-empty object"}); return
+                result = _edit_palette_swap(site_dir, palette_raw)
         except Exception as e:
             log.warning("visual-edit failed: %s", e)
             handler._json(500, {"error": f"edit failed: {e}"}); return
@@ -442,6 +728,15 @@ def run_visual_edit(handler) -> None:
     })
     # Per-user engagement signal (T17). NEVER pass op/text/color/etc.
     _log_engagement(caller_uid, "visual_edit_used")
+
+    # 2026-05-23 — Task C of Fly.io integration. Push the post-edit state
+    # to the Fly app so the next /preview hit reflects the click-to-edit
+    # change. No-ops when PEBBLE_PREVIEW_BACKEND isn't "fly".
+    try:
+        from pebble.fly_preview import deploy_in_background as _fly_bg_deploy
+        _fly_bg_deploy(slug, site_dir)
+    except Exception as _exc:
+        log.info("[fly] background deploy hook errored after visual-edit for %s: %s", slug, _exc)
 
 
 # ---- Iframe bridge script --------------------------------------------------
@@ -512,6 +807,7 @@ PEBBLE_VISUAL_EDIT_BRIDGE = r"""
         fontFamily: cs.fontFamily,
         background: cs.backgroundColor,
       },
+      src: (tag === "img") ? (el.getAttribute("src") || el.src || "") : "",
     };
   }
 
