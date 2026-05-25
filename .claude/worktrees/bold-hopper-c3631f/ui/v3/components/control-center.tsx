@@ -43,8 +43,11 @@ export function ControlCenter({
         </aside>
       )}
 
-      {/* MIDDLE — canvas. Scrolls independently. */}
-      <section className="flex-1 h-full overflow-y-auto bg-background min-w-0">
+      {/* MIDDLE — canvas. Scrolls independently. Transparent bg so pages
+          that paint their own fixed background (e.g. /community with the
+          architectural Unsplash photo) show through. The body/html layer
+          provides the default bg-background for pages that don't override. */}
+      <section className="flex-1 h-full overflow-y-auto bg-transparent min-w-0">
         {children}
       </section>
 

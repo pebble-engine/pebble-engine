@@ -71,7 +71,11 @@ export function DashboardSidebar(_props: { plan?: unknown } = {}) {
   const created = projects.length;
   const FREE_LIMIT = 1;
   const atLimit = created >= FREE_LIMIT;
-  const isFree = subscription !== null && !subscription?.plan;
+  // Fail-open to "free" — if the subscription API errors (transient or
+  // user logged-out), default to showing the free-plan badge rather than
+  // hiding it. We only suppress the badge when we have CONFIRMED the
+  // user is on a paid plan (subscription?.plan is set).
+  const isFree = !subscription?.plan;
 
   return (
     <aside className="w-[240px] bg-card/70 backdrop-blur-xl border-r border-border/50 flex flex-col h-full overflow-hidden">

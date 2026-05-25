@@ -348,7 +348,7 @@ export default function DashboardPage() {
       <div className="flex-1 min-h-0">
       <ControlCenter greeting={greeting} projectContext={chatContext} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
-        <div className="max-w-5xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* Fresh-user empty state — only show the cinematic hero (and
               right-rail Recent Activity). Suppresses the Welcome card,
               Projects header, filter chips, HomeTiles, and Activity feed
