@@ -233,6 +233,18 @@ def _execute_deletion_if_due(user_id: str, email: str) -> bool:
     scrubbed = _scrub_user_projects(user_id)
     log.info("gdpr scrub: %d project(s) removed for %s", scrubbed, _redact(email))
     _cancel_pending_deletion(user_id)
+    # Audit trail — was silent-via-log.info-only before the auth review
+    # on 2026-05-24 flagged the missing event. log_event is fire-and-forget
+    # so an audit-log outage cannot block deletion completion.
+    try:
+        from pebble.audit_log import log_event
+        log_event(
+            user_id=user_id,
+            event_type="account_delete_executed",
+            metadata={"projects_scrubbed": scrubbed},
+        )
+    except Exception:
+        pass
     return True
 
 
@@ -1156,8 +1168,17 @@ def _reset_data_export_limiter_for_tests() -> None:
 
 
 def _exports_dir(user_id: str) -> Path:
-    """Return the per-user exports directory under OUTPUT_DIR/.exports/."""
-    return OUTPUT_DIR / ".exports" / user_id
+    """Return the per-user exports directory under OUTPUT_DIR/.exports/.
+
+    Wraps user_id with safe_user_id (path-traversal guard). Today's call
+    sites all pass JWT-validated UUIDs, but this defends against future
+    call sites that might pass URL or body data — flagged by the auth
+    review on 2026-05-24.
+    """
+    safe = _safe_uid(user_id)
+    if not safe:
+        raise ValueError(f"invalid user_id for _exports_dir: {user_id!r}")
+    return OUTPUT_DIR / ".exports" / safe
 
 
 def _build_export_zip(user_id: str, user_email: str,

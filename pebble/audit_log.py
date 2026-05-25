@@ -16,6 +16,7 @@ Currently emitted by the codebase:
   email_change_requested, email_change_confirmed, email_change_request_failed,
   account_delete_requested, account_delete_cancelled, account_delete_executed,
   data_export_requested, data_export_delivered, data_export_failed,
+  data_export_download_denied,
   stripe_subscription_canceled.
 
 Reserved for upcoming Phase D (MFA + sessions list) and Phase 44b (billing
