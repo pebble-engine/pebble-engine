@@ -163,7 +163,9 @@ def run_purchase_pack(handler) -> None:
 
     stripe_secret = (os.environ.get("STRIPE_SECRET_KEY") or "").strip()
     if not stripe_secret:
-        handler._json(500, {"error": "STRIPE_SECRET_KEY not configured"}); return
+        # 503 (not 500) — this is "billing isn't configured on this
+        # instance," same shape as pebble/server/stripe_checkout.py.
+        handler._json(503, {"error": "Billing not configured on this Pebble instance"}); return
     stripe.api_key = stripe_secret
 
     public_base = (os.environ.get("PEBBLE_PUBLIC_URL") or "http://localhost:3001").rstrip("/")
@@ -192,9 +194,12 @@ def run_purchase_pack(handler) -> None:
                 },
             },
         )
-    except Exception as e:
-        log.warning("[credits] stripe checkout create failed: %s", e)
-        handler._json(500, {"error": f"checkout failed: {e}"}); return
+    except Exception:
+        # Don't log/return the raw exception — Stripe error messages can
+        # echo customer email or other PII from upstream. Same pattern as
+        # pebble/server/stripe_checkout.py:151.
+        log.warning("[credits] stripe checkout create failed (pack=%s)", pack_key)
+        handler._json(502, {"error": "Stripe is temporarily unavailable. Try again."}); return
 
     handler._json(200, {"url": session.url, "session_id": session.id})
 

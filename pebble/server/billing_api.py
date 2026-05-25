@@ -47,10 +47,17 @@ def _list_stripe_invoices(customer_id: str, limit: int = 12) -> list[Any]:
     Separate function so tests can monkeypatch without touching Stripe.
     Import is deferred so missing SDK only raises when a paid user actually
     hits this endpoint.
+
+    Raises RuntimeError (caught by caller → 503) if STRIPE_SECRET_KEY is
+    not configured, instead of raising a bare KeyError that would surface
+    as a generic 500 "Couldn't load invoices" message.
     """
     import os
     import stripe  # type: ignore[import]
-    stripe.api_key = os.environ["STRIPE_SECRET_KEY"]
+    secret = (os.environ.get("STRIPE_SECRET_KEY") or "").strip()
+    if not secret:
+        raise RuntimeError("STRIPE_SECRET_KEY not configured")
+    stripe.api_key = secret
     return stripe.Invoice.list(customer=customer_id, limit=limit).data
 
 
