@@ -1169,41 +1169,43 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
 function DashboardEmptyHero() {
   // The dramatic visual — metallic P + light shafts + star particles —
   // is the user's design ref cropped to just the spotlight region.
-  // React renders real text + buttons below it on a matching dark
-  // continuation. No CSS approximation; the image IS the design.
+  // It spans the full container width (no max-w cap) so it reads as a
+  // proper hero, not a contained card. Real text + buttons render below
+  // it on a matching dark continuation. No CSS approximation; the image
+  // IS the design.
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-[#1a1d20] min-h-[520px] flex flex-col items-center justify-start px-6 pt-2 pb-10">
-      {/* Hero image — cropped from the design reference (610x255 native) */}
+    <div className="relative rounded-3xl overflow-hidden bg-[#1a1d20] flex flex-col items-center justify-start">
+      {/* Hero image — full container width */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src="/dashboard/hero-bg.png"
         alt=""
         aria-hidden="true"
-        className="w-full max-w-[720px] h-auto select-none pointer-events-none"
+        className="w-full h-auto select-none pointer-events-none block"
         // @ts-expect-error fetchpriority is valid HTML but not in React typedefs yet
         fetchpriority="high"
       />
 
       {/* Copy + CTAs — rendered below the image on continuation of dark bg */}
-      <div className="text-center max-w-md -mt-2">
-        <h2 className={`${type.dashboard.heading.l} text-white mb-2`}>
+      <div className="text-center max-w-2xl w-full px-6 pt-6 pb-12">
+        <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
           No projects created yet.
         </h2>
-        <p className={`${type.body.s} text-white/60 mb-8`}>
+        <p className="text-base md:text-lg text-white/60 mb-10 max-w-md mx-auto">
           Ready to start building? Create your first website or explore templates.
         </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-4">
           <Link
             href="/workspace#phase=welcome"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white text-black text-sm font-semibold shadow-xl hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-white text-black text-base font-semibold shadow-2xl hover:bg-white/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
-            <Plus className="w-4 h-4" /> Start something new
+            <Plus className="w-5 h-5" /> Start something new
           </Link>
           <Link
             href="/templates"
-            className="inline-flex items-center gap-2 px-6 py-2.5 rounded-full bg-white/5 border border-white/30 text-white/90 text-sm font-semibold backdrop-blur-sm hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full bg-white/5 border border-white/30 text-white/90 text-base font-semibold backdrop-blur-sm hover:bg-white/10 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
           >
-            <Search className="w-4 h-4" /> Browse templates
+            <Search className="w-5 h-5" /> Browse templates
           </Link>
         </div>
       </div>

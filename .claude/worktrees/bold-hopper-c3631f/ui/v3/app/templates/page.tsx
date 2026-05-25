@@ -197,6 +197,63 @@ export default function TemplatesPage() {
             </div>
           </div>
         )}
+
+        {/* ── Community Designs — user-submitted sites ──
+            Until a real community submissions backend ships, the strip
+            illustrates the section using a slice of the curated template
+            previews so customers see what the format looks like. The
+            "Submit yours" CTA routes to /community/launchpad which is
+            already the submission entry point. */}
+        {templates && templates.length > 0 && (
+          <section className="space-y-4 mb-16">
+            <div className="flex items-end justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className={`${type.dashboard.heading.m}`}>Community Designs</h2>
+                <p className={`${type.body.s} text-muted-foreground mt-1`}>
+                  Sites built by Pebble users. Steal the structure, swap in your story.
+                </p>
+              </div>
+              <Link
+                href="/community/launchpad"
+                className={`${type.label} text-primary inline-flex items-center gap-1 hover:underline`}
+              >
+                Submit yours <Upload className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            <div className="relative">
+              <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+              <div aria-hidden="true" className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+              <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-2 snap-x">
+                {templates.slice(0, 8).map((t) => (
+                  <button
+                    key={`community-${t.id}`}
+                    type="button"
+                    onClick={() => setPreviewing(t)}
+                    aria-label={`Preview ${t.name}`}
+                    className="group relative shrink-0 snap-start w-[180px] aspect-[4/3] rounded-lg overflow-hidden border border-border bg-card hover:border-foreground/40 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
+                  >
+                    {t.preview_image && (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={t.preview_image}
+                        alt=""
+                        aria-hidden="true"
+                        className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    )}
+                    <div className="absolute inset-x-0 bottom-0 p-2.5 bg-gradient-to-t from-black/85 via-black/30 to-transparent">
+                      <p className="text-white text-xs font-semibold truncate">{t.name}</p>
+                      <p className="text-white/60 text-[9px] uppercase tracking-widest truncate">
+                        {t.applicable_industries[0] || "Community"}
+                      </p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
       </main>
 
       {previewing && (
@@ -266,19 +323,19 @@ function CinematicSlide({
         />
       )}
       {/* Dark gradient overlay for text legibility */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/30" />
-      {/* Headline text — bottom-left aligned */}
-      <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 text-left">
+      <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+      {/* Headline text — bottom-left aligned, scaled down for breathing room */}
+      <div className="absolute inset-x-0 bottom-0 p-4 md:p-5 text-left">
         <h3
-          className="text-white font-bold leading-[0.95] tracking-tight uppercase mb-3"
+          className="text-white font-bold leading-[1.05] tracking-tight uppercase mb-1.5 line-clamp-3"
           style={{
             fontFamily: "Georgia, 'Times New Roman', serif",
-            fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)",
+            fontSize: "clamp(0.9rem, 1.2vw, 1.15rem)",
           }}
         >
           {headline}
         </h3>
-        <p className="text-white/70 text-[10px] uppercase tracking-widest font-medium">
+        <p className="text-white/60 text-[9px] uppercase tracking-widest font-medium">
           {t.applicable_industries.slice(0, 2).join(" · ")}
         </p>
       </div>
