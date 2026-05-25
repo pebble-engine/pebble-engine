@@ -41,6 +41,7 @@ import {
   Plus,
   Coins,
   MessageSquare,
+  Users,
 } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -108,12 +109,21 @@ export function DashboardSidebar(_props: { plan?: unknown } = {}) {
       />
       <NavLink href="/templates" Icon={Compass} label="Templates" active={pathname.startsWith("/templates")} />
       <NavLink href="/integrations" Icon={Plug} label="Integrations" active={pathname.startsWith("/integrations")} />
+      {/* Community Hub — routes to the architectural-hero /community page
+          (the "Pebble Community Hub" wordmark in TopNav, full-bleed photo
+          background). Separate from Ask Pebble because they're different
+          destinations: Community Hub = page, Ask Pebble = chat widget. */}
+      <NavLink
+        href="/community"
+        Icon={Users}
+        label="Community Hub"
+        active={pathname.startsWith("/community")}
+      />
 
-      {/* Ask Pebble — opens the FloatingPeblet chat widget. Replaces the old
-          Community nav entry; community is still reachable via direct URLs
-          and the in-page hero CTAs. Fires window.postMessage so we don't have
-          to prop-drill setOpen through the sidebar / shell. FloatingPeblet
-          listens for type === "pebble-chat-open". */}
+      {/* Ask Pebble — opens the FloatingPeblet chat widget. Fires
+          window.postMessage so we don't have to prop-drill setOpen
+          through the sidebar / shell. FloatingPeblet listens for
+          type === "pebble-chat-open". */}
       <button
         type="button"
         onClick={() => {
