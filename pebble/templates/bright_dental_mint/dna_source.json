@@ -1,0 +1,27 @@
+{
+  "dna_id":       "dental_friendly",
+  "name":         "Bright Dental",
+  "vibe":         "Calm modern dentistry. Bone/ice background, navy text, coral CTA, mint accent.",
+  "hero_pattern": "two_col_friendly_photo_with_trust_badge_and_char_stagger_headline",
+  "palette": {
+    "bone":  "#fafaf9",
+    "ice":   "#e0f2fe",
+    "navy":  "#1e3a8a",
+    "mint":  "#6ee7b7",
+    "coral": "#fb7185"
+  },
+  "fonts": {
+    "display": "Outfit",
+    "body":    "Inter"
+  },
+  "signature_moves": [
+    "Two-column hero: friendly dentist photo with floating 'Trusted since [Year]' badge + char-stagger Outfit headline",
+    "Soft hover-lift cards on services (translateY -4px + shadow grow on hover)",
+    "Coral CTA pill (rounded-full) with subtle scale + color hover",
+    "Ice-blue icon chips for service tiles and process steps",
+    "Numbered 3-step process with circular ice badges",
+    "Accordion FAQs with + → × rotation on open",
+    "Insurance-carrier card grid (4-up on desktop)",
+    "Multi-page Next.js App Router (Home / Team / FAQ / Booking) — never SPA show/hide"
+  ]
+}
