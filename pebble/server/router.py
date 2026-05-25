@@ -428,6 +428,13 @@ def route_post(handler) -> None:
             # + 5/min rate-limit prevent abuse via stolen session.
             from pebble.server.account_mfa import run_record_mfa_event
             run_record_mfa_event(handler)
+        elif handler.path == "/api/account/global-signout":
+            # Phase D.3 (2026-05-24) — sign out every session for the
+            # calling user via Supabase /auth/v1/logout?scope=global.
+            # Audit row + defensive-notify email written only AFTER
+            # Supabase confirms. Per-user 3/hour rate-limit.
+            from pebble.server.account_signout import run_global_signout
+            run_global_signout(handler)
         elif handler.path == "/api/account/change-email-request":
             # Re-auth challenge + single-use pending token + confirmation
             # email to NEW address. Per-user rate-limited 3/24h.
