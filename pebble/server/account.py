@@ -854,9 +854,9 @@ def _send_email_change_completed_safe(*, old_email: str, new_email: str) -> None
 def run_request_email_change(handler) -> None:
     """POST /api/account/change-email-request — { current_password, new_email }.
 
-    Re-authenticates the user, writes a pending file with a single-use
-    token, sends confirmation email to the NEW address. Per-user
-    rate-limited 3/24h."""
+    Re-authenticates the user, writes a pending token in Supabase (was local
+    file pre-migration-006), sends confirmation email to the NEW address.
+    Per-user rate-limited 3/24h."""
     from pebble.security import require_user
     user = require_user(handler)
     if not user:
@@ -898,22 +898,18 @@ def run_request_email_change(handler) -> None:
         handler._json(401, {"error": "current password is incorrect"})
         return
 
-    # Write pending file (single-use token, 24h TTL).
-    token = secrets.token_urlsafe(32)
-    now = datetime.now(timezone.utc)
-    expires = now + _PENDING_EMAIL_CHANGE_TTL
-    pending = {
-        "token":        token,
-        "new_email":    new_email,
-        "user_id":      user["id"],
-        "requested_at": now.isoformat(),
-        "expires_at":   expires.isoformat(),
-    }
-    p = _pending_email_change_path(user["id"])
-    p.parent.mkdir(parents=True, exist_ok=True)
-    tmp = p.with_suffix(".tmp")
-    tmp.write_text(json.dumps(pending), encoding="utf-8")
-    tmp.replace(p)
+    # Write pending token to Supabase (single-use, 24h TTL).
+    # Migration 006 moved this from output/.users/<uid>/email_change_pending.json
+    # to the public.email_change_pending table so it works across instances.
+    from pebble.pending_state import create_email_change_pending
+    try:
+        result = create_email_change_pending(user["id"], new_email, ttl_hours=24)
+        token = result["token"]
+    except Exception as exc:
+        log.error("[account] create_email_change_pending failed for %s: %s",
+                  _redact(user.get("email") or ""), exc)
+        handler._json(500, {"error": "could not create email-change request — try again in a moment"})
+        return
 
     # Audit log + confirmation email to NEW address (both best-effort).
     from pebble.audit_log import log_event_for_handler
@@ -939,7 +935,14 @@ def run_request_email_change(handler) -> None:
 def run_confirm_email_change(handler) -> None:
     """GET /api/account/change-email-confirm?token=… — single-use token
     lookup, calls Supabase admin to update email, sends notification to
-    OLD address, deletes pending file."""
+    OLD address, deletes pending token.
+
+    Lookup order (backward-compat for in-flight tokens on first deploy):
+      1. Supabase public.email_change_pending table (migration 006).
+      2. Fallback: scan output/.users/**/email_change_pending.json (legacy).
+    Remove the fallback after Pebble has been live >24h with migration 006
+    deployed (longest token TTL — no in-flight tokens can survive longer).
+    """
     from urllib.parse import urlparse, parse_qs
     raw_path = getattr(handler, "_raw_path", handler.path)
     qs = parse_qs(urlparse(raw_path).query)
@@ -948,42 +951,57 @@ def run_confirm_email_change(handler) -> None:
         handler._json(400, {"error": "token required"})
         return
 
-    # Scan pending files for the matching token.
-    users_root = _output_dir() / ".users"
-    if not users_root.is_dir():
-        handler._json(404, {"error": "token not found or already used"})
-        return
-
-    matched_path: Optional[Path] = None
+    # ── 1. Primary lookup: Supabase ──────────────────────────────────────────
     matched_data: Optional[dict] = None
-    for sub in users_root.iterdir():
-        if not sub.is_dir():
-            continue
-        candidate = sub / "email_change_pending.json"
-        if not candidate.is_file():
-            continue
-        try:
-            data = json.loads(candidate.read_text(encoding="utf-8"))
-            if data.get("token") == token:
-                matched_path = candidate
-                matched_data = data
-                break
-        except Exception:
-            continue
+    _legacy_path: Optional[Path] = None  # set only when fallback matched
 
-    if matched_path is None or matched_data is None:
-        handler._json(404, {"error": "token not found or already used"})
-        return
-
-    # Expiry check — clean up the file either way.
+    from pebble.pending_state import lookup_email_change_pending, delete_email_change_pending
     try:
-        expires = datetime.fromisoformat(matched_data["expires_at"])
-        if datetime.now(timezone.utc) > expires:
-            matched_path.unlink(missing_ok=True)
-            handler._json(400, {"error": "token expired — request a new email-change"})
-            return
-    except Exception:
-        handler._json(400, {"error": "invalid pending token"})
+        row = lookup_email_change_pending(token)
+        if row is not None:
+            matched_data = row
+        # None means: unknown token OR expired — fall through to legacy check
+        # so we don't break tokens written before migration 006 deployed.
+    except Exception as exc:
+        log.warning("[account] Supabase lookup_email_change_pending failed: %s — "
+                    "falling back to local files", exc)
+        # Supabase unavailable: fall through to legacy scan so a DB outage
+        # doesn't lock users out of confirming in-flight email changes.
+
+    # ── 2. Legacy fallback: local filesystem ─────────────────────────────────
+    # Remove this block once Pebble has been live >24h with migration 006
+    # (i.e., all pre-migration tokens have expired or been consumed).
+    if matched_data is None:
+        users_root = _output_dir() / ".users"
+        if users_root.is_dir():
+            for sub in users_root.iterdir():
+                if not sub.is_dir():
+                    continue
+                candidate = sub / "email_change_pending.json"
+                if not candidate.is_file():
+                    continue
+                try:
+                    data = json.loads(candidate.read_text(encoding="utf-8"))
+                    if data.get("token") == token:
+                        # Honour the expiry check that lookup_email_change_pending
+                        # would have applied in the primary path.
+                        try:
+                            expires = datetime.fromisoformat(data["expires_at"])
+                            if datetime.now(timezone.utc) > expires:
+                                candidate.unlink(missing_ok=True)
+                                handler._json(400, {"error": "token expired — request a new email-change"})
+                                return
+                        except Exception:
+                            handler._json(400, {"error": "invalid pending token"})
+                            return
+                        matched_data = data
+                        _legacy_path = candidate
+                        break
+                except Exception:
+                    continue
+
+    if matched_data is None:
+        handler._json(404, {"error": "token not found or already used"})
         return
 
     new_email = matched_data["new_email"]
@@ -996,8 +1014,15 @@ def run_confirm_email_change(handler) -> None:
         handler._json(500, {"error": "could not update email — try again in a moment"})
         return
 
-    # Delete pending file (token is consumed).
-    matched_path.unlink(missing_ok=True)
+    # Consume the token (delete from whichever store it came from).
+    if _legacy_path is not None:
+        _legacy_path.unlink(missing_ok=True)
+    else:
+        try:
+            delete_email_change_pending(token)
+        except Exception as exc:
+            log.warning("[account] delete_email_change_pending failed (token consumed): %s", exc)
+            # Non-fatal: the email was already updated. Token will expire naturally.
 
     # Audit log + notification to OLD address (both best-effort).
     from pebble.audit_log import log_event_for_handler
@@ -1084,17 +1109,18 @@ def _build_export_zip(user_id: str, user_email: str,
                         except Exception:
                             pass
 
-        # Generate single-use token + manifest (24h expiry).
-        token = secrets.token_urlsafe(32)
-        expires_at = (datetime.now(timezone.utc) + timedelta(hours=24)).isoformat()
-        manifest_path = exports / f"pebble-export-{ts}.manifest.json"
-        manifest_path.write_text(json.dumps({
-            "token":        token,
-            "zip_path":     str(zip_path),
-            "user_id":      user_id,
-            "expires_at":   expires_at,
-            "requested_at": datetime.now(timezone.utc).isoformat(),
-        }), encoding="utf-8")
+        # Generate single-use token + store manifest in Supabase (24h expiry).
+        # Migration 006 moved manifest storage from local .manifest.json files
+        # to the public.data_export_manifests table so it works across instances.
+        #
+        # SINGLE-INSTANCE ZIP LIMITATION: the ZIP file itself still lives on
+        # local disk (output/.exports/<uid>/<ts>.zip). The download endpoint
+        # must therefore run on the same engine instance that created the ZIP.
+        # Multi-instance ZIP storage (S3/R2 upload after zip_path.stat()) is
+        # future work — tracked as a follow-up to the NLM 2026-05-25 critique.
+        from pebble.pending_state import create_data_export_manifest
+        manifest_result = create_data_export_manifest(user_id, str(zip_path), ttl_hours=24)
+        token = manifest_result["token"]
 
         # Send email with download link.
         download_url = (
@@ -1177,7 +1203,18 @@ def run_request_data_export(handler) -> None:
 
 
 def run_download_export(handler) -> None:
-    """GET /api/account/export-download?token=<token> — streams the zip."""
+    """GET /api/account/export-download?token=<token> — streams the zip.
+
+    Lookup order (backward-compat for in-flight tokens on first deploy):
+      1. Supabase public.data_export_manifests table (migration 006).
+      2. Fallback: scan output/.exports/**/*.manifest.json (legacy).
+    Remove the fallback after Pebble has been live >24h with migration 006
+    deployed (longest token TTL — no in-flight manifest can survive longer).
+
+    NOTE: The ZIP file itself lives on local disk. The download therefore
+    requires the same engine instance that created the ZIP to serve it.
+    Multi-instance ZIP storage is future work (S3/R2). See _build_export_zip.
+    """
     from urllib.parse import urlparse, parse_qs
     qs = parse_qs(urlparse(handler.path).query)
     token = (qs.get("token", [""])[0] or "").strip()
@@ -1185,34 +1222,56 @@ def run_download_export(handler) -> None:
         handler._json(400, {"error": "token required"})
         return
 
-    # Scan .exports/*/manifest files for the matching token.
-    exports_root = OUTPUT_DIR / ".exports"
-    if not exports_root.is_dir():
-        handler._json(404, {"error": "token not found"})
-        return
-
-    matched_manifest = None
+    # ── 1. Primary lookup: Supabase ──────────────────────────────────────────
     matched_data: Optional[dict] = None
-    for user_dir in exports_root.iterdir():
-        if not user_dir.is_dir():
-            continue
-        for mp in user_dir.glob("*.manifest.json"):
-            try:
-                data = json.loads(mp.read_text(encoding="utf-8"))
-                if data.get("token") == token:
-                    matched_manifest = mp
-                    matched_data = data
-                    break
-            except Exception:
-                continue
-        if matched_manifest:
-            break
 
-    if matched_manifest is None or matched_data is None:
+    from pebble.pending_state import lookup_data_export_manifest
+    try:
+        row = lookup_data_export_manifest(token)
+        if row is not None:
+            matched_data = row
+        # None: unknown or expired — fall through to legacy scan
+    except Exception as exc:
+        log.warning("[account] Supabase lookup_data_export_manifest failed: %s — "
+                    "falling back to local files", exc)
+
+    # ── 2. Legacy fallback: local .manifest.json files ───────────────────────
+    # Remove this block once Pebble has been live >24h with migration 006
+    # (i.e., all pre-migration tokens have expired or been consumed).
+    if matched_data is None:
+        exports_root = OUTPUT_DIR / ".exports"
+        if exports_root.is_dir():
+            for user_dir in exports_root.iterdir():
+                if not user_dir.is_dir():
+                    continue
+                for mp in user_dir.glob("*.manifest.json"):
+                    try:
+                        data = json.loads(mp.read_text(encoding="utf-8"))
+                        if data.get("token") == token:
+                            # Apply expiry check (mirrors lookup_data_export_manifest).
+                            try:
+                                expires = datetime.fromisoformat(data["expires_at"])
+                                if datetime.now(timezone.utc) > expires:
+                                    handler._json(410, {
+                                        "error": "Download link has expired. Request a new export."
+                                    })
+                                    return
+                            except Exception:
+                                handler._json(400, {"error": "invalid manifest"})
+                                return
+                            matched_data = data
+                            break
+                    except Exception:
+                        continue
+                if matched_data:
+                    break
+
+    if matched_data is None:
         handler._json(404, {"error": "token not found"})
         return
 
-    # Expiry check.
+    # Expiry check for the Supabase path (lookup_data_export_manifest already
+    # filters expired rows, but double-check with explicit error messaging).
     try:
         expires = datetime.fromisoformat(matched_data["expires_at"])
         if datetime.now(timezone.utc) > expires:
@@ -1230,6 +1289,7 @@ def run_download_export(handler) -> None:
         return
 
     # Stream the zip with proper download headers.
+    # Token is NOT deleted on download — the user has a 24h re-download window.
     size = zip_path.stat().st_size
     handler.send_response(200)
     handler.send_header("Content-Type", "application/zip")

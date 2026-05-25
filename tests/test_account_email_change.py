@@ -113,10 +113,25 @@ def test_request_rejects_wrong_current_password(tmp_path, monkeypatch, output_di
 
 
 def test_request_writes_pending_file_and_sends_confirm_email(tmp_path, monkeypatch, output_dir):
-    """Happy path: pending file written, confirmation email sent to NEW
-    address, audit log entry made."""
+    """Happy path: pending token stored in Supabase (mocked), confirmation
+    email sent to NEW address, audit log entry made.
+
+    Migration 006: pending state now lives in Supabase, not a local file.
+    The test mocks pebble.pending_state.create_email_change_pending to stay
+    offline and verify the new storage layer is wired in correctly.
+    """
     monkeypatch.setattr("pebble.security.require_user", lambda h: _FAKE_USER)
     monkeypatch.setattr(account_mod, "_reauth_user", lambda email, pw: (True, None))
+
+    import pebble.pending_state as pending_state_mod
+    fake_token = "fake-supabase-token-abc123"
+    create_calls = []
+
+    def fake_create(user_id, new_email, ttl_hours=24):
+        create_calls.append({"user_id": user_id, "new_email": new_email, "ttl_hours": ttl_hours})
+        return {"token": fake_token, "expires_at": "2099-01-01T00:00:00+00:00"}
+
+    monkeypatch.setattr(pending_state_mod, "create_email_change_pending", fake_create)
 
     email_calls = []
     monkeypatch.setattr(account_mod, "_send_email_change_confirmation_safe",
@@ -133,20 +148,15 @@ def test_request_writes_pending_file_and_sends_confirm_email(tmp_path, monkeypat
     assert h.status == 200, f"expected 200, got {h.status}: {h.json_body}"
     assert h.json_body.get("ok") is True
 
-    # Pending file must exist with the right shape
-    pending_path = output_dir / ".users" / _FAKE_USER["id"] / "email_change_pending.json"
-    assert pending_path.exists(), "pending file must be written"
-    data = json.loads(pending_path.read_text(encoding="utf-8"))
-    assert "token" in data and len(data["token"]) >= 32
-    assert data["new_email"] == "new@example.com"
-    assert data["user_id"] == _FAKE_USER["id"]
-    assert "expires_at" in data
-    assert "requested_at" in data
+    # create_email_change_pending called with the right args
+    assert len(create_calls) == 1
+    assert create_calls[0]["user_id"] == _FAKE_USER["id"]
+    assert create_calls[0]["new_email"] == "new@example.com"
 
-    # Confirmation email sent to NEW address
+    # Confirmation email sent to NEW address with the Supabase-generated token
     assert len(email_calls) == 1
     assert email_calls[0]["new_email"] == "new@example.com"
-    assert "token" in email_calls[0]
+    assert email_calls[0]["token"] == fake_token
 
     # Audit log
     assert any(c.get("event_type") == "email_change_requested" for c in audit_calls)

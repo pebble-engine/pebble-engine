@@ -56,7 +56,14 @@ class _FakeHandler:
 
 def test_export_request_kicks_off_background_thread(tmp_path, monkeypatch):
     """Returns 200 immediately, audit_log data_export_requested written,
-    background thread starts and eventually emails + writes data_export_delivered."""
+    background thread starts and eventually emails + writes data_export_delivered.
+
+    Migration 006: manifest metadata now stored in Supabase, not a local
+    .manifest.json file. The test mocks pebble.pending_state.create_data_export_manifest
+    to stay offline and verify the new storage layer is wired in correctly.
+    """
+    import pebble.pending_state as pending_state_mod
+
     out = tmp_path / "output"
     out.mkdir()
     (out / "project-a" / "site").mkdir(parents=True)
@@ -70,6 +77,19 @@ def test_export_request_kicks_off_background_thread(tmp_path, monkeypatch):
     )
     # Reset limiter so prior test state doesn't bleed.
     account_mod._reset_data_export_limiter_for_tests()
+
+    # Mock the Supabase manifest creation (migration 006) — returns a fake token.
+    fake_token = "fake-export-token-xyz789"
+    manifest_create_calls: list[dict] = []
+
+    def fake_create_manifest(user_id, zip_path, ttl_hours=24):
+        manifest_create_calls.append({"user_id": user_id, "zip_path": zip_path})
+        return {
+            "token": fake_token,
+            "expires_at": "2099-01-01T00:00:00+00:00",
+        }
+
+    monkeypatch.setattr(pending_state_mod, "create_data_export_manifest", fake_create_manifest)
 
     audit_calls: list[dict] = []
     monkeypatch.setattr(
@@ -107,8 +127,12 @@ def test_export_request_kicks_off_background_thread(tmp_path, monkeypatch):
     # Email sent + delivered audit row written.
     assert len(email_calls) == 1
     assert email_calls[0][0] == "test@example.com"
-    assert "/api/account/export-download?token=" in email_calls[0][1]
+    assert f"/api/account/export-download?token={fake_token}" in email_calls[0][1]
     assert any(c.get("event_type") == "data_export_delivered" for c in audit_calls)
+
+    # Supabase manifest creation was called with the right user_id
+    assert len(manifest_create_calls) >= 1
+    assert manifest_create_calls[0]["user_id"] == "u-1"
 
 
 def test_export_request_rate_limited(tmp_path, monkeypatch):
