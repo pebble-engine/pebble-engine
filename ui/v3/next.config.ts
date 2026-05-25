@@ -61,6 +61,12 @@ const SECURITY_HEADERS = [
     value: [
       "default-src 'self'",
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://*.vercel-scripts.com https://js.stripe.com",
+      // Sentry Replay (and any other monitoring SDK that spawns workers
+      // from blob URLs) needs worker-src. Without an explicit directive,
+      // browsers fall back to script-src — which is hostname-restricted
+      // and rejects blob:. List blob: + self explicitly to allow internal
+      // worker creation without widening the broader script-src.
+      "worker-src 'self' blob:",
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       "img-src 'self' data: blob: https:",
