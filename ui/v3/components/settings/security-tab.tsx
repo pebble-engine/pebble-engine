@@ -11,6 +11,7 @@ import { Eye, EyeOff, Lock } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import { MfaSection } from "@/components/settings/mfa-section";
 
 // ── component ─────────────────────────────────────────────────────────────────
 
@@ -151,6 +152,9 @@ export function SecurityTab() {
           </button>
         </form>
       </motion.section>
+
+      {/* Phase D.1 (2026-05-24) — TOTP MFA enrollment + disable flow. */}
+      <MfaSection />
     </div>
   );
 }
