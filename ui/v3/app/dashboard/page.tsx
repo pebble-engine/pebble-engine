@@ -37,6 +37,7 @@ import {
   toggleStar,
   fetchActivity,
   deleteProject,
+  rollback,
   type ProjectSummary,
   type ActivityRow,
 } from "@/lib/api";
@@ -71,6 +72,44 @@ export default function DashboardPage() {
   // without stale-closure surprises.
   const pendingDeleteRef = useRef<PendingDelete | null>(null);
   useEffect(() => { pendingDeleteRef.current = pendingDelete; }, [pendingDelete]);
+
+  // Restore-from-activity toast — fires after a successful inline
+  // rollback from the ActivityFeed. Auto-dismisses after 5s. The
+  // `tone` lets us reuse the same toast surface for the failure path.
+  type RestoreToast = {
+    tone: "success" | "error";
+    message: string;
+    slug?: string;       // success only — drives the "Open workspace" link
+    timestamp: number;   // disambiguates rapid-fire toasts in AnimatePresence
+  };
+  const [restoreToast, setRestoreToast] = useState<RestoreToast | null>(null);
+  useEffect(() => {
+    if (!restoreToast) return;
+    const id = setTimeout(() => setRestoreToast(null), 5000);
+    return () => clearTimeout(id);
+  }, [restoreToast]);
+
+  /** Confirm + fire a rollback for an ActivityFeed row. */
+  async function handleRestoreFromActivity(row: ActivityRow) {
+    const niceWhen = formatRelative(row.written_at);
+    const ok = window.confirm(
+      `Restore ${row.business_name} to this snapshot (${niceWhen})? Current state is auto-snapshotted first so this is reversible.`,
+    );
+    if (!ok) return;
+    try {
+      await rollback(row.slug, row.snapshot_id);
+      setRestoreToast({
+        tone: "success",
+        message: `Restored ${row.business_name} to ${niceWhen}.`,
+        slug: row.slug,
+        timestamp: Date.now(),
+      });
+      void refresh();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Couldn't restore that snapshot.";
+      setRestoreToast({ tone: "error", message: msg, timestamp: Date.now() });
+    }
+  }
 
   useEffect(() => {
     void refresh();
@@ -360,10 +399,14 @@ export default function DashboardPage() {
           </motion.div>
 
           {!loading && activity.length > 0 && (
-            <ActivityFeed activity={activity} onOpenProject={(slug) => {
-              const p = projects.find((x) => x.slug === slug);
-              if (p) openProject(p);
-            }} />
+            <ActivityFeed
+              activity={activity}
+              onOpenProject={(slug) => {
+                const p = projects.find((x) => x.slug === slug);
+                if (p) openProject(p);
+              }}
+              onRestore={handleRestoreFromActivity}
+            />
           )}
         </div>
       </div>
@@ -372,6 +415,13 @@ export default function DashboardPage() {
 
       {/* Gmail-style undo toast — only one pending delete at a time. */}
       <DeleteUndoToast pending={pendingDelete} onUndo={handleUndoDelete} />
+
+      {/* Restore-from-activity toast — auto-dismisses; success variant
+          carries a link to open the workspace at the restored slug. */}
+      <RestoreToast toast={restoreToast} onOpen={(slug) => {
+        const p = projects.find((x) => x.slug === slug);
+        if (p) openProject(p);
+      }} onDismiss={() => setRestoreToast(null)} />
     </div>
   );
 }
@@ -621,20 +671,24 @@ function FilterChip({
 // ---------------------------------------------------------------------------
 
 function ActivityFeed({
-  activity, onOpenProject,
-}: { activity: ActivityRow[]; onOpenProject: (slug: string) => void }) {
+  activity, onOpenProject, onRestore,
+}: {
+  activity: ActivityRow[];
+  onOpenProject: (slug: string) => void;
+  onRestore: (row: ActivityRow) => void;
+}) {
   return (
     <section className="pt-4 border-t border-border space-y-4">
       <div className="flex items-center gap-2">
         <Clock className="w-4 h-4 text-muted-foreground" />
         <h2 className={`${type.eyebrow} text-foreground`}>Recently changed</h2>
-        <p className={type.caption}>— every refinement and edit, undoable from the project workspace.</p>
+        <p className={type.caption}>— hover a row to undo a refinement or edit in place.</p>
       </div>
       <ul className="space-y-1.5">
         {activity.slice(0, 10).map((row) => (
           <li
             key={`${row.slug}-${row.snapshot_id}`}
-            className={`${interactions.card} flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border cursor-pointer`}
+            className={`${interactions.card} group flex items-center justify-between gap-3 p-3 rounded-lg bg-card border border-border cursor-pointer`}
             onClick={() => onOpenProject(row.slug)}
             tabIndex={0}
           >
@@ -646,13 +700,85 @@ function ActivityFeed({
                 {labelForReason(row.reason)} · {formatRelative(row.written_at)}
               </p>
             </div>
-            <span className={`${type.mono} text-muted-foreground shrink-0`}>
-              {row.files_count} files
-            </span>
+            <div className="flex items-center gap-3 shrink-0">
+              {/* Restore button — visible on row hover only; keyboard
+                  users always see it via focus-within fallback. Click
+                  stops propagation so the row's "open project" doesn't
+                  also fire. */}
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onRestore(row); }}
+                className="opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2 py-1 rounded"
+                aria-label={`Restore ${row.business_name} to this snapshot`}
+                title="Restore this snapshot"
+              >
+                <Undo2 className="w-3.5 h-3.5" />
+                Restore
+              </button>
+              <span className={`${type.mono} text-muted-foreground`}>
+                {row.files_count} files
+              </span>
+            </div>
           </li>
         ))}
       </ul>
     </section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// RestoreToast — feedback for inline rollback from ActivityFeed.
+// Success variant carries an "Open workspace" link. Auto-dismisses in 5s
+// (timer lives in the parent). Mirrors DeleteUndoToast's layout for
+// visual continuity.
+// ---------------------------------------------------------------------------
+
+function RestoreToast({
+  toast, onOpen, onDismiss,
+}: {
+  toast: { tone: "success" | "error"; message: string; slug?: string; timestamp: number } | null;
+  onOpen: (slug: string) => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] pointer-events-none">
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            key={`restore-${toast.timestamp}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className={`pointer-events-auto rounded-xl shadow-xl px-4 py-3 flex items-center gap-4 max-w-md ${
+              toast.tone === "success"
+                ? "bg-foreground text-background"
+                : "bg-destructive text-destructive-foreground"
+            }`}
+            role="status"
+            aria-live="polite"
+          >
+            <Undo2 className="w-4 h-4 shrink-0 opacity-80" />
+            <div className="flex-1 text-sm">{toast.message}</div>
+            {toast.tone === "success" && toast.slug && (
+              <button
+                onClick={() => { onOpen(toast.slug!); onDismiss(); }}
+                className="text-sm font-bold uppercase tracking-wider text-primary hover:underline shrink-0"
+              >
+                Open
+              </button>
+            )}
+            <button
+              onClick={onDismiss}
+              className="text-xs opacity-70 hover:opacity-100 shrink-0"
+              aria-label="Dismiss"
+            >
+              ✕
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 }
 
