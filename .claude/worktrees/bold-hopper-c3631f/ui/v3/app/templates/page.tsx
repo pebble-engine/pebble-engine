@@ -28,7 +28,7 @@ import {
   type TemplateSummary,
 } from "@/lib/api";
 import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
-import { type Brief } from "@/lib/state";
+import { type Brief, getBrief } from "@/lib/state";
 
 
 export default function TemplatesPage() {
@@ -771,12 +771,32 @@ function InstantiateDialog({
   onClose: () => void;
   router: ReturnType<typeof useRouter>;
 }) {
-  const [businessName, setBusinessName] = useState("");
-  const [businessType, setBusinessType] = useState(
-    template.applicable_industries[0] || "",
+  // Pre-fill from any existing brief the user built earlier (welcome flow,
+  // signup flow, smart-defaults) so they don't retype what they already
+  // said. Falls back to template defaults / blanks on cold entry.
+  // sessionStorage is the source; survives signup redirect in the same tab.
+  // Marc 2026-05-25: closes the loop between "I typed my prompt" and
+  // "I picked a template" — without this, the prompt was being discarded
+  // the moment the user browsed templates.
+  const initial = useMemo(() => getBrief(), []);
+  const hadBrief = Boolean(
+    (initial.business_name && String(initial.business_name).trim()) ||
+    (initial.notes_freeform && String(initial.notes_freeform).trim()),
   );
-  const [location, setLocation] = useState("");
-  const [notes, setNotes] = useState("");
+  const [businessName, setBusinessName] = useState(
+    (initial.business_name as string | undefined) ?? "",
+  );
+  const [businessType, setBusinessType] = useState(
+    (initial.business_type as string | undefined)
+      || template.applicable_industries[0]
+      || "",
+  );
+  const [location, setLocation] = useState(
+    (initial.location as string | undefined) ?? "",
+  );
+  const [notes, setNotes] = useState(
+    (initial.notes_freeform as string | undefined) ?? "",
+  );
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -834,7 +854,11 @@ function InstantiateDialog({
             <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-1`}>
               {template.vibe}
             </p>
-            <h2 id="instantiate-dialog-title" className={`${type.dashboard.heading.l}`}>Use {template.name}</h2>
+            <h2 id="instantiate-dialog-title" className={`${type.dashboard.heading.l}`}>
+              {hadBrief && businessName
+                ? `Use ${template.name} for ${businessName}`
+                : `Use ${template.name}`}
+            </h2>
           </div>
           <button
             type="button"
@@ -845,7 +869,11 @@ function InstantiateDialog({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <p className={`${type.body.s} text-muted-foreground mb-5`}>{template.best_for}</p>
+        <p className={`${type.body.s} text-muted-foreground mb-5`}>
+          {hadBrief
+            ? "We saved what you told us earlier — confirm or tweak below."
+            : template.best_for}
+        </p>
 
         <div className="space-y-4">
           <FieldLabel label="Your business name" required>
@@ -909,7 +937,11 @@ function InstantiateDialog({
             className="px-5 py-2 rounded-full bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60 transition-colors flex items-center gap-2"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Building…" : "Use this template"}
+            {submitting
+              ? "Building…"
+              : hadBrief
+                ? "Build my site"
+                : "Use this template"}
           </button>
         </div>
       </motion.div>
