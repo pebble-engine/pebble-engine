@@ -870,6 +870,27 @@ def run_change_password(handler) -> None:
         handler._json(401, {"error": "current password is incorrect"})
         return
 
+    # HIBP leaked-password check on the NEW password. Free k-anonymity
+    # range query (only first 5 chars of SHA-1 sent off-host). Free-tier
+    # Supabase can't enable this server-side (Pro plan only), so we run
+    # it ourselves. Fail-OPEN on HIBP outage — see module docstring.
+    from pebble.password_security import check_pwned
+    pwn_count = check_pwned(new)
+    if pwn_count is not None and pwn_count > 0:
+        from pebble.audit_log import log_event_for_handler
+        log_event_for_handler(
+            handler=handler, user_id=user["id"],
+            event_type="password_change_failed",
+            metadata={"reason": "pwned_password", "breach_count": pwn_count},
+        )
+        handler._json(400, {
+            "error": (
+                f"This password has appeared in {pwn_count:,} known data "
+                f"breaches. Please choose a different one."
+            ),
+        })
+        return
+
     if not _update_password(user["id"], new):
         handler._json(500, {"error": "could not update password — try again in a moment"})
         return
