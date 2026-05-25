@@ -420,6 +420,14 @@ def route_post(handler) -> None:
             # notification email. Per-user rate-limited to 5/hour.
             from pebble.server.account import run_change_password
             run_change_password(handler)
+        elif handler.path == "/api/account/mfa-event":
+            # Phase D.1 (2026-05-24) — client-side hook for the v3
+            # SecurityTab. After Supabase mfa.verify / mfa.unenroll
+            # succeeds, the frontend posts here so the engine writes
+            # audit_log + sends notification email. event_type allow-list
+            # + 5/min rate-limit prevent abuse via stolen session.
+            from pebble.server.account_mfa import run_record_mfa_event
+            run_record_mfa_event(handler)
         elif handler.path == "/api/account/change-email-request":
             # Re-auth challenge + single-use pending token + confirmation
             # email to NEW address. Per-user rate-limited 3/24h.

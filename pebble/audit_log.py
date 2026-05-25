@@ -18,12 +18,14 @@ Currently emitted by the codebase:
   account_delete_failed,
   data_export_requested, data_export_delivered, data_export_failed,
   data_export_download_denied,
-  stripe_subscription_canceled.
+  stripe_subscription_canceled,
+  mfa_enabled, mfa_disabled,                     # Phase D.1 (2026-05-24)
+  session_revoked, global_signout.               # Phase D.2/D.3 (2026-05-24)
 
-Reserved for upcoming Phase D (MFA + sessions list) and Phase 44b (billing
-events). Not emitted today — do not write code that depends on their presence
-in the audit_log until the relevant phase ships:
-  mfa_enabled, mfa_disabled, signed_in_new_device, global_signout,
+Reserved for upcoming Phase 44b (billing events). Not emitted today — do not
+write code that depends on their presence in the audit_log until the relevant
+phase ships:
+  signed_in_new_device,
   plan_changed, payment_method_changed.
 
 Requires env vars: SUPABASE_URL (or PEBBLE_SUPABASE_URL) and

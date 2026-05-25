@@ -704,6 +704,130 @@ def send_data_export_ready(email: str, download_url: str,
                 sender=sender)
 
 
+def send_mfa_enabled_notification(email: str,
+                                  sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that two-factor auth was just turned on for their
+    account. Sent AFTER the Supabase verify step succeeds so a real
+    customer who didn't enable it (i.e. their session was compromised)
+    finds out immediately.
+
+    Defensive-notify pattern, identical shape to
+    :func:`send_password_changed_notification` — short body, recovery
+    CTA inline. Phase D.1 (2026-05-24)."""
+    base = _base_url()
+    settings_url = f"{base}/settings?tab=security"
+    forgot_url = f"{base}/auth/forgot"
+    subject = "Two-factor auth was just enabled on your Pebble account"
+    text = (
+        "Two-factor authentication was just enabled on your Pebble account.\n\n"
+        "From now on, sign-in will ask for a code from your authenticator app "
+        "in addition to your password.\n\n"
+        "If this was you, no action needed.\n\n"
+        "If this wasn't you, your account may be compromised. Reset your "
+        "password immediately:\n"
+        f"  {forgot_url}\n\n"
+        f"and review the change at {settings_url}.\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Two-factor authentication was just enabled on your Pebble account.</p>"
+        "<p>From now on, sign-in will ask for a code from your authenticator app "
+        "in addition to your password.</p>"
+        "<p>If this was you, no action needed.</p>"
+        "<p>If this <strong>wasn't</strong> you, your account may be compromised. "
+        "Reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we '
+        "can lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_mfa_disabled_notification(email: str,
+                                   sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that two-factor auth was just turned OFF. Higher-
+    risk transition than enabling — a compromised session would WANT to
+    disable MFA to keep its foothold. Sent AFTER unenroll succeeds.
+    Phase D.1 (2026-05-24)."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    settings_url = f"{base}/settings?tab=security"
+    subject = "Two-factor auth was just disabled on your Pebble account"
+    text = (
+        "Two-factor authentication was just turned OFF on your Pebble account.\n\n"
+        "From now on, only your password protects sign-in.\n\n"
+        "If this was you, you can re-enable it any time at "
+        f"{settings_url}.\n\n"
+        "If this WASN'T you, treat your account as compromised:\n"
+        f"  1. Reset your password immediately: {forgot_url}\n"
+        f"  2. Re-enable two-factor auth at {settings_url}\n"
+        "  3. Email support@pebbleapp.ai so we can review recent activity\n\n"
+        "— Pebble"
+    )
+    html = (
+        "<p>Two-factor authentication was just turned <strong>OFF</strong> on your "
+        "Pebble account.</p>"
+        "<p>From now on, only your password protects sign-in.</p>"
+        f'<p>If this was you, you can re-enable it any time at '
+        f'<a href="{_escape_html(settings_url)}">your security settings</a>.</p>'
+        "<p>If this <strong>wasn't</strong> you, treat your account as compromised:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then re-enable two-factor at '
+        f'<a href="{_escape_html(settings_url)}">your security settings</a> and email '
+        "support@pebbleapp.ai so we can review recent activity.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
+def send_global_signout_notification(email: str, *, device_count: int = 0,
+                                     sender: Optional[EmailSender] = None) -> dict:
+    """Notify the user that they (or someone on their account) just signed
+    out every active session. Same defensive-notify pattern as the password
+    change — a compromised attacker WON'T trigger this themselves, but a
+    real customer who didn't initiate it knows immediately to reset their
+    password. Phase D.3 (2026-05-24)."""
+    base = _base_url()
+    forgot_url = f"{base}/auth/forgot"
+    subject = "All devices signed out of your Pebble account"
+    summary = (
+        f"All sessions (about {device_count} device{'s' if device_count != 1 else ''}) "
+        if device_count > 0
+        else "All active sessions on your Pebble account "
+    )
+    text = (
+        f"{summary}were just signed out.\n\n"
+        "If this was you, no action needed — just sign back in on the devices "
+        "you trust.\n\n"
+        "If this wasn't you, reset your password immediately:\n"
+        f"  {forgot_url}\n\n"
+        "Then email support@pebbleapp.ai so we can lock down your account.\n\n"
+        "— Pebble"
+    )
+    html = (
+        f"<p>{_escape_html(summary)}were just signed out.</p>"
+        "<p>If this was you, no action needed — just sign back in on the devices "
+        "you trust.</p>"
+        "<p>If this <strong>wasn't</strong> you, reset your password immediately:</p>"
+        f'<p><a href="{_escape_html(forgot_url)}" style="background:#c0392b;color:#fff;'
+        f'padding:10px 16px;border-radius:8px;text-decoration:none;font-weight:600">'
+        f"Reset my password</a></p>"
+        f'<p style="font-size:13px;color:#666">Then email support@pebbleapp.ai so we '
+        "can lock down your account.</p>"
+        "<p>— Pebble</p>"
+    )
+    return send(EmailMessage(to=email, subject=subject, text=text, html=html),
+                sender=sender)
+
+
 def send_data_export_failed(email: str,
                             sender: Optional[EmailSender] = None) -> dict:
     """Sent when the background zip job failed. Tells the user to try
@@ -755,6 +879,9 @@ __all__ = [
     "send_email_change_completed",
     "send_data_export_ready",
     "send_data_export_failed",
+    "send_mfa_enabled_notification",
+    "send_mfa_disabled_notification",
+    "send_global_signout_notification",
     "render_welcome",
     "render_password_reset",
     # Shared rendering utilities used by sibling email modules.
