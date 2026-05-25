@@ -120,9 +120,23 @@ export function PebbleChat({ greeting, onCollapse }: PebbleChatProps) {
   const { user } = useAuth();
 
   const [tab, setTab] = useState<Tab>("chat");
-  const [history, setHistory] = useState<ChatMessage[]>(() =>
-    greeting ? [{ role: "assistant", content: greeting }] : [],
-  );
+  const [history, setHistory] = useState<ChatMessage[]>([]);
+
+  // The greeting arrives asynchronously — dashboard waits for projects
+  // to load before building the personalized line. We inject it as
+  // Pebble's opening message exactly once. The ref guard ensures we
+  // never overwrite a conversation the user has already started, and
+  // never re-inject if the prop object reference changes but the actual
+  // text hasn't (React strict-mode double-invoke safety).
+  const greetingSetRef = useRef(false);
+  useEffect(() => {
+    if (!greeting || greetingSetRef.current) return;
+    setHistory((prev) => {
+      if (prev.length > 0) return prev; // conversation already started
+      greetingSetRef.current = true;
+      return [{ role: "assistant", content: greeting }];
+    });
+  }, [greeting]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
