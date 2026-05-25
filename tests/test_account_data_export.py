@@ -163,13 +163,21 @@ def test_export_request_rate_limited(tmp_path, monkeypatch):
 
 
 def test_download_with_valid_token_streams_zip(tmp_path, monkeypatch):
-    """Manifest with valid token → 200 + zip bytes streamed."""
+    """Manifest with valid token → 200 + zip bytes streamed.
+
+    Fix 3 (2026-05-24): download requires Bearer JWT match. Authed user
+    requesting their OWN export → 200.
+    """
     out = tmp_path / "output"
     out.mkdir()
     monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
 
     # Create a real zip file + manifest.
     user_id = "u-1"
+    monkeypatch.setattr(
+        account_mod, "require_user",
+        lambda h: {"id": user_id, "email": "test@example.com"},
+    )
     exports = out / ".exports" / user_id
     exports.mkdir(parents=True)
     zip_path = exports / "test-export.zip"
@@ -202,6 +210,10 @@ def test_download_with_expired_token_410(tmp_path, monkeypatch):
     out = tmp_path / "output"
     out.mkdir()
     monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(
+        account_mod, "require_user",
+        lambda h: {"id": "u-1", "email": "test@example.com"},
+    )
 
     exports = out / ".exports" / "u-1"
     exports.mkdir(parents=True)
@@ -229,7 +241,104 @@ def test_download_with_unknown_token_404(tmp_path, monkeypatch):
     out = tmp_path / "output"
     out.mkdir()
     monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
+    monkeypatch.setattr(
+        account_mod, "require_user",
+        lambda h: {"id": "u-1", "email": "test@example.com"},
+    )
 
     h = _FakeHandler(path="/api/account/export-download?token=does-not-exist")
     account_mod.run_download_export(h)
     assert h.responses[-1][0] == 404
+
+
+# ---- Fix 3 (2026-05-24): Bearer-JWT match for export-download ------------
+
+def test_download_unauthenticated_returns_401(tmp_path, monkeypatch):
+    """No Bearer JWT → 401. The download URL is no longer a public
+    capability link — anyone with the URL could re-download for 24h
+    (browser history, mail-forward, employer mail-scanning proxy)."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
+
+    # require_user writes 401 when no/invalid Authorization header.
+    def fail_auth(h):
+        h._json(401, {"error": "sign in required"})
+        return None
+
+    monkeypatch.setattr(account_mod, "require_user", fail_auth)
+
+    # Seed a valid manifest so we can prove the auth check fires BEFORE lookup.
+    user_id = "u-victim"
+    exports = out / ".exports" / user_id
+    exports.mkdir(parents=True)
+    zip_path = exports / "v.zip"
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("x", "")
+    (exports / "v.manifest.json").write_text(json.dumps({
+        "token": "victim-token",
+        "zip_path": str(zip_path),
+        "user_id": user_id,
+        "expires_at": "2099-01-01T00:00:00+00:00",
+        "requested_at": "2026-05-24T00:00:00+00:00",
+    }))
+
+    h = _FakeHandler(path="/api/account/export-download?token=victim-token")
+    account_mod.run_download_export(h)
+
+    assert h.responses[-1][0] == 401
+    # Zip bytes must NOT have streamed.
+    assert h.raw_writes == []
+
+
+def test_download_other_user_returns_403_and_audits(tmp_path, monkeypatch):
+    """Authed user A requesting user B's manifest → 403. The mismatch is
+    a security failure (the URL is the only secret), so it gets audit-logged.
+    Returning 404 would mask the leak from server-side detection."""
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
+
+    # Authed as user-A
+    monkeypatch.setattr(
+        account_mod, "require_user",
+        lambda h: {"id": "user-A", "email": "a@example.com"},
+    )
+
+    audit_calls: list[dict] = []
+    monkeypatch.setattr(
+        "pebble.audit_log.log_event_for_handler",
+        lambda **kw: audit_calls.append(kw),
+    )
+    monkeypatch.setattr(
+        "pebble.audit_log.log_event", lambda **kw: audit_calls.append(kw),
+    )
+
+    # Manifest belongs to user-B
+    exports_b = out / ".exports" / "user-B"
+    exports_b.mkdir(parents=True)
+    zip_b = exports_b / "b.zip"
+    with zipfile.ZipFile(zip_b, "w") as z:
+        z.writestr("secret.txt", "leaked")
+    (exports_b / "b.manifest.json").write_text(json.dumps({
+        "token": "user-b-token",
+        "zip_path": str(zip_b),
+        "user_id": "user-B",
+        "expires_at": "2099-01-01T00:00:00+00:00",
+        "requested_at": "2026-05-24T00:00:00+00:00",
+    }))
+
+    h = _FakeHandler(path="/api/account/export-download?token=user-b-token")
+    account_mod.run_download_export(h)
+
+    assert h.responses[-1][0] == 403, \
+        "user-A must NOT receive user-B's export — and we return 403 " \
+        "(not 404) so server-side detection can spot the leak"
+    # Zip bytes must NOT have streamed.
+    assert h.raw_writes == []
+    # Audit trail: the mismatch is a security event.
+    assert any(
+        "export" in (c.get("event_type") or "").lower() and
+        "denied" in (c.get("event_type") or "").lower()
+        for c in audit_calls
+    ), f"expected export-denied audit log, got: {[c.get('event_type') for c in audit_calls]}"

@@ -1205,6 +1205,17 @@ def run_request_data_export(handler) -> None:
 def run_download_export(handler) -> None:
     """GET /api/account/export-download?token=<token> — streams the zip.
 
+    Auth (Fix 3, 2026-05-24): requires Bearer JWT match against the
+    manifest's user_id. The token alone is NOT a capability link —
+    before this fix, anyone with the URL could re-download for 24h
+    (browser history, email-forward, employer mail-scanning proxy,
+    shoulder-surf, etc.). The token is what makes the URL discoverable;
+    the JWT is what makes the download authorized.
+
+    The token is still NOT consumed on first download — legit retries
+    (mid-download network blip, second device) need to work for the
+    24h window. The auth check is what protects re-use by an attacker.
+
     Lookup order (backward-compat for in-flight tokens on first deploy):
       1. Supabase public.data_export_manifests table (migration 006).
       2. Fallback: scan output/.exports/**/*.manifest.json (legacy).
@@ -1215,6 +1226,12 @@ def run_download_export(handler) -> None:
     requires the same engine instance that created the ZIP to serve it.
     Multi-instance ZIP storage is future work (S3/R2). See _build_export_zip.
     """
+    # Fix 3 (2026-05-24): require Bearer JWT BEFORE any lookup. require_user
+    # writes 401/503 and returns None on auth failure; we just need to bail.
+    user = require_user(handler)
+    if not user:
+        return
+
     from urllib.parse import urlparse, parse_qs
     qs = parse_qs(urlparse(handler.path).query)
     token = (qs.get("token", [""])[0] or "").strip()
@@ -1268,6 +1285,34 @@ def run_download_export(handler) -> None:
 
     if matched_data is None:
         handler._json(404, {"error": "token not found"})
+        return
+
+    # Fix 3 (2026-05-24): the authed user's id MUST match the manifest's
+    # user_id. If they don't, this is a leaked-URL replay attempt: someone
+    # got the link out-of-band (browser history, mail scan, screenshot)
+    # and is trying to download another user's export. Return 403 (NOT
+    # 404 — the mismatch IS an auth failure, and 403 lets server-side
+    # detection spot the leak in logs) and audit-log the event.
+    manifest_user_id = matched_data.get("user_id") or ""
+    if user["id"] != manifest_user_id:
+        try:
+            from pebble.audit_log import log_event_for_handler
+            log_event_for_handler(
+                handler=handler, user_id=user["id"],
+                event_type="data_export_download_denied",
+                metadata={
+                    "reason": "user_id mismatch",
+                    "manifest_user_id_suffix": manifest_user_id[-8:] if manifest_user_id else None,
+                },
+            )
+        except Exception:  # pragma: no cover — audit is fire-and-forget
+            pass
+        log.warning(
+            "[account] export-download denied: user=%s requested manifest "
+            "owned by user=...%s",
+            user["id"], manifest_user_id[-8:] if manifest_user_id else "?",
+        )
+        handler._json(403, {"error": "this export does not belong to your account"})
         return
 
     # Expiry check for the Supabase path (lookup_data_export_manifest already
