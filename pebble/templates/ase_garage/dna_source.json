@@ -1,0 +1,30 @@
+{
+  "dna_id":       "auto_honest_diag",
+  "name":         "ASE Honest Garage",
+  "vibe":         "Industrial slate + yellow + brick. Honest mechanic positioning with shimmer-stripe CTAs and a before/after slider.",
+  "hero_pattern": "split_hero_stat_panel_left_image_right",
+  "palette": {
+    "background":       "#fafaf9",
+    "background_alt":   "#e7e5e4",
+    "slate":            "#1e293b",
+    "yellow":           "#facc15",
+    "brick":            "#b91c1c",
+    "concrete":         "#e7e5e4",
+    "off_white":        "#fafaf9"
+  },
+  "fonts": {
+    "display": "Archivo Black",
+    "body":    "JetBrains Mono"
+  },
+  "signature_moves": [
+    "Slate hero with bottom-border yellow stripe navbar",
+    "Yellow shimmer-sweep CTAs (linear-gradient pseudo-element animation)",
+    "Brick red emergency-call CTA paired with shimmer-yellow primary",
+    "Split hero: stat copy left, mechanic photo right with corner overlay tag",
+    "8-card service strip in a 4-col grid (each card flips bg-yellow on hover with reveal price)",
+    "4-up 'Why Locals Drop Here' grid with big yellow numbered counters and slate bottom border",
+    "Pointer-drag before/after image slider with yellow handle and bold BEFORE/AFTER label tabs",
+    "3-step Drop & Go process with yellow circle numbers on a centered vertical hairline",
+    "Yellow location band (slate text on yellow) with shop hours table"
+  ]
+}

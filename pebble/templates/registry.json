@@ -1288,6 +1288,44 @@
       "preview_pages": [
         { "label": "Home", "path": "/" }
       ]
+    },
+    {
+      "id": "ase_garage",
+      "directory": "pebble/templates/ase_garage",
+      "name": "ASE Honest Garage",
+      "tagline": "Honest mechanic positioning. Slate + yellow + brick. Before/after slider + drop-and-go process.",
+      "vibe": "Industrial Slate + Hazard Yellow",
+      "source_dna": "auto_honest_diag",
+      "applicable_industries": [
+        "auto repair",
+        "mechanic",
+        "auto service",
+        "tire shop",
+        "auto body",
+        "transmission shop",
+        "brake shop",
+        "diagnostic shop",
+        "import auto specialist",
+        "domestic auto specialist",
+        "lube and oil"
+      ],
+      "preview_image": "/templates-preview/ase_garage.png",
+      "color_swatches": [
+        "#1e293b",
+        "#facc15",
+        "#b91c1c",
+        "#fafaf9"
+      ],
+      "fonts": {
+        "display": "Archivo Black",
+        "body": "JetBrains Mono"
+      },
+      "best_for": "Independent ASE-certified auto repair shops competing on honesty + flat-fee diagnostics. Industrial slate + yellow shimmer CTAs + before/after work proof.",
+      "tier": "free",
+      "preview_url": "/preview-template/ase_garage/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
     }
   ],
   "_planned_next": []
