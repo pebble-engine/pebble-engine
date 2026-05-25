@@ -10,14 +10,15 @@
  * path because each instantiation costs ~$0.005 (vs $0.02-0.50 for
  * full /api/generate).
  *
- * The visual hook is "Templates Are Free" — copying Webild's exact
- * marketing framing because it works. The carrot routes lowest-commitment
- * users into the cheapest, most-likely-to-look-good path.
+ * Phase 56a (2026-05-25): Rebuilt as a cinematic horizontal carousel.
+ * B&W full-bleed slides, uppercase serif headline overlays, thumbnail
+ * ribbon replaces chip filter row.
  */
 import { useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Check, X, Loader2, Eye, ExternalLink, Upload } from "lucide-react";
 import { FloatingPeblet } from "@/components/floating-peblet";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
@@ -26,7 +27,7 @@ import {
   instantiateTemplate,
   type TemplateSummary,
 } from "@/lib/api";
-import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type Brief } from "@/lib/state";
 
 
@@ -34,18 +35,21 @@ export default function TemplatesPage() {
   const router = useRouter();
   const [templates, setTemplates] = useState<TemplateSummary[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Phase 32a (2026-05-20) — two-step flow: clicking a card opens the
-  // PREVIEW pane (iframe + page tabs). User browses home/about/etc.
-  // before clicking "Use this template" → instantiate dialog.
   const [previewing, setPreviewing] = useState<TemplateSummary | null>(null);
   const [picked, setPicked] = useState<TemplateSummary | null>(null);
   const [activeIndustry, setActiveIndustry] = useState<string | null>(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
 
   useEffect(() => {
     listTemplates()
       .then((res) => setTemplates(res.templates))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
+
+  // Reset to start when filter changes
+  useEffect(() => {
+    setCarouselIndex(0);
+  }, [activeIndustry]);
 
   // Unique sorted industry list extracted from all templates.
   const industries = useMemo(() => {
@@ -65,6 +69,15 @@ export default function TemplatesPage() {
     [templates],
   );
 
+  // Helper: first preview_image for a given industry (thumbnail ribbon)
+  const firstImageForIndustry = useCallback(
+    (ind: string): string | null => {
+      const t = (templates ?? []).find((x) => x.applicable_industries.includes(ind));
+      return t?.preview_image ?? null;
+    },
+    [templates],
+  );
+
   const visible = useMemo(
     () =>
       (templates ?? []).filter(
@@ -77,15 +90,14 @@ export default function TemplatesPage() {
     <div className="min-h-screen-safe flex flex-col bg-background text-foreground">
       <TopNav />
       <main className="flex-1 px-6 md:px-12 lg:px-16 py-12 max-w-7xl mx-auto w-full">
+        {/* ── Page header ── */}
         <header className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 mb-4 rounded-full border border-border bg-card text-xs">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span className={`${type.mono} uppercase tracking-wider`}>Templates are free</span>
-          </div>
-          <h1 className={`${type.dashboard.display.l} mb-3`}>Start with a template</h1>
+          <p className={`${type.mono} text-[10px] uppercase tracking-widest text-muted-foreground mb-3`}>
+            Template gallery
+          </p>
+          <h1 className={`${type.dashboard.display.l} mb-3`}>Cinematic Template Carousel</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-2xl mx-auto`}>
-            Hand-curated designs across industries. Pick one, fill in your business info,
-            ship in under a minute. Customize anything after.
+            Curated for professionals. Build with confidence.
           </p>
         </header>
 
@@ -102,33 +114,6 @@ export default function TemplatesPage() {
           </div>
         )}
 
-        {/* Industry ribbon — horizontal scrollable filter */}
-        {templates && (
-          <div className="relative mb-8">
-            <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-8 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
-            <div aria-hidden="true" className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
-            <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-1 px-1">
-              <RibbonChip
-                active={!activeIndustry}
-                onClick={() => setActiveIndustry(null)}
-                swatch={null}
-              >
-                All
-              </RibbonChip>
-              {industries.map((ind) => (
-                <RibbonChip
-                  key={ind}
-                  active={activeIndustry === ind}
-                  onClick={() => setActiveIndustry(ind)}
-                  swatch={firstSwatchForIndustry(ind)}
-                >
-                  {ind}
-                </RibbonChip>
-              ))}
-            </div>
-          </div>
-        )}
-
         {/* Template grid — filtered by active industry */}
         {templates && visible.length === 0 && (
           <div className="text-center text-muted-foreground py-16">
@@ -136,21 +121,84 @@ export default function TemplatesPage() {
           </div>
         )}
 
+        {/* ── Cinematic carousel ── */}
         {templates && visible.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {visible.map((t, i) => (
-              <TemplateCard
-                key={t.id}
-                template={t}
-                index={i}
-                onClick={() => setPreviewing(t)}
-              />
-            ))}
-            {/* Submit a template CTA — always last */}
-            <SubmitTemplateCard />
+          <div className="relative mb-10">
+            {/* Prev chevron */}
+            <button
+              type="button"
+              onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
+              disabled={carouselIndex === 0}
+              aria-label="Previous template"
+              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            {/* Next chevron */}
+            <button
+              type="button"
+              onClick={() =>
+                setCarouselIndex((i) => Math.min(visible.length - 1, i + 1))
+              }
+              disabled={carouselIndex >= visible.length - 1}
+              aria-label="Next template"
+              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            {/* Track */}
+            <div className="overflow-hidden px-12">
+              <motion.div
+                className="flex gap-4 items-center"
+                animate={{ x: -carouselIndex * 436 }}
+                transition={{ duration: 0.55, ease: EASE_CINEMATIC }}
+                style={{ paddingLeft: "calc(50% - 218px - 24px)" }}
+              >
+                {visible.map((t, i) => (
+                  <CinematicSlide
+                    key={t.id}
+                    template={t}
+                    active={i === carouselIndex}
+                    onClick={() => setPreviewing(t)}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Thumbnail Ribbon ── */}
+        {templates && (
+          <div className="space-y-3 mb-12">
+            <p className={`${type.mono} text-[10px] uppercase tracking-widest text-muted-foreground text-center`}>
+              Thumbnail ribbon
+            </p>
+            <div className="relative">
+              <div aria-hidden="true" className="absolute left-0 top-0 bottom-0 w-12 bg-gradient-to-r from-background to-transparent z-10 pointer-events-none" />
+              <div aria-hidden="true" className="absolute right-0 top-0 bottom-0 w-12 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none" />
+              <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden px-12 py-1">
+                <ThumbnailRibbonChip
+                  label="All"
+                  imageSrc={null}
+                  active={!activeIndustry}
+                  onClick={() => setActiveIndustry(null)}
+                />
+                {industries.map((ind) => (
+                  <ThumbnailRibbonChip
+                    key={ind}
+                    label={ind}
+                    imageSrc={firstImageForIndustry(ind)}
+                    active={activeIndustry === ind}
+                    onClick={() => setActiveIndustry(ind)}
+                  />
+                ))}
+                <SubmitThumbnail />
+              </div>
+            </div>
           </div>
         )}
       </main>
+
       {previewing && (
         <PreviewPane
           template={previewing}
@@ -169,100 +217,137 @@ export default function TemplatesPage() {
 }
 
 // ------------------------------------------------------------------ //
-// Template card — image OR fallback, never both                       //
+// CinematicSlide — B&W full-bleed with uppercase serif headline       //
 // ------------------------------------------------------------------ //
-// Phase 32e (2026-05-20). Earlier card had the fallback name overlay
-// rendering on TOP of every working image via `mix-blend-overlay`,
-// which made every card read as "big white serif name on a colored
-// background" regardless of the screenshot underneath — the dominant
-// homogenizing factor in the gallery. Fix: render fallback ONLY when
-// no preview_image is set OR the image fails to load (error state).
 
-function TemplateCard({
+function CinematicSlide({
   template: t,
-  index: i,
+  active,
   onClick,
 }: {
   template: TemplateSummary;
-  index: number;
+  active: boolean;
   onClick: () => void;
 }) {
   const [imgErrored, setImgErrored] = useState(false);
   const showFallback = !t.preview_image || imgErrored;
+  // Tagline → uppercase. Strip punctuation softening so it reads bold.
+  const headline = (t.tagline || t.name).toUpperCase();
   return (
-    <motion.button
+    <button
+      type="button"
       onClick={onClick}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: STANDARD_S, delay: i * 0.05, ease: EASE_CINEMATIC }}
-      aria-label={t.name}
-      className="group text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
+      aria-label={`Preview ${t.name}`}
+      className={`relative shrink-0 w-[300px] sm:w-[360px] md:w-[420px] aspect-[3/4] rounded-2xl overflow-hidden group transition-all duration-500 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 ${
+        active ? "scale-100 opacity-100" : "scale-[0.92] opacity-50"
+      }`}
     >
-      <div
-        className="relative aspect-[4/3] w-full overflow-hidden bg-muted"
-        style={{
-          background: showFallback && t.color_swatches?.length
-            ? `linear-gradient(135deg, ${t.color_swatches.join(", ")})`
-            : undefined,
-        }}
-      >
-        {!showFallback && (
-          /* eslint-disable-next-line @next/next/no-img-element */
-          <img
-            src={t.preview_image}
-            alt={`${t.name} preview`}
-            className="absolute inset-0 w-full h-full object-cover object-top"
-            loading="lazy"
-            onError={() => setImgErrored(true)}
-          />
-        )}
-        {showFallback && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <p
-              className={`${type.dashboard.display.m} opacity-90 px-4 text-center`}
-              style={{
-                fontFamily: t.fonts?.display
-                  ? `'${t.fonts.display}', serif`
-                  : undefined,
-              }}
-            >
-              {t.name}
-            </p>
-          </div>
-        )}
-        {/* Cinematic hover overlay — reveals tagline on hover */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4 z-10">
-          <p className="text-white text-sm font-medium leading-snug line-clamp-2">
-            {t.tagline}
-          </p>
-        </div>
-      </div>
-      {/* Simplified body — name + tagline + ≤2 industries.
-          Marc 2026-05-24: dropped the vibe codename ("GLOW EMERALD DUAL-THEME")
-          and reduced visible industries from 4 to 2 — the cards were reading
-          as walls of tag chips. Names should carry the gallery, not metadata. */}
-      <div className="p-5">
-        <h3 className={`${type.dashboard.heading.m} mb-2`}>{t.name}</h3>
-        <p className={`${type.body.s} text-muted-foreground line-clamp-1 mb-3`}>
-          {t.tagline}
+      {/* Background image — grayscale by default, full color on hover */}
+      {!showFallback && (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={t.preview_image}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover object-center grayscale group-hover:grayscale-0 transition-all duration-700"
+          loading="lazy"
+          onError={() => setImgErrored(true)}
+        />
+      )}
+      {showFallback && (
+        <div
+          className="absolute inset-0"
+          style={{
+            background: t.color_swatches?.length
+              ? `linear-gradient(135deg, ${t.color_swatches.join(", ")})`
+              : "linear-gradient(135deg, #1a1a1a, #333)",
+            filter: "grayscale(1)",
+          }}
+        />
+      )}
+      {/* Dark gradient overlay for text legibility */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-black/30" />
+      {/* Headline text — bottom-left aligned */}
+      <div className="absolute inset-x-0 bottom-0 p-6 md:p-8 text-left">
+        <h3
+          className="text-white font-bold leading-[0.95] tracking-tight uppercase mb-3"
+          style={{
+            fontFamily: "Georgia, 'Times New Roman', serif",
+            fontSize: "clamp(1.75rem, 3.5vw, 2.5rem)",
+          }}
+        >
+          {headline}
+        </h3>
+        <p className="text-white/70 text-[10px] uppercase tracking-widest font-medium">
+          {t.applicable_industries.slice(0, 2).join(" · ")}
         </p>
-        <div className="flex flex-wrap gap-1.5">
-          {t.applicable_industries.slice(0, 2).map((ind) => (
-            <span
-              key={ind}
-              className={`${type.mono} px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground`}
-            >
-              {ind}
-            </span>
-          ))}
-          {t.applicable_industries.length > 2 && (
-            <span className={`${type.mono} px-2 py-0.5 rounded-full text-xs text-muted-foreground`}>
-              +{t.applicable_industries.length - 2}
-            </span>
-          )}
-        </div>
       </div>
-    </motion.button>
+    </button>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// ThumbnailRibbonChip — small image card for industry filter          //
+// ------------------------------------------------------------------ //
+
+function ThumbnailRibbonChip({
+  label,
+  imageSrc,
+  active,
+  onClick,
+}: {
+  label: string;
+  imageSrc?: string | null;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative shrink-0 w-[120px] h-[80px] rounded-lg overflow-hidden group transition-all border-2 ${
+        active
+          ? "border-foreground scale-100 opacity-100"
+          : "border-transparent opacity-60 hover:opacity-100"
+      }`}
+      aria-label={`Filter by ${label}`}
+      aria-pressed={active}
+    >
+      {imageSrc ? (
+        /* eslint-disable-next-line @next/next/no-img-element */
+        <img
+          src={imageSrc}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all"
+          loading="lazy"
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-br from-foreground/10 to-foreground/30" />
+      )}
+      <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors" />
+      <span className="absolute inset-x-0 bottom-1 text-center text-white text-[9px] uppercase tracking-widest font-bold px-1 truncate">
+        {label}
+      </span>
+    </button>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// SubmitThumbnail — thumbnail-sized "Submit a template" CTA           //
+// ------------------------------------------------------------------ //
+
+function SubmitThumbnail() {
+  return (
+    <Link
+      href="/community/launchpad"
+      className="relative shrink-0 w-[120px] h-[80px] rounded-lg overflow-hidden border-2 border-dashed border-border bg-card hover:border-foreground transition-colors group flex flex-col items-center justify-center gap-1"
+    >
+      <Upload className="w-4 h-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+      <span className={`${type.mono} text-[9px] uppercase tracking-widest text-muted-foreground group-hover:text-foreground transition-colors`}>
+        Submit
+      </span>
+    </Link>
   );
 }
 
@@ -286,12 +371,6 @@ function getFamily(
 // ------------------------------------------------------------------ //
 // Preview pane (Phase 32e) — screenshot/iframe + variant strip + auth //
 // ------------------------------------------------------------------ //
-// All 21 cards now open this pane. For base templates it shows the
-// live iframe (with page tabs). For color variants it shows the
-// Playwright screenshot. Either way the family variant strip lets users
-// browse siblings before committing. "Want to use this template?" is
-// auth-gated: anonymous users see a soft sign-in nudge rather than a
-// hard redirect.
 
 function PreviewPane({
   template: initialTemplate,
@@ -331,16 +410,8 @@ function PreviewPane({
   }, [onClose]);
 
   const active = pages[activeIdx] ?? pages[0];
-  // Templates with absolute preview_urls (legacy localhost:3199 entries) load
-  // as-is. Engine-served static-export URLs (/preview-template/<id>/...) need
-  // the engine origin prefixed so the iframe resolves to port 8000, not v3's
-  // port 3001. Mirror the ENGINE_BASE logic from lib/api.ts exactly.
   const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
   const previewUrl = current.preview_url ?? "";
-  // Both preview_url and active.path may carry a leading/trailing slash —
-  // naive concat ("/preview-template/<id>/" + "/about") emits a double slash
-  // that the engine's path-traversal guard interprets as an absolute path
-  // and 403s ("path outside template root"). Normalize once here.
   const trimmedPath = (active.path || "").replace(/^\/+/, "");
   const trimmedPreview = previewUrl.replace(/\/+$/, "");
   const iframeSrc = previewUrl.startsWith("/")
@@ -506,13 +577,6 @@ function PreviewPane({
             src={iframeSrc}
             className="w-full h-full rounded-lg border border-white/10 bg-white"
             title={`${current.name} ${active.label} preview`}
-            // allow-downloads is required because Next.js static export
-            // (basePath: "/preview-template/<id>") triggers a "download"
-            // sandbox check on font preload / image-asset prefetches that
-            // get classified as attachments by Chrome's heuristic. Without
-            // it the iframe body stays empty even when the engine returns 200.
-            // allow-popups + allow-popups-to-escape-sandbox so target=_blank
-            // links from inside the preview (e.g. "View live") open properly.
             sandbox="allow-scripts allow-same-origin allow-forms allow-downloads allow-popups allow-popups-to-escape-sandbox"
           />
         ) : current.preview_image ? (
@@ -711,65 +775,5 @@ function FieldLabel({
       </span>
       {children}
     </label>
-  );
-}
-
-// ------------------------------------------------------------------ //
-// RibbonChip — industry filter chip with optional colour swatch       //
-// ------------------------------------------------------------------ //
-
-function RibbonChip({
-  active,
-  onClick,
-  swatch,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  swatch: string[] | null;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-full text-sm font-semibold transition-colors ${
-        active
-          ? "bg-foreground text-background"
-          : "bg-card border border-border text-muted-foreground hover:text-foreground"
-      }`}
-    >
-      {swatch && (
-        <span
-          className="w-5 h-4 rounded-sm shrink-0"
-          style={{ background: `linear-gradient(135deg, ${swatch.slice(0, 3).join(", ")})` }}
-        />
-      )}
-      {children}
-    </button>
-  );
-}
-
-// ------------------------------------------------------------------ //
-// SubmitTemplateCard — "Submit a template" always-visible CTA card    //
-// ------------------------------------------------------------------ //
-
-function SubmitTemplateCard() {
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        window.open(
-          "mailto:hello@getpebble.net?subject=Template+submission&body=Tell+us+about+your+template:+industry,+design+vibe,+link+to+a+live+demo+or+Figma+file.",
-        )
-      }
-      className="group text-left bg-card border-2 border-dashed border-border rounded-2xl overflow-hidden hover:border-primary/60 transition-colors aspect-[4/3] flex flex-col items-center justify-center gap-3 p-6"
-    >
-      <Upload className="w-8 h-8 text-muted-foreground group-hover:text-primary transition-colors" />
-      <p className="text-base font-bold text-foreground text-center">Submit a template</p>
-      <p className="text-sm text-muted-foreground text-center leading-snug">
-        Earn 30% on every install
-      </p>
-    </button>
   );
 }
