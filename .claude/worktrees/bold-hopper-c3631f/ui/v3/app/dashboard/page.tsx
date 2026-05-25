@@ -1167,87 +1167,31 @@ function EmptyState({ filter, query }: { filter: Filter; query: string }) {
 
 // ── DashboardEmptyHero — centered metallic P + light shafts + CTAs ──
 function DashboardEmptyHero() {
-  // Particles are generated client-side after mount to avoid SSR hydration
-  // mismatch from Math.random(). Fade-in effect is a nice side-benefit.
-  const [particles, setParticles] = useState<Array<{ x: number; y: number; size: number; opacity: number; delay: number }>>([]);
-  useEffect(() => {
-    setParticles(
-      Array.from({ length: 50 }, () => ({
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        size: Math.random() * 2 + 0.5,
-        opacity: Math.random() * 0.6 + 0.2,
-        delay: Math.random() * 2,
-      })),
-    );
-  }, []);
-
+  // The dramatic visual — metallic P + light shafts + star particles —
+  // is the user's design ref cropped to just the spotlight region.
+  // React renders real text + buttons below it on a matching dark
+  // continuation. No CSS approximation; the image IS the design.
   return (
-    <div className="relative rounded-3xl overflow-hidden bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 min-h-[520px] flex flex-col items-center justify-center px-6 py-10">
-      {/* God-ray light shafts — radial spotlight from above-center */}
-      <div
+    <div className="relative rounded-3xl overflow-hidden bg-[#1a1d20] min-h-[520px] flex flex-col items-center justify-start px-6 pt-2 pb-10">
+      {/* Hero image — cropped from the design reference (610x255 native) */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/dashboard/hero-bg.png"
+        alt=""
         aria-hidden="true"
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `
-            radial-gradient(ellipse 60% 70% at 50% 30%, rgba(255,255,255,0.18), transparent 70%),
-            radial-gradient(ellipse 30% 50% at 50% 0%, rgba(255,255,255,0.25), transparent 60%)
-          `,
-        }}
+        className="w-full max-w-[720px] h-auto select-none pointer-events-none"
+        // @ts-expect-error fetchpriority is valid HTML but not in React typedefs yet
+        fetchpriority="high"
       />
-      {/* Conic light rays — subtle */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: `conic-gradient(
-            from 180deg at 50% 30%,
-            transparent 0deg,
-            rgba(255,255,255,0.05) 15deg,
-            transparent 30deg,
-            rgba(255,255,255,0.07) 60deg,
-            transparent 75deg,
-            rgba(255,255,255,0.05) 105deg,
-            transparent 120deg,
-            transparent 240deg,
-            rgba(255,255,255,0.05) 255deg,
-            transparent 270deg,
-            rgba(255,255,255,0.07) 300deg,
-            transparent 315deg,
-            rgba(255,255,255,0.05) 345deg,
-            transparent 360deg
-          )`,
-        }}
-      />
-      {/* Particle field */}
-      {particles.map((p, i) => (
-        <motion.span
-          key={i}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: p.opacity }}
-          transition={{ duration: 1.5, delay: p.delay }}
-          className="absolute rounded-full bg-white pointer-events-none"
-          style={{
-            left: `${p.x}%`,
-            top: `${p.y}%`,
-            width: `${p.size}px`,
-            height: `${p.size}px`,
-          }}
-        />
-      ))}
-      {/* Big metallic P — uses image asset if present, CSS fallback otherwise */}
-      <div className="relative z-10 mb-6">
-        <MetallicPebbleLogo size="xl" imageSrc="/dashboard/metallic-p.png" />
-      </div>
-      {/* Copy */}
-      <div className="relative z-10 text-center max-w-md">
+
+      {/* Copy + CTAs — rendered below the image on continuation of dark bg */}
+      <div className="text-center max-w-md -mt-2">
         <h2 className={`${type.dashboard.heading.l} text-white mb-2`}>
           No projects created yet.
         </h2>
         <p className={`${type.body.s} text-white/60 mb-8`}>
           Ready to start building? Create your first website or explore templates.
         </p>
-        {/* CTAs — centered side-by-side */}
         <div className="flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/workspace#phase=welcome"
