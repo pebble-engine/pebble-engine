@@ -80,6 +80,21 @@ export function FloatingPeblet({ greeting, projectContext }: FloatingPebletProps
     }
   }, [open]);
 
+  // External open hook — anything in the app can dispatch
+  //   window.postMessage({ type: "pebble-chat-open" }, "*")
+  // to open this widget. Used by the DashboardSidebar "Ask Pebble" button
+  // and the Community page "Ask Peblet" footer button.
+  useEffect(() => {
+    function handleMessage(e: MessageEvent) {
+      if (e.data?.type === "pebble-chat-open") {
+        setOpen(true);
+        openRef.current = true;
+      }
+    }
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
+
   function savePos(x: number, y: number) {
     try {
       window.localStorage.setItem(STORAGE_KEY, JSON.stringify({ x, y }));
@@ -153,7 +168,7 @@ export function FloatingPeblet({ greeting, projectContext }: FloatingPebletProps
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0, y: 8 }}
             transition={{ duration: 0.2 }}
-            className="w-[380px] h-[520px] rounded-2xl shadow-2xl border border-border bg-card flex flex-col overflow-hidden cursor-grab active:cursor-grabbing"
+            className="w-[380px] h-[520px] rounded-2xl shadow-2xl border border-white/15 bg-card/75 backdrop-blur-xl flex flex-col overflow-hidden cursor-grab active:cursor-grabbing"
           >
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-2.5 border-b border-border shrink-0">

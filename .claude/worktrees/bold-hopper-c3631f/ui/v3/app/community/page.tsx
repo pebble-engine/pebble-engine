@@ -184,30 +184,34 @@ export default function CommunityHomePage() {
     "Welcome to the community. I can show you launches, partners, or affiliate stuff — what do you want to see?";
 
   return (
-    <div className="flex flex-col h-screen-safe">
-      <TopNav projectName="Community" rightSlot={topRightSlot} />
-      <div className="flex-1 min-h-0">
-        <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
-          <div className="p-6 md:p-8">
-            <div className="max-w-6xl mx-auto space-y-10">
+    <div className="relative flex flex-col h-screen-safe">
+      {/* Full-viewport architectural photo — sits behind everything, sidebar + chat
+          panel + content all render OVER it with glassmorphism. Fixed so the photo
+          stays put when content below the hero scrolls. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1920&q=85"
+        alt=""
+        aria-hidden="true"
+        // @ts-expect-error fetchpriority is valid HTML but not in React typedefs yet
+        fetchpriority="high"
+        className="fixed inset-0 w-full h-full object-cover z-0 pointer-events-none"
+      />
+      {/* Dark overlay for legibility — kept moderate so the photo reads through */}
+      <div aria-hidden="true" className="fixed inset-0 bg-black/45 z-[1] pointer-events-none" />
 
-              {/* HERO — full-bleed cinematic photo with centered headline + dot-ticker */}
-              <section className="relative overflow-hidden rounded-3xl min-h-[560px] md:min-h-[620px] flex flex-col items-center justify-center px-6">
-                {/* Background photo — dark creative workspace */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80"
-                  alt=""
-                  aria-hidden="true"
-                  // @ts-expect-error fetchpriority is valid HTML but not in React typedefs yet
-                  fetchpriority="high"
-                  className="absolute inset-0 w-full h-full object-cover"
-                />
-                {/* Dark overlay */}
-                <div aria-hidden className="absolute inset-0 bg-black/55" />
+      {/* All UI sits above the photo */}
+      <div className="relative z-10 flex flex-col h-full">
+        <TopNav projectName="Pebble Community Hub" rightSlot={topRightSlot} />
+        <div className="flex-1 min-h-0">
+          <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
+            <div className="p-6 md:p-8">
+              <div className="max-w-6xl mx-auto space-y-10">
 
-                {/* Centered content */}
-                <div className="relative z-10 text-center space-y-6 max-w-4xl w-full">
+                {/* HERO — content sits directly on the global photo bg, no card chrome */}
+                <section className="relative min-h-[520px] md:min-h-[580px] flex flex-col items-center justify-center px-6">
+                  {/* Centered content */}
+                  <div className="relative z-10 text-center space-y-6 max-w-4xl w-full">
                   {/* Massive serif headline */}
                   <h1
                     className="text-5xl md:text-7xl lg:text-8xl text-white leading-[1.05] tracking-tight"
@@ -354,9 +358,10 @@ export default function CommunityHomePage() {
                 </div>
               </section>
 
+              </div>
             </div>
-          </div>
-        </ControlCenter>
+          </ControlCenter>
+        </div>
       </div>
     </div>
   );

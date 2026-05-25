@@ -35,7 +35,7 @@ export function ControlCenter({
   projectContext,
 }: ControlCenterProps) {
   return (
-    <div className="flex h-full w-full overflow-hidden bg-background">
+    <div className="flex h-full w-full overflow-hidden bg-transparent">
       {/* LEFT — workspace sidebar. Hidden under lg. */}
       {leftSidebar && (
         <aside className="hidden lg:flex shrink-0 h-full">
