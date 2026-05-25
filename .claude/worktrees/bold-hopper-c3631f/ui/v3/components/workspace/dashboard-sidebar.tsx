@@ -160,15 +160,20 @@ export function DashboardSidebar(_props: { plan?: unknown } = {}) {
       {/* Footer — Upgrade or Usage. Active subscription = no upgrade prompt. */}
       <div className="mt-auto pt-4 border-t border-border space-y-3">
         {subscription !== null && !subscription?.plan && (() => {
-          const published = projects.filter((p) => p.publish != null).length;
-          const FREE_LIMIT = 2;
-          const atLimit = published >= FREE_LIMIT;
+          // FREE_LIMIT mirrors pebble/user_plan.py PLAN_LIMITS["free"]["published_sites"].
+          // Counting created projects (not published) per Marc 2026-05-25 —
+          // the counter ticks up the moment a project exists, matching what
+          // a non-technical user expects from "you have N projects."
+          const created = projects.length;
+          const FREE_LIMIT = 1;
+          const displayCount = Math.min(created, FREE_LIMIT);
+          const atLimit = created >= FREE_LIMIT;
           return (
             <div className={`px-3 py-2 bg-background border rounded-lg ${atLimit ? "border-destructive/40" : "border-border"}`}>
               <div className="flex items-center justify-between gap-2">
                 <p className={type.eyebrow}>Free plan</p>
                 <span className={`text-xs font-bold ${atLimit ? "text-destructive" : "text-muted-foreground"}`}>
-                  {published} / {FREE_LIMIT} live
+                  {displayCount} / {FREE_LIMIT}
                 </span>
               </div>
               {atLimit && (
