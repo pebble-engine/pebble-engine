@@ -549,6 +549,26 @@ def run_delete_account(handler) -> None:
                     event_type="stripe_subscription_canceled" if ok else "stripe_subscription_cancel_failed",
                     metadata={"subscription_id": sub_id, "prior_status": status},
                 )
+                # Fix 5 (2026-05-24): stamp a marker so cancel-deletion can
+                # surface "you lost your Pro plan when you scheduled
+                # deletion" to the user. Without this, a user who
+                # cancels deletion silently drops to Free — they only
+                # discover the loss when a feature breaks. Stamp on
+                # success OR failure: in both cases the Stripe sub is
+                # gone (either we cancelled it, or it was already gone).
+                sub_data["cancelled_by_delete_at"] = (
+                    datetime.now(timezone.utc).isoformat()
+                )
+                try:
+                    sub_path.write_text(
+                        json.dumps(sub_data, indent=2),
+                        encoding="utf-8",
+                    )
+                except OSError as write_exc:
+                    log.warning(
+                        "[account] could not stamp cancelled_by_delete_at for %s: %s",
+                        user_id, write_exc,
+                    )
         except Exception as e:
             log.warning("[account] could not parse subscription.json for %s: %s", user_id, e)
 
@@ -585,7 +605,13 @@ def run_delete_account(handler) -> None:
 # ─── POST /api/account/cancel-deletion ───────────────────────────────────────
 
 def run_cancel_deletion(handler) -> None:
-    """Cancel a pending soft-delete within the cooling-off window."""
+    """Cancel a pending soft-delete within the cooling-off window.
+
+    Fix 5 (2026-05-24): if the user's Stripe subscription was cancelled
+    as part of scheduling the deletion, surface that loudly in the
+    response. Without the warning the user keeps their account but
+    silently drops to Free — they only discover the loss when a feature
+    breaks. We do NOT auto-restart Stripe — that's a user decision."""
     if not is_configured():
         handler._json(503, {"error": "Account service not configured"})
         return
@@ -615,10 +641,35 @@ def run_cancel_deletion(handler) -> None:
         })
         return
 
+    # Fix 5: read subscription.json BEFORE the cancellation removal to
+    # see if Stripe was cancelled as part of this delete request.
+    had_stripe_sub_cancelled = False
+    sub_path = _output_dir() / ".users" / user_id / "subscription.json"
+    if sub_path.is_file():
+        try:
+            sub_data = json.loads(sub_path.read_text(encoding="utf-8"))
+            if sub_data.get("cancelled_by_delete_at"):
+                had_stripe_sub_cancelled = True
+        except (OSError, json.JSONDecodeError):
+            pass
+
     cancelled = _cancel_pending_deletion(user_id)
     if cancelled:
         log.info("account deletion cancelled for %s", _redact(user_email))
-    handler._json(200, {
+
+    # Fix 5: audit-log the cancellation so we have a trail of users
+    # who needed (or didn't need) the warning.
+    try:
+        from pebble.audit_log import log_event_for_handler
+        log_event_for_handler(
+            handler=handler, user_id=user_id,
+            event_type="account_delete_cancelled",
+            metadata={"had_stripe_sub_cancelled": had_stripe_sub_cancelled},
+        )
+    except Exception:  # pragma: no cover — audit is fire-and-forget
+        pass
+
+    response: dict = {
         "ok": True,
         "cancelled": cancelled,
         "message": (
@@ -626,7 +677,16 @@ def run_cancel_deletion(handler) -> None:
             if cancelled
             else "No pending deletion to cancel."
         ),
-    })
+    }
+    if had_stripe_sub_cancelled:
+        # Marc's call: loud warning, NOT auto-restart. The user needs to
+        # consciously re-subscribe — and we point them at /pricing.
+        response["subscription_warning"] = (
+            "Your Pro plan was cancelled when you scheduled deletion. "
+            "Visit /pricing to resume."
+        )
+
+    handler._json(200, response)
 
 
 def _cancel_stripe_subscription(subscription_id: str) -> bool:

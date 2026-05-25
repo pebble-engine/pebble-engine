@@ -181,3 +181,101 @@ def test_delete_still_proceeds_when_stripe_cancel_fails(monkeypatch, output_dir)
     # operator follow-up.
     assert any(c.get("event_type") == "stripe_subscription_cancel_failed" for c in audit_calls)
     assert any(c.get("event_type") == "account_delete_requested" for c in audit_calls)
+
+
+# ---- Fix 5 (2026-05-24): cancel-deletion warns when Stripe was lost -------
+
+_CANCEL_BODY = json.dumps({}).encode()
+
+
+def test_cancel_deletion_warns_when_stripe_sub_was_cancelled(monkeypatch, output_dir):
+    """User schedules delete (Stripe sub cancelled), then changes their mind
+    inside the cooling-off period. The response MUST surface that they lost
+    their Pro plan as a side-effect — losing Pro silently is bad UX."""
+    monkeypatch.setattr("pebble.server.account.validate_access_token",
+                        lambda token: _FAKE_USER)
+
+    # Step 1: schedule deletion (Stripe sub gets cancelled).
+    _make_sub_file(output_dir, "active", "sub_active123")
+    monkeypatch.setattr(account_mod, "_cancel_stripe_subscription",
+                        lambda sub_id: True)
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: None)
+    monkeypatch.setattr("pebble.email.send_account_deletion_scheduled",
+                        lambda email, cooling_off_ends: None)
+
+    delete_h = _FakeHandler()
+    account_server.run_delete_account(delete_h)
+    assert delete_h.status == 200, f"setup: scheduling failed: {delete_h.json_body}"
+
+    # Confirm the marker was written to subscription.json
+    sub_path = output_dir / ".users" / _FAKE_USER["id"] / "subscription.json"
+    sub_data = json.loads(sub_path.read_text(encoding="utf-8"))
+    assert sub_data.get("cancelled_by_delete_at"), \
+        "delete handler must stamp cancelled_by_delete_at when it cancels a Stripe sub"
+
+    # Step 2: cancel deletion. Response MUST include the warning.
+    audit_after: list[dict] = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_after.append(kw))
+
+    cancel_h = _FakeHandler(body=_CANCEL_BODY)
+    account_server.run_cancel_deletion(cancel_h)
+
+    assert cancel_h.status == 200
+    body = cancel_h.json_body or {}
+    assert body.get("ok") is True
+    assert body.get("cancelled") is True
+    warning = body.get("subscription_warning") or ""
+    assert "Pro" in warning or "plan" in warning.lower(), \
+        f"missing subscription_warning in cancel response: {body}"
+    assert "/pricing" in warning, \
+        f"warning must point at /pricing to resume: {body}"
+
+    # Audit event: account_delete_cancelled with had_stripe_sub_cancelled=True
+    delete_cancelled = [c for c in audit_after
+                        if c.get("event_type") == "account_delete_cancelled"]
+    assert delete_cancelled, \
+        f"missing account_delete_cancelled audit event: {[c.get('event_type') for c in audit_after]}"
+    assert delete_cancelled[0].get("metadata", {}).get("had_stripe_sub_cancelled") is True
+
+
+def test_cancel_deletion_no_warning_for_free_tier_user(monkeypatch, output_dir):
+    """User on Free (no subscription.json) → cancel-deletion response has
+    no subscription_warning. Don't crowd the UI with irrelevant text."""
+    monkeypatch.setattr("pebble.server.account.validate_access_token",
+                        lambda token: _FAKE_USER)
+
+    # No subscription file at all.
+    monkeypatch.setattr(account_mod, "_cancel_stripe_subscription",
+                        lambda sub_id: True)
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: None)
+    monkeypatch.setattr("pebble.email.send_account_deletion_scheduled",
+                        lambda email, cooling_off_ends: None)
+
+    # Schedule deletion (no Stripe sub to cancel).
+    delete_h = _FakeHandler()
+    account_server.run_delete_account(delete_h)
+    assert delete_h.status == 200
+
+    audit_after: list[dict] = []
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler",
+                        lambda **kw: audit_after.append(kw))
+
+    cancel_h = _FakeHandler(body=_CANCEL_BODY)
+    account_server.run_cancel_deletion(cancel_h)
+
+    assert cancel_h.status == 200
+    body = cancel_h.json_body or {}
+    assert body.get("ok") is True
+    assert body.get("cancelled") is True
+    assert "subscription_warning" not in body, \
+        f"free-tier cancel must NOT include subscription_warning: {body}"
+
+    # Audit event present with had_stripe_sub_cancelled=False
+    delete_cancelled = [c for c in audit_after
+                        if c.get("event_type") == "account_delete_cancelled"]
+    assert delete_cancelled, \
+        f"missing account_delete_cancelled audit event: {[c.get('event_type') for c in audit_after]}"
+    assert delete_cancelled[0].get("metadata", {}).get("had_stripe_sub_cancelled") is False
