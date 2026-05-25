@@ -150,6 +150,29 @@ function SettingsPageContent() {
           {active === "activity" && <ActivityTab />}
           {active === "data"     && <DataTab />}
 
+          {/* Always-visible help footer — every tab inherits this, so a
+              broken billing/auth/etc surface never leaves the user
+              stranded without a way to reach support. Lives once in
+              the shell, never per-tab. */}
+          <footer className="mt-10 pt-5 border-t border-border">
+            <p className="text-xs text-muted-foreground">
+              Need help?{" "}
+              <a
+                href="/help"
+                className="underline hover:text-foreground transition-colors"
+              >
+                Help docs
+              </a>
+              {" · "}
+              <a
+                href="mailto:support@pebbleapp.ai"
+                className="underline hover:text-foreground transition-colors"
+              >
+                Email support
+              </a>
+            </p>
+          </footer>
+
         </div>
       </main>
     </div>
