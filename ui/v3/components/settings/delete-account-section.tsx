@@ -7,12 +7,25 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, ChevronDown } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+
+// Backend contract for POST /api/account/cancel-deletion. The optional
+// `subscription_warning` field is populated when the user's Stripe sub
+// was cancelled by the original /api/account/delete call and could not
+// be automatically resumed when the cooling-off was cancelled (the
+// backend agent is wiring this — see Fix 5 in the task spec).
+type CancelDeletionResponse = {
+  ok: true;
+  cancelled?: boolean;
+  message?: string;
+  subscription_warning?: string;
+};
 
 // ── component ─────────────────────────────────────────────────────────────────
 
@@ -28,6 +41,10 @@ export function DeleteAccountSection() {
   const [deleteError, setDeleteError]             = useState<string | null>(null);
   const [cancelSubmitting, setCancelSubmitting]   = useState(false);
   const [showDeleteZone, setShowDeleteZone]       = useState(false);
+  // Populated when /api/account/cancel-deletion reports the original
+  // delete already torched the Stripe subscription. Persists until the
+  // user dismisses or clicks "Resume Pro".
+  const [subscriptionWarning, setSubscriptionWarning] = useState<string | null>(null);
 
   const deletionDate = deletionScheduled ? deletionScheduled.slice(0, 10) : null;
 
@@ -94,15 +111,24 @@ export function DeleteAccountSection() {
 
   async function onCancelDeletion() {
     setCancelSubmitting(true);
+    setSubscriptionWarning(null);
     try {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) return;
-      await fetch("/api/account/cancel-deletion", {
+      const res = await fetch("/api/account/cancel-deletion", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
+      const body = (await res.json().catch(() => ({}))) as CancelDeletionResponse;
       setDeletionScheduled(null);
+      // The backend includes `subscription_warning` only when the user
+      // previously lost their Stripe sub to the delete call. When
+      // present, surface it as a persistent inline alert with a CTA to
+      // re-subscribe; absent → quiet success (current path).
+      if (body.subscription_warning) {
+        setSubscriptionWarning(body.subscription_warning);
+      }
     } catch {
       // non-fatal
     } finally {
@@ -120,6 +146,39 @@ export function DeleteAccountSection() {
           Permanently remove your account and all associated data.
         </p>
       </div>
+
+      {/* Subscription-cancelled warning — only shown right after the
+          user cancels a pending deletion AND the backend reports the
+          original delete call already torched their Stripe sub. Stays
+          on screen (no auto-dismiss) so the user actually sees it. */}
+      {subscriptionWarning && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-xl border border-spark/40 bg-spark/5 p-4"
+        >
+          <AlertTriangle className="w-5 h-5 text-spark-deep shrink-0 mt-0.5" />
+          <div className="flex-1 space-y-2">
+            <p className={`${type.body.s} text-foreground font-medium`}>
+              {subscriptionWarning}
+            </p>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/pricing"
+                className="text-sm font-semibold text-primary hover:underline"
+              >
+                Resume Pro →
+              </Link>
+              <button
+                type="button"
+                onClick={() => setSubscriptionWarning(null)}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Deletion scheduled banner */}
       {deletionDate && (
