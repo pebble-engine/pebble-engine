@@ -108,20 +108,18 @@ export default function RootLayout({
       className={`${cormorant.variable} ${cinzel.variable} ${plusJakartaSans.variable} ${interTight.variable} ${jetbrainsMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <head>
-        {/* Theme-flash prevention runs before hydration. In Next.js 15+
-            App Router, <Script strategy="beforeInteractive"> emits a
-            React warning when placed inside <head> ("Encountered a script
-            tag while rendering React component"). The blessed pattern
-            is dangerouslySetInnerHTML on a raw <script> tag — it's
-            written straight to the HTML stream so the dark-mode class
-            lands before first paint, no React-render lifecycle involved. */}
-        <script
+      <body className="min-h-full flex flex-col bg-background text-foreground">
+        {/* Theme-flash prevention: <Script strategy="beforeInteractive"> is
+            injected by Next.js 15 into the server-rendered <head> before
+            React hydration, so the dark-mode class lands before first paint.
+            Using next/script avoids the React 19 warning that raw <script
+            dangerouslySetInnerHTML> triggers inside JSX. Must live in <body>
+            (not inside a bare <head> tag) — Next.js handles the placement. */}
+        <Script
           id="theme-init"
+          strategy="beforeInteractive"
           dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }}
         />
-      </head>
-      <body className="min-h-full flex flex-col bg-background text-foreground">
         <AuthProvider>
           {children}
           <CommandPalette />

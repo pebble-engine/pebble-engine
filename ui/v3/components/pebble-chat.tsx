@@ -276,7 +276,12 @@ export function PebbleChat({ greeting }: PebbleChatProps) {
     return () => { recognitionRef.current?.stop(); };
   }, []);
 
-  const voiceSupported = useMemo(() => !!getSpeechRecognition(), []);
+  // useState(false) + useEffect so server and first client paint both agree
+  // on false, then flip after mount. useMemo evaluated synchronously on first
+  // client render (window.SpeechRecognition exists) while SSR saw undefined —
+  // that mismatch was the React hydration error on the dashboard.
+  const [voiceSupported, setVoiceSupported] = useState(false);
+  useEffect(() => { setVoiceSupported(!!getSpeechRecognition()); }, []);
 
   return (
     <div className="flex h-full flex-col bg-card border-l border-border">
