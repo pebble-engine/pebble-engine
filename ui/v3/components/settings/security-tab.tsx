@@ -12,6 +12,7 @@ import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { MfaSection } from "@/components/settings/mfa-section";
+import { GlobalSignoutSection } from "@/components/settings/global-signout-section";
 
 // ── component ─────────────────────────────────────────────────────────────────
 
@@ -155,6 +156,10 @@ export function SecurityTab() {
 
       {/* Phase D.1 (2026-05-24) — TOTP MFA enrollment + disable flow. */}
       <MfaSection />
+
+      {/* Phase D.3 (2026-05-24) — global sign-out CTA. Phase D.2 will
+          absorb this into the active-sessions section. */}
+      <GlobalSignoutSection />
     </div>
   );
 }
