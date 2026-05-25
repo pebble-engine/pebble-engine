@@ -281,6 +281,27 @@ export default function DashboardPage() {
     ? (getUserProfile().firstName || user?.email?.split("@")[0] || "")
     : "";
 
+  // First-visit welcome card — dismissed via localStorage so it never
+  // returns for the same browser. Initial state is `false` so SSR and
+  // first client render agree (the card slides in post-mount). We hide
+  // it entirely if the user already has projects: the card is empty-
+  // state hand-holding, not perpetual UI noise.
+  const ONBOARDED_KEY = "pebble.onboarded.v1";
+  const [showOnboardCard, setShowOnboardCard] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const dismissed = window.localStorage.getItem(ONBOARDED_KEY);
+      if (!dismissed) setShowOnboardCard(true);
+    } catch {
+      // localStorage blocked (private mode / Safari ITP): skip the card.
+    }
+  }, []);
+  function dismissOnboardCard() {
+    setShowOnboardCard(false);
+    try { window.localStorage.setItem(ONBOARDED_KEY, String(Date.now())); } catch {}
+  }
+
   // TopNav right slot — Marc's 2026-05-23 mockup: "+ New project"
   // button (primary, jumps into the welcome flow) + notification bell
   // with badge. Both surface on every dashboard-shell route so the
@@ -305,6 +326,15 @@ export default function DashboardPage() {
       <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
+          {/* First-visit welcome card — shows only on a genuinely empty
+              dashboard for a non-dismissed user. Once dismissed,
+              localStorage flag suppresses it forever for this browser.
+              Mounted ABOVE the page header so it's the first thing the
+              user sees on their very first /dashboard load. */}
+          {showOnboardCard && !loading && projects.length === 0 && (
+            <OnboardingCard onDismiss={dismissOnboardCard} />
+          )}
+
           {/* Welcome banner — Marc's 2026-05-23 mockup: warm header
               with a wave emoji + tagline that anchors the page as
               "your home base" rather than "a folder of designs." */}
@@ -474,6 +504,84 @@ function DeleteUndoToast({
           </motion.div>
         )}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// OnboardingCard — one-time welcome card for users on their very first
+// dashboard visit (no projects yet, not dismissed). Three quick-start
+// CTAs cover the three on-ramps: Ask Pebble (the new-project flow),
+// Templates (clone a proven starting point), Settings (account setup).
+// Dismissal is persisted in localStorage under `pebble.onboarded.v1` —
+// the card never returns for this browser once dismissed.
+// ---------------------------------------------------------------------------
+
+function OnboardingCard({ onDismiss }: { onDismiss: () => void }) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-6 md:p-8 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h2 className={`${type.dashboard.heading.l} text-foreground`}>
+            Welcome to Pebble <span aria-hidden>👋</span>
+          </h2>
+          <p className={`${type.body.s} text-muted-foreground mt-2 max-w-xl`}>
+            Pebble turns a sentence into a real website. Here are 3 quick
+            ways to start:
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors underline shrink-0"
+        >
+          Got it, hide this
+        </button>
+      </div>
+      <ul className="mt-5 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <li>
+          <Link
+            href="/workspace#phase=welcome"
+            className="group flex items-start gap-3 rounded-xl border border-border bg-background p-4 hover:border-primary/40 hover:bg-accent/40 transition-colors h-full"
+          >
+            <Sparkles className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Ask Pebble to build a site</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Start asking <span className="inline-block group-hover:translate-x-0.5 transition-transform" aria-hidden>→</span>
+              </p>
+            </div>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/templates"
+            className="group flex items-start gap-3 rounded-xl border border-border bg-background p-4 hover:border-primary/40 hover:bg-accent/40 transition-colors h-full"
+          >
+            <Compass className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Browse industry-tested templates</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                See templates <span className="inline-block group-hover:translate-x-0.5 transition-transform" aria-hidden>→</span>
+              </p>
+            </div>
+          </Link>
+        </li>
+        <li>
+          <Link
+            href="/settings"
+            className="group flex items-start gap-3 rounded-xl border border-border bg-background p-4 hover:border-primary/40 hover:bg-accent/40 transition-colors h-full"
+          >
+            <Users className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">Configure your account</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Open settings <span className="inline-block group-hover:translate-x-0.5 transition-transform" aria-hidden>→</span>
+              </p>
+            </div>
+          </Link>
+        </li>
+      </ul>
     </div>
   );
 }
