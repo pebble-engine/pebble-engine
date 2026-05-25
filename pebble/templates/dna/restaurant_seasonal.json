@@ -1,0 +1,80 @@
+{
+  "dna_id": "restaurant_seasonal",
+  "vibe_label": "Quiet Editorial Restaurant",
+  "source_brand": "Qwen 3.6 restaurant source",
+  "source_industry": "fine dining restaurant",
+  "applicable_industries": [
+    "restaurant",
+    "fine dining",
+    "tasting menu restaurant",
+    "wine bar",
+    "supper club",
+    "farm-to-table restaurant",
+    "private dining room",
+    "chef-driven restaurant",
+    "modern American restaurant",
+    "Italian trattoria",
+    "French bistro",
+    "neo-bistro",
+    "seasonal kitchen",
+    "boutique catering"
+  ],
+  "palette": {
+    "bg":        "#f5f0e8",
+    "fg":        "#1c1917",
+    "primary":   "#7c1d1d",
+    "secondary": "#b08968",
+    "accent":    "#7c1d1d",
+    "muted":     "rgba(28,25,23,0.6)",
+    "border":    "rgba(28,25,23,0.2)",
+    "extras": {
+      "bone":     "#f5f0e8",
+      "charcoal": "#1c1917",
+      "burgundy": "#7c1d1d",
+      "warmgold": "#b08968"
+    }
+  },
+  "fonts": {
+    "display": "Playfair Display",
+    "body":    "Inter",
+    "accent":  null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&display=swap",
+  "hero_pattern": "fullbleed_dish_photo_with_italic_serif_anchor",
+  "hero_signature": "Bottom-anchored content over a full-bleed plated-dish photo at opacity-80 with a charcoal/40 overlay. The headline is italic Playfair Display at 5xl-8xl with a fade-up entrance. Two CTAs underneath: burgundy filled 'Reserve a Table' and bone-outlined 'View Menu' (which inverts on hover).",
+  "section_flow": [
+    {"id": "navbar",      "type": "fixed_transparent_dark_to_bone_on_scroll",     "notes": "Fixed nav. On home (transparent prop) it starts transparent over the dark hero — bone wordmark + bone links — then swaps to a light bone background with shadow once scrollY > 24. On all other pages it always renders in the light style."},
+    {"id": "hero",        "type": "fullbleed_dish_photo_with_italic_serif_anchor","notes": "See hero_signature."},
+    {"id": "story",       "type": "two_col_image_left_drop_cap_paragraphs",      "notes": "4:5 grayscale-on-hover photo left. Right: Playfair display section heading + drop-cap first paragraph in burgundy + second paragraph standard."},
+    {"id": "gallery",     "type": "four_col_aspect_45_image_grid",                 "notes": "Stripped-down 4-col interior photo grid (each tile aspect-[4/5] with hover scale-105)."},
+    {"id": "location",    "type": "two_col_map_placeholder_visit_hours_table",    "notes": "Dark charcoal section with bone text. Map placeholder card left. Right: 'Visit' address + clickable phone/email + 'Hours' weekday table."},
+    {"id": "menu_page",   "type": "dietary_chip_filter_with_accordion_sections",   "notes": "Top: 4 dietary chips (All/Vegan/GF/DF). Below: accordions per course (First/Main/Wine). Each item row has name + description + dietary tags + price aligned right. Filter narrows items in place."},
+    {"id": "events_page", "type": "three_room_tabs_with_event_inquiry_form",       "notes": "3 tabs (Cellar/Terrace/Chef's Counter) drive an image + capacity card swap. Below: contact form + interactive guest-count stepper (+/- buttons updating an integer between 2 and 200)."},
+    {"id": "journal_page","type": "three_col_journal_card_grid_with_newsletter",   "notes": "3-col article grid (image / date kicker / Playfair title / 1-line body). Underneath: bone newsletter signup with burgundy submit."},
+    {"id": "reservation_page", "type": "form_only_centered_with_date_time_party",  "notes": "Centered serif heading + 2-col form: name, email, date, time select, party size, special requests. Burgundy full-width CTA 'Request Table'."},
+    {"id": "footer",      "type": "three_col_charcoal_bone_with_social",           "notes": "Dark charcoal bg, bone-tinted text. Brand wordmark + address + phone, social links (Instagram/Facebook/Resy), copyright."}
+  ],
+  "notable_features": [
+    "Drop-cap first paragraph styling with burgundy initial (via ::first-letter)",
+    "Multi-page Next.js App Router routes (Home/Menu/Events/Journal/Reservations) instead of show/hide SPA logic",
+    "Dietary chip filter on menu accordion with empty-state messaging per course",
+    "Multi-room private-dining tabs driving image + capacity card swap",
+    "Guest-count stepper (+/-) for event inquiry form",
+    "Burgundy CTA pill (rounded-full) paired with bone-outlined secondary CTAs that invert on hover",
+    "Italic Playfair Display all headlines, 5xl-8xl on hero",
+    "Charcoal/40 overlay on hero photo for readable bone text",
+    "Grayscale-to-color hover on the story-section photo",
+    "Bone/charcoal/burgundy/warmgold 4-color palette restraint throughout"
+  ],
+  "motion_vocabulary": [
+    "Reveal: opacity 0->1 + y 24->0 over 700ms with [0.22,1,0.36,1] easing, once-only on viewport-enter",
+    "Hero entrance: opacity 0->1 + y 24->0 over 1s, ease editorial",
+    "Gallery hover: scale-105 transform over 700ms",
+    "Story photo hover: grayscale -> color over 700ms",
+    "Menu accordion summary toggle: + rotates to × via group-open:rotate-45 over 300ms",
+    "Room tabs: border-burgundy underline + text-color transition on active button",
+    "Reservation/event forms: bottom-border focus -> burgundy transition over 300ms",
+    "prefers-reduced-motion: reduce -> all transitions clamped to 0.01ms"
+  ],
+  "tailwind_extras_inline_css": ".drop-cap (4.5rem burgundy italic first-letter). .form-input-sk (transparent bottom-border 30%-charcoal input that turns burgundy on focus). Tokens: --color-bone, --color-charcoal, --color-burgundy, --color-warmgold, --font-display (Playfair Display), --font-sans (Inter). H1-H4 default to display font globally."
+}

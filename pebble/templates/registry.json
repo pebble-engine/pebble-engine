@@ -1362,6 +1362,51 @@
       "preview_pages": [
         { "label": "Home", "path": "/" }
       ]
+    },
+    {
+      "id": "seasonal_kitchen",
+      "directory": "pebble/templates/seasonal_kitchen",
+      "name": "Seasonal Kitchen",
+      "tagline": "Quiet editorial dining. Italic Playfair headlines, burgundy accents, drop-cap stories, dietary-filter menus.",
+      "vibe": "Bone + Burgundy Quiet Editorial",
+      "source_dna": "restaurant_seasonal",
+      "applicable_industries": [
+        "restaurant",
+        "fine dining",
+        "tasting menu restaurant",
+        "wine bar",
+        "supper club",
+        "farm-to-table restaurant",
+        "private dining room",
+        "chef-driven restaurant",
+        "modern American restaurant",
+        "Italian trattoria",
+        "French bistro",
+        "neo-bistro",
+        "seasonal kitchen",
+        "boutique catering"
+      ],
+      "preview_image": "/templates-preview/seasonal_kitchen.png",
+      "color_swatches": [
+        "#f5f0e8",
+        "#1c1917",
+        "#7c1d1d",
+        "#b08968"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Inter"
+      },
+      "best_for": "Chef-driven restaurants and wine bars that want quiet, editorial restraint. Multi-page (Home / Menu / Events / Journal / Reservations) with dietary-filter menus, multi-room private-dining tabs, and a guest-count event inquiry stepper.",
+      "tier": "premium",
+      "preview_url": "/preview-template/seasonal_kitchen/",
+      "preview_pages": [
+        { "label": "Home",         "path": "/" },
+        { "label": "Menu",         "path": "/menu" },
+        { "label": "Events",       "path": "/events" },
+        { "label": "Journal",      "path": "/journal" },
+        { "label": "Reservations", "path": "/reservations" }
+      ]
     }
   ],
   "_planned_next": []

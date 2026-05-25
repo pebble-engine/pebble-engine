@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bone:     #f5f0e8;
+  --color-charcoal: #1c1917;
+  --color-burgundy: #7c1d1d;
+  --color-warmgold: #b08968;
+  --color-background: var(--color-bone);
+  --color-foreground: var(--color-charcoal);
+
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--color-bone);
+  color: var(--color-charcoal);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-display); }
+
+.drop-cap::first-letter {
+  float: left;
+  font-size: 4.5rem;
+  line-height: 0.8;
+  padding-right: 0.75rem;
+  margin-top: 0.25rem;
+  color: var(--color-burgundy);
+  font-weight: 700;
+  font-style: italic;
+}
+
+.form-input-sk {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(28, 25, 23, 0.3);
+  padding: 0.75rem 0;
+  outline: none;
+  transition: border-color 0.3s;
+  color: var(--color-charcoal);
+}
+.form-input-sk:focus { border-bottom-color: var(--color-burgundy); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  html { scroll-behavior: auto; }
+}
