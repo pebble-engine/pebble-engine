@@ -9,12 +9,20 @@ Public entry points:
   log_event(user_id, event_type, ip, user_agent, metadata)
   log_event_for_handler(handler, user_id, event_type, metadata)
 
-Standard event_type values (extend as needed, but keep them short snake_case):
-  password_change, password_change_failed, email_change_requested,
-  email_change_confirmed, account_delete_requested, account_delete_executed,
-  plan_changed, payment_method_changed, mfa_enabled, mfa_disabled,
-  signed_in_new_device, global_signout, data_export_requested,
-  data_export_delivered.
+Standard event_type values (short snake_case). Two buckets:
+
+Currently emitted by the codebase:
+  password_change, password_change_failed,
+  email_change_requested, email_change_confirmed, email_change_request_failed,
+  account_delete_requested, account_delete_cancelled, account_delete_executed,
+  data_export_requested, data_export_delivered, data_export_failed,
+  stripe_subscription_canceled.
+
+Reserved for upcoming Phase D (MFA + sessions list) and Phase 44b (billing
+events). Not emitted today — do not write code that depends on their presence
+in the audit_log until the relevant phase ships:
+  mfa_enabled, mfa_disabled, signed_in_new_device, global_signout,
+  plan_changed, payment_method_changed.
 
 Requires env vars: SUPABASE_URL (or PEBBLE_SUPABASE_URL) and
 SUPABASE_SERVICE_ROLE_KEY (or PEBBLE_SUPABASE_SERVICE_ROLE_KEY).
