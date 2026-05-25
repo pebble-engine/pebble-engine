@@ -36,12 +36,12 @@ import {
   Mic,
   MicOff,
   Send,
-  Sparkles,
   AlertTriangle,
   Loader2,
   MessageSquare,
   Zap,
   BookOpen,
+  ChevronRight,
 } from "lucide-react";
 import {
   sendChat,
@@ -49,7 +49,6 @@ import {
   type ChatConfirmAction,
 } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
-import { PebletMascot } from "@/components/peblet-mascot";
 import { PebletShortcuts } from "@/components/peblet-shortcuts";
 import { PebletDocs } from "@/components/peblet-docs";
 
@@ -112,9 +111,10 @@ type Tab = "chat" | "shortcuts" | "docs";
 
 export type PebbleChatProps = {
   greeting?: string;
+  onCollapse?: () => void;
 };
 
-export function PebbleChat({ greeting }: PebbleChatProps) {
+export function PebbleChat({ greeting, onCollapse }: PebbleChatProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -284,60 +284,36 @@ export function PebbleChat({ greeting }: PebbleChatProps) {
   useEffect(() => { setVoiceSupported(!!getSpeechRecognition()); }, []);
 
   return (
-    <div className="flex h-full flex-col bg-card border-l border-border">
-      {/* Hero — Peblet mascot + identity. Shared across all tabs so
-          the assistant's presence stays anchored. 2026-05-24 polish:
-          richer ambient backdrop — a radial glow behind the mascot
-          plus a few drifting particles so the hero feels alive
-          without burning CPU on a video. */}
-      <header className="relative flex flex-col items-center text-center px-4 pt-5 pb-4 border-b border-border shrink-0 bg-gradient-to-b from-primary/10 via-violet-500/5 to-transparent overflow-hidden">
-        {/* Soft radial glow behind the mascot */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-12 left-1/2 -translate-x-1/2 w-48 h-48 rounded-full bg-primary/25 blur-3xl"
-        />
-        {/* Drift particles — only in the header so the chat scroll area stays calm */}
-        <div aria-hidden className="pointer-events-none absolute inset-0">
-          <span className="absolute top-[18%] left-[14%] w-1 h-1 rounded-full bg-primary/50 ambient-drift" />
-          <span className="absolute top-[28%] right-[16%] w-1.5 h-1.5 rounded-full bg-pink-500/40 ambient-drift-slow" />
-          <span className="absolute top-[48%] left-[24%] w-1 h-1 rounded-full bg-violet-500/45 ambient-drift" />
-          <span className="absolute top-[62%] right-[22%] w-1 h-1 rounded-full bg-primary/40 ambient-drift-slow" />
+    <div className="flex h-full flex-col bg-background border-l border-border">
+      {/* Identity bar — clean monogram + status + collapse button.
+          No mascot, no gradient. Stays compact so more chat is visible. */}
+      <header className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
+        {/* "P" monogram avatar */}
+        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shrink-0">
+          <span className="text-sm font-bold text-primary-foreground leading-none">P</span>
         </div>
-        <style>{`
-          @keyframes peblet-drift-kf {
-            0%, 100% { transform: translateY(0) translateX(0); opacity: 0.75; }
-            50%      { transform: translateY(-6px) translateX(3px); opacity: 1; }
-          }
-          .ambient-drift      { animation: peblet-drift-kf 7s ease-in-out infinite; }
-          .ambient-drift-slow { animation: peblet-drift-kf 12s ease-in-out infinite; }
-          @media (prefers-reduced-motion: reduce) {
-            .ambient-drift, .ambient-drift-slow { animation: none; }
-          }
-        `}</style>
 
-        <div className="relative flex items-center justify-between w-full mb-2">
-          <div className="flex items-center gap-1.5">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-foreground leading-none">Pebble</p>
+          <div className="flex items-center gap-1.5 mt-0.5">
             <span className="relative inline-flex">
               <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
               <span className="absolute inset-0 inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping opacity-60" />
             </span>
-            <p className="text-sm font-bold text-foreground leading-none">Peblet</p>
+            <p className="text-[11px] text-muted-foreground leading-none">AI Assistant</p>
           </div>
-          <span className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground px-2 py-0.5 rounded-full border border-border bg-card/60 backdrop-blur-sm">
-            AI Assistant
-          </span>
         </div>
-        <div className="relative">
-          <PebletMascot size="lg" animate />
-        </div>
-        <div className="relative mt-3 space-y-1">
-          <p className="text-base font-bold text-foreground">
-            Hi{user ? "" : " there"}! I&apos;m Peblet <span className="inline-block">👋</span>
-          </p>
-          <p className="text-xs text-muted-foreground leading-snug max-w-[260px]">
-            Your personal AI assistant for building and managing your website.
-          </p>
-        </div>
+
+        {onCollapse && (
+          <button
+            type="button"
+            onClick={onCollapse}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            aria-label="Collapse chat panel"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
+        )}
       </header>
 
       {/* Tab content area — only one mounted at a time so search /
@@ -417,19 +393,22 @@ function ChatTab(props: {
           {history.map((msg, i) => (
             <motion.div
               key={`${i}-${msg.role}`}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.2 }}
-              className={msg.role === "user" ? "flex flex-col items-end gap-1" : "flex flex-col items-start gap-1"}
+              initial={{ opacity: 0, y: 8, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 0.18 }}
+              className={msg.role === "user" ? "flex justify-end" : "flex items-end gap-2"}
             >
-              <p className="text-[10px] uppercase tracking-widest font-semibold text-muted-foreground">
-                {msg.role === "user" ? "You" : "Peblet"}
-              </p>
+              {/* Assistant "P" avatar — sits flush with bubble bottom */}
+              {msg.role === "assistant" && (
+                <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-0.5">
+                  <span className="text-[10px] font-bold text-primary-foreground leading-none">P</span>
+                </div>
+              )}
               <div
                 className={
                   msg.role === "user"
-                    ? "bg-foreground text-background px-3.5 py-2.5 rounded-2xl rounded-tr-sm text-sm max-w-[88%] leading-snug"
-                    : "bg-muted text-foreground px-3.5 py-2.5 rounded-2xl rounded-tl-sm text-sm max-w-[88%] leading-snug"
+                    ? "bg-primary text-primary-foreground px-3.5 py-2 rounded-2xl rounded-tr-sm text-sm max-w-[82%] leading-snug"
+                    : "bg-muted text-foreground px-3.5 py-2 rounded-2xl rounded-tl-sm text-sm max-w-[82%] leading-snug"
                 }
               >
                 {msg.content}
@@ -439,9 +418,15 @@ function ChatTab(props: {
         </AnimatePresence>
 
         {sending && (
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex h-1.5 w-1.5 rounded-full bg-foreground animate-pulse" />
-            <span>Peblet is thinking…</span>
+          <div className="flex items-end gap-2">
+            <div className="w-6 h-6 rounded-full bg-primary flex items-center justify-center shrink-0 mb-0.5">
+              <span className="text-[10px] font-bold text-primary-foreground leading-none">P</span>
+            </div>
+            <div className="bg-muted px-3.5 py-3 rounded-2xl rounded-tl-sm flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:300ms]" />
+            </div>
           </div>
         )}
 

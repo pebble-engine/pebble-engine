@@ -23,7 +23,7 @@
  */
 
 import { useState } from "react";
-import { MessageSquare, X } from "lucide-react";
+import { MessageSquare, X, ChevronLeft } from "lucide-react";
 import { PebbleChat } from "@/components/pebble-chat";
 
 export type ControlCenterProps = {
@@ -40,6 +40,7 @@ export type ControlCenterProps = {
 
 export function ControlCenter({ children, leftSidebar, greeting }: ControlCenterProps) {
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
+  const [chatCollapsed, setChatCollapsed] = useState(false);
 
   return (
     <div className="flex h-full w-full overflow-hidden bg-background">
@@ -57,11 +58,31 @@ export function ControlCenter({ children, leftSidebar, greeting }: ControlCenter
         {children}
       </section>
 
-      {/* RIGHT — chat panel on desktop. Narrower than the canvas
-          so it feels like a companion, not a hijacker. */}
-      <aside className="hidden lg:flex lg:w-[340px] xl:w-[360px] shrink-0 h-full">
-        <PebbleChat greeting={greeting} />
-      </aside>
+      {/* RIGHT — chat panel on desktop. Collapses to a 48px strip
+          so users can reclaim canvas space without fully dismissing
+          the assistant. Expand/collapse via chevron buttons. */}
+      {chatCollapsed ? (
+        <aside className="hidden lg:flex lg:flex-col w-12 shrink-0 h-full border-l border-border bg-card items-center pt-3 gap-2">
+          <button
+            type="button"
+            onClick={() => setChatCollapsed(false)}
+            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+            aria-label="Open Pebble chat"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span
+            style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+            className="text-[10px] font-semibold text-muted-foreground/50 tracking-widest mt-1 select-none"
+          >
+            Ask Pebble
+          </span>
+        </aside>
+      ) : (
+        <aside className="hidden lg:flex lg:w-[340px] xl:w-[360px] shrink-0 h-full">
+          <PebbleChat greeting={greeting} onCollapse={() => setChatCollapsed(true)} />
+        </aside>
+      )}
 
       {/* Mobile floating "Ask Peblet" pill — opens the chat sheet. */}
       {!mobileChatOpen && (
