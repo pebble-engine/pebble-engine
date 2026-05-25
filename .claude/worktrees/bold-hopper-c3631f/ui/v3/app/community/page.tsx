@@ -121,7 +121,7 @@ const SHOWCASE = [
   { name: "Artisan Kitchen",      kind: "Restaurant",        image: "/templates-preview/artisan_kitchen.png",       href: "/templates" },
   { name: "Boutique Brokerage",   kind: "Real estate",       image: "/templates-preview/boutique_brokerage.png",    href: "/templates" },
   { name: "Instructor Pro",       kind: "Coach / educator",  image: "/templates-preview/instructor_pro.png",        href: "/templates" },
-  { name: "Instructor Pro",       kind: "Coach / educator",   image: "/templates-preview/instructor_pro.png",       href: "/templates" },
+  { name: "Honest Garage",        kind: "Auto repair",        image: "/templates-preview/honest_garage.png",         href: "/templates" },
 ];
 
 const ACTIVITY_COLORS: Record<ActivityKind, string> = {
@@ -252,7 +252,9 @@ export default function CommunityHomePage() {
                 <img
                   src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80"
                   alt=""
-                  aria-hidden
+                  aria-hidden="true"
+                  // @ts-expect-error fetchpriority is valid HTML but not in React typedefs yet
+                  fetchpriority="high"
                   className="absolute inset-0 w-full h-full object-cover"
                 />
                 {/* Dark overlay */}
