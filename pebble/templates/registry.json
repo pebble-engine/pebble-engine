@@ -1407,6 +1407,49 @@
         { "label": "Journal",      "path": "/journal" },
         { "label": "Reservations", "path": "/reservations" }
       ]
+    },
+    {
+      "id": "bright_dental",
+      "directory": "pebble/templates/bright_dental",
+      "name": "Bright Dental",
+      "tagline": "Calm, modern dentistry. No upsells, no rushing. Friendly for kids and adults.",
+      "vibe": "Coral + Mint Friendly Modern",
+      "source_dna": "dental_friendly",
+      "applicable_industries": [
+        "dental",
+        "dentist",
+        "family dentist",
+        "pediatric dentist",
+        "orthodontist",
+        "cosmetic dentist",
+        "dental hygienist",
+        "oral surgeon",
+        "periodontist",
+        "endodontist",
+        "dental clinic",
+        "dentures and implants specialist",
+        "smile makeover practice"
+      ],
+      "preview_image": "/templates-preview/bright_dental.png",
+      "color_swatches": [
+        "#fafaf9",
+        "#1e3a8a",
+        "#fb7185",
+        "#6ee7b7"
+      ],
+      "fonts": {
+        "display": "Outfit",
+        "body": "Inter"
+      },
+      "best_for": "Family + pediatric dentists who want to feel calm and approachable (not corporate). Multi-page (Home / Team / FAQ / Booking) with friendly photos, mint accents, coral primary CTA, and an accordion FAQ + insurance grid.",
+      "tier": "premium",
+      "preview_url": "/preview-template/bright_dental/",
+      "preview_pages": [
+        { "label": "Home",    "path": "/" },
+        { "label": "Team",    "path": "/team" },
+        { "label": "FAQ",     "path": "/faq" },
+        { "label": "Booking", "path": "/booking" }
+      ]
     }
   ],
   "_planned_next": []

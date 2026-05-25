@@ -1,0 +1,79 @@
+{
+  "dna_id": "dental_friendly",
+  "vibe_label": "Calm Modern Dental",
+  "source_brand": "Qwen 3.6 dental source",
+  "source_industry": "family + pediatric dental",
+  "applicable_industries": [
+    "dental",
+    "dentist",
+    "family dentist",
+    "pediatric dentist",
+    "orthodontist",
+    "cosmetic dentist",
+    "dental hygienist",
+    "oral surgeon",
+    "periodontist",
+    "endodontist",
+    "dental clinic",
+    "dentures and implants specialist",
+    "smile makeover practice"
+  ],
+  "palette": {
+    "bg":        "#fafaf9",
+    "fg":        "#1e3a8a",
+    "primary":   "#fb7185",
+    "secondary": "#6ee7b7",
+    "accent":    "#e0f2fe",
+    "muted":     "rgba(30,58,138,0.6)",
+    "border":    "rgba(30,58,138,0.15)",
+    "extras": {
+      "bone":  "#fafaf9",
+      "ice":   "#e0f2fe",
+      "navy":  "#1e3a8a",
+      "mint":  "#6ee7b7",
+      "coral": "#fb7185"
+    }
+  },
+  "fonts": {
+    "display": "Outfit",
+    "body":    "Inter",
+    "accent":  null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@400;600;800&display=swap",
+  "hero_pattern": "two_col_friendly_photo_with_trust_badge_and_char_stagger_headline",
+  "hero_signature": "Two-column hero on a bone/white background. Left: rounded-2xl 4:3 friendly dentist+patient photo with a floating 'Trusted in [City] since [Year]' bone/90 backdrop-blur badge at top-left. Right: char-stagger Outfit headline (4xl-6xl, bold, navy) followed by a friendly subhead, a coral pill primary CTA paired with a navy-outlined secondary CTA, and a small slate footnote line about emergency slots + PPO insurance.",
+  "section_flow": [
+    {"id": "navbar",      "type": "fixed_white_chip_with_coral_pill_cta",          "notes": "Fixed nav. Starts on a clean white background; once scrollY > 20 it gains a backdrop-blur + soft shadow. Navy brand wordmark + slate links + coral pill 'Book Appointment'. Mobile menu opens a full-width drawer with body scroll-lock."},
+    {"id": "hero",        "type": "two_col_friendly_photo_with_trust_badge_and_char_stagger_headline", "notes": "See hero_signature."},
+    {"id": "trust_strip", "type": "horizontal_trust_strip_with_mint_dividers",      "notes": "Slate-50 narrow band with mint check, mint stars, and 'N+ years in [City]' separated by thin vertical dividers on desktop."},
+    {"id": "services",    "type": "three_col_hover_lift_service_card_grid",         "notes": "Six service tiles in a 3-col grid. Each card has an ice-blue rounded square icon chip, bold Outfit title, slate body. Cards lift -4px on hover with a soft shadow grow."},
+    {"id": "process",     "type": "three_step_numbered_circle_process",             "notes": "Three centered cards with a 16x16 ice-blue circular badge holding a big Outfit numeral (1/2/3), bold step title, slate body."},
+    {"id": "testimonial", "type": "single_centered_mint_quote_with_avatar_meta",    "notes": "Slate-50 section with a mint quote glyph above an Outfit 2xl-4xl bold quote. Initial-in-ice-circle avatar + 'Name · Patient since [Year]' below."},
+    {"id": "team_page",   "type": "three_col_friendly_doctor_card_grid_with_role_meta", "notes": "Three team cards: square photo, Outfit name + role + bio, white card with hover-lift."},
+    {"id": "faq_page",    "type": "accordion_faqs_plus_insurance_carrier_grid_plus_hours", "notes": "Top: Outfit 5xl title + plain-language subhead. Below: stacked FAQ accordions with + → × rotation. Below that: insurance-carrier card grid (4-up on desktop) and the office-hours card."},
+    {"id": "booking_page","type": "two_col_form_left_map_hours_right",              "notes": "Centered Outfit 5xl title. Left: slate-50 form card with name/phone/email/date/time/reason/notes; coral pill submit. Right: map placeholder + clickable address/phone + office-hours list."},
+    {"id": "footer",      "type": "four_col_navy_footer_with_quick_links_contact",   "notes": "Navy background, slate-200 text. Brand + tagline (2/4 cols) + Quick Links + Contact (address, phone, email). Bottom bar: license # + © year + Instagram/Facebook/Accessibility links."}
+  ],
+  "notable_features": [
+    "Soft hover-lift cards (translateY -4px + shadow grow) on services and team",
+    "Coral pill primary CTA (rounded-full, scale-102 on hover) paired with a navy-outlined ghost CTA that inverts on hover",
+    "Floating 'Trusted in [City] since [Year]' badge over hero photo",
+    "Char-stagger Outfit headline with 0.025s per-character delay and prefers-reduced-motion fallback",
+    "Accordion FAQs with + → × rotation driven by Framer Motion AnimatePresence",
+    "Insurance-carrier card grid (4-up on desktop) rendering each PPO carrier as a navy bone-and-slate tile",
+    "Numbered 3-step process with circular ice-blue badges and Outfit numerals",
+    "Multi-page Next.js App Router (Home / Team / FAQ / Booking) — never SPA show/hide",
+    "5-color restraint: bone bg, navy text, coral primary, mint accent, ice for soft chips"
+  ],
+  "motion_vocabulary": [
+    "Reveal: opacity 0->1 + y 24->0 over 700ms with [0.22,1,0.36,1] easing, once-only on viewport-enter",
+    "Hero entrance: opacity 0->1 + y 24->0 over 700ms with the photo entering at 0s and the text column at 0.1s delay",
+    "Hero char-stagger: each headline character opacity 0->1 + y 8->0 over 400ms, 0.025s stagger, starting after 0.2s",
+    "Card hover-lift: translateY -4px + shadow grow over 300ms ease",
+    "Coral CTA hover: scale-102 + background darken over 200ms",
+    "FAQ accordion: + glyph rotate 0->45deg + AnimatePresence height auto + opacity 0->1 over 400ms",
+    "Navbar transition: pt/pb shrink + bg-white -> bg-white/95 backdrop-blur + soft shadow over 300ms on scrollY > 20",
+    "prefers-reduced-motion: reduce -> all transitions clamped to 0.01ms and char-stagger replaced with plain text"
+  ],
+  "tailwind_extras_inline_css": ".btn-coral (coral background, white text, 99px rounded pill, hover scales 1.02 and darkens). .form-input-bd (white background, 2px ice border, 0.75rem padding, focus->coral border with coral-tinted ring). .shadow-soft (0 8px 30px -10px rgba(30,58,138,0.1)). .hover-lift (translateY -4px + shadow grow on hover, 300ms ease). Tokens: --color-bone, --color-ice, --color-navy, --color-mint, --color-coral, --color-coral-hover, --color-slate-light, --font-display (Outfit), --font-sans (Inter). H1-H4 default to Outfit globally."
+}
