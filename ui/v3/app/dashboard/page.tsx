@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -22,6 +22,7 @@ import {
   Users,
   BookOpen,
   ArrowRight,
+  Undo2,
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { ControlCenter } from "@/components/control-center";
@@ -53,8 +54,37 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [deleting, setDeleting] = useState<string | null>(null); // slug pending confirm
 
+  // Gmail-style undo: when the user clicks Delete on the inline overlay,
+  // optimistically yank the row, show a toast for 5s, and only fire the
+  // actual DELETE request when the timer expires. Click Undo within the
+  // window → cancel the timer, put the row back, no API call. Only one
+  // pending delete at a time — starting a second flushes the first.
+  type PendingDelete = {
+    slug: string;
+    business_name: string;
+    project: ProjectSummary;
+    timeoutId: ReturnType<typeof setTimeout>;
+    startedAt: number;
+  };
+  const [pendingDelete, setPendingDelete] = useState<PendingDelete | null>(null);
+  // Ref mirrors the state so unmount + "flush previous" can clear timers
+  // without stale-closure surprises.
+  const pendingDeleteRef = useRef<PendingDelete | null>(null);
+  useEffect(() => { pendingDeleteRef.current = pendingDelete; }, [pendingDelete]);
+
   useEffect(() => {
     void refresh();
+  }, []);
+
+  // On unmount, clear any pending timeout — we do NOT auto-fire the
+  // delete here. If the user navigated away, the row will reappear on
+  // next /dashboard load (we only mutated local state).
+  useEffect(() => {
+    return () => {
+      if (pendingDeleteRef.current) {
+        clearTimeout(pendingDeleteRef.current.timeoutId);
+      }
+    };
   }, []);
 
   // 2026-05-23: Per-session greeting from Pebble. Computed in useEffect
@@ -97,18 +127,75 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDelete(slug: string) {
-    // Optimistic remove
-    const prev = projects;
+  /** Fire the actual DELETE request and reconcile state. Called either
+   *  by the 5s timer or immediately when a NEW delete pre-empts an
+   *  in-flight one (edge case: user deletes B while A is still in the
+   *  undo window — A flushes synchronously, B starts a fresh 5s). */
+  async function flushDelete(p: PendingDelete) {
+    try {
+      await deleteProject(p.slug);
+      void refresh();
+    } catch {
+      // Restore the row on API failure — same defensive behaviour as
+      // the previous implementation.
+      setProjects((prev) => {
+        if (prev.some((x) => x.slug === p.slug)) return prev;
+        return [p.project, ...prev];
+      });
+    }
+  }
+
+  function handleConfirmDelete(slug: string) {
+    const project = projects.find((x) => x.slug === slug);
+    if (!project) { setDeleting(null); return; }
+
+    // If a previous delete is still pending, flush it now (fire the
+    // request, drop the toast) before queuing the new one.
+    const existing = pendingDeleteRef.current;
+    if (existing) {
+      clearTimeout(existing.timeoutId);
+      void flushDelete(existing);
+      pendingDeleteRef.current = null;
+    }
+
+    // Optimistically yank the row.
     setProjects((p) => p.filter((x) => x.slug !== slug));
     setDeleting(null);
-    try {
-      await deleteProject(slug);
-      void refresh();  // refresh usage totals too
-    } catch {
-      // Restore on failure
-      setProjects(prev);
-    }
+
+    const startedAt = Date.now();
+    const timeoutId = setTimeout(() => {
+      // Only flush if THIS pending is still the active one (guards
+      // against a race where the user undid + re-deleted the same slug
+      // — the old timer would otherwise wipe the restored row).
+      const current = pendingDeleteRef.current;
+      if (current && current.slug === slug && current.startedAt === startedAt) {
+        pendingDeleteRef.current = null;
+        setPendingDelete(null);
+        void flushDelete(current);
+      }
+    }, 5000);
+
+    setPendingDelete({
+      slug,
+      business_name: project.business_name,
+      project,
+      timeoutId,
+      startedAt,
+    });
+  }
+
+  function handleUndoDelete() {
+    const current = pendingDeleteRef.current;
+    if (!current) return;
+    clearTimeout(current.timeoutId);
+    pendingDeleteRef.current = null;
+    // Restore the row — guard against duplicates if the projects list
+    // was refreshed externally while the toast was up.
+    setProjects((prev) => {
+      if (prev.some((x) => x.slug === current.slug)) return prev;
+      return [current.project, ...prev];
+    });
+    setPendingDelete(null);
   }
 
   async function handleToggleStar(slug: string, currentlyStarred: boolean) {
@@ -265,7 +352,7 @@ export default function DashboardPage() {
                   onToggleStar={() => handleToggleStar(p.slug, p.starred)}
                   onRequestDelete={() => setDeleting(p.slug)}
                   deletePending={deleting === p.slug}
-                  onConfirmDelete={() => handleDelete(p.slug)}
+                  onConfirmDelete={() => handleConfirmDelete(p.slug)}
                   onCancelDelete={() => setDeleting(null)}
                 />
               ))}
@@ -282,6 +369,61 @@ export default function DashboardPage() {
       </div>
       </ControlCenter>
       </div>
+
+      {/* Gmail-style undo toast — only one pending delete at a time. */}
+      <DeleteUndoToast pending={pendingDelete} onUndo={handleUndoDelete} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// DeleteUndoToast — fixed-position bottom toast with a 5s progress bar.
+// Mounted once at the page root; `pending` prop drives in/out.
+// ---------------------------------------------------------------------------
+
+function DeleteUndoToast({
+  pending,
+  onUndo,
+}: {
+  pending: { slug: string; business_name: string; startedAt: number } | null;
+  onUndo: () => void;
+}) {
+  return (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[60] pointer-events-none">
+      <AnimatePresence>
+        {pending && (
+          <motion.div
+            key={`${pending.slug}-${pending.startedAt}`}
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.2 }}
+            className="pointer-events-auto bg-foreground text-background rounded-xl shadow-xl px-4 py-3 flex items-center gap-4 max-w-md overflow-hidden relative"
+            role="status"
+            aria-live="polite"
+          >
+            <Trash2 className="w-4 h-4 shrink-0 opacity-80" />
+            <div className="flex-1 text-sm">
+              Deleted <span className="font-semibold">{pending.business_name}</span>.
+            </div>
+            <button
+              onClick={onUndo}
+              className="flex items-center gap-1 text-sm font-bold uppercase tracking-wider text-primary hover:underline shrink-0"
+            >
+              <Undo2 className="w-3.5 h-3.5" /> Undo
+            </button>
+            {/* 5s progress bar at the bottom — purely visual. The actual
+                timer lives in the parent's setTimeout. */}
+            <motion.div
+              key={`bar-${pending.slug}-${pending.startedAt}`}
+              initial={{ width: "100%" }}
+              animate={{ width: "0%" }}
+              transition={{ duration: 5, ease: "linear" }}
+              className="absolute bottom-0 left-0 h-0.5 bg-primary/70"
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
