@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from typing import Any
 
 from pebble.log import log
@@ -67,24 +68,137 @@ CONFIRM_ACTIONS: dict[str, dict[str, str]] = {
 }
 
 
-def _build_system(sitemap: list[dict[str, str]]) -> str:
+# Edit operations the model can dispatch via `dispatch_op`.
+# Maps op name → required params + description for the system prompt.
+# NEVER include ops that modify auth, billing, or project ownership.
+DISPATCH_OPS: dict[str, dict] = {
+    "font-family": {
+        "description": "Change a font family on an element or globally",
+        "required_params": ["new_font_family"],
+        "optional_params": ["selector_hint"],
+    },
+    "color": {
+        "description": "Change a specific element's color",
+        "required_params": ["new_color"],
+        "optional_params": ["selector_hint", "original_text"],
+    },
+    "font-size": {
+        "description": "Make text bigger (delta: 1) or smaller (delta: -1)",
+        "required_params": ["delta"],
+        "optional_params": ["selector_hint"],
+    },
+    "palette-swap": {
+        "description": "Change the overall brand color scheme via CSS variables",
+        "required_params": [],
+        "optional_params": ["primary", "secondary", "accent", "background", "foreground"],
+    },
+    "image-swap": {
+        "description": "Replace a specific image with a new URL",
+        "required_params": ["original_src", "new_src"],
+        "optional_params": [],
+    },
+}
+
+_HEX_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+
+def _safe_dispatch(raw: object, current_slug: str | None) -> dict | None:
+    """Validate and normalise a `dispatch_op` object from the LLM.
+
+    Security rules:
+      - `op` must be in DISPATCH_OPS allowlist
+      - `current_slug` must be provided by the server (never trust the LLM's slug)
+      - Unknown params are stripped; only allowlisted param keys pass through
+      - Returns None for any invalid input
+
+    The returned dict is ready to pass directly to the frontend as
+    ``dispatch_op`` in the chat response.
+    """
+    if not isinstance(raw, dict) or not current_slug:
+        return None
+
+    op = raw.get("op")
+    if not isinstance(op, str) or op not in DISPATCH_OPS:
+        return None
+
+    params_raw = raw.get("params") or {}
+    if not isinstance(params_raw, dict):
+        return None
+
+    spec = DISPATCH_OPS[op]
+    allowed_keys = set(spec["required_params"]) | set(spec["optional_params"])
+
+    # Strip anything the LLM added that isn't in the spec — prevents
+    # prompt-injection attacks from sneaking extra fields through.
+    clean_params: dict = {k: v for k, v in params_raw.items() if k in allowed_keys}
+
+    # Validate required params are present and non-empty.
+    for req in spec["required_params"]:
+        if req not in clean_params or not clean_params[req]:
+            return None  # LLM didn't provide enough info — don't dispatch
+
+    # palette-swap: validate hex values, wrap into "palette" key that
+    # matches what _edit_palette_swap expects on the backend.
+    if op == "palette-swap":
+        palette: dict = {}
+        for color_key in ["primary", "secondary", "accent", "background", "foreground"]:
+            val = clean_params.get(color_key)
+            if val and isinstance(val, str) and _HEX_RE.match(val):
+                palette[color_key] = val
+        if not palette:
+            return None  # no valid colors — decline
+        clean_params = {"palette": palette}
+
+    # The slug always comes from the server, never from the LLM output.
+    clean_params["slug"] = current_slug
+
+    return {"op": op, "params": clean_params}
+
+
+def _build_system(
+    sitemap: list[dict[str, str]],
+    project_context: dict | None = None,
+) -> str:
     routes_list = "\n".join(f"  - {r['path']} — {r['label']}" for r in sitemap)
     confirm_list = "\n".join(
         f"  - {k}: {v['intent']}" for k, v in CONFIRM_ACTIONS.items()
     )
+    dispatch_list = "\n".join(
+        f'  - "{k}": {v["description"]}' for k, v in DISPATCH_OPS.items()
+    )
+
+    ctx_block = ""
+    if project_context and isinstance(project_context, dict):
+        name     = project_context.get("name", "")
+        industry = project_context.get("industry", "")
+        dna      = project_context.get("design_dna", "")
+        published = project_context.get("is_published", False)
+        ctx_lines = [f"  - Project name: {name}"] if name else []
+        if industry: ctx_lines.append(f"  - Industry: {industry}")
+        if dna:      ctx_lines.append(f"  - Design style: {dna.replace('_', ' ')}")
+        ctx_lines.append(f"  - Published: {'yes' if published else 'no'}")
+        if ctx_lines:
+            ctx_block = (
+                "\nPROJECT CONTEXT (the user's current project — use this to "
+                "give specific, relevant answers):\n"
+                + "\n".join(ctx_lines)
+                + "\n"
+            )
+
     return (
         "You are Pebble, the warm AI assistant inside the Pebble website-"
         "building app. You help users navigate, answer questions about the "
         "app, and act on their requests. You are friendly, brief, and "
-        "concrete.\n\n"
-
-        "OUTPUT FORMAT — strict JSON, no markdown fences, no prose around "
+        "concrete.\n"
+        + ctx_block
+        + "\nOUTPUT FORMAT — strict JSON, no markdown fences, no prose around "
         "the JSON. Every reply MUST be a single JSON object with this "
         "shape:\n"
         "{\n"
         '  "reply": "<your short 1-3 sentence response shown to the user>",\n'
         '  "navigate_to": "<path or null>",\n'
-        '  "confirm_action": "<action key or null>"\n'
+        '  "confirm_action": "<action key or null>",\n'
+        '  "dispatch_op": {"op": "<op>", "params": {...}} or null\n'
         "}\n\n"
 
         "WHEN THE USER ASKS TO GO SOMEWHERE: set `navigate_to` to one of "
@@ -93,17 +207,30 @@ def _build_system(sitemap: list[dict[str, str]]) -> str:
 
         "WHEN THE USER ASKS FOR A DESTRUCTIVE ACTION (cancel, delete, "
         "remove billing, etc.): set `confirm_action` to one of these "
-        "exact keys and ALSO set `navigate_to` to the relevant page if "
-        "applicable. The frontend will show a confirmation prompt — never "
-        "claim you already performed the action.\n"
+        "exact keys. The frontend will confirm — never claim you already "
+        "performed the action.\n"
         f"{confirm_list}\n\n"
+
+        "WHEN THE USER ASKS TO CHANGE SOMETHING ON THEIR SITE (font, color, "
+        "image, brand colors): set `dispatch_op` with one of these ops. "
+        "Only set it when you have enough information to fill ALL required "
+        "params. If you're missing info (e.g. no new image URL), ask the "
+        "user instead.\n"
+        f"{dispatch_list}\n\n"
+        "dispatch_op param rules:\n"
+        '  - font-family: {"new_font_family": "Font Name", "selector_hint": "optional"}\n'
+        '  - color: {"new_color": "#RRGGBB", "selector_hint": "optional"}\n'
+        '  - font-size: {"delta": 1} for bigger, {"delta": -1} for smaller\n'
+        '  - palette-swap: {"primary": "#hex", "secondary": "#hex"} — only include colors mentioned\n'
+        '  - image-swap: {"original_src": "<exact old URL>", "new_src": "<new URL>"}\n'
+        "IMPORTANT: Never invent image URLs. Ask the user to paste the URL.\n\n"
 
         "STYLE:\n"
         "  - Default reply length: under 40 words. Aim for under 20.\n"
         "  - Conversational, not corporate. No exclamation points.\n"
         "  - Don't promise specific times or invent features.\n"
-        "  - If the user just chats, set navigate_to and confirm_action "
-        "to null and answer warmly.\n"
+        "  - If the user just chats, set navigate_to, confirm_action, and "
+        "dispatch_op to null and answer warmly.\n"
         "  - If the user is on the dashboard and asks 'what can I do', "
         "suggest one specific next step (Templates, build a site, etc.)."
     )
@@ -112,7 +239,6 @@ def _build_system(sitemap: list[dict[str, str]]) -> str:
 def _extract_json_object(raw: str) -> dict[str, Any] | None:
     """LLMs sometimes wrap JSON in markdown fences or trailing prose.
     Pull the first {...} that parses cleanly."""
-    import re
     if not raw:
         return None
     # Try the whole string first — happy path for compliant models.
@@ -218,7 +344,26 @@ def run_chat(handler) -> None:
             if isinstance(s, dict) and isinstance(s.get("path"), str) and s["path"].startswith("/")
         ] or DEFAULT_SITEMAP
 
-    system = _build_system(sitemap)
+    # Optional project context — passed from the frontend dashboard when
+    # the user has projects loaded. Keeps the server stateless: we don't
+    # fetch project data here, we trust what the authenticated frontend sends.
+    project_context_raw = body.get("project_context")
+    project_context: dict | None = (
+        project_context_raw
+        if isinstance(project_context_raw, dict)
+        else None
+    )
+    # current_slug: the project the user is currently working on. Used to
+    # scope dispatch_op edits. NEVER let the LLM supply the slug — only
+    # the authenticated request can set it.
+    current_slug_raw = body.get("current_slug")
+    current_slug: str | None = (
+        current_slug_raw.strip()
+        if isinstance(current_slug_raw, str) and current_slug_raw.strip()
+        else None
+    )
+
+    system = _build_system(sitemap, project_context=project_context)
 
     # Call OpenRouter directly so we can pass a full message array
     # (the existing OpenRouterClient.generate only takes system+user
@@ -279,12 +424,14 @@ def run_chat(handler) -> None:
         {"key": confirm_key, "label": CONFIRM_ACTIONS[confirm_key]["label"]}
         if confirm_key else None
     )
+    dispatch_obj = _safe_dispatch(parsed.get("dispatch_op"), current_slug)
 
     handler._json(200, {
         "reply":          reply,
         "navigate_to":    nav,
         "confirm_action": confirm_obj,
+        "dispatch_op":    dispatch_obj,
     })
 
 
-__all__ = ["run_chat", "CHAT_MODEL", "DEFAULT_SITEMAP", "CONFIRM_ACTIONS"]
+__all__ = ["run_chat", "CHAT_MODEL", "DEFAULT_SITEMAP", "CONFIRM_ACTIONS", "DISPATCH_OPS"]
