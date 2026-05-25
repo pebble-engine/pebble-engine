@@ -14,7 +14,7 @@
  */
 
 import { Suspense, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { Settings as SettingsIcon } from "lucide-react";
 import { type } from "@/lib/type";
@@ -38,17 +38,55 @@ const TABS = [
 
 type TabValue = typeof TABS[number]["value"];
 
+const TAB_VALUES = TABS.map((t) => t.value) as readonly TabValue[];
+
+/** Narrow a free-form ?tab=… string to a known TabValue. Returns null for
+ *  anything we don't recognize so the caller can fall back to "profile".
+ *  Validating BEFORE setting state stops arbitrary string injection into
+ *  the tab switch (e.g. ?tab=<script>). */
+function parseTab(raw: string | null | undefined): TabValue | null {
+  if (!raw) return null;
+  return (TAB_VALUES as readonly string[]).includes(raw) ? (raw as TabValue) : null;
+}
+
 // ── main component ────────────────────────────────────────────────────────────
 
 function SettingsPageContent() {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
-  const [active, setActive] = useState<TabValue>("profile");
+  // Seed initial tab from ?tab=<id> so deep links from Stripe receipts,
+  // support replies, etc. land on the right surface. Falls back to
+  // "profile" for missing/invalid values.
+  const [active, setActive] = useState<TabValue>(
+    () => parseTab(searchParams?.get("tab")) ?? "profile",
+  );
 
   // ── auth redirect ──────────────────────────────────────────────────────────
   useEffect(() => {
     if (!loading && !user) router.replace("/login?next=/settings");
   }, [loading, user, router]);
+
+  // ── sync URL ⇄ tab state ───────────────────────────────────────────────────
+  // If the URL changes (back/forward, programmatic nav), reflect that in
+  // the active tab. Guards against the no-op case so we don't fight the
+  // user's own clicks (which already set `active` synchronously).
+  useEffect(() => {
+    const fromUrl = parseTab(searchParams?.get("tab"));
+    if (fromUrl && fromUrl !== active) setActive(fromUrl);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  function selectTab(value: TabValue) {
+    setActive(value);
+    // router.replace (not push) so the back button still takes the user
+    // to the previous PAGE, not through every tab they clicked through.
+    // Preserve other query params (e.g. ?billing=updated from checkout).
+    const params = new URLSearchParams(searchParams?.toString() ?? "");
+    params.set("tab", value);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   // ── shimmer ────────────────────────────────────────────────────────────────
   if (loading || !user) {
@@ -93,7 +131,7 @@ function SettingsPageContent() {
             {TABS.map((t) => (
               <button
                 key={t.value}
-                onClick={() => setActive(t.value)}
+                onClick={() => selectTab(t.value)}
                 className={`px-4 py-2 text-sm transition-colors ${
                   active === t.value
                     ? "border-b-2 border-foreground font-medium text-foreground"
