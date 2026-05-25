@@ -213,6 +213,13 @@ def route_get(handler) -> None:
         elif handler.path.startswith("/api/account/activity"):
             from pebble.server.audit_log_api import run_get_activity
             run_get_activity(handler)
+        elif handler.path == "/api/account/sessions":
+            # Phase D.2 (2026-05-24) — list active sessions via the
+            # public.list_user_sessions SECURITY DEFINER function
+            # (migration 008). Service-role key call; user_id forwarded
+            # explicitly so the DB function can scope server-side.
+            from pebble.server.account_sessions import run_list_sessions
+            run_list_sessions(handler)
         elif handler.path.startswith("/api/account/change-email-confirm"):
             # Single-use token confirm — no auth required (user clicks from email).
             from pebble.server.account import run_confirm_email_change
@@ -475,6 +482,13 @@ def route_delete(handler) -> None:
             # Phase 44 — body carries {slug}. Owner-gated inside the handler.
             from pebble.server.publish_instant import run_unpublish_instant
             run_unpublish_instant(handler)
+            return
+        if handler.path.startswith("/api/account/sessions/"):
+            # Phase D.2 (2026-05-24) — DELETE /api/account/sessions/<uuid>.
+            # The handler validates the uuid shape before forwarding.
+            session_id = handler.path[len("/api/account/sessions/"):]
+            from pebble.server.account_sessions import run_revoke_session
+            run_revoke_session(handler, session_id)
             return
         if handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
