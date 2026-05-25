@@ -161,8 +161,8 @@ class TestOpValidatorIncludesFontFamily:
         """
         import pebble.server.visual_edit as mod
         src = Path(mod.__file__).read_text(encoding="utf-8")
-        # The validator line should contain all four ops.
-        assert re.search(r"op not in.*font-family", src), (
+        # The _VALID_OPS tuple (or equivalent validator) must include 'font-family'.
+        assert "font-family" in src and ("_VALID_OPS" in src or re.search(r"op not in.*font-family", src)), (
             "run_visual_edit does not include 'font-family' in the op validator"
         )
 

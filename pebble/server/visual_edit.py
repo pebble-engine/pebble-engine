@@ -494,6 +494,100 @@ def _edit_image_swap(site_dir: Path, original_src: str, new_src: str) -> dict:
     }
 
 
+# ---- Palette-swap op (global CSS variable update) -------------------------
+
+import colorsys as _colorsys
+
+_HEX_COLOR_RE = re.compile(r"^#[0-9A-Fa-f]{6}$")
+
+# CSS variable names we allow palette-swap to target. Ordered so that
+# the most common ones appear first for readability in the UI.
+_PALETTE_VAR_NAMES = (
+    "primary", "secondary", "accent",
+    "background", "foreground",
+    "primary-foreground", "secondary-foreground", "accent-foreground",
+    "muted", "muted-foreground",
+    "card", "card-foreground",
+    "border", "ring",
+)
+
+
+def _hex_to_hsl_css(hex_color: str) -> str:
+    """Convert #RRGGBB to Tailwind/shadcn HSL channel string 'H S% L%'."""
+    h = hex_color.lstrip("#")
+    r, g, b = (int(h[i:i+2], 16) / 255.0 for i in (0, 2, 4))
+    # colorsys uses HLS order, not HSL — note the swap.
+    h_val, l_val, s_val = _colorsys.rgb_to_hls(r, g, b)
+    return f"{round(h_val * 360, 1)} {round(s_val * 100, 1)}% {round(l_val * 100, 1)}%"
+
+
+def _edit_palette_swap(site_dir: Path, palette: dict) -> dict:
+    """Update CSS custom-property values in app/globals.css.
+
+    ``palette`` maps variable names (without ``--``) to hex colors:
+        {"primary": "#1a3a6b", "secondary": "#f5a623"}
+
+    Only variables present in ``_PALETTE_VAR_NAMES`` are touched; any
+    key outside the allowlist is silently ignored so the LLM can't
+    inject arbitrary CSS.
+
+    Returns ``{files_changed: [...]}`` or ``{files_changed: [], error: "..."}``.
+    """
+    if not palette or not isinstance(palette, dict):
+        return {"files_changed": [], "error": "palette must be a non-empty dict"}
+
+    # Validate every hex value up front.
+    clean: dict[str, str] = {}
+    for key, val in palette.items():
+        if key not in _PALETTE_VAR_NAMES:
+            continue  # silently skip unknown vars
+        if not isinstance(val, str) or not _HEX_COLOR_RE.match(val):
+            return {"files_changed": [], "error": f"invalid hex color for {key!r}: {val!r}"}
+        clean[key] = val
+
+    if not clean:
+        return {"files_changed": []}
+
+    # Resolve globals.css — try the shadcn/Tailwind default location first,
+    # then fall back to a recursive search.
+    candidates = [
+        site_dir / "app" / "globals.css",
+        site_dir / "styles" / "globals.css",
+        site_dir / "globals.css",
+    ]
+    css_file: Path | None = next((p for p in candidates if p.exists()), None)
+    if css_file is None:
+        found = list(site_dir.glob("**/*.css"))
+        css_file = next((p for p in found if "globals" in p.name.lower()), None)
+    if css_file is None:
+        return {"files_changed": [], "error": "globals.css not found in site"}
+
+    try:
+        original = css_file.read_text(encoding="utf-8")
+    except Exception as e:
+        return {"files_changed": [], "error": f"could not read globals.css: {e}"}
+
+    text = original
+    for var_name, hex_val in clean.items():
+        hsl = _hex_to_hsl_css(hex_val)
+        # Match:  --primary: <old value>;
+        # The value is everything up to the next semicolon.
+        pattern = re.compile(
+            r"(--" + re.escape(var_name) + r"\s*:\s*)([^;]+)(;)"
+        )
+        text = pattern.sub(lambda m: m.group(1) + hsl + m.group(3), text)
+
+    if text == original:
+        return {"files_changed": []}
+
+    try:
+        css_file.write_text(text, encoding="utf-8")
+    except Exception as e:
+        return {"files_changed": [], "error": f"could not write globals.css: {e}"}
+
+    return {"files_changed": [css_file.relative_to(site_dir).as_posix()]}
+
+
 # ---- HTTP entry point ------------------------------------------------------
 
 def run_visual_edit(handler) -> None:
@@ -502,7 +596,8 @@ def run_visual_edit(handler) -> None:
         { slug, op, selector_hint?, original_text?, new_text?,
           new_color?, delta?, new_font_family?, pebble_id? }
 
-    ``op`` is one of ``text`` | ``color`` | ``font-size`` | ``font-family``.
+    ``op`` is one of ``text`` | ``color`` | ``font-size`` | ``font-family`` |
+    ``image-swap`` | ``palette-swap``.
     The other fields are op-specific. Response includes ``billable: false``
     always — visual edits never spend credits.
     """
@@ -521,8 +616,9 @@ def run_visual_edit(handler) -> None:
     op = body.get("op")
     if not isinstance(slug, str) or not slug:
         handler._json(400, {"error": "slug is required"}); return
-    if op not in ("text", "color", "font-size", "font-family", "image-swap"):
-        handler._json(400, {"error": "op must be 'text', 'color', 'font-size', 'font-family', or 'image-swap'"}); return
+    _VALID_OPS = ("text", "color", "font-size", "font-family", "image-swap", "palette-swap")
+    if op not in _VALID_OPS:
+        handler._json(400, {"error": f"op must be one of: {', '.join(_VALID_OPS)}"}); return
 
     # Auth gate — see refine.py + the 2026-05-15 evening NLM pass.
     caller_uid = require_project_owner(handler, slug)
@@ -587,7 +683,7 @@ def run_visual_edit(handler) -> None:
                 if result is None:
                     hint = body.get("selector_hint") or body.get("original_text") or ""
                     result = _edit_font_family_for_selector(site_dir, hint, new_font_family)
-            else:  # image-swap
+            elif op == "image-swap":
                 original_src = (body.get("original_src") or "").strip()
                 new_src_val  = (body.get("new_src") or "").strip()
                 if not original_src:
@@ -595,6 +691,11 @@ def run_visual_edit(handler) -> None:
                 if not new_src_val:
                     handler._json(400, {"error": "new_src is required for image-swap op"}); return
                 result = _edit_image_swap(site_dir, original_src, new_src_val)
+            else:  # palette-swap
+                palette_raw = body.get("palette") or {}
+                if not isinstance(palette_raw, dict) or not palette_raw:
+                    handler._json(400, {"error": "palette must be a non-empty object"}); return
+                result = _edit_palette_swap(site_dir, palette_raw)
         except Exception as e:
             log.warning("visual-edit failed: %s", e)
             handler._json(500, {"error": f"edit failed: {e}"}); return
