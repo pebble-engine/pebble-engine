@@ -377,7 +377,14 @@
         "body": "IBM Plex Sans"
       },
       "best_for": "B2B / corporate service providers \u2014 bonded, insured, white-collar trades.",
-      "tier": "free"
+      "tier": "free",
+      "preview_url": "/preview-template/service_pro_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Services", "path": "/services" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "service_pro_cream",
@@ -415,7 +422,14 @@
         "body": "Raleway"
       },
       "best_for": "Landscaping, lawn care, garden services \u2014 warm, organic, light-mode native.",
-      "tier": "free"
+      "tier": "free",
+      "preview_url": "/preview-template/service_pro_cream/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Services", "path": "/services" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "luxe_beauty_rose",
@@ -455,7 +469,14 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Warm, feminine beauty + spa brands. Inviting, intimate, premium.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/luxe_beauty_rose/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Shop", "path": "/shop" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "luxe_beauty_aubergine",
@@ -495,7 +516,14 @@
         "accent": "Pinyon Script"
       },
       "best_for": "Mysterious, evening-luxury brands \u2014 perfume, jewelry, premium skincare.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/luxe_beauty_aubergine/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Shop", "path": "/shop" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "ink_studio_oxblood",
@@ -532,7 +560,14 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Old-world craft brands \u2014 tattoo, leather, whiskey, cigar lounge, vintage.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/ink_studio_oxblood/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Gallery", "path": "/gallery" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "ink_studio_steel",
@@ -569,7 +604,14 @@
         "accent": "Bebas Neue"
       },
       "best_for": "Workshop / fabrication / metal craft \u2014 industrial precision, dark mood.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/ink_studio_steel/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Gallery", "path": "/gallery" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "artisan_kitchen_navy",
@@ -608,7 +650,14 @@
         "body": "Karla"
       },
       "best_for": "Coastal coffee shops + light cafes. Cream + navy + warm amber.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/artisan_kitchen_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Menu", "path": "/menu" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "artisan_kitchen_olive",
@@ -647,7 +696,14 @@
         "body": "Merriweather"
       },
       "best_for": "Mediterranean / Italian / trattoria \u2014 slow food + olive-oil-warm hospitality.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/artisan_kitchen_olive/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Menu", "path": "/menu" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "instructor_pro_navy",
@@ -683,7 +739,14 @@
         "body": "Atkinson Hyperlegible"
       },
       "best_for": "Executive coaching, leadership development, professional services authority.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/instructor_pro_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Courses", "path": "/courses" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "instructor_pro_forest",
@@ -719,7 +782,14 @@
         "body": "Barlow"
       },
       "best_for": "Wilderness guiding, outdoor adventure, survival training, eco-lodges.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/instructor_pro_forest/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Courses", "path": "/courses" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "boutique_brokerage_sage",
@@ -754,7 +824,13 @@
         "body": "Josefin Sans"
       },
       "best_for": "Rural / countryside luxury real estate. Calm, considered, less urban.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/boutique_brokerage_sage/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "boutique_brokerage_navy",
@@ -789,7 +865,13 @@
         "body": "Inter"
       },
       "best_for": "Yacht-club / old-money urban-coastal real estate. Greenwich, Newport, Annapolis vibe.",
-      "tier": "premium"
+      "tier": "premium",
+      "preview_url": "/preview-template/boutique_brokerage_navy/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" },
+        { "label": "About", "path": "/about" },
+        { "label": "Contact", "path": "/contact" }
+      ]
     },
     {
       "id": "cinematic_hero",
