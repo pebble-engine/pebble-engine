@@ -6,7 +6,7 @@
  * (collapsible, requires email-typed confirmation, 14-day cooling-off).
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertTriangle, ChevronDown } from "lucide-react";
@@ -30,6 +30,35 @@ export function DeleteAccountSection() {
   const [showDeleteZone, setShowDeleteZone]       = useState(false);
 
   const deletionDate = deletionScheduled ? deletionScheduled.slice(0, 10) : null;
+
+  // ── hydrate from server on mount ───────────────────────────────────────────
+  // /api/account/profile returns `deletion_scheduled_for: string | null`
+  // (verified in pebble/server/account.py:354). Without this, a user who
+  // schedules deletion, closes the tab, then comes back sees the delete
+  // form with no banner — the 14-day undo affordance is invisible.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: session } = await supabase.auth.getSession();
+        const token = session?.session?.access_token;
+        if (!token) return;
+        const res = await fetch("/api/account/profile", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const body = (await res.json()) as { deletion_scheduled_for: string | null };
+        if (!cancelled && body.deletion_scheduled_for) {
+          setDeletionScheduled(body.deletion_scheduled_for);
+        }
+      } catch {
+        // non-fatal — worst case the user re-attempts deletion and the
+        // backend tells them one is already scheduled.
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [user, supabase]);
 
   // ── handlers ───────────────────────────────────────────────────────────────
 
