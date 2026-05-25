@@ -457,10 +457,34 @@ export type ChatConfirmAction = {
   label: string;
 };
 
+/** Context about the user's current project, passed to /api/chat so the
+ *  model can give project-aware replies and emit dispatch_op edits. */
+export type ChatProjectContext = {
+  /** Human-readable project name, e.g. "Acme Plumbing". */
+  name: string;
+  /** Slug used to scope dispatch_op edits — never supplied by the LLM. */
+  slug: string;
+  industry?:    string;
+  design_dna?:  string;
+  is_published?: boolean;
+};
+
+/** A deterministic edit op the chat model wants to dispatch. Mirrored
+ *  from pebble/server/chat.py DISPATCH_OPS. The frontend fires the
+ *  corresponding /api/visual-edit call automatically. */
+export type ChatDispatchOp =
+  | { op: "font-family";  params: { slug: string; new_font_family: string; selector_hint?: string } }
+  | { op: "color";        params: { slug: string; new_color: string; selector_hint?: string } }
+  | { op: "font-size";    params: { slug: string; delta: number; selector_hint?: string } }
+  | { op: "palette-swap"; params: { slug: string; palette: Record<string, string> } }
+  | { op: "image-swap";   params: { slug: string; original_src: string; new_src: string } };
+
 export type ChatResponse = {
   reply:          string;
   navigate_to:    string | null;
   confirm_action: ChatConfirmAction | null;
+  /** When set, the frontend fires this visual-edit op automatically. */
+  dispatch_op:    ChatDispatchOp | null;
   /** True when the LLM call failed and the reply is a canned fallback. */
   fallback?:      boolean;
 };
@@ -468,8 +492,23 @@ export type ChatResponse = {
 export async function sendChat(
   messages: ChatMessage[],
   sitemap?: ChatSitemapEntry[],
+  projectContext?: ChatProjectContext | null,
 ): Promise<ChatResponse> {
-  return postJSON("/api/chat", { messages, sitemap });
+  return postJSON("/api/chat", {
+    messages,
+    sitemap,
+    ...(projectContext ? {
+      project_context: {
+        name:         projectContext.name,
+        industry:     projectContext.industry,
+        design_dna:   projectContext.design_dna,
+        is_published: projectContext.is_published,
+      },
+      // slug passed separately — used by backend to scope dispatch_op,
+      // never injected into the system prompt.
+      current_slug: projectContext.slug,
+    } : {}),
+  });
 }
 
 // ---------- /api/notifications (Supabase-backed bell feed, 2026-05-24) -----
@@ -797,7 +836,7 @@ export async function refine(slug: string, refinement_id: RefinementId): Promise
 
 // ---------- /api/visual-edit (new) -----------------------------------------
 
-export type VisualEditOp = "text" | "color" | "font-size";
+export type VisualEditOp = "text" | "color" | "font-size" | "font-family" | "image-swap" | "palette-swap";
 
 // pebble_id is the data-pebble-id attribute injected at generate-time. When
 // provided, the engine does a surgical edit scoped to that exact element.
@@ -808,7 +847,8 @@ export type VisualEditBody =
   | { slug: string; op: "color";        pebble_id?: string; selector_hint?: string; original_text?: string; new_color: string }
   | { slug: string; op: "font-size";    pebble_id?: string; selector_hint?: string; original_text?: string; new_font_size?: string; delta: number }
   | { slug: string; op: "font-family";  pebble_id?: string; selector_hint?: string; new_font_family: string }
-  | { slug: string; op: "image-swap";   pebble_id?: string; selector_hint?: string; original_src: string; new_src: string };
+  | { slug: string; op: "image-swap";    pebble_id?: string; selector_hint?: string; original_src: string; new_src: string }
+  | { slug: string; op: "palette-swap";  palette: Record<string, string> };
 
 export type VisualEditResponse = {
   slug: string;
