@@ -209,16 +209,31 @@ export function BillingTab() {
             {subscription ? "Change plan" : "Choose a plan →"}
           </Link>
 
-          {/* Portal button — only for users with a subscription */}
-          {subscription && (
-            <button
-              type="button" onClick={onManageBilling} disabled={billingLoading}
-              className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <CreditCard className="w-4 h-4" />
-              {billingLoading ? "Opening…" : "Manage billing"}
-            </button>
-          )}
+          {/* Portal button — always visible. When the user has no
+              subscription yet, render as visually disabled with a
+              native title tooltip explaining the gate. Free users (and
+              users with a cancelled sub) can still see the affordance
+              exists; click is a no-op so they don't waste a round-trip
+              to a 404'd portal session. */}
+          {(() => {
+            const portalDisabled = !subscription || billingLoading;
+            const portalTitle = !subscription
+              ? "Available after your first paid plan"
+              : undefined;
+            return (
+              <button
+                type="button"
+                onClick={subscription ? onManageBilling : undefined}
+                disabled={portalDisabled}
+                title={portalTitle}
+                aria-disabled={portalDisabled}
+                className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <CreditCard className="w-4 h-4" />
+                {billingLoading ? "Opening…" : "Manage billing"}
+              </button>
+            );
+          })()}
 
           <Link href="/dashboard" className="text-sm text-muted-foreground hover:text-foreground">
             Back to dashboard
