@@ -13,14 +13,15 @@
  * no page-level edits needed.
  */
 
+import type { ReactNode } from "react";
 import { FloatingPeblet } from "@/components/floating-peblet";
 import { type ChatProjectContext } from "@/lib/api";
 
 export type ControlCenterProps = {
   /** Middle column — the actual route content. */
-  children: React.ReactNode;
+  children: ReactNode;
   /** Optional left sidebar slot (DashboardSidebar, or omit). */
-  leftSidebar?: React.ReactNode;
+  leftSidebar?: ReactNode;
   /** Opening line spoken by Peblet on mount. */
   greeting?: string;
   /** Optional project context for chat dispatch. */
