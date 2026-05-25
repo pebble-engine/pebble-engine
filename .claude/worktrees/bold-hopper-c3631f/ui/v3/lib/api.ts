@@ -1338,6 +1338,14 @@ export async function fetchSubscription(): Promise<SubscriptionState> {
   let json: unknown;
   try { json = JSON.parse(text); } catch { json = { error: text || "non-json response" }; }
   if (!resp.ok) {
+    // 5xx from the billing endpoint = engine bug or stripe-config issue.
+    // Don't throw — degrade silently to "no subscription" so callers
+    // (sidebar Free Plan badge, settings billing tab) render as free
+    // instead of erroring the whole page. 4xx still throws so genuine
+    // client mistakes (missing auth header, etc.) surface as before.
+    if (resp.status >= 500) {
+      return { plan: null, status: null } as SubscriptionState;
+    }
     const err = (json as { error?: string }).error || `HTTP ${resp.status}`;
     throw new Error(err);
   }

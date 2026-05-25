@@ -91,6 +91,9 @@ def route_get(handler) -> None:
         elif handler.path == "/api/blocks":
             from pebble.server.blocks import run_list_blocks
             run_list_blocks(handler)
+        elif handler.path == "/api/templates":
+            from pebble.server.templates_api import run_list_templates
+            run_list_templates(handler)
         elif handler.path == "/api/industries":
             handler._handle_list_industries()
         elif handler.path == "/api/briefs":
@@ -168,7 +171,10 @@ def route_get(handler) -> None:
 
 def route_post(handler) -> None:
     try:
-        if handler.path == "/api/build":
+        if handler.path == "/api/instantiate-template":
+            from pebble.server.templates_api import run_instantiate_template
+            run_instantiate_template(handler)
+        elif handler.path == "/api/build":
             handler._handle_build(generate=False)
         elif handler.path == "/api/generate":
             handler._handle_build(generate=True)
