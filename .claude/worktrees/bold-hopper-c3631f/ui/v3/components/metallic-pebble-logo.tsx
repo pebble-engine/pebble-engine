@@ -64,6 +64,7 @@ export function MetallicPebbleLogo({
 
       {/* ── Metallic "P" — gradient clipped to text ── */}
       <span
+        role="presentation"
         className={`relative z-10 font-bold leading-none select-none ${text}`}
         style={{
           background:
@@ -77,14 +78,15 @@ export function MetallicPebbleLogo({
         P
       </span>
 
-      {/* ── Animated shine sweep — slides left-to-right, repeats ── */}
+      {/* ── Animated shine sweep — GPU-composited translateX, no reflow ── */}
       <motion.div
         className="absolute top-0 bottom-0 w-1/2 pointer-events-none z-20"
         style={{
           background:
             "linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.28) 50%, transparent 100%)",
         }}
-        animate={{ left: ["-50%", "150%"] }}
+        initial={{ x: "-100%" }}
+        animate={{ x: ["-100%", "300%"] }}
         transition={{
           duration: 1.6,
           repeat: Infinity,
