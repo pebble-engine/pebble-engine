@@ -197,6 +197,25 @@ def validate_access_token(
     return data
 
 
+def get_aal(bearer_token: str) -> str:
+    """Return the AAL (Authenticator Assurance Level) claim from a JWT.
+
+    Reads the ``aal`` claim from the JWT payload WITHOUT signature verification
+    — useful for a fast local check after :func:`validate_access_token` has
+    already confirmed the token is genuine.
+
+    Returns ``"aal2"`` if the claim is ``"aal2"``, otherwise ``"aal1"``
+    (safe default — assume weakest assurance when the claim is absent or
+    unreadable so callers always block rather than accidentally allow).
+
+    Does NOT validate the token. Call :func:`validate_access_token` first.
+    """
+    claims = _decode_jwt_claims(bearer_token) if isinstance(bearer_token, str) else None
+    if not isinstance(claims, dict):
+        return "aal1"
+    return "aal2" if claims.get("aal") == "aal2" else "aal1"
+
+
 def delete_user(
     user_id: str,
     *,
@@ -337,6 +356,7 @@ __all__ = [
     "AdminError",
     "is_configured",
     "validate_access_token",
+    "get_aal",
     "delete_user",
     "get_profile",
     "update_profile",

@@ -32,6 +32,7 @@ from typing import Optional
 from pebble.auth_admin import (
     AdminError,
     delete_user,
+    get_aal,
     get_profile,
     is_configured,
     update_profile,
@@ -109,6 +110,41 @@ def _bearer_token(handler) -> str:
     if not raw.lower().startswith("bearer "):
         return ""
     return raw[7:].strip()
+
+
+def _require_aal2_if_mfa_enrolled(handler, token: str, user: dict) -> bool:
+    """AAL downgrade guard for destructive account endpoints.
+
+    Returns True (allow) if the request should proceed. Writes 401 and
+    returns False if the user has MFA enrolled but the JWT was issued at
+    AAL1 (e.g., a pre-MFA stolen token or a session that pre-dates MFA
+    enrollment).
+
+    Logic:
+    - No verified MFA factors → pass (aal1 is correct for non-MFA users).
+    - Has verified factor + aal2 JWT → pass (properly MFA-authenticated).
+    - Has verified factor + aal1 JWT → reject 401 with aal_required hint.
+
+    NLM 2026-05-25 finding: without this guard a stolen AAL1 session can
+    reach /api/account/delete and /api/account/export-* for the full token
+    lifetime (~1h) even after the user enables MFA.
+    """
+    verified_factors = [
+        f for f in (user.get("factors") or [])
+        if isinstance(f, dict) and f.get("status") == "verified"
+    ]
+    if not verified_factors:
+        return True  # user has no MFA enrolled — aal1 is fine
+    if get_aal(token) == "aal2":
+        return True  # properly MFA-authenticated
+    handler._json(401, {
+        "error": (
+            "This action requires multi-factor authentication. "
+            "Please sign in again using your authenticator app."
+        ),
+        "aal_required": "aal2",
+    })
+    return False
 
 
 def _output_dir() -> Path:
@@ -551,6 +587,10 @@ def run_delete_account(handler) -> None:
 
     user_id = user.get("id") or ""
     user_email = user.get("email") or "?"
+
+    # AAL guard — NLM 2026-05-25: stolen pre-MFA token cannot delete account.
+    if not _require_aal2_if_mfa_enrolled(handler, token, user):
+        return
 
     # Past-due lazy cleanup.
     if _execute_deletion_if_due(user_id, user_email):
@@ -1345,6 +1385,11 @@ def run_request_data_export(handler) -> None:
     if not user:
         return  # require_user already responded 401/503
 
+    # AAL guard — NLM 2026-05-25: stolen pre-MFA token cannot trigger export.
+    token = _bearer_token(handler)
+    if not _require_aal2_if_mfa_enrolled(handler, token, user):
+        return
+
     if not _data_export_limiter.allow(user["id"]):
         handler._json(429, {
             "error": "Already requested an export in the last 24 hours. Check your email."
@@ -1408,6 +1453,11 @@ def run_download_export(handler) -> None:
     # writes 401/503 and returns None on auth failure; we just need to bail.
     user = require_user(handler)
     if not user:
+        return
+
+    # AAL guard — NLM 2026-05-25: stolen pre-MFA token cannot download exports.
+    token = _bearer_token(handler)
+    if not _require_aal2_if_mfa_enrolled(handler, token, user):
         return
 
     from urllib.parse import urlparse, parse_qs
@@ -1518,6 +1568,22 @@ def run_download_export(handler) -> None:
         return
 
     zip_path = Path(matched_data["zip_path"])
+    # Fix B (NLM 2026-05-25): defense-in-depth path bounds check. zip_path
+    # comes from the trusted DB manifest (written by _build_export_zip), but
+    # guard against a corrupted or injected manifest row pointing outside this
+    # user's exports directory. Cheap — one resolve() call.
+    try:
+        expected_dir = _exports_dir(user["id"]).resolve()
+        if not zip_path.resolve().is_relative_to(expected_dir):
+            log.warning(
+                "[account] export-download: zip_path %s outside expected dir for user %s",
+                zip_path, _safe_uid(user["id"]),
+            )
+            handler._json(403, {"error": "invalid export path"})
+            return
+    except (ValueError, OSError):
+        handler._json(400, {"error": "invalid export path"})
+        return
     if not zip_path.is_file():
         handler._json(404, {"error": "export file is no longer available"})
         return

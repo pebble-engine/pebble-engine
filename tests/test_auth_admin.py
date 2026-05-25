@@ -350,3 +350,30 @@ def test_delete_raises_on_network_error(monkeypatch):
     monkeypatch.setattr("urllib.request.urlopen", fake)
     with pytest.raises(auth_admin.AdminError, match="unreachable"):
         auth_admin.delete_user("11111111-2222-3333-4444-555555555555")
+
+
+# ---- get_aal -----------------------------------------------------------------
+
+def test_get_aal_returns_aal2_for_mfa_jwt():
+    token = _make_jwt(extra={"aal": "aal2"})
+    assert auth_admin.get_aal(token) == "aal2"
+
+
+def test_get_aal_returns_aal1_for_non_mfa_jwt():
+    token = _make_jwt(extra={"aal": "aal1"})
+    assert auth_admin.get_aal(token) == "aal1"
+
+
+def test_get_aal_defaults_to_aal1_when_claim_absent():
+    token = _make_jwt()  # no 'aal' key in payload
+    assert auth_admin.get_aal(token) == "aal1"
+
+
+def test_get_aal_defaults_to_aal1_for_non_string_input():
+    assert auth_admin.get_aal(None) == "aal1"   # type: ignore[arg-type]
+    assert auth_admin.get_aal(123) == "aal1"     # type: ignore[arg-type]
+
+
+def test_get_aal_defaults_to_aal1_for_malformed_jwt():
+    assert auth_admin.get_aal("not.a.jwt") == "aal1"
+    assert auth_admin.get_aal("one-segment") == "aal1"
