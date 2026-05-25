@@ -315,3 +315,74 @@ def test_confirm_token_is_single_use(tmp_path, monkeypatch, output_dir):
     h2 = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
     account_server.run_confirm_email_change(h2)
     assert h2.status == 404
+
+
+# ---- Fix 4 (2026-05-24): file-fallback hard-kill date --------------------
+
+def test_confirm_file_fallback_skipped_after_hard_kill_date(
+    tmp_path, monkeypatch, output_dir,
+):
+    """After _FILE_FALLBACK_HARD_KILL (2026-05-29T00:00:00Z), the local-file
+    fallback for email_change_pending.json is silently dropped. Any token
+    only present in the legacy file location returns 410 (link expired,
+    re-request) — so an attacker who can write a forged file under
+    output/.users/<uid>/email_change_pending.json can't use it to confirm
+    an email change.
+
+    Pre-kill-date the file fallback still works (existing tests above).
+    """
+    import datetime as _dt
+    from pathlib import Path as _Path
+
+    token = "legacy-file-only-token"
+    seeded = _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"])
+
+    # Force "now" past the hard-kill date.
+    class _PastKillDatetime(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2026, 6, 1, tzinfo=tz or _dt.timezone.utc)
+
+    monkeypatch.setattr(account_mod, "datetime", _PastKillDatetime)
+
+    # Spy on Path.iterdir to prove the file-scan code path NEVER runs.
+    # If the fallback short-circuited correctly, _output_dir / ".users"
+    # is never enumerated.
+    iterdir_calls: list[str] = []
+    real_iterdir = _Path.iterdir
+
+    def spy_iterdir(self):
+        iterdir_calls.append(str(self))
+        return real_iterdir(self)
+
+    monkeypatch.setattr(_Path, "iterdir", spy_iterdir)
+
+    # Supabase lookup also returns None (no row) so we know any successful
+    # confirm would have to have come from the file fallback.
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_email_change_pending",
+        lambda token: None,
+    )
+
+    monkeypatch.setattr(account_mod, "_update_user_email",
+                        lambda uid, email: True)
+    monkeypatch.setattr(account_mod, "_get_user_email_from_supabase",
+                        lambda uid: "old@example.com")
+    monkeypatch.setattr("pebble.audit_log.log_event_for_handler", lambda **kw: None)
+    monkeypatch.setattr(account_mod, "_send_email_change_completed_safe", lambda **kw: None)
+
+    h = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
+    account_server.run_confirm_email_change(h)
+
+    # 410 Gone: the token is no longer accepted via the legacy path.
+    assert h.status == 410, \
+        f"expected 410 (link expired, re-request) after kill date, got {h.status}: {h.json_body}"
+    # The file was NOT consumed (the test seed is still there) — proves
+    # the legacy path didn't even try to read it.
+    assert seeded.exists(), \
+        "file must NOT be consumed when the fallback is dead-killed"
+    # The .users dir must NOT have been iterated.
+    users_root_iter = [c for c in iterdir_calls
+                       if c.endswith(".users") or ".users" + str(_Path("/"))[-1] in c]
+    assert not users_root_iter, \
+        f"file-scan code path ran after hard-kill date: {users_root_iter}"

@@ -64,6 +64,34 @@ _data_export_limiter = RateLimiter(rate=1 / 86400.0, burst=1)
 OUTPUT_DIR: Path = Path(__file__).parent.parent.parent.resolve() / "output"
 
 
+# Legacy file-fallback for pending state files issued BEFORE the
+# 918272b migration to Supabase. The window must close fast because
+# the file path lacks RLS — an attacker who can write a file under
+# output/.users/<uid>/email_change_pending.json or
+# output/.exports/<uid>/*.manifest.json could otherwise forge state
+# and confirm an email change or download an arbitrary ZIP.
+#
+# After this date, both run_confirm_email_change and run_download_export
+# refuse to consult the local-file path — Supabase-only. Any
+# unconfirmed token by this date is silently dropped (returns 410);
+# user can re-request from settings. (Fix 4, 2026-05-24.)
+_FILE_FALLBACK_HARD_KILL = "2026-05-29T00:00:00+00:00"
+
+
+def _file_fallback_is_dead() -> bool:
+    """True after the hard-kill date has passed. Returning True makes
+    both confirm-email-change and download-export refuse to scan the
+    legacy file location, even when Supabase lookup_*() returns None.
+    """
+    try:
+        kill = datetime.fromisoformat(_FILE_FALLBACK_HARD_KILL)
+    except ValueError:
+        # Hard-kill date is a module constant — if someone mangles it
+        # we want to fail SAFE (kill date in effect immediately).
+        return True
+    return datetime.now(timezone.utc) >= kill
+
+
 def _reset_delete_rate_limiter_for_tests() -> None:
     global _delete_rate_limiter
     _delete_rate_limiter = RateLimiter(rate=1 / 1200.0, burst=3)
@@ -971,7 +999,11 @@ def run_confirm_email_change(handler) -> None:
     # ── 2. Legacy fallback: local filesystem ─────────────────────────────────
     # Remove this block once Pebble has been live >24h with migration 006
     # (i.e., all pre-migration tokens have expired or been consumed).
-    if matched_data is None:
+    #
+    # Fix 4 (2026-05-24): hard-killed after _FILE_FALLBACK_HARD_KILL. After
+    # that date the file path is dead — no scan, no read — so a forged
+    # local file under output/.users/<uid>/ can't be used as auth state.
+    if matched_data is None and not _file_fallback_is_dead():
         users_root = _output_dir() / ".users"
         if users_root.is_dir():
             for sub in users_root.iterdir():
@@ -1001,6 +1033,16 @@ def run_confirm_email_change(handler) -> None:
                     continue
 
     if matched_data is None:
+        # Fix 4: distinguish "post-kill-date, fallback dead" from "unknown
+        # token". The user-facing remedy is the same (re-request) but the
+        # status code semantics differ — 410 Gone tells the v3 client the
+        # link is permanently invalid (don't auto-retry), 404 means the
+        # token was never valid in the first place.
+        if _file_fallback_is_dead():
+            handler._json(410, {
+                "error": "link expired — please re-request from settings"
+            })
+            return
         handler._json(404, {"error": "token not found or already used"})
         return
 
@@ -1255,7 +1297,11 @@ def run_download_export(handler) -> None:
     # ── 2. Legacy fallback: local .manifest.json files ───────────────────────
     # Remove this block once Pebble has been live >24h with migration 006
     # (i.e., all pre-migration tokens have expired or been consumed).
-    if matched_data is None:
+    #
+    # Fix 4 (2026-05-24): hard-killed after _FILE_FALLBACK_HARD_KILL.
+    # After that date a forged manifest in output/.exports/<uid>/ can't
+    # be used to download a ZIP.
+    if matched_data is None and not _file_fallback_is_dead():
         exports_root = OUTPUT_DIR / ".exports"
         if exports_root.is_dir():
             for user_dir in exports_root.iterdir():
@@ -1284,6 +1330,13 @@ def run_download_export(handler) -> None:
                     break
 
     if matched_data is None:
+        # Fix 4: post-kill-date misses get 410 (link permanently dead) so
+        # the v3 client knows not to auto-retry.
+        if _file_fallback_is_dead():
+            handler._json(410, {
+                "error": "Download link has expired. Request a new export."
+            })
+            return
         handler._json(404, {"error": "token not found"})
         return
 

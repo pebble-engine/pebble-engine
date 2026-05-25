@@ -342,3 +342,79 @@ def test_download_other_user_returns_403_and_audits(tmp_path, monkeypatch):
         "denied" in (c.get("event_type") or "").lower()
         for c in audit_calls
     ), f"expected export-denied audit log, got: {[c.get('event_type') for c in audit_calls]}"
+
+
+# ---- Fix 4 (2026-05-24): file-fallback hard-kill date --------------------
+
+def test_download_file_fallback_skipped_after_hard_kill_date(
+    tmp_path, monkeypatch,
+):
+    """After _FILE_FALLBACK_HARD_KILL (2026-05-29T00:00:00Z), the local-file
+    fallback for *.manifest.json is silently dropped. Any token only
+    present in the legacy file location returns 410 — so an attacker who
+    can write a forged manifest under output/.exports/<uid>/*.manifest.json
+    can't use it to download arbitrary files.
+
+    Pre-kill-date the file fallback still works (existing tests above)."""
+    import datetime as _dt
+    from pathlib import Path as _Path
+
+    out = tmp_path / "output"
+    out.mkdir()
+    monkeypatch.setattr(account_mod, "OUTPUT_DIR", out)
+    user_id = "u-1"
+    monkeypatch.setattr(
+        account_mod, "require_user",
+        lambda h: {"id": user_id, "email": "test@example.com"},
+    )
+
+    # Force "now" past the hard-kill date.
+    class _PastKillDatetime(_dt.datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return _dt.datetime(2026, 6, 1, tzinfo=tz or _dt.timezone.utc)
+
+    monkeypatch.setattr(account_mod, "datetime", _PastKillDatetime)
+
+    # Supabase lookup returns None so any success would have to come from
+    # the file fallback.
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_data_export_manifest",
+        lambda token: None,
+    )
+
+    # Spy on iterdir to prove the .exports scan never runs.
+    iterdir_calls: list[str] = []
+    real_iterdir = _Path.iterdir
+
+    def spy_iterdir(self):
+        iterdir_calls.append(str(self))
+        return real_iterdir(self)
+
+    monkeypatch.setattr(_Path, "iterdir", spy_iterdir)
+
+    # Seed a legacy manifest the fallback would have matched.
+    exports = out / ".exports" / user_id
+    exports.mkdir(parents=True)
+    zip_path = exports / "test.zip"
+    with zipfile.ZipFile(zip_path, "w") as z:
+        z.writestr("x", "")
+    (exports / "test.manifest.json").write_text(json.dumps({
+        "token": "legacy-only-token",
+        "zip_path": str(zip_path),
+        "user_id": user_id,
+        "expires_at": "2099-01-01T00:00:00+00:00",
+        "requested_at": "2026-05-24T00:00:00+00:00",
+    }))
+
+    h = _FakeHandler(path="/api/account/export-download?token=legacy-only-token")
+    account_mod.run_download_export(h)
+
+    assert h.responses[-1][0] == 410, \
+        f"expected 410 after kill date, got {h.responses[-1][0]}"
+    # Zip bytes must NOT have streamed.
+    assert h.raw_writes == []
+    # The .exports dir must NOT have been iterated.
+    exports_iter = [c for c in iterdir_calls if c.endswith(".exports")]
+    assert not exports_iter, \
+        f"file-scan code path ran after hard-kill date: {exports_iter}"
