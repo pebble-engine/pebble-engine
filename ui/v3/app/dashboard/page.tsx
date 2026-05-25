@@ -39,6 +39,7 @@ import {
   rollback,
   type ProjectSummary,
   type ActivityRow,
+  type ChatProjectContext,
 } from "@/lib/api";
 import { interactions } from "@/lib/interactions";
 
@@ -134,6 +135,7 @@ export default function DashboardPage() {
   // PebbleChat handles a greeting that arrives after mount via its own
   // greetingSetRef guard (see pebble-chat.tsx).
   const [greeting, setGreeting] = useState<string>("");
+  const [chatContext, setChatContext] = useState<ChatProjectContext | null>(null);
   useEffect(() => {
     // Don't compute until the project list has settled — we want to
     // reference the most-recently-built project by name. If still
@@ -150,6 +152,20 @@ export default function DashboardPage() {
         firstName,
         mostRecentProjectName: mostRecent?.business_name ?? null,
       }),
+    );
+
+    // Chat context — gives Pebble knowledge of the most-recently-built
+    // project so it can answer project-specific questions and dispatch edits.
+    setChatContext(
+      mostRecent
+        ? {
+            slug:         mostRecent.slug,
+            name:         mostRecent.business_name,
+            industry:     mostRecent.business_type ?? undefined,
+            design_dna:   mostRecent.design_dna ?? undefined,
+            is_published: mostRecent.publish != null,
+          }
+        : null,
     );
   }, [user, loading, projects]);
 
@@ -329,7 +345,7 @@ export default function DashboardPage() {
     <div className="flex flex-col h-screen-safe">
       <TopNav projectName="Dashboard" rightSlot={topRightSlot} />
       <div className="flex-1 min-h-0">
-      <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
+      <ControlCenter greeting={greeting} projectContext={chatContext} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
           {/* First-visit welcome card — shows only on a genuinely empty

@@ -25,6 +25,7 @@
 import { useState } from "react";
 import { MessageSquare, X, ChevronLeft } from "lucide-react";
 import { PebbleChat } from "@/components/pebble-chat";
+import { type ChatProjectContext } from "@/lib/api";
 
 export type ControlCenterProps = {
   /** Middle column — the actual route content the user is looking at. */
@@ -36,9 +37,12 @@ export type ControlCenterProps = {
    *  greeting feel context-aware ("Welcome back to your dashboard" vs
    *  "Browsing templates? I can help filter"). */
   greeting?: string;
+  /** Optional project context passed from pages that load project data.
+   *  Enables Pebble chat to give project-aware replies and dispatch edits. */
+  projectContext?: ChatProjectContext | null;
 };
 
-export function ControlCenter({ children, leftSidebar, greeting }: ControlCenterProps) {
+export function ControlCenter({ children, leftSidebar, greeting, projectContext }: ControlCenterProps) {
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
   const [chatCollapsed, setChatCollapsed] = useState(false);
 
@@ -80,7 +84,7 @@ export function ControlCenter({ children, leftSidebar, greeting }: ControlCenter
         </aside>
       ) : (
         <aside className="hidden lg:flex lg:w-[340px] xl:w-[360px] shrink-0 h-full">
-          <PebbleChat greeting={greeting} onCollapse={() => setChatCollapsed(true)} />
+          <PebbleChat greeting={greeting} onCollapse={() => setChatCollapsed(true)} projectContext={projectContext} />
         </aside>
       )}
 
@@ -116,7 +120,7 @@ export function ControlCenter({ children, leftSidebar, greeting }: ControlCenter
               <X className="w-4 h-4" />
             </button>
             <div className="flex-1 min-h-0">
-              <PebbleChat greeting={greeting} />
+              <PebbleChat greeting={greeting} projectContext={projectContext} />
             </div>
           </div>
         </div>
