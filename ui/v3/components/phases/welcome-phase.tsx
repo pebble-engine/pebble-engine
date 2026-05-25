@@ -115,10 +115,8 @@ const TEMPLATE_TILES = [
   { label: "Boutique Brokerage",         feel: "Real estate",  preview: "/templates-preview/boutique_brokerage.png"      },
   { label: "Boutique Brokerage · Navy",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_navy.png" },
   { label: "Boutique Brokerage · Sage",  feel: "Real estate",  preview: "/templates-preview/boutique_brokerage_sage.png" },
-  // Honest garage — automotive
+  // Cinematic Hero — generic service-business hero (no color variants)
   { label: "Cinematic Hero",             feel: "Service light", preview: "/templates-preview/cinematic_hero.png"          },
-  { label: "Ink Studio · Oxblood",       feel: "Tattoo dark",   preview: "/templates-preview/ink_studio_oxblood.png"      },
-  { label: "Artisan Kitchen · Olive",    feel: "Restaurant",    preview: "/templates-preview/artisan_kitchen_olive.png"   },
   // Ink studio — tattoo / art
   { label: "Ink Studio",                 feel: "Tattoo studio",preview: "/templates-preview/ink_studio.png"              },
   { label: "Ink Studio · Oxblood",       feel: "Tattoo studio",preview: "/templates-preview/ink_studio_oxblood.png"      },
@@ -1367,30 +1365,17 @@ export function WelcomePhase({ onAdvance }: Props) {
             </p>
           </motion.div>
 
-          {/* Video left (~40% on md+, full width on mobile) + steps right */}
-          <div className="grid grid-cols-1 md:grid-cols-[42%_1fr] gap-8 sm:gap-10 md:gap-14 items-center">
-            {/* Left — looping screen recording of a real Pebble build */}
-            <motion.div
-              initial={{ opacity: 0, y: 16 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, amount: 0.3 }}
-              transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-              className="rounded-2xl overflow-hidden border border-border bg-card shadow-[0_18px_44px_rgba(31,29,26,0.10)]"
-            >
-              <video
-                src="/mp_.mp4"
-                autoPlay
-                muted
-                loop
-                playsInline
-                preload="metadata"
-                className="block w-full h-auto bg-muted"
-                aria-label="A live recording of a Pebble build, from sentence to live site"
-                ref={(el) => { if (el) el.playbackRate = 1.5; }}
-              />
-            </motion.div>
+          {/* 2026-05-24 — the looping screen recording (/mp_.mp4) was deleted
+              in tech-debt sweep c0663e0 as an "orphan placeholder." Until
+              Marc records a real one, the steps take full width — keeps the
+              section meaningful without a broken video tag (was 404-ing on
+              every visit + spamming the console).
 
-            {/* Right — 3 numbered step cards from the existing STEPS const */}
+              When the real recording lands at /mp_.mp4, restore the
+              md:grid-cols-[42%_1fr] split + the <video> tag from the
+              referenced commit. */}
+          <div className="grid grid-cols-1 gap-8 sm:gap-10 md:gap-14 items-center max-w-3xl mx-auto">
+            {/* 3 numbered step cards from the existing STEPS const */}
             <motion.ol
               variants={STAGGER_PARENT}
               initial="hidden"
