@@ -14,7 +14,7 @@
  * B&W full-bleed slides, uppercase serif headline overlays, thumbnail
  * ribbon replaces chip filter row.
  */
-import { useCallback, useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useRef, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -39,6 +39,9 @@ export default function TemplatesPage() {
   const [picked, setPicked] = useState<TemplateSummary | null>(null);
   const [activeIndustry, setActiveIndustry] = useState<string | null>(null);
   const [carouselIndex, setCarouselIndex] = useState(0);
+  // Auto-rotate state. Paused when the user interacts (chevrons, swipe,
+  // hover, or focus) so they can read a card without it jumping away.
+  const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     listTemplates()
@@ -123,48 +126,14 @@ export default function TemplatesPage() {
 
         {/* ── Cinematic carousel ── */}
         {templates && visible.length > 0 && (
-          <div className="relative mb-10">
-            {/* Prev chevron */}
-            <button
-              type="button"
-              onClick={() => setCarouselIndex((i) => Math.max(0, i - 1))}
-              disabled={carouselIndex === 0}
-              aria-label="Previous template"
-              className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            {/* Next chevron */}
-            <button
-              type="button"
-              onClick={() =>
-                setCarouselIndex((i) => Math.min(visible.length - 1, i + 1))
-              }
-              disabled={carouselIndex >= visible.length - 1}
-              aria-label="Next template"
-              className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl disabled:opacity-30 disabled:cursor-not-allowed transition-opacity"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
-            {/* Track */}
-            <div className="overflow-hidden px-12">
-              <motion.div
-                className="flex gap-4 items-center"
-                animate={{ x: -carouselIndex * 436 }}
-                transition={{ duration: 0.55, ease: EASE_CINEMATIC }}
-                style={{ paddingLeft: "calc(50% - 218px - 24px)" }}
-              >
-                {visible.map((t, i) => (
-                  <CinematicSlide
-                    key={t.id}
-                    template={t}
-                    active={i === carouselIndex}
-                    onClick={() => setPreviewing(t)}
-                  />
-                ))}
-              </motion.div>
-            </div>
-          </div>
+          <CarouselDeck
+            visible={visible}
+            carouselIndex={carouselIndex}
+            setCarouselIndex={setCarouselIndex}
+            paused={paused}
+            setPaused={setPaused}
+            onPreview={(t) => setPreviewing(t)}
+          />
         )}
 
         {/* ── Thumbnail Ribbon ── */}
@@ -269,6 +238,139 @@ export default function TemplatesPage() {
       )}
       {picked && <InstantiateDialog template={picked} onClose={() => setPicked(null)} router={router} />}
       <FloatingPeblet greeting="Looking for a template? I can help you find the right one." />
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// CarouselDeck — auto-rotating slider with swipe + interaction pause  //
+// ------------------------------------------------------------------ //
+// Behavior (per Marc 2026-05-25):
+// - Idle: advances one slide every 4 seconds.
+// - User hovers, focuses, clicks a chevron, or starts a touch swipe →
+//   rotation STOPS for as long as they're engaged.
+// - Mobile swipe with > 50px horizontal drag advances one slide and
+//   keeps rotation paused (user is making a decision).
+//
+// Rotation rule of thumb: pause on intent (hover / focus / drag start /
+// chevron click), resume when intent ends (mouseleave / blur / drag end
+// without a swipe past threshold).
+
+function CarouselDeck({
+  visible,
+  carouselIndex,
+  setCarouselIndex,
+  paused,
+  setPaused,
+  onPreview,
+}: {
+  visible: TemplateSummary[];
+  carouselIndex: number;
+  setCarouselIndex: React.Dispatch<React.SetStateAction<number>>;
+  paused: boolean;
+  setPaused: React.Dispatch<React.SetStateAction<boolean>>;
+  onPreview: (t: TemplateSummary) => void;
+}) {
+  // Auto-rotate: advance one slide every 4s, wrapping at the end.
+  // Paused when the user is interacting (see CarouselDeck props/handlers).
+  useEffect(() => {
+    if (paused || visible.length <= 1) return;
+    const id = setInterval(() => {
+      setCarouselIndex((i) => (i + 1) % visible.length);
+    }, 4000);
+    return () => clearInterval(id);
+  }, [paused, visible.length, setCarouselIndex]);
+
+  // Touch swipe — once a user starts touching, we pause rotation. On
+  // swipe-release with > 50px horizontal travel we advance one slide
+  // and KEEP rotation paused (user is reading / deciding).
+  const touchStartXRef = useRef<number | null>(null);
+  const SWIPE_THRESHOLD = 50;
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartXRef.current = e.touches[0]?.clientX ?? null;
+    setPaused(true);
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStartXRef.current;
+    touchStartXRef.current = null;
+    if (start == null) return;
+    const end = e.changedTouches[0]?.clientX ?? start;
+    const dx = end - start;
+    if (Math.abs(dx) > SWIPE_THRESHOLD) {
+      if (dx < 0) {
+        // Swipe left → next
+        setCarouselIndex((i) => Math.min(visible.length - 1, i + 1));
+      } else {
+        // Swipe right → prev
+        setCarouselIndex((i) => Math.max(0, i - 1));
+      }
+      // Keep paused — user is making a decision.
+    }
+    // No re-resume on touchend; user resumes by tapping outside or
+    // letting hover/focus clear on desktop. Mobile sessions stay
+    // paused which matches the "let them decide" requirement.
+  };
+
+  return (
+    <div
+      className="relative mb-10"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+      onFocus={() => setPaused(true)}
+      onBlur={() => setPaused(false)}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+    >
+      {/* Prev chevron — wraps to end when at start */}
+      <button
+        type="button"
+        onClick={() => {
+          setCarouselIndex((i) => (i === 0 ? visible.length - 1 : i - 1));
+          setPaused(true);
+        }}
+        aria-label="Previous template"
+        className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl transition-opacity"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </button>
+      {/* Next chevron — wraps to start when at end */}
+      <button
+        type="button"
+        onClick={() => {
+          setCarouselIndex((i) => (i + 1) % visible.length);
+          setPaused(true);
+        }}
+        aria-label="Next template"
+        className="absolute right-2 md:right-4 top-1/2 -translate-y-1/2 z-20 w-11 h-11 rounded-full bg-white/90 text-black hover:bg-white flex items-center justify-center shadow-xl transition-opacity"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </button>
+      {/* Track */}
+      <div className="overflow-hidden px-12">
+        <motion.div
+          className="flex gap-4 items-center"
+          animate={{ x: -carouselIndex * 436 }}
+          transition={{ duration: 0.55, ease: EASE_CINEMATIC }}
+          style={{ paddingLeft: "calc(50% - 218px - 24px)" }}
+        >
+          {visible.map((t, i) => (
+            <CinematicSlide
+              key={t.id}
+              template={t}
+              active={i === carouselIndex}
+              onClick={() => onPreview(t)}
+            />
+          ))}
+        </motion.div>
+      </div>
+      {/* Auto-rotate hint chip — subtle, only when paused tells user
+          they're "in control" and rotation will resume on mouse-leave. */}
+      {paused && visible.length > 1 && (
+        <p className="absolute bottom-3 left-1/2 -translate-x-1/2 text-[10px] uppercase tracking-widest text-muted-foreground/70 pointer-events-none">
+          Auto-rotate paused
+        </p>
+      )}
     </div>
   );
 }
