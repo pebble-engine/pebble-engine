@@ -14,7 +14,7 @@
  * marketing framing because it works. The carrot routes lowest-commitment
  * users into the cheapest, most-likely-to-look-good path.
  */
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Upload } from "lucide-react";
@@ -57,13 +57,20 @@ export default function TemplatesPage() {
   }, [templates]);
 
   // Helper: first color_swatches array for a given industry.
-  function firstSwatchForIndustry(ind: string): string[] | null {
-    const t = (templates ?? []).find((x) => x.applicable_industries.includes(ind));
-    return t?.color_swatches?.length ? t.color_swatches : null;
-  }
+  const firstSwatchForIndustry = useCallback(
+    (ind: string): string[] | null => {
+      const t = (templates ?? []).find((x) => x.applicable_industries.includes(ind));
+      return t?.color_swatches?.length ? t.color_swatches : null;
+    },
+    [templates],
+  );
 
-  const visible = (templates ?? []).filter(
-    (t) => !activeIndustry || t.applicable_industries.includes(activeIndustry),
+  const visible = useMemo(
+    () =>
+      (templates ?? []).filter(
+        (t) => !activeIndustry || t.applicable_industries.includes(activeIndustry),
+      ),
+    [templates, activeIndustry],
   );
 
   return (
@@ -188,6 +195,7 @@ function TemplateCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: STANDARD_S, delay: i * 0.05, ease: EASE_CINEMATIC }}
+      aria-label={t.name}
       className="group text-left bg-card border border-border rounded-2xl overflow-hidden hover:border-foreground/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
     >
       <div
@@ -313,6 +321,15 @@ function PreviewPane({
     setNeedsAuth(false);
   }, [current.id]);
 
+  // Escape key closes the pane for keyboard users.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const active = pages[activeIdx] ?? pages[0];
   // Templates with absolute preview_urls (legacy localhost:3199 entries) load
   // as-is. Engine-served static-export URLs (/preview-template/<id>/...) need
@@ -349,7 +366,13 @@ function PreviewPane({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 flex flex-col" onClick={onClose}>
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="preview-pane-title"
+      className="fixed inset-0 z-50 bg-black/85 flex flex-col"
+      onClick={onClose}
+    >
       {/* ── Header bar ── */}
       <div
         className="flex items-center justify-between gap-3 px-6 py-3 border-b border-white/10 bg-black"
@@ -368,7 +391,7 @@ function PreviewPane({
             <p className={`${type.mono} text-[10px] uppercase tracking-wider text-white/50`}>
               {current.vibe}
             </p>
-            <h2 className={`${type.dashboard.heading.m} text-white truncate`}>{current.name}</h2>
+            <h2 id="preview-pane-title" className={`${type.dashboard.heading.m} text-white truncate`}>{current.name}</h2>
           </div>
         </div>
 
@@ -398,7 +421,7 @@ function PreviewPane({
               href={iframeSrc}
               target="_blank"
               rel="noopener noreferrer"
-              title="Open in new tab"
+              aria-label="Open preview in new tab"
               className="p-1.5 rounded-md text-white/70 hover:bg-white/10 hover:text-white"
             >
               <ExternalLink className="w-4 h-4" />
@@ -534,6 +557,15 @@ function InstantiateDialog({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Escape key closes the dialog for keyboard users.
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
   const submit = async () => {
     if (!businessName.trim()) {
       setError("Please give your business a name");
@@ -561,6 +593,9 @@ function InstantiateDialog({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="instantiate-dialog-title"
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
       onClick={onClose}
     >
@@ -576,7 +611,7 @@ function InstantiateDialog({
             <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-1`}>
               {template.vibe}
             </p>
-            <h2 className={`${type.dashboard.heading.l}`}>Use {template.name}</h2>
+            <h2 id="instantiate-dialog-title" className={`${type.dashboard.heading.l}`}>Use {template.name}</h2>
           </div>
           <button
             type="button"
