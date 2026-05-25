@@ -15,12 +15,10 @@ import {
   Globe,
   Download,
   Mail,
-  FolderOpen,
   Search,
   Sparkles,
   Compass,
   Users,
-  BookOpen,
   ArrowRight,
   Undo2,
 } from "lucide-react";
@@ -335,47 +333,39 @@ export default function DashboardPage() {
             <OnboardingCard onDismiss={dismissOnboardCard} />
           )}
 
-          {/* Welcome banner — Marc's 2026-05-23 mockup: warm header
-              with a wave emoji + tagline that anchors the page as
-              "your home base" rather than "a folder of designs." */}
-          <header className="space-y-1">
-            <p className="text-sm font-semibold text-muted-foreground">
-              Welcome back{displayName ? `, ${displayName}` : ""}! <span aria-hidden>👋</span>
-            </p>
-            <h1 className={`${type.dashboard.display.m} text-foreground`}>Dashboard</h1>
-            <p className={`${type.body.s} text-muted-foreground`}>
-              Here&apos;s what&apos;s happening with your projects.
+          {/* Page header — Linear-style: just the page title + live
+              stats subtitle. Compact, data-forward, no emoji.
+              2026-05-25 redesign. */}
+          <header>
+            <h1 className={`${type.dashboard.display.m} text-foreground`}>Projects</h1>
+            <p className={`${type.body.s} text-muted-foreground mt-0.5`}>
+              {loading ? "Loading…" : (
+                <>
+                  {mounted && displayName ? `${displayName}'s workspace` : "Your workspace"}
+                  {!loading && projects.length > 0 && ` · ${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+                  {!loading && projects.filter((p) => p.starred).length > 0 && ` · ${projects.filter((p) => p.starred).length} starred`}
+                  {!loading && projects.filter((p) => p.publish != null).length > 0 && ` · ${projects.filter((p) => p.publish != null).length} published`}
+                </>
+              )}
             </p>
           </header>
           {/* Phase 45 — page-local filter chips sit in the main area now
               (not the sidebar). The sidebar is shared across workspace
               pages and shouldn't carry per-page state. These three chips
               are the same All / Starred / Recents view as before. */}
-          <div className="flex items-center justify-between gap-4 flex-wrap">
-            <div>
-              <h2 className={`${type.dashboard.heading.l} text-foreground`}>
-                {filter === "starred" ? "Starred" : filter === "recents" ? "Recently built" : "Your projects"}
-              </h2>
-              <p className={`${type.body.s} text-muted-foreground mt-1`}>
-                {loading
-                  ? "Loading your projects…"
-                  : `${visible.length} ${visible.length === 1 ? "project" : "projects"}`}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <FilterChip active={filter === "all"}     onClick={() => setFilter("all")}     Icon={Home}  label="All" />
-              <FilterChip active={filter === "starred"} onClick={() => setFilter("starred")} Icon={Star}  label="Starred" />
-              <FilterChip active={filter === "recents"} onClick={() => setFilter("recents")} Icon={Clock} label="Recents" />
-              <div className="relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by name or industry..."
-                  className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-60"
-                />
-              </div>
+          <div className="flex items-center gap-3 flex-wrap">
+            <FilterChip active={filter === "all"}     onClick={() => setFilter("all")}     Icon={Home}  label="All" />
+            <FilterChip active={filter === "starred"} onClick={() => setFilter("starred")} Icon={Star}  label="Starred" />
+            <FilterChip active={filter === "recents"} onClick={() => setFilter("recents")} Icon={Clock} label="Recents" />
+            <div className="relative">
+              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <input
+                type="search"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search projects…"
+                className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-52"
+              />
             </div>
           </div>
 
@@ -587,28 +577,10 @@ function OnboardingCard({ onDismiss }: { onDismiss: () => void }) {
 }
 
 // ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
-// HomeTiles — interactive Home-section content for /dashboard.
-//
-// Three persistent action cards (Templates / Get inspired / Pebble guides)
-// plus one rotating "tip of the day" so the surface doesn't feel static.
-// Marc's 2026-05-23 brief: "Home section and community section need to be
-// the most energetic, welcoming." This is the first energy beat — a
-// dense, color-forward strip above the project grid that gives the user
-// somewhere to go BESIDES their own designs.
-//
-// Why tile + rotating tip rather than a full blog feed: a real CMS is a
-// project on its own. The tile pattern gets the right energy on screen
-// today without committing to authored content. When we DO start writing
-// articles, the third tile points at /learn and that page can grow into
-// the feed without touching the dashboard again.
-//
-// When the user has no projects yet, the first tile gently nudges
-// toward Templates (faster way to ship than building from scratch).
-// When they have projects, all three tiles stay the same — we don't
-// hide them after first build, because returning to ideas / tips is
-// what makes the dashboard a habit.
+// HomeTiles — clean quick-action row above the project grid.
+// 2026-05-25 redesign: replaced gradient blob promos with flat icon-chip
+// action tiles. No decorative gradients — the icon background + border
+// carry the affordance. Clean, Linear/Vercel-style.
 // ---------------------------------------------------------------------------
 
 const PEBBLE_TIPS = [
@@ -621,55 +593,43 @@ const PEBBLE_TIPS = [
 ];
 
 function HomeTiles({ hasProjects }: { hasProjects: boolean }) {
-  // Per-mount tip pick — refreshes every dashboard visit.
   const [tipIdx, setTipIdx] = useState(0);
   useEffect(() => {
     setTipIdx(Math.floor(Math.random() * PEBBLE_TIPS.length));
   }, []);
 
-  // 2026-05-24 de-card-ify. Marc: "doesn't like AI slop and a bunch of
-  // borders and cards." Replaced the 3-equal-tile grid with a
-  // magazine-style layout: one large hero promo (left, 60%) + two
-  // compact secondary promos (right, stacked). No card borders — the
-  // gradients themselves carry the affordance, and the absence of
-  // border-on-rest makes the page feel composed instead of catalogued.
-  // The rotating Pebble tip became a single-line inline-on-page item
-  // (in the page header area), so this section is just three actions
-  // not three actions + a fourth bordered strip.
   return (
-    <section className="grid grid-cols-1 lg:grid-cols-5 gap-3">
-      <HeroPromo
-        href="/templates"
-        eyebrow="Templates"
-        title={hasProjects ? "Start from a proven shape" : "Skip the blank page"}
-        body="Cinematic, industry-tuned starting points. One click clones the design and customizes for your business — under a minute, no blank-page paralysis."
-        cta="Browse templates"
-      />
-      <div className="lg:col-span-2 grid grid-rows-2 gap-3">
-        <CompactPromo
-          href="/community/launchpad"
-          eyebrow="Get inspired"
-          title="See what others built"
-          accent="amber"
+    <section className="space-y-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+        <ActionTile
+          href="/templates"
+          Icon={Compass}
+          label="Browse templates"
+          description={hasProjects ? "More starting points" : "Skip the blank page"}
         />
-        <CompactPromo
+        <ActionTile
+          href="/community/launchpad"
+          Icon={Sparkles}
+          label="Get inspired"
+          description="See what others built"
+        />
+        <ActionTile
           href="/community"
-          eyebrow="Community"
-          title="Meet other builders"
-          accent="emerald"
+          Icon={Users}
+          label="Community"
+          description="Meet other builders"
         />
       </div>
-      {/* Pebble tip strip moves into the section as an unbordered
-          full-width row below the promo grid. Less card-on-card. */}
-      <div className="lg:col-span-5 flex items-center gap-2.5 pt-2">
-        <span className="text-[10px] uppercase tracking-widest font-bold text-primary">Peblet tip</span>
-        <span className="text-muted-foreground/40">·</span>
-        <p className="text-sm text-muted-foreground flex-1 truncate">{PEBBLE_TIPS[tipIdx]}</p>
+      {/* Rotating tip — single row, no card border */}
+      <div className="flex items-center gap-2.5">
+        <span className="text-[10px] uppercase tracking-widest font-bold text-primary shrink-0">Tip</span>
+        <span className="text-muted-foreground/30" aria-hidden>·</span>
+        <p className="text-xs text-muted-foreground flex-1 truncate">{PEBBLE_TIPS[tipIdx]}</p>
         <button
           type="button"
           onClick={() => setTipIdx((i) => (i + 1) % PEBBLE_TIPS.length)}
-          className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent"
-          aria-label="Show another Peblet tip"
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent shrink-0"
+          aria-label="Next tip"
         >
           Next →
         </button>
@@ -678,75 +638,29 @@ function HomeTiles({ hasProjects }: { hasProjects: boolean }) {
   );
 }
 
-// HeroPromo — left/large promo block. Editorial layout: huge title,
-// no border, gradient background. Marc's de-card-ify ask in shape.
-function HeroPromo({
-  href, eyebrow, title, body, cta,
+// ActionTile — flat bordered tile, icon-chip + label + arrow.
+// No gradients. Clean affordance from border-on-hover + icon background.
+function ActionTile({
+  href, Icon, label, description,
 }: {
   href: string;
-  eyebrow: string;
-  title: string;
-  body: string;
-  cta: string;
+  Icon: typeof Home;
+  label: string;
+  description: string;
 }) {
   return (
     <Link
       href={href}
-      className="group lg:col-span-3 relative overflow-hidden rounded-2xl p-7 md:p-9 flex flex-col justify-between min-h-[220px]"
-      style={{
-        background: "linear-gradient(135deg, rgba(48,84,255,0.18) 0%, rgba(48,84,255,0.04) 60%, transparent 100%)",
-      }}
+      className="group flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3.5 hover:bg-accent/40 hover:border-primary/30 transition-colors"
     >
-      {/* Decorative blob */}
-      <div aria-hidden className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full bg-primary/25 blur-3xl" />
-      <div aria-hidden className="pointer-events-none absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-violet-500/20 blur-3xl" />
-
-      <div className="relative">
-        <p className="text-[11px] uppercase tracking-widest font-bold text-primary">{eyebrow}</p>
-        <h3 className="text-2xl md:text-3xl font-bold text-foreground leading-tight mt-2 tracking-tight">
-          {title}
-        </h3>
-        <p className="text-sm text-muted-foreground leading-snug mt-2 max-w-md">
-          {body}
-        </p>
+      <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+        <Icon className="w-4 h-4 text-primary" />
       </div>
-      <div className="relative pt-5">
-        <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-foreground group-hover:gap-2.5 transition-all">
-          {cta} <ArrowRight className="w-4 h-4" />
-        </span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-foreground leading-none">{label}</p>
+        <p className="text-xs text-muted-foreground mt-0.5 truncate">{description}</p>
       </div>
-    </Link>
-  );
-}
-
-// CompactPromo — small upper-right secondary promo. Lighter weight
-// than the hero, still no border.
-function CompactPromo({
-  href, eyebrow, title, accent,
-}: {
-  href: string;
-  eyebrow: string;
-  title: string;
-  accent: "amber" | "emerald";
-}) {
-  const palette = accent === "amber"
-    ? "linear-gradient(135deg, rgba(245,158,11,0.18) 0%, rgba(245,158,11,0.04) 60%, transparent 100%)"
-    : "linear-gradient(135deg, rgba(16,185,129,0.18) 0%, rgba(16,185,129,0.04) 60%, transparent 100%)";
-  const dot = accent === "amber" ? "bg-amber-500" : "bg-emerald-500";
-  return (
-    <Link
-      href={href}
-      className="group relative overflow-hidden rounded-2xl p-5 flex flex-col justify-between min-h-[100px]"
-      style={{ background: palette }}
-    >
-      <div className="flex items-center gap-1.5">
-        <span className={`inline-block w-1.5 h-1.5 rounded-full ${dot}`} />
-        <p className="text-[10px] uppercase tracking-widest font-bold text-foreground/80">{eyebrow}</p>
-      </div>
-      <div className="flex items-end justify-between gap-3 mt-2">
-        <h4 className="text-base font-bold text-foreground leading-tight">{title}</h4>
-        <ArrowRight className="w-4 h-4 text-foreground/60 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
-      </div>
+      <ArrowRight className="w-3.5 h-3.5 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
     </Link>
   );
 }
