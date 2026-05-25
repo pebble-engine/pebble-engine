@@ -32,6 +32,8 @@ def screenshot(template_id: str) -> Path:
     dest        = PREVIEWS_DIR / f"{template_id}.png"
     PREVIEWS_DIR.mkdir(parents=True, exist_ok=True)
 
+    engine_host = urlparse(ENGINE_BASE).netloc
+
     def handle_route(route):
         """Reroute root-relative asset requests (e.g. /hero.jpg) to the
         correct sub-path (/preview-template/<id>/hero.jpg) so images load.
@@ -39,10 +41,22 @@ def screenshot(template_id: str) -> Path:
         The Next.js static export uses absolute-root paths for public/
         assets, which are 404 when served under a sub-path on the engine.
         We intercept and fix them without touching the engine code.
+
+        Only redirects requests to the engine host. External URLs
+        (Unsplash photos, Google Fonts, etc.) pass through untouched —
+        Playwright rejects route.continue_(url=...) across protocols.
         """
         req_url = route.request.url
         parsed  = urlparse(req_url)
-        path    = parsed.path
+
+        # External URLs (Unsplash, Google Fonts, Vercel scripts, etc.)
+        # — let them pass through. Cross-protocol redirects raise
+        # "New URL must have same protocol as overridden URL".
+        if parsed.netloc != engine_host:
+            route.continue_()
+            return
+
+        path = parsed.path
 
         # Only intercept root-level non-Next-internal paths
         if (
