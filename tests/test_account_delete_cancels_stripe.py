@@ -240,6 +240,60 @@ def test_cancel_deletion_warns_when_stripe_sub_was_cancelled(monkeypatch, output
     assert delete_cancelled[0].get("metadata", {}).get("had_stripe_sub_cancelled") is True
 
 
+# ---- Fix 1 (2026-05-24): AdminError on hard-delete emits audit event ------
+
+def test_execute_deletion_admin_error_emits_audit_event(monkeypatch, output_dir):
+    """When delete_user(user_id) raises AdminError, the failure MUST be
+    surfaced via audit_log.log_event with event_type='account_delete_failed'.
+    Before this fix the failure was log.error-only — a user whose hard-delete
+    kept failing silently had no audit trail to investigate."""
+    from datetime import datetime, timedelta, timezone
+    from pebble.auth_admin import AdminError
+
+    # Seed a past-due pending deletion.
+    user_id = _FAKE_USER["id"]
+    user_dir = output_dir / ".users" / user_id
+    user_dir.mkdir(parents=True, exist_ok=True)
+    scheduled = (datetime.now(timezone.utc) - timedelta(days=1)).isoformat()
+    (user_dir / "pending_deletion.json").write_text(
+        json.dumps({
+            "user_id": user_id,
+            "email": _FAKE_USER["email"],
+            "requested_at": scheduled,
+            "scheduled_for": scheduled,
+        }),
+        encoding="utf-8",
+    )
+
+    # Make delete_user raise AdminError.
+    def fake_delete_user(uid):
+        raise AdminError("boom")
+    monkeypatch.setattr("pebble.server.account.delete_user", fake_delete_user)
+
+    # Capture audit_log.log_event calls (NOT log_event_for_handler — the
+    # background path uses the bare log_event since there is no handler).
+    audit_calls: list[dict] = []
+    monkeypatch.setattr("pebble.audit_log.log_event",
+                        lambda **kw: audit_calls.append(kw))
+
+    # Call _execute_deletion_if_due directly.
+    result = account_mod._execute_deletion_if_due(user_id, _FAKE_USER["email"])
+
+    # Must return False (delete didn't pretend to succeed).
+    assert result is False, "AdminError path must return False"
+
+    # Must emit account_delete_failed audit event with reason.
+    failed = [c for c in audit_calls if c.get("event_type") == "account_delete_failed"]
+    assert failed, (
+        f"missing account_delete_failed audit event. "
+        f"Got events: {[c.get('event_type') for c in audit_calls]}"
+    )
+    assert failed[0].get("user_id") == user_id
+    assert failed[0].get("metadata", {}).get("reason") == "boom", (
+        f"audit metadata must include reason. Got: {failed[0].get('metadata')}"
+    )
+
+
 def test_cancel_deletion_no_warning_for_free_tier_user(monkeypatch, output_dir):
     """User on Free (no subscription.json) → cancel-deletion response has
     no subscription_warning. Don't crowd the UI with irrelevant text."""

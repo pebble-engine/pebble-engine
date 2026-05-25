@@ -229,6 +229,19 @@ def _execute_deletion_if_due(user_id: str, email: str) -> bool:
         delete_user(user_id)
     except AdminError as e:
         log.error("scheduled deletion failed for %s: %s", _redact(email), e)
+        # Audit trail — was log.error-only before the auth review on
+        # 2026-05-24 flagged that a silently-failing hard-delete left no
+        # forensic record. log_event is fire-and-forget; defense-in-depth
+        # try/except so a future regression in audit_log can't break us.
+        try:
+            from pebble.audit_log import log_event
+            log_event(
+                user_id=user_id,
+                event_type="account_delete_failed",
+                metadata={"reason": str(e)[:200]},
+            )
+        except Exception:
+            pass
         return False
     scrubbed = _scrub_user_projects(user_id)
     log.info("gdpr scrub: %d project(s) removed for %s", scrubbed, _redact(email))
@@ -374,6 +387,18 @@ def run_get_profile(handler) -> None:
                     return
                 except AdminError as e:
                     log.error("scheduled deletion failed for %s: %s", _redact(user_email), e)
+                    # Audit trail — mirror the same audit emission as
+                    # _execute_deletion_if_due so the inline-in-profile
+                    # path doesn't silently lose forensic data.
+                    try:
+                        from pebble.audit_log import log_event
+                        log_event(
+                            user_id=user_id,
+                            event_type="account_delete_failed",
+                            metadata={"reason": str(e)[:200]},
+                        )
+                    except Exception:
+                        pass
                     pending = None
         except (ValueError, TypeError):
             pass

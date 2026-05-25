@@ -892,14 +892,20 @@ function HistoryDrawer({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <ReasonBadge reason={s.reason} />
-                    <span className="text-xs text-muted-foreground">
-                      {formatTimestamp(s.written_at)}
+                    {/* Humanized relative time — easier to scan than an
+                        ISO date. Hover the row for the raw snapshot_id
+                        (power-user affordance via the wrapper `title`). */}
+                    <span
+                      className="text-xs text-muted-foreground"
+                      title={`${formatTimestamp(s.written_at)} · ${s.snapshot_id}`}
+                    >
+                      {formatRelativeTime(s.written_at)}
+                      {typeof s.files_count === "number" && s.files_count > 0
+                        ? ` · ${s.files_count} ${s.files_count === 1 ? "file" : "files"} changed`
+                        : ""}
                     </span>
                   </div>
                   <p className="text-sm text-foreground truncate">{s.source || s.reason}</p>
-                  <p className="text-[11px] font-mono text-muted-foreground mt-1">
-                    {s.files_count} files · {s.snapshot_id}
-                  </p>
                 </div>
                 <button
                   onClick={() => onRollback(s.snapshot_id)}
@@ -940,5 +946,28 @@ function formatTimestamp(iso: string): string {
     return d.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
   } catch {
     return iso;
+  }
+}
+
+// Humanizes an ISO timestamp into "5 minutes ago", "2 hours ago", "yesterday",
+// etc. via Intl.RelativeTimeFormat — picks the largest unit that fits so the
+// label stays scannable. Falls back to formatTimestamp on parse failure.
+function formatRelativeTime(iso: string): string {
+  if (!iso) return "";
+  try {
+    const t = new Date(iso).getTime();
+    if (Number.isNaN(t)) return formatTimestamp(iso);
+    const diffSec = Math.round((t - Date.now()) / 1000); // negative for the past
+    const rtf = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+    const abs = Math.abs(diffSec);
+    if (abs < 45)         return rtf.format(Math.round(diffSec), "second");
+    if (abs < 60 * 45)    return rtf.format(Math.round(diffSec / 60), "minute");
+    if (abs < 3600 * 22)  return rtf.format(Math.round(diffSec / 3600), "hour");
+    if (abs < 86400 * 6)  return rtf.format(Math.round(diffSec / 86400), "day");
+    if (abs < 86400 * 27) return rtf.format(Math.round(diffSec / (86400 * 7)), "week");
+    if (abs < 86400 * 320) return rtf.format(Math.round(diffSec / (86400 * 30)), "month");
+    return rtf.format(Math.round(diffSec / (86400 * 365)), "year");
+  } catch {
+    return formatTimestamp(iso);
   }
 }
