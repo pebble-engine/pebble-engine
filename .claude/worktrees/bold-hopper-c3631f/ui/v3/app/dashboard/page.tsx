@@ -349,77 +349,76 @@ export default function DashboardPage() {
       <ControlCenter greeting={greeting} projectContext={chatContext} leftSidebar={<DashboardSidebar />}>
       <div className="p-6 md:p-8">
         <div className="max-w-5xl mx-auto space-y-6">
-          {/* First-visit welcome card — shows only on a genuinely empty
-              dashboard for a non-dismissed user. Once dismissed,
-              localStorage flag suppresses it forever for this browser.
-              Mounted ABOVE the page header so it's the first thing the
-              user sees on their very first /dashboard load. */}
-          {showOnboardCard && !loading && projects.length === 0 && (
-            <OnboardingCard onDismiss={dismissOnboardCard} />
-          )}
+          {/* Fresh-user empty state — only show the cinematic hero (and
+              right-rail Recent Activity). Suppresses the Welcome card,
+              Projects header, filter chips, HomeTiles, and Activity feed
+              so the page reads as a single dramatic moment instead of a
+              wall of onboarding chrome. Marc 2026-05-25: matches the
+              design ref exactly — the P + 2 CTAs + Activity rail, nothing
+              else. The full dashboard chrome returns the instant the user
+              has projects OR switches filter / starts a search. */}
+          {(() => {
+            const isFreshUserEmpty = !loading
+              && projects.length === 0
+              && filter === "all"
+              && !query;
+            if (isFreshUserEmpty) {
+              return <EmptyState filter={filter} query={query} />;
+            }
+            return (
+              <>
+                {/* First-visit welcome card */}
+                {showOnboardCard && !loading && projects.length === 0 && (
+                  <OnboardingCard onDismiss={dismissOnboardCard} />
+                )}
 
-          {/* Page header — Linear-style: just the page title + live
-              stats subtitle. Compact, data-forward, no emoji.
-              2026-05-25 redesign. */}
-          <header>
-            <h1 className={`${type.dashboard.display.m} text-foreground`}>Projects</h1>
-            <p className={`${type.body.s} text-muted-foreground mt-0.5`}>
-              {loading ? "Loading…" : (
-                <>
-                  {mounted && displayName ? `${displayName}'s workspace` : "Your workspace"}
-                  {!loading && projects.length > 0 && ` · ${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
-                  {!loading && projects.filter((p) => p.starred).length > 0 && ` · ${projects.filter((p) => p.starred).length} starred`}
-                  {!loading && projects.filter((p) => p.publish != null).length > 0 && ` · ${projects.filter((p) => p.publish != null).length} published`}
-                </>
-              )}
-            </p>
-          </header>
-          {/* Phase 45 — page-local filter chips sit in the main area now
-              (not the sidebar). The sidebar is shared across workspace
-              pages and shouldn't carry per-page state. These three chips
-              are the same All / Starred / Recents view as before. */}
-          <div className="flex items-center gap-3 flex-wrap">
-            <FilterChip active={filter === "all"}     onClick={() => setFilter("all")}     Icon={Home}  label="All" />
-            <FilterChip active={filter === "starred"} onClick={() => setFilter("starred")} Icon={Star}  label="Starred" />
-            <FilterChip active={filter === "recents"} onClick={() => setFilter("recents")} Icon={Clock} label="Recents" />
-            <div className="relative">
-              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <input
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search projects…"
-                className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-52"
-              />
-            </div>
-          </div>
+                {/* Page header */}
+                <header>
+                  <h1 className={`${type.dashboard.display.m} text-foreground`}>Projects</h1>
+                  <p className={`${type.body.s} text-muted-foreground mt-0.5`}>
+                    {loading ? "Loading…" : (
+                      <>
+                        {mounted && displayName ? `${displayName}'s workspace` : "Your workspace"}
+                        {!loading && projects.length > 0 && ` · ${projects.length} ${projects.length === 1 ? "project" : "projects"}`}
+                        {!loading && projects.filter((p) => p.starred).length > 0 && ` · ${projects.filter((p) => p.starred).length} starred`}
+                        {!loading && projects.filter((p) => p.publish != null).length > 0 && ` · ${projects.filter((p) => p.publish != null).length} published`}
+                      </>
+                    )}
+                  </p>
+                </header>
 
-          {/* Home tiles — sit above the project grid on /dashboard so the
-              page feels like a living surface, not just a folder. Three
-              actions wired to real destinations:
-                · Templates  → /templates  (browse + clone, instant starts)
-                · Community  → /community  (showcase + partner + affiliate)
-                · Guides     → /learn      (placeholder — see footnote)
-              Marc's 2026-05-23 brief: Home should be the most energetic,
-              welcoming surface. These tiles + the inbox of designs below
-              accomplish the "interactive Home" ask without forcing a
-              blog/CMS investment up front. /learn lands on a friendly
-              "coming soon" stub for now — easy to replace with real
-              content (or a remote-loaded post feed) without touching
-              this surface again.
-              Only renders on filter="all" (the Home view); Starred and
-              Recents views hide it so they stay focused on the slice. */}
-          {!loading && filter === "all" && (
-            <HomeTiles hasProjects={projects.length > 0} />
-          )}
+                {/* Filter chips row */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  <FilterChip active={filter === "all"}     onClick={() => setFilter("all")}     Icon={Home}  label="All" />
+                  <FilterChip active={filter === "starred"} onClick={() => setFilter("starred")} Icon={Star}  label="Starred" />
+                  <FilterChip active={filter === "recents"} onClick={() => setFilter("recents")} Icon={Clock} label="Recents" />
+                  <div className="relative">
+                    <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <input
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search projects…"
+                      className="pl-9 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-ring w-52"
+                    />
+                  </div>
+                </div>
 
-          {loading && (
-            <div className="text-center py-20 text-muted-foreground">Loading…</div>
-          )}
+                {/* Home tiles — only on the Home (all) view */}
+                {!loading && filter === "all" && (
+                  <HomeTiles hasProjects={projects.length > 0} />
+                )}
 
-          {!loading && visible.length === 0 && (
-            <EmptyState filter={filter} query={query} />
-          )}
+                {loading && (
+                  <div className="text-center py-20 text-muted-foreground">Loading…</div>
+                )}
+
+                {!loading && visible.length === 0 && (
+                  <EmptyState filter={filter} query={query} />
+                )}
+              </>
+            );
+          })()}
 
           <motion.div
             initial="hidden"
