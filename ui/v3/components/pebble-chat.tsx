@@ -45,8 +45,10 @@ import {
 } from "lucide-react";
 import {
   sendChat,
+  visualEdit,
   type ChatMessage,
   type ChatConfirmAction,
+  type ChatProjectContext,
 } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { PebletShortcuts } from "@/components/peblet-shortcuts";
@@ -112,9 +114,24 @@ type Tab = "chat" | "shortcuts" | "docs";
 export type PebbleChatProps = {
   greeting?: string;
   onCollapse?: () => void;
+  /** Project context passed from the dashboard. When provided, every chat
+   *  turn sends it to /api/chat so the model can give project-aware replies
+   *  and dispatch visual-edit ops directly. */
+  projectContext?: ChatProjectContext | null;
 };
 
-export function PebbleChat({ greeting, onCollapse }: PebbleChatProps) {
+function opLabel(op: string): string {
+  const labels: Record<string, string> = {
+    "font-family":  "font change",
+    "color":        "color change",
+    "font-size":    "font size change",
+    "palette-swap": "color palette update",
+    "image-swap":   "image swap",
+  };
+  return labels[op] ?? op;
+}
+
+export function PebbleChat({ greeting, onCollapse, projectContext }: PebbleChatProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuth();
@@ -191,10 +208,49 @@ export function PebbleChat({ greeting, onCollapse }: PebbleChatProps) {
       setPendingConfirm(null);
 
       try {
-        const res = await sendChat(next, SITEMAP);
+        const res = await sendChat(next, SITEMAP, projectContext);
         setHistory((h) => [...h, { role: "assistant", content: res.reply }]);
 
-        if (res.confirm_action) {
+        if (res.dispatch_op) {
+          // Fire the deterministic visual-edit op the model requested.
+          const { op, params } = res.dispatch_op;
+          try {
+            // Map ChatDispatchOp params to the VisualEditBody shape.
+            // The slug always comes from params.slug (set by the backend).
+            if (op === "font-family") {
+              const p = params as { slug: string; new_font_family: string; selector_hint?: string };
+              await visualEdit({ slug: p.slug, op, new_font_family: p.new_font_family, selector_hint: p.selector_hint });
+            } else if (op === "color") {
+              const p = params as { slug: string; new_color: string; selector_hint?: string };
+              await visualEdit({ slug: p.slug, op, new_color: p.new_color, selector_hint: p.selector_hint });
+            } else if (op === "font-size") {
+              const p = params as { slug: string; delta: number; selector_hint?: string };
+              await visualEdit({ slug: p.slug, op, delta: p.delta, selector_hint: p.selector_hint });
+            } else if (op === "palette-swap") {
+              const p = params as { slug: string; palette: Record<string, string> };
+              await visualEdit({ slug: p.slug, op, palette: p.palette });
+            } else if (op === "image-swap") {
+              const p = params as { slug: string; original_src: string; new_src: string };
+              await visualEdit({ slug: p.slug, op, original_src: p.original_src, new_src: p.new_src });
+            }
+            setHistory((h) => [
+              ...h,
+              {
+                role: "assistant",
+                content: `Done — ${opLabel(op)} applied. Refresh the preview to see the change.`,
+              },
+            ]);
+          } catch (dispatchErr) {
+            setHistory((h) => [
+              ...h,
+              {
+                role: "assistant",
+                content: `Hmm, I couldn't apply that edit (${dispatchErr instanceof Error ? dispatchErr.message : "unknown error"}). You can try clicking the element directly in the preview.`,
+              },
+            ]);
+          }
+          // Don't also navigate after a dispatch — the op IS the action.
+        } else if (res.confirm_action) {
           setPendingConfirm({ action: res.confirm_action, reply: res.reply });
         } else if (res.navigate_to && res.navigate_to !== pathname) {
           window.setTimeout(() => router.push(res.navigate_to!), 350);
@@ -205,7 +261,7 @@ export function PebbleChat({ greeting, onCollapse }: PebbleChatProps) {
         setSending(false);
       }
     },
-    [history, sending, router, pathname],
+    [history, sending, router, pathname, projectContext],
   );
 
   // Handler the Docs tab uses to hand a query off to chat — switches
