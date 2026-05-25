@@ -629,3 +629,60 @@ def test_webhook_ignores_late_event_for_old_subscription(
     assert after["status"] == "active"
     assert after["plan"] == "pro"
 
+
+# ---- Plan-metadata whitelist (Fix 2, 2026-05-24) --------------------------
+
+def test_webhook_rejects_unknown_plan_metadata(
+    with_secret, output_root, verified_event, caplog, monkeypatch,
+):
+    """A buggy/stale checkout that stamps metadata.pebble_plan="enterprise"
+    must NOT cause "enterprise" to be persisted to the sentinel.
+    Only the publicly-purchasable {starter, pro} are valid here —
+    anything else is a misconfiguration we shouldn't propagate.
+
+    The endpoint still returns 200 (so Stripe doesn't retry forever) but
+    skips the sentinel write and logs a warning."""
+    import logging
+    from pebble.server import stripe_webhook
+
+    # pebble's logger has propagate=False (see pebble/log.py) which blocks
+    # caplog's root handler from seeing emitted records. Restore propagation
+    # for this test only — monkeypatch auto-reverts at teardown.
+    monkeypatch.setattr(logging.getLogger("pebble"), "propagate", True)
+    caplog.set_level(logging.WARNING)
+
+    h = verified_event(_subscription_event(
+        event_type="customer.subscription.created",
+        plan="enterprise",  # NOT in the {starter, pro} whitelist
+    ))
+    stripe_webhook.run_stripe_webhook(h)
+
+    # 200 so Stripe doesn't keep retrying — the rejection is intentional.
+    assert h.status == 200
+    # No sentinel file was written — the unknown plan must NOT persist.
+    sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+    assert not sentinel.exists(), \
+        "sentinel must not be written for unknown plan values"
+    # Warning logged so ops can investigate the stale/buggy checkout.
+    assert "enterprise" in caplog.text or "pebble_plan" in caplog.text
+
+
+def test_webhook_accepts_starter_and_pro_plans(
+    with_secret, output_root, verified_event,
+):
+    """Sanity check the whitelist allows the only two publicly-purchasable
+    plans. Without this we'd risk a too-strict regex blocking real flows."""
+    from pebble.server import stripe_webhook
+
+    for plan in ("starter", "pro"):
+        # Clear sentinel between iterations so each is fresh.
+        sentinel = output_root / ".users" / "uuid-marc-abc" / "subscription.json"
+        if sentinel.exists():
+            sentinel.unlink()
+
+        h = verified_event(_subscription_event(plan=plan))
+        stripe_webhook.run_stripe_webhook(h)
+        assert h.status == 200
+        assert sentinel.exists(), f"plan={plan} should have written sentinel"
+        data = json.loads(sentinel.read_text(encoding="utf-8"))
+        assert data["plan"] == plan

@@ -74,6 +74,20 @@ _SUBSCRIPTION_EVENT_TYPES = frozenset({
     "customer.subscription.deleted",
 })
 
+# Whitelist of `metadata.pebble_plan` values the webhook will persist.
+# Stripe-publicly-purchasable plans only — anything else (enterprise,
+# typos, stale checkouts with a previous plan name) is rejected before
+# write to keep the user_plan gate's source of truth clean. The gate at
+# pebble/user_plan.py fails-closed to "free" on read of an unknown
+# value, but a bad value persisted forever in subscription.json is
+# still a record-keeping mess.
+#
+# Keep this in sync with pebble.user_plan._VALID_PLANS minus
+# administratively-assigned plans (enterprise). Enterprise users get
+# their plan via the profile.plan_tier column, NEVER via webhook.
+_WEBHOOK_PLAN_WHITELIST = frozenset({"starter", "pro"})
+
+
 def _output_dir() -> Path:
     """Resolve OUTPUT_DIR via the same lookup pattern as security.py /
     engagement.py — pebble_engine.OUTPUT_DIR if loaded, else compute
@@ -351,6 +365,23 @@ def run_stripe_webhook(handler) -> None:
     plan = metadata.get("pebble_plan") or "unknown"
     if not isinstance(plan, str) or len(plan) > 32:
         plan = "unknown"
+
+    # Whitelist plan metadata. A stale or buggy checkout that stamps
+    # an unknown plan (e.g. "enterprise" — administratively-assigned,
+    # never sold via Stripe) must NOT cause that value to be persisted
+    # to the sentinel. The user_plan gate fails closed to "free" on
+    # READ of an unknown value, but we'd rather not carry the bad
+    # record at all. Reject + 200 so Stripe doesn't retry.
+    if plan not in _WEBHOOK_PLAN_WHITELIST:
+        log.warning(
+            "stripe-webhook %s rejected pebble_plan=%r for user=%s "
+            "(not in %s) — no sentinel written",
+            event_type, plan, user_id, sorted(_WEBHOOK_PLAN_WHITELIST),
+        )
+        handler._json(200, {"ok": True, "action": "skipped",
+                            "reason": f"plan {plan!r} not in whitelist"})
+        return
+
     status = obj.get("status", "unknown")
     if not isinstance(status, str) or len(status) > 32:
         status = "unknown"
