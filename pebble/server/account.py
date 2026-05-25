@@ -138,7 +138,16 @@ def _read_pending_deletion(user_id: str) -> Optional[dict]:
         return None
     try:
         return json.loads(p.read_text(encoding="utf-8"))
-    except Exception:
+    except Exception as e:
+        # Surface corruption in engine.err.log instead of vanishing it.
+        # Returning None here means the user is NOT treated as "deletion
+        # scheduled" — a corrupted file silently re-armed next time the
+        # user requested delete before this fix. The warning is what lets
+        # ops/Marc notice the corruption and clean the file up.
+        log.warning(
+            "[account] corrupted pending_deletion JSON for %s: %s",
+            _safe_uid(user_id), e,
+        )
         return None
 
 
