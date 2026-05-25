@@ -1249,6 +1249,45 @@
           "path": "/contact"
         }
       ]
+    },
+    {
+      "id": "aura_luxury",
+      "directory": "pebble/templates/aura_luxury",
+      "name": "AURA Pristine",
+      "tagline": "Surgical-grade dark luxury. Parallax 3D hero + before/after slider + bento services.",
+      "vibe": "Editorial Dark Luxury Cleaning",
+      "source_dna": "luxury_cleaning",
+      "applicable_industries": [
+        "luxury cleaning",
+        "estate cleaning",
+        "white-glove cleaning",
+        "post-construction cleaning",
+        "commercial sanitation",
+        "art restoration",
+        "yacht cleaning",
+        "luxury hospitality",
+        "premium home services",
+        "estate management",
+        "concierge service",
+        "luxury moving"
+      ],
+      "preview_image": "/templates-preview/aura_luxury.png",
+      "color_swatches": [
+        "#0F1115",
+        "#161920",
+        "#ffffff",
+        "#94a3b8"
+      ],
+      "fonts": {
+        "display": "Playfair Display",
+        "body": "Outfit"
+      },
+      "best_for": "Ultra-premium service brands selling discretion and white-glove standards \u2014 estate cleaning, sanitation, restoration. Dark editorial palette with parallax 3D showcases.",
+      "tier": "premium",
+      "preview_url": "/preview-template/aura_luxury/",
+      "preview_pages": [
+        { "label": "Home", "path": "/" }
+      ]
     }
   ],
   "_planned_next": []

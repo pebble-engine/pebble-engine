@@ -1,0 +1,75 @@
+{
+  "dna_id": "luxury_cleaning",
+  "vibe_label": "Surgical Editorial Dark Luxury",
+  "source_brand": "AURA Pristine (Qwen 3.6 source)",
+  "source_industry": "luxury cleaning",
+  "applicable_industries": [
+    "luxury cleaning",
+    "estate cleaning",
+    "white-glove cleaning",
+    "post-construction cleaning",
+    "commercial sanitation",
+    "biohazard remediation",
+    "art restoration",
+    "yacht cleaning",
+    "luxury hospitality cleaning",
+    "premium home services",
+    "estate management",
+    "private staffing",
+    "concierge service",
+    "luxury moving"
+  ],
+  "palette": {
+    "bg":        "#0F1115",
+    "fg":        "#ffffff",
+    "primary":   "#ffffff",
+    "secondary": "#94a3b8",
+    "accent":    "#ffffff",
+    "muted":     "#64748b",
+    "border":    "rgba(255,255,255,0.05)",
+    "extras": {
+      "bg_alt":      "#0B0C0E",
+      "card":        "#161920",
+      "card_metal":  "linear-gradient(135deg,#1c202a 0%,#161920 50%,#13161c 100%)",
+      "hero_glow":   "rgba(255,255,255,0.01)"
+    }
+  },
+  "fonts": {
+    "display": "Playfair Display",
+    "body":    "Outfit",
+    "accent":  null
+  },
+  "google_fonts_url": "https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap",
+  "hero_pattern": "two_col_editorial_with_parallax_3d_showcase",
+  "hero_signature": "Two-column editorial split. Left: ultra-thin uppercase pulsing-dot status pill, Playfair Display 3-line headline with italic middle word, Outfit body, animated arrow CTA bottom-border-link, 3-up icon trust pillars under a hairline. Right: 500x600 parallax cursor-tracking 3D showcase containing a grayscale luxury interior photo (background), a glassmorphic spec checklist card peeking out the right edge (midground), 10 floating glass bubble particles (foreground), and an 'Active Sterility Index' chip pinned bottom-left. The whole right column rotates a few degrees on mouse-move via Framer Motion useSpring with perspective:1200.",
+  "section_flow": [
+    {"id": "navbar",       "type": "sticky_blur_dark_with_ringed_logo",          "notes": "Sticky bg-[#0F1115]/80 backdrop-blur. Tiny ringed 'A' tile + tracking-[0.35em] uppercase Playfair wordmark, mid-nav anchor links in tracking-[0.2em] uppercase Outfit, right-side 'Book Consultation' rounded-full border-pill with Compass icon."},
+    {"id": "hero",         "type": "two_col_editorial_with_parallax_3d_showcase","notes": "See hero_signature."},
+    {"id": "transformation","type": "before_after_clippath_slider_pointer_drag", "notes": "Full-width 600px rounded-2xl viewport. Bottom layer: clean photo with saturate boost; top layer: same photo with grayscale + brightness reduction, clipped via clipPath inset from the left percentage. White 0.5px vertical handle with circular drag puck at center and ↔ glyph. Top labels: 'BEFORE: Dull & Muted' (right) and 'AFTER: Sterile Luxury' (left). Drag/hover-to-compare. 4-stat grid below."},
+    {"id": "services",     "type": "bento_grid_4_cards_7_5_5_7_with_side_drawer","notes": "12-col bento: card1=7, card2=5, card3=5, card4=7. Each card is rounded-2xl bg-[#161920] with brushed-metal hover overlay (linear-gradient diagonal 1c202a→161920→13161c + repeating-1px-pattern at mix-blend overlay). Click to open a right-side drawer (Framer Motion spring) showing description, duration/intensity grid, and surgical specs list. Backdrop is bg-black/60 backdrop-blur-md."},
+    {"id": "philosophy",   "type": "centered_italic_manifesto_quote",            "notes": "Dark bg-[#0B0C0E] section with a centered Sparkles icon, italic Playfair pull-quote, hairline divider, and tiny tracking-[0.3em] uppercase 'The Aura Manifesto' attribution."},
+    {"id": "contact",      "type": "centered_dark_form_with_concierge_voice",    "notes": "Compact name/email/inquiry form on dark cards (bg-[#161920] inputs, white-on-black submit pill 'Initialize Consultation' with tracking-[0.15em] uppercase)."},
+    {"id": "footer",       "type": "four_column_editorial_compliance",           "notes": "4-col: brand+body, Locations (with MapPin), Concierge (PhoneCall + email + response-standard), Compliance copy. Bottom strip with copyright and three policy links."}
+  ],
+  "notable_features": [
+    "Brushed-metal background-gradient + 2px-repeating-line overlay on cards (mix-blend overlay)",
+    "Framer Motion useSpring parallax rotateX/rotateY on hero showcase column",
+    "Glassmorphic spec checklist card overhanging the hero's right edge",
+    "Pointer-captured drag on transformation slider (clipPath inset transition)",
+    "Asymmetric 12-col bento services with 7/5 + 5/7 row layout",
+    "Side-drawer modal pattern via Framer Motion AnimatePresence with spring damping=30/stiffness=200",
+    "Outfit ultra-thin uppercase microtype at tracking-[0.25em] and font-size 9-11px",
+    "Italic Playfair pull-quotes used for centerpiece copy moments",
+    "Custom 6px scrollbar with translucent white thumb",
+    "Editorial dark off-black bg-[#0F1115] paired with section variant bg-[#0B0C0E]"
+  ],
+  "motion_vocabulary": [
+    "Hero showcase: useSpring rotate driven by mouse position with perspective:1200 transform-style:preserve-3d",
+    "Floating bubble particles: 3s+ ease-in-out y-bobble loops, staggered delays",
+    "Bento card hover: brushed-metal overlay fade-in 500ms + subtitle reveal slide-up",
+    "Service drawer: spring damping=30 stiffness=200 slide from right",
+    "Animated arrow CTA: Framer Motion infinite x:[0,4,0] over 1.5s ease-in-out",
+    "prefers-reduced-motion: reduce → all keyframe/transition durations clamped to 0.01ms"
+  ],
+  "tailwind_extras_inline_css": ".brushed-metal-bg (diagonal gradient + ::after with repeating-1px-line + mix-blend overlay + 80% opacity). Custom 6px scrollbar (track #0F1115, thumb rgba(255,255,255,0.1) → 0.2 on hover). Tokenized via @theme directives: --color-background, --color-background-alt, --color-card-bg, --color-card-border, --color-text-primary, --color-text-secondary, --color-text-muted, --font-sans (Outfit), --font-serif (Playfair Display)."
+}
