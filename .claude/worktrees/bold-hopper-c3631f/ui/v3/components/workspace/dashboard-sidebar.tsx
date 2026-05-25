@@ -89,8 +89,12 @@ export function DashboardSidebar(_props: { plan?: unknown } = {}) {
         </Link>
       </div>
 
-      {/* Primary nav — five items, vertical */}
-      <nav className="flex-1 px-3 flex flex-col gap-1">
+      {/* Primary nav — five items, vertical. NO flex-1: we want the
+          footer (Help + Free Plan) to sit naturally just below the nav,
+          NOT pushed to the absolute bottom of the viewport where it gets
+          covered by Linear's "2 Issues" extension overlay (or any other
+          floating bottom-left widget). */}
+      <nav className="px-3 flex flex-col gap-1">
         <NavLink
           href="/dashboard"
           Icon={FolderOpen}
