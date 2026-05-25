@@ -31,7 +31,7 @@ import {
 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { ControlCenter } from "@/components/control-center";
-import { DashboardSidebar } from "@/components/workspace/dashboard-sidebar";
+import { CommunitySidebar } from "@/components/workspace/community-sidebar";
 import { PebletMascot } from "@/components/peblet-mascot";
 import { NotificationBell } from "@/components/notification-bell";
 import { type } from "@/lib/type";
@@ -204,7 +204,7 @@ export default function CommunityHomePage() {
       <div className="relative z-10 flex flex-col h-full">
         <TopNav projectName="Pebble Community Hub" rightSlot={topRightSlot} />
         <div className="flex-1 min-h-0">
-          <ControlCenter greeting={greeting} leftSidebar={<DashboardSidebar />}>
+          <ControlCenter greeting={greeting} leftSidebar={<CommunitySidebar />}>
             <div className="p-6 md:p-8">
               <div className="max-w-6xl mx-auto space-y-10">
 
