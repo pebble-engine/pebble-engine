@@ -179,13 +179,25 @@ def run_plan(handler) -> None:
     })
 
 
-def run_build(handler, generate: bool, progress_cb=None) -> None:
+def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool = False) -> None:
     """Handle a build request. ``handler`` is a ``PebbleHandler`` instance;
     the JSON response is written via its ``_json`` helper.
 
     ``progress_cb``, if provided, is called as ``progress_cb(event_type, data)``
     at key pipeline milestones so callers can emit SSE frames without polling.
     Failures inside the callback are silently swallowed.
+
+    ``skip_rate_limit`` is set by ``pebble.server.build_stream.build_stream_generator``
+    because the FastAPI handler at ``pebble.app.generate_stream`` already
+    debited ``generate_limiter`` before invoking us. Without this opt-out,
+    every browser-initiated SSE build burnt TWO tokens per request from
+    a 5-burst bucket — after ~3 page loads the bucket emptied and the
+    inner check silently 429'd inside the streaming thread, surfaced to
+    the client as the maddening "Stream ended without a done event"
+    failure that took ~6 minutes of subagent triage to root-cause on
+    2026-05-26. The BaseHTTPServer path (``handler._handle_build``
+    → ``run_build``) passes the default ``skip_rate_limit=False`` so
+    direct POSTs to ``/api/generate`` still get rate-limited as before.
     """
     def _emit(event_type: str, data: dict) -> None:
         if progress_cb is not None:
@@ -219,7 +231,7 @@ def run_build(handler, generate: bool, progress_cb=None) -> None:
     _pick_layout    = getattr(pe, "pick_layout_for_brief", None)
 
     ip = client_ip(handler)
-    if generate and not generate_limiter.allow(ip or ""):
+    if generate and not skip_rate_limit and not generate_limiter.allow(ip or ""):
         handler._json(429, {"error": "too many build requests — max 5 per 10 min per IP"}); return
 
     try:

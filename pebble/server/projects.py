@@ -92,12 +92,18 @@ def run_list_projects(handler) -> None:
             except Exception:
                 brief = {}
 
-        # User-scope filter: when logged in, drop projects owned by someone
-        # else. Unclaimed (no _user_id) stay visible.
-        if current_uid:
-            owner = brief.get("_user_id")
-            if owner and owner != current_uid:
-                continue
+        # User-scope filter: only show projects this user owns. Unclaimed
+        # projects (no _user_id — legacy test builds from before auth
+        # shipped) are NOT visible to signed-in users. Old "unclaimed
+        # stays visible to everyone" rule caused a P0 onboarding regression:
+        # brand-new users signed up to a dashboard pre-filled with 22 random
+        # legacy test projects, with the Free badge reading "22/1 — upgrade
+        # for more" before they'd built anything. Anonymous callers already
+        # get 401 (Phase 58e), so nothing relies on the old fall-through.
+        # — 2026-05-26 walkthrough.
+        owner = brief.get("_user_id")
+        if owner != current_uid:
+            continue
 
         meta_path = project_dir / "build_meta.json"
         built_at = None

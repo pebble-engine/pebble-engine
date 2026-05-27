@@ -50,7 +50,7 @@ export default function TermsPage() {
               <div>
                 <p className="font-medium text-[#1a1a1a]">Free tier</p>
                 <p>
-                  Free accounts may publish up to 2 sites. The builder and all editing tools are
+                  Free accounts may publish one site. The builder and all editing tools are
                   fully available. No payment is required to start.
                 </p>
               </div>
