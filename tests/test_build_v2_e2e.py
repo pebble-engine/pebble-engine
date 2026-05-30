@@ -26,7 +26,7 @@ def _fake_sonnet_response() -> str:
     return json.dumps({
         "block_picks": [
             {
-                "block_id": "bakery/hero_artisan",
+                "block_id": "library/hero_artisan_warm",
                 "slot_values": {
                     "eyebrow": "Brooklyn",
                     "headline": "Sourdough, made slowly",
@@ -37,7 +37,7 @@ def _fake_sonnet_response() -> str:
                 },
             },
             {
-                "block_id": "bakery/footer_compact",
+                "block_id": "library/footer_horizontal",
                 "slot_values": {
                     "business_name": "Stoneground Loaf",
                     "tagline": "Naturally leavened sourdough.",
@@ -93,7 +93,7 @@ def test_v2_generate_produces_runnable_site(tmp_path, monkeypatch):
     assert meta["engine_version"] == "v2"
     assert meta["model"] == "claude-sonnet-4-6"
     assert meta["provider"] == "anthropic"
-    assert "bakery/hero_artisan" in meta["block_picks"]
+    assert "library/hero_artisan_warm" in meta["block_picks"]
     assert "built_at" in meta
 
     page = (project_dir / "site" / "app" / "page.tsx").read_text(encoding="utf-8")
@@ -136,15 +136,27 @@ def test_v2_generate_503s_when_llm_unavailable(tmp_path, monkeypatch):
     assert "ANTHROPIC" in body["error"]
 
 
-def test_v2_generate_400s_on_unknown_industry(tmp_path, monkeypatch):
+def test_v2_generate_works_for_any_industry(tmp_path, monkeypatch):
+    """Universal architecture: any industry string must produce a 200, not a 400.
+    Sonnet handles adaptation — no industry is 'unknown' any more."""
     fake_client = MagicMock()
+    fake_client.generate.return_value = _fake_sonnet_response()
+    fake_client.model = "claude-sonnet-4-6"
+    fake_client.provider = "anthropic"
+
     monkeypatch.setattr(
         "pebble.server.build_v2.get_llm_client",
         lambda: (fake_client, "ok"),
     )
     monkeypatch.setattr("pebble.server.build_v2._output_dir", lambda: tmp_path)
-    handler = _make_handler({"business_name": "x", "industry": "telepathic-yoga-shamanism"})
+
+    handler = _make_handler({
+        "business_name": "Cosmic Flow Studio",
+        "industry": "telepathic-yoga-shamanism",
+        "extra_context": "Holistic wellness for the spiritually curious",
+    })
     run_build_v2(handler)
+
     status, body = handler._json.call_args[0]
-    assert status == 400
-    assert "industry" in body["error"].lower()
+    assert status == 200
+    assert body["engine_version"] == "v2"

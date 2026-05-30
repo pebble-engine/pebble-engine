@@ -22,9 +22,9 @@ def _make_registry(tmp_path: Path, blocks: list[tuple[str, str, dict]]) -> Block
 
 def _base_meta(name: str, **extra) -> dict:
     return {
-        "block_id": f"bakery/{name}",
+        "block_id": f"library/{name}",
         "block_type": extra.pop("block_type", "hero"),
-        "industry": "bakery",
+        "vibe_tags": extra.pop("vibe_tags", ["warm"]),
         "dna_tags": [],
         "slots": extra.pop("slots", {}),
         "palette_slots": extra.pop("palette_slots", ["bg", "fg", "accent"]),
@@ -36,7 +36,7 @@ def _base_meta(name: str, **extra) -> dict:
 
 def test_scalar_and_palette_substitution(tmp_path):
     reg = _make_registry(tmp_path, [(
-        "bakery", "hero",
+        "library", "hero",
         _base_meta(
             "hero",
             __template__='<h1 className="bg-{{bg}} text-{{fg}}">{{headline}}</h1>',
@@ -46,7 +46,7 @@ def test_scalar_and_palette_substitution(tmp_path):
     out = tmp_path / "out"
     compile_site(
         registry=reg,
-        block_picks=[{"block_id": "bakery/hero", "slot_values": {"headline": "Welcome"}}],
+        block_picks=[{"block_id": "library/hero", "slot_values": {"headline": "Welcome"}}],
         palette={"bg": "stone-50", "fg": "stone-900"},
         out_dir=out,
     )
@@ -68,7 +68,7 @@ def test_list_iteration(tmp_path):
         '</div>'
     )
     reg = _make_registry(tmp_path, [(
-        "bakery", "svc",
+        "library", "svc",
         _base_meta(
             "svc",
             block_type="services",
@@ -80,7 +80,7 @@ def test_list_iteration(tmp_path):
     compile_site(
         registry=reg,
         block_picks=[{
-            "block_id": "bakery/svc",
+            "block_id": "library/svc",
             "slot_values": {
                 "eyebrow": "What we bake",
                 "services": [
@@ -111,7 +111,7 @@ def test_list_of_strings(tmp_path):
         '</ul>'
     )
     reg = _make_registry(tmp_path, [(
-        "bakery", "list",
+        "library", "list",
         _base_meta(
             "list",
             __template__=template,
@@ -123,7 +123,7 @@ def test_list_of_strings(tmp_path):
     compile_site(
         registry=reg,
         block_picks=[{
-            "block_id": "bakery/list",
+            "block_id": "library/list",
             "slot_values": {"items": ["Alpha", "Beta", "Gamma"]},
         }],
         palette={},
@@ -148,7 +148,7 @@ def test_nested_list_iteration(tmp_path):
         '{/* {{tiers_list_end}} */}'
     )
     reg = _make_registry(tmp_path, [(
-        "bakery", "pricing",
+        "library", "pricing",
         _base_meta(
             "pricing",
             block_type="pricing",
@@ -161,7 +161,7 @@ def test_nested_list_iteration(tmp_path):
     compile_site(
         registry=reg,
         block_picks=[{
-            "block_id": "bakery/pricing",
+            "block_id": "library/pricing",
             "slot_values": {
                 "tiers": [
                     {"name": "Basic", "features": ["1 loaf/wk", "Pick up only"]},
@@ -182,7 +182,7 @@ def test_nested_list_iteration(tmp_path):
 
 def test_unfilled_placeholder_raises(tmp_path):
     reg = _make_registry(tmp_path, [(
-        "bakery", "broken",
+        "library", "broken",
         _base_meta(
             "broken",
             __template__='<h1>{{headline}} - {{tagline}}</h1>',
@@ -194,7 +194,7 @@ def test_unfilled_placeholder_raises(tmp_path):
         compile_site(
             registry=reg,
             block_picks=[{
-                "block_id": "bakery/broken",
+                "block_id": "library/broken",
                 "slot_values": {"headline": "Welcome"},  # tagline missing
             }],
             palette={},
@@ -206,15 +206,15 @@ def test_unfilled_placeholder_raises(tmp_path):
 
 def test_multiple_blocks_concatenate_in_order(tmp_path):
     reg = _make_registry(tmp_path, [
-        ("bakery", "a", _base_meta("a", __template__='<h1>{{x}}</h1>', slots={"x": {"kind": "text"}}, palette_slots=[])),
-        ("bakery", "b", _base_meta("b", __template__='<h2>{{y}}</h2>', slots={"y": {"kind": "text"}}, palette_slots=[])),
+        ("library", "a", _base_meta("a", __template__='<h1>{{x}}</h1>', slots={"x": {"kind": "text"}}, palette_slots=[])),
+        ("library", "b", _base_meta("b", __template__='<h2>{{y}}</h2>', slots={"y": {"kind": "text"}}, palette_slots=[])),
     ])
     out = tmp_path / "out"
     compile_site(
         registry=reg,
         block_picks=[
-            {"block_id": "bakery/a", "slot_values": {"x": "FIRST"}},
-            {"block_id": "bakery/b", "slot_values": {"y": "SECOND"}},
+            {"block_id": "library/a", "slot_values": {"x": "FIRST"}},
+            {"block_id": "library/b", "slot_values": {"y": "SECOND"}},
         ],
         palette={},
         out_dir=out,
@@ -223,8 +223,8 @@ def test_multiple_blocks_concatenate_in_order(tmp_path):
     assert page.index("FIRST") < page.index("SECOND")
 
 
-def test_real_bakery_hero_produces_valid_jsx():
-    """Integration: compile a real bakery hero template into runnable JSX.
+def test_real_warm_hero_produces_valid_jsx():
+    """Integration: compile a real library warm hero template into runnable JSX.
     Catches the 'export default function Hero()' nested wrapper bug that
     synthetic tests missed (regression guard, 2026-05-29)."""
     from pebble.blocks.registry import BlockRegistry
@@ -237,7 +237,7 @@ def test_real_bakery_hero_produces_valid_jsx():
         compile_site(
             registry=reg,
             block_picks=[{
-                "block_id": "bakery/hero_artisan",
+                "block_id": "library/hero_artisan_warm",
                 "slot_values": {
                     "eyebrow": "Brooklyn",
                     "headline": "Real bread",

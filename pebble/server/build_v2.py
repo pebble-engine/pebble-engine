@@ -45,21 +45,26 @@ def _slugify(name: str) -> str:
     return re.sub(r"[\s_]+", "-", text).strip("-") or "untitled"
 
 
-def _build_menu(registry: BlockRegistry, industry: str) -> list[dict]:
-    """Shape the registry's blocks for the matched industry into the
-    Sonnet picker's expected menu format."""
+def _build_menu(registry: BlockRegistry) -> list[dict]:
+    """Shape ALL blocks in the registry into the Sonnet picker's menu.
+
+    Industry is no longer a filter — Sonnet picks blocks that fit the
+    brief's vibe regardless of which ``vibe_tags`` they carry. This makes
+    the engine work for ANY industry the user types, not just the 7
+    we initially seeded blocks for.
+    """
     menu = []
     for block in registry._blocks.values():
-        if block.metadata.industry != industry:
-            continue
         menu.append({
             "block_id": block.metadata.block_id,
             "block_type": block.metadata.block_type,
+            "vibe_tags": list(block.metadata.vibe_tags),
             "slots": {
                 name: {
                     "kind": s.kind,
                     "max_chars": s.max_chars,
                     "tone": s.tone,
+                    "pexels_query_template": s.pexels_query_template,
                 }
                 for name, s in block.metadata.slots.items()
             },
@@ -87,7 +92,7 @@ def run_build_v2(handler) -> None:
     name = sanitize_business_name(raw_name) or "untitled"
     brief["business_name"] = name
     slug = _slugify(name)
-    industry = (brief.get("industry") or "").strip().lower() or "bakery"
+    industry = (brief.get("industry") or "").strip().lower()
 
     # LLM client resolution — fail loud if env isn't configured
     client, reason = get_llm_client()
@@ -96,13 +101,9 @@ def run_build_v2(handler) -> None:
 
     # Block library load + menu shaping
     registry = BlockRegistry.load(_BLOCK_LIBRARY_ROOT)
-    menu = _build_menu(registry, industry)
+    menu = _build_menu(registry)
     if not menu:
-        handler._json(400, {
-            "error": f"no blocks available for industry {industry!r}; "
-                     f"v2 currently supports: "
-                     f"{sorted({b.metadata.industry for b in registry._blocks.values()})}"
-        })
+        handler._json(503, {"error": "block library is empty — engine misconfigured"})
         return
 
     # Sonnet pick + copy

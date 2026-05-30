@@ -50,13 +50,19 @@ def test_prompt_includes_brief_and_block_menu():
         brief={"business_name": "Stoneground Loaf", "industry": "bakery",
                "extra_context": "Brooklyn sourdough"},
         llm_client=fake_client,
-        block_menu=[{"block_id": "bakery/hero_artisan", "block_type": "hero", "slots": {}}],
+        block_menu=[{
+            "block_id": "library/hero_artisan_warm",
+            "block_type": "hero",
+            "vibe_tags": ["warm", "crafted"],
+            "slots": {"headline": {"max_chars": 80, "kind": "text", "pexels_query_template": None}},
+            "palette_slots": ["bg", "fg", "accent"],
+        }],
     )
 
-    prompt = fake_client.generate.call_args[0][0]
+    prompt = fake_client.generate.call_args.kwargs.get("user", "") or fake_client.generate.call_args[0][0]
     assert "Stoneground Loaf" in prompt
     assert "Brooklyn sourdough" in prompt
-    assert "bakery/hero_artisan" in prompt
+    assert "library/hero_artisan_warm" in prompt
 
 
 def test_handles_json_wrapped_in_prose():
