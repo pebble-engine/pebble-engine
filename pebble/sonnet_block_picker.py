@@ -79,7 +79,10 @@ def pick_blocks_and_copy(
         block_menu_json=json.dumps(block_menu, indent=2),
     )
 
-    raw = llm_client.generate(prompt)
+    raw = llm_client.generate(
+        system="You are an expert web designer. Follow all instructions exactly and return only valid JSON.",
+        user=prompt,
+    )
 
     match = _JSON_RX.search(raw)
     if not match:
