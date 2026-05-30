@@ -1,0 +1,50 @@
+{
+  "block_id": "library/contact_compact_bold",
+  "block_type": "contact",
+  "vibe_tags": ["bold", "high-contrast", "energetic", "intense"],
+  "dna_tags": ["brutalist_editorial", "terminal_operator"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "all-caps action label (READY TO START, GET IN TOUCH, LET'S GO)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "bold, confrontational all-caps (MAKE YOUR MOVE.)"
+    },
+    "form_intro": {
+      "kind": "text",
+      "max_chars": 180,
+      "tone": "direct, no-nonsense; sets expectation fast (We respond within 24 hours. No spam.)"
+    },
+    "address": {
+      "kind": "text",
+      "max_chars": 120,
+      "tone": "street address, city"
+    },
+    "hours_text": {
+      "kind": "text",
+      "max_chars": 160,
+      "tone": "operating hours, e.g. Mon-Fri 6am-10pm"
+    },
+    "phone": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "phone number with formatting"
+    },
+    "email": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "contact email address"
+    },
+    "form_slug": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "project slug injected by the compiler for form action URL"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent"],
+  "preview_image": "previews/library_contact_compact_bold.png"
+}

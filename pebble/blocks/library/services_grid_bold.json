@@ -1,0 +1,25 @@
+{
+  "block_id": "library/services_grid_bold",
+  "block_type": "services",
+  "vibe_tags": ["bold", "high-contrast", "energetic", "motivational", "intense"],
+  "dna_tags": ["brutalist_editorial", "terminal_operator", "neon_underground"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "all-caps imperative label (WHAT WE OFFER, THE PROGRAM, SERVICES)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "bold, confrontational, short all-caps phrase"
+    },
+    "services": {
+      "kind": "list",
+      "tone": "3-6 items; each has title (40 chars, all-caps bold), body (120 chars, punchy), image (Pexels action), price (16 chars, formatted)",
+      "pexels_query_template": "{service_subject} intense focused athletic action"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_services_grid_bold.png"
+}
