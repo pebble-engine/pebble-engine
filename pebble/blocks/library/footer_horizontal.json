@@ -1,18 +1,18 @@
 {
-  "block_id": "bakery/footer_compact",
+  "block_id": "library/footer_horizontal",
   "block_type": "footer",
-  "industry": "bakery",
+  "vibe_tags": ["minimal", "clean", "universal"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "business_name": {
       "kind": "text",
       "max_chars": 60,
-      "tone": "the bakery name, injected from brief"
+      "tone": "the business name, injected from brief"
     },
     "tagline": {
       "kind": "text",
       "max_chars": 140,
-      "tone": "short brand line, evokes craft and neighborhood"
+      "tone": "short brand line"
     },
     "year": {
       "kind": "text",
@@ -25,5 +25,5 @@
     }
   },
   "palette_slots": ["bg", "fg", "accent", "muted"],
-  "preview_image": "previews/bakery_footer_compact.png"
+  "preview_image": "previews/library_footer_horizontal.png"
 }

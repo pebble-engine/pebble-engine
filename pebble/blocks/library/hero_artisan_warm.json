@@ -1,7 +1,7 @@
 {
-  "block_id": "bakery/hero_artisan",
+  "block_id": "library/hero_artisan_warm",
   "block_type": "hero",
-  "industry": "bakery",
+  "vibe_tags": ["warm", "crafted", "sensory", "small-batch", "intimate"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "eyebrow": {
@@ -31,10 +31,10 @@
     },
     "hero_image": {
       "kind": "image",
-      "pexels_query": "artisan sourdough bread bakery interior warm light",
+      "pexels_query_template": "{industry_scene} {mood_warm} {lighting_natural}",
       "aspect": "16/9"
     }
   },
   "palette_slots": ["bg", "fg", "accent"],
-  "preview_image": "previews/bakery_hero_artisan.png"
+  "preview_image": "previews/library_hero_artisan_warm.png"
 }

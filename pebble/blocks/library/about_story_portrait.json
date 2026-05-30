@@ -1,7 +1,7 @@
 {
-  "block_id": "bakery/about_story",
+  "block_id": "library/about_story_portrait",
   "block_type": "about",
-  "industry": "bakery",
+  "vibe_tags": ["warm", "personal", "narrative", "trust-building"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "eyebrow": {
@@ -20,15 +20,15 @@
     },
     "portrait_image": {
       "kind": "image",
-      "pexels_query": "baker portrait flour hands artisan bakery",
+      "pexels_query_template": "{founder_role} portrait {mood_intimate} {lighting_natural}",
       "aspect": "3/4"
     },
     "signature": {
       "kind": "text",
       "max_chars": 60,
-      "tone": "baker name + role (Head Baker, Founder, Owner)"
+      "tone": "person name + role (Founder, Owner, Head of craft)"
     }
   },
   "palette_slots": ["bg", "fg", "accent"],
-  "preview_image": "previews/bakery_about_story.png"
+  "preview_image": "previews/library_about_story_portrait.png"
 }

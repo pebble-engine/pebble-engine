@@ -1,7 +1,7 @@
 {
-  "block_id": "bakery/services_grid",
+  "block_id": "library/services_grid_cards",
   "block_type": "services",
-  "industry": "bakery",
+  "vibe_tags": ["clean", "structured", "imagery-forward", "approachable"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "eyebrow": {
@@ -16,9 +16,10 @@
     },
     "services": {
       "kind": "list",
-      "tone": "3-6 items; each item has title (40 chars), body (140 chars), image (Pexels), price (16 chars)"
+      "tone": "3-6 items; each item has title (40 chars), body (140 chars), image (Pexels), price (16 chars)",
+      "pexels_query_template": "{service_subject} {mood_warm} close up"
     }
   },
   "palette_slots": ["bg", "fg", "accent", "muted"],
-  "preview_image": "previews/bakery_services_grid.png"
+  "preview_image": "previews/library_services_grid_cards.png"
 }

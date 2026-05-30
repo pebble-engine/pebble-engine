@@ -38,7 +38,7 @@ from pebble.blocks import (
 )
 from pebble.blocks.base import ThemeTokens, _hex_brightness
 from pebble.blocks.insert import _splice_page_tsx, _unique_component_name
-from pebble.blocks.library import _jsx_safe, _jsx_string, _kicker
+from pebble.blocks.catalog import _jsx_safe, _jsx_string, _kicker
 from style_dna import DNA_CARDS
 
 

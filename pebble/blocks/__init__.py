@@ -30,7 +30,7 @@ from pebble.blocks.base import (
     extract_palette_hexes,
 )
 from pebble.blocks.insert import insert_block_into_site
-from pebble.blocks.library import BLOCK_REGISTRY, list_blocks, render_block
+from pebble.blocks.catalog import BLOCK_REGISTRY, list_blocks, render_block
 
 __all__ = [
     "BLOCK_REGISTRY",

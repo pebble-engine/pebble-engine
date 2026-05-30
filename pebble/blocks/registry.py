@@ -1,10 +1,15 @@
-"""Load and look up blocks from the on-disk library.
+"""Load and look up blocks from the on-disk universal library.
 
-The on-disk layout is `<industry>/<block_id>.{json,tsx}`. The registry
+The on-disk layout is `<namespace>/<block_id>.{json,tsx}`. The registry
 walks the tree at load time, validates each metadata.json, and pairs it
 with the sibling .tsx template source. Sonnet's block picker queries
 this registry; the blocks_compiler uses it to retrieve template source
 for substitution.
+
+Blocks are universal — any block can serve any industry. The ``find``
+method filters by ``vibe_tag`` (aesthetic personality) and/or
+``block_type`` so Sonnet can assemble a site from the best-fit blocks
+regardless of industry.
 """
 from __future__ import annotations
 
@@ -27,17 +32,17 @@ class BlockRegistry:
 
     @classmethod
     def load(cls, root: Path) -> "BlockRegistry":
-        """Walk `root/<industry>/<name>.{json,tsx}` and build the registry."""
+        """Walk `root/<namespace>/<name>.{json,tsx}` and build the registry."""
         out: dict[str, Block] = {}
-        for industry_dir in sorted(root.iterdir()):
-            if not industry_dir.is_dir():
+        for namespace_dir in sorted(root.iterdir()):
+            if not namespace_dir.is_dir():
                 continue
-            for json_path in sorted(industry_dir.glob("*.json")):
+            for json_path in sorted(namespace_dir.glob("*.json")):
                 tsx_path = json_path.with_suffix(".tsx")
                 if not tsx_path.exists():
                     raise ValueError(
                         f"block {json_path.name}: template file {tsx_path.name} "
-                        f"missing in {industry_dir.name}/"
+                        f"missing in {namespace_dir.name}/"
                     )
                 meta = validate_block_metadata(json.loads(json_path.read_text(encoding="utf-8")))
                 out[meta.block_id] = Block(
@@ -52,16 +57,19 @@ class BlockRegistry:
     def __getitem__(self, block_id: str) -> Block:
         return self._blocks[block_id]
 
-    def find(self, *, industry: str, block_type: BlockType,
-             dna_tag: str | None = None) -> list[Block]:
-        """Return all blocks matching the filter."""
+    def find(self, *, vibe_tag: str | None = None,
+             block_type: BlockType | None = None) -> list[Block]:
+        """Return all blocks matching the filter.
+
+        ``vibe_tag`` matches if the tag is in the block's vibe_tags list.
+        ``block_type`` is an exact match.
+        Both filters are AND-ed; omit either to skip that filter.
+        """
         out = []
         for block in self._blocks.values():
-            if block.metadata.industry != industry:
+            if block_type is not None and block.metadata.block_type != block_type:
                 continue
-            if block.metadata.block_type != block_type:
-                continue
-            if dna_tag is not None and dna_tag not in block.metadata.dna_tags:
+            if vibe_tag is not None and vibe_tag not in block.metadata.vibe_tags:
                 continue
             out.append(block)
         return out

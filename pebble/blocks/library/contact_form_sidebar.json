@@ -1,7 +1,7 @@
 {
-  "block_id": "bakery/contact_form",
+  "block_id": "library/contact_form_sidebar",
   "block_type": "contact",
-  "industry": "bakery",
+  "vibe_tags": ["clean", "practical", "trust-building"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "eyebrow": {
@@ -46,5 +46,5 @@
     }
   },
   "palette_slots": ["bg", "fg", "accent"],
-  "preview_image": "previews/bakery_contact_form.png"
+  "preview_image": "previews/library_contact_form_sidebar.png"
 }

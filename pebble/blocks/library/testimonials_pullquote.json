@@ -1,13 +1,13 @@
 {
-  "block_id": "bakery/testimonials_quote",
+  "block_id": "library/testimonials_pullquote",
   "block_type": "testimonials",
-  "industry": "bakery",
+  "vibe_tags": ["minimal", "confident", "editorial"],
   "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
   "slots": {
     "quote": {
       "kind": "text",
       "max_chars": 280,
-      "tone": "genuine, sensory; evokes emotion about the bakery or a specific product"
+      "tone": "genuine; evokes real emotion about a specific result or experience"
     },
     "attribution": {
       "kind": "text",
@@ -17,14 +17,14 @@
     "role": {
       "kind": "text",
       "max_chars": 60,
-      "tone": "relationship context (Regular customer, Brooklyn resident, Customer since 2018)"
+      "tone": "relationship context (Regular customer, Local resident, Customer since 2018)"
     },
     "headshot_image": {
       "kind": "image",
-      "pexels_query": "smiling woman portrait warm light natural",
+      "pexels_query_template": "smiling person portrait {lighting_natural}",
       "aspect": "1/1"
     }
   },
   "palette_slots": ["bg", "fg", "accent"],
-  "preview_image": "previews/bakery_testimonials_quote.png"
+  "preview_image": "previews/library_testimonials_pullquote.png"
 }
