@@ -262,6 +262,9 @@ def route_post(handler) -> None:
             handler._handle_build(generate=False)
         elif handler.path == "/api/generate":
             handler._handle_build(generate=True)
+        elif handler.path == "/api/v2/generate":
+            from pebble.server.build_v2 import run_build_v2
+            run_build_v2(handler)
         elif handler.path == "/api/plan":
             handler._handle_plan()
         elif handler.path == "/api/setup":
