@@ -68,6 +68,10 @@ def test_v2_generate_produces_runnable_site(tmp_path, monkeypatch):
         "pebble.server.build_v2._output_dir",
         lambda: tmp_path,
     )
+    monkeypatch.setattr(
+        "pebble.server.build_v2.resolve_pexels_tags",
+        lambda src: src,
+    )
 
     handler = _make_handler({
         "business_name": "Stoneground Loaf",
@@ -149,6 +153,10 @@ def test_v2_generate_works_for_any_industry(tmp_path, monkeypatch):
         lambda: (fake_client, "ok"),
     )
     monkeypatch.setattr("pebble.server.build_v2._output_dir", lambda: tmp_path)
+    monkeypatch.setattr(
+        "pebble.server.build_v2.resolve_pexels_tags",
+        lambda src: src,
+    )
 
     handler = _make_handler({
         "business_name": "Cosmic Flow Studio",

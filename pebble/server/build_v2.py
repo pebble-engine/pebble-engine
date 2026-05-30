@@ -20,6 +20,7 @@ import re
 from pebble.blocks.registry import BlockRegistry
 from pebble.blocks_compiler import compile_site
 from pebble.llm import get_llm_client
+from pebble.pexels_resolver import resolve_pexels_tags
 from pebble.sonnet_block_picker import pick_blocks_and_copy
 from pebble.text import sanitize_business_name
 
@@ -126,6 +127,13 @@ def run_build_v2(handler) -> None:
         )
     except ValueError as e:
         handler._json(500, {"error": f"compile failed: {e}"}); return
+
+    # Pexels resolution — turn [pexels:query] tags into real image URLs.
+    # Without this the generated site 404s on every image.
+    page_tsx = site_dir / "app" / "page.tsx"
+    if page_tsx.exists():
+        resolved = resolve_pexels_tags(page_tsx.read_text(encoding="utf-8"))
+        page_tsx.write_text(resolved, encoding="utf-8")
 
     # Persist brief + meta alongside the site
     project_dir.mkdir(parents=True, exist_ok=True)
