@@ -1,0 +1,30 @@
+{
+  "block_id": "library/testimonials_kids_playful",
+  "block_type": "testimonials",
+  "vibe_tags": ["playful", "joyful", "vibrant", "friendly", "family-friendly"],
+  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "slots": {
+    "quote": {
+      "kind": "text",
+      "max_chars": 280,
+      "tone": "genuine parent or kid voice; specific detail ('My daughter cried when class ended — the good kind!')"
+    },
+    "attribution": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "first name or parent name (e.g. Priya, or Priya — mom of two)"
+    },
+    "role": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "relationship context (Parent of a 6-year-old, Regular customer since last fall)"
+    },
+    "headshot_image": {
+      "kind": "image",
+      "pexels_query_template": "smiling parent portrait cheerful natural light",
+      "aspect": "1/1"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_testimonials_kids_playful.png"
+}

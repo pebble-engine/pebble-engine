@@ -1,0 +1,25 @@
+{
+  "block_id": "library/services_cards_playful",
+  "block_type": "services",
+  "vibe_tags": ["playful", "vibrant", "joyful", "friendly", "family-friendly"],
+  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 50,
+      "tone": "upbeat label with optional single emoji (e.g. 'What we offer')"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "enthusiastic but not over-the-top; focus on what kids/families get"
+    },
+    "services": {
+      "kind": "list",
+      "tone": "3-6 items; each has title (40 chars), body (140 chars), image (Pexels), price (16 chars, e.g. $28/class)",
+      "pexels_query_template": "{service_subject} bright colorful fun activities"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_services_cards_playful.png"
+}

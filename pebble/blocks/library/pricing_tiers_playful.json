@@ -1,0 +1,24 @@
+{
+  "block_id": "library/pricing_tiers_playful",
+  "block_type": "pricing",
+  "vibe_tags": ["playful", "friendly", "bright", "joyful"],
+  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "welcoming label (e.g. 'Pick your plan', 'Options')"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "fun but clear; kids/parents should feel good about choosing, not pressured"
+    },
+    "tiers": {
+      "kind": "list",
+      "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars, e.g. /month), features (list of 3-5 strings, 60 chars each), cta (24 chars), featured (boolean)"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_pricing_tiers_playful.png"
+}

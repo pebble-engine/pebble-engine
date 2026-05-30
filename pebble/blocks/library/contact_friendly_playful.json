@@ -1,0 +1,50 @@
+{
+  "block_id": "library/contact_friendly_playful",
+  "block_type": "contact",
+  "vibe_tags": ["playful", "friendly", "joyful", "bright", "family-friendly"],
+  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "welcoming, maybe with one emoji (e.g. 'Say hello!')"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "warm, inviting; parents and kids should feel zero barrier to reaching out"
+    },
+    "form_intro": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "friendly, reassuring; sounds like a real human will reply (no robots)"
+    },
+    "address": {
+      "kind": "text",
+      "max_chars": 120,
+      "tone": "street address, city, neighborhood"
+    },
+    "hours_text": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "opening hours with days clearly listed"
+    },
+    "phone": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "phone number with formatting"
+    },
+    "email": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "contact email address"
+    },
+    "form_slug": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "project slug injected by the compiler for form action URL"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_contact_friendly_playful.png"
+}
