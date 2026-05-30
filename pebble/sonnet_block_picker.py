@@ -19,34 +19,72 @@ Name: {business_name}
 Industry: {industry}
 Description: {extra_context}
 
-# Available blocks (you must only pick from these — do not invent block_ids)
+# Available blocks
+The library has many blocks across vibes. Each block has:
+- `block_id`: unique ID (use this exact string in your picks)
+- `block_type`: which slot it fills (hero, services, about, etc.)
+- `vibe_tags`: vibe descriptors (e.g. "warm", "clean", "bold", "trust-building")
+- `slots`: copy + image slots you must fill
+- For image slots, the `pexels_query_template` is a STRUCTURAL HINT for the kind
+  of subject the image should show (e.g. "{{founder_role}} portrait" means
+  "a portrait of someone in the founder's role"). You translate it into a
+  real Pexels search query based on the business's industry.
+
 {block_menu_json}
 
 # Your job
-1. Pick 7-8 blocks. Use the exact `block_id` values from the menu above.
-   Prefer one block of each block_type (hero, services, about,
-   testimonials, pricing, contact, footer). The order you list them
-   becomes the order on the page.
-2. For each picked block, write copy for every slot the block exposes.
-   - Respect each slot's `max_chars` ceiling.
-   - Use the slot's `tone` hint when present.
-   - For `list` kind slots, provide a JSON list. List items can be
-     either strings (for simple lists) or objects (e.g. service items
-     with title/body/image/price).
-   - For `image` kind slots, return a Pexels-style placeholder of the
-     form "[pexels:<descriptive query>]" — the renderer swaps it later.
-   - Make every copy line specific to THIS business. Never write
-     placeholders like "[BUSINESS NAME]" or "Your tagline here" — write
-     real copy or leave the slot out.
-3. Pick a palette: Tailwind color tokens for `bg`, `fg`, `accent`, and
-   `muted` (4 tokens). Choose values that fit the brief's tone —
-   e.g. `stone-50 / stone-900 / orange-700 / stone-200` for a warm
-   bakery, `slate-50 / slate-900 / sky-600 / slate-200` for a modern
-   service business.
+
+## 1. Pick 6-8 blocks that fit the business's vibe
+
+Match the block's `vibe_tags` to the emotional palette this business needs:
+- Bakery, salon, florist, ceramic studio → warm, crafted, sensory, small-batch
+- Dentist, lawyer, financial advisor → clean, trust-building, structured
+- Fitness coach, esports, startup → bold, energetic, motivational
+- Photographer, designer, gallery → editorial, minimal, dramatic
+- Restaurant, cafe, food truck → appetizing, vibrant, warm
+
+Use the EXACT `block_id` values from the menu — do not invent block_ids.
+Prefer one block of each `block_type` (hero, services, about, testimonials,
+pricing, contact, footer). The order you list them becomes the order on
+the page.
+
+## 2. Write copy for every slot
+
+- Respect each slot's `max_chars` ceiling.
+- Match the slot's `tone` hint when present.
+- For `list` slots, provide a JSON list. Items can be strings (e.g. feature
+  list) or objects (e.g. service cards with title/body/image/price).
+- Make every line specific to THIS business. Never use placeholders like
+  "[BUSINESS NAME]" or "Your tagline here" — write real copy or leave the
+  slot out.
+
+## 3. Resolve image slots into Pexels queries
+
+For each `kind: "image"` slot:
+- Read the slot's `pexels_query_template` — it's a hint at what the image
+  should show (e.g. "{{industry_scene}} {{mood_warm}}" or "{{founder_role}}
+  portrait" or "smiling person").
+- Translate the hint into a real Pexels search query that:
+  - Names the industry concretely (not "{{industry_scene}}" but
+    "sourdough bakery interior" or "modern dental office")
+  - Adds the mood/lighting/style implied by the template
+  - Reads as a real search query a photographer would type
+- Output the final query as the slot value, e.g.:
+  - `"hero_image": "artisan sourdough bakery interior warm sunlight"`
+  - `"founder_image": "baker portrait flour apron natural light"`
+
+## 4. Pick a palette
+
+Tailwind color tokens for `bg`, `fg`, `accent`, and `muted` (4 tokens).
+Choose values that fit the brand vibe:
+- Warm/crafted: `stone-50 / stone-900 / amber-700 / stone-200`
+- Clean/trust: `slate-50 / slate-900 / sky-600 / slate-200`
+- Bold/energetic: `zinc-900 / zinc-50 / lime-400 / zinc-700`
+- Editorial/minimal: `neutral-50 / neutral-900 / neutral-900 / neutral-200`
 
 # Output
 
-Return ONLY a JSON object with this exact shape, no prose around it:
+Return ONLY a JSON object, no prose around it:
 
 {{
   "block_picks": [

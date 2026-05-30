@@ -42,7 +42,8 @@ def test_returns_parsed_block_picks_and_palette():
 
 
 def test_prompt_includes_brief_and_block_menu():
-    """Sonnet must see both the business brief and the available blocks."""
+    """The prompt must give Sonnet: business brief, full block menu,
+    vibe-matching guidance, and Pexels query resolution instructions."""
     fake_client = MagicMock()
     fake_client.generate.return_value = '{"block_picks":[], "palette":{}}'
 
@@ -60,9 +61,15 @@ def test_prompt_includes_brief_and_block_menu():
     )
 
     prompt = fake_client.generate.call_args.kwargs.get("user", "") or fake_client.generate.call_args[0][0]
+    # Brief is included
     assert "Stoneground Loaf" in prompt
     assert "Brooklyn sourdough" in prompt
+    # Block menu is included
     assert "library/hero_artisan_warm" in prompt
+    # Vibe-matching guidance is present (new in R3)
+    assert "vibe_tags" in prompt
+    # Pexels guidance is present (new in R3)
+    assert "pexels" in prompt.lower()
 
 
 def test_handles_json_wrapped_in_prose():
@@ -125,3 +132,28 @@ def test_rejects_invented_block_id():
             llm_client=fake_client,
             block_menu=[{"block_id": "bakery/hero_artisan", "block_type": "hero", "slots": {}}],
         )
+
+
+def test_picker_passes_through_resolved_pexels_queries():
+    """When Sonnet writes a real Pexels query for an image slot, the
+    picker passes it through unchanged — no template processing needed."""
+    fake_client = MagicMock()
+    fake_client.generate.return_value = json.dumps({
+        "block_picks": [{
+            "block_id": "library/hero_artisan_warm",
+            "slot_values": {
+                "headline": "Real bread",
+                "hero_image": "artisan sourdough bakery interior warm sunlight",
+            },
+        }],
+        "palette": {"bg": "stone-50"},
+    })
+
+    result = pick_blocks_and_copy(
+        brief={"business_name": "x", "industry": "bakery"},
+        llm_client=fake_client,
+        block_menu=[{"block_id": "library/hero_artisan_warm", "block_type": "hero", "vibe_tags": ["warm"], "slots": {}, "palette_slots": []}],
+    )
+
+    assert result["block_picks"][0]["slot_values"]["hero_image"] == \
+        "artisan sourdough bakery interior warm sunlight"
