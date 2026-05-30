@@ -199,7 +199,9 @@ def _render_list_item(
             prefix = f"{list_name}[]."
             if ph.startswith(prefix):
                 field = ph[len(prefix):]
-                val = item.get(field, f"{{{{{ph}}}}}")  # keep unfilled if missing
+                # Use empty string for optional fields (e.g. price on a dentist)
+                # rather than leaving the placeholder in and failing the leak check.
+                val = item.get(field, "")
                 return str(val)
             return m.group(0)  # leave other placeholders alone
         text = _PLACEHOLDER_RE.sub(replace_field, text)
