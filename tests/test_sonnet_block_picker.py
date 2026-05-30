@@ -1,0 +1,121 @@
+import json
+from unittest.mock import MagicMock
+import pytest
+
+from pebble.sonnet_block_picker import pick_blocks_and_copy
+
+
+def test_returns_parsed_block_picks_and_palette():
+    """Happy path: Sonnet returns valid JSON, picker returns it parsed."""
+    fake_response = json.dumps({
+        "block_picks": [
+            {
+                "block_id": "bakery/hero_artisan",
+                "slot_values": {
+                    "eyebrow": "Brooklyn",
+                    "headline": "Sourdough, every morning",
+                    "subheadline": "Real bread.",
+                    "cta_primary": "Reserve",
+                    "cta_secondary": "About",
+                    "hero_image": "[pexels:sourdough]",
+                },
+            }
+        ],
+        "palette": {"bg": "stone-50", "fg": "stone-900", "accent": "orange-700"},
+    })
+    fake_client = MagicMock()
+    fake_client.generate.return_value = fake_response
+
+    result = pick_blocks_and_copy(
+        brief={"business_name": "Stoneground Loaf", "industry": "bakery",
+               "extra_context": "Brooklyn sourdough subscription"},
+        llm_client=fake_client,
+        block_menu=[{
+            "block_id": "bakery/hero_artisan", "block_type": "hero",
+            "slots": {"headline": {"max_chars": 80, "kind": "text"}},
+        }],
+    )
+
+    assert len(result["block_picks"]) == 1
+    assert result["block_picks"][0]["block_id"] == "bakery/hero_artisan"
+    assert result["palette"]["bg"] == "stone-50"
+
+
+def test_prompt_includes_brief_and_block_menu():
+    """Sonnet must see both the business brief and the available blocks."""
+    fake_client = MagicMock()
+    fake_client.generate.return_value = '{"block_picks":[], "palette":{}}'
+
+    pick_blocks_and_copy(
+        brief={"business_name": "Stoneground Loaf", "industry": "bakery",
+               "extra_context": "Brooklyn sourdough"},
+        llm_client=fake_client,
+        block_menu=[{"block_id": "bakery/hero_artisan", "block_type": "hero", "slots": {}}],
+    )
+
+    prompt = fake_client.generate.call_args[0][0]
+    assert "Stoneground Loaf" in prompt
+    assert "Brooklyn sourdough" in prompt
+    assert "bakery/hero_artisan" in prompt
+
+
+def test_handles_json_wrapped_in_prose():
+    """Sonnet sometimes wraps JSON in 'Here's the spec:' style preamble.
+    The picker must extract the first {...} block regardless."""
+    fake_client = MagicMock()
+    fake_client.generate.return_value = (
+        "Sure! Here's the spec for Stoneground Loaf:\n\n"
+        '{"block_picks": [{"block_id": "bakery/hero_artisan", "slot_values": {"headline": "x"}}], '
+        '"palette": {"bg": "stone-50"}}\n\n'
+        "Let me know if you'd like any changes."
+    )
+
+    result = pick_blocks_and_copy(
+        brief={"business_name": "x", "industry": "bakery"},
+        llm_client=fake_client,
+        block_menu=[],
+    )
+    assert result["block_picks"][0]["block_id"] == "bakery/hero_artisan"
+
+
+def test_rejects_no_json_in_response():
+    fake_client = MagicMock()
+    fake_client.generate.return_value = "I cannot help with that request."
+
+    with pytest.raises(ValueError, match="no JSON"):
+        pick_blocks_and_copy(
+            brief={"business_name": "x", "industry": "bakery"},
+            llm_client=fake_client,
+            block_menu=[],
+        )
+
+
+def test_rejects_malformed_json():
+    fake_client = MagicMock()
+    fake_client.generate.return_value = '{this is not real json, malformed}'
+
+    with pytest.raises(ValueError, match="invalid JSON"):
+        pick_blocks_and_copy(
+            brief={"business_name": "x", "industry": "bakery"},
+            llm_client=fake_client,
+            block_menu=[],
+        )
+
+
+def test_rejects_invented_block_id():
+    """Sonnet must only pick from the menu. Inventing a block_id is a
+    fatal error — the compiler can't render an unknown block."""
+    fake_client = MagicMock()
+    fake_client.generate.return_value = json.dumps({
+        "block_picks": [
+            {"block_id": "bakery/imaginary_block", "slot_values": {}}
+        ],
+        "palette": {"bg": "stone-50"},
+    })
+
+    with pytest.raises(ValueError, match="invented|unknown block_id"):
+        pick_blocks_and_copy(
+            brief={"business_name": "x", "industry": "bakery"},
+            llm_client=fake_client,
+            block_menu=[{"block_id": "bakery/hero_artisan", "block_type": "hero", "slots": {}}],
+        )
