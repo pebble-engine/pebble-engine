@@ -1,10 +1,18 @@
 """Pexels tag resolver.
 
-After blocks_compiler runs, the generated page.tsx contains string tags
-like `[pexels: artisan sourdough bread]` in image src attributes —
-that's how the Sonnet picker writes per-block Pexels queries. This
-module scans the rendered source, calls the Pexels API once per
-unique query, and substitutes real image URLs.
+After blocks_compiler runs, the generated page.tsx may contain image
+queries in two forms:
+
+1. Tagged:   src="[pexels: artisan sourdough bread]"
+   The legacy format — the [pexels:...] tag is replaced with a real URL.
+
+2. Plain-text query:   src="artisan sourdough bakery interior warm sunlight"
+   What Sonnet actually writes when filling image slots (the picker prompt
+   instructs it to produce search-ready query strings, not tagged values).
+   Detected by the absence of https:// or / prefixes in the src value.
+
+Both forms are resolved to a real Pexels URL (or Picsum fallback) so the
+generated site never has broken images.
 
 Designed to be called by build_v2 right after compile_site.
 
@@ -22,7 +30,25 @@ from typing import Optional
 import httpx
 
 _TAG_RX = re.compile(r"\[pexels:\s*([^\]]+?)\s*\]")
+
+# Matches src="<value>" where <value> does NOT look like a URL.
+# A real URL starts with https://, http://, /, or ./ — anything else is
+# treated as a plain-text Pexels search query written by Sonnet.
+_PLAIN_SRC_RX = re.compile(r'src="([^"]+)"')
+_URL_PREFIXES = ("https://", "http://", "/", "./", "../", "{")
+
 _PEXELS_API = "https://api.pexels.com/v1/search"
+
+
+def _is_url(value: str) -> bool:
+    """Return True if value looks like a real URL, JSX expression, or [pexels:...] tag.
+
+    Values that start with [pexels: are handled by the tag resolver path —
+    exclude them from the plain-text path to avoid double-processing.
+    """
+    if value.startswith("[pexels:"):
+        return True  # handled by the tag resolver, not the plain-text path
+    return any(value.startswith(p) for p in _URL_PREFIXES)
 
 
 def _extract_pexels_tags(source: str) -> list[str]:
@@ -34,6 +60,18 @@ def _extract_pexels_tags(source: str) -> list[str]:
         if query not in seen:
             seen.add(query)
             out.append(query)
+    return out
+
+
+def _extract_plain_queries(source: str) -> list[str]:
+    """Return unique plain-text src values that look like search queries."""
+    seen = set()
+    out = []
+    for match in _PLAIN_SRC_RX.finditer(source):
+        value = match.group(1).strip()
+        if not _is_url(value) and value not in seen:
+            seen.add(value)
+            out.append(value)
     return out
 
 
@@ -69,19 +107,43 @@ def _placeholder_url(query: str) -> str:
 
 
 def resolve_pexels_tags(source: str) -> str:
-    """Scan source for [pexels:query] tags, swap each with a real image URL.
+    """Scan source for image queries and swap each with a real image URL.
+
+    Handles two patterns:
+    - ``[pexels: query]`` tags in src attributes (legacy format)
+    - Plain-text src values that look like search queries (what Sonnet
+      writes when filling image slots directly)
 
     Each unique query is fetched once. Failed fetches fall back to a
     Picsum placeholder so the user never sees a broken site.
     """
-    queries = _extract_pexels_tags(source)
+    # Build a combined url_map for both formats
     url_map: dict[str, str] = {}
-    for q in queries:
-        url = _fetch_pexels_image_url(q) or _placeholder_url(q)
-        url_map[q] = url
 
-    def _replace(match: re.Match) -> str:
+    for q in _extract_pexels_tags(source):
+        url_map[q] = _fetch_pexels_image_url(q) or _placeholder_url(q)
+
+    for q in _extract_plain_queries(source):
+        if q not in url_map:
+            url_map[q] = _fetch_pexels_image_url(q) or _placeholder_url(q)
+
+    if not url_map:
+        return source
+
+    # Replace [pexels:...] tags first
+    def _replace_tag(match: re.Match) -> str:
         q = match.group(1).strip()
         return url_map.get(q, _placeholder_url(q))
 
-    return _TAG_RX.sub(_replace, source)
+    result = _TAG_RX.sub(_replace_tag, source)
+
+    # Replace plain-text src="<query>" with src="<real URL>"
+    def _replace_plain_src(match: re.Match) -> str:
+        value = match.group(1).strip()
+        if value in url_map:
+            return f'src="{url_map[value]}"'
+        return match.group(0)
+
+    result = _PLAIN_SRC_RX.sub(_replace_plain_src, result)
+
+    return result
