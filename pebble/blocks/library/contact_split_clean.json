@@ -1,0 +1,50 @@
+{
+  "block_id": "library/contact_split_clean",
+  "block_type": "contact",
+  "vibe_tags": ["clean", "trust-building", "professional", "structured", "calm"],
+  "dna_tags": ["swiss_magazine", "boutique_brokerage"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "plainspoken (Get in touch, Contact us, Request an appointment)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "direct, low-pressure — states the action without overselling (e.g. Schedule a consultation)"
+    },
+    "form_intro": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "concise; sets expectation for response time; respectful of the reader's time; no promises"
+    },
+    "address": {
+      "kind": "text",
+      "max_chars": 120,
+      "tone": "street address, city, state, zip"
+    },
+    "hours_text": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "office hours, e.g. Mon–Fri, 9am–5pm"
+    },
+    "phone": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "phone number with standard formatting"
+    },
+    "email": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "professional contact email address"
+    },
+    "form_slug": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "project slug injected by the compiler for form action URL"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_contact_split_clean.png"
+}

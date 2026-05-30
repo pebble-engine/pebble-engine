@@ -1,0 +1,30 @@
+{
+  "block_id": "library/testimonials_panel_clean",
+  "block_type": "testimonials",
+  "vibe_tags": ["clean", "trust-building", "professional", "authoritative", "calm"],
+  "dna_tags": ["swiss_magazine", "boutique_brokerage", "terminal_operator"],
+  "slots": {
+    "quote": {
+      "kind": "text",
+      "max_chars": 280,
+      "tone": "specific, outcome-focused; mentions a concrete result or change; no superlatives; plainspoken"
+    },
+    "attribution": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "first name and last name of the client; no invented names"
+    },
+    "role": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "relationship context — brief, factual (Patient, Client, Business owner)"
+    },
+    "headshot_image": {
+      "kind": "image",
+      "pexels_query_template": "professional person portrait clean neutral background",
+      "aspect": "1/1"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_testimonials_panel_clean.png"
+}

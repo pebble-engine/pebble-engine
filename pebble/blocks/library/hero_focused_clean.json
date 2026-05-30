@@ -1,0 +1,40 @@
+{
+  "block_id": "library/hero_focused_clean",
+  "block_type": "hero",
+  "vibe_tags": ["clean", "trust-building", "professional", "calm", "authoritative", "structured"],
+  "dna_tags": ["swiss_magazine", "boutique_brokerage", "terminal_operator"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "plainspoken, credential-forward (Board-certified, Licensed since, Serving X since)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "confident, direct, no superlatives — states what you do and for whom"
+    },
+    "subheadline": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "respectful of time; one or two clear sentences about the outcome the client can expect"
+    },
+    "cta_primary": {
+      "kind": "text",
+      "max_chars": 28,
+      "tone": "action-oriented, low-pressure (Schedule a consultation, Book an appointment)"
+    },
+    "cta_secondary": {
+      "kind": "text",
+      "max_chars": 28,
+      "tone": "informational (Our services, How we work, Meet the team)"
+    },
+    "hero_image": {
+      "kind": "image",
+      "pexels_query_template": "{industry_scene} bright clean modern natural light professional",
+      "aspect": "16/9"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_hero_focused_clean.png"
+}
