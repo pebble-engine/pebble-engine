@@ -1,8 +1,18 @@
 {
   "block_id": "library/testimonials_panel_bold",
   "block_type": "testimonials",
-  "vibe_tags": ["bold", "high-contrast", "athletic", "motivational", "intense"],
-  "dna_tags": ["brutalist_editorial", "terminal_operator", "neon_underground"],
+  "vibe_tags": [
+    "bold",
+    "high-contrast",
+    "athletic",
+    "motivational",
+    "intense"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "terminal_operator",
+    "neon_underground"
+  ],
   "slots": {
     "quote": {
       "kind": "text",
@@ -25,6 +35,11 @@
       "aspect": "1/1"
     }
   },
-  "palette_slots": ["bg", "fg", "accent"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg"
+  ],
   "preview_image": "previews/library_testimonials_panel_bold.png"
 }

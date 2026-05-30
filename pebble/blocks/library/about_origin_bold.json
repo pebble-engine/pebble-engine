@@ -1,8 +1,18 @@
 {
   "block_id": "library/about_origin_bold",
   "block_type": "about",
-  "vibe_tags": ["bold", "intense", "motivational", "high-contrast", "energetic"],
-  "dna_tags": ["brutalist_editorial", "terminal_operator", "cinematic_imax"],
+  "vibe_tags": [
+    "bold",
+    "intense",
+    "motivational",
+    "high-contrast",
+    "energetic"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "terminal_operator",
+    "cinematic_imax"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -29,6 +39,11 @@
       "tone": "person name + title (COACH MARCUS, FOUNDER & HEAD TRAINER)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg"
+  ],
   "preview_image": "previews/library_about_origin_bold.png"
 }

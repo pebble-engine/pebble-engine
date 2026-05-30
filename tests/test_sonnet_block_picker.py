@@ -21,7 +21,7 @@ def test_returns_parsed_block_picks_and_palette():
                 },
             }
         ],
-        "palette": {"bg": "stone-50", "fg": "stone-900", "accent": "orange-700"},
+        "palette": {"bg": "stone-50", "fg": "stone-900", "accent": "orange-700", "accent_fg": "stone-50", "muted": "stone-200"},
     })
     fake_client = MagicMock()
     fake_client.generate.return_value = fake_response
@@ -70,6 +70,8 @@ def test_prompt_includes_brief_and_block_menu():
     assert "vibe_tags" in prompt
     # Pexels guidance is present (new in R3)
     assert "pexels" in prompt.lower()
+    # accent_fg token is described in the palette section
+    assert "accent_fg" in prompt
 
 
 def test_handles_json_wrapped_in_prose():

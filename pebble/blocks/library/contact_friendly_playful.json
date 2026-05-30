@@ -1,8 +1,17 @@
 {
   "block_id": "library/contact_friendly_playful",
   "block_type": "contact",
-  "vibe_tags": ["playful", "friendly", "joyful", "bright", "family-friendly"],
-  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "vibe_tags": [
+    "playful",
+    "friendly",
+    "joyful",
+    "bright",
+    "family-friendly"
+  ],
+  "dna_tags": [
+    "playful_illustrated",
+    "family_friendly"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -45,6 +54,12 @@
       "tone": "project slug injected by the compiler for form action URL"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_contact_friendly_playful.png"
 }

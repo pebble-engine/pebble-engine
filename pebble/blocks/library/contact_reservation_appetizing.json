@@ -1,8 +1,16 @@
 {
   "block_id": "library/contact_reservation_appetizing",
   "block_type": "contact",
-  "vibe_tags": ["appetizing", "warm", "sensory", "warm-craft"],
-  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "vibe_tags": [
+    "appetizing",
+    "warm",
+    "sensory",
+    "warm-craft"
+  ],
+  "dna_tags": [
+    "warm_artisan",
+    "cinematic_imax"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,12 +20,12 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "serif, warm — 'The table is ready.' Not 'Contact us.'"
+      "tone": "serif, warm \u2014 'The table is ready.' Not 'Contact us.'"
     },
     "form_intro": {
       "kind": "text",
       "max_chars": 200,
-      "tone": "friendly, sets expectations — mention response time, walk-ins welcome if true"
+      "tone": "friendly, sets expectations \u2014 mention response time, walk-ins welcome if true"
     },
     "address": {
       "kind": "text",
@@ -27,7 +35,7 @@
     "hours_text": {
       "kind": "text",
       "max_chars": 200,
-      "tone": "dining hours, e.g. Tue–Sun, 5pm–10pm. Lunch Sat–Sun, 11am–3pm."
+      "tone": "dining hours, e.g. Tue\u2013Sun, 5pm\u201310pm. Lunch Sat\u2013Sun, 11am\u20133pm."
     },
     "phone": {
       "kind": "text",
@@ -45,6 +53,12 @@
       "tone": "project slug injected by the compiler for form action URL"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_contact_reservation_appetizing.png"
 }

@@ -1,8 +1,17 @@
 {
   "block_id": "library/menu_grid_appetizing",
   "block_type": "services",
-  "vibe_tags": ["appetizing", "warm", "sensory", "rich", "warm-craft"],
-  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "vibe_tags": [
+    "appetizing",
+    "warm",
+    "sensory",
+    "rich",
+    "warm-craft"
+  ],
+  "dna_tags": [
+    "warm_artisan",
+    "cinematic_imax"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "serif, poetic — evokes appetite, not categories. 'Food made for the table.'"
+      "tone": "serif, poetic \u2014 evokes appetite, not categories. 'Food made for the table.'"
     },
     "services": {
       "kind": "list",
@@ -20,6 +29,12 @@
       "pexels_query_template": "{service_subject} rustic plating warm light shallow focus"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_menu_grid_appetizing.png"
 }

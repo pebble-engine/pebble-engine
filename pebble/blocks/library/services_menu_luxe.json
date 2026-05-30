@@ -1,8 +1,17 @@
 {
   "block_id": "library/services_menu_luxe",
   "block_type": "services",
-  "vibe_tags": ["luxurious", "serene", "elegant", "spa-like", "premium"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "serene",
+    "elegant",
+    "spa-like",
+    "premium"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "unhurried, sensory — evoke care and attention"
+      "tone": "unhurried, sensory \u2014 evoke care and attention"
     },
     "services": {
       "kind": "list",
@@ -20,6 +29,12 @@
       "pexels_query_template": "{service_subject} close up linen soft natural light muted"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_services_menu_luxe.png"
 }

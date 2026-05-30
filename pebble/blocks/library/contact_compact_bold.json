@@ -1,8 +1,16 @@
 {
   "block_id": "library/contact_compact_bold",
   "block_type": "contact",
-  "vibe_tags": ["bold", "high-contrast", "energetic", "intense"],
-  "dna_tags": ["brutalist_editorial", "terminal_operator"],
+  "vibe_tags": [
+    "bold",
+    "high-contrast",
+    "energetic",
+    "intense"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "terminal_operator"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -45,6 +53,11 @@
       "tone": "project slug injected by the compiler for form action URL"
     }
   },
-  "palette_slots": ["bg", "fg", "accent"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg"
+  ],
   "preview_image": "previews/library_contact_compact_bold.png"
 }

@@ -1,8 +1,17 @@
 {
   "block_id": "library/footer_signature_luxe",
   "block_type": "footer",
-  "vibe_tags": ["luxurious", "muted", "elegant", "serene", "premium"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "muted",
+    "elegant",
+    "serene",
+    "premium"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "tagline": {
       "kind": "text",
       "max_chars": 140,
-      "tone": "short sensory brand line — present tense, never hyperbolic"
+      "tone": "short sensory brand line \u2014 present tense, never hyperbolic"
     },
     "year": {
       "kind": "text",
@@ -24,6 +33,12 @@
       "tone": "3-5 nav links; each has label (24 chars, shown uppercase) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_signature_luxe.png"
 }

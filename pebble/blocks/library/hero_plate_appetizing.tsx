@@ -30,7 +30,7 @@ export default function HeroPlate() {
         <div className="flex flex-wrap gap-4">
           <a
             href="#reserve"
-            className="bg-{{accent}} text-stone-50 px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200"
+            className="bg-{{accent}} text-{{accent_fg}} px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200"
           >
             {{cta_primary}}
           </a>

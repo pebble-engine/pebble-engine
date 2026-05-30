@@ -1,8 +1,17 @@
 {
   "block_id": "library/footer_horizontal",
   "block_type": "footer",
-  "vibe_tags": ["minimal", "clean", "universal"],
-  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "vibe_tags": [
+    "minimal",
+    "clean",
+    "universal"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -24,6 +33,12 @@
       "tone": "3-6 nav links; each has label (24 chars) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_horizontal.png"
 }

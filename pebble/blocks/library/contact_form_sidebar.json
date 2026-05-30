@@ -1,8 +1,17 @@
 {
   "block_id": "library/contact_form_sidebar",
   "block_type": "contact",
-  "vibe_tags": ["clean", "practical", "trust-building"],
-  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "vibe_tags": [
+    "clean",
+    "practical",
+    "trust-building"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -45,6 +54,11 @@
       "tone": "project slug injected by the compiler for form action URL"
     }
   },
-  "palette_slots": ["bg", "fg", "accent"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg"
+  ],
   "preview_image": "previews/library_contact_form_sidebar.png"
 }

@@ -1,8 +1,17 @@
 {
   "block_id": "library/services_cards_playful",
   "block_type": "services",
-  "vibe_tags": ["playful", "vibrant", "joyful", "friendly", "family-friendly"],
-  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "vibe_tags": [
+    "playful",
+    "vibrant",
+    "joyful",
+    "friendly",
+    "family-friendly"
+  ],
+  "dna_tags": [
+    "playful_illustrated",
+    "family_friendly"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -20,6 +29,12 @@
       "pexels_query_template": "{service_subject} bright colorful fun activities"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_services_cards_playful.png"
 }

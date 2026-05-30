@@ -1,8 +1,18 @@
 {
   "block_id": "library/services_grid_cards",
   "block_type": "services",
-  "vibe_tags": ["clean", "structured", "imagery-forward", "approachable"],
-  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "vibe_tags": [
+    "clean",
+    "structured",
+    "imagery-forward",
+    "approachable"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -20,6 +30,12 @@
       "pexels_query_template": "{service_subject} {mood_warm} close up"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_services_grid_cards.png"
 }

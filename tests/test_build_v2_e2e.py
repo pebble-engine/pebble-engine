@@ -50,7 +50,7 @@ def _fake_sonnet_response() -> str:
             },
         ],
         "palette": {"bg": "stone-50", "fg": "stone-900",
-                    "accent": "orange-700", "muted": "stone-200"},
+                    "accent": "orange-700", "accent_fg": "stone-50", "muted": "stone-200"},
     })
 
 

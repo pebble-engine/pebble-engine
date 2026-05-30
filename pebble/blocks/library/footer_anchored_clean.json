@@ -1,8 +1,18 @@
 {
   "block_id": "library/footer_anchored_clean",
   "block_type": "footer",
-  "vibe_tags": ["clean", "professional", "authoritative", "structured", "calm"],
-  "dna_tags": ["swiss_magazine", "boutique_brokerage", "terminal_operator"],
+  "vibe_tags": [
+    "clean",
+    "professional",
+    "authoritative",
+    "structured",
+    "calm"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "boutique_brokerage",
+    "terminal_operator"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -24,6 +34,12 @@
       "tone": "3-6 nav links; each has label (24 chars) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_anchored_clean.png"
 }

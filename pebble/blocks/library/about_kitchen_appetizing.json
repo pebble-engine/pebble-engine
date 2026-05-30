@@ -1,8 +1,17 @@
 {
   "block_id": "library/about_kitchen_appetizing",
   "block_type": "about",
-  "vibe_tags": ["appetizing", "warm", "sensory", "indulgent", "warm-craft"],
-  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "vibe_tags": [
+    "appetizing",
+    "warm",
+    "sensory",
+    "indulgent",
+    "warm-craft"
+  ],
+  "dna_tags": [
+    "warm_artisan",
+    "cinematic_imax"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "serif, personal — evoke a cook's conviction, not a brand statement"
+      "tone": "serif, personal \u2014 evoke a cook's conviction, not a brand statement"
     },
     "story_paragraphs": {
       "kind": "list",
@@ -29,6 +38,12 @@
       "tone": "chef name + title (Head Chef, Owner, Founder + Head Cook)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_about_kitchen_appetizing.png"
 }

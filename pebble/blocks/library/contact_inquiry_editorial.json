@@ -1,8 +1,18 @@
 {
   "block_id": "library/contact_inquiry_editorial",
   "block_type": "contact",
-  "vibe_tags": ["editorial", "minimal", "restrained", "gallery", "monochrome"],
-  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "restrained",
+    "gallery",
+    "monochrome"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -45,6 +55,12 @@
       "tone": "project slug injected by the compiler for form action URL"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_contact_inquiry_editorial.png"
 }

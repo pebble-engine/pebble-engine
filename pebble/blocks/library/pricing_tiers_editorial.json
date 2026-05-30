@@ -1,8 +1,18 @@
 {
   "block_id": "library/pricing_tiers_editorial",
   "block_type": "pricing",
-  "vibe_tags": ["editorial", "minimal", "restrained", "monochrome", "gallery"],
-  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "restrained",
+    "monochrome",
+    "gallery"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -19,6 +29,12 @@
       "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars, e.g. /day or /project), features (list of 3-4 strings, 60 chars each), cta (24 chars), featured (boolean)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_pricing_tiers_editorial.png"
 }

@@ -1,8 +1,17 @@
 {
   "block_id": "library/pricing_prixfixe_appetizing",
   "block_type": "pricing",
-  "vibe_tags": ["appetizing", "warm", "rich", "indulgent", "warm-craft"],
-  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "vibe_tags": [
+    "appetizing",
+    "warm",
+    "rich",
+    "indulgent",
+    "warm-craft"
+  ],
+  "dna_tags": [
+    "warm_artisan",
+    "cinematic_imax"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,13 +21,19 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "serif, unhurried — 'A meal worth planning for.' Not 'Choose your plan.'"
+      "tone": "serif, unhurried \u2014 'A meal worth planning for.' Not 'Choose your plan.'"
     },
     "tiers": {
       "kind": "list",
-      "tone": "2-3 tier objects; each has: name (24 chars, e.g. 'A la carte', 'Prix-fixe', 'Chef's table'), price (16 chars), period (16 chars, e.g. 'per person', 'per table'), features (list of 3-5 strings, 60 chars each — name dishes or inclusions), cta (24 chars, e.g. 'Reserve now', 'Book this menu'), featured (boolean)"
+      "tone": "2-3 tier objects; each has: name (24 chars, e.g. 'A la carte', 'Prix-fixe', 'Chef's table'), price (16 chars), period (16 chars, e.g. 'per person', 'per table'), features (list of 3-5 strings, 60 chars each \u2014 name dishes or inclusions), cta (24 chars, e.g. 'Reserve now', 'Book this menu'), featured (boolean)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_pricing_prixfixe_appetizing.png"
 }

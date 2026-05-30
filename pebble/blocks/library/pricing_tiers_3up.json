@@ -1,8 +1,17 @@
 {
   "block_id": "library/pricing_tiers_3up",
   "block_type": "pricing",
-  "vibe_tags": ["clear", "structured", "decision-oriented"],
-  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "vibe_tags": [
+    "clear",
+    "structured",
+    "decision-oriented"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -19,6 +28,12 @@
       "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars, e.g. /month), features (list of 3-5 strings, 60 chars each), cta (24 chars), featured (boolean for elevated ring)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_pricing_tiers_3up.png"
 }

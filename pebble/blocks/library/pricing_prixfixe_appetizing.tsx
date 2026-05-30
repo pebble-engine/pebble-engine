@@ -47,7 +47,7 @@ export default function PricingPrixFixe() {
             {/* CTA */}
             <a
               href="#reserve"
-              className="mt-2 bg-{{accent}} text-stone-50 px-8 py-4 rounded-full font-sans font-semibold text-center hover:scale-105 hover:opacity-95 transition-transform duration-200"
+              className="mt-2 bg-{{accent}} text-{{accent_fg}} px-8 py-4 rounded-full font-sans font-semibold text-center hover:scale-105 hover:opacity-95 transition-transform duration-200"
             >
               {{tiers[].cta}}
             </a>

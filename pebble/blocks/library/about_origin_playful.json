@@ -1,8 +1,17 @@
 {
   "block_id": "library/about_origin_playful",
   "block_type": "about",
-  "vibe_tags": ["playful", "friendly", "joyful", "family-friendly", "bright"],
-  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "vibe_tags": [
+    "playful",
+    "friendly",
+    "joyful",
+    "family-friendly",
+    "bright"
+  ],
+  "dna_tags": [
+    "playful_illustrated",
+    "family_friendly"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -16,7 +25,7 @@
     },
     "story_paragraphs": {
       "kind": "list",
-      "tone": "2-3 paragraph strings, each 280 chars; personal voice, not corporate — like a friend telling you"
+      "tone": "2-3 paragraph strings, each 280 chars; personal voice, not corporate \u2014 like a friend telling you"
     },
     "portrait_image": {
       "kind": "image",
@@ -29,6 +38,12 @@
       "tone": "person name + role (e.g. Maya, Founder & Chief Fun Officer)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_about_origin_playful.png"
 }

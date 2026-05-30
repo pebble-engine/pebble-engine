@@ -1,8 +1,17 @@
 {
   "block_id": "library/footer_anchored_bold",
   "block_type": "footer",
-  "vibe_tags": ["bold", "high-contrast", "energetic", "athletic"],
-  "dna_tags": ["brutalist_editorial", "terminal_operator", "neon_underground"],
+  "vibe_tags": [
+    "bold",
+    "high-contrast",
+    "energetic",
+    "athletic"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "terminal_operator",
+    "neon_underground"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -24,6 +33,12 @@
       "tone": "3-6 nav links; each has label (24 chars, all-caps) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_anchored_bold.png"
 }

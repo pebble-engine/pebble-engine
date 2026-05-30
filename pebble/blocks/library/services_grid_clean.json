@@ -1,8 +1,17 @@
 {
   "block_id": "library/services_grid_clean",
   "block_type": "services",
-  "vibe_tags": ["clean", "structured", "professional", "calm", "authoritative"],
-  "dna_tags": ["swiss_magazine", "boutique_brokerage"],
+  "vibe_tags": [
+    "clean",
+    "structured",
+    "professional",
+    "calm",
+    "authoritative"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,13 +21,19 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "confident, direct — describes the scope of work, no filler words"
+      "tone": "confident, direct \u2014 describes the scope of work, no filler words"
     },
     "services": {
       "kind": "list",
       "tone": "3-6 items; each has title (40 chars, plainspoken) and body (140 chars, outcome-focused, no superlatives)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_services_grid_clean.png"
 }

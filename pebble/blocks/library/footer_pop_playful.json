@@ -1,8 +1,16 @@
 {
   "block_id": "library/footer_pop_playful",
   "block_type": "footer",
-  "vibe_tags": ["playful", "vibrant", "joyful", "bright"],
-  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "vibe_tags": [
+    "playful",
+    "vibrant",
+    "joyful",
+    "bright"
+  ],
+  "dna_tags": [
+    "playful_illustrated",
+    "family_friendly"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -12,7 +20,7 @@
     "tagline": {
       "kind": "text",
       "max_chars": 140,
-      "tone": "short, cheerful brand line — not corporate, more like a friendly sign-off"
+      "tone": "short, cheerful brand line \u2014 not corporate, more like a friendly sign-off"
     },
     "year": {
       "kind": "text",
@@ -24,6 +32,12 @@
       "tone": "3-6 nav links; each has label (24 chars) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_pop_playful.png"
 }

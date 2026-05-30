@@ -1,13 +1,22 @@
 {
   "block_id": "library/testimonials_whisper_luxe",
   "block_type": "testimonials",
-  "vibe_tags": ["luxurious", "serene", "muted", "elegant", "spa-like"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "serene",
+    "muted",
+    "elegant",
+    "spa-like"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "quote": {
       "kind": "text",
       "max_chars": 280,
-      "tone": "genuine, unhurried; evokes a specific sensory memory or feeling — never hyperbolic"
+      "tone": "genuine, unhurried; evokes a specific sensory memory or feeling \u2014 never hyperbolic"
     },
     "attribution": {
       "kind": "text",
@@ -25,6 +34,12 @@
       "aspect": "1/1"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_testimonials_whisper_luxe.png"
 }

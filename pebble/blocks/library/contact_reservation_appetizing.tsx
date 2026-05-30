@@ -79,7 +79,7 @@ export default function ContactReservation() {
 
               <button
                 type="submit"
-                className="bg-{{accent}} text-stone-50 px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200 w-full md:w-auto"
+                className="bg-{{accent}} text-{{accent_fg}} px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200 w-full md:w-auto"
               >
                 Request a table
               </button>

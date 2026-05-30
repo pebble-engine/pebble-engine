@@ -75,12 +75,19 @@ For each `kind: "image"` slot:
 
 ## 4. Pick a palette
 
-Tailwind color tokens for `bg`, `fg`, `accent`, and `muted` (4 tokens).
+Tailwind color tokens for `bg`, `fg`, `accent`, `accent_fg`, and `muted` (5 tokens).
+
+- `bg`: page background (typically a 50-100 weight)
+- `fg`: primary text color (typically a 900 weight)
+- `accent`: brand color used for buttons + emphasis (any weight, fits the vibe)
+- `accent_fg`: foreground color when text sits ON an accent background — choose for contrast. If `accent` is dark (700+), `accent_fg` should be light (50). If `accent` is light (lime-400, amber-200), `accent_fg` should be dark (zinc-900).
+- `muted`: subtle background for cards, dividers (typically 100-200 weight)
+
 Choose values that fit the brand vibe:
-- Warm/crafted: `stone-50 / stone-900 / amber-700 / stone-200`
-- Clean/trust: `slate-50 / slate-900 / sky-600 / slate-200`
-- Bold/energetic: `zinc-900 / zinc-50 / lime-400 / zinc-700`
-- Editorial/minimal: `neutral-50 / neutral-900 / neutral-900 / neutral-200`
+- Warm/crafted: `stone-50 / stone-900 / amber-700 / stone-50 / stone-200`
+- Clean/trust: `slate-50 / slate-900 / sky-600 / slate-50 / slate-200`
+- Bold/energetic: `zinc-900 / zinc-50 / lime-400 / zinc-900 / zinc-700`
+- Editorial/minimal: `neutral-50 / neutral-900 / neutral-900 / neutral-50 / neutral-200`
 
 # Output
 
@@ -91,7 +98,7 @@ Return ONLY a JSON object, no prose around it:
     {{"block_id": "<from menu>", "slot_values": {{<slot_name>: <value>, ...}}}},
     ...
   ],
-  "palette": {{"bg": "<tailwind>", "fg": "<tailwind>", "accent": "<tailwind>", "muted": "<tailwind>"}}
+  "palette": {{"bg": "<tailwind>", "fg": "<tailwind>", "accent": "<tailwind>", "accent_fg": "<tailwind>", "muted": "<tailwind>"}}
 }}
 """
 

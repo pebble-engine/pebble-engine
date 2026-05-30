@@ -1,8 +1,17 @@
 {
   "block_id": "library/pricing_tiers_clean",
   "block_type": "pricing",
-  "vibe_tags": ["clean", "structured", "professional", "trust-building", "authoritative"],
-  "dna_tags": ["swiss_magazine", "boutique_brokerage"],
+  "vibe_tags": [
+    "clean",
+    "structured",
+    "professional",
+    "trust-building",
+    "authoritative"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,13 +21,19 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "direct, transparent — sets expectation of clarity and no hidden fees"
+      "tone": "direct, transparent \u2014 sets expectation of clarity and no hidden fees"
     },
     "tiers": {
       "kind": "list",
       "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars, e.g. /month or one-time), features (list of 3-5 strings, 60 chars each, outcome-focused), cta (28 chars), featured (boolean)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_pricing_tiers_clean.png"
 }

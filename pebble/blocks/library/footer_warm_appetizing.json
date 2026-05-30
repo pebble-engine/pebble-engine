@@ -1,8 +1,16 @@
 {
   "block_id": "library/footer_warm_appetizing",
   "block_type": "footer",
-  "vibe_tags": ["appetizing", "warm", "sensory", "warm-craft"],
-  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "vibe_tags": [
+    "appetizing",
+    "warm",
+    "sensory",
+    "warm-craft"
+  ],
+  "dna_tags": [
+    "warm_artisan",
+    "cinematic_imax"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -12,7 +20,7 @@
     "tagline": {
       "kind": "text",
       "max_chars": 140,
-      "tone": "short sensory brand line — italic, evocative. 'Made for sharing.' 'The honest meal you've been missing.'"
+      "tone": "short sensory brand line \u2014 italic, evocative. 'Made for sharing.' 'The honest meal you've been missing.'"
     },
     "year": {
       "kind": "text",
@@ -24,6 +32,12 @@
       "tone": "3-6 nav links; each has label (24 chars) and href (80 chars). e.g. Menu, Reservations, About, Gift cards, Private dining"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_warm_appetizing.png"
 }

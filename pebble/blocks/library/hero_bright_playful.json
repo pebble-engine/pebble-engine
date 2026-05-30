@@ -1,8 +1,17 @@
 {
   "block_id": "library/hero_bright_playful",
   "block_type": "hero",
-  "vibe_tags": ["playful", "vibrant", "joyful", "bright", "friendly"],
-  "dna_tags": ["playful_illustrated", "family_friendly"],
+  "vibe_tags": [
+    "playful",
+    "vibrant",
+    "joyful",
+    "bright",
+    "friendly"
+  ],
+  "dna_tags": [
+    "playful_illustrated",
+    "family_friendly"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "bouncy, enthusiastic; no exclamation mark here — save it for copy"
+      "tone": "bouncy, enthusiastic; no exclamation mark here \u2014 save it for copy"
     },
     "subheadline": {
       "kind": "text",
@@ -35,6 +44,12 @@
       "aspect": "16/9"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_hero_bright_playful.png"
 }

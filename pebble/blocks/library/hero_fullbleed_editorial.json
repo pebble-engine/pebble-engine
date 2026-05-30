@@ -1,8 +1,19 @@
 {
   "block_id": "library/hero_fullbleed_editorial",
   "block_type": "hero",
-  "vibe_tags": ["editorial", "minimal", "monochrome", "restrained", "gallery"],
-  "dna_tags": ["brutalist_editorial", "cinematic_imax", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "monochrome",
+    "restrained",
+    "gallery"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "cinematic_imax",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -35,6 +46,12 @@
       "aspect": "16/9"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_hero_fullbleed_editorial.png"
 }

@@ -1,8 +1,17 @@
 {
   "block_id": "library/about_ethos_luxe",
   "block_type": "about",
-  "vibe_tags": ["luxurious", "serene", "premium", "elegant", "spa-like"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "serene",
+    "premium",
+    "elegant",
+    "spa-like"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -29,6 +38,12 @@
       "tone": "person name + role (Founder, Head of craft, Lead therapist)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_about_ethos_luxe.png"
 }

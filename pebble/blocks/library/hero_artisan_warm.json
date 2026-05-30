@@ -1,8 +1,19 @@
 {
   "block_id": "library/hero_artisan_warm",
   "block_type": "hero",
-  "vibe_tags": ["warm", "crafted", "sensory", "small-batch", "intimate"],
-  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "vibe_tags": [
+    "warm",
+    "crafted",
+    "sensory",
+    "small-batch",
+    "intimate"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -35,6 +46,11 @@
       "aspect": "16/9"
     }
   },
-  "palette_slots": ["bg", "fg", "accent"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg"
+  ],
   "preview_image": "previews/library_hero_artisan_warm.png"
 }

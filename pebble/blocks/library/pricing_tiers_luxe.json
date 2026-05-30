@@ -1,8 +1,17 @@
 {
   "block_id": "library/pricing_tiers_luxe",
   "block_type": "pricing",
-  "vibe_tags": ["luxurious", "elegant", "premium", "muted", "serene"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "elegant",
+    "premium",
+    "muted",
+    "serene"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -19,6 +28,12 @@
       "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars e.g. per visit), features (list of 3-5 strings, 60 chars each), cta (24 chars, uppercase), featured (boolean)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_pricing_tiers_luxe.png"
 }

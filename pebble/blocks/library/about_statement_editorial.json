@@ -1,8 +1,18 @@
 {
   "block_id": "library/about_statement_editorial",
   "block_type": "about",
-  "vibe_tags": ["editorial", "minimal", "artist-statement", "restrained", "gallery"],
-  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "artist-statement",
+    "restrained",
+    "gallery"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -29,6 +39,12 @@
       "tone": "name, role or location (Anna R., Architect)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_about_statement_editorial.png"
 }

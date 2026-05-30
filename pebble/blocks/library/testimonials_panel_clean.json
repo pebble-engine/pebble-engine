@@ -1,8 +1,18 @@
 {
   "block_id": "library/testimonials_panel_clean",
   "block_type": "testimonials",
-  "vibe_tags": ["clean", "trust-building", "professional", "authoritative", "calm"],
-  "dna_tags": ["swiss_magazine", "boutique_brokerage", "terminal_operator"],
+  "vibe_tags": [
+    "clean",
+    "trust-building",
+    "professional",
+    "authoritative",
+    "calm"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "boutique_brokerage",
+    "terminal_operator"
+  ],
   "slots": {
     "quote": {
       "kind": "text",
@@ -17,7 +27,7 @@
     "role": {
       "kind": "text",
       "max_chars": 60,
-      "tone": "relationship context — brief, factual (Patient, Client, Business owner)"
+      "tone": "relationship context \u2014 brief, factual (Patient, Client, Business owner)"
     },
     "headshot_image": {
       "kind": "image",
@@ -25,6 +35,12 @@
       "aspect": "1/1"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_testimonials_panel_clean.png"
 }

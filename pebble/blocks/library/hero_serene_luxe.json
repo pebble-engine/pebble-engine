@@ -1,8 +1,17 @@
 {
   "block_id": "library/hero_serene_luxe",
   "block_type": "hero",
-  "vibe_tags": ["luxurious", "serene", "muted", "premium", "elegant"],
-  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "vibe_tags": [
+    "luxurious",
+    "serene",
+    "muted",
+    "premium",
+    "elegant"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "swiss_magazine"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "light, unhurried, body-positive — never aggressive or boastful"
+      "tone": "light, unhurried, body-positive \u2014 never aggressive or boastful"
     },
     "subheadline": {
       "kind": "text",
@@ -35,6 +44,12 @@
       "aspect": "16/9"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_hero_serene_luxe.png"
 }

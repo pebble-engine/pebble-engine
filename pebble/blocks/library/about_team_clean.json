@@ -1,8 +1,17 @@
 {
   "block_id": "library/about_team_clean",
   "block_type": "about",
-  "vibe_tags": ["clean", "trust-building", "professional", "authoritative", "structured"],
-  "dna_tags": ["swiss_magazine", "boutique_brokerage"],
+  "vibe_tags": [
+    "clean",
+    "trust-building",
+    "professional",
+    "authoritative",
+    "structured"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "boutique_brokerage"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,11 +21,11 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "plainspoken introduction — name or role-based; confident, no sentimentality"
+      "tone": "plainspoken introduction \u2014 name or role-based; confident, no sentimentality"
     },
     "story_paragraphs": {
       "kind": "list",
-      "tone": "2-3 paragraph strings, each 240 chars; professional background, training, approach — no 'we care' or 'passionate'"
+      "tone": "2-3 paragraph strings, each 240 chars; professional background, training, approach \u2014 no 'we care' or 'passionate'"
     },
     "portrait_image": {
       "kind": "image",
@@ -26,9 +35,15 @@
     "signature": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "full name + credentials + role (e.g. Dr. Jane Smith, MD · Founder)"
+      "tone": "full name + credentials + role (e.g. Dr. Jane Smith, MD \u00b7 Founder)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_about_team_clean.png"
 }

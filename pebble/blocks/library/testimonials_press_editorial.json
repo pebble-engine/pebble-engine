@@ -1,8 +1,18 @@
 {
   "block_id": "library/testimonials_press_editorial",
   "block_type": "testimonials",
-  "vibe_tags": ["editorial", "minimal", "restrained", "artist-statement", "monochrome"],
-  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "restrained",
+    "artist-statement",
+    "monochrome"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "quote": {
       "kind": "text",
@@ -25,6 +35,12 @@
       "aspect": "1/1"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_testimonials_press_editorial.png"
 }

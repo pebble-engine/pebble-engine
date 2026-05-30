@@ -1,8 +1,17 @@
 {
   "block_id": "library/hero_plate_appetizing",
   "block_type": "hero",
-  "vibe_tags": ["appetizing", "sensory", "warm", "rich", "indulgent"],
-  "dna_tags": ["cinematic_imax", "warm_artisan"],
+  "vibe_tags": [
+    "appetizing",
+    "sensory",
+    "warm",
+    "rich",
+    "indulgent"
+  ],
+  "dna_tags": [
+    "cinematic_imax",
+    "warm_artisan"
+  ],
   "slots": {
     "eyebrow": {
       "kind": "text",
@@ -12,7 +21,7 @@
     "headline": {
       "kind": "text",
       "max_chars": 80,
-      "tone": "sensory serif — evoke the plate, not the genre. Name textures."
+      "tone": "sensory serif \u2014 evoke the plate, not the genre. Name textures."
     },
     "subheadline": {
       "kind": "text",
@@ -35,6 +44,12 @@
       "aspect": "16/9"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_hero_plate_appetizing.png"
 }

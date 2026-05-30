@@ -1,8 +1,18 @@
 {
   "block_id": "library/footer_minimal_editorial",
   "block_type": "footer",
-  "vibe_tags": ["editorial", "minimal", "restrained", "monochrome", "gallery"],
-  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "restrained",
+    "monochrome",
+    "gallery"
+  ],
+  "dna_tags": [
+    "brutalist_editorial",
+    "swiss_magazine",
+    "gallery_first"
+  ],
   "slots": {
     "business_name": {
       "kind": "text",
@@ -24,6 +34,12 @@
       "tone": "3-5 nav links; each has label (24 chars) and href (80 chars)"
     }
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent",
+    "accent_fg",
+    "muted"
+  ],
   "preview_image": "previews/library_footer_minimal_editorial.png"
 }
