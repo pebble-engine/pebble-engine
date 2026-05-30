@@ -1,0 +1,25 @@
+{
+  "block_id": "library/menu_grid_appetizing",
+  "block_type": "services",
+  "vibe_tags": ["appetizing", "warm", "sensory", "rich", "warm-craft"],
+  "dna_tags": ["warm_artisan", "cinematic_imax"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "what the section is (The menu, What we're making, Tonight's plates)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "serif, poetic — evokes appetite, not categories. 'Food made for the table.'"
+    },
+    "services": {
+      "kind": "list",
+      "tone": "4-6 items; each has title (40 chars, italic menu-item style), body (120 chars, name the ingredients), image (food close-up), price (16 chars)",
+      "pexels_query_template": "{service_subject} rustic plating warm light shallow focus"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_menu_grid_appetizing.png"
+}

@@ -1,0 +1,40 @@
+{
+  "block_id": "library/hero_plate_appetizing",
+  "block_type": "hero",
+  "vibe_tags": ["appetizing", "sensory", "warm", "rich", "indulgent"],
+  "dna_tags": ["cinematic_imax", "warm_artisan"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "intimate, neighborhood feel (Now seating, Open for dinner, Est. 2018)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "sensory serif — evoke the plate, not the genre. Name textures."
+    },
+    "subheadline": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "specific ingredients, technique, provenance. No 'delicious' or 'authentic'."
+    },
+    "cta_primary": {
+      "kind": "text",
+      "max_chars": 28,
+      "tone": "Reserve a table, Book tonight, Claim your seat"
+    },
+    "cta_secondary": {
+      "kind": "text",
+      "max_chars": 28,
+      "tone": "See the menu, What we serve, How it's made"
+    },
+    "hero_image": {
+      "kind": "image",
+      "pexels_query_template": "{industry_scene} warm light close up candlelit {mood_warm}",
+      "aspect": "16/9"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_hero_plate_appetizing.png"
+}
