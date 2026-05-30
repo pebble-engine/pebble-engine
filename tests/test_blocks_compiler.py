@@ -221,3 +221,51 @@ def test_multiple_blocks_concatenate_in_order(tmp_path):
     )
     page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
     assert page.index("FIRST") < page.index("SECOND")
+
+
+def test_real_bakery_hero_produces_valid_jsx():
+    """Integration: compile a real bakery hero template into runnable JSX.
+    Catches the 'export default function Hero()' nested wrapper bug that
+    synthetic tests missed (regression guard, 2026-05-29)."""
+    from pebble.blocks.registry import BlockRegistry
+    real_root = Path(__file__).parent.parent / "pebble" / "blocks"
+    reg = BlockRegistry.load(real_root)
+
+    import tempfile, shutil
+    out_dir = Path(tempfile.mkdtemp())
+    try:
+        compile_site(
+            registry=reg,
+            block_picks=[{
+                "block_id": "bakery/hero_artisan",
+                "slot_values": {
+                    "eyebrow": "Brooklyn",
+                    "headline": "Real bread",
+                    "subheadline": "Made slowly.",
+                    "cta_primary": "Order",
+                    "cta_secondary": "About",
+                    "hero_image": "https://x.com/h.jpg",
+                },
+            }],
+            palette={"bg": "stone-50", "fg": "stone-900", "accent": "orange-700"},
+            out_dir=out_dir,
+        )
+        page = (out_dir / "app" / "page.tsx").read_text(encoding="utf-8")
+
+        # The fatal bug: nested function declaration inside arrow component
+        assert "export default function Hero" not in page, \
+            "block's export default wrapper leaked into Section component (regression)"
+
+        # And specifically — no `const SectionNN = () => (\nexport default function`
+        # arrow→function pattern, which is the smoking gun
+        import re
+        bad_pattern = re.compile(r"const\s+Section\d+\s*=\s*\(\s*\)\s*=>\s*\(\s*\n\s*export\s+default\s+function", re.DOTALL)
+        assert not bad_pattern.search(page), \
+            "compiler nested an export default function inside an arrow component (regression)"
+
+        # The good signal — actual JSX content survived
+        assert "Real bread" in page
+        assert "stone-50" in page
+        assert "{{" not in page
+    finally:
+        shutil.rmtree(out_dir, ignore_errors=True)

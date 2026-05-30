@@ -312,6 +312,37 @@ def _extract_imports(text: str) -> tuple[list[str], str]:
 
 
 # ---------------------------------------------------------------------------
+# JSX body extractor
+# ---------------------------------------------------------------------------
+
+# Matches the full-component wrapper shape produced by Next.js blocks:
+#
+#   export default function NAME() {
+#     return (
+#       <jsx>...</jsx>
+#     );
+#   }
+#
+# Captured group 1 is the inner JSX expression only.
+_EXPORT_DEFAULT_FUNCTION_RE = re.compile(
+    r'^\s*export\s+default\s+function\s+\w+\s*\(\s*\)\s*\{\s*return\s*\(\s*(.*?)\s*\)\s*;?\s*\}\s*$',
+    re.DOTALL,
+)
+
+
+def _extract_jsx_body(source: str) -> str:
+    """Strip the 'export default function NAME() { return (...); }' wrapper.
+
+    If the pattern is found, returns only the captured JSX expression.
+    If not found (e.g. bare JSX templates in tests), returns source unchanged.
+    """
+    m = _EXPORT_DEFAULT_FUNCTION_RE.match(source)
+    if m:
+        return m.group(1)
+    return source
+
+
+# ---------------------------------------------------------------------------
 # page.tsx builder
 # ---------------------------------------------------------------------------
 
@@ -344,7 +375,11 @@ def _build_page_tsx(rendered_blocks: list[tuple[str, str]]) -> str:
             if imp not in all_imports:
                 all_imports.append(imp)
 
-        # Remove leading/trailing blank lines from the clean body
+        # Strip 'export default function NAME() { return (...); }' wrapper if present.
+        # Real bakery blocks are full Next.js components; we only want the JSX body.
+        clean_body = _extract_jsx_body(clean_body.strip())
+
+        # Remove leading/trailing blank lines from the JSX body
         clean_body = clean_body.strip()
 
         section_name = f"Section{i:02d}"
