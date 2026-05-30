@@ -402,6 +402,145 @@ def _build_page_tsx(rendered_blocks: list[tuple[str, str]]) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Scaffolding writer
+# ---------------------------------------------------------------------------
+
+_PACKAGE_JSON = """\
+{
+  "name": "pebble-v2-site",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.41",
+    "tailwindcss": "^3.4.10",
+    "typescript": "^5.5.4"
+  }
+}
+"""
+
+_NEXT_CONFIG_MJS = """\
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  images: {
+    remotePatterns: [
+      { protocol: 'https', hostname: 'images.pexels.com' },
+      { protocol: 'https', hostname: 'picsum.photos' },
+      { protocol: 'https', hostname: 'fastly.picsum.photos' },
+    ],
+  },
+};
+
+export default nextConfig;
+"""
+
+_TSCONFIG_JSON = """\
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "plugins": [{ "name": "next" }],
+    "paths": { "@/*": ["./*"] }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+"""
+
+_TAILWIND_CONFIG_TS = """\
+import type { Config } from "tailwindcss";
+
+const config: Config = {
+  content: ["./app/**/*.{ts,tsx}"],
+  theme: { extend: {} },
+  plugins: [],
+};
+
+export default config;
+"""
+
+_POSTCSS_CONFIG_MJS = """\
+export default {
+  plugins: {
+    tailwindcss: {},
+    autoprefixer: {},
+  },
+};
+"""
+
+_APP_LAYOUT_TSX = """\
+import type { Metadata } from "next";
+import "./globals.css";
+
+export const metadata: Metadata = {
+  title: "Pebble",
+  description: "Built with Pebble",
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <html lang="en">
+      <body className="antialiased">{children}</body>
+    </html>
+  );
+}
+"""
+
+_APP_GLOBALS_CSS = """\
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+"""
+
+
+def _write_scaffolding(out_dir: Path) -> None:
+    """Write the 7 scaffolding files needed for a runnable Next.js 14 project.
+
+    Safe to call on an already-scaffolded directory — existing files are
+    overwritten with the canonical versions.
+    """
+    out_dir.mkdir(parents=True, exist_ok=True)
+    app_dir = out_dir / "app"
+    app_dir.mkdir(parents=True, exist_ok=True)
+
+    (out_dir / "package.json").write_text(_PACKAGE_JSON, encoding="utf-8")
+    (out_dir / "next.config.mjs").write_text(_NEXT_CONFIG_MJS, encoding="utf-8")
+    (out_dir / "tsconfig.json").write_text(_TSCONFIG_JSON, encoding="utf-8")
+    (out_dir / "tailwind.config.ts").write_text(_TAILWIND_CONFIG_TS, encoding="utf-8")
+    (out_dir / "postcss.config.mjs").write_text(_POSTCSS_CONFIG_MJS, encoding="utf-8")
+    (app_dir / "layout.tsx").write_text(_APP_LAYOUT_TSX, encoding="utf-8")
+    (app_dir / "globals.css").write_text(_APP_GLOBALS_CSS, encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
 # Public API
 # ---------------------------------------------------------------------------
 
@@ -452,3 +591,7 @@ def compile_site(
     app_dir = out_dir / "app"
     app_dir.mkdir(parents=True, exist_ok=True)
     (app_dir / "page.tsx").write_text(page_tsx, encoding="utf-8")
+
+    # Write scaffolding (package.json, next.config.mjs, tsconfig.json,
+    # tailwind.config.ts, postcss.config.mjs, app/layout.tsx, app/globals.css)
+    _write_scaffolding(out_dir)

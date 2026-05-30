@@ -223,6 +223,67 @@ def test_multiple_blocks_concatenate_in_order(tmp_path):
     assert page.index("FIRST") < page.index("SECOND")
 
 
+def test_compile_site_scaffolds_runnable_next_project(tmp_path):
+    """A v2-compiled site must have all the files needed for npm install + next dev."""
+    bakery = tmp_path / "library" / "bakery"
+    bakery.mkdir(parents=True)
+    (bakery / "hero.tsx").write_text(
+        'export default function Hero() { return (<h1 className="bg-{{bg}}">{{headline}}</h1>); }'
+    )
+    import json
+    (bakery / "hero.json").write_text(json.dumps({
+        "block_id": "library/hero",
+        "block_type": "hero",
+        "vibe_tags": ["warm"],
+        "dna_tags": [],
+        "slots": {"headline": {"kind": "text"}},
+        "palette_slots": ["bg"],
+    }))
+    from pebble.blocks.registry import BlockRegistry
+    from pebble.blocks_compiler import compile_site
+    reg = BlockRegistry.load(tmp_path / "library")
+
+    out = tmp_path / "site"
+    compile_site(
+        registry=reg,
+        block_picks=[{"block_id": "library/hero", "slot_values": {"headline": "x"}}],
+        palette={"bg": "stone-50"},
+        out_dir=out,
+    )
+
+    # Scaffolding files must all exist
+    assert (out / "package.json").exists()
+    assert (out / "next.config.mjs").exists()
+    assert (out / "tsconfig.json").exists()
+    assert (out / "tailwind.config.ts").exists()
+    assert (out / "postcss.config.mjs").exists()
+    assert (out / "app" / "layout.tsx").exists()
+    assert (out / "app" / "globals.css").exists()
+    assert (out / "app" / "page.tsx").exists()
+
+    # package.json must declare next, react, react-dom, tailwindcss
+    pkg = json.loads((out / "package.json").read_text(encoding="utf-8"))
+    assert "next" in pkg["dependencies"]
+    assert "react" in pkg["dependencies"]
+    assert "react-dom" in pkg["dependencies"]
+    assert "tailwindcss" in pkg["devDependencies"]
+
+    # Layout must import globals.css + render html/body
+    layout = (out / "app" / "layout.tsx").read_text(encoding="utf-8")
+    assert "globals.css" in layout
+    assert "<html" in layout and "<body" in layout
+
+    # Tailwind config must include content paths for app/
+    tw = (out / "tailwind.config.ts").read_text(encoding="utf-8")
+    assert "./app/**/*.{ts,tsx}" in tw
+
+    # globals.css has the 3 Tailwind directives
+    css = (out / "app" / "globals.css").read_text(encoding="utf-8")
+    assert "@tailwind base" in css
+    assert "@tailwind components" in css
+    assert "@tailwind utilities" in css
+
+
 def test_real_warm_hero_produces_valid_jsx():
     """Integration: compile a real library warm hero template into runnable JSX.
     Catches the 'export default function Hero()' nested wrapper bug that
