@@ -1,0 +1,40 @@
+{
+  "block_id": "library/hero_serene_luxe",
+  "block_type": "hero",
+  "vibe_tags": ["luxurious", "serene", "muted", "premium", "elegant"],
+  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "present-tense, sensory (An hour of softness. / A quiet beginning.)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "light, unhurried, body-positive — never aggressive or boastful"
+    },
+    "subheadline": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "sensory and welcoming; evoke texture, light, calm"
+    },
+    "cta_primary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "uppercase booking action (BOOK A VISIT, RESERVE YOUR TIME)"
+    },
+    "cta_secondary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "uppercase informational (OUR OFFERINGS, EXPLORE)"
+    },
+    "hero_image": {
+      "kind": "image",
+      "pexels_query_template": "{industry_scene} soft natural light muted serene minimalist spa",
+      "aspect": "16/9"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_hero_serene_luxe.png"
+}
