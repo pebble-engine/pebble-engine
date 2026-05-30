@@ -1,0 +1,24 @@
+{
+  "block_id": "bakery/pricing_simple",
+  "block_type": "pricing",
+  "industry": "bakery",
+  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "clear, inviting (Subscription plans, Weekly boxes, Our packages)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "warm, value-forward"
+    },
+    "tiers": {
+      "kind": "list",
+      "tone": "2-3 tier objects; each has: name (24 chars), price (16 chars), period (16 chars, e.g. /week), features (list of 3-5 strings, 60 chars each), cta (24 chars), featured (boolean for elevated ring)"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/bakery_pricing_simple.png"
+}

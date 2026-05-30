@@ -1,0 +1,50 @@
+{
+  "block_id": "bakery/contact_form",
+  "block_type": "contact",
+  "industry": "bakery",
+  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "welcoming (Get in touch, Say hello, Let's talk)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "warm, direct, inviting contact"
+    },
+    "form_intro": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "friendly, reassuring; sets expectations for response time"
+    },
+    "address": {
+      "kind": "text",
+      "max_chars": 120,
+      "tone": "street address, city, neighborhood"
+    },
+    "hours_text": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "operating hours, e.g. Wed-Sun, 7am-3pm"
+    },
+    "phone": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "phone number with formatting"
+    },
+    "email": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "contact email address"
+    },
+    "form_slug": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "project slug injected by the compiler for form action URL"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent"],
+  "preview_image": "previews/bakery_contact_form.png"
+}
