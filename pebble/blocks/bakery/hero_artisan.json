@@ -1,0 +1,40 @@
+{
+  "block_id": "bakery/hero_artisan",
+  "block_type": "hero",
+  "industry": "bakery",
+  "dna_tags": ["swiss_magazine", "cinematic_imax", "warm_artisan", "boutique_brokerage"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "intimate, neighborhood-feel"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "warm, confident, sensory"
+    },
+    "subheadline": {
+      "kind": "text",
+      "max_chars": 200,
+      "tone": "warm, descriptive, evoke smell and texture"
+    },
+    "cta_primary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "action-oriented (Order now, Reserve a loaf)"
+    },
+    "cta_secondary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "informational (Our story, See the menu)"
+    },
+    "hero_image": {
+      "kind": "image",
+      "pexels_query": "artisan sourdough bread bakery interior warm light",
+      "aspect": "16/9"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent"],
+  "preview_image": "previews/bakery_hero_artisan.png"
+}
