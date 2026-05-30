@@ -1,0 +1,50 @@
+{
+  "block_id": "library/contact_inquiry_editorial",
+  "block_type": "contact",
+  "vibe_tags": ["editorial", "minimal", "restrained", "gallery", "monochrome"],
+  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "sparse (Inquiries, Contact, Get in touch)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "direct, artist-statement (Every project begins with a conversation.)"
+    },
+    "form_intro": {
+      "kind": "text",
+      "max_chars": 180,
+      "tone": "restrained, sets expectation without overselling (I respond within two days.)"
+    },
+    "address": {
+      "kind": "text",
+      "max_chars": 120,
+      "tone": "studio or city address"
+    },
+    "hours_text": {
+      "kind": "text",
+      "max_chars": 140,
+      "tone": "availability or studio hours"
+    },
+    "phone": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "phone number"
+    },
+    "email": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "contact email"
+    },
+    "form_slug": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "project slug injected by the compiler for form action URL"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_contact_inquiry_editorial.png"
+}

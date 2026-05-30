@@ -1,0 +1,30 @@
+{
+  "block_id": "library/testimonials_press_editorial",
+  "block_type": "testimonials",
+  "vibe_tags": ["editorial", "minimal", "restrained", "artist-statement", "monochrome"],
+  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "slots": {
+    "quote": {
+      "kind": "text",
+      "max_chars": 300,
+      "tone": "press or peer quote; restrained, specific, no hyperbole (The work holds attention in ways most photography does not.)"
+    },
+    "attribution": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "name or publication (The New York Times, Sarah O.)"
+    },
+    "role": {
+      "kind": "text",
+      "max_chars": 60,
+      "tone": "context (Art Director, Aperture Magazine, Collector)"
+    },
+    "headshot_image": {
+      "kind": "image",
+      "pexels_query_template": "portrait minimal editorial black and white",
+      "aspect": "1/1"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_testimonials_press_editorial.png"
+}

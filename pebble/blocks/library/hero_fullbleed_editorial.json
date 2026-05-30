@@ -1,0 +1,40 @@
+{
+  "block_id": "library/hero_fullbleed_editorial",
+  "block_type": "hero",
+  "vibe_tags": ["editorial", "minimal", "monochrome", "restrained", "gallery"],
+  "dna_tags": ["brutalist_editorial", "cinematic_imax", "swiss_magazine", "gallery_first"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "sparse, place or medium (Photography, New York, 2024)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "artist-statement, lowercase acceptable, no exclamation (Forty years of photographs.)"
+    },
+    "subheadline": {
+      "kind": "text",
+      "max_chars": 160,
+      "tone": "restrained, one idea, no marketing speak"
+    },
+    "cta_primary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "understated action (View work, See the archive)"
+    },
+    "cta_secondary": {
+      "kind": "text",
+      "max_chars": 24,
+      "tone": "secondary (About, Contact)"
+    },
+    "hero_image": {
+      "kind": "image",
+      "pexels_query_template": "{industry_scene} editorial black and white negative space atmospheric",
+      "aspect": "16/9"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_hero_fullbleed_editorial.png"
+}

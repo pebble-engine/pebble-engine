@@ -1,0 +1,25 @@
+{
+  "block_id": "library/services_grid_editorial",
+  "block_type": "services",
+  "vibe_tags": ["editorial", "minimal", "gallery", "restrained", "monochrome"],
+  "dna_tags": ["brutalist_editorial", "swiss_magazine", "gallery_first"],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "sparse label (Services, Work, Offerings)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "artist-statement tone, no selling (Work designed for the long view.)"
+    },
+    "services": {
+      "kind": "list",
+      "tone": "2-4 items; each has title (40 chars, serif feel), body (120 chars, restrained), image (editorial), price (16 chars, optional — leave blank if not applicable)",
+      "pexels_query_template": "{service_subject} minimal fine art editorial atmospheric"
+    }
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"],
+  "preview_image": "previews/library_services_grid_editorial.png"
+}
