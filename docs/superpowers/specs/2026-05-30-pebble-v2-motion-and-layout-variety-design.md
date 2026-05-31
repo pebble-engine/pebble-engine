@@ -166,9 +166,26 @@ brief → sonnet_block_picker (picks blocks incl. gallery/scroll-story + copy + 
 - **GSAP SSR.** Mitigated by the CLAUDE.md rules + one-effect-only containment.
 - **Bundle size / perf.** Framer Motion is tree-shakeable; primitives are small. Watch CWV after.
 
+## Editing north star (decided 2026-05-30)
+
+The target is **Lovable / Base44 parity**, NOT a Canva free-drag canvas:
+
+1. **Inline click-to-edit** — click any element, change text / color / font / size / image. ✅ exists today.
+2. **Prompt-to-change** — natural-language edits ("move the gallery up", "make the hero bolder"). *Follow-up.*
+3. **Drag-to-reorder whole sections** — rearrange section order like Lego blocks; responsive-safe. *Follow-up, unlocked by section-files.*
+
+Explicitly **not** in the product target: free-pixel dragging of individual elements, handle-resize,
+or arbitrary per-element absolute positioning. This is rarer than it looks in this category
+(Lovable/Base44 don't do it) because it fights responsive design.
+
+**This project's job toward that north star:** deliver #1's continued correctness through the motion
+changes, and lay the section-files foundation that #3 needs. #2 and #3 themselves are tracked as a
+separate follow-up (see task backlog), built on top of this.
+
 ## Out of scope (separate future projects)
 
-- The **full Canva editor** (free-drag repositioning, arbitrary element insertion). This spec only
-  guarantees motion + layout variety **do not block** it and that section-files advance it.
+- **Prompt-to-edit engine + drag-to-reorder UI** (the parity follow-up) — tracked separately; this
+  project only guarantees it isn't blocked and that section-files advance it.
+- **Free-drag/Canva-style per-element positioning** — not a product goal (see north star above).
 - The **15-industry free template gallery** (task #231) — built *after* this lands, as its showcase.
 - WebContainers preview (Phase 3 plan already written) — independent track.
