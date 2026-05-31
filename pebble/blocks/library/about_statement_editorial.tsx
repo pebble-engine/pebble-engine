@@ -1,4 +1,8 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import FadeUp from "@/components/motion/FadeUp";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutStatementEditorial() {
   return (
@@ -9,23 +13,25 @@ export default function AboutStatementEditorial() {
           {/* Portrait — spans 5 of 12 cols, no decorative flourishes */}
           <div className="md:col-span-5">
             <div className="relative aspect-[2/3] overflow-hidden">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover grayscale"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover grayscale"
+                />
+              </Parallax>
             </div>
           </div>
 
           {/* Statement — spans 7 of 12 cols */}
-          <div className="md:col-span-7 md:pt-12">
+          <FadeUp className="md:col-span-7 md:pt-12">
             <p className="text-{{muted}} text-xs uppercase tracking-widest mb-6 font-sans">
               {{eyebrow}}
             </p>
             <h2 className="font-serif text-{{fg}} text-4xl md:text-5xl leading-tight mb-10 max-w-lg">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}
@@ -40,7 +46,7 @@ export default function AboutStatementEditorial() {
                 — {{signature}}
               </p>
             </div>
-          </div>
+          </FadeUp>
 
         </div>
       </div>

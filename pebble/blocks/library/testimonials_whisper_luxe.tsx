@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import FadeUp from "@/components/motion/FadeUp";
 
 export default function TestimonialsWhisper() {
   return (
@@ -9,6 +11,7 @@ export default function TestimonialsWhisper() {
         <div className="w-12 h-px bg-amber-600/40 mx-auto mb-16" aria-hidden="true" />
 
         {/* The quote — light weight, generous tracking */}
+        <FadeUp>
         <blockquote>
           <p className="text-stone-700 text-2xl md:text-4xl font-light leading-relaxed tracking-tight max-w-2xl mx-auto italic">
             &ldquo;{{quote}}&rdquo;
@@ -37,6 +40,7 @@ export default function TestimonialsWhisper() {
             </div>
           </footer>
         </blockquote>
+        </FadeUp>
 
         {/* Closing rule */}
         <div className="w-12 h-px bg-amber-600/40 mx-auto mt-16" aria-hidden="true" />

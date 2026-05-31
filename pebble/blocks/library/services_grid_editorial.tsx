@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
 export default function ServicesGridEditorial() {
   return (
@@ -11,14 +14,14 @@ export default function ServicesGridEditorial() {
             {{eyebrow}}
           </p>
           <h2 className="font-serif text-{{fg}} text-4xl md:text-5xl leading-tight max-w-xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Services — two-column editorial grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-{{fg}}/8">
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 gap-px bg-{{fg}}/8">
           {/* {{services_list_start}} */}
-          <div className="bg-{{bg}} p-10 group">
+          <StaggerItem className="bg-{{bg}} p-10 group">
             <div className="relative aspect-[4/3] overflow-hidden mb-8">
               <Image
                 src="{{services[].image}}"
@@ -37,9 +40,9 @@ export default function ServicesGridEditorial() {
             <span className="text-{{fg}}/40 text-xs tracking-widest uppercase font-sans">
               {{services[].price}}
             </span>
-          </div>
+          </StaggerItem>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
 
       </div>
     </section>

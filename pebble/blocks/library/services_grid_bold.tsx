@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
 export default function ServicesGridBold() {
   return (
@@ -11,14 +14,14 @@ export default function ServicesGridBold() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-6xl md:text-8xl font-black leading-none uppercase max-w-3xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Services grid — dark cards, lime accent on hover */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {/* {{services_list_start}} */}
-          <div className="group relative bg-{{muted}} overflow-hidden rounded-md hover:ring-2 hover:ring-{{accent}} transition-all duration-200">
+          <StaggerItem className="group relative bg-{{muted}} overflow-hidden rounded-md hover:ring-2 hover:ring-{{accent}} transition-all duration-200">
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
                 src="{{services[].image}}"
@@ -41,9 +44,9 @@ export default function ServicesGridBold() {
                 {{services[].price}}
               </span>
             </div>
-          </div>
+          </StaggerItem>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
 
       </div>
     </section>

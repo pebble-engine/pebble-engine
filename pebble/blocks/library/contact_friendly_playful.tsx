@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactFriendlyPlayful() {
   return (
     <section className="bg-purple-100 py-24 px-8">
@@ -9,7 +12,7 @@ export default function ContactFriendlyPlayful() {
             {{eyebrow}}
           </p>
           <h2 className="text-purple-900 text-5xl md:text-6xl font-extrabold leading-tight max-w-xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 

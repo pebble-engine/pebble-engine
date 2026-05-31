@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactSplitClean() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -11,7 +14,7 @@ export default function ContactSplitClean() {
               {{eyebrow}}
             </p>
             <h2 className="text-{{fg}} text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-8">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
             <p className="text-slate-500 text-base leading-relaxed mb-10 max-w-xs">
               {{form_intro}}

@@ -1,3 +1,6 @@
+"use client";
+import FadeUp from "@/components/motion/FadeUp";
+
 export default function TestimonialsPressEditorial() {
   return (
     <section className="bg-{{bg}} py-28 px-8">
@@ -14,6 +17,7 @@ export default function TestimonialsPressEditorial() {
             &ldquo;
           </div>
 
+          <FadeUp>
           <blockquote>
             <p className="font-serif text-{{fg}} text-2xl md:text-4xl leading-snug tracking-tight">
               {{quote}}
@@ -32,6 +36,7 @@ export default function TestimonialsPressEditorial() {
               </div>
             </footer>
           </blockquote>
+          </FadeUp>
 
         </div>
       </div>

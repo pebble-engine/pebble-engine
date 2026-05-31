@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutKitchen() {
   return (
@@ -9,13 +12,15 @@ export default function AboutKitchen() {
           {/* Kitchen / chef photograph — left */}
           <div className="relative">
             <div className="relative aspect-[3/4] rounded-3xl overflow-hidden">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </Parallax>
               <div className="absolute inset-0 bg-gradient-to-t from-{{bg}}/40 to-transparent" />
             </div>
             {/* Warm amber accent block */}
@@ -28,7 +33,7 @@ export default function AboutKitchen() {
               {{eyebrow}}
             </p>
             <h2 className="text-{{fg}} font-serif text-4xl md:text-5xl leading-tight mb-8 max-w-md">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}

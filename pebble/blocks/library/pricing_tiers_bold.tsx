@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function PricingTiersBold() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,15 +13,15 @@ export default function PricingTiersBold() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-6xl md:text-8xl font-black uppercase leading-none max-w-3xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Tier cards — horizontal stacked, dark */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
           {/* {{tiers_list_start}} */}
-          <div className="relative bg-{{muted}} rounded-md p-8 flex flex-col gap-6 ring-2 ring-{{accent}}">
+          <StaggerItem className="relative bg-{{muted}} rounded-md p-8 flex flex-col gap-6 ring-2 ring-{{accent}}">
             {/* Tier name */}
             <div>
               <span className="text-{{accent}} text-xs font-black uppercase tracking-[0.3em]">
@@ -51,10 +55,10 @@ export default function PricingTiersBold() {
             >
               {{tiers[].cta}}
             </a>
-          </div>
+          </StaggerItem>
           {/* {{tiers_list_end}} */}
 
-        </div>
+        </Stagger>
       </div>
     </section>
   );

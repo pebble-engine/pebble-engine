@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactInquiryEditorial() {
   return (
     <section className="bg-{{bg}} py-28 px-8">
@@ -9,7 +12,7 @@ export default function ContactInquiryEditorial() {
             {{eyebrow}}
           </p>
           <h2 className="font-serif text-{{fg}} text-4xl md:text-5xl leading-tight max-w-lg">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 

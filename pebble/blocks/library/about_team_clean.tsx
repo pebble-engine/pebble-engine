@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutTeamClean() {
   return (
@@ -10,13 +13,15 @@ export default function AboutTeamClean() {
           {/* Left — portrait */}
           <div className="relative">
             <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover grayscale-[15%]"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover grayscale-[15%]"
+                />
+              </Parallax>
             </div>
             {/* Accent rule below portrait */}
             <div className="mt-5 h-px w-16 bg-sky-600" aria-hidden="true" />
@@ -28,7 +33,7 @@ export default function AboutTeamClean() {
               {{eyebrow}}
             </p>
             <h2 className="text-{{fg}} text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}

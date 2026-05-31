@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
 export default function ServicesMenu() {
   return (
@@ -11,14 +14,14 @@ export default function ServicesMenu() {
             {{eyebrow}}
           </p>
           <h2 className="text-stone-700 text-5xl md:text-6xl font-light leading-tight max-w-xl mx-auto tracking-tight">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Services — stacked menu rows with image thumbnails */}
-        <div className="divide-y divide-stone-200">
+        <Stagger className="divide-y divide-stone-200">
           {/* {{services_list_start}} */}
-          <div className="group flex items-center gap-8 py-10 hover:bg-stone-100/60 transition-colors duration-300 px-4 -mx-4 rounded-2xl">
+          <StaggerItem className="group flex items-center gap-8 py-10 hover:bg-stone-100/60 transition-colors duration-300 px-4 -mx-4 rounded-2xl">
             {/* Thumbnail */}
             <div className="relative flex-shrink-0 w-20 h-20 rounded-xl overflow-hidden">
               <Image
@@ -46,9 +49,9 @@ export default function ServicesMenu() {
                 {{services[].price}}
               </span>
             </div>
-          </div>
+          </StaggerItem>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
       </div>
     </section>
   );

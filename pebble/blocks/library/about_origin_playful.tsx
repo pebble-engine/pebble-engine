@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutOriginPlayful() {
   return (
@@ -9,13 +12,15 @@ export default function AboutOriginPlayful() {
           {/* Portrait — left column with playful frame */}
           <div className="relative">
             <div className="relative aspect-[3/4] rounded-[2.5rem] overflow-hidden shadow-xl ring-4 ring-pink-300">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </Parallax>
             </div>
             {/* Floating accent blocks */}
             <div aria-hidden="true" className="absolute -bottom-6 -right-6 w-36 h-36 rounded-3xl bg-amber-300 -z-10" />
@@ -28,7 +33,7 @@ export default function AboutOriginPlayful() {
               {{eyebrow}}
             </p>
             <h2 className="text-purple-900 text-5xl md:text-6xl font-extrabold leading-tight mb-8 max-w-lg">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}

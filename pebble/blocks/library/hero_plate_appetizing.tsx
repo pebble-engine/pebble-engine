@@ -1,17 +1,23 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 export default function HeroPlate() {
   return (
     <section className="relative min-h-screen flex items-end overflow-hidden bg-stone-900">
       {/* Full-bleed food photograph */}
       <div className="absolute inset-0">
-        <Image
-          src="{{hero_image}}"
-          alt="{{headline}}"
-          fill
-          priority
-          className="object-cover"
-        />
+        <Parallax className="absolute inset-0" distance={40}>
+          <Image
+            src="{{hero_image}}"
+            alt="{{headline}}"
+            fill
+            priority
+            className="object-cover"
+          />
+        </Parallax>
         {/* Rich warm gradient — bottom-heavy so type is readable */}
         <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent" />
       </div>
@@ -22,18 +28,18 @@ export default function HeroPlate() {
           {{eyebrow}}
         </p>
         <h1 className="text-stone-50 font-serif text-5xl md:text-7xl leading-tight max-w-3xl mb-6">
-          {{headline}}
+          <RevealWords>{{headline}}</RevealWords>
         </h1>
         <p className="text-stone-200/80 text-lg md:text-xl font-sans leading-relaxed max-w-2xl mb-10">
           {{subheadline}}
         </p>
         <div className="flex flex-wrap gap-4">
-          <a
+          <MagneticButton
             href="#reserve"
-            className="bg-{{accent}} text-{{accent_fg}} px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200"
+            className="inline-block bg-{{accent}} text-{{accent_fg}} px-8 py-4 rounded-full font-sans font-semibold hover:scale-105 hover:opacity-95 transition-transform duration-200"
           >
             {{cta_primary}}
-          </a>
+          </MagneticButton>
           <a
             href="#menu"
             className="text-stone-100 px-8 py-4 rounded-full border border-stone-400/40 font-sans hover:bg-stone-50/10 transition"
