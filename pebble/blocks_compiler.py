@@ -380,6 +380,25 @@ export default function Page() {{
 """
 
 
+def _write_section_files(
+    rendered_blocks: list[tuple[str, str]],
+    out_dir: Path,
+) -> list[str]:
+    """Write each rendered block to components/sections/SectionNN.tsx verbatim
+    (full default-exported component, hooks intact). Returns the component names
+    in order, for page.tsx to import.
+    """
+    sections_dir = out_dir / "components" / "sections"
+    sections_dir.mkdir(parents=True, exist_ok=True)
+    names: list[str] = []
+    for i, (_block_id, body) in enumerate(rendered_blocks):
+        name = f"Section{i:02d}"
+        source = _normalize_section_source(body)
+        (sections_dir / f"{name}.tsx").write_text(source + "\n", encoding="utf-8")
+        names.append(name)
+    return names
+
+
 def _build_page_tsx(rendered_blocks: list[tuple[str, str]]) -> str:
     """Build the page.tsx content from a list of (block_id, rendered_body) tuples.
 
