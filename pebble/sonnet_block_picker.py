@@ -34,6 +34,15 @@ The library has many blocks across vibes. Each block has:
 
 # Your job
 
+## 0. Extract the real business name
+
+The "Name" field above may be a clean name ("Sudsy Paws") OR a whole
+conversational sentence the user typed ("My wife and I run a mobile dog
+grooming van called Sudsy Paws…"). Pull out the ACTUAL business name — the
+brand a customer would say out loud. If the brief never states a name, invent
+a short, fitting one (2-4 words). Return it as `business_name` in the output.
+Never use the full sentence as the name.
+
 ## 1. Pick 6-8 blocks that fit the business's vibe
 
 Match the block's `vibe_tags` to the emotional palette this business needs:
@@ -105,6 +114,7 @@ Choose values that fit the brand vibe:
 Return ONLY a JSON object, no prose around it:
 
 {{
+  "business_name": "<the real brand name, 2-4 words>",
   "block_picks": [
     {{"block_id": "<from menu>", "slot_values": {{<slot_name>: <value>, ...}}}},
     ...

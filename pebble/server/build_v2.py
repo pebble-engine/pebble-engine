@@ -138,6 +138,17 @@ def build_v2_core(brief: dict, progress_cb=None) -> dict:
     except ValueError as e:
         raise BuildV2Error(502, f"LLM output rejected: {e}")
 
+    # Prefer the clean business name Sonnet extracted from the brief over the
+    # raw (possibly conversational) input — e.g. "My wife and I run a mobile
+    # dog grooming van called Sudsy Paws…" → "Sudsy Paws". Re-slug to match so
+    # the project dir, plan title, and hero all use the real brand name.
+    extracted = sanitize_business_name(spec.get("business_name", "") or "")
+    if extracted and extracted.lower() != name.lower():
+        name = extracted
+        brief["business_name"] = name
+        slug = _slugify(name)
+        emit("started", {"slug": slug, "business_name": name})  # correct the feed
+
     palette = spec.get("palette", {})
     block_ids = [p["block_id"] for p in spec.get("block_picks", [])]
     emit("style", {

@@ -24,6 +24,7 @@ def _make_handler(brief: dict) -> MagicMock:
 def _fake_sonnet_response() -> str:
     """A realistic Sonnet response for a Stoneground Loaf brief."""
     return json.dumps({
+        "business_name": "Stoneground Loaf",
         "block_picks": [
             {
                 "block_id": "library/hero_artisan_warm",
@@ -172,3 +173,40 @@ def test_v2_generate_works_for_any_industry(tmp_path, monkeypatch):
     status, body = handler._json.call_args[0]
     assert status == 200
     assert body["engine_version"] == "v2"
+
+
+def test_v2_extracts_clean_business_name_from_conversational_brief(tmp_path, monkeypatch):
+    """A consumer types a whole sentence as the 'business name'. The build must
+    adopt the clean name Sonnet extracts ('Sudsy Paws'), not slugify the whole
+    sentence into the project dir / title."""
+    fake_client = MagicMock()
+    fake_client.generate.return_value = json.dumps({
+        "business_name": "Sudsy Paws",
+        "block_picks": [
+            {"block_id": "library/hero_artisan_warm", "slot_values": {
+                "eyebrow": "Austin", "headline": "Spa day for your pup",
+                "subheadline": "We come to you.", "cta_primary": "Book",
+                "cta_secondary": "Services", "hero_image": "[pexels:dog grooming]"}},
+        ],
+        "palette": {"bg": "stone-50", "fg": "stone-900", "accent": "amber-700",
+                    "accent_fg": "stone-50", "muted": "stone-200"},
+    })
+    fake_client.model = "claude-sonnet-4-6"
+    fake_client.provider = "anthropic"
+    monkeypatch.setattr("pebble.server.build_v2.get_llm_client", lambda: (fake_client, "ok"))
+    monkeypatch.setattr("pebble.server.build_v2._output_dir", lambda: tmp_path)
+    monkeypatch.setattr("pebble.server.build_v2.resolve_pexels_tags", lambda src: src)
+
+    handler = _make_handler({
+        "business_name": "My wife and I run a mobile dog grooming van called Sudsy Paws",
+        "industry": "dog grooming",
+    })
+    run_build_v2(handler)
+
+    status, body = handler._json.call_args[0]
+    assert status == 200
+    # slug came from the CLEAN name, not the whole sentence
+    assert body["slug"] == "sudsy-paws"
+    # brief.json persisted the clean name
+    saved = json.loads((tmp_path / "sudsy-paws" / "brief.json").read_text())
+    assert saved["business_name"] == "Sudsy Paws"
