@@ -344,6 +344,25 @@ def _extract_jsx_body(source: str) -> str:
     return source
 
 
+# Matches a "use client" / 'use client' directive (with optional semicolon).
+_USE_CLIENT_RE = re.compile(r'''["']use client["'];?''')
+
+
+def _normalize_section_source(source: str) -> str:
+    """Return source with a single ``"use client";`` directive on line 1 iff the
+    block declared one anywhere; otherwise return the stripped source unchanged.
+
+    A ``"use client"`` directive is only valid as the first statement of a
+    module, so when a block author (or the motion pass) includes it, we must
+    guarantee it lands on line 1 — above the imports.
+    """
+    stripped = source.strip()
+    if not _USE_CLIENT_RE.search(stripped):
+        return stripped
+    without = _USE_CLIENT_RE.sub("", stripped).strip()
+    return '"use client";\n\n' + without
+
+
 # ---------------------------------------------------------------------------
 # page.tsx builder
 # ---------------------------------------------------------------------------
