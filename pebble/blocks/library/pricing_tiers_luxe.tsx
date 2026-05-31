@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function PricingLuxe() {
   return (
     <section className="bg-stone-50 py-32 px-8">
@@ -9,15 +13,15 @@ export default function PricingLuxe() {
             {{eyebrow}}
           </p>
           <h2 className="text-stone-700 text-5xl md:text-6xl font-light leading-tight max-w-xl mx-auto tracking-tight">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Tier cards — clean outlines, no heavy fills */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
 
           {/* {{tiers_list_start}} */}
-          <div className="relative flex flex-col gap-8 rounded-2xl border border-stone-200 bg-white/60 p-8 hover:border-amber-600/40 transition-colors duration-300">
+          <StaggerItem className="relative flex flex-col gap-8 rounded-2xl border border-stone-200 bg-white/60 p-8 hover:border-amber-600/40 transition-colors duration-300">
             {/* Tier name */}
             <div>
               <span className="text-amber-600 text-xs font-light uppercase tracking-[0.2em]">
@@ -53,10 +57,10 @@ export default function PricingLuxe() {
             >
               {{tiers[].cta}}
             </a>
-          </div>
+          </StaggerItem>
           {/* {{tiers_list_end}} */}
 
-        </div>
+        </Stagger>
       </div>
     </section>
   );

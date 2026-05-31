@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
 export default function MenuGrid() {
   return (
@@ -11,14 +14,14 @@ export default function MenuGrid() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} font-serif text-4xl md:text-6xl leading-tight max-w-xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Menu items grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
           {/* {{services_list_start}} */}
-          <article className="group flex flex-col">
+          <StaggerItem className="group flex flex-col">
             {/* Food photograph */}
             <div className="relative aspect-[4/3] rounded-2xl overflow-hidden mb-5">
               <Image
@@ -41,9 +44,9 @@ export default function MenuGrid() {
             <p className="text-{{fg}}/65 font-sans text-base leading-relaxed">
               {{services[].body}}
             </p>
-          </article>
+          </StaggerItem>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
 
       </div>
     </section>

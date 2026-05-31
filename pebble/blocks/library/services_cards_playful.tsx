@@ -1,4 +1,8 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger } from "@/components/motion/Stagger";
+import TiltCard from "@/components/motion/TiltCard";
 
 export default function ServicesCardsPlayful() {
   return (
@@ -11,14 +15,14 @@ export default function ServicesCardsPlayful() {
             {{eyebrow}}
           </p>
           <h2 className="text-purple-900 text-5xl md:text-6xl font-extrabold leading-tight max-w-2xl mx-auto">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Services grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* {{services_list_start}} */}
-          <div className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ring-2 ring-pink-100">
+          <TiltCard className="group bg-white rounded-3xl overflow-hidden shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ring-2 ring-pink-100">
             {/* Image */}
             <div className="relative aspect-[4/3] overflow-hidden">
               <Image
@@ -42,9 +46,9 @@ export default function ServicesCardsPlayful() {
                 {{services[].body}}
               </p>
             </div>
-          </div>
+          </TiltCard>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
       </div>
     </section>
   );

@@ -344,13 +344,32 @@ def _extract_jsx_body(source: str) -> str:
     return source
 
 
+# Matches a "use client" / 'use client' directive (with optional semicolon).
+_USE_CLIENT_RE = re.compile(r'''["']use client["'];?''')
+
+
+def _normalize_section_source(source: str) -> str:
+    """Return source with a single ``"use client";`` directive on line 1 iff the
+    block declared one anywhere; otherwise return the stripped source unchanged.
+
+    A ``"use client"`` directive is only valid as the first statement of a
+    module, so when a block author (or the motion pass) includes it, we must
+    guarantee it lands on line 1 — above the imports.
+    """
+    stripped = source.strip()
+    if not _USE_CLIENT_RE.search(stripped):
+        return stripped
+    without = _USE_CLIENT_RE.sub("", stripped).strip()
+    return '"use client";\n\n' + without
+
+
 # ---------------------------------------------------------------------------
 # page.tsx builder
 # ---------------------------------------------------------------------------
 
 _PAGE_TEMPLATE = """\
 {imports}
-{sections}
+
 export default function Page() {{
   return (
     <main>
@@ -361,42 +380,37 @@ export default function Page() {{
 """
 
 
-def _build_page_tsx(rendered_blocks: list[tuple[str, str]]) -> str:
-    """Build the page.tsx content from a list of (block_id, rendered_body) tuples.
-
-    Each block body becomes a `Section{i:02d}` arrow component.
-    All import statements are deduped and hoisted to the top.
+def _write_section_files(
+    rendered_blocks: list[tuple[str, str]],
+    out_dir: Path,
+) -> list[str]:
+    """Write each rendered block to components/sections/SectionNN.tsx verbatim
+    (full default-exported component, hooks intact). Returns the component names
+    in order, for page.tsx to import.
     """
-    all_imports: list[str] = []
-    section_components: list[str] = []
-    section_names: list[str] = []
+    sections_dir = out_dir / "components" / "sections"
+    sections_dir.mkdir(parents=True, exist_ok=True)
+    names: list[str] = []
+    for i, (_block_id, body) in enumerate(rendered_blocks):
+        name = f"Section{i:02d}"
+        source = _normalize_section_source(body)
+        (sections_dir / f"{name}.tsx").write_text(source + "\n", encoding="utf-8")
+        names.append(name)
+    return names
 
-    for i, (block_id, body) in enumerate(rendered_blocks):
-        imports, clean_body = _extract_imports(body)
-        for imp in imports:
-            if imp not in all_imports:
-                all_imports.append(imp)
 
-        # Strip 'export default function NAME() { return (...); }' wrapper if present.
-        # Real bakery blocks are full Next.js components; we only want the JSX body.
-        clean_body = _extract_jsx_body(clean_body.strip())
-
-        # Remove leading/trailing blank lines from the JSX body
-        clean_body = clean_body.strip()
-
-        section_name = f"Section{i:02d}"
-        section_names.append(section_name)
-
-        component = f"const {section_name} = () => (\n{clean_body}\n);\n"
-        section_components.append(component)
-
-    imports_block = '\n'.join(all_imports)
-    sections_block = '\n'.join(section_components)
-    section_tags_block = '\n'.join(f'      <{name} />' for name in section_names)
-
+def _build_page_tsx(section_names: list[str]) -> str:
+    """Build page.tsx that imports each section component and renders them in
+    order inside <main>. Section bodies live in their own files (see
+    _write_section_files), so page.tsx is a thin composition root.
+    """
+    imports_block = "\n".join(
+        f'import {name} from "@/components/sections/{name}";'
+        for name in section_names
+    )
+    section_tags_block = "\n".join(f"      <{name} />" for name in section_names)
     return _PAGE_TEMPLATE.format(
         imports=imports_block,
-        sections=sections_block,
         section_tags=section_tags_block,
     )
 
@@ -418,7 +432,8 @@ _PACKAGE_JSON = """\
   "dependencies": {
     "next": "14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.3.8"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -475,7 +490,10 @@ _TAILWIND_CONFIG_TS = """\
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+  ],
   theme: { extend: {} },
   plugins: [],
 };
@@ -521,8 +539,22 @@ _APP_GLOBALS_CSS = """\
 """
 
 
+_MOTION_SRC_DIR = Path(__file__).parent / "blocks" / "motion"
+
+
+def _write_motion_library(out_dir: Path) -> None:
+    """Copy the curated motion primitives into the generated site's
+    components/motion/ directory (verbatim, like scaffolding). Blocks import
+    these via ``@/components/motion/<Name>``."""
+    dest = out_dir / "components" / "motion"
+    dest.mkdir(parents=True, exist_ok=True)
+    for src in sorted(_MOTION_SRC_DIR.glob("*.tsx")):
+        (dest / src.name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def _write_scaffolding(out_dir: Path) -> None:
-    """Write the 7 scaffolding files needed for a runnable Next.js 14 project.
+    """Write the scaffolding files needed for a runnable Next.js 14 project,
+    plus the curated motion primitives library.
 
     Safe to call on an already-scaffolded directory — existing files are
     overwritten with the canonical versions.
@@ -538,6 +570,9 @@ def _write_scaffolding(out_dir: Path) -> None:
     (out_dir / "postcss.config.mjs").write_text(_POSTCSS_CONFIG_MJS, encoding="utf-8")
     (app_dir / "layout.tsx").write_text(_APP_LAYOUT_TSX, encoding="utf-8")
     (app_dir / "globals.css").write_text(_APP_GLOBALS_CSS, encoding="utf-8")
+
+    # Curated motion primitives → components/motion/ (imported by blocks).
+    _write_motion_library(out_dir)
 
 
 # ---------------------------------------------------------------------------
@@ -584,10 +619,11 @@ def compile_site(
 
         rendered_blocks.append((block_id, rendered))
 
-    # Build the page.tsx
-    page_tsx = _build_page_tsx(rendered_blocks)
+    # Write each block as its own section file (full body + hooks preserved),
+    # then a thin page.tsx that imports and renders them in order.
+    section_names = _write_section_files(rendered_blocks, out_dir)
+    page_tsx = _build_page_tsx(section_names)
 
-    # Write output
     app_dir = out_dir / "app"
     app_dir.mkdir(parents=True, exist_ok=True)
     (app_dir / "page.tsx").write_text(page_tsx, encoding="utf-8")

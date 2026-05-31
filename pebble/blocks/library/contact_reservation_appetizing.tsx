@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactReservation() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,7 +12,7 @@ export default function ContactReservation() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} font-serif text-4xl md:text-5xl leading-tight max-w-xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 

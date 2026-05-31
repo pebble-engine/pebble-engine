@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutOriginBold() {
   return (
@@ -9,13 +12,15 @@ export default function AboutOriginBold() {
           {/* Left — raw portrait with hard-edge lime accent block */}
           <div className="relative">
             <div className="relative aspect-[3/4] overflow-hidden rounded-md">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover brightness-90"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover brightness-90"
+                />
+              </Parallax>
               {/* Hard lime corner accent — bottom-left */}
               <div className="absolute bottom-0 left-0 w-1 h-24 bg-{{accent}}" />
               <div className="absolute bottom-0 left-0 h-1 w-24 bg-{{accent}}" />
@@ -35,7 +40,7 @@ export default function AboutOriginBold() {
               {{eyebrow}}
             </p>
             <h2 className="text-{{fg}} text-5xl md:text-7xl font-black uppercase leading-none mb-10 max-w-lg">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}

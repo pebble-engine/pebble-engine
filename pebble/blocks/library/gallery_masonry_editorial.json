@@ -1,0 +1,39 @@
+{
+  "block_id": "library/gallery_masonry_editorial",
+  "block_type": "gallery",
+  "vibe_tags": [
+    "editorial",
+    "minimal",
+    "visual",
+    "portfolio",
+    "imagery-forward"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "cinematic_imax",
+    "boutique_brokerage"
+  ],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "gallery section label (Selected work, Recent projects, The portfolio)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "confident, showcases the visual body of work"
+    },
+    "images": {
+      "kind": "list",
+      "tone": "6-10 items; each item has image (Pexels) and caption (40 chars). A visual portfolio/gallery — photographer work, restaurant dishes, salon results, product shots.",
+      "pexels_query_template": "{portfolio_subject} {mood} professional"
+    }
+  },
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent"
+  ],
+  "preview_image": "previews/library_gallery_masonry_editorial.png"
+}

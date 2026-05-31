@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import FadeUp from "@/components/motion/FadeUp";
 
 export default function TestimonialsPanelClean() {
   return (
@@ -16,6 +18,7 @@ export default function TestimonialsPanelClean() {
 
         {/* Quote block */}
         <div className="max-w-3xl mx-auto">
+          <FadeUp>
           <blockquote>
             <p className="text-slate-100 text-2xl md:text-4xl font-medium leading-snug tracking-tight">
               &ldquo;{{quote}}&rdquo;
@@ -42,6 +45,7 @@ export default function TestimonialsPanelClean() {
               </div>
             </footer>
           </blockquote>
+          </FadeUp>
         </div>
 
       </div>

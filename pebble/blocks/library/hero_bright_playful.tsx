@@ -1,4 +1,8 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 export default function HeroBrightPlayful() {
   return (
@@ -15,7 +19,7 @@ export default function HeroBrightPlayful() {
 
         {/* Headline */}
         <h1 className="text-purple-900 text-6xl md:text-8xl font-extrabold leading-none tracking-tight max-w-4xl mx-auto">
-          {{headline}}
+          <RevealWords>{{headline}}</RevealWords>
         </h1>
 
         {/* Subheadline */}
@@ -25,12 +29,12 @@ export default function HeroBrightPlayful() {
 
         {/* CTAs */}
         <div className="mt-12 flex flex-wrap gap-4 justify-center">
-          <a
+          <MagneticButton
             href="#join"
-            className="bg-pink-500 text-white px-10 py-5 rounded-full font-bold text-lg shadow-lg hover:scale-110 hover:rotate-2 hover:shadow-pink-300 transition-all duration-200"
+            className="inline-block bg-pink-500 text-white px-10 py-5 rounded-full font-bold text-lg shadow-lg hover:scale-110 hover:rotate-2 hover:shadow-pink-300 transition-all duration-200"
           >
             {{cta_primary}}
-          </a>
+          </MagneticButton>
           <a
             href="#learn"
             className="bg-white text-purple-900 border-2 border-purple-200 px-10 py-5 rounded-full font-bold text-lg hover:scale-105 hover:border-pink-400 transition-all duration-200"
@@ -43,13 +47,15 @@ export default function HeroBrightPlayful() {
       {/* Hero image — floaty card with drop shadow */}
       <div className="relative z-10 mt-16 w-full max-w-3xl mx-auto">
         <div className="relative aspect-[16/9] rounded-3xl overflow-hidden shadow-2xl ring-4 ring-pink-200">
-          <Image
-            src="{{hero_image}}"
-            alt="{{headline}}"
-            fill
-            priority
-            className="object-cover"
-          />
+          <Parallax className="absolute inset-0" distance={40}>
+            <Image
+              src="{{hero_image}}"
+              alt="{{headline}}"
+              fill
+              priority
+              className="object-cover"
+            />
+          </Parallax>
         </div>
         {/* Decorative offset badge */}
         <div aria-hidden="true" className="absolute -bottom-4 -right-4 w-24 h-24 bg-amber-300 rounded-3xl -z-10" />

@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function PricingPrixFixe() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,15 +13,15 @@ export default function PricingPrixFixe() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} font-serif text-4xl md:text-5xl leading-tight max-w-xl mx-auto">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Prix-fixe tier cards — warm parchment styling */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
 
           {/* {{tiers_list_start}} */}
-          <div className="relative bg-{{muted}}/30 rounded-3xl p-8 flex flex-col gap-6 border border-{{fg}}/10 hover:border-{{accent}}/40 transition-colors duration-200">
+          <StaggerItem className="relative bg-{{muted}}/30 rounded-3xl p-8 flex flex-col gap-6 border border-{{fg}}/10 hover:border-{{accent}}/40 transition-colors duration-200">
             {/* Tier name */}
             <div>
               <span className="text-{{accent}} font-sans text-xs font-semibold uppercase tracking-widest">
@@ -51,10 +55,10 @@ export default function PricingPrixFixe() {
             >
               {{tiers[].cta}}
             </a>
-          </div>
+          </StaggerItem>
           {/* {{tiers_list_end}} */}
 
-        </div>
+        </Stagger>
       </div>
     </section>
   );

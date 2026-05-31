@@ -32,6 +32,16 @@ def _base_meta(name: str, **extra) -> dict:
     }
 
 
+def _read_sections(out: Path) -> str:
+    """Concatenate all generated section files. After the section-files
+    refactor, rendered block content lives in components/sections/SectionNN.tsx
+    (not page.tsx), so content/count/order assertions read from here."""
+    d = out / "components" / "sections"
+    return "\n".join(
+        p.read_text(encoding="utf-8") for p in sorted(d.glob("*.tsx"))
+    )
+
+
 # ---- scalar + palette ----
 
 def test_scalar_and_palette_substitution(tmp_path):
@@ -50,7 +60,7 @@ def test_scalar_and_palette_substitution(tmp_path):
         palette={"bg": "stone-50", "fg": "stone-900"},
         out_dir=out,
     )
-    page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
+    page = _read_sections(out)
     assert "bg-stone-50" in page
     assert "text-stone-900" in page
     assert ">Welcome<" in page
@@ -93,7 +103,7 @@ def test_list_iteration(tmp_path):
         palette={},
         out_dir=out,
     )
-    page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
+    page = _read_sections(out)
     assert page.count("<article>") == 3
     assert "Sourdough" in page and "Pastries" in page and "Bread subscription" in page
     assert "Naturally leavened" in page
@@ -129,7 +139,7 @@ def test_list_of_strings(tmp_path):
         palette={},
         out_dir=out,
     )
-    page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
+    page = _read_sections(out)
     assert page.count("<li>") == 3
     assert "Alpha" in page and "Beta" in page and "Gamma" in page
 
@@ -172,7 +182,7 @@ def test_nested_list_iteration(tmp_path):
         palette={},
         out_dir=out,
     )
-    page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
+    page = _read_sections(out)
     assert page.count("<section>") == 2
     assert page.count("<li>") == 5  # 2 + 3 features
     assert "1 loaf/wk" in page and "Custom requests" in page
@@ -219,7 +229,7 @@ def test_multiple_blocks_concatenate_in_order(tmp_path):
         palette={},
         out_dir=out,
     )
-    page = (out / "app" / "page.tsx").read_text(encoding="utf-8")
+    page = _read_sections(out)
     assert page.index("FIRST") < page.index("SECOND")
 
 
@@ -311,22 +321,21 @@ def test_real_warm_hero_produces_valid_jsx():
             palette={"bg": "stone-50", "fg": "stone-900", "accent": "orange-700"},
             out_dir=out_dir,
         )
+        sec0 = (out_dir / "components" / "sections" / "Section00.tsx").read_text(encoding="utf-8")
         page = (out_dir / "app" / "page.tsx").read_text(encoding="utf-8")
 
-        # The fatal bug: nested function declaration inside arrow component
-        assert "export default function Hero" not in page, \
-            "block's export default wrapper leaked into Section component (regression)"
+        # New contract: the block stays a proper default-exported component in
+        # its own section file (full body/hooks intact), and page.tsx imports it.
+        assert "export default function Hero" in sec0
+        assert 'import Section00 from "@/components/sections/Section00";' in page
 
-        # And specifically — no `const SectionNN = () => (\nexport default function`
-        # arrow→function pattern, which is the smoking gun
-        import re
-        bad_pattern = re.compile(r"const\s+Section\d+\s*=\s*\(\s*\)\s*=>\s*\(\s*\n\s*export\s+default\s+function", re.DOTALL)
-        assert not bad_pattern.search(page), \
-            "compiler nested an export default function inside an arrow component (regression)"
+        # No arrow-wrapped inlining (the old flattening) anywhere.
+        assert "= () => (" not in page
+        assert "= () => (" not in sec0
 
-        # The good signal — actual JSX content survived
-        assert "Real bread" in page
-        assert "stone-50" in page
-        assert "{{" not in page
+        # The good signal — actual JSX content survived into the section file
+        assert "Real bread" in sec0
+        assert "stone-50" in sec0
+        assert "{{" not in sec0
     finally:
         shutil.rmtree(out_dir, ignore_errors=True)

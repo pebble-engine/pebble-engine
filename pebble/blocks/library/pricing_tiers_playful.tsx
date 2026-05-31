@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function PricingTiersPlayful() {
   return (
     <section className="bg-pink-50 py-24 px-8">
@@ -9,15 +13,15 @@ export default function PricingTiersPlayful() {
             {{eyebrow}}
           </p>
           <h2 className="text-purple-900 text-5xl md:text-6xl font-extrabold leading-tight max-w-2xl mx-auto">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Tier cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
 
           {/* {{tiers_list_start}} */}
-          <div className="relative bg-white rounded-[2rem] p-8 flex flex-col gap-6 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ring-2 ring-pink-200">
+          <StaggerItem className="relative bg-white rounded-[2rem] p-8 flex flex-col gap-6 shadow-md hover:shadow-xl hover:-translate-y-2 transition-all duration-300 ring-2 ring-pink-200">
             {/* Name + price */}
             <div>
               <span className="text-pink-500 text-xs font-extrabold uppercase tracking-widest">
@@ -50,10 +54,10 @@ export default function PricingTiersPlayful() {
             >
               {{tiers[].cta}}
             </a>
-          </div>
+          </StaggerItem>
           {/* {{tiers_list_end}} */}
 
-        </div>
+        </Stagger>
       </div>
     </section>
   );

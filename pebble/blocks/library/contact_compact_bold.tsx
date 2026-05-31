@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactCompactBold() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,7 +12,7 @@ export default function ContactCompactBold() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-6xl md:text-8xl font-black uppercase leading-none max-w-3xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 

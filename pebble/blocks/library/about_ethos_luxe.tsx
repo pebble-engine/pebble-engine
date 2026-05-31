@@ -1,4 +1,8 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import FadeUp from "@/components/motion/FadeUp";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutEthos() {
   return (
@@ -12,14 +16,16 @@ export default function AboutEthos() {
               {{eyebrow}}
             </p>
             <h2 className="text-stone-700 text-5xl md:text-6xl font-light leading-[1.1] tracking-tight mb-10 max-w-lg">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
+            <FadeUp>
             {/* {{story_paragraphs_list_start}} */}
             <p className="text-stone-500 text-lg font-light leading-relaxed mb-6">
               {{story_paragraphs[]}}
             </p>
             {/* {{story_paragraphs_list_end}} */}
+            </FadeUp>
 
             {/* Signature — thin rule above */}
             <div className="mt-12 pt-8 border-t border-stone-200">
@@ -32,13 +38,15 @@ export default function AboutEthos() {
           {/* Right — portrait, accent accent block behind it */}
           <div className="relative">
             <div className="relative aspect-[3/4] rounded-2xl overflow-hidden">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </Parallax>
               {/* Soft cream gradient at base — doesn't crush the image */}
               <div className="absolute inset-0 bg-gradient-to-t from-stone-50/20 to-transparent" />
             </div>

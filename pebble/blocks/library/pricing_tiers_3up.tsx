@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function PricingSimple() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,15 +13,15 @@ export default function PricingSimple() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-5xl md:text-6xl font-bold leading-tight max-w-2xl mx-auto">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Tier cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
 
           {/* {{tiers_list_start}} */}
-          <div className="relative bg-{{muted}}/40 rounded-3xl p-8 flex flex-col gap-6 ring-2 ring-{{accent}}">
+          <StaggerItem className="relative bg-{{muted}}/40 rounded-3xl p-8 flex flex-col gap-6 ring-2 ring-{{accent}}">
             {/* Tier name */}
             <div>
               <span className="text-{{accent}} text-xs font-semibold uppercase tracking-widest">
@@ -51,10 +55,10 @@ export default function PricingSimple() {
             >
               {{tiers[].cta}}
             </a>
-          </div>
+          </StaggerItem>
           {/* {{tiers_list_end}} */}
 
-        </div>
+        </Stagger>
       </div>
     </section>
   );

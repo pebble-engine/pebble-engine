@@ -1,3 +1,7 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
 export default function ServicesGridClean() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,14 +13,14 @@ export default function ServicesGridClean() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-4xl md:text-5xl font-semibold leading-tight max-w-xl tracking-tight">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 
         {/* Services grid — 3 columns, text-only cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-200">
+        <Stagger className="grid grid-cols-1 md:grid-cols-3 gap-px bg-slate-200">
           {/* {{services_list_start}} */}
-          <div className="bg-{{bg}} p-8 flex flex-col gap-4">
+          <StaggerItem className="bg-{{bg}} p-8 flex flex-col gap-4">
             <h3 className="text-{{fg}} text-lg font-semibold leading-snug">
               {{services[].title}}
             </h3>
@@ -29,9 +33,9 @@ export default function ServicesGridClean() {
             >
               Learn more &rarr;
             </a>
-          </div>
+          </StaggerItem>
           {/* {{services_list_end}} */}
-        </div>
+        </Stagger>
 
       </div>
     </section>

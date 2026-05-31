@@ -16,8 +16,78 @@ import pytest
 from pebble.server.visual_edit import (
     _edit_font_family_for_selector,
     _edit_image_swap,
+    _edit_text_by_id,
     _upsert_jsx_style,
 )
+
+
+# ---------------------------------------------------------------------------
+# _edit_text_by_id — motion-wrapper transparency (sub-project D follow-up)
+# ---------------------------------------------------------------------------
+
+def _seed_site(rel_to_content: dict[str, str]) -> Path:
+    tmp = Path(tempfile.mkdtemp())
+    for rel, content in rel_to_content.items():
+        dest = tmp / rel
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_text(content, encoding="utf-8")
+    return tmp
+
+
+def test_edit_text_revealwords_wrapper_despaced_original():
+    """Motion-wrapped headline: <h1 ...><RevealWords>Old Title</RevealWords></h1>.
+    RevealWords renders each word as a margin-spaced span, so the live DOM
+    textContent the bridge sends is DE-SPACED ('OldTitle') and won't match the
+    spaced source. The edit must still succeed by treating RevealWords as a
+    transparent text container."""
+    site = _seed_site({
+        "components/sections/Section00.tsx":
+        '<h1 className="x" data-pebble-id="pb-rw001"><RevealWords>Old Title</RevealWords></h1>',
+    })
+    man = {"pb-rw001": {"file": "components/sections/Section00.tsx", "tag": "h1", "original_text": ""}}
+    result = _edit_text_by_id(site, "pb-rw001", man, "OldTitle", "Fresh Headline")
+    assert result and result["replacements"] == 1
+    out = (site / "components/sections/Section00.tsx").read_text(encoding="utf-8")
+    assert "<RevealWords>Fresh Headline</RevealWords>" in out
+    assert "Old Title" not in out
+
+
+def test_edit_text_countup_wrapper():
+    """<CountUp> is also a transparent text container (stat numbers)."""
+    site = _seed_site({
+        "components/sections/S.tsx":
+        '<span data-pebble-id="pb-cu1"><CountUp suffix="+">480</CountUp></span>',
+    })
+    man = {"pb-cu1": {"file": "components/sections/S.tsx", "tag": "span", "original_text": ""}}
+    result = _edit_text_by_id(site, "pb-cu1", man, "480+", "500")
+    assert result and result["replacements"] == 1
+    out = (site / "components/sections/S.tsx").read_text(encoding="utf-8")
+    assert '<CountUp suffix="+">500</CountUp>' in out
+
+
+def test_edit_text_plain_leaf_still_works():
+    """Regression: a plain text node still edits by full replacement."""
+    site = _seed_site({"app/page.tsx": '<h1 data-pebble-id="pb-l1">Old</h1>'})
+    man = {"pb-l1": {"file": "app/page.tsx", "tag": "h1", "original_text": "Old"}}
+    result = _edit_text_by_id(site, "pb-l1", man, "Old", "New")
+    assert result and result["replacements"] == 1
+    assert "<h1 data-pebble-id=\"pb-l1\">New</h1>" in (site / "app/page.tsx").read_text(encoding="utf-8")
+
+
+def test_edit_text_real_children_still_require_verbatim():
+    """Regression: a tag with REAL child elements (not a transparent wrapper)
+    still only edits when original_text appears verbatim, and no-ops otherwise."""
+    src = '<p data-pebble-id="pb-c1">Hello <strong>world</strong></p>'
+    site = _seed_site({"app/page.tsx": src})
+    man = {"pb-c1": {"file": "app/page.tsx", "tag": "p", "original_text": ""}}
+    # Non-matching original -> no edit happens. The true invariant is that the
+    # source is NOT corrupted and NO replacement was made; the exact no-op
+    # signal (None vs a replacements:0 result) doesn't matter to the caller.
+    result = _edit_text_by_id(site, "pb-c1", man, "Nonexistent", "X")
+    if result is not None:
+        assert result.get("replacements", 0) == 0
+    # Source untouched — the guarantee that actually matters.
+    assert src in (site / "app/page.tsx").read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------

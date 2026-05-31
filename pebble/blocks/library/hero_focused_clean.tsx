@@ -1,17 +1,23 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
 export default function HeroFocused() {
   return (
     <section className="relative min-h-screen flex items-center overflow-hidden bg-slate-50">
       {/* Background image — right half only, desktop */}
       <div className="absolute inset-y-0 right-0 w-full md:w-1/2">
-        <Image
-          src="{{hero_image}}"
-          alt="{{headline}}"
-          fill
-          priority
-          className="object-cover"
-        />
+        <Parallax className="absolute inset-0" distance={40}>
+          <Image
+            src="{{hero_image}}"
+            alt="{{headline}}"
+            fill
+            priority
+            className="object-cover"
+          />
+        </Parallax>
         <div className="absolute inset-0 bg-gradient-to-r from-slate-50 via-slate-50/60 to-transparent" />
       </div>
 
@@ -22,18 +28,18 @@ export default function HeroFocused() {
             {{eyebrow}}
           </p>
           <h1 className="text-slate-900 text-5xl md:text-7xl font-semibold leading-tight tracking-tight">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h1>
           <p className="text-slate-600 text-lg mt-6 leading-relaxed max-w-md">
             {{subheadline}}
           </p>
           <div className="mt-10 flex flex-wrap gap-4">
-            <a
+            <MagneticButton
               href="#contact"
-              className="bg-sky-600 text-white px-7 py-3.5 rounded-md font-medium hover:bg-sky-700 transition text-sm tracking-wide"
+              className="inline-block bg-sky-600 text-white px-7 py-3.5 rounded-md font-medium hover:bg-sky-700 transition text-sm tracking-wide"
             >
               {{cta_primary}}
-            </a>
+            </MagneticButton>
             <a
               href="#services"
               className="text-slate-700 px-7 py-3.5 rounded-md border border-slate-300 hover:border-slate-400 hover:bg-slate-100 transition text-sm tracking-wide"

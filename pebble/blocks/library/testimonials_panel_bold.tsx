@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import FadeUp from "@/components/motion/FadeUp";
 
 export default function TestimonialsPanelBold() {
   return (
@@ -8,7 +10,8 @@ export default function TestimonialsPanelBold() {
         {/* Lime accent bar — top hard rule */}
         <div className="w-16 h-1 bg-{{accent}} mb-12" aria-hidden="true" />
 
-        <blockquote>
+        <FadeUp>
+          <blockquote>
           {/* The quote — oversized, dominant */}
           <p className="text-{{fg}} text-3xl md:text-5xl font-black leading-none uppercase tracking-tight max-w-4xl">
             &ldquo;{{quote}}&rdquo;
@@ -36,7 +39,8 @@ export default function TestimonialsPanelBold() {
             {/* Decorative closing rule */}
             <div className="flex-1 h-px bg-{{fg}}/10 ml-4" aria-hidden="true" />
           </footer>
-        </blockquote>
+          </blockquote>
+        </FadeUp>
 
       </div>
     </section>

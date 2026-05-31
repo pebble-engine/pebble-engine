@@ -1,3 +1,6 @@
+"use client";
+import RevealWords from "@/components/motion/RevealWords";
+
 export default function ContactForm() {
   return (
     <section className="bg-{{bg}} py-24 px-8">
@@ -9,7 +12,7 @@ export default function ContactForm() {
             {{eyebrow}}
           </p>
           <h2 className="text-{{fg}} text-5xl md:text-6xl font-bold leading-tight max-w-xl">
-            {{headline}}
+            <RevealWords>{{headline}}</RevealWords>
           </h2>
         </div>
 

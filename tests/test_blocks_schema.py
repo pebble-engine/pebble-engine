@@ -42,3 +42,18 @@ def test_empty_vibe_tags_raises():
             "slots": {},
             "palette_slots": [],
         })
+
+
+def test_gallery_and_scroll_story_block_types_accepted():
+    """The two structural-variety block types (sub-project C) must validate."""
+    for btype in ("gallery", "scroll-story"):
+        meta = {
+            "block_id": f"library/x_{btype.replace('-', '_')}",
+            "block_type": btype,
+            "vibe_tags": ["editorial"],
+            "dna_tags": [],
+            "slots": {"headline": {"kind": "text"}},
+            "palette_slots": ["bg", "fg", "accent"],
+        }
+        result = validate_block_metadata(meta)
+        assert result.block_type == btype
