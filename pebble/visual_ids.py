@@ -128,9 +128,22 @@ def _new_id() -> str:
     return "pb-" + secrets.token_hex(3)
 
 
+# Directories holding SHARED, reusable components — never inject ids here.
+# A primitive like components/motion/RevealWords.tsx renders once per usage but
+# has a single source; baking an id into its inner <span> would give every
+# headline on the page the SAME id and route every edit to the shared source,
+# breaking all of them at once. The id must ride from the call site via the
+# component's ...rest spread, not be baked into the primitive.
+_SKIP_DIR_PARTS = ("components/motion",)
+
+
 def _iter_files(site_dir: Path) -> Iterable[Path]:
     for pattern in ("**/*.tsx", "**/*.jsx", "**/*.html"):
-        yield from site_dir.glob(pattern)
+        for f in site_dir.glob(pattern):
+            rel = f.relative_to(site_dir).as_posix()
+            if any(skip in rel for skip in _SKIP_DIR_PARTS):
+                continue
+            yield f
 
 
 def _inject_into_file(file_path: Path, site_dir: Path) -> dict[str, dict]:
