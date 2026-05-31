@@ -50,6 +50,13 @@ Commit `069160c9`.
 `build_v2` now calls `inject_pebble_ids` → writes `.pebble-ids.json` manifest +
 tags editable elements (parity with v1). 24 ids on a 3-block site. Commit (this).
 
+**Follow-up fix applied (autonomous):** the first D pass had `inject_pebble_ids`
+walking `components/motion/` and baking ids into the SHARED primitive source —
+which would give every headline the same id and route all edits to one shared
+file. Fixed by excluding `components/motion/` from injection (the id rides from
+the call site via `...rest`, as designed). Regression test added. Manifest now
+tags only per-page section files.
+
 **KNOWN LIMITATION — motion-wrapped headline text edits:**
 Headlines compile to `<h1 ...><RevealWords>{{headline}}</RevealWords></h1>`. The
 injector tags the `<h1>` (so it's selectable + color/font editable), but the text
