@@ -100,10 +100,14 @@ def test_v2_generate_produces_runnable_site(tmp_path, monkeypatch):
     assert "library/hero_artisan_warm" in meta["block_picks"]
     assert "built_at" in meta
 
-    page = (project_dir / "site" / "app" / "page.tsx").read_text(encoding="utf-8")
-    assert "Sourdough" in page
-    assert "Stoneground Loaf" in page
-    assert "{{" not in page  # the placeholder-leak guarantee
+    # Rendered content now lives in components/sections/*.tsx (not page.tsx).
+    sections_dir = project_dir / "site" / "components" / "sections"
+    rendered = "\n".join(
+        p.read_text(encoding="utf-8") for p in sorted(sections_dir.glob("*.tsx"))
+    )
+    assert "Sourdough" in rendered
+    assert "Stoneground Loaf" in rendered
+    assert "{{" not in rendered  # the placeholder-leak guarantee
 
 
 def test_v2_generate_rejects_empty_body(tmp_path, monkeypatch):
