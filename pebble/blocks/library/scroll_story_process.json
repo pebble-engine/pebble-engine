@@ -1,0 +1,39 @@
+{
+  "block_id": "library/scroll_story_process",
+  "block_type": "scroll-story",
+  "vibe_tags": [
+    "narrative",
+    "process",
+    "trust-building",
+    "explanatory",
+    "universal"
+  ],
+  "dna_tags": [
+    "swiss_magazine",
+    "warm_artisan",
+    "boutique_brokerage"
+  ],
+  "slots": {
+    "eyebrow": {
+      "kind": "text",
+      "max_chars": 40,
+      "tone": "process section label (How it works, Our process, From start to finish)"
+    },
+    "headline": {
+      "kind": "text",
+      "max_chars": 80,
+      "tone": "frames the step-by-step story this business wants to tell"
+    },
+    "steps": {
+      "kind": "list",
+      "tone": "3-5 items; each item has step_label (e.g. 'Step 1' / 'First', 16 chars), title (40 chars), body (160 chars), image (Pexels). A sequential how-it-works / process narrative.",
+      "pexels_query_template": "{process_step_subject} {mood} professional"
+    }
+  },
+  "palette_slots": [
+    "bg",
+    "fg",
+    "accent"
+  ],
+  "preview_image": "previews/library_scroll_story_process.png"
+}

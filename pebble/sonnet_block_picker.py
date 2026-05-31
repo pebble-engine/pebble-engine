@@ -44,9 +44,20 @@ Match the block's `vibe_tags` to the emotional palette this business needs:
 - Restaurant, cafe, food truck → appetizing, vibrant, warm
 
 Use the EXACT `block_id` values from the menu — do not invent block_ids.
-Prefer one block of each `block_type` (hero, services, about, testimonials,
+Prefer one block of each core `block_type` (hero, services, about, testimonials,
 pricing, contact, footer). The order you list them becomes the order on
 the page.
+
+Two OPTIONAL block types add structural variety — reach for them when they fit:
+- `gallery`: a visual masonry grid of images. Pick it for image-heavy
+  businesses (photographer, restaurant, salon, designer, interior, products).
+  Place it after the hero or about. Skip it for text-heavy services businesses.
+- `scroll-story`: a pinned, step-by-step narrative ("how it works", "our
+  process"). Pick it for businesses where the PROCESS matters (service
+  providers, agencies, clinics, weddings, contractors). Place it after about
+  or services. Skip it when there's no real sequence to tell.
+Use at most one of each, and only when it genuinely fits — never both if the
+business is simple.
 
 ## 2. Write copy for every slot
 

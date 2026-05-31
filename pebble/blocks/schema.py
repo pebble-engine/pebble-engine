@@ -21,6 +21,7 @@ SlotKind = Literal["text", "image", "list", "url"]
 BlockType = Literal[
     "hero", "services", "about", "testimonials",
     "contact", "pricing", "footer", "gallery", "faq",
+    "scroll-story",
 ]
 
 _VALID_SLOT_KINDS = {"text", "image", "list", "url"}
