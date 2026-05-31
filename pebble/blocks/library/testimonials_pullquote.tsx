@@ -1,4 +1,6 @@
+"use client";
 import Image from "next/image";
+import FadeUp from "@/components/motion/FadeUp";
 
 export default function TestimonialsQuote() {
   return (
@@ -14,6 +16,7 @@ export default function TestimonialsQuote() {
         </div>
 
         {/* The pull-quote itself */}
+        <FadeUp>
         <blockquote className="relative">
           <p className="text-{{fg}} text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto">
             {{quote}}
@@ -42,6 +45,7 @@ export default function TestimonialsQuote() {
             </div>
           </footer>
         </blockquote>
+        </FadeUp>
 
       </div>
     </section>

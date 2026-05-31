@@ -1,4 +1,7 @@
+"use client";
 import Image from "next/image";
+import RevealWords from "@/components/motion/RevealWords";
+import Parallax from "@/components/motion/Parallax";
 
 export default function AboutStory() {
   return (
@@ -9,13 +12,15 @@ export default function AboutStory() {
           {/* Portrait image — left column */}
           <div className="relative">
             <div className="relative aspect-[3/4] rounded-3xl overflow-hidden">
-              <Image
-                src="{{portrait_image}}"
-                alt="{{headline}}"
-                fill
-                priority
-                className="object-cover"
-              />
+              <Parallax className="absolute inset-0" distance={30}>
+                <Image
+                  src="{{portrait_image}}"
+                  alt="{{headline}}"
+                  fill
+                  priority
+                  className="object-cover"
+                />
+              </Parallax>
               {/* Warm gradient wash at the bottom of the portrait */}
               <div className="absolute inset-0 bg-gradient-to-t from-{{bg}}/30 to-transparent" />
             </div>
@@ -29,7 +34,7 @@ export default function AboutStory() {
               {{eyebrow}}
             </p>
             <h2 className="text-{{fg}} text-5xl md:text-6xl font-bold leading-tight mb-8 max-w-lg">
-              {{headline}}
+              <RevealWords>{{headline}}</RevealWords>
             </h2>
 
             {/* {{story_paragraphs_list_start}} */}
