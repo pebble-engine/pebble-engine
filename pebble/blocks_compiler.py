@@ -369,7 +369,7 @@ def _normalize_section_source(source: str) -> str:
 
 _PAGE_TEMPLATE = """\
 {imports}
-{sections}
+
 export default function Page() {{
   return (
     <main>
@@ -399,42 +399,18 @@ def _write_section_files(
     return names
 
 
-def _build_page_tsx(rendered_blocks: list[tuple[str, str]]) -> str:
-    """Build the page.tsx content from a list of (block_id, rendered_body) tuples.
-
-    Each block body becomes a `Section{i:02d}` arrow component.
-    All import statements are deduped and hoisted to the top.
+def _build_page_tsx(section_names: list[str]) -> str:
+    """Build page.tsx that imports each section component and renders them in
+    order inside <main>. Section bodies live in their own files (see
+    _write_section_files), so page.tsx is a thin composition root.
     """
-    all_imports: list[str] = []
-    section_components: list[str] = []
-    section_names: list[str] = []
-
-    for i, (block_id, body) in enumerate(rendered_blocks):
-        imports, clean_body = _extract_imports(body)
-        for imp in imports:
-            if imp not in all_imports:
-                all_imports.append(imp)
-
-        # Strip 'export default function NAME() { return (...); }' wrapper if present.
-        # Real bakery blocks are full Next.js components; we only want the JSX body.
-        clean_body = _extract_jsx_body(clean_body.strip())
-
-        # Remove leading/trailing blank lines from the JSX body
-        clean_body = clean_body.strip()
-
-        section_name = f"Section{i:02d}"
-        section_names.append(section_name)
-
-        component = f"const {section_name} = () => (\n{clean_body}\n);\n"
-        section_components.append(component)
-
-    imports_block = '\n'.join(all_imports)
-    sections_block = '\n'.join(section_components)
-    section_tags_block = '\n'.join(f'      <{name} />' for name in section_names)
-
+    imports_block = "\n".join(
+        f'import {name} from "@/components/sections/{name}";'
+        for name in section_names
+    )
+    section_tags_block = "\n".join(f"      <{name} />" for name in section_names)
     return _PAGE_TEMPLATE.format(
         imports=imports_block,
-        sections=sections_block,
         section_tags=section_tags_block,
     )
 

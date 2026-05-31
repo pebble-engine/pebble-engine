@@ -56,3 +56,17 @@ def test_write_section_files_preserves_hooks(tmp_path: Path):
     text = (tmp_path / "components" / "sections" / f"{names[0]}.tsx").read_text(encoding="utf-8")
     assert text.splitlines()[0] == '"use client";'
     assert "const r=useRef(null)" in text
+
+
+from pebble.blocks_compiler import _build_page_tsx
+
+
+def test_build_page_tsx_imports_and_renders_sections_in_order():
+    page = _build_page_tsx(["Section00", "Section01"])
+    assert 'import Section00 from "@/components/sections/Section00";' in page
+    assert 'import Section01 from "@/components/sections/Section01";' in page
+    i0 = page.index("<Section00 />")
+    i1 = page.index("<Section01 />")
+    assert i0 < i1
+    assert "export default function Page()" in page
+    assert "= () => (" not in page
