@@ -490,7 +490,10 @@ _TAILWIND_CONFIG_TS = """\
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  content: ["./app/**/*.{ts,tsx}"],
+  content: [
+    "./app/**/*.{ts,tsx}",
+    "./components/**/*.{ts,tsx}",
+  ],
   theme: { extend: {} },
   plugins: [],
 };

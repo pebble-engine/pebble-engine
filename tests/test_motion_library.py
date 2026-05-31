@@ -35,3 +35,15 @@ def test_scaffolding_package_json_includes_framer_motion(tmp_path: Path):
     _write_scaffolding(tmp_path)
     pkg = json.loads((tmp_path / "package.json").read_text(encoding="utf-8"))
     assert "framer-motion" in pkg["dependencies"]
+
+
+def test_tailwind_content_scans_components_dir(tmp_path: Path):
+    """REGRESSION: after the section-files refactor, all rendered markup lives
+    in components/sections/ + components/motion/ — not app/. The Tailwind
+    content glob MUST scan components/ or the generated CSS ships nearly empty
+    and every site renders unstyled (mashed text, no layout, no colors)."""
+    _write_scaffolding(tmp_path)
+    tw = (tmp_path / "tailwind.config.ts").read_text(encoding="utf-8")
+    assert "./components/**/*.{ts,tsx}" in tw, \
+        "Tailwind must scan components/ — section + motion files live there"
+    assert "./app/**/*.{ts,tsx}" in tw
