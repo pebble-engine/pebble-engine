@@ -70,3 +70,56 @@ def test_build_page_tsx_imports_and_renders_sections_in_order():
     assert i0 < i1
     assert "export default function Page()" in page
     assert "= () => (" not in page
+
+
+import pytest
+from pebble.blocks_compiler import compile_site
+
+
+class _FakeBlock:
+    def __init__(self, template):
+        self.template_source = template
+
+
+class _FakeRegistry:
+    def __init__(self, mapping):
+        self._m = mapping
+    def __getitem__(self, block_id):
+        return self._m[block_id]
+
+
+def test_compile_site_writes_section_files_and_thin_page(tmp_path: Path):
+    reg = _FakeRegistry({
+        "hero_x": _FakeBlock(
+            '"use client";\nimport {useRef} from "react";\n'
+            'export default function Hero(){const r=useRef(null);'
+            'return <section ref={r}>{{headline}}</section>;}'
+        ),
+        "about_y": _FakeBlock(
+            'export default function About(){return <section>{{body}}</section>;}'
+        ),
+    })
+    picks = [
+        {"block_id": "hero_x", "slot_values": {"headline": "Hi"}},
+        {"block_id": "about_y", "slot_values": {"body": "We bake."}},
+    ]
+    compile_site(registry=reg, block_picks=picks, palette={}, out_dir=tmp_path)
+
+    sec0 = tmp_path / "components" / "sections" / "Section00.tsx"
+    sec1 = tmp_path / "components" / "sections" / "Section01.tsx"
+    page = tmp_path / "app" / "page.tsx"
+    assert sec0.exists() and sec1.exists() and page.exists()
+    assert ">Hi<" in sec0.read_text(encoding="utf-8")
+    assert "We bake." in sec1.read_text(encoding="utf-8")
+    assert "useRef(null)" in sec0.read_text(encoding="utf-8")
+    assert sec0.read_text(encoding="utf-8").splitlines()[0] == '"use client";'
+    assert 'import Section00 from "@/components/sections/Section00";' in page.read_text(encoding="utf-8")
+
+
+def test_compile_site_still_hard_fails_on_unfilled_placeholder(tmp_path: Path):
+    reg = _FakeRegistry({"hero_x": _FakeBlock(
+        'export default function Hero(){return <section>{{never_filled}}</section>;}'
+    )})
+    with pytest.raises(ValueError, match="unfilled placeholder"):
+        compile_site(registry=reg, block_picks=[{"block_id": "hero_x"}],
+                     palette={}, out_dir=tmp_path)

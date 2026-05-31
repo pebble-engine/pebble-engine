@@ -598,10 +598,11 @@ def compile_site(
 
         rendered_blocks.append((block_id, rendered))
 
-    # Build the page.tsx
-    page_tsx = _build_page_tsx(rendered_blocks)
+    # Write each block as its own section file (full body + hooks preserved),
+    # then a thin page.tsx that imports and renders them in order.
+    section_names = _write_section_files(rendered_blocks, out_dir)
+    page_tsx = _build_page_tsx(section_names)
 
-    # Write output
     app_dir = out_dir / "app"
     app_dir.mkdir(parents=True, exist_ok=True)
     (app_dir / "page.tsx").write_text(page_tsx, encoding="utf-8")
