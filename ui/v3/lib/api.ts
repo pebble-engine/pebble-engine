@@ -234,7 +234,16 @@ export async function streamGenerateSite(
   // poking setState on unmounted components ("Can't update state on
   // unmounted component" warning) AND the engine kept running the
   // build, burning credits the user wasn't watching.
-  const resp = await fetch(engineUrl("/api/generate-stream"), {
+  // Phase 4 cutover (2026-05-31): when NEXT_PUBLIC_PEBBLE_USE_V2 is set, the
+  // Build button routes to the v2 (template-first + motion) engine. Both
+  // endpoints speak the identical SSE envelope, so the live build feed is
+  // unchanged. Reversible: unset the flag to fall back to v1 instantly.
+  const buildPath =
+    (process.env.NEXT_PUBLIC_PEBBLE_USE_V2 || "").toLowerCase() === "true"
+      ? "/api/v2/generate-stream"
+      : "/api/generate-stream";
+
+  const resp = await fetch(engineUrl(buildPath), {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader },
     body: JSON.stringify(brief),

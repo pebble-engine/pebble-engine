@@ -96,6 +96,33 @@ async def generate_stream(request: Request):
     )
 
 
+@app.post("/api/v2/generate-stream")
+async def generate_stream_v2(request: Request):
+    """POST /api/v2/generate-stream — SSE build progress for the v2 (template-
+    first + motion) engine. Emits the SAME event vocabulary as
+    /api/generate-stream so the v3 workspace's live build feed renders
+    identically. The ``done`` event carries a GenerateResponse payload.
+    """
+    from pebble.server.build_stream_v2 import build_stream_v2_generator
+
+    client_host = (request.client.host if request.client else "127.0.0.1")
+    if not generate_limiter.allow(client_host):
+        return JSONResponse(
+            {"error": "too many build requests — max 5 per 10 min per IP"},
+            status_code=429,
+        )
+
+    body = await request.body()
+    return StreamingResponse(
+        build_stream_v2_generator(body),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
+
+
 # ---------------------------------------------------------------------------
 # Catch-all routes — delegate to existing route_X() dispatch functions
 # ---------------------------------------------------------------------------
