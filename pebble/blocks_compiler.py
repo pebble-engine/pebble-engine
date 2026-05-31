@@ -432,7 +432,8 @@ _PACKAGE_JSON = """\
   "dependencies": {
     "next": "14.2.5",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "framer-motion": "^11.3.8"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -535,8 +536,22 @@ _APP_GLOBALS_CSS = """\
 """
 
 
+_MOTION_SRC_DIR = Path(__file__).parent / "blocks" / "motion"
+
+
+def _write_motion_library(out_dir: Path) -> None:
+    """Copy the curated motion primitives into the generated site's
+    components/motion/ directory (verbatim, like scaffolding). Blocks import
+    these via ``@/components/motion/<Name>``."""
+    dest = out_dir / "components" / "motion"
+    dest.mkdir(parents=True, exist_ok=True)
+    for src in sorted(_MOTION_SRC_DIR.glob("*.tsx")):
+        (dest / src.name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def _write_scaffolding(out_dir: Path) -> None:
-    """Write the 7 scaffolding files needed for a runnable Next.js 14 project.
+    """Write the scaffolding files needed for a runnable Next.js 14 project,
+    plus the curated motion primitives library.
 
     Safe to call on an already-scaffolded directory — existing files are
     overwritten with the canonical versions.
@@ -552,6 +567,9 @@ def _write_scaffolding(out_dir: Path) -> None:
     (out_dir / "postcss.config.mjs").write_text(_POSTCSS_CONFIG_MJS, encoding="utf-8")
     (app_dir / "layout.tsx").write_text(_APP_LAYOUT_TSX, encoding="utf-8")
     (app_dir / "globals.css").write_text(_APP_GLOBALS_CSS, encoding="utf-8")
+
+    # Curated motion primitives → components/motion/ (imported by blocks).
+    _write_motion_library(out_dir)
 
 
 # ---------------------------------------------------------------------------
