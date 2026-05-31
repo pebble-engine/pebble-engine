@@ -123,3 +123,28 @@ def test_compile_site_still_hard_fails_on_unfilled_placeholder(tmp_path: Path):
     with pytest.raises(ValueError, match="unfilled placeholder"):
         compile_site(registry=reg, block_picks=[{"block_id": "hero_x"}],
                      palette={}, out_dir=tmp_path)
+
+
+def test_pexels_resolves_across_section_files(tmp_path: Path, monkeypatch):
+    # Force the offline picsum fallback so the test is deterministic + network-free.
+    import pebble.pexels_resolver as pr
+    monkeypatch.setattr(pr, "_fetch_pexels_image_url", lambda q: None)
+
+    reg = _FakeRegistry({"hero_x": _FakeBlock(
+        'export default function Hero(){return <img src="{{hero_image}}"/>;}'
+    )})
+    site_dir = tmp_path / "site"
+    compile_site(
+        registry=reg,
+        block_picks=[{"block_id": "hero_x",
+                      "slot_values": {"hero_image": "rustic bread loaves"}}],
+        palette={}, out_dir=site_dir,
+    )
+    # Simulate build_v2's resolution loop over section files.
+    sections_dir = site_dir / "components" / "sections"
+    for sec in sorted(sections_dir.glob("*.tsx")):
+        sec.write_text(pr.resolve_pexels_tags(sec.read_text(encoding="utf-8")),
+                       encoding="utf-8")
+    text = (sections_dir / "Section00.tsx").read_text(encoding="utf-8")
+    assert 'src="rustic bread loaves"' not in text
+    assert "https://" in text

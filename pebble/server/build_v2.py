@@ -128,12 +128,14 @@ def run_build_v2(handler) -> None:
     except ValueError as e:
         handler._json(500, {"error": f"compile failed: {e}"}); return
 
-    # Pexels resolution — turn [pexels:query] tags into real image URLs.
+    # Pexels resolution — turn image queries into real URLs across every
+    # section file (images now live in components/sections/, not page.tsx).
     # Without this the generated site 404s on every image.
-    page_tsx = site_dir / "app" / "page.tsx"
-    if page_tsx.exists():
-        resolved = resolve_pexels_tags(page_tsx.read_text(encoding="utf-8"))
-        page_tsx.write_text(resolved, encoding="utf-8")
+    sections_dir = site_dir / "components" / "sections"
+    if sections_dir.exists():
+        for sec in sorted(sections_dir.glob("*.tsx")):
+            resolved = resolve_pexels_tags(sec.read_text(encoding="utf-8"))
+            sec.write_text(resolved, encoding="utf-8")
 
     # Persist brief + meta alongside the site
     project_dir.mkdir(parents=True, exist_ok=True)
