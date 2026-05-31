@@ -23,6 +23,7 @@ from pebble.llm import get_llm_client
 from pebble.pexels_resolver import resolve_pexels_tags
 from pebble.sonnet_block_picker import pick_blocks_and_copy
 from pebble.text import sanitize_business_name
+from pebble.visual_ids import inject_pebble_ids
 
 
 _BLOCK_LIBRARY_ROOT = Path(__file__).parent.parent / "blocks"
@@ -136,6 +137,12 @@ def run_build_v2(handler) -> None:
         for sec in sorted(sections_dir.glob("*.tsx")):
             resolved = resolve_pexels_tags(sec.read_text(encoding="utf-8"))
             sec.write_text(resolved, encoding="utf-8")
+
+    # Inject data-pebble-id into every editable tag + write .pebble-ids.json
+    # manifest, so /api/visual-edit can do surgical click-to-edit on v2 sites
+    # (parity with v1's build.py). Tags live in components/sections + motion;
+    # inject_pebble_ids walks all .tsx, so it covers them. Idempotent.
+    inject_pebble_ids(site_dir)
 
     # Persist brief + meta alongside the site
     project_dir.mkdir(parents=True, exist_ok=True)
