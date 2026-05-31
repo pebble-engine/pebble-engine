@@ -134,7 +134,21 @@ def _edit_text_by_id(site_dir: Path, pebble_id: str, manifest: dict,
     _, open_end, close_start, _ = span
     inner = text[open_end:close_start]
 
-    if "<" in inner:
+    # Transparent text-container wrappers: a motion primitive like
+    # <RevealWords>Headline</RevealWords> or <CountUp suffix="+">480</CountUp>
+    # wraps a single editable string. At runtime RevealWords splits the text
+    # into per-word spans (spacing via CSS margins), so the live DOM
+    # textContent the bridge captures is DE-SPACED ("OldTitle") and won't match
+    # the spaced source. Treat the wrapper as transparent and edit the string
+    # inside it directly, independent of original_text.
+    _WRAPPER_RE = re.compile(
+        r"^(\s*<(RevealWords|CountUp)\b[^>]*>)(.*?)(</\2>\s*)$",
+        re.DOTALL,
+    )
+    wrap_m = _WRAPPER_RE.match(inner)
+    if wrap_m:
+        new_inner = wrap_m.group(1) + new_text + wrap_m.group(4)
+    elif "<" in inner:
         # Has child elements — only replace if original_text appears verbatim.
         if not original_text or original_text not in inner:
             return None
