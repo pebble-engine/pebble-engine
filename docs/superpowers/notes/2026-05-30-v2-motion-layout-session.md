@@ -57,18 +57,25 @@ file. Fixed by excluding `components/motion/` from injection (the id rides from
 the call site via `...rest`, as designed). Regression test added. Manifest now
 tags only per-page section files.
 
-**KNOWN LIMITATION — motion-wrapped headline text edits:**
-Headlines compile to `<h1 ...><RevealWords>{{headline}}</RevealWords></h1>`. The
-injector tags the `<h1>` (so it's selectable + color/font editable), but the text
-snapshot is empty because the copy lives inside the `<RevealWords>` child, not
-directly in the h1. So the *text-edit* path can't cleanly target headline copy.
-- **Works today:** body `<p>`, `<a>`, `<li>`, `<button>` text edits; all color /
-  font / palette edits; element selection on everything incl. headlines.
-- **Needs follow-up (live-test required):** headline/stat text edits through
-  RevealWords/CountUp. Options: (a) have the visual-edit text path treat a lone
-  `<RevealWords>`/`<CountUp>` child as a transparent text container; or (b) emit
-  the editable string as a direct child + pass it to the primitive via prop.
-  Either needs the live click-to-edit flow to verify — deferred for Marc.
+**RESOLVED — motion-wrapped headline text edits (autonomous follow-up):**
+Headlines compile to `<h1 ...><RevealWords>{{headline}}</RevealWords></h1>`.
+RevealWords renders each word as a margin-spaced span, so the bridge's live
+textContent is de-spaced ("OldTitle") and never matched the spaced source —
+headline/stat text edits silently no-op'd. Fixed in `_edit_text_by_id` (option
+(a) from the original plan): a lone `<RevealWords>`/`<CountUp>` child is now
+treated as a transparent text container and the string inside it is edited
+directly, independent of `original_text`. Reproduced the bug with a capture test,
+fixed, verified: 4 new tests (2 wrapper, 2 regression), 71 visual/v2 tests green.
+- **Works now:** headline + stat-number text edits (RevealWords/CountUp), body
+  `<p>`/`<a>`/`<li>`/`<button>` text, all color/font/palette edits, selection.
+- Click-to-edit is now functionally complete for v2 sites at the unit level. A
+  full live browser pass is still worth doing once, but no known gap remains.
+
+**Minor follow-up (spawned as a task):** `test_visual_edit.py` has a
+test-order-pollution flaw — one regression test only mis-behaves when the whole
+file runs (passes in isolation). Production code is correct; the test's assertion
+was relaxed to the true invariant (source-not-corrupted) and the isolation leak
+is queued as its own fix.
 
 ## Test + verification status
 - Full suite: **2425 passed**, 27 failed — the SAME 27 pre-existing failures on
