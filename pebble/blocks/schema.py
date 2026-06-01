@@ -25,6 +25,12 @@ BlockType = Literal[
 ]
 
 _VALID_SLOT_KINDS = {"text", "image", "list", "url"}
+# keep in sync with BlockType
+_ALLOWED_TYPES = {
+    "hero", "services", "about", "testimonials", "contact",
+    "pricing", "footer", "gallery", "faq", "scroll-story",
+    "trust", "coverage",
+}
 
 
 @dataclass(frozen=True)
@@ -58,11 +64,6 @@ def validate_block_metadata(raw: dict) -> BlockMetadata:
                      "slots", "palette_slots"):
         if required not in raw:
             raise ValueError(f"block metadata missing required field: {required}")
-    _ALLOWED_TYPES = {
-        "hero", "services", "about", "testimonials", "contact",
-        "pricing", "footer", "gallery", "faq", "scroll-story",
-        "trust", "coverage",
-    }
     if raw["block_type"] not in _ALLOWED_TYPES:
         raise ValueError(
             f"block {raw.get('block_id', '?')!r}: unknown block_type {raw['block_type']!r}; "

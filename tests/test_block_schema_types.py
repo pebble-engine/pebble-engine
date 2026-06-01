@@ -25,5 +25,5 @@ def test_existing_types_still_accepted():
 
 def test_unknown_block_type_rejected():
     import pytest
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="bogus_never_a_type"):
         validate_block_metadata(_meta("bogus_never_a_type"))
