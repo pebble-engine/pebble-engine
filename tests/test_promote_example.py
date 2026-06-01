@@ -13,6 +13,13 @@ def _make_fake_build(tmp_path, slug="tidewater-plumbing"):
     (site / "app" / "page.tsx").write_text(
         "export default function Page(){return null;}", encoding="utf-8"
     )
+    # Hero section carries the resolved Pexels URL — this is what the gallery
+    # card uses as hero_image (matching the existing manifest entries).
+    (site / "components" / "sections").mkdir(parents=True)
+    (site / "components" / "sections" / "Section00.tsx").write_text(
+        'src="https://images.pexels.com/photos/123/x.jpeg?auto=compress&w=940"',
+        encoding="utf-8",
+    )
     # noise that must be excluded
     (site / "node_modules" / "react").mkdir(parents=True)
     (site / "node_modules" / "react" / "index.js").write_text("// noise", encoding="utf-8")
@@ -75,7 +82,9 @@ def test_promote_moves_site_and_appends_manifest(tmp_path, monkeypatch):
     assert entry["source_dir"] == "pebble/examples/tidewater-plumbing"
     assert entry["kind"] == "example_build"
     assert entry["sections"] == 3  # from block_picks length
-    assert entry["hero_image"]  # non-empty
+    # hero_image is the Pexels URL from the hero section (gallery convention),
+    # not the screenshot path — thumbnail capture is off by default.
+    assert entry["hero_image"].startswith("https://images.pexels.com/")
 
 
 def test_promote_is_idempotent(tmp_path, monkeypatch):

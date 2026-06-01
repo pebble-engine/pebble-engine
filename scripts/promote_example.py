@@ -89,15 +89,22 @@ def _read_json(path: Path, default):
 
 
 def _resolve_hero_image(site_dir: Path, brief: dict, thumb_rel: str) -> str:
-    """Prefer thumbnail; otherwise dig the first pexels URL out of Section00.tsx."""
-    if thumb_rel:
-        return thumb_rel
+    """Resolve the gallery card image.
+
+    Preference order, matching the existing 15 manifest entries which all use
+    a direct Pexels URL: the hero's resolved Pexels URL (loads in-browser,
+    bypassing the engine's /preview /_next/image proxy), then a captured
+    thumbnail path, then any hero_image carried on the brief. The gallery
+    card (`ui/v3/app/examples/page.tsx`) renders this straight into <img src>.
+    """
     sec0 = site_dir / "components" / "sections" / "Section00.tsx"
     if sec0.exists():
         import re
         m = re.search(r'https://images\.pexels\.com/[^"\'\s]+', sec0.read_text(encoding="utf-8"))
         if m:
             return m.group(0)
+    if thumb_rel:
+        return thumb_rel
     return brief.get("hero_image", "") or ""
 
 
@@ -111,11 +118,17 @@ def _count_sections(meta: dict, site_dir: Path) -> int:
     return 0
 
 
-def promote(slug: str, *, vibe: str) -> dict:
+def promote(slug: str, *, vibe: str, capture_thumb: bool = False) -> dict:
     """Promote output/<slug>/ into pebble/examples/<slug>/ + register.
 
     Idempotent: re-promoting the same slug replaces the existing entry
     rather than appending a duplicate.
+
+    ``capture_thumb`` is off by default: the engine's /preview /_next/image
+    proxy currently strips image query params, so a screenshot taken through
+    it shows a blank hero (and a cold preview screenshots the warmup splash).
+    The gallery card uses the Pexels ``hero_image`` URL, not the png, so the
+    thumbnail is optional until that proxy bug is fixed.
     """
     out_dir = OUTPUT_DIR / slug
     src_site = out_dir / "site"
@@ -139,7 +152,7 @@ def promote(slug: str, *, vibe: str) -> dict:
     if meta:
         (dst_dir / "build_meta.json").write_text(json.dumps(meta, indent=2), encoding="utf-8")
 
-    thumb_rel = capture_thumbnail(slug, dst_site)
+    thumb_rel = capture_thumbnail(slug, dst_site) if capture_thumb else ""
     hero_image = _resolve_hero_image(dst_site, brief, thumb_rel)
     sections = _count_sections(meta, dst_site)
     source_dir = f"pebble/examples/{slug}"
@@ -168,10 +181,16 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("slug", help="build slug under output/")
     ap.add_argument("--vibe", required=True, help="vibe label for the gallery (e.g. trade-pro)")
+    ap.add_argument(
+        "--thumbnail",
+        action="store_true",
+        help="also capture a Playwright homepage screenshot (off by default; "
+        "the engine preview proxy currently renders a blank hero)",
+    )
     args = ap.parse_args(argv)
 
     try:
-        result = promote(args.slug, vibe=args.vibe)
+        result = promote(args.slug, vibe=args.vibe, capture_thumb=args.thumbnail)
     except FileNotFoundError as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
