@@ -61,15 +61,17 @@ def _slugify(name: str) -> str:
     return re.sub(r"[\s_]+", "-", text).strip("-") or "untitled"
 
 
-def _build_menu(registry: BlockRegistry) -> list[dict]:
-    """Shape ALL blocks in the registry into the Sonnet picker's menu.
+def _build_block_menu(registry: BlockRegistry, vibe: str | None = None) -> list[dict]:
+    """Shape blocks into the Sonnet picker's menu. Optionally pin to a vibe.
 
-    Industry is not a filter — Sonnet picks blocks that fit the brief's vibe,
-    so the engine works for ANY industry the user types.
+    When ``vibe`` is set, the menu is restricted to blocks whose
+    ``vibe_tags`` contain ``vibe`` — guaranteeing the build draws from that
+    vibe's set. If the filter leaves the menu without an essential section
+    (hero, services, contact, footer), we fall back to the unfiltered menu
+    so a build never fails for lack of options.
     """
-    menu = []
-    for block in registry._blocks.values():
-        menu.append({
+    def _shape(block):
+        return {
             "block_id": block.metadata.block_id,
             "block_type": block.metadata.block_type,
             "vibe_tags": list(block.metadata.vibe_tags),
@@ -83,8 +85,26 @@ def _build_menu(registry: BlockRegistry) -> list[dict]:
                 for name, s in block.metadata.slots.items()
             },
             "palette_slots": list(block.metadata.palette_slots),
-        })
-    return menu
+        }
+
+    all_blocks = list(registry._blocks.values())
+    if not vibe:
+        return [_shape(b) for b in all_blocks]
+    filtered = [b for b in all_blocks if vibe in b.metadata.vibe_tags]
+    essential = {"hero", "services", "contact", "footer"}
+    types_present = {b.metadata.block_type for b in filtered}
+    if not essential.issubset(types_present):
+        # log + fall back
+        try:
+            from pebble.log import log as _log
+            _log.warning(
+                "[build_v2] vibe pin %r left menu without essential types %s; falling back to full menu",
+                vibe, sorted(essential - types_present),
+            )
+        except Exception:
+            pass
+        return [_shape(b) for b in all_blocks]
+    return [_shape(b) for b in filtered]
 
 
 def build_v2_core(brief: dict, progress_cb=None) -> dict:
@@ -126,7 +146,8 @@ def build_v2_core(brief: dict, progress_cb=None) -> dict:
 
     # Block library + menu
     registry = BlockRegistry.load(_BLOCK_LIBRARY_ROOT)
-    menu = _build_menu(registry)
+    vibe = (brief.get("vibe") or "").strip() or None
+    menu = _build_block_menu(registry, vibe=vibe)
     if not menu:
         raise BuildV2Error(503, "block library is empty — engine misconfigured")
 
