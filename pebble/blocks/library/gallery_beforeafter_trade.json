@@ -1,0 +1,12 @@
+{
+  "block_id": "library/gallery_beforeafter_trade",
+  "block_type": "gallery",
+  "vibe_tags": ["trade-pro", "local-service", "practical"],
+  "dna_tags": ["terminal_operator", "swiss_magazine"],
+  "slots": {
+    "eyebrow": {"kind": "text", "max_chars": 40, "tone": "Recent work / Our projects"},
+    "headline": {"kind": "text", "max_chars": 70, "tone": "plain"},
+    "projects": {"kind": "list", "tone": "3-6 items; each {caption (60), image (pexels query)}"}
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"]
+}
