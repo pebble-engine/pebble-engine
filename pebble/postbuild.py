@@ -59,6 +59,22 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
         result["errors"].append("npm not found in PATH; install Node.js")
         return result
 
+    # Windows: npm is npm.cmd (a batch file), so the spawn routes through
+    # cmd.exe — which flashes a console window unless we suppress it. Both
+    # the (blocking) npm install AND the detached next dev would otherwise
+    # pop a window every time a preview warms up. CREATE_NO_WINDOW + a hidden
+    # STARTUPINFO reliably suppresses it for the cmd.exe→node chain (plain
+    # DETACHED_PROCESS did not — that was the "window pops up" report).
+    win_kwargs: dict = {}
+    if sys.platform == "win32":
+        startupinfo = subprocess.STARTUPINFO()
+        startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo.wShowWindow = subprocess.SW_HIDE
+        win_kwargs = {
+            "creationflags": subprocess.CREATE_NO_WINDOW,
+            "startupinfo": startupinfo,
+        }
+
     # 1. npm install — bounded timeout, captured.
     log.info("Running `npm install` in %s...", site_dir.name)
     try:
@@ -69,6 +85,7 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
             timeout=600,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
+            **win_kwargs,
         )
     except subprocess.CalledProcessError as e:
         stderr = e.stderr.decode("utf-8", "ignore") if e.stderr else ""
@@ -83,18 +100,20 @@ def post_build_run_dev_server(site_dir: Path) -> dict:
     url = f"http://127.0.0.1:{port}"
     log.info("Starting `next dev` on port %d...", port)
     try:
-        # Windows needs creationflags to detach; POSIX inherits stdin/out fine.
-        creationflags = 0
+        # CREATE_NO_WINDOW (from win_kwargs) suppresses the console window;
+        # add CREATE_NEW_PROCESS_GROUP so the detached dev server doesn't
+        # receive the engine's Ctrl+C. POSIX inherits stdin/out fine.
+        dev_kwargs = dict(win_kwargs)
         if sys.platform == "win32":
-            creationflags = (
-                subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+            dev_kwargs["creationflags"] = (
+                subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
             )
         proc = subprocess.Popen(
             [npm, "run", "dev", "--", "-p", str(port)],
             cwd=str(site_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            creationflags=creationflags if sys.platform == "win32" else 0,
+            **dev_kwargs,
         )
     except Exception as e:
         result["errors"].append(f"failed to start dev server: {e}")
