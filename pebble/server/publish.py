@@ -152,6 +152,13 @@ def run_publish(handler) -> None:
     if uid is None:
         return
 
+    # MFA step-up: publish is the most consequential mutation (live deploy).
+    # A stolen AAL1 token must not push a site live within its TTL. No-op
+    # for callers without enrolled MFA / cookie / anon / unconfigured auth.
+    from pebble.security import enforce_step_up
+    if not enforce_step_up(handler):
+        return  # 401 already written
+
     # Free-plan site limit. Active subscribers are unlimited. Free users
     # cap at FREE_PUBLISH_LIMIT published sites.
     #

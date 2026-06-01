@@ -370,6 +370,13 @@ def run_rollback(handler) -> None:
     if require_project_owner(handler, slug) is None:
         return
 
+    # MFA step-up: rollback is destructive (overwrites the live site with a
+    # prior snapshot). A stolen AAL1 token must not trigger it. No-op for
+    # callers without enrolled MFA / cookie / anon / unconfigured auth.
+    from pebble.security import enforce_step_up
+    if not enforce_step_up(handler):
+        return  # 401 already written
+
     # snapshot_id reaches the filesystem via restore_snapshot — pin its
     # shape so it can't contain path-traversal segments either.
     if not validate_snapshot_id(handler, snapshot_id):

@@ -420,6 +420,46 @@ def require_aal2_if_mfa_enrolled(handler, token: str, user: dict) -> bool:
     return False
 
 
+def enforce_step_up(handler) -> bool:
+    """Drop-in MFA step-up for routes that hold a uid but not the full
+    GoTrue user dict (refine, publish, rollback).
+
+    Extracts the bearer token, fetches the GoTrue user (which carries the
+    ``factors`` list), and applies :func:`require_aal2_if_mfa_enrolled`.
+
+    FAILS OPEN by design — returns True (allow) whenever MFA can't be
+    assessed:
+      - no bearer token (legacy cookie / anonymous caller)
+      - Supabase auth not configured on this instance
+      - token validation errors or returns no user
+
+    This is deliberate: every route that calls this ALREADY enforces
+    ownership via ``require_project_owner`` / ``resolve_user_id``. Step-up
+    is defense-in-depth layered on top, so "can't determine factors" must
+    not break the primary flow (or cookie/anon callers, or tests running
+    without Supabase env). It blocks ONLY the precise attack it targets: a
+    validated AAL1 bearer token belonging to a user who HAS enrolled MFA.
+
+    Returns False (and writes 401) only in that one blocking case.
+    """
+    raw = (handler.headers.get("Authorization", "") or "").strip()
+    if not raw.lower().startswith("bearer "):
+        return True
+    token = raw[7:].strip()
+    if not token:
+        return True
+    try:
+        from pebble import auth_admin
+        if not auth_admin.is_configured():
+            return True
+        user = auth_admin.validate_access_token(token)
+    except Exception:
+        return True
+    if not isinstance(user, dict):
+        return True
+    return require_aal2_if_mfa_enrolled(handler, token, user)
+
+
 # --------- Trusted-proxy-aware client IP ----------------------------------
 
 def _trusted_proxy_networks() -> list[ipaddress._BaseNetwork]:
@@ -586,6 +626,7 @@ __all__ = [
     "client_ip",
     "require_project_owner",
     "require_aal2_if_mfa_enrolled",
+    "enforce_step_up",
     "forms_submit_limiter",
     "track_view_limiter",
     "forgot_email_limiter",

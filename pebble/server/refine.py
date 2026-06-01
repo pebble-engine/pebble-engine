@@ -324,6 +324,13 @@ def run_refine(handler) -> None:
     if caller_uid is None:
         return
 
+    # MFA step-up: a stolen AAL1 token must not mutate a project even
+    # within its ~1h TTL. No-op for callers without enrolled MFA, for
+    # cookie/anon auth, and when Supabase auth isn't configured (tests).
+    from pebble.security import enforce_step_up
+    if not enforce_step_up(handler):
+        return  # 401 already written
+
     site_dir = _output_dir() / slug / "site"
     if not site_dir.exists():
         handler._json(404, {"error": f"project site not found: {slug}"}); return

@@ -221,12 +221,12 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
     build_prompt = pe.build_prompt
     audit_design_system = pe.audit_design_system
     figma_file_summary = pe.figma_file_summary
-    parse_files = pe.parse_files
     apply_imagen_to_site = pe.apply_imagen_to_site
     post_build_run_dev_server = pe.post_build_run_dev_server
     post_build_screenshots = pe.post_build_screenshots
     generate_design_system = pe.generate_design_system  # None when degraded
     pick_random_dna = pe.pick_random_dna                # None when DNA module missing
+    parse_files = pe.parse_files
     _LAYOUT_DNA_OK  = getattr(pe, "_LAYOUT_DNA_OK", False)
     _pick_layout    = getattr(pe, "pick_layout_for_brief", None)
 
@@ -301,6 +301,14 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
                 if isinstance(user_data, dict) and user_data.get("id"):
                     answers["_user_id"] = user_data["id"]
                     user_email = (user_data.get("email") or "").strip()
+                    # MFA step-up: a stolen AAL1 token must not spend a paid
+                    # user's credits on a build even within its ~1h TTL.
+                    # No-op for users without enrolled MFA. Only gate the
+                    # real build (generate), not the free /api/build preview.
+                    if generate:
+                        from pebble.security import require_aal2_if_mfa_enrolled
+                        if not require_aal2_if_mfa_enrolled(handler, token, user_data):
+                            return  # 401 already written
         if not answers.get("_user_id"):
             from pebble.server.auth import current_user_id
             owner = current_user_id(handler)
