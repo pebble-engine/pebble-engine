@@ -432,15 +432,52 @@ git commit -m "feat(v3): plan-usage badge — AI refinements used this month"
 
 ---
 
-## Workstream D: Managed secrets at publish (DEFERRED — owner decision required)
+## Workstream D: Make the published contact form actually send email (BLOCKED on architecture decision)
 
-**Why deferred:** This is the only genuinely net-new subsystem and it stores *customer* third-party API keys (Resend) server-side. That is a security + liability decision the owner must make before any code lands. The injection point is known (`pebble/publish.py:_create_cloudflare_deployment`, ~line 493 — add an `env_vars` multipart field; Cloudflare Pages supports it). What's undecided:
+**2026-06-01 finding that invalidates the original framing.** The original plan
+(and the owner's first answer: "BYO-key, never persisted — inject the Resend key
+as a Cloudflare env var") assumed the publish target runs the contact form's
+server code. **It does not.** Verified in `pebble/publish.py:307-334`
+(`publish_to_cloudflare`): the Cloudflare Pages path deploys a **static artifact**
+(`output/<slug>/site/out` or the raw source tree). Its own docstring:
 
-1. **Storage model** — encrypted-at-rest per-project `secrets.json`, or push straight to Cloudflare and never persist locally? (Don't-persist is the lower-liability option.)
-2. **Whose Resend key** — does the customer bring their own key (we just inject it), or does Pebble provide a shared/subaccount key and bill usage? (BYO-key = far less liability, matches the "no lock-in" positioning.)
-3. **Where the user enters it** — a publish-time form field vs. a project settings panel.
+> "Static-export-only is the practical scope here: Server Actions and SSR
+> Next.js need @cloudflare/next-on-pages which is a separate build step."
 
-**Recommendation to encode once decided:** BYO-key, never persisted locally — collect the Resend key in the publish modal, push it directly to the Cloudflare Pages deployment as an env var, discard from memory after the API call. This keeps Pebble out of the secret-custody business entirely. Write the full TDD plan after the owner picks.
+The generated contact form is a Next.js **Server Action** (`app/actions/contact.ts`
++ Resend in `lib/email.ts`, per `skills/prompt_template.md` Code Pattern 8). A
+static deploy has **no server runtime**, so:
+
+- The Server Action never executes on the published Cloudflare site.
+- Injecting `RESEND_API_KEY` as a Cloudflare env var is a **no-op** — nothing reads it.
+
+So "inject a secret at publish" cannot make the form work on the current target.
+The real fork:
+
+### Option 1 — Route the form to Pebble's hosted endpoint (RECOMMENDED)
+Pebble ALREADY has `POST /api/forms/<slug>` (public) with webhook delivery +
+autoresponder, sending via the **engine's own Resend key** (`pebble/server/forms.py`,
+`pebble/forms_webhook.py`, `pebble/forms_autoresponder.py`). Change the generated
+static site's `ContactForm` to `fetch()`-POST to that endpoint instead of calling a
+Server Action. Then:
+- The customer needs NO Resend key and NO `.env` — the secret is Pebble's, server-side.
+- Works perfectly on a static deploy (it's just a `fetch`).
+- Leverages infra that already exists (webhook + autoresponder + storage quotas).
+- Cost: a prompt-template change (static-friendly ContactForm variant that POSTs to
+  the engine), the published site must know its slug + engine URL, and the
+  `contact_form_uses_server_action` eval needs a sibling/relaxation for published
+  static builds. Affects every future build — needs eval coverage + care.
+
+### Option 2 — Switch publish to `@cloudflare/next-on-pages` (keeps BYO-key)
+Build the site as Cloudflare Functions so Server Actions run, then set the Resend
+key via `PATCH /accounts/{id}/pages/projects/{name}` (`deployment_configs.production.env_vars`
+— NOT a field on the deployment POST; the Explore agent's guess was wrong). Much
+bigger lift: new build step, Functions runtime, env-var PATCH call, and the
+customer still needs their own Resend key.
+
+**Recommendation:** Option 1. It matches the static deploy target, removes the
+`.env` wall entirely (the actual launch goal), and reuses built infra. Build it as
+its own focused session with eval coverage — do NOT bolt it onto this branch.
 
 ---
 
