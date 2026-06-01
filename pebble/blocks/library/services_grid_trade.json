@@ -1,0 +1,12 @@
+{
+  "block_id": "library/services_grid_trade",
+  "block_type": "services",
+  "vibe_tags": ["trade-pro", "local-service", "practical"],
+  "dna_tags": ["terminal_operator", "swiss_magazine"],
+  "slots": {
+    "eyebrow": {"kind": "text", "max_chars": 40, "tone": "What we do / Our services"},
+    "headline": {"kind": "text", "max_chars": 70, "tone": "plain scope statement"},
+    "services": {"kind": "list", "tone": "4-6 items; each {title (40), body (120, outcome-focused), from_price (optional, e.g. 'from $89')}"}
+  },
+  "palette_slots": ["bg", "fg", "accent", "muted"]
+}
