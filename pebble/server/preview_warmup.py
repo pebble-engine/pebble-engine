@@ -41,6 +41,28 @@ from typing import Optional
 from pebble.log import log
 
 
+def _win_no_window_kwargs() -> dict:
+    """Windows-only subprocess kwargs that suppress the console window.
+
+    npm resolves to npm.cmd (a batch file), so spawning it routes through
+    cmd.exe — which flashes a console window unless explicitly suppressed.
+    Both the warmup npm install and the detached next dev would otherwise
+    pop a window EVERY time a preview warms up (and repeatedly, since the
+    workspace iframe re-polls every 2s while a preview isn't ready). Plain
+    DETACHED_PROCESS did not suppress it for the cmd.exe→node chain;
+    CREATE_NO_WINDOW + a hidden STARTUPINFO does. No-op off Windows.
+    """
+    if sys.platform != "win32":
+        return {}
+    startupinfo = subprocess.STARTUPINFO()
+    startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+    startupinfo.wShowWindow = subprocess.SW_HIDE
+    return {
+        "creationflags": subprocess.CREATE_NO_WINDOW,
+        "startupinfo": startupinfo,
+    }
+
+
 class PreviewWarmup:
     """Orchestrate `npm install` in the background, in parallel with the
     LLM stream that's writing the project files. One instance per build."""
@@ -113,6 +135,7 @@ class PreviewWarmup:
                     timeout=600,
                     stdout=subprocess.DEVNULL,
                     stderr=subprocess.PIPE,
+                    **_win_no_window_kwargs(),
                 )
                 self._elapsed_seconds = _t.time() - (self._started_at or _t.time())
                 log.info("[warmup] npm install completed in %.1fs for %s",
@@ -191,17 +214,19 @@ def start_next_dev_after_install(
              port, warmup.elapsed_seconds or 0)
 
     try:
-        creationflags = 0
+        dev_kwargs = _win_no_window_kwargs()
         if sys.platform == "win32":
-            creationflags = (
-                subprocess.DETACHED_PROCESS | subprocess.CREATE_NEW_PROCESS_GROUP
+            # CREATE_NO_WINDOW suppresses the console; CREATE_NEW_PROCESS_GROUP
+            # detaches the dev server from the engine's Ctrl+C.
+            dev_kwargs["creationflags"] = (
+                subprocess.CREATE_NO_WINDOW | subprocess.CREATE_NEW_PROCESS_GROUP
             )
         proc = subprocess.Popen(
             [npm, "run", "dev", "--", "-p", str(port)],
             cwd=str(site_dir),
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
-            creationflags=creationflags if sys.platform == "win32" else 0,
+            **dev_kwargs,
         )
     except Exception as exc:
         result["errors"].append(f"failed to start dev server: {exc}")
