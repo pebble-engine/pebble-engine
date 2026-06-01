@@ -1,0 +1,11 @@
+{
+  "block_id": "library/service_area_trade",
+  "block_type": "coverage",
+  "vibe_tags": ["trade-pro", "local-service"],
+  "dna_tags": ["terminal_operator", "swiss_magazine"],
+  "slots": {
+    "headline": {"kind": "text", "max_chars": 60, "tone": "Proudly serving <City> & surrounding areas"},
+    "areas": {"kind": "list", "tone": "6-12 neighborhood/city names served"}
+  },
+  "palette_slots": ["bg", "fg", "accent"]
+}
