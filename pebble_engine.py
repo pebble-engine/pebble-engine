@@ -1798,7 +1798,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 #     immediately. The keep-alive ping in the workspace hits
                 #     Fly DIRECTLY (cross-origin) to wake it without blocking
                 #     user-facing requests on the wake-up window.
-                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=20):
+                if self._proxy_to_dev(fly_url, forward_path, remote_timeout=20,
+                                      base_prefix=slug_prefix):
                     return
                 # Proxy failed — fall through to local path so we don't break
                 # workspaces for projects that haven't been Fly-provisioned.
@@ -1817,7 +1818,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 # Strip /preview/<raw-slug> so next dev sees the real route.
                 slug_prefix = "/preview/" + parts[0]
                 forward_path = self.path[len(slug_prefix):] or "/"
-                if self._proxy_to_dev(dev_url, forward_path):
+                if self._proxy_to_dev(dev_url, forward_path, base_prefix=slug_prefix):
                     return
         except Exception:
             pass  # fall through to static files
@@ -2047,7 +2048,58 @@ class PebbleHandler(BaseHTTPRequestHandler):
             return html + tag
         return html[:idx] + tag + html[idx:]
 
-    def _proxy_to_dev(self, dev_url: str, forward_path: str, remote_timeout: int = 10) -> bool:
+    @staticmethod
+    def _rewrite_root_absolute_urls(html: str, base_prefix: str) -> str:
+        """Prefix root-absolute href/src/action URLs with ``base_prefix``.
+
+        The workspace project preview proxies to ``next dev``, but generated
+        projects set NO ``basePath`` in next.config, so the served HTML
+        references root-absolute ``/_next/static/...`` (plus ``/about``,
+        ``/images/...``, ``/contact`` form actions). Served under
+        ``/preview/<slug>/``, the browser would request those at the engine
+        ROOT and 404 — which is why the preview rendered completely unstyled
+        (no CSS/JS loaded). Rewriting them to ``/preview/<slug>/_next/...``
+        routes them back through ``_handle_preview``, which strips the prefix
+        and forwards to next dev.
+
+        Idempotent: the negative lookahead skips protocol-relative ``//`` and
+        anything already under ``/preview/`` so a second pass is a no-op.
+        Handles both single- and double-quoted attributes.
+
+        Known limits (full fidelity needs a real basePath/assetPrefix on the
+        dev server): URLs hard-coded INSIDE compiled CSS/JS (``url(/_next/..)``
+        fonts, dynamically-imported chunks) and RSC flight-data CSS preloads
+        aren't rewritten. The styled render + images — the reported problem —
+        work; only client-side route navigation degrades.
+        """
+        # 1) Single root-absolute attribute URLs: href / src / action.
+        out = re.sub(
+            r'''(href|src|action)=(["'])/(?!/|preview/)''',
+            rf'\1=\2{base_prefix}/',
+            html,
+        )
+
+        # 2) srcset / srcSet hold a comma-separated list of
+        # "<url> <descriptor>" pairs (next/image responsive variants). The
+        # attribute regex above can't touch the 2nd..Nth URLs, and a browser
+        # that picks an unprefixed candidate 404s WITHOUT falling back to the
+        # plain src — so the preview image would break. Prefix every
+        # root-absolute URL inside each srcset value.
+        def _fix_srcset(m: "re.Match") -> str:
+            attr, quote, value = m.group(1), m.group(2), m.group(3)
+            fixed = re.sub(r'(^|,\s*)/(?!/|preview/)', rf'\1{base_prefix}/', value)
+            return f'{attr}={quote}{fixed}{quote}'
+
+        out = re.sub(
+            r'''(srcset|srcSet)=(["'])(.*?)\2''',
+            _fix_srcset,
+            out,
+            flags=re.DOTALL,
+        )
+        return out
+
+    def _proxy_to_dev(self, dev_url: str, forward_path: str, remote_timeout: int = 10,
+                      base_prefix: Optional[str] = None) -> bool:
         """Forward GET *forward_path* to the running next dev server at *dev_url*.
 
         Injects the visual-edit bridge into HTML responses (workspace iframe
@@ -2081,6 +2133,11 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 try:
                     from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
                     html = data.decode("utf-8", errors="replace")
+                    # Prefix root-absolute asset/nav URLs so /_next/static/*,
+                    # /images/*, etc. resolve under /preview/<slug>/ instead
+                    # of 404ing at the engine root (the unstyled-preview bug).
+                    if base_prefix:
+                        html = self._rewrite_root_absolute_urls(html, base_prefix)
                     data = self._inject_bridge(html, PEBBLE_VISUAL_EDIT_BRIDGE).encode("utf-8")
                     ct = "text/html; charset=utf-8"
                 except Exception:
