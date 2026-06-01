@@ -755,6 +755,44 @@ export async function instantiateTemplate(
   return postJSON("/api/instantiate-template", { template_id, brief });
 }
 
+// ---------- /api/examples + clone (2026-05-31) ----------------------------
+//
+// The 15 industry example sites built by the v2 motion engine, offered as
+// FREE pick-from starting points. Unlike instantiate-template (curated
+// skeleton + LLM content-swap), an example is a complete site; "cloning" is
+// a pure filesystem copy — no LLM, instant, billable:false. The user edits
+// the clone like any other project. See pebble/server/examples.py.
+
+export type ExampleSummary = {
+  slug: string;
+  name: string;
+  industry: string;
+  vibe: string;
+  hero_image: string;   // real Pexels preview image
+  sections: number;
+  kind: string;         // "example_build"
+};
+
+export async function listExamples(): Promise<{ examples: ExampleSummary[]; count: number }> {
+  return getJSON("/api/examples");
+}
+
+export type CloneExampleResponse = {
+  ok: boolean;
+  slug: string;
+  cloned_from: string;
+  file_count: number;
+  preview_url: string;
+  billable: boolean;
+};
+
+export async function cloneExample(
+  example_slug: string,
+  business_name?: string,
+): Promise<CloneExampleResponse> {
+  return postJSON("/api/examples/clone", { example_slug, business_name });
+}
+
 // ---------- /api/template-match (Phase F1, 2026-05-24) --------------------
 //
 // Score templates against a free-text prompt + optional business_type.

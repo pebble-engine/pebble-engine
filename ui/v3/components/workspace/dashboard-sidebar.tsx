@@ -52,6 +52,7 @@ import {
   Plus,
   Coins,
   MessageSquare,
+  Sparkles,
 } from "lucide-react";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
@@ -85,6 +86,7 @@ type NavItem =
 const NAV_ITEMS: NavItem[] = [
   { label: "Projects",  href: "/dashboard",   icon: FolderOpen },
   { label: "Templates", href: "/templates",   icon: LayoutGrid },
+  { label: "Examples",  href: "/examples",    icon: Sparkles },
   { label: "Inbox",     href: "/inbox",       icon: Inbox },
   {
     label: "Resources",
