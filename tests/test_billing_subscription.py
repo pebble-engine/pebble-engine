@@ -94,7 +94,11 @@ def test_returns_200_with_null_plan_when_no_sentinel(signed_in_user, output_root
     h = FakeHandler()
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
-    assert h.body == {"plan": None, "status": None, "current_period_end": None, "needs_plan_selection": False}
+    assert h.body["plan"] is None
+    assert h.body["status"] is None
+    assert h.body["current_period_end"] is None
+    assert h.body["needs_plan_selection"] is False
+    assert "quota" in h.body  # free-tier quota present so the badge renders
 
 
 def test_surfaces_needs_plan_selection_flag(signed_in_user, output_root):
@@ -112,12 +116,11 @@ def test_surfaces_needs_plan_selection_flag(signed_in_user, output_root):
     h = FakeHandler()
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
-    assert h.body == {
-        "plan":                 None,
-        "status":               None,
-        "current_period_end":   None,
-        "needs_plan_selection": True,
-    }
+    assert h.body["plan"] is None
+    assert h.body["status"] is None
+    assert h.body["current_period_end"] is None
+    assert h.body["needs_plan_selection"] is True
+    assert "quota" in h.body
 
 
 def test_returns_200_with_null_plan_when_sentinel_is_corrupt(signed_in_user, output_root):
@@ -144,12 +147,11 @@ def test_returns_active_subscription(signed_in_user, output_root):
     h = FakeHandler()
     billing_subscription.run_get_subscription(h)
     assert h.status == 200
-    assert h.body == {
-        "plan":                 "starter",
-        "status":               "active",
-        "current_period_end":   1893456000,
-        "needs_plan_selection": False,
-    }
+    assert h.body["plan"] == "starter"
+    assert h.body["status"] == "active"
+    assert h.body["current_period_end"] == 1893456000
+    assert h.body["needs_plan_selection"] is False
+    assert "quota" in h.body
 
 
 def test_returns_canceled_subscription(signed_in_user, output_root):
@@ -224,4 +226,49 @@ def test_rejects_path_traversal_user_id(monkeypatch, output_root):
     # MUST NOT leak the victim's plan — fall through to the "no
     # subscription" 200/null branch instead.
     assert h.status == 200
-    assert h.body == {"plan": None, "status": None, "current_period_end": None, "needs_plan_selection": False}
+    assert h.body["plan"] is None
+    assert h.body["status"] is None
+    assert h.body["current_period_end"] is None
+    assert h.body["needs_plan_selection"] is False
+    # quota must ALSO not leak the victim — safe_user_id rejects the
+    # traversal id, so get_quota_summary returns the free default (or None).
+    assert h.body.get("quota") in (None,) or h.body["quota"]["plan"] == "free"
+
+
+# ---- quota surfacing (2026-06-01 plan-usage transparency) -----------------
+
+def test_active_sub_includes_quota(signed_in_user, output_root, monkeypatch):
+    """The badge needs usage + limits alongside the plan."""
+    from pebble.server import billing_subscription
+
+    _write_sentinel(output_root, "uuid-marc-abc", plan="starter", status="active")
+    monkeypatch.setattr(
+        "pebble.user_plan.get_quota_summary",
+        lambda uid: {
+            "plan": "starter",
+            "limits": {"ai_refinements_per_month": 150},
+            "usage": {"ai_refinements_this_month": 12},
+        },
+    )
+    h = FakeHandler()
+    billing_subscription.run_get_subscription(h)
+    assert h.status == 200
+    assert h.body["quota"]["usage"]["ai_refinements_this_month"] == 12
+    assert h.body["quota"]["limits"]["ai_refinements_per_month"] == 150
+
+
+def test_quota_failure_is_soft(signed_in_user, output_root, monkeypatch):
+    """A get_quota_summary error must not break the endpoint — quota=None."""
+    from pebble.server import billing_subscription
+
+    _write_sentinel(output_root, "uuid-marc-abc", plan="pro", status="active")
+
+    def _boom(uid):
+        raise RuntimeError("usage read failed")
+
+    monkeypatch.setattr("pebble.user_plan.get_quota_summary", _boom)
+    h = FakeHandler()
+    billing_subscription.run_get_subscription(h)
+    assert h.status == 200
+    assert h.body["plan"] == "pro"
+    assert h.body["quota"] is None

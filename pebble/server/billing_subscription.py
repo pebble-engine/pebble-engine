@@ -74,16 +74,28 @@ def run_get_subscription(handler) -> None:
     except Exception:
         pass
 
+    # Plan quota + month-to-date usage so v3 can render a "12 of 150
+    # refinements used this month" badge without a second round-trip.
+    # Soft-fail to None: a usage-read error must never break the badge
+    # endpoint (the plan/status fields are the critical payload).
+    quota = None
+    try:
+        from pebble.user_plan import get_quota_summary
+        quota = get_quota_summary(user.get("id", ""))
+    except Exception:
+        quota = None
+
     sentinel = _load_sentinel(user.get("id", ""))
     if sentinel is None:
         # No subscription. Respond 200 with explicit nulls so v3 can
         # render an "upgrade to a plan" CTA without parsing exception
-        # messages.
+        # messages. quota still carries the free-tier limits + usage.
         handler._json(200, {
             "plan":                  None,
             "status":                None,
             "current_period_end":    None,
             "needs_plan_selection":  needs_pick,
+            "quota":                 quota,
         })
         return
 
@@ -94,4 +106,5 @@ def run_get_subscription(handler) -> None:
         "status":                sentinel.get("status"),
         "current_period_end":    sentinel.get("current_period_end"),
         "needs_plan_selection":  needs_pick,
+        "quota":                 quota,
     })
