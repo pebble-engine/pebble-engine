@@ -1,0 +1,562 @@
+{
+  "pb-b0febf": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "VALORANT. ROCKET LEAGUE. NO LIMITS."
+  },
+  "pb-fd1b11": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-0c4111": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We are Static Vanguard. Grassroots built, arena ready. Two rosters. One identity"
+  },
+  "pb-d3363a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "PARTNER WITH US"
+  },
+  "pb-4032e8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "OUR ROSTERS"
+  },
+  "pb-e206ae": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-cea031": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "VALORANT DIVISION"
+  },
+  "pb-61f334": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Five players. One shot clock. Our Valorant squad competes in open circuit and co"
+  },
+  "pb-939d14": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Active"
+  },
+  "pb-e0f6a6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "ROCKET LEAGUE DIVISION"
+  },
+  "pb-a48232": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Speed, mechanics, and split-second rotations. The RL roster runs ranked scrims d"
+  },
+  "pb-67b70f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Active"
+  },
+  "pb-eccd2d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "CONTENT & CLIPS"
+  },
+  "pb-332b97": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "From the signature static glitch intro to highlight reels \u2014 our content pipeline"
+  },
+  "pb-7e7eae": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Live"
+  },
+  "pb-80afed": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "SPONSOR PARTNERSHIPS"
+  },
+  "pb-8ea605": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Reach a young, engaged audience that lives in Discord, watches Twitch, and wears"
+  },
+  "pb-ffaee0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Open"
+  },
+  "pb-67b586": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "THE ORIGIN"
+  },
+  "pb-60e177": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-bbb500": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Static Vanguard started in a Discord server with six players who were tired of g"
+  },
+  "pb-344388": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Then came the glitch intro. What started as a streamer overlay became the thing "
+  },
+  "pb-3727a4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Now we're taking it further. Two rosters. A growing fanbase. And a pitch to ever"
+  },
+  "pb-f047cb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 VANCE 'STATIC' OKAFOR, FOUNDER & IGL"
+  },
+  "pb-a1017d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-3cf4d1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;The static glitch drops and the whole lobby knows. Doesn't matter what se"
+  },
+  "pb-09b250": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "CONTENT CREATOR, 280K TWITCH FOLLOWERS"
+  },
+  "pb-2d76dd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "PARTNERSHIP TIERS"
+  },
+  "pb-184ecc": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a553ae": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "ALLY"
+  },
+  "pb-abc66a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$500"
+  },
+  "pb-d28399": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "/month"
+  },
+  "pb-036f76": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-30a71b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-341b8a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Logo on team social graphics"
+  },
+  "pb-936ef9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cc5c25": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-a44cff": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Shoutout in match-day stream"
+  },
+  "pb-682965": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-eda94c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-1d222c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Discord sponsor channel post"
+  },
+  "pb-842a92": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-87510d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-8c2eea": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Monthly performance report"
+  },
+  "pb-9b1383": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "START HERE"
+  },
+  "pb-1bc524": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "SIGNAL"
+  },
+  "pb-f2e8d1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$1,500"
+  },
+  "pb-ea897f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "/month"
+  },
+  "pb-637a1f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6004fd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-de9d59": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Jersey sleeve logo placement"
+  },
+  "pb-15c8d4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8e3450": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-9bdf99": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Static glitch intro brand drop"
+  },
+  "pb-00ec33": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-79323f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-a41b93": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Dedicated Twitch segment weekly"
+  },
+  "pb-dc73f1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c0a647": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-a2cb95": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Co-branded clip series monthly"
+  },
+  "pb-91bf75": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ea489e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-3540ee": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Priority in sponsor announcements"
+  },
+  "pb-41455c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "GO SIGNAL"
+  },
+  "pb-b3f2da": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "VANGUARD"
+  },
+  "pb-d14ffa": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$4,000"
+  },
+  "pb-07b9d7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "/month"
+  },
+  "pb-02f636": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7a90e7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-e388e0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Chest logo \u2014 both division jerseys"
+  },
+  "pb-00de7d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f28cda": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-6a2b43": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Named segment on all broadcasts"
+  },
+  "pb-1d8049": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-de9eb9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-e3fe79": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Full static glitch branded variant"
+  },
+  "pb-12347c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-56bbbb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-c3c354": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Quarterly campaign collaboration"
+  },
+  "pb-2f2077": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-af82e0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-736f55": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Exclusive fan activation rights"
+  },
+  "pb-062365": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "OWN THE STATIC"
+  },
+  "pb-11e74d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "PARTNER WITH US"
+  },
+  "pb-9f1653": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ab3999": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Whether you're a brand looking for your next play or a player wanting to try out"
+  },
+  "pb-fa9d9c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-052ba9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-759fe8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-4c01f2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Send it"
+  },
+  "pb-f75761": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Location"
+  },
+  "pb-a2b07d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Online-first org \u2014 based in Los Angeles, CA"
+  },
+  "pb-b584c7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-26f041": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Mon\u2013Fri, 10am\u20138pm PT. Match nights: always live."
+  },
+  "pb-9b5c53": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Contact"
+  },
+  "pb-16093c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-18465a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "+1 (213) 555-0194"
+  },
+  "pb-603e40": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-20b35c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "partners@staticvanguard.gg"
+  },
+  "pb-afe595": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Static Vanguard"
+  },
+  "pb-2e491a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Compete loud. Glitch first. Leave a signal."
+  },
+  "pb-ef9faf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-becaf8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "ROSTER"
+  },
+  "pb-7ed5c9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6557bd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "SCHEDULE"
+  },
+  "pb-4cceaf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-08f1ba": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "CLIPS"
+  },
+  "pb-842500": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-65f39e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "PARTNERS"
+  },
+  "pb-06d8d2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-40b9ba": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "CONTACT"
+  },
+  "pb-43f3a2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Static Vanguard. All rights reserved."
+  }
+}

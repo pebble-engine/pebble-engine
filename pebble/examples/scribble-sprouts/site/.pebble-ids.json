@@ -1,0 +1,557 @@
+{
+  "pb-50540d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "After-school & weekend art classes for ages 4\u201312 \ud83c\udfa8"
+  },
+  "pb-382f5e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-0f7154": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Painting, clay, collage, and gloriously messy projects in a studio that celebrat"
+  },
+  "pb-498bc6": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "See what's on"
+  },
+  "pb-93bebe": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "What we make together \ud83d\udd8c\ufe0f"
+  },
+  "pb-28af86": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-98e062": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Paint Explorers"
+  },
+  "pb-4de92b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Acrylics, watercolors, finger paints \u2014 kids experiment with color, layering, and"
+  },
+  "pb-6a5dd2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Clay & Sculpture"
+  },
+  "pb-097b86": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Hands-on clay building, pinch pots, animals, and abstract shapes. Kiln-fired pie"
+  },
+  "pb-6f1616": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Collage Studio"
+  },
+  "pb-325c2b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Torn paper, fabric scraps, magazine cutouts, and glitter galore. Big layered wor"
+  },
+  "pb-0e43e0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Mixed Media Mess"
+  },
+  "pb-e0a019": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our most popular class: paint + clay + collage + whatever else we can find. Expe"
+  },
+  "pb-69d314": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Weekend Workshops"
+  },
+  "pb-1b97ad": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Saturday and Sunday drop-in sessions themed around seasons, holidays, and pure i"
+  },
+  "pb-c75fbe": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How Scribble Sprouts began \ud83c\udf31"
+  },
+  "pb-ab2958": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-80dff8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Scribble Sprouts started because we kept seeing kids hesitate before picking up "
+  },
+  "pb-784014": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Every Saturday morning this room fills with kids ages 4 to 12, and the noise and"
+  },
+  "pb-311fb3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our Wall of Fame is the heart of the studio. Before any artwork goes home, it go"
+  },
+  "pb-2f134f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Jamie, Founder & Chief Mess Maker"
+  },
+  "pb-98b386": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Wall of Fame"
+  },
+  "pb-794fac": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-934a73": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-f3dfbd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "My son has never called himself an artist \u2014 until he walked past the Wall of Fam"
+  },
+  "pb-a6814e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Parent of a 7-year-old, attending since September"
+  },
+  "pb-11f5e7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Pick your plan"
+  },
+  "pb-c912b1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-29c5a5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Drop-In"
+  },
+  "pb-53c479": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $26"
+  },
+  "pb-ad2a52": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per class"
+  },
+  "pb-466029": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-af740a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-70c1f3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Any single class or weekend workshop"
+  },
+  "pb-ff1414": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-475bd8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-af626a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "All materials included"
+  },
+  "pb-4f4b7e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-033420": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-757931": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Your artwork goes on the Wall of Fame"
+  },
+  "pb-b0eb95": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f6977f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-7b971c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "No commitment needed"
+  },
+  "pb-911c2c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Book a class"
+  },
+  "pb-bc8f86": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Monthly Bundle"
+  },
+  "pb-5e7a36": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$99"
+  },
+  "pb-172972": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per month"
+  },
+  "pb-e555e7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6ea21f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-5605f3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "4 classes per month (any mix)"
+  },
+  "pb-e553e6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-93360d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-806527": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "All materials included"
+  },
+  "pb-dab776": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-702818": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-9eab13": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Reserved spot in your chosen sessions"
+  },
+  "pb-5314d3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5829d0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-21a6c5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Wall of Fame for every piece"
+  },
+  "pb-16b868": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f8a88b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-63a17d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "10% off weekend workshops"
+  },
+  "pb-19ff25": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Join monthly"
+  },
+  "pb-8e888d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Birthday Party"
+  },
+  "pb-3c7864": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$220"
+  },
+  "pb-fcd542": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per party"
+  },
+  "pb-d0d79d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-da11ef": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-0d202a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "2-hour private studio session"
+  },
+  "pb-9a58ac": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-761ac6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-7cea79": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Up to 12 kids"
+  },
+  "pb-7e341b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d06111": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-eb2a95": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Guided project + free paint time"
+  },
+  "pb-453852": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d24860": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-ff7f7d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Every kid takes their art home"
+  },
+  "pb-7c30ec": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9facc8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-a9a0f0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "We handle all the mess!"
+  },
+  "pb-abdb6d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Book a party"
+  },
+  "pb-d2d481": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Say hello! \ud83d\udc4b"
+  },
+  "pb-49c6fd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3dc86d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Drop us a message and a real human (hi, that's Jamie!) will get back to you with"
+  },
+  "pb-33d20d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-8e5313": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-d6f20a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-6633bd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send it!"
+  },
+  "pb-de4211": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-0b5a75": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "14 Maple Lane, Arts District"
+  },
+  "pb-b50156": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-454222": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "After-school classes: Mon\u2013Fri, 3pm\u20136pm\nWeekend sessions: Sat & Sun, 9am\u20131pm"
+  },
+  "pb-62695c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-e3fa92": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-9d05d1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(555) 318-4720"
+  },
+  "pb-a921c0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-825697": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@scribblesprouts.com"
+  },
+  "pb-61042f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Scribble Sprouts"
+  },
+  "pb-9237ce": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Making a glorious mess since day one. Every kid's a masterpiece. \ud83c\udfa8"
+  },
+  "pb-d3702c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f5d328": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Classes"
+  },
+  "pb-a4722c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1ec25e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Our Story"
+  },
+  "pb-4f6ec1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8a2ea2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Wall of Fame"
+  },
+  "pb-a37603": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-580434": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Pricing"
+  },
+  "pb-e90521": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-51628e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  }
+}

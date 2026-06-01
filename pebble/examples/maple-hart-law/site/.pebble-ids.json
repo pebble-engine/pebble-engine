@@ -1,0 +1,637 @@
+{
+  "pb-7642a1": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Family law in Burlington, VT"
+  },
+  "pb-a83336": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-e73a1f": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Divorce, custody, and adoption are hard enough. We make sure you understand exac"
+  },
+  "pb-6ba66f": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "How we work"
+  },
+  "pb-d53418": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Areas of practice"
+  },
+  "pb-0d0b50": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c6302a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Divorce"
+  },
+  "pb-bd8dc6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "We guide you through the process step by step \u2014 property, finances, and paperwor"
+  },
+  "pb-983f87": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-a5bd7e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Child Custody"
+  },
+  "pb-19a09b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Whether you're creating a parenting plan from scratch or modifying an existing o"
+  },
+  "pb-b360c7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-88e37f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Adoption"
+  },
+  "pb-f1076b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "We handle the legal details of bringing a child into your family, including step"
+  },
+  "pb-a63eb7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-1da569": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Free 30-Minute First Call"
+  },
+  "pb-6c7f0d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every new client gets a no-pressure plain English call. We tell you what the pro"
+  },
+  "pb-b9ad5b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-da47ab": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How it works"
+  },
+  "pb-92a7b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-31afa7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 1"
+  },
+  "pb-e52bdc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Your free plain English call"
+  },
+  "pb-169835": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We spend 30 minutes on the phone \u2014 no charge, no obligation. You tell us what's "
+  },
+  "pb-9cf3ae": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 2"
+  },
+  "pb-81d90d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We build your case plan together"
+  },
+  "pb-1029b5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "If you decide to work with us, we map out the full process \u2014 timeline, documents"
+  },
+  "pb-805390": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 3"
+  },
+  "pb-6d6795": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We handle the legal work"
+  },
+  "pb-cb5909": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Filings, negotiations, court appearances \u2014 we take care of it. We check in at ev"
+  },
+  "pb-52e152": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 4"
+  },
+  "pb-743b21": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "You move forward"
+  },
+  "pb-5db07f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "When your case closes, you understand every outcome and know exactly what it mea"
+  },
+  "pb-dc5c4b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "About Dana Hart"
+  },
+  "pb-704f1f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b9887f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "I started Maple & Hart because I kept seeing people walk into legal situations c"
+  },
+  "pb-b0519d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "I've practiced family law in Burlington for over a decade. Divorce, custody, ado"
+  },
+  "pb-d5a593": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "My job is to be the person across the table who tells you the truth, walks you t"
+  },
+  "pb-82471e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Dana Hart \u2014 Founder & Family Law Attorney"
+  },
+  "pb-fbba1e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Client results"
+  },
+  "pb-b4f4e8": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-cb39ea": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I came in knowing nothing and terrified. Dana sat with me for that first "
+  },
+  "pb-2af7e1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Custody client, Burlington"
+  },
+  "pb-3fe337": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Fee schedule"
+  },
+  "pb-3ff222": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-695209": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Free First Call"
+  },
+  "pb-70848f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$0"
+  },
+  "pb-fdaa0a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "30 minutes"
+  },
+  "pb-41e0fe": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c61985": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-26d882": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Plain English explanation of your situation"
+  },
+  "pb-8d5d6a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9a5c2e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-7c5c44": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Overview of your legal options"
+  },
+  "pb-9d0f78": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a5bc48": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-ea8599": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Honest timeline and process walkthrough"
+  },
+  "pb-61086b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7f19de": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-a42ea4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "No obligation to retain"
+  },
+  "pb-2e249c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Book your free call"
+  },
+  "pb-b6ee49": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Full Representation"
+  },
+  "pb-a5a77b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Flat fee or hourly"
+  },
+  "pb-e7be15": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "case basis"
+  },
+  "pb-808245": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-15505e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-119374": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Divorce, custody, or adoption handled end-to-end"
+  },
+  "pb-c39bfc": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-318d02": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-343a8b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "All filings, negotiations, and court appearances"
+  },
+  "pb-0302aa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4c4799": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-5db7df": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Clear fee structure agreed before work begins"
+  },
+  "pb-e4874f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e3e546": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-d31926": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Regular plain-language case updates"
+  },
+  "pb-11c5aa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ef9d1f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-730063": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Available for questions throughout"
+  },
+  "pb-978c9d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Schedule a consultation"
+  },
+  "pb-6fdab6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Unbundled Services"
+  },
+  "pb-c5b04e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $150"
+  },
+  "pb-50a8bb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per task"
+  },
+  "pb-43525e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-76fe27": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-70c0d4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Document review and plain-language summary"
+  },
+  "pb-c8143b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b67f4e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-19202d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Coaching for self-represented clients"
+  },
+  "pb-818ea8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d16c40": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-751439": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Single-session legal advice"
+  },
+  "pb-692ad7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-214822": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-6327c2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Parenting plan drafting"
+  },
+  "pb-1ee185": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Ask about this option"
+  },
+  "pb-2f870a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Get in touch"
+  },
+  "pb-346c7b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-569366": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and Dana will follow up within one business day to schedule yo"
+  },
+  "pb-169bda": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-36eec3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "184 Church Street, Suite 3, Burlington, VT 05401"
+  },
+  "pb-3453f0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Office hours"
+  },
+  "pb-774cd8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Mon\u2013Fri, 9am\u20135pm. Evening calls available by arrangement."
+  },
+  "pb-089aa3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Contact"
+  },
+  "pb-6ee915": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-1ac531": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(802) 555-0147"
+  },
+  "pb-2bd742": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-dca0e5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@mapleandhart.law"
+  },
+  "pb-d80c8b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-93d503": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-1b1f4d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-548d68": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "span",
+    "original_text": "(optional)"
+  },
+  "pb-baf93e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "How can we help?"
+  },
+  "pb-40d289": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send message"
+  },
+  "pb-0752ad": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Maple & Hart Law"
+  },
+  "pb-8b400e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Family law practice in Burlington, VT \u2014 plain English, no pressure."
+  },
+  "pb-b7d8b0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1b70a6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-a9eab7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5ff077": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "How It Works"
+  },
+  "pb-597c72": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-097af3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Dana"
+  },
+  "pb-33feaf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-dd57df": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Fees"
+  },
+  "pb-ecc47b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-97ee7e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-27a598": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Maple & Hart Law. All rights reserved."
+  },
+  "pb-69772b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

@@ -1,0 +1,627 @@
+{
+  "pb-1e69f5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Small-batch roasted in-house, every week"
+  },
+  "pb-2ca655": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-1844a5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We roast single-origin beans a few days a week \u2014 you can smell it the second you"
+  },
+  "pb-9ab8e3": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "Our story"
+  },
+  "pb-2c300c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "How it began"
+  },
+  "pb-5521e1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-97daf9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "We built Ember & Oak around one idea: that coffee is better when you know where "
+  },
+  "pb-fbf68b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "You'll smell the roast before you see it. That's the point. We wanted a place th"
+  },
+  "pb-0ac82a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every bag that leaves here has a handwritten roast date and a short note about t"
+  },
+  "pb-82285b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "\u2014 \u2014 The Ember & Oak team, Roasters & Neighbors"
+  },
+  "pb-f7ad2a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What we're pouring"
+  },
+  "pb-aba965": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-699443": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole Bean Bags"
+  },
+  "pb-4565bc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "250g and 500g bags of freshly roasted single-origin coffee. Each bag is hand-dat"
+  },
+  "pb-d73f10": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $18"
+  },
+  "pb-8dc19b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Espresso Blends"
+  },
+  "pb-e19508": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our house espresso blend is built for balance \u2014 sweet caramel up front, a clean "
+  },
+  "pb-04e27d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $19"
+  },
+  "pb-44c364": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Caf\u00e9 Drinks"
+  },
+  "pb-7ef569": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Come in and we'll brew you a cup. Pour-overs, lattes, cortados \u2014 whatever fits t"
+  },
+  "pb-b759a6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $4.50"
+  },
+  "pb-758ed7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Coffee Subscriptions"
+  },
+  "pb-750305": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Get a fresh bag every 2 or 4 weeks. Choose your roast level, we'll rotate the or"
+  },
+  "pb-b52661": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $17/bag"
+  },
+  "pb-af3aad": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From the farm to your cup"
+  },
+  "pb-a3f2f2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f19f2f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Step 1"
+  },
+  "pb-41c14c": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "We source direct from the farm"
+  },
+  "pb-b01495": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We work with importers and cooperatives we trust to find single-origin lots from"
+  },
+  "pb-7bda72": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Step 2"
+  },
+  "pb-ae385b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "We roast in small batches"
+  },
+  "pb-2adb52": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "A few mornings a week, we load the drum and roast to order. Small batches mean w"
+  },
+  "pb-88c8b3": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Step 3"
+  },
+  "pb-415e29": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "We write the date by hand"
+  },
+  "pb-73f698": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every single bag gets a handwritten roast date and a note about the farm \u2014 origi"
+  },
+  "pb-502a9e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Step 4"
+  },
+  "pb-d87cfd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "We ship it or you stop by"
+  },
+  "pb-d3cab3": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Bags ship within 48 hours of roasting. Or come to the caf\u00e9 \u2014 smell the fresh roa"
+  },
+  "pb-92f966": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-ed83d8": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "What people say"
+  },
+  "pb-a2d147": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-7c2d4b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-da45f8": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I ordered the Ethiopian Yirgacheffe on a whim and ended up reading the whole far"
+  },
+  "pb-a4c6d3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Online customer, orders every month"
+  },
+  "pb-3ead13": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Options"
+  },
+  "pb-7a6208": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-2f432e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Single Bag"
+  },
+  "pb-934d6f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $18"
+  },
+  "pb-d0be19": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per bag"
+  },
+  "pb-275e83": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-36ff24": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-45b766": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "250g or 500g whole bean bags"
+  },
+  "pb-6f04b8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ecd249": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-e80b39": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Handwritten roast date on every bag"
+  },
+  "pb-30864a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6952fd": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-62ac46": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Farm notes included"
+  },
+  "pb-59803d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-897a5a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-58d49b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Ships within 48 hrs of roasting"
+  },
+  "pb-aedd79": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Shop now"
+  },
+  "pb-8d71f0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Subscription"
+  },
+  "pb-7e2f2f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $17"
+  },
+  "pb-210906": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per bag"
+  },
+  "pb-e4f23d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6ee953": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-bf6649": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Delivery every 2 or 4 weeks"
+  },
+  "pb-bf15c2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f0a425": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-ec27cc": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "We rotate the origin each cycle"
+  },
+  "pb-ce180f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e352af": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-c91bb6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Handwritten roast date & farm note"
+  },
+  "pb-32eec5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b89cf8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-5bd473": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Free shipping on every order"
+  },
+  "pb-b5425f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-804790": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-f31374": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Pause or cancel any time"
+  },
+  "pb-a42c44": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Start a subscription"
+  },
+  "pb-90da94": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Caf\u00e9 Visit"
+  },
+  "pb-9c68de": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $4.50"
+  },
+  "pb-f90e21": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per drink"
+  },
+  "pb-84f3bb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-be63a5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-dda01d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Pour-overs, lattes, cortados"
+  },
+  "pb-832e10": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-562137": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-115c4d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Beans pulled fresh from in-house roasts"
+  },
+  "pb-9fa128": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d1f3cc": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-158c2b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Take a bag home on your way out"
+  },
+  "pb-ade047": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2db929": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2713"
+  },
+  "pb-17b975": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Regulars always welcome"
+  },
+  "pb-253482": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Find us"
+  },
+  "pb-cb4c27": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Come find us"
+  },
+  "pb-6eeba2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-74f370": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Questions about a bean, a subscription, or a wholesale order? Send us a message "
+  },
+  "pb-2e534e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-90dda3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-269d74": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message or party size"
+  },
+  "pb-1ef657": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request a table"
+  },
+  "pb-fec802": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-29dc8f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "412 Maple Street, Portland, OR 97209 \u2014 Kerns neighborhood"
+  },
+  "pb-af92b2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-11adc5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Caf\u00e9 open Tuesday \u2013 Saturday, 7am \u2013 2pm. Roasting days: Tuesday, Thursday, Satur"
+  },
+  "pb-408ce5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-dedb2f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-cf96b1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(503) 555-0174"
+  },
+  "pb-9f6a79": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-56810d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@emberandoakroasters.com"
+  },
+  "pb-88a184": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Ember & Oak Roasters"
+  },
+  "pb-c6ba95": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Small-batch, single-origin. Roasted in-house. Every bag hand-dated."
+  },
+  "pb-75740f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-af99b9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Shop Coffee"
+  },
+  "pb-5938b3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-92e1e2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Our Story"
+  },
+  "pb-56f018": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-96f3d2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Subscriptions"
+  },
+  "pb-836998": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9ab62e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Visit the Caf\u00e9"
+  },
+  "pb-365fd9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f87e8c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Wholesale"
+  }
+}

@@ -1,0 +1,597 @@
+{
+  "pb-5aa2d3": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Now seating \u00b7 Hudson Valley, NY"
+  },
+  "pb-e0d8c2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-9b31b3": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Every plate names the farm it came from \u2014 most within 30 miles. The menu shifts "
+  },
+  "pb-3f91f4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "See the menu"
+  },
+  "pb-df2220": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Tonight's plates"
+  },
+  "pb-a18b2e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-16d11d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Roasted Beet & Whipped Ch\u00e8vre"
+  },
+  "pb-311077": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$16"
+  },
+  "pb-268cfa": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Chioggia beets from Holler Creek Farm, whipped local ch\u00e8vre, toasted walnut, wil"
+  },
+  "pb-f8c65f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Smoked Duck Leg Confit"
+  },
+  "pb-59574c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$38"
+  },
+  "pb-01e3a7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Raised at Herondale Farm. Slow-rendered, crisped to order, served over creamy wh"
+  },
+  "pb-caefaa": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Sungold Tomato Pappardelle"
+  },
+  "pb-e15bb0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$29"
+  },
+  "pb-f19c61": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Hand-rolled pasta, sungold tomatoes from Tivoli Farm, torn basil, aged pecorino,"
+  },
+  "pb-197631": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Grilled Lamb Shoulder Chop"
+  },
+  "pb-cc3d68": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$42"
+  },
+  "pb-3efa38": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Hudson Valley pasture-raised lamb from Kinderhook Farm. Wood-fired, rested, plat"
+  },
+  "pb-5fa62e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Cornmeal Cake & Stone Fruit"
+  },
+  "pb-72761e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$13"
+  },
+  "pb-e75adf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Butter-rich cornmeal cake, roasted peaches from Barton Orchards, cr\u00e8me fra\u00eeche, "
+  },
+  "pb-cf7af1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Behind the pass"
+  },
+  "pb-ea97a0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-2f5faf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "My wife Dana and I opened Maple & Furrow because we were tired of restaurants th"
+  },
+  "pb-5a7234": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Every dish on the menu carries the name of the farm it came from. That's not a m"
+  },
+  "pb-c38826": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "The menu changes every few weeks, driven entirely by what our growers bring in. "
+  },
+  "pb-5d5d23": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Dana & the kitchen crew \u00b7 Founders, Maple & Furrow"
+  },
+  "pb-2e8826": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From the kitchen & the fields"
+  },
+  "pb-0fbc33": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e5bed5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-76ea07": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "What people say"
+  },
+  "pb-2a07b7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-c2649a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-082073": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We had the duck confit from Herondale and I still think about it a month later. "
+  },
+  "pb-82c403": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Table of two, been coming since last fall"
+  },
+  "pb-fc6414": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "The offering"
+  },
+  "pb-7706af": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-8667ff": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u00c0 la carte"
+  },
+  "pb-0c421b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $13"
+  },
+  "pb-8287b0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per dish"
+  },
+  "pb-e14e2a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-db4eb8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-990b2e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Full menu, order at your own pace"
+  },
+  "pb-4e1ff9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c94d28": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-f8c990": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Dishes sourced from named local farms"
+  },
+  "pb-aacf73": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ab6a1a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-bd8437": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Menu rotates every few weeks"
+  },
+  "pb-dfa680": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-448fd6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-d1586a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Vegetarian options always available"
+  },
+  "pb-3b3edd": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-29e559": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-d456d9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Wine & local cider pairings available"
+  },
+  "pb-cdf7e7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Reserve a table"
+  },
+  "pb-d7357d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Chef's tasting"
+  },
+  "pb-191783": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$72"
+  },
+  "pb-bd2d4a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per person"
+  },
+  "pb-0ab6fa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9ffca2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-46193a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Five courses chosen by the kitchen"
+  },
+  "pb-c816f5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-290f3b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-8c51aa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Reflects whatever arrived from the farms this week"
+  },
+  "pb-e1d38b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8b1872": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-5d65c9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Paired with seasonal wine or cider (add $38)"
+  },
+  "pb-8bed72": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fd906c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-dcbcc2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Available Thursday \u2013 Sunday, full table only"
+  },
+  "pb-a3ed72": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ce6904": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-0bf0e9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "48-hour advance reservation required"
+  },
+  "pb-b0e59a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Book the tasting"
+  },
+  "pb-72eb6c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Private dining"
+  },
+  "pb-87e278": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $800"
+  },
+  "pb-2575b2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per evening"
+  },
+  "pb-8c29eb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ac6beb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-fbd99e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Exclusive use of our back room, seats up to 14"
+  },
+  "pb-43b236": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a5daa3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-06e2a9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Custom menu built around your guests"
+  },
+  "pb-12452e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-592bf5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-1fa5ae": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Full farm sourcing list provided"
+  },
+  "pb-49329a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c2f4a2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2726"
+  },
+  "pb-4e40d0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Wine pairing available on request"
+  },
+  "pb-5e5039": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Inquire now"
+  },
+  "pb-a5b288": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Reservations"
+  },
+  "pb-a3c611": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a12f75": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Send us a note and we'll confirm within one business day. Walk-ins welcome when "
+  },
+  "pb-31ef0b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-063c27": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-030e9e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message or party size"
+  },
+  "pb-6e8530": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request a table"
+  },
+  "pb-4b7b02": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-1ebf7a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "42 Millbrook Turnpike, Rhinebeck, NY 12572"
+  },
+  "pb-af5a21": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-3e9fa4": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Dinner: Wed \u2013 Sun, 5pm \u2013 10pm\nLunch: Sat \u2013 Sun, 11:30am \u2013 2:30pm\nClosed Monday &"
+  },
+  "pb-ab90b5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-2e74ce": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-e2a822": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(845) 555-0183"
+  },
+  "pb-df7527": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-f0061a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@mapleandfurrow.com"
+  },
+  "pb-2cdd76": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Maple & Furrow"
+  },
+  "pb-4db666": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Seasonal farm-to-table dining in the Hudson Valley. Named farms, real seasons, o"
+  },
+  "pb-2bc47c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-84581c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Menu"
+  },
+  "pb-a880a3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-53c389": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Reservations"
+  },
+  "pb-4dd5db": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5caabd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Our Story"
+  },
+  "pb-7addde": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-51a6e0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Private Dining"
+  },
+  "pb-2a4c70": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a2c96e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Gallery"
+  }
+}

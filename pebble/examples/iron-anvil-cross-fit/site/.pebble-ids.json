@@ -1,0 +1,577 @@
+{
+  "pb-fdbabd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "TRAIN. SWEAT. RING THE BELL."
+  },
+  "pb-e7d7f4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-fcbfe8": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "No mirror selfies. No gym-bro nonsense. Just a tight-knit east side community gr"
+  },
+  "pb-7a5354": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "SEE THE PROGRAM"
+  },
+  "pb-8d9951": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "WHAT WE OFFER"
+  },
+  "pb-cce3f6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-2a2f2f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "GROUP WODs"
+  },
+  "pb-435055": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Daily coached classes scaled to every level. Show up, get after it, leave strong"
+  },
+  "pb-db6f31": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $99/mo"
+  },
+  "pb-4b0f42": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "FIRST LIGHT 6AM CREW"
+  },
+  "pb-10d6e7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our legendary sunrise session. Finish the WOD, ring the PR bell, grab coffee fro"
+  },
+  "pb-56ccd9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Included"
+  },
+  "pb-93f1dc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "PERSONAL COACHING"
+  },
+  "pb-c4cbdd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "One-on-one sessions dialing in your technique, programming your goals, and pushi"
+  },
+  "pb-7d8441": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $75/session"
+  },
+  "pb-c74fbf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "FOUNDATIONS COURSE"
+  },
+  "pb-3d8846": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Brand new to CrossFit? This is your starting block. Four sessions covering movem"
+  },
+  "pb-366e8d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$120 \u2014 4 sessions"
+  },
+  "pb-6b2941": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "OPEN GYM"
+  },
+  "pb-bbc225": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Members get unlimited open floor time. Bring your own programming or chip away a"
+  },
+  "pb-71d5cb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Members only"
+  },
+  "pb-7862b7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "OUR STORY"
+  },
+  "pb-b15354": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-83f6bf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We opened Iron Anvil CrossFit on the east side because this neighborhood needed "
+  },
+  "pb-3178c9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Every coach here was once a nervous beginner staring down a barbell. We coach re"
+  },
+  "pb-fbb9db": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "The 6am First Light crew set the tone from day one. They finish every session ri"
+  },
+  "pb-ba4853": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 COACH DEREK \u2014 FOUNDER & HEAD TRAINER"
+  },
+  "pb-995c8f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-bbf9cf": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I showed up not knowing a clean from a deadlift. Twelve weeks later I hit"
+  },
+  "pb-163df4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "MEMBER SINCE 2022 \u2014 FIRST LIGHT CREW"
+  },
+  "pb-80bc65": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "CHOOSE YOUR TIER"
+  },
+  "pb-a06cfb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-74f8cc": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "DROP-IN"
+  },
+  "pb-01f342": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$25"
+  },
+  "pb-0fdbcf": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "per class"
+  },
+  "pb-148503": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f2e143": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-4ee9a8": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Single coached group WOD"
+  },
+  "pb-f117ae": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9865ce": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-777d2a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Access to all equipment"
+  },
+  "pb-204cfb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f016a1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-472f31": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Coach-led warm-up and cool-down"
+  },
+  "pb-0dc240": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-180919": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-73a94b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Full scaling options provided"
+  },
+  "pb-11d1ec": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "BOOK A CLASS"
+  },
+  "pb-d9c02a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "UNLIMITED"
+  },
+  "pb-4994fa": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$149"
+  },
+  "pb-2aa5b9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "/month"
+  },
+  "pb-91575a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-be5ec4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-1346d5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Unlimited group WOD classes"
+  },
+  "pb-f9a3f8": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-227b74": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-277017": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "First Light 6am access included"
+  },
+  "pb-599dc1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-160e74": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-84f108": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Open gym floor time"
+  },
+  "pb-8b20a4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-30cb05": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-54d6b9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Monthly progress check-in with a coach"
+  },
+  "pb-ef23b9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d92b38": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-3ededb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Members-only community events"
+  },
+  "pb-5daf39": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "JOIN NOW"
+  },
+  "pb-100a7e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "ELITE"
+  },
+  "pb-449eb4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$249"
+  },
+  "pb-15582c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "/month"
+  },
+  "pb-d259d1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4dc12a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-31c7b0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Everything in Unlimited"
+  },
+  "pb-3367c4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2b5173": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-e59dd1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "2x personal coaching sessions/month"
+  },
+  "pb-14ddba": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-018c72": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-554cdb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Custom programming and goal tracking"
+  },
+  "pb-bb5555": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ddb459": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-46f845": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Priority scheduling for all classes"
+  },
+  "pb-6d6e88": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-3eacb0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "+"
+  },
+  "pb-20cd73": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Nutrition guidance add-on available"
+  },
+  "pb-d49fbf": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "GO ELITE"
+  },
+  "pb-43bdfb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "READY TO START"
+  },
+  "pb-ee4a82": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ef3dd5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Send us a message and we'll get back to you within 24 hours. No spam, no pressur"
+  },
+  "pb-b76bd1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-1baabb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-27df43": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-8d4f8e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Send it"
+  },
+  "pb-ee0788": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Location"
+  },
+  "pb-8b554b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "412 Eastgate Blvd, East Side District"
+  },
+  "pb-fb5227": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-66c632": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Mon\u2013Fri 5:30am\u20138pm | Sat 7am\u201312pm | Sun 8am\u201311am"
+  },
+  "pb-750dfd": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Contact"
+  },
+  "pb-49870c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-b12fd4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "(555) 874-2600"
+  },
+  "pb-1c6a79": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-0d4a56": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "hello@ironanvilcrossfit.com"
+  },
+  "pb-3102b6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Iron Anvil CrossFit"
+  },
+  "pb-1b5bb9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Train hard. Show up. Ring the bell."
+  },
+  "pb-60f11e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-dc10d3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "PROGRAMS"
+  },
+  "pb-dfdd0f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7f50a6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "PRICING"
+  },
+  "pb-d9ec81": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a7b889": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "OUR STORY"
+  },
+  "pb-8d4850": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-80d6c9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "FIRST LIGHT CREW"
+  },
+  "pb-f399e5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cc9dc2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "CONTACT"
+  },
+  "pb-c48404": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Iron Anvil CrossFit. All rights reserved."
+  }
+}

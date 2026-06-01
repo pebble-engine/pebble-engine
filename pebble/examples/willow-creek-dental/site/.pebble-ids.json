@@ -1,0 +1,417 @@
+{
+  "pb-5bb7ee": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Family dental care, no rush \u2014 ever"
+  },
+  "pb-ca7f24": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-7d3ccd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From first teeth to lifelong smiles, we see every member of your family with unh"
+  },
+  "pb-9eda98": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "Our services"
+  },
+  "pb-60abeb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "What we offer"
+  },
+  "pb-315ab2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-4bbe76": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Children's Dentistry"
+  },
+  "pb-c16018": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Gentle first visits for toddlers through teens. We take the time to make young p"
+  },
+  "pb-4a367f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-9f13c2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Routine Cleanings & Exams"
+  },
+  "pb-ee5091": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Thorough cleanings with no rushing. We talk through what we find and answer ever"
+  },
+  "pb-8fc9fd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-a74924": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Restorative Care"
+  },
+  "pb-cadecd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fillings, crowns, and tooth repair done at a pace that feels manageable. We walk"
+  },
+  "pb-a5f121": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-8edf7e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Cosmetic Dentistry"
+  },
+  "pb-451317": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Whitening, veneers, and smile refinements for patients who want to feel confiden"
+  },
+  "pb-4ac827": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-fd934a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Senior Dental Care"
+  },
+  "pb-5e320b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Attentive care for older patients with longer appointments, clear explanations, "
+  },
+  "pb-63678d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-c6c48c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Anxiety-Friendly Visits"
+  },
+  "pb-66695f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Designed for nervous patients. We never rush, always explain, and you can pause "
+  },
+  "pb-98218d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-36b5c9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How a visit works"
+  },
+  "pb-26cdfd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6d3949": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 1"
+  },
+  "pb-ad4c8d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "You arrive \u2014 no waiting room chaos"
+  },
+  "pb-503d3a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We never double-book, so your appointment starts on time. A calm, unhurried spac"
+  },
+  "pb-3792e9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 2"
+  },
+  "pb-4bb12b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We listen before we look"
+  },
+  "pb-24d290": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Before anything else, we ask about your concerns, your history, and how you're f"
+  },
+  "pb-96049c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 3"
+  },
+  "pb-de9d74": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We explain everything first"
+  },
+  "pb-f7fbc2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Nothing happens without your full understanding. We show you what we see, descri"
+  },
+  "pb-b97834": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 4"
+  },
+  "pb-f16ffd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Treatment, at your pace"
+  },
+  "pb-f4ce1c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "You stay in control. We check in throughout. If you need a break, just say so. U"
+  },
+  "pb-c5719f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 5"
+  },
+  "pb-2d8916": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "You leave knowing exactly what's next"
+  },
+  "pb-edb3e8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Before you go, we review findings and any follow-up in plain language \u2014 no jargo"
+  },
+  "pb-18b64d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Our story"
+  },
+  "pb-c4a906": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a348aa": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Willow Creek Dental started with a simple observation: most people don't dislike"
+  },
+  "pb-e86f19": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We see everyone from toddlers getting their very first cleaning to grandparents "
+  },
+  "pb-ce09fd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Before we do anything, we explain it. Before you feel anything, you know why. Th"
+  },
+  "pb-80a2e0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Dr. Sarah Wren, DDS \u00b7 Founder & Lead Dentist"
+  },
+  "pb-9689ff": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Client results"
+  },
+  "pb-f5a8f6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-b162e0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I've avoided the dentist for over a decade because of anxiety. My first v"
+  },
+  "pb-9ed90a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Patient"
+  },
+  "pb-f745b7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Request an appointment"
+  },
+  "pb-75826e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-448b8f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll follow up within one business day to confirm your ap"
+  },
+  "pb-b8c211": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-701264": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "214 Willow Creek Road, Suite 101, Maplewood, NJ 07040"
+  },
+  "pb-e9dde7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Office hours"
+  },
+  "pb-923b57": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Monday \u2013 Thursday, 8am \u2013 5pm\nFriday, 8am \u2013 2pm\nSaturday by appointment"
+  },
+  "pb-04039e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Contact"
+  },
+  "pb-afc214": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-efb87e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "(973) 555-0184"
+  },
+  "pb-7a984f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-0c363f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "hello@willowcreekdental.com"
+  },
+  "pb-f36901": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-97cd75": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-98e677": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-a9eb7c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "(optional)"
+  },
+  "pb-6b5bc0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "How can we help?"
+  },
+  "pb-fde54c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Send message"
+  },
+  "pb-0cb559": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Willow Creek Dental"
+  },
+  "pb-7d78c0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Family dental practice in Maplewood, NJ \u2014 unhurried care for every age."
+  },
+  "pb-1069ce": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-164b90": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-605859": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-346d01": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "How It Works"
+  },
+  "pb-cbb65e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a3fbd7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-d41063": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4e25c4": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Patient Reviews"
+  },
+  "pb-fcb4a8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4e46a1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Book an Appointment"
+  },
+  "pb-bdcd23": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Willow Creek Dental. All rights reserved."
+  },
+  "pb-1e4aa6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

@@ -106,6 +106,11 @@ def route_get(handler) -> None:
             # picker. Public; no auth needed.
             from pebble.server.templates_api import run_list_templates
             run_list_templates(handler)
+        elif handler.path == "/api/examples":
+            # 2026-05-31 — free "pick-from" gallery of the 15 industry example
+            # sites (v2 motion engine). Public; no auth needed.
+            from pebble.server.examples import run_list_examples
+            run_list_examples(handler)
         elif handler.path == "/api/industries":
             handler._handle_list_industries()
         elif handler.path == "/api/briefs":
@@ -295,6 +300,12 @@ def route_post(handler) -> None:
             # customer's business name/services. Free-tier-friendly.
             from pebble.server.templates_api import run_instantiate_template
             run_instantiate_template(handler)
+        elif handler.path == "/api/examples/clone":
+            # 2026-05-31 — "clone this example": pure filesystem copy of a
+            # pre-built v2 example site into the user's account. No LLM,
+            # instant, billable: false.
+            from pebble.server.examples import run_clone_example
+            run_clone_example(handler)
         elif handler.path == "/api/template-match":
             # Phase F1 (2026-05-24) — deterministic top-N template ranking.
             # Scores every template against (prompt, business_type) via cheap

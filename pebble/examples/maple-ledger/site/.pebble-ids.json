@@ -1,0 +1,667 @@
+{
+  "pb-1aa242": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "CPA & bookkeeping for local small businesses"
+  },
+  "pb-f474da": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-73cd66": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We handle the day-to-day books and yearly taxes for restaurants, contractors, sa"
+  },
+  "pb-e0e1c7": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "See our services"
+  },
+  "pb-ca07eb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "What we handle"
+  },
+  "pb-34e30b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-4e162b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Small Business Bookkeeping"
+  },
+  "pb-829f26": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Monthly reconciliation, categorization, and clean books delivered on schedule \u2014 "
+  },
+  "pb-df6c12": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-c69143": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Business Tax Returns"
+  },
+  "pb-5b218d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Annual federal and state filings for sole proprietors, LLCs, S-corps, and partne"
+  },
+  "pb-24d913": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-5fd931": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Individual Tax Returns"
+  },
+  "pb-c2dddf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Straightforward personal returns done right. Whether you have W-2s, freelance in"
+  },
+  "pb-a2e431": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-145060": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "IRS Correspondence & Notices"
+  },
+  "pb-1624fb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Got a letter from the IRS? Don't panic. We read it, respond on your behalf, and "
+  },
+  "pb-8b43c1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-f34428": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Catch-Up Bookkeeping"
+  },
+  "pb-3f33cc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Months behind on your books? We sort through the backlog, reconcile the gaps, an"
+  },
+  "pb-c83e13": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-c87d68": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Free Shoebox Review"
+  },
+  "pb-28b333": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Bring in your messiest pile of receipts and records. We'll tell you straight wha"
+  },
+  "pb-7534f7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "a",
+    "original_text": "Learn more &rarr;"
+  },
+  "pb-52db3a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How it works"
+  },
+  "pb-f0c2f4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c9a057": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 1"
+  },
+  "pb-02d5f8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Start with the Shoebox Review"
+  },
+  "pb-8c0f30": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Bring whatever you've got \u2014 receipts, bank statements, a shoebox, or nothing at "
+  },
+  "pb-2fdbf0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 2"
+  },
+  "pb-5f75d8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We agree on a clear scope"
+  },
+  "pb-d05832": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "No vague packages. We tell you what needs to be done, what it costs, and what th"
+  },
+  "pb-2254e1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 3"
+  },
+  "pb-730538": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "We take it off your plate"
+  },
+  "pb-c09e6f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Once we're aligned, you hand over access and we get to work. Books get organized"
+  },
+  "pb-a4521a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Step 4"
+  },
+  "pb-69c298": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "You stay informed, always"
+  },
+  "pb-75d609": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We send clear summaries, answer your questions the same day, and flag anything t"
+  },
+  "pb-b4013d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed CPA \u00b7 Local since 2011"
+  },
+  "pb-bda103": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-9a5ca5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Maple & Ledger started because too many local business owners were getting burne"
+  },
+  "pb-af253d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We work exclusively with small businesses and individuals. Restaurants, contract"
+  },
+  "pb-d11276": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Our team is small by choice. Every client works directly with a licensed CPA, no"
+  },
+  "pb-a842a6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Maple & Ledger CPA \u00b7 Licensed & Local"
+  },
+  "pb-6b8c50": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Client results"
+  },
+  "pb-a823be": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-7e79c0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I came in with two years of unfiled returns and a pile of receipts I was "
+  },
+  "pb-d9b7ba": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Owner, Hutchins Tile & Renovation"
+  },
+  "pb-c4528d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Service packages"
+  },
+  "pb-4f808f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-2cc363": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Tax Filing Only"
+  },
+  "pb-6d9ec3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $350"
+  },
+  "pb-217222": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per return"
+  },
+  "pb-591cd8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2df5a2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-b6d7c4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Federal + state individual or business return"
+  },
+  "pb-03f399": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-87859e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-e337b2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Deduction review included"
+  },
+  "pb-03477e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-733d3b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-978276": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "E-filing and confirmation"
+  },
+  "pb-2f1b86": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a7f320": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-715ecb": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "One year of document storage"
+  },
+  "pb-ab6ffe": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Get started"
+  },
+  "pb-02a751": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Books + Taxes"
+  },
+  "pb-923e50": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $275"
+  },
+  "pb-b5a33c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "/ month"
+  },
+  "pb-47a8d7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6666b4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-3cfd06": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Monthly bookkeeping & reconciliation"
+  },
+  "pb-ebf030": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-78b458": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-ee53aa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Profit & loss delivered each month"
+  },
+  "pb-a3f820": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-91620c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-d89f3d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Annual business tax return included"
+  },
+  "pb-e3bcab": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ac09b9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-2287c3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "IRS notice support included"
+  },
+  "pb-b0472c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-16b841": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-dcb320": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Direct CPA access by phone or email"
+  },
+  "pb-8ef37c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Start with a review"
+  },
+  "pb-0000b5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Catch-Up & Clean"
+  },
+  "pb-1a988e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-0be330": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "one-time"
+  },
+  "pb-ad1d6f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-24bf01": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-6ae991": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Backlog bookkeeping for any period"
+  },
+  "pb-38edde": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c17095": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-fb8f32": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Full reconciliation and gap repair"
+  },
+  "pb-2beac6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0dcaa5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-5fe427": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Amended or late returns if needed"
+  },
+  "pb-6b9b5b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6281a6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-028576": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Handoff to ongoing plan at completion"
+  },
+  "pb-4b49d2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Book a free review"
+  },
+  "pb-d5808b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Get in touch"
+  },
+  "pb-c8ce1d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-1ec947": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll get back to you within one business day to set up yo"
+  },
+  "pb-2ad81a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-35ce80": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "412 Maple Street, Suite 3, Millbrook, OH 44101"
+  },
+  "pb-8f84b4": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Office hours"
+  },
+  "pb-4e62eb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Monday \u2013 Friday, 9am \u2013 5pm\nEvening appointments available by request"
+  },
+  "pb-2b6b24": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Contact"
+  },
+  "pb-724d42": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-401937": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(330) 555-0182"
+  },
+  "pb-00fba3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-107b70": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@mapleandledger.com"
+  },
+  "pb-bf8f5c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-fbd50a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-9791f9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-8ffb42": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "span",
+    "original_text": "(optional)"
+  },
+  "pb-7a9568": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "How can we help?"
+  },
+  "pb-c0d46f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send message"
+  },
+  "pb-4c27c8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Maple & Ledger"
+  },
+  "pb-b75091": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "CPA and bookkeeping for local small businesses. Millbrook, OH."
+  },
+  "pb-00bd6d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9eb3c0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-a50f6a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ce88c9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "How It Works"
+  },
+  "pb-0e03f8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a411f1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-cb1ede": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d6b8d3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Pricing"
+  },
+  "pb-2e752a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a5f162": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-fea04e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Maple & Ledger. All rights reserved."
+  },
+  "pb-0b50ae": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

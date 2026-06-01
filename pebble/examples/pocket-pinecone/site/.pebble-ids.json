@@ -1,0 +1,517 @@
+{
+  "pb-26669a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "\ud83c\udf32 A little shop full of big surprises"
+  },
+  "pb-5c8258": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-2c95bc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We hand-pick every wooden toy, building set, and wind-up wonder ourselves \u2014 no b"
+  },
+  "pb-ee09ad": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "Meet our mystery cubby"
+  },
+  "pb-8e2261": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "\ud83e\udde9 What's in store"
+  },
+  "pb-8648cf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-9132d0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Wooden Toys & Figures"
+  },
+  "pb-457d64": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Beautifully crafted animals, cars, dollhouses, and more \u2014 all solid wood, all bu"
+  },
+  "pb-1de3cc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Open-Ended Building Sets"
+  },
+  "pb-e73665": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Blocks, tiles, and loose parts that can become anything a kid dreams up. No righ"
+  },
+  "pb-42540e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Weird Wind-Up Critters"
+  },
+  "pb-fb94f1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our most beloved oddities \u2014 waddling penguins, flipping frogs, chomping crabs. K"
+  },
+  "pb-d0d14e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Games You Won't Find Elsewhere"
+  },
+  "pb-2e2003": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Strategy, silliness, and storytelling \u2014 we scout indie games and import gems tha"
+  },
+  "pb-bd5185": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "The Mystery Cubby Wall \ud83c\udf89"
+  },
+  "pb-a04ec4": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our numbered wooden boxes up front, each hiding a small surprise toy for just $5"
+  },
+  "pb-37155e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\ud83c\udf3f How it all started"
+  },
+  "pb-b2c11c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-4d56e4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We got tired of driving to big-box stores and leaving with bags full of plastic "
+  },
+  "pb-6a8d3e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pocket & Pinecone started in a corner storefront with a handful of wooden toys, "
+  },
+  "pb-5ecc15": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "The mystery cubby wall was our first big idea and it's still the heart of the sh"
+  },
+  "pb-70508d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Maren & Joel, Founders & Chief Toy Scouts"
+  },
+  "pb-6ee5d8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-d8133b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "My son has dragged us back every Saturday for three months just to pick a myster"
+  },
+  "pb-0efe7a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Regular customer since the shop opened"
+  },
+  "pb-eb9257": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Pick your play"
+  },
+  "pb-6feee7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b75d77": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Stocking Stuffers"
+  },
+  "pb-83a9b3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$5 \u2013 $15"
+  },
+  "pb-7046ba": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "per item"
+  },
+  "pb-119566": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fa5b27": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-1b392e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Mystery cubby surprise toys ($5 each)"
+  },
+  "pb-d9b6d6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cb067e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-33ffe0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Wind-up critters and novelties"
+  },
+  "pb-ef6da0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-26e533": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-925494": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Small wooden figures and animals"
+  },
+  "pb-f35722": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cfb94a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-8dc886": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Great for party favors or add-ons"
+  },
+  "pb-385529": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "Browse the shop"
+  },
+  "pb-d6639a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Sweet Spot Gifts"
+  },
+  "pb-f9a5b1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$16 \u2013 $45"
+  },
+  "pb-c4b737": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "per item"
+  },
+  "pb-962c6f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9a1d76": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-64789b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Open-ended building and stacking sets"
+  },
+  "pb-125381": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-874f94": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-a03acd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Indie card and strategy games"
+  },
+  "pb-c3237e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b727b3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-370941": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Wooden play kitchens and small-world sets"
+  },
+  "pb-073872": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d2024e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-fd4ac5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Hand-picked for ages 2\u201310"
+  },
+  "pb-685b9d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "Come explore"
+  },
+  "pb-33b0de": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Heirloom Picks"
+  },
+  "pb-d92c01": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "$50 \u2013 $120"
+  },
+  "pb-1ba469": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "per item"
+  },
+  "pb-917716": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9f6f35": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-0ee0a0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Large wooden playsets and dollhouses"
+  },
+  "pb-8a62e2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cf3aee": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-d81312": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Premium building and marble run sets"
+  },
+  "pb-ffe10e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-18bb98": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-c42cc2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Curated gift bundles we put together for you"
+  },
+  "pb-f7161f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-108324": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "&#10003;"
+  },
+  "pb-ee21ae": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Toys built to survive years of love"
+  },
+  "pb-81f39c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": "Ask us for help"
+  },
+  "pb-cb1573": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "\ud83d\udc4b Say hello!"
+  },
+  "pb-645ba3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-09903d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Whether you need a gift idea, want to know what's new in the cubbies, or just wa"
+  },
+  "pb-d87597": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-ce0081": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-f3c3ac": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-15fa83": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Send it!"
+  },
+  "pb-25fc08": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-f74004": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "114 Elm Corner, Millbrook, NY 12545"
+  },
+  "pb-321106": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-0cb735": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Tuesday \u2013 Friday: 10am \u2013 6pm\nSaturday: 10am \u2013 5pm\nSunday: 11am \u2013 4pm\nClosed Mond"
+  },
+  "pb-5db334": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-79fc47": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-6707f5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "(845) 555-0173"
+  },
+  "pb-574297": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-45c0b2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "hello@pocketandpinecone.com"
+  },
+  "pb-41e186": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Pocket & Pinecone"
+  },
+  "pb-c7b3c1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "A little shop, hand-picked with love. Come wander in."
+  },
+  "pb-4a25f2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1e57c5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "What's in store"
+  },
+  "pb-83b17b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-02798b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Our story"
+  },
+  "pb-147c79": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-96a2a9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Mystery cubby"
+  },
+  "pb-a1c9e2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-996e35": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Gift ideas"
+  },
+  "pb-7cd742": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d40b5c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Visit us"
+  }
+}

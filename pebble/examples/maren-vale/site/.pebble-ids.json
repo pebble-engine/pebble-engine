@@ -1,0 +1,352 @@
+{
+  "pb-abf723": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Hand-fabricated fine jewelry."
+  },
+  "pb-f046b9": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-efe8e4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Every piece begins at the bench \u2014 formed from metal, shaped by hand, finished wi"
+  },
+  "pb-6c72d8": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "OUR OFFERINGS"
+  },
+  "pb-54b4a5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our ethos."
+  },
+  "pb-654b18": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3408aa": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "I work alone at my bench \u2014 sawing, soldering, setting stones by hand. There is n"
+  },
+  "pb-b17bfc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Before any metal is touched, I draw. Every client receives an original hand-sket"
+  },
+  "pb-886a56": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Most of the people who come to me are marking something: a proposal, an annivers"
+  },
+  "pb-5221e4": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Maren, Founder & Goldsmith"
+  },
+  "pb-25dc8e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How it works."
+  },
+  "pb-c2535a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-00e61c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "First"
+  },
+  "pb-44d1a8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "A conversation"
+  },
+  "pb-ffd542": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We begin with a quiet conversation \u2014 in the studio or over email \u2014 about the mom"
+  },
+  "pb-6b9100": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Second"
+  },
+  "pb-4dabde": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "The sketch"
+  },
+  "pb-cd7b09": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "I draw your piece by hand on cotton paper. You'll receive the original \u2014 not a s"
+  },
+  "pb-6b32a2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Third"
+  },
+  "pb-bde4dd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "The making"
+  },
+  "pb-503815": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Once the design is approved, I fabricate your piece at my bench. Sawing, forming"
+  },
+  "pb-942705": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Finally"
+  },
+  "pb-c7eed4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Yours to keep"
+  },
+  "pb-3b11f3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Your finished piece arrives with its original design sketch, wrapped simply and "
+  },
+  "pb-5874a2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "What we offer."
+  },
+  "pb-b170d1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-55250c": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Engagement Rings"
+  },
+  "pb-5fe701": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Designed around your story. Every ring begins with a hand sketch and is built fr"
+  },
+  "pb-05ad28": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $2,800"
+  },
+  "pb-79f638": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Heirloom Necklaces"
+  },
+  "pb-b9554f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Pendants and chains made to be passed down. We work with your inherited stones, "
+  },
+  "pb-7a5fca": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $1,200"
+  },
+  "pb-3af187": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Anniversary Bands"
+  },
+  "pb-2981a9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Quiet, considered bands for marking time together. Etched, textured, set or plai"
+  },
+  "pb-0a5cb4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $900"
+  },
+  "pb-89cd78": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Memorial Pieces"
+  },
+  "pb-47d8f1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Jewelry made to hold something \u2014 a lock of hair, a stone from a beloved ring, an"
+  },
+  "pb-949f36": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $850"
+  },
+  "pb-2bed3d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "One-of-a-Kind Commissions"
+  },
+  "pb-9ae88f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Something entirely your own. Bring a feeling, a reference, a photograph \u2014 I'll t"
+  },
+  "pb-f7db2f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $1,500"
+  },
+  "pb-f75616": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-295923": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I still look at the sketch sometimes, even now that I wear the ring every"
+  },
+  "pb-875e1f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Commission client, engagement ring."
+  },
+  "pb-80b2d1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Begin a commission."
+  },
+  "pb-1bfe79": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-65cc19": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Tell me a little about what you have in mind \u2014 the occasion, a feeling, a materi"
+  },
+  "pb-1260d7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-6b282e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-c06095": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-b1b910": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Send request"
+  },
+  "pb-d890ee": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-e2c798": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Studio by appointment \u2014 Portland, Oregon"
+  },
+  "pb-4033c0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-a6328b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Tuesday \u2013 Saturday, 10am \u2013 5pm. Evening appointments available on request."
+  },
+  "pb-0b9677": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-0bef1f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-275917": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "(503) 214-0876"
+  },
+  "pb-a61451": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-2d41b1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "hello@marenandvale.com"
+  },
+  "pb-cc4afc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Maren & Vale"
+  },
+  "pb-82ed86": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fine jewelry, hand-fabricated at the bench. Portland, Oregon."
+  },
+  "pb-0d2d6a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-af7bd2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Commissions"
+  },
+  "pb-47e92d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f2f37b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Process"
+  },
+  "pb-59507f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b9a09b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-3fd89d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-701497": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  }
+}

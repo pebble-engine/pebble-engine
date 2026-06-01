@@ -31,6 +31,26 @@ def test_motion_primitives_are_edit_safe_and_reduced_motion_aware(tmp_path: Path
     assert "...rest" in reveal
 
 
+def test_revealwords_fires_on_mount_not_on_scroll(tmp_path: Path):
+    """REGRESSION: the headline primitive must animate on MOUNT, not whileInView.
+
+    A hero h1 lives above the fold and is the highest-stakes text on the page.
+    With whileInView its visibility depended on IntersectionObserver firing —
+    leaving the headline invisible (opacity:0) on any client where IO is
+    delayed/absent or during the hydration window. RevealWords must use
+    `animate` so the headline is always revealed once JS hydrates.
+
+    FadeUp/Stagger keep whileInView intentionally (genuine below-fold reveals)."""
+    _write_scaffolding(tmp_path)
+    reveal = (tmp_path / "components" / "motion" / "RevealWords.tsx").read_text(encoding="utf-8")
+    assert "animate=" in reveal, "RevealWords must fire on mount via animate"
+    assert "whileInView=" not in reveal, \
+        "RevealWords must NOT gate the headline behind IntersectionObserver"
+    # below-the-fold reveal primitives still use whileInView
+    fade = (tmp_path / "components" / "motion" / "FadeUp.tsx").read_text(encoding="utf-8")
+    assert "whileInView=" in fade, "FadeUp is a scroll reveal — keep whileInView"
+
+
 def test_scaffolding_package_json_includes_framer_motion(tmp_path: Path):
     _write_scaffolding(tmp_path)
     pkg = json.loads((tmp_path / "package.json").read_text(encoding="utf-8"))

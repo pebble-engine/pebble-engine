@@ -1,0 +1,377 @@
+{
+  "pb-6f336a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Small-batch sourdough \u00b7 Riverside"
+  },
+  "pb-e642f7": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-d912c1": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We mix everything by hand, let our doughs ferment for two full days, and pull ab"
+  },
+  "pb-39e0bc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "Our story"
+  },
+  "pb-fa2a39": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "What we're baking"
+  },
+  "pb-0589bd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-8ef6e8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Country Sourdough"
+  },
+  "pb-05ec3c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$9"
+  },
+  "pb-5f916d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our everyday loaf \u2014 open crumb, crackly crust, two-day cold ferment. Made with l"
+  },
+  "pb-fee9bb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Saturday Rye & Fig"
+  },
+  "pb-dfe7de": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$13"
+  },
+  "pb-e935b9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Our most-asked-about loaf. Dark rye, dried fig, and a thirty-year-old starter in"
+  },
+  "pb-a75ed8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Butter Croissant"
+  },
+  "pb-b8fda9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$5"
+  },
+  "pb-953fed": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Laminated by hand each morning. Honey-lacquered, shatteringly flaky, with a soft"
+  },
+  "pb-798e41": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Whole Wheat Sesame"
+  },
+  "pb-b37830": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$10"
+  },
+  "pb-4aaa71": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Nutty and substantial \u2014 40% whole wheat, toasted sesame crust, slightly sweet cr"
+  },
+  "pb-9bef6d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Morning Pastry Box"
+  },
+  "pb-b9ba9a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "$22"
+  },
+  "pb-dbf771": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "A rotating mix of what came out of the oven that morning \u2014 croissants, kouign-am"
+  },
+  "pb-05753f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "How it began"
+  },
+  "pb-8935f4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b3345a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Flour & Fern is three people and a tiny corner space in Riverside. We open the o"
+  },
+  "pb-c183c6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our sourdough ferments for 48 hours minimum \u2014 no shortcuts, no commercial yeast."
+  },
+  "pb-11e41f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "The Saturday rye-and-fig loaf is the one people drive across town for. It's bake"
+  },
+  "pb-e3431a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Founders & bakers, Flour & Fern"
+  },
+  "pb-fa737e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From the oven"
+  },
+  "pb-0ba208": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ecc7f9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-7001d2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "What people say"
+  },
+  "pb-179174": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-4e7c69": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-4a498c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I set an alarm on Saturdays specifically for the rye-and-fig loaf. I've missed i"
+  },
+  "pb-721b51": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Regular every weekend since last spring"
+  },
+  "pb-4d112f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "How it's made"
+  },
+  "pb-5fc0b1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-fd0578": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Day one"
+  },
+  "pb-14f427": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "The mix"
+  },
+  "pb-f89654": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "We combine stone-milled flour, water, and our live starter by hand each afternoo"
+  },
+  "pb-68fe96": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Day two"
+  },
+  "pb-bc490e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Cold ferment"
+  },
+  "pb-d55b93": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Shaped loaves go into the walk-in for a full night cold proof. The cold slows ev"
+  },
+  "pb-c10e1c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Early morning"
+  },
+  "pb-3916cf": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "Into the oven"
+  },
+  "pb-bbb93f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "We score each loaf by hand before loading the deck oven. Steam injection gives t"
+  },
+  "pb-822849": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "By 7am"
+  },
+  "pb-b83bc1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h3",
+    "original_text": "On the shelf"
+  },
+  "pb-53609a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Loaves cool on the rack, then go up for sale. Most days we're sold out before no"
+  },
+  "pb-8b1f0e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Come find us"
+  },
+  "pb-f4482c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-648dfd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Want to reserve a loaf for the week, ask about wholesale, or just say hello? Sen"
+  },
+  "pb-5a0c28": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-a79026": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-214bb1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message or party size"
+  },
+  "pb-10eaf9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request a table"
+  },
+  "pb-10db9b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-3295d8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Corner of Fern Ave & Riverside Dr, Riverside neighborhood"
+  },
+  "pb-b8586f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-27de72": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Wednesday \u2013 Friday: 7am \u2013 noon (or until sold out)\nSaturday \u2013 Sunday: 6:30am \u2013 n"
+  },
+  "pb-5aaa6b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-84f02e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-d68bdc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(503) 741-0892"
+  },
+  "pb-d83868": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-df07bd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@flourandfern.com"
+  },
+  "pb-a19ac3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Flour & Fern"
+  },
+  "pb-3d5cec": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Small-batch sourdough baked slow, sold by noon."
+  },
+  "pb-4c5304": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-939904": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "What we bake"
+  },
+  "pb-600f47": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2bf30b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Our story"
+  },
+  "pb-218176": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8a7e6b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "How it's made"
+  },
+  "pb-8d7bf8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6e754e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Visit us"
+  }
+}

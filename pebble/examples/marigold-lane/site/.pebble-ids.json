@@ -1,0 +1,362 @@
+{
+  "pb-7247b9": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "A little salon on the east side"
+  },
+  "pb-1875a5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-07ff76": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We're a converted house with three chairs, a kettle always on, and stylists who "
+  },
+  "pb-cfcd05": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "Our story"
+  },
+  "pb-f4e847": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "How it began"
+  },
+  "pb-8c4259": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-44cb56": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Marigold Lane started when three of us decided we'd rather work somewhere that f"
+  },
+  "pb-97b2bc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Most of our clients have been coming for years \u2014 some since the very beginning. "
+  },
+  "pb-8b987e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every first appointment starts with a proper sit-down. Kettle on, no scissors ye"
+  },
+  "pb-62f6a2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "\u2014 \u2014 The team at Marigold Lane"
+  },
+  "pb-561bcb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What we offer."
+  },
+  "pb-5f6659": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-711755": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "New Client Consultation"
+  },
+  "pb-5a365b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Every first visit begins with tea and a slow conversation. No scissors until we "
+  },
+  "pb-a296ad": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Complimentary"
+  },
+  "pb-a04661": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Cut & Style"
+  },
+  "pb-53b77e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A considered cut shaped for how you live in your hair day to day \u2014 finished howe"
+  },
+  "pb-bbdde4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $75"
+  },
+  "pb-4ea41d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Colour & Highlights"
+  },
+  "pb-33a6b9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Lived-in colour, bold statements, or a gentle refresh. Mixed by hand and applied"
+  },
+  "pb-4fa68c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $110"
+  },
+  "pb-6442aa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Gloss & Treatment"
+  },
+  "pb-2a8f53": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Restorative treatments that bring back softness and shine without stripping what"
+  },
+  "pb-a9bf1b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $55"
+  },
+  "pb-73147e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Blowout & Finish"
+  },
+  "pb-50ca47": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A proper blowout that lasts \u2014 smooth, full, or natural. Done with a brush and no"
+  },
+  "pb-64d76c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $45"
+  },
+  "pb-b255c8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent work"
+  },
+  "pb-733cd4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a36a07": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Your first visit"
+  },
+  "pb-2df76e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-93c24e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "First"
+  },
+  "pb-3b115b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "The kettle goes on"
+  },
+  "pb-8ed411": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Before anything else, you'll sit down with one of us for a cup of tea. We'll ask"
+  },
+  "pb-248420": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Then"
+  },
+  "pb-d5c421": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "A slow consultation"
+  },
+  "pb-e5aa56": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We look at your hair properly \u2014 texture, growth patterns, what's been done befor"
+  },
+  "pb-eb00b4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Next"
+  },
+  "pb-170c95": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "The cut, colour, or treatment"
+  },
+  "pb-4608b2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Your stylist is the same person every visit. They remember what you asked for la"
+  },
+  "pb-303ba6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Finally"
+  },
+  "pb-4da8d9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "You leave feeling like yourself"
+  },
+  "pb-032af7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We finish with a style that fits how you actually wear your hair. We'll note wha"
+  },
+  "pb-c2daa8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-2e4220": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I've moved twice and still drive across the city to get to Marigold Lane."
+  },
+  "pb-d6cc0c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Client since the beginning."
+  },
+  "pb-e35b1e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Come in and sit down."
+  },
+  "pb-8bcaf3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-19ad85": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Send us a note with your name, what you're thinking, and when works for you. We'"
+  },
+  "pb-64a01f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-1737ee": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-116062": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-678b29": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send request"
+  },
+  "pb-12d503": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-9be8be": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Marigold Lane Salon \u00b7 East Side"
+  },
+  "pb-bc563c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-de024e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Tuesday \u2013 Friday, 10am \u2013 7pm \u00b7 Saturday, 9am \u2013 5pm \u00b7 Closed Sunday & Monday"
+  },
+  "pb-90a937": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-2ddb74": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-657c89": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(503) 555-0182"
+  },
+  "pb-d6d160": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-d9e95e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@marigoldlanesalon.com"
+  },
+  "pb-9b28c8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Marigold Lane"
+  },
+  "pb-6be5fc": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "A neighborhood salon where your hair is known and your time is not rushed."
+  },
+  "pb-b04181": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9ddb1e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-13d744": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-81af73": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-db2d5f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1a357c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Our Process"
+  },
+  "pb-3f2204": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-439fd0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Book"
+  }
+}

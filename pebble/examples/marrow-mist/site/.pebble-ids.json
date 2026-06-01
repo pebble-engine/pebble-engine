@@ -1,0 +1,617 @@
+{
+  "pb-e540d9": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "A quiet beginning."
+  },
+  "pb-c1983d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-05ac2b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Every visit begins with warm water, cedar-and-chamomile tea, and a foot ritual t"
+  },
+  "pb-9a7336": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "OUR OFFERINGS"
+  },
+  "pb-7c41f1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "What we offer."
+  },
+  "pb-0e6458": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-421986": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "The Ritual Welcome"
+  },
+  "pb-2ffab6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every session begins here: warm basin foot soak, cedar-and-chamomile tea, and a "
+  },
+  "pb-9f72b8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "Included in all"
+  },
+  "pb-63a287": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Deep Restore Massage"
+  },
+  "pb-aeda51": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Slow, deliberate pressure along the back and shoulders. We work with your tensio"
+  },
+  "pb-bfacb3": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $120"
+  },
+  "pb-d839d4": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Cedar & Clay Facial"
+  },
+  "pb-620c35": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "A grounding facial using mineral-rich clay and cedar extract. Skin left clear an"
+  },
+  "pb-ecf3ca": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $105"
+  },
+  "pb-52bc85": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Couples' Sanctuary"
+  },
+  "pb-ae747f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Side-by-side treatment in our private suite \u2014 ideal for anniversaries. Begins wi"
+  },
+  "pb-bece18": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $260"
+  },
+  "pb-d1bb63": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h3",
+    "original_text": "Restorative Body Wrap"
+  },
+  "pb-8896dc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Warm herb-infused linen wraps cocoon the body while tension melts. Ends with a g"
+  },
+  "pb-ba880b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "span",
+    "original_text": "From $135"
+  },
+  "pb-819ad6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our ethos."
+  },
+  "pb-84a021": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-d21016": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Most spas rush you in. We built Marrow & Mist to do the opposite. Before any tre"
+  },
+  "pb-8825e4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We mostly see women in their 30s and 40s who are holding a lot. Career, family, "
+  },
+  "pb-a6807b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Tucked just off the main road, we stay small on purpose. Our therapists know you"
+  },
+  "pb-ce060b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Nadia Voss, Founder & Lead Therapist"
+  },
+  "pb-f25137": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "How a visit unfolds."
+  },
+  "pb-b640e7": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-1aad48": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Arrival"
+  },
+  "pb-a111c1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Leave the noise outside."
+  },
+  "pb-bffced": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "You're greeted by name, shown to a quiet anteroom, and offered a moment to set d"
+  },
+  "pb-3779dc": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "The Ritual"
+  },
+  "pb-3e8e14": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Warm water and cedar tea."
+  },
+  "pb-d8dd4c": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Your foot soak is drawn \u2014 warm water with mineral salts and eucalyptus. A cup of"
+  },
+  "pb-760c1f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "The Treatment"
+  },
+  "pb-144bcb": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Unhurried, thorough, yours."
+  },
+  "pb-22d9c6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Your therapist checks in \u2014 not with a questionnaire, but a conversation. Then th"
+  },
+  "pb-733b70": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Coming Back"
+  },
+  "pb-aa889a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Slow your return to the day."
+  },
+  "pb-4bbb78": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "After your treatment, rest in the recovery lounge as long as you need. There's n"
+  },
+  "pb-ef5eb5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-a9643d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "&ldquo;I've been to places that call themselves spas. Marrow & Mist is the only "
+  },
+  "pb-f79fd9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Regular guest. Comes in every six weeks."
+  },
+  "pb-1326f0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "What's included."
+  },
+  "pb-b78c91": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e4e07d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "The Hour"
+  },
+  "pb-8cae97": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $120"
+  },
+  "pb-b419ed": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per visit"
+  },
+  "pb-1c6130": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b216f3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-4cddae": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Warm foot ritual & cedar-chamomile tea"
+  },
+  "pb-a6b0e4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-42e71c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-88aba1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "60-minute massage or facial"
+  },
+  "pb-4da272": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-596f51": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-f77910": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Recovery lounge access"
+  },
+  "pb-144129": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-579820": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-923a43": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Personalised pressure & scent consult"
+  },
+  "pb-edf990": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "BOOK NOW"
+  },
+  "pb-0d4a07": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "The Deep Rest"
+  },
+  "pb-e0ef1a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $195"
+  },
+  "pb-4d982a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per visit"
+  },
+  "pb-cd3c97": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-3dfd78": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-746b81": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Warm foot ritual & cedar-chamomile tea"
+  },
+  "pb-667560": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d7f08c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-9ae3bc": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "90-minute massage or body wrap"
+  },
+  "pb-2f6200": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d65052": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-25606d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Scalp massage included"
+  },
+  "pb-f0d60c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-95674f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-a73c96": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Recovery lounge \u2014 take your time"
+  },
+  "pb-2b7a08": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5e7fac": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-1b3412": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Complimentary botanical mist"
+  },
+  "pb-8caae6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "BOOK NOW"
+  },
+  "pb-0cf9fa": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "The Couples' Suite"
+  },
+  "pb-3bdaf7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "From $260"
+  },
+  "pb-589440": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "per couple"
+  },
+  "pb-3226b7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d277ce": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-732d30": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Private suite, two foot rituals"
+  },
+  "pb-810b24": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e4ade9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-f1a329": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Two cups of cedar-chamomile tea"
+  },
+  "pb-2b8dbe": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fee382": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-896f9e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Synchronized 60-minute massages"
+  },
+  "pb-c83f4d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8ea38a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-e1a8b7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Ideal for anniversaries & gifts"
+  },
+  "pb-cdd070": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "BOOK NOW"
+  },
+  "pb-1e1b3e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "We hold space for you."
+  },
+  "pb-33ec1f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e72419": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Send us a note and we'll confirm your booking within one business day. Let us kn"
+  },
+  "pb-280336": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-8f38fb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email address"
+  },
+  "pb-412661": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-ca5bf7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send request"
+  },
+  "pb-5d7a36": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Find us"
+  },
+  "pb-d65ffe": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "14 Alderwood Lane, just off Merchant Street, Millhaven"
+  },
+  "pb-4c12e6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-dbb76f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Tuesday \u2013 Friday, 10am \u2013 7pm\nSaturday, 9am \u2013 6pm\nSunday, 10am \u2013 4pm\nClosed Monda"
+  },
+  "pb-9eb950": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Get in touch"
+  },
+  "pb-eb9bc8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-64dabc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(503) 882-4170"
+  },
+  "pb-a84b70": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-c30f26": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@marrowandmist.com"
+  },
+  "pb-aa3607": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Marrow & Mist"
+  },
+  "pb-446d8a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "A day spa where every treatment begins with stillness."
+  },
+  "pb-bac00e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b834cf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "OFFERINGS"
+  },
+  "pb-849867": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c1d1b6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "OUR STORY"
+  },
+  "pb-3a2ccd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6c45e5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "HOW IT WORKS"
+  },
+  "pb-65d0ef": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9b52b2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "BOOK A VISIT"
+  }
+}

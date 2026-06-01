@@ -18,19 +18,20 @@ export default function HeroPlate() {
             className="object-cover"
           />
         </Parallax>
-        {/* Rich warm gradient — bottom-heavy so type is readable */}
-        <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/60 to-transparent" />
+        {/* Rich warm gradient — bottom-heavy, plus a mid scrim so type stays
+            readable even over bright/low-contrast food photos */}
+        <div className="absolute inset-0 bg-gradient-to-t from-stone-900 via-stone-900/70 to-transparent" />
       </div>
 
       {/* Copy block — sits beneath the photo like a menu caption */}
       <div className="relative z-10 container mx-auto px-8 pb-20 md:pb-28 max-w-6xl">
-        <p className="text-{{accent}} text-sm uppercase tracking-widest font-sans mb-4">
+        <p className="text-{{accent}} text-sm uppercase tracking-widest font-sans mb-4 [text-shadow:0_1px_8px_rgba(0,0,0,0.5)]">
           {{eyebrow}}
         </p>
-        <h1 className="text-stone-50 font-serif text-5xl md:text-7xl leading-tight max-w-3xl mb-6">
+        <h1 className="text-stone-50 font-serif text-5xl md:text-7xl leading-tight max-w-3xl mb-6 [text-shadow:0_2px_16px_rgba(0,0,0,0.55)]">
           <RevealWords>{{headline}}</RevealWords>
         </h1>
-        <p className="text-stone-200/80 text-lg md:text-xl font-sans leading-relaxed max-w-2xl mb-10">
+        <p className="text-stone-200/80 text-lg md:text-xl font-sans leading-relaxed max-w-2xl mb-10 [text-shadow:0_1px_10px_rgba(0,0,0,0.5)]">
           {{subheadline}}
         </p>
         <div className="flex flex-wrap gap-4">

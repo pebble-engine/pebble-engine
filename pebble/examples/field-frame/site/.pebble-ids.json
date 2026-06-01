@@ -1,0 +1,342 @@
+{
+  "pb-440773": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Hudson Valley, New York"
+  },
+  "pb-497b5e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-8eb80b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Field & Frame is a small residential architecture studio. We design modern singl"
+  },
+  "pb-d21c80": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "About the studio"
+  },
+  "pb-911e94": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Selected work"
+  },
+  "pb-f3a6b5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-66d8cc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Studio"
+  },
+  "pb-4836e2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-07a59e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Field & Frame is Nora and two other architects. We design modern single-family h"
+  },
+  "pb-549b84": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Before we draw a single wall, we walk the site at sunrise and at sunset. We trac"
+  },
+  "pb-d4abbf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We keep the studio small because the work requires it. Each project gets our ful"
+  },
+  "pb-661fa9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Nora Ellsworth, Principal Architect"
+  },
+  "pb-f50a4d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Work"
+  },
+  "pb-618729": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-717570": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "New Construction"
+  },
+  "pb-43133e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Modern single-family homes designed from the site outward \u2014 sited for light, bui"
+  },
+  "pb-97c840": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-4dc88e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Thoughtful Renovation"
+  },
+  "pb-13e1dc": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Additions and renovations that respect what's already there. We find the logic o"
+  },
+  "pb-aa4cea": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-2b1aa9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Site Analysis"
+  },
+  "pb-5c92d6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every engagement begins with the land. We document solar angles, seasonal shadow"
+  },
+  "pb-65dfbd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-1e74f3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our process"
+  },
+  "pb-fea721": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-83a375": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "First"
+  },
+  "pb-6b0b51": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "We walk the site"
+  },
+  "pb-626b0d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Before any drawing starts, we visit the land at sunrise and sunset. We document "
+  },
+  "pb-7ecfdf": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Second"
+  },
+  "pb-952430": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "Schematic design"
+  },
+  "pb-a8ca13": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We develop a scheme that responds to what we found on site \u2014 orientation, massin"
+  },
+  "pb-bad44c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Third"
+  },
+  "pb-7ddfb0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "Design development"
+  },
+  "pb-582009": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Materials, details, structure. We work through every decision carefully \u2014 not to"
+  },
+  "pb-ce94c3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Fourth"
+  },
+  "pb-4d007d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "Construction documents"
+  },
+  "pb-6a4422": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We produce a thorough set of drawings and specifications. Fewer questions in the"
+  },
+  "pb-e0294a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Fifth"
+  },
+  "pb-ab2f37": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h3",
+    "original_text": "Construction administration"
+  },
+  "pb-ce534f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We stay involved through the build \u2014 site visits, contractor coordination, respo"
+  },
+  "pb-144161": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-23bdca": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "The Catskill Ridge House is the kind of work that makes you reconsider what a ho"
+  },
+  "pb-c4fed8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Regional Design Review, 2023"
+  },
+  "pb-f40866": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Inquiries"
+  },
+  "pb-cee579": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ff4db3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "We take on a small number of projects each year. If you have a site and a sense "
+  },
+  "pb-b8839a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-8aee43": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-95163b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-82cdda": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send inquiry \u2192"
+  },
+  "pb-423248": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Studio"
+  },
+  "pb-3f1bdf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Stone Ridge, New York 12484"
+  },
+  "pb-70c743": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-0c1dd2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Studio hours: Monday \u2013 Friday, 9am \u2013 5pm"
+  },
+  "pb-44bb8b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Contact"
+  },
+  "pb-3b275c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "(845) 555-0192"
+  },
+  "pb-753415": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "hello@fieldandframe.studio"
+  },
+  "pb-6afbec": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Field & Frame"
+  },
+  "pb-4856f5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Residential architecture. Hudson Valley, NY."
+  },
+  "pb-adc5fe": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d858d4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Work"
+  },
+  "pb-465d67": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-270841": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Studio"
+  },
+  "pb-f20858": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0b859a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Process"
+  },
+  "pb-d6e001": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4db275": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Inquiries"
+  },
+  "pb-bfeb56": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2024"
+  }
+}

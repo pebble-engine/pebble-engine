@@ -1,0 +1,167 @@
+[
+  {
+    "n": 1,
+    "vibe": "warm-craft",
+    "industry": "artisan bakery",
+    "name": "Flour & Fern",
+    "slug": "flour-fern",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 2,
+    "vibe": "warm-craft",
+    "industry": "hair salon",
+    "name": "Marigold Lane",
+    "slug": "marigold-lane",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 3,
+    "vibe": "clean-trust",
+    "industry": "dental practice",
+    "name": "Willow Creek Dental",
+    "slug": "willow-creek-dental",
+    "sections": 7,
+    "files": 27,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 4,
+    "vibe": "clean-trust",
+    "industry": "family law firm",
+    "name": "Maple & Hart Law",
+    "slug": "maple-hart-law",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 5,
+    "vibe": "clean-trust",
+    "industry": "accounting / cpa firm",
+    "name": "Maple & Ledger",
+    "slug": "maple-ledger",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 6,
+    "vibe": "bold-energetic",
+    "industry": "crossfit gym",
+    "name": "Iron Anvil CrossFit",
+    "slug": "iron-anvil-cross-fit",
+    "sections": 7,
+    "files": 27,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 7,
+    "vibe": "bold-energetic",
+    "industry": "esports organization",
+    "name": "Static Vanguard",
+    "slug": "static-vanguard",
+    "sections": 7,
+    "files": 27,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 8,
+    "vibe": "editorial-minimal",
+    "industry": "wedding photography",
+    "name": "Linen & Light",
+    "slug": "linen-light",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 9,
+    "vibe": "editorial-minimal",
+    "industry": "residential architecture",
+    "name": "Field & Frame",
+    "slug": "field-frame",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 10,
+    "vibe": "appetizing-rich",
+    "industry": "farm-to-table restaurant",
+    "name": "Maple & Furrow",
+    "slug": "maple-furrow",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 11,
+    "vibe": "appetizing-rich",
+    "industry": "specialty coffee roaster",
+    "name": "Ember & Oak Roasters",
+    "slug": "ember-oak-roasters",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 12,
+    "vibe": "luxurious-spa",
+    "industry": "day spa",
+    "name": "Marrow & Mist",
+    "slug": "marrow-mist",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 13,
+    "vibe": "luxurious-spa",
+    "industry": "fine jewelry boutique",
+    "name": "Maren & Vale",
+    "slug": "maren-vale",
+    "sections": 7,
+    "files": 27,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 14,
+    "vibe": "playful-illustrated",
+    "industry": "kids art classes",
+    "name": "Scribble Sprouts",
+    "slug": "scribble-sprouts",
+    "sections": 8,
+    "files": 28,
+    "leaks": [],
+    "ok": true
+  },
+  {
+    "n": 15,
+    "vibe": "playful-illustrated",
+    "industry": "indie toy shop",
+    "name": "Pocket & Pinecone",
+    "slug": "pocket-pinecone",
+    "sections": 7,
+    "files": 27,
+    "leaks": [],
+    "ok": true
+  }
+]

@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0",
+  "generated_for": "free pick-from gallery (v2 motion engine)",
+  "examples": [
+    {
+      "slug": "flour-fern",
+      "name": "Flour & Fern",
+      "industry": "artisan bakery",
+      "vibe": "warm-craft",
+      "hero_image": "https://images.pexels.com/photos/6794615/pexels-photo-6794615.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/flour-fern",
+      "kind": "example_build"
+    },
+    {
+      "slug": "marigold-lane",
+      "name": "Marigold Lane",
+      "industry": "hair salon",
+      "vibe": "warm-craft",
+      "hero_image": "https://images.pexels.com/photos/10773643/pexels-photo-10773643.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/marigold-lane",
+      "kind": "example_build"
+    },
+    {
+      "slug": "willow-creek-dental",
+      "name": "Willow Creek Dental",
+      "industry": "dental practice",
+      "vibe": "clean-trust",
+      "hero_image": "https://images.pexels.com/photos/6812463/pexels-photo-6812463.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 7,
+      "source_dir": "pebble/examples/willow-creek-dental",
+      "kind": "example_build"
+    },
+    {
+      "slug": "maple-hart-law",
+      "name": "Maple & Hart Law",
+      "industry": "family law firm",
+      "vibe": "clean-trust",
+      "hero_image": "https://images.pexels.com/photos/7078756/pexels-photo-7078756.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/maple-hart-law",
+      "kind": "example_build"
+    },
+    {
+      "slug": "maple-ledger",
+      "name": "Maple & Ledger",
+      "industry": "accounting / cpa firm",
+      "vibe": "clean-trust",
+      "hero_image": "https://images.pexels.com/photos/8297044/pexels-photo-8297044.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/maple-ledger",
+      "kind": "example_build"
+    },
+    {
+      "slug": "iron-anvil-cross-fit",
+      "name": "Iron Anvil Cross Fit",
+      "industry": "crossfit gym",
+      "vibe": "bold-energetic",
+      "hero_image": "https://images.pexels.com/photos/9958673/pexels-photo-9958673.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 7,
+      "source_dir": "pebble/examples/iron-anvil-cross-fit",
+      "kind": "example_build"
+    },
+    {
+      "slug": "static-vanguard",
+      "name": "Static Vanguard",
+      "industry": "esports organization",
+      "vibe": "bold-energetic",
+      "hero_image": "https://images.pexels.com/photos/7862508/pexels-photo-7862508.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 7,
+      "source_dir": "pebble/examples/static-vanguard",
+      "kind": "example_build"
+    },
+    {
+      "slug": "linen-light",
+      "name": "Linen & Light",
+      "industry": "wedding photography",
+      "vibe": "editorial-minimal",
+      "hero_image": "https://images.pexels.com/photos/15865441/pexels-photo-15865441.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/linen-light",
+      "kind": "example_build"
+    },
+    {
+      "slug": "field-frame",
+      "name": "Field & Frame",
+      "industry": "residential architecture",
+      "vibe": "editorial-minimal",
+      "hero_image": "https://images.pexels.com/photos/4125087/pexels-photo-4125087.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/field-frame",
+      "kind": "example_build"
+    },
+    {
+      "slug": "maple-furrow",
+      "name": "Maple & Furrow",
+      "industry": "farm-to-table restaurant",
+      "vibe": "appetizing-rich",
+      "hero_image": "https://images.pexels.com/photos/18823960/pexels-photo-18823960.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/maple-furrow",
+      "kind": "example_build"
+    },
+    {
+      "slug": "ember-oak-roasters",
+      "name": "Ember & Oak Roasters",
+      "industry": "specialty coffee roaster",
+      "vibe": "appetizing-rich",
+      "hero_image": "https://images.pexels.com/photos/4264047/pexels-photo-4264047.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/ember-oak-roasters",
+      "kind": "example_build"
+    },
+    {
+      "slug": "marrow-mist",
+      "name": "Marrow & Mist",
+      "industry": "day spa",
+      "vibe": "luxurious-spa",
+      "hero_image": "https://images.pexels.com/photos/35884499/pexels-photo-35884499.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/marrow-mist",
+      "kind": "example_build"
+    },
+    {
+      "slug": "maren-vale",
+      "name": "Maren & Vale",
+      "industry": "fine jewelry boutique",
+      "vibe": "luxurious-spa",
+      "hero_image": "https://images.pexels.com/photos/5009521/pexels-photo-5009521.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 7,
+      "source_dir": "pebble/examples/maren-vale",
+      "kind": "example_build"
+    },
+    {
+      "slug": "scribble-sprouts",
+      "name": "Scribble Sprouts",
+      "industry": "kids art classes",
+      "vibe": "playful-illustrated",
+      "hero_image": "https://images.pexels.com/photos/4172988/pexels-photo-4172988.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/scribble-sprouts",
+      "kind": "example_build"
+    },
+    {
+      "slug": "pocket-pinecone",
+      "name": "Pocket & Pinecone",
+      "industry": "indie toy shop",
+      "vibe": "playful-illustrated",
+      "hero_image": "https://images.pexels.com/photos/36303741/pexels-photo-36303741.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 7,
+      "source_dir": "pebble/examples/pocket-pinecone",
+      "kind": "example_build"
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+[
+  {
+    "business_name": "Flour & Fern",
+    "industry": "artisan bakery",
+    "extra_context": "We're a tiny corner bakery in the Riverside neighborhood doing small-batch sourdough and pastries, just me and two early-morning bakers. Everything's mixed by hand and our loaves ferment slow for two days, so we only make about 40 a day and they sell out by noon most weekends. I want regulars to feel like this is their spot \u2014 the kind of place where we know your name and your usual order. The one thing folks always remember is our Saturday-only rye-and-fig loaf that we bake from a starter my grandmother kept alive for thirty years.",
+    "_vibe": "warm-craft"
+  },
+  {
+    "business_name": "Marigold Lane",
+    "industry": "hair salon",
+    "extra_context": "We're a little neighborhood salon I run with two other stylists out of an old converted house on the east side. Most of our folks have been coming for years, so it's pretty personal \u2014 you get the same chair, same person, and we actually remember what you asked for last time. I want the site to feel warm and unhurried, like sitting down with someone who knows your hair. One thing we're a bit known for is that every first-time appointment starts with a real cup of tea and a slow consult before anyone touches scissors.",
+    "_vibe": "warm-craft"
+  },
+  {
+    "business_name": "Willow Creek Dental",
+    "industry": "dental practice",
+    "extra_context": "We're a family dental practice and I see everyone from toddlers getting their first cleaning to grandparents, all under one roof. A lot of our patients come to us because they're honestly nervous about the dentist, so the whole vibe I want is calm and reassuring, nothing clinical or cold. The one thing people always mention is our \"no rush\" policy: we never double-book, so you actually get unhurried time in the chair and we explain everything before we do it.",
+    "_vibe": "clean-trust"
+  },
+  {
+    "business_name": "Maple & Hart Law",
+    "industry": "family law firm",
+    "extra_context": "We're a small family law practice run by me, Dana Hart, in Burlington. We help people through divorce, custody, and adoption \u2014 mostly parents who are scared, stressed, and don't know what any of the legal words mean. I want the site to feel calm and honest, like sitting across a kitchen table from someone who's got your back, not a stuffy intimidating law office. The one thing that makes us different: every new client gets a free 30-minute \"plain English\" first call where we just explain what's actually going to happen, no jargon and no pressure to sign anything.",
+    "_vibe": "clean-trust"
+  },
+  {
+    "business_name": "Maple & Ledger",
+    "industry": "accounting / cpa firm",
+    "extra_context": "We're a small CPA and bookkeeping shop that handles the day-to-day books and yearly taxes for local small businesses \u2014 restaurants, contractors, salons, that kind of thing \u2014 plus a handful of individuals who just want their returns done right. Most of our clients came to us scared of the IRS or burned by a previous accountant who went quiet, so what I really want people to feel is calm: like they finally have someone in their corner who picks up the phone. The one thing that sets us apart is we do a free 20-minute \"shoebox review\" where you bring in whatever messy pile of receipts you've got and we tell you straight what shape you're in, no commitment.",
+    "_vibe": "clean-trust"
+  },
+  {
+    "business_name": "Iron Anvil CrossFit",
+    "industry": "crossfit gym",
+    "extra_context": "We're Iron Anvil CrossFit, a community box on the east side of town for everyday people who want to get strong together, not gym bros chasing mirror selfies. We coach real humans through tough WODs and we want the site to hit you with that pumped-up, you-belong-here energy the second it loads. Our signature thing is the 6am \"First Light\" crew that finishes every workout ringing the PR bell and grabbing coffee from the trailer parked out front.",
+    "_vibe": "bold-energetic"
+  },
+  {
+    "business_name": "Static Vanguard",
+    "industry": "esports organization",
+    "extra_context": "We're Static Vanguard, a competitive gaming team running rosters in Valorant and Rocket League, and we're trying to grow from grassroots into a real org with sponsors. The site needs to serve our fans who follow our match schedule and clips, but honestly it's also a pitch deck for brands \u2014 we want it to feel loud, fast, and electric the second someone lands on it. The one thing that's actually ours: every player has a signature \"static glitch\" intro animation we run before their matches, and fans have started making it our whole identity. Make it feel like walking into the arena right before the crowd goes off.",
+    "_vibe": "bold-energetic"
+  },
+  {
+    "business_name": "Linen & Light",
+    "industry": "wedding photography",
+    "extra_context": "Hi, I'm Nora \u2014 I photograph weddings on 35mm and medium-format film, mostly for couples who want something quiet and unposed rather than the big flashy gallery look. I work with people getting married in vineyards, old barns, backyards, that kind of thing, usually around Oregon and Northern California. The feeling I'm after is calm and timeless \u2014 photos that look like they could've been taken in 1995 or yesterday, that you'd still love hanging on your wall in thirty years. The one thing that sets me apart: I only shoot film, no digital backup camera, and I hand-develop the black and whites myself so the grain and tones are actually mine, not a preset.",
+    "_vibe": "editorial-minimal"
+  },
+  {
+    "business_name": "Field & Frame",
+    "industry": "residential architecture",
+    "extra_context": "We're a small residential architecture studio based in the Hudson Valley \u2014 I'm Nora, and I run it with two other architects. We design modern single-family homes and the occasional thoughtful renovation, mostly for clients who want something quiet and well-built, not flashy. The feeling I want the site to give is calm and confident, like walking into a finished house where every line is intentional. One thing that sets us apart: we walk the actual site at sunrise and sunset before we draw a single wall, so the house gets sited around the light rather than the other way around. The site should really just be the work \u2014 big photos of finished homes, lots of white space, our story kept short.",
+    "_vibe": "editorial-minimal"
+  },
+  {
+    "business_name": "Maple & Furrow",
+    "industry": "farm-to-table restaurant",
+    "extra_context": "We're a small farm-to-table spot in the Hudson Valley, run by me and my wife Dana. The menu changes every few weeks depending on what our growers pull out of the ground, so you'll never see the exact same plate twice. We cook for folks who want a slow, unhurried dinner that feels like eating at a friend's farmhouse table, not a fancy night out. The one thing people always remember: every dish on the menu lists the farm it came from by name, and most of those farms are within 30 miles of our front door. Warm lighting, real candles, food that tastes like the season it's in.",
+    "_vibe": "appetizing-rich"
+  },
+  {
+    "business_name": "Ember & Oak Roasters",
+    "industry": "specialty coffee roaster",
+    "extra_context": "We're a small-batch coffee roaster and cafe \u2014 I roast single-origin beans in-house a few days a week and you can smell it the second you walk in. We mostly serve regulars from the neighborhood plus folks who want good beans to brew at home, and we ship bags too. I want the place to feel warm and a little cozy, like your kitchen on a slow Sunday morning, not some sleek minimalist chain. The one thing people remember us for: every bag has a handwritten roast date and a little note about the farm the beans came from.",
+    "_vibe": "appetizing-rich"
+  },
+  {
+    "business_name": "Marrow & Mist",
+    "industry": "day spa",
+    "extra_context": "We're a small day spa tucked just off the main road, mostly serving busy women in their 30s and 40s who need a real reset, plus the occasional couple coming in for an anniversary. I want people to exhale the second they walk through the door, like the noise of the day just gets left at the threshold. The one thing that's really us: every treatment starts with a warm foot ritual and a cup of cedar-and-chamomile tea before you even get to the table, so you arrive slowly instead of being rushed onto it.",
+    "_vibe": "luxurious-spa"
+  },
+  {
+    "business_name": "Maren & Vale",
+    "industry": "fine jewelry boutique",
+    "extra_context": "We're a small fine jewelry boutique where I design and hand-fabricate every piece at my bench \u2014 engagement rings, heirloom-style necklaces, that kind of thing. Most of my clients are people marking a big moment and they want something that feels personal, not mass-produced. I want the website to feel calm and unhurried, like stepping into a quiet spa \u2014 soft, warm, a little hushed and luxurious. The one thing that sets us apart: every commission comes with a hand-sketched design on cotton paper before we ever touch metal, and clients keep the original sketch.",
+    "_vibe": "luxurious-spa"
+  },
+  {
+    "business_name": "Scribble Sprouts",
+    "industry": "kids art classes",
+    "extra_context": "We're Scribble Sprouts, a little after-school and weekend art studio for kids ages 4 to 12 here in town. We do painting, clay, collage, the messier the better, and I want the website to feel as joyful and bright as the room does on a Saturday morning when there's glitter everywhere. The one thing parents always mention is our \"wall of fame\" where every single kid's piece goes up before it goes home, so nobody ever leaves feeling like their art wasn't good enough.",
+    "_vibe": "playful-illustrated"
+  },
+  {
+    "business_name": "Pocket & Pinecone",
+    "industry": "indie toy shop",
+    "extra_context": "We're a little independent toy shop tucked into a corner storefront, and we hand-pick everything ourselves \u2014 mostly wooden toys, open-ended building sets, weird wind-up critters, and games you won't find at the big-box stores. Our customers are parents and grandparents who want toys that aren't all plastic and batteries, plus the kids who light up the second they walk in. I want the shop to feel cozy and a bit magical, like a storybook you can wander into. The one thing everyone remembers is our \"mystery cubby\" wall up front \u2014 little numbered wooden boxes where for five bucks you get a surprise small toy, and kids beg to pick one every single visit.",
+    "_vibe": "playful-illustrated"
+  }
+]

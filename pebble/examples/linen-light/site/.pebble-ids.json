@@ -1,0 +1,537 @@
+{
+  "pb-668297": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Film photography \u00b7 Oregon & Northern California"
+  },
+  "pb-b32bd4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-fda844": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "35mm and medium-format film, shot and hand-developed by Nora. For couples who wa"
+  },
+  "pb-54ae7b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": "See the work"
+  },
+  "pb-e9963a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Selected work"
+  },
+  "pb-48aa20": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-d43dc8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "About"
+  },
+  "pb-5f23e5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-07e69e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "I'm Nora. I shoot every wedding on 35mm and medium-format film \u2014 no digital back"
+  },
+  "pb-7eea05": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Most of my couples are getting married somewhere quiet \u2014 a vineyard, an old barn"
+  },
+  "pb-bb1df3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "I hand-develop all the black-and-white film myself. It takes longer. The results"
+  },
+  "pb-e3d6c9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "\u2014 Nora, Founder & Film Photographer"
+  },
+  "pb-186a37": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Work"
+  },
+  "pb-f1f6b8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-5f48cb": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Full-Day Wedding Coverage"
+  },
+  "pb-e1e6bd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Eight to ten hours on 35mm and 120 film. Getting ready through the last dance. E"
+  },
+  "pb-d18fc7": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $3,800"
+  },
+  "pb-f96d93": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Ceremony & Portraits"
+  },
+  "pb-837be9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "A focused half-day: the ceremony, the quiet hour after, and portraits in whateve"
+  },
+  "pb-4f34aa": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $2,200"
+  },
+  "pb-c3c5e8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Elopements"
+  },
+  "pb-4a89d9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Just the two of you and a few rolls of film. A morning on a ridge, a backyard, a"
+  },
+  "pb-7315d9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "From $1,400"
+  },
+  "pb-cc618d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h3",
+    "original_text": "Hand-Developed Black & White"
+  },
+  "pb-d61500": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "All black-and-white film is developed in my darkroom. The grain and tones you se"
+  },
+  "pb-f23622": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Included"
+  },
+  "pb-f1bc48": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-e34622": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We framed three of Nora's photographs within a week of receiving them. They look"
+  },
+  "pb-52f859": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Married in the Willamette Valley, 2023"
+  },
+  "pb-2cd736": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Rates"
+  },
+  "pb-f6ef66": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-5ac2ad": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Elopement"
+  },
+  "pb-95fa96": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$1,400"
+  },
+  "pb-7a5324": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "/day"
+  },
+  "pb-b980d8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bc20a5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-d64ca2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Up to 5 hours of coverage"
+  },
+  "pb-8be86b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6ada66": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-b67c71": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "35mm or medium-format film throughout"
+  },
+  "pb-a1d6e7": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-cc2d75": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-7cb342": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Hand-developed black-and-white rolls"
+  },
+  "pb-cdeb0a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4c311a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-4711cd": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "60\u201390 scanned images delivered"
+  },
+  "pb-218770": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Inquire"
+  },
+  "pb-59220f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Ceremony & Portraits"
+  },
+  "pb-7bc697": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$2,200"
+  },
+  "pb-e5e037": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "/day"
+  },
+  "pb-af9256": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0dcaff": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-8f0c0b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "4\u20135 hours of coverage"
+  },
+  "pb-82398a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-abacd9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-699e47": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Ceremony, quiet hour, and portraits"
+  },
+  "pb-3e5f6f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fbac4c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-50ff22": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Both 35mm and medium-format"
+  },
+  "pb-1091d1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c954ff": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-002259": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Hand-developed black-and-whites"
+  },
+  "pb-c36cdf": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b9a6c2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-99fa0c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "100\u2013130 scanned images delivered"
+  },
+  "pb-68c8c8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Inquire"
+  },
+  "pb-7e27b6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Full Day"
+  },
+  "pb-24b276": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "$3,800"
+  },
+  "pb-51e4a0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "/day"
+  },
+  "pb-89da3a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8a0c01": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-6e880c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "8\u201310 hours of coverage"
+  },
+  "pb-518aec": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-615d74": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-47f152": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Getting ready through last dance"
+  },
+  "pb-ff4e4f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d5fb60": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-dd68b1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "All film developed and scanned by hand"
+  },
+  "pb-da76ab": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-67da8c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "\u2014"
+  },
+  "pb-53130c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "180\u2013220 scanned images delivered"
+  },
+  "pb-f04037": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": "Inquire"
+  },
+  "pb-47b57c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Inquiries"
+  },
+  "pb-c87878": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-aac157": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Tell me your date, where you're getting married, and a little about what you're "
+  },
+  "pb-707cfc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Name"
+  },
+  "pb-1e4954": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Email"
+  },
+  "pb-dde0b2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Message"
+  },
+  "pb-6c6b78": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Send inquiry \u2192"
+  },
+  "pb-cd2f09": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Studio"
+  },
+  "pb-fcce73": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Portland, Oregon"
+  },
+  "pb-0c988a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Hours"
+  },
+  "pb-c9e75d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Available for weddings in Oregon and Northern California."
+  },
+  "pb-93216d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h3",
+    "original_text": "Contact"
+  },
+  "pb-f3ac97": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-6a50ee": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "nora@linenandlight.com"
+  },
+  "pb-8e633c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Linen & Light"
+  },
+  "pb-f98daa": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Film wedding photography. Oregon & Northern California."
+  },
+  "pb-cf1cae": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-db8104": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Work"
+  },
+  "pb-6a6c6d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f44e20": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-524110": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c7a01f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Rates"
+  },
+  "pb-7e2c39": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a0ba0f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Inquire"
+  },
+  "pb-714332": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025"
+  }
+}
