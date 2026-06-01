@@ -304,15 +304,7 @@ def _engine():
     return pe
 
 
-def _parse_files(response: str) -> list[tuple[str, str]]:
-    """Parse <pebble-file> blocks. Delegates to pebble_engine.parse_files so
-    the repair loop never drifts from the engine's tolerant parser."""
-    return _engine().parse_files(response)
-
-
-def _parse_deletions(response: str) -> list[str]:
-    """Parse <pebble-delete path="..."/> tags. Delegates to pebble_engine."""
-    return _engine().parse_deletions(response)
+from pebble.llm_parse import parse_files as _parse_files, parse_deletions as _parse_deletions
 
 
 def _is_safe_relative(path: str) -> bool:
