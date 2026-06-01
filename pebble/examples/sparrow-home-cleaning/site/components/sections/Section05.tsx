@@ -1,0 +1,70 @@
+"use client";
+
+import RevealWords from "@/components/motion/RevealWords";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
+
+export default function ServiceAreaTrade() {
+  return (
+    <section className="bg-sky-50 py-20 px-8">
+      <div className="max-w-5xl mx-auto text-center">
+
+        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-ec777e">
+          <RevealWords>Proudly Serving Minneapolis & Surrounding Areas</RevealWords>
+        </h2>
+
+        <Stagger className="mt-10 flex flex-wrap justify-center gap-3">
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Minneapolis
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            St. Paul
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Edina
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Bloomington
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Eden Prairie
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Minnetonka
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Plymouth
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Richfield
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            St. Louis Park
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Golden Valley
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Fridley
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Roseville
+          </StaggerItem>
+          
+        </Stagger>
+
+      </div>
+    </section>
+  );
+}

@@ -1,0 +1,17 @@
+{
+  "engine_version": "v2",
+  "model": "claude-sonnet-4-6",
+  "provider": "anthropic",
+  "built_at": "2026-06-01T22:30:47.567164+00:00",
+  "block_picks": [
+    "library/hero_trade_pro",
+    "library/trust_strip_trade",
+    "library/services_grid_trade",
+    "library/about_team_clean",
+    "library/testimonials_pullquote",
+    "library/service_area_trade",
+    "library/contact_quote_trade",
+    "library/footer_anchored_clean"
+  ],
+  "industry": "roofer"
+}

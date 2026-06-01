@@ -1,0 +1,362 @@
+{
+  "pb-d61307": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Kansas City, MO"
+  },
+  "pb-b3c613": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-d112d6": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "We handle the whole job \u2014 from free storm inspection to working directly with yo"
+  },
+  "pb-f75dfa": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-69a543": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 Manufacturer Certified"
+  },
+  "pb-7b258d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-b27e97": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Credentialed"
+  },
+  "pb-68912c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free Inspections"
+  },
+  "pb-b28de2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Storm & Hail Damage"
+  },
+  "pb-bfe0d9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Certified"
+  },
+  "pb-7b363b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Major Shingle Manufacturers"
+  },
+  "pb-c5276d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insurance Claims"
+  },
+  "pb-9104d0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "We Work with Adjusters"
+  },
+  "pb-79934c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-7a2ff2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-5f51f6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Full Roof Replacement"
+  },
+  "pb-5da282": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Complete tear-off and installation using certified shingles that qualify for man"
+  },
+  "pb-310bfd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-ce851a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-8c4339": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Storm Damage Repair"
+  },
+  "pb-9d12b5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hail, wind, and water damage assessed and repaired fast. We document everything "
+  },
+  "pb-041c1c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-4aedbb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c87a69": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Insurance Claim Assistance"
+  },
+  "pb-b4fd75": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We work directly with your insurance adjuster \u2014 from initial inspection through "
+  },
+  "pb-202d3b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-a60635": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a1e80e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Residential Inspections"
+  },
+  "pb-1b41d8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Detailed written roof inspection for peace of mind, real estate transactions, or"
+  },
+  "pb-6ab53e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Free for storm damage"
+  },
+  "pb-3fa5cb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-bf9664": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Gutter Installation & Cleaning"
+  },
+  "pb-6ffdfa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "New gutter systems installed and existing gutters cleared of debris to protect y"
+  },
+  "pb-c25c1e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-6c2a38": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-558a19": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 Manufacturer Certified"
+  },
+  "pb-041c5d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0344da": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Summit Ridge Roofing is a licensed and insured roofing contractor based in Kansa"
+  },
+  "pb-95eb77": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We hold certifications from major shingle manufacturers, which means the product"
+  },
+  "pb-9e174f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "When a storm rolls through, we show up fast \u2014 free inspections, honest assessmen"
+  },
+  "pb-e491d5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Summit Ridge Roofing \u00b7 Licensed Roofing Contractor, Kansas City MO"
+  },
+  "pb-47f06c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-5e9048": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "After the hailstorm last spring I had no idea where to start. Summit Ridge came "
+  },
+  "pb-832ddb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Homeowner, Lee's Summit, MO"
+  },
+  "pb-06db60": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3bdbfc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-507446": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you promptly. Storm inspections "
+  },
+  "pb-9473d7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-6a1f72": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-cb9046": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-561303": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-154db6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-146ade": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-997a05": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-692222": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-8b0c68": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-1d961f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-71fead": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-4973b8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Summit Ridge Roofing"
+  },
+  "pb-877dc5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed roofing contractor serving Kansas City, MO \u2014 replacements, storm repair"
+  },
+  "pb-b0b724": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-587474": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-abc8bb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e60eaa": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-ce57c0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8b6e09": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-20dc1b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-349137": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Free Estimate"
+  },
+  "pb-5f72cd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-97fa6c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Call Us"
+  },
+  "pb-6032f6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Summit Ridge Roofing. All rights reserved."
+  },
+  "pb-2f0163": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

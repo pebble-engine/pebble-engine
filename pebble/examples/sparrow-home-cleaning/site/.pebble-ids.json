@@ -1,0 +1,362 @@
+{
+  "pb-58191f": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured & Bonded \u00b7 Serving Minneapolis, MN"
+  },
+  "pb-7641d5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-6d4d8d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Book online in under two minutes and come home to a clean you can count on \u2014 you"
+  },
+  "pb-9c1534": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-9165f8": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded \u2022 Background-Checked Staff \u2022 Eco-Friendly Options"
+  },
+  "pb-01b38e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured"
+  },
+  "pb-418dec": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "& Bonded"
+  },
+  "pb-52872b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Background-"
+  },
+  "pb-b4f9b8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Checked Staff"
+  },
+  "pb-7ef98c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Satisfaction"
+  },
+  "pb-6f7140": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Guarantee, Every Visit"
+  },
+  "pb-f8cc46": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Eco-Friendly"
+  },
+  "pb-a5228e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Products Available"
+  },
+  "pb-84fad8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-9cf172": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-bb4e4e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Weekly & Biweekly Cleaning"
+  },
+  "pb-e59909": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Consistent recurring cleans that keep your home fresh all year. Your assigned te"
+  },
+  "pb-0d833d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-9c181f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3c36a0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Deep Cleaning"
+  },
+  "pb-2752c5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A thorough top-to-bottom clean covering baseboards, appliances, grout, and every"
+  },
+  "pb-0aca1b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-fd4314": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d800b2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-In Cleaning"
+  },
+  "pb-a62aec": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Start fresh in your new space. We clean every surface, cabinet, and fixture befo"
+  },
+  "pb-894bb4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-7e544e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-4a841f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-Out Cleaning"
+  },
+  "pb-f1b634": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Leave your old place spotless for inspections and new tenants. Detail-focused cl"
+  },
+  "pb-01576d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-2200c3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c65457": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Small Office Cleaning"
+  },
+  "pb-f7e8f2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Keep your workspace tidy and professional. Scheduled around your hours so your t"
+  },
+  "pb-2efb84": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-860aed": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-110985": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-72a8d0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "I was skeptical I'd ever find a cleaning service I could actually rely on \u2014 but "
+  },
+  "pb-c81111": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Recurring biweekly customer, South Minneapolis"
+  },
+  "pb-a12900": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured, Bonded & Background-Checked"
+  },
+  "pb-975bfb": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f132ff": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Every Sparrow cleaner is background-checked before their first day and trained o"
+  },
+  "pb-8faf5b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We're fully insured and bonded, so you can hand over your keys with total peace "
+  },
+  "pb-9332fc": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "You'll be matched with a consistent assigned team so your cleaners know your hom"
+  },
+  "pb-8bcd8b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "The Sparrow Home Cleaning Team \u00b7 Minneapolis, MN"
+  },
+  "pb-ec777e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0363f9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-92186a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll confirm your booking promptly. Prefer to talk? Give "
+  },
+  "pb-38dbc3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-10b595": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-97b991": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-94a5b5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-ca7d4c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-000034": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-5bb27b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-6f8623": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-d56bff": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-d50f4f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-6d420d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-6b48bb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Sparrow Home Cleaning"
+  },
+  "pb-853562": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Residential and small office cleaning service in Minneapolis, MN"
+  },
+  "pb-ac21ee": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-36e5f1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-db7a56": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-91d9a7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-70481c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5dbd47": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-9e4b7e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ef352d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Book Online"
+  },
+  "pb-f9f877": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9944a7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-09ecbb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Sparrow Home Cleaning. All rights reserved."
+  },
+  "pb-f74820": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

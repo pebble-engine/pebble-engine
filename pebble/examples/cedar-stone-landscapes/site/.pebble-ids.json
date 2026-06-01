@@ -1,0 +1,792 @@
+{
+  "pb-cee2f0": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving the Triangle, NC"
+  },
+  "pb-512d17": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-a132db": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From custom hardscapes and irrigation systems to weekly lawn care and seasonal c"
+  },
+  "pb-c749c4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-6a262d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 Free Design Consultations"
+  },
+  "pb-25ff3b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-221af9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Credentialed"
+  },
+  "pb-aeec27": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free Quotes"
+  },
+  "pb-8d30d7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Design Consultations"
+  },
+  "pb-216833": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Warranty Backed"
+  },
+  "pb-99d196": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Workmanship Guarantee"
+  },
+  "pb-a77d07": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Triangle Area"
+  },
+  "pb-8fd02f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Locally Rooted"
+  },
+  "pb-5c695c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-16a619": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-56d44c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Landscape Design & Installation"
+  },
+  "pb-fc0119": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Custom planting plans and full installation that transform your outdoor space \u2014 "
+  },
+  "pb-68441d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-1bfcdb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d088fb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Weekly Lawn Care"
+  },
+  "pb-af8d61": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Consistent, detail-oriented mowing, edging, and turf management that keeps your "
+  },
+  "pb-163463": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-17f3d8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-6e9e8d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Hardscape Construction"
+  },
+  "pb-556925": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Patios, retaining walls, walkways, and outdoor living features built with precis"
+  },
+  "pb-1de5e9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-0516d9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d472a3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Irrigation Install & Repair"
+  },
+  "pb-2db502": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Efficient irrigation systems designed to protect your landscape investment \u2014 new"
+  },
+  "pb-ff14a4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-14b826": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-e63b8a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Seasonal Cleanups & Mulching"
+  },
+  "pb-7c2c4c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Spring and fall cleanups plus fresh mulch application that refresh your beds, pr"
+  },
+  "pb-36952d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-623875": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-df93cd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent Projects"
+  },
+  "pb-f2da7d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3e3a7d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Bluestone patio with custom retaining wall"
+  },
+  "pb-d8a335": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Native plant garden installation, Raleigh"
+  },
+  "pb-7c5845": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Drip irrigation system in ornamental beds"
+  },
+  "pb-0ee631": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Spring cleanup and mulch refresh"
+  },
+  "pb-e07e36": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Terraced lawn with stone steps"
+  },
+  "pb-aa764c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Licensed Landscaping Professionals \u00b7 Raleigh, NC"
+  },
+  "pb-9b17f5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-59435e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes is a licensed and insured landscape company serving Ral"
+  },
+  "pb-09c8f5": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Every project begins with a free design consultation. We listen carefully to how"
+  },
+  "pb-8ba6f1": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our team brings a detail-oriented approach to every job \u2014 from precise stone pla"
+  },
+  "pb-8c5dc0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes \u00b7 Licensed & Insured \u00b7 Raleigh, NC"
+  },
+  "pb-010a63": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-d4653f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone completely transformed our backyard. The patio design was thoughtf"
+  },
+  "pb-5ba952": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Homeowner, North Raleigh"
+  },
+  "pb-0ce25f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-810641": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e74771": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tell us about your project and we'll be in touch within one business day to set "
+  },
+  "pb-5948ec": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-eee1bf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-9bbeec": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-c0e6b5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8cbf4f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-81e410": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-1c0631": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-d88aa5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-406614": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-51826c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-db5eb9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-c91b9b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes"
+  },
+  "pb-37e481": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed landscape design, hardscape, and lawn care serving Raleigh and the Tria"
+  },
+  "pb-aca33f": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0cdb0a": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-cf1fd1": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ff1274": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-7dab70": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d00cfa": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-82f5d9": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1936bd": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-ee6322": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0be84b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-9edea4": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Cedar & Stone Landscapes. All rights reserved."
+  },
+  "pb-9a3fdf": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-c429ac": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving the Triangle Area"
+  },
+  "pb-c664c7": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-da3450": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From custom hardscapes to weekly lawn maintenance, Cedar & Stone delivers though"
+  },
+  "pb-f047a5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-91f811": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 Workmanship Warranty"
+  },
+  "pb-46c842": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-94ee7d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully credentialed in NC"
+  },
+  "pb-1ec380": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free Consultations"
+  },
+  "pb-1ac39e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "No-obligation design meeting"
+  },
+  "pb-2654ab": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Warranty Backed"
+  },
+  "pb-7c125d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Workmanship guarantee on all projects"
+  },
+  "pb-3bb700": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Local Roots"
+  },
+  "pb-08f3a7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Proudly serving the Triangle area"
+  },
+  "pb-f7fec0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-84a2ff": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-5c9bc2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Landscape Design & Installation"
+  },
+  "pb-352cb0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Custom garden and yard plans brought to life \u2014 from initial sketch to final plan"
+  },
+  "pb-6fbefe": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-5794b4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-99b9ba": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Weekly Lawn Care"
+  },
+  "pb-bc80fb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Reliable, recurring maintenance that keeps your lawn healthy and presentable thr"
+  },
+  "pb-bfcb2d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-937568": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-4d33e8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Hardscape Construction"
+  },
+  "pb-e36e25": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Patios, retaining walls, walkways, and outdoor living spaces built with precisio"
+  },
+  "pb-d17dc6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-7a5e07": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3f1698": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Irrigation Install & Repair"
+  },
+  "pb-7db6d7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Smart irrigation systems designed for efficiency \u2014 and fast, accurate repairs wh"
+  },
+  "pb-6c2a06": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-78471f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-fed679": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Seasonal Cleanups & Mulching"
+  },
+  "pb-3092a1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Spring and fall cleanups, fresh mulch application, and bed edging that refresh y"
+  },
+  "pb-602c34": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-8abf32": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-2bbf21": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent Work"
+  },
+  "pb-63d0db": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-93c17d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Bluestone patio with built-in retaining wall"
+  },
+  "pb-eaf814": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Native plant garden design installation"
+  },
+  "pb-204f55": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Custom irrigation system for residential lawn"
+  },
+  "pb-c24878": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Seasonal mulching and bed edging refresh"
+  },
+  "pb-c05d88": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tiered retaining wall with ornamental plantings"
+  },
+  "pb-a8e1e6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 Triangle Area Landscapers"
+  },
+  "pb-db0ad3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a957ba": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes is a licensed and insured landscaping company based in "
+  },
+  "pb-b931af": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Every project begins with a free design consultation \u2014 a chance to understand yo"
+  },
+  "pb-ab5562": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We stand behind every job with a workmanship warranty, because a landscape is an"
+  },
+  "pb-721a98": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes \u00b7 Raleigh, NC"
+  },
+  "pb-d6a5b2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-3edb17": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "They transformed our overgrown backyard into something we actually use. The pati"
+  },
+  "pb-cd75af": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Homeowners in Cary, NC"
+  },
+  "pb-71f6fb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c14f8f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-8d08a6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tell us about your project and we'll be in touch within one business day to set "
+  },
+  "pb-3c296e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-2444b5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-6f1c5a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-527d5b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-de191c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-1ef65c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-5f602c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-f058ee": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-edceca": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-a600ca": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-0694bf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-43dfb2": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Cedar & Stone Landscapes"
+  },
+  "pb-5ba78f": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed and insured landscape design, lawn care, and hardscape construction in "
+  },
+  "pb-d3f7cd": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7edac6": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-032ab3": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0c9d98": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-69d28a": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2c9ac5": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-81e849": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f9fd14": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-5e7a59": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6aa416": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-1edb0f": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Cedar & Stone Landscapes. All rights reserved."
+  },
+  "pb-3bb74c": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

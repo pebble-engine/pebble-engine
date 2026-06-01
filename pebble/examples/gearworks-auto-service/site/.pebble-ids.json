@@ -1,0 +1,372 @@
+{
+  "pb-cf4fd7": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "ASE-Certified & Fully Insured \u00b7 Columbus, OH"
+  },
+  "pb-a5dcc9": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-493a8b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From brake jobs to full diagnostics, we show you exactly what your car needs \u2014 w"
+  },
+  "pb-434258": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-b3db69": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "ASE-Certified \u00b7 Fully Insured \u00b7 Loaner Cars Available"
+  },
+  "pb-bb5427": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "ASE-Certified"
+  },
+  "pb-82c98e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Technicians"
+  },
+  "pb-ae8901": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured"
+  },
+  "pb-e01562": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Shop Coverage"
+  },
+  "pb-12e7a9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Digital Reports"
+  },
+  "pb-83e940": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Photos Before Approval"
+  },
+  "pb-cb5524": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Loaner Cars"
+  },
+  "pb-251656": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Available On Request"
+  },
+  "pb-cd5720": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-d5a081": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-1cf62b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Computerized Diagnostics"
+  },
+  "pb-58bae6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pinpoint the problem fast with factory-grade scan tools. We read the codes, inte"
+  },
+  "pb-1d7ade": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-5b8d61": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-fb0c82": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Brake Service"
+  },
+  "pb-55fd18": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pads, rotors, calipers, and fluid \u2014 inspected and serviced to restore full stopp"
+  },
+  "pb-7ebc8c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-51cd62": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-14d210": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Oil & Filter Changes"
+  },
+  "pb-888c44": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Conventional, synthetic-blend, or full synthetic. We use the grade your manufact"
+  },
+  "pb-d2a1db": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-69991b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-bec8bc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "AC Recharge & Repair"
+  },
+  "pb-e3b556": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "From a simple recharge to leak diagnosis and compressor replacement, we restore "
+  },
+  "pb-b730c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-2b3350": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-59d594": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Tire Sales & Alignment"
+  },
+  "pb-11d9fc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Quality tires at fair prices, mounted and balanced on-site. Precision wheel alig"
+  },
+  "pb-7386b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-e7ac95": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a16032": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Fleet Maintenance Contracts"
+  },
+  "pb-9122f3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Scheduled maintenance, priority scheduling, and consolidated billing for busines"
+  },
+  "pb-8d00c2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-ac95a7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-ad1759": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "ASE-Certified Technicians \u00b7 Fully Insured Shop"
+  },
+  "pb-0cf045": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-a70b57": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Our technicians hold ASE certifications across all major service categories. Tha"
+  },
+  "pb-f28e4c": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We built our process around transparency. Every vehicle gets a digital inspectio"
+  },
+  "pb-2590be": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Gearworks carries full shop insurance, stocks loaner cars for customers who can'"
+  },
+  "pb-20153a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Gearworks Auto Service \u00b7 ASE-Certified \u00b7 Columbus, OH"
+  },
+  "pb-04bc17": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-c04fa0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "They sent me photos of my brake rotors before even asking if I wanted the work d"
+  },
+  "pb-6bdc04": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Columbus resident, regular customer"
+  },
+  "pb-00782d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-10e058": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-14e553": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you promptly to confirm your app"
+  },
+  "pb-fd026f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-37301f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-5c9f58": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-468577": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-aede9e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-af96d8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-e87f68": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-442f24": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-eb4622": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-658b53": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-b72248": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-83eccd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Gearworks Auto Service"
+  },
+  "pb-02939d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "ASE-certified auto repair shop in Columbus, OH \u2014 transparent, insured, and custo"
+  },
+  "pb-0ae79e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a58d2b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-7efc66": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-03fced": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-5233b0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-dbfc81": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-6b77ad": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b96e83": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-c7cdf8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Gearworks Auto Service. All rights reserved."
+  },
+  "pb-d1f23f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  }
+}

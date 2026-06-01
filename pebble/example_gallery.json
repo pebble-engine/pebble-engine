@@ -151,6 +151,86 @@
       "sections": 7,
       "source_dir": "pebble/examples/pocket-pinecone",
       "kind": "example_build"
+    },
+    {
+      "slug": "tidewater-plumbing-co",
+      "name": "Tidewater Plumbing Co.",
+      "industry": "plumber",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/6419128/pexels-photo-6419128.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/tidewater-plumbing-co",
+      "kind": "example_build"
+    },
+    {
+      "slug": "brightwire-electric",
+      "name": "Brightwire Electric",
+      "industry": "electrician",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/27928762/pexels-photo-27928762.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/brightwire-electric",
+      "kind": "example_build"
+    },
+    {
+      "slug": "northpeak-heating-air",
+      "name": "Northpeak Heating & Air",
+      "industry": "hvac",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/5463577/pexels-photo-5463577.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/northpeak-heating-air",
+      "kind": "example_build"
+    },
+    {
+      "slug": "cedar-stone-landscapes",
+      "name": "Cedar & Stone Landscapes",
+      "industry": "landscaper",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/9690090/pexels-photo-9690090.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 9,
+      "source_dir": "pebble/examples/cedar-stone-landscapes",
+      "kind": "example_build"
+    },
+    {
+      "slug": "sparrow-home-cleaning",
+      "name": "Sparrow Home Cleaning",
+      "industry": "cleaning service",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/6195125/pexels-photo-6195125.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/sparrow-home-cleaning",
+      "kind": "example_build"
+    },
+    {
+      "slug": "ridgeline-builders",
+      "name": "Ridgeline Builders",
+      "industry": "general contractor",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/36035072/pexels-photo-36035072.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 9,
+      "source_dir": "pebble/examples/ridgeline-builders",
+      "kind": "example_build"
+    },
+    {
+      "slug": "summit-ridge-roofing",
+      "name": "Summit Ridge Roofing",
+      "industry": "roofer",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/33404248/pexels-photo-33404248.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/summit-ridge-roofing",
+      "kind": "example_build"
+    },
+    {
+      "slug": "gearworks-auto-service",
+      "name": "Gearworks Auto Service",
+      "industry": "auto repair",
+      "vibe": "trade-pro",
+      "hero_image": "https://images.pexels.com/photos/8985450/pexels-photo-8985450.jpeg?auto=compress&cs=tinysrgb&h=650&w=940",
+      "sections": 8,
+      "source_dir": "pebble/examples/gearworks-auto-service",
+      "kind": "example_build"
     }
   ]
 }
