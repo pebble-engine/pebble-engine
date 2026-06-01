@@ -75,7 +75,7 @@ export default function HeroTradePro() {
 
           {/* Trust strip */}
           <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-{{muted}} text-xs font-medium uppercase tracking-widest">
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest">
               {{trust_line}}
             </p>
           </div>
