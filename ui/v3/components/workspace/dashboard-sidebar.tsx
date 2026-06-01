@@ -67,6 +67,7 @@ import {
 import { getUserProfile, clearBriefForNewProject, type PebblePlan } from "@/lib/state";
 import { useRouter } from "next/navigation";
 import { LaunchSetupRail } from "@/components/workspace/launch-setup-rail";
+import { PlanUsageBadge } from "@/components/workspace/plan-usage-badge";
 
 // ---------------------------------------------------------------------------
 // Nav shape — single source of truth consumed by both the desktop sidebar
@@ -301,6 +302,10 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
             </p>
           </div>
         )}
+        {/* Plan-usage transparency (2026-06-01): how many AI refinements
+            this month, of the plan limit. Renders for every signed-in
+            user; the engine returns free-tier quota even without a sub. */}
+        <PlanUsageBadge quota={subscription?.quota} />
 
         <Link
           // Phase 58b — point to /workspace#phase=welcome (the actual idea-

@@ -1287,6 +1287,16 @@ export type BillingPortalResponse = {
   url: string;
 };
 
+/** Plan quota + month-to-date usage, surfaced by /api/billing/subscription
+ *  so the workspace can render a "12 of 150 refinements used" badge.
+ *  `limits` carries the full plan-limits table; the badge reads
+ *  `ai_refinements_per_month` (-1 = unlimited). */
+export type PlanQuota = {
+  plan:   string;
+  limits: Record<string, number | boolean | string[]>;
+  usage:  { ai_refinements_this_month: number };
+};
+
 export type SubscriptionState = {
   plan:                 "starter" | "pro" | null;
   status:               string | null;   // "active" | "past_due" | "canceled" | ... | null
@@ -1294,6 +1304,9 @@ export type SubscriptionState = {
   /** Phase 54b — true when the user signed up but hasn't picked a plan
    *  yet. v3 mounts the plan-picker modal when this is true. */
   needs_plan_selection: boolean;
+  /** 2026-06-01 — plan quota + usage for the sidebar usage badge. Null
+   *  when the engine couldn't read usage (soft-fail). */
+  quota?:               PlanQuota | null;
 };
 
 /** Phase 54b — body of POST /api/account/select-plan. */
