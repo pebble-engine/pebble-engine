@@ -21,7 +21,7 @@ SlotKind = Literal["text", "image", "list", "url"]
 BlockType = Literal[
     "hero", "services", "about", "testimonials",
     "contact", "pricing", "footer", "gallery", "faq",
-    "scroll-story",
+    "scroll-story", "trust", "coverage",
 ]
 
 _VALID_SLOT_KINDS = {"text", "image", "list", "url"}
@@ -58,6 +58,16 @@ def validate_block_metadata(raw: dict) -> BlockMetadata:
                      "slots", "palette_slots"):
         if required not in raw:
             raise ValueError(f"block metadata missing required field: {required}")
+    _ALLOWED_TYPES = {
+        "hero", "services", "about", "testimonials", "contact",
+        "pricing", "footer", "gallery", "faq", "scroll-story",
+        "trust", "coverage",
+    }
+    if raw["block_type"] not in _ALLOWED_TYPES:
+        raise ValueError(
+            f"block {raw.get('block_id', '?')!r}: unknown block_type {raw['block_type']!r}; "
+            f"must be one of {sorted(_ALLOWED_TYPES)}"
+        )
     vibe_tags = raw["vibe_tags"]
     if not isinstance(vibe_tags, list) or not vibe_tags:
         raise ValueError(
