@@ -1,0 +1,15 @@
+{
+  "block_id": "library/contact_quote_trade",
+  "block_type": "contact",
+  "vibe_tags": ["trade-pro", "local-service", "trustworthy"],
+  "dna_tags": ["terminal_operator", "swiss_magazine"],
+  "slots": {
+    "headline": {"kind": "text", "max_chars": 60, "tone": "Get a Free Quote"},
+    "subheadline": {"kind": "text", "max_chars": 140, "tone": "reassurance; response-time promise"},
+    "phone": {"kind": "text", "max_chars": 24, "tone": "display phone"},
+    "email": {"kind": "text", "max_chars": 60, "tone": "display email"},
+    "address": {"kind": "text", "max_chars": 100, "tone": "service address or 'Mobile service'"},
+    "service_options": {"kind": "list", "tone": "the services list for the form dropdown (mirror services titles)"}
+  },
+  "palette_slots": ["bg", "fg", "accent", "accent_fg", "muted"]
+}
