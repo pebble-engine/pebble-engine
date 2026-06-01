@@ -12,5 +12,5 @@
     "trust_line": {"kind": "text", "max_chars": 60, "tone": "Licensed • Insured • 24/7 Emergency"},
     "hero_image": {"kind": "image", "pexels_query_template": "{industry_scene} professional at work tools natural light", "aspect": "16/9"}
   },
-  "palette_slots": ["bg", "fg", "accent", "accent_fg", "muted"]
+  "palette_slots": ["bg", "accent", "accent_fg", "muted"]
 }
