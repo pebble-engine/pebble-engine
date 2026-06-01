@@ -132,7 +132,7 @@ components/
     Problem.tsx           "You've been told you should have a website..."
     Promise.tsx           Three things make Pebble different
     HowItWorks.tsx        3-step explanation
-    Pricing.tsx           Free / $29 / $59 + $99 setup call
+    Pricing.tsx           Free / $29 / $59
     Footer.tsx            Wordmark + nav + copyright
   forms/
     WaitlistForm.tsx      Resend-wired email capture

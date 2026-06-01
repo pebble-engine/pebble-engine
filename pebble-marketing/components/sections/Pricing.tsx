@@ -88,17 +88,6 @@ export function Pricing() {
             </FadeIn>
           ))}
         </div>
-
-        <FadeIn delay={900} duration={1000}>
-          <div className="mt-10 rounded-card border border-mist p-6 max-w-2xl mx-auto text-center bg-sand">
-            <p className="brand-mono mb-2 text-spark">Optional add-on</p>
-            <p className="text-stone leading-relaxed">
-              <span className="font-medium">$99 one-time</span> for a 30-minute
-              setup call. We walk you through your first site, answer questions,
-              get you live before we hang up.
-            </p>
-          </div>
-        </FadeIn>
       </div>
     </section>
   );

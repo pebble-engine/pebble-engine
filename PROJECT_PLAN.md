@@ -27,7 +27,7 @@ Ch 5  Landing page          ━━━━━━━━━━━━━━━━━�
 Ch 6  Visual Editor MVP     ━━━━━━━━━━━━━━━━━━━━━  shipped (image swap deferred)
 Ch 7  User Accounts         ━━━━━━━━━━━━━━━━━━░░░  profile + GDPR delete open
 Ch 8  Dashboard             ━━━━━━━━━━━━━━━━━━━━━  settings page shipped 2026-05-17
-Ch 9  Billing (Stripe)      ━━━━━━━━━━━━━━━━━━░░░  endpoints + portal shipped; trial + setup-call open
+Ch 9  Billing (Stripe)      ━━━━━━━━━━━━━━━━━━░░░  endpoints + portal shipped; trial open
 Ch 10 Hosting               ━━━━━━━━━━━━━━━━━░░░░  *.pebbleapp.ai wildcard open
 Ch 11 Customer Onboarding   ━━━━━━━━━━━━━━━━━░░░░  email sequence open
 Ch 12 Launch                ░░░░░░░░░░░░░░░░░░░░░  gated on 9 + 10.2
@@ -135,7 +135,7 @@ Where we are now. Each chapter ships something visible to customers.
             • Problem (three competitors and why each fails this audience)
             • Promise (three differentiators)
             • HowItWorks (3 steps in ~10 minutes)
-            • Pricing (Free trial / $29 / $59 + $99 setup call)
+            • Pricing (Free trial / $29 / $59)
             • Footer
 [x] 5.4  Waitlist email-capture via Resend Server Action
 [x] 5.5  Brand-tuned: amber primary CTAs, 18px+ body, WCAG AAA contrast,
@@ -279,26 +279,18 @@ Supabase exclusively).
                                      server-side). Verify the portal config
                                      allows plan changes between our two
                                      prices.
-[ ] 9.7  $99 setup-call product    → RETRACTED 2026-05-24 after code audit.
-         Originally marked shipped 2026-05-18, but the audit found NO
-         setup_call entry in pebble/server/stripe_checkout.py:_PRICE_ENV
-         (whitelist is {starter, pro}) and NO SETUP_CALLS/ensure_setup_call
-         symbols in pebble/stripe_bootstrap.py. Either the work was reverted
-         or this line got ahead of reality. Marc's call (2026-05-24): park as
-         future backlog; CLAUDE.md API table now reflects the {starter, pro}
-         reality.
-         When revisited (sketch only — verify before relying on it):
-           - Add "setup_call" → "PEBBLE_STRIPE_SETUP_PRICE_ID" to _PRICE_ENV
-           - Route mode="payment" success → PEBBLE_SETUP_CALL_LINK
-           - Add SETUP_CALLS + ensure_setup_call to stripe_bootstrap.py
-           - Wire checkout.session.completed → Resend confirmation email
-           - Subscribe checkout.session.completed in Stripe Dashboard +
-             update stripe listen command in .env.example
+[x] 9.7  $99 setup-call product    → REMOVED 2026-06-01 (owner decision).
+         Originally marked shipped 2026-05-18, retracted 2026-05-24 after a
+         code audit found no active wiring, then fully removed 2026-06-01:
+         the marketing pricing add-on copy is gone and all docs are scrubbed.
+         Backend was already clean ({starter, pro} only in _PRICE_ENV and
+         stripe_bootstrap). Not coming back — Pebble's offer is the three
+         subscription tiers, no one-time consultation upsell.
 ```
 
 Outstanding before launch:
 - Marc fixes STRIPE_WEBHOOK_SECRET in .env (currently has an rk_test_ pasted into the slot; should be `whsec_` from `stripe listen`).
-- Marc runs `python -m pebble.stripe_bootstrap` and pastes the TWO PEBBLE_STRIPE_*_PRICE_ID values into .env (starter, pro). (setup_call retracted from active surface — see 9.7 above.)
+- Marc runs `python -m pebble.stripe_bootstrap` and pastes the TWO PEBBLE_STRIPE_*_PRICE_ID values into .env (starter, pro).
 - Marc installs Stripe CLI (`scoop install stripe` on Windows; winget is NOT supported per Stripe's docs).
 - E2E test together: `stripe listen --forward-to localhost:8000/api/internal/stripe-webhook`, then v3 /settings → "Manage billing" → card 4242 4242 4242 4242.
 
