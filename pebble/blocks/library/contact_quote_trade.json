@@ -9,7 +9,8 @@
     "phone": {"kind": "text", "max_chars": 24, "tone": "display phone"},
     "email": {"kind": "text", "max_chars": 60, "tone": "display email"},
     "address": {"kind": "text", "max_chars": 100, "tone": "service address or 'Mobile service'"},
-    "service_options": {"kind": "list", "tone": "the services list for the form dropdown (mirror services titles)"}
+    "service_options": {"kind": "list", "tone": "the services list for the form dropdown (mirror services titles)"},
+    "form_slug": {"kind": "text", "max_chars": 80, "tone": "project slug injected by the compiler for form action URL"}
   },
   "palette_slots": ["bg", "fg", "accent", "accent_fg", "muted"]
 }
