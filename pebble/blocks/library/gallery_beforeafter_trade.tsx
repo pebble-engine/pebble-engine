@@ -1,7 +1,6 @@
 "use client";
 import RevealWords from "@/components/motion/RevealWords";
-import Stagger from "@/components/motion/Stagger";
-import StaggerItem from "@/components/motion/StaggerItem";
+import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
 export default function GalleryBeforeafterTrade() {
   return (
