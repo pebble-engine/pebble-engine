@@ -51,6 +51,7 @@ def test_vibe_pin_filters_menu(tmp_path):
     ids = {b["block_id"] for b in menu}
     assert "library/hero_trade_pro" in ids
     assert "library/hero_focused_clean" not in ids
+    assert len(menu) == 4  # 4 trade-pro blocks in the fixture
 
 
 def test_no_vibe_returns_all(tmp_path):

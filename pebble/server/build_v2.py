@@ -25,6 +25,7 @@ import re
 from pebble.blocks.registry import BlockRegistry
 from pebble.blocks_compiler import compile_site
 from pebble.llm import get_llm_client
+from pebble.log import log
 from pebble.pexels_resolver import resolve_pexels_tags
 from pebble.sonnet_block_picker import pick_blocks_and_copy
 from pebble.text import sanitize_business_name
@@ -61,6 +62,24 @@ def _slugify(name: str) -> str:
     return re.sub(r"[\s_]+", "-", text).strip("-") or "untitled"
 
 
+def _shape_block(block) -> dict:
+    return {
+        "block_id": block.metadata.block_id,
+        "block_type": block.metadata.block_type,
+        "vibe_tags": list(block.metadata.vibe_tags),
+        "slots": {
+            name: {
+                "kind": s.kind,
+                "max_chars": s.max_chars,
+                "tone": s.tone,
+                "pexels_query_template": s.pexels_query_template,
+            }
+            for name, s in block.metadata.slots.items()
+        },
+        "palette_slots": list(block.metadata.palette_slots),
+    }
+
+
 def _build_block_menu(registry: BlockRegistry, vibe: str | None = None) -> list[dict]:
     """Shape blocks into the Sonnet picker's menu. Optionally pin to a vibe.
 
@@ -70,41 +89,19 @@ def _build_block_menu(registry: BlockRegistry, vibe: str | None = None) -> list[
     (hero, services, contact, footer), we fall back to the unfiltered menu
     so a build never fails for lack of options.
     """
-    def _shape(block):
-        return {
-            "block_id": block.metadata.block_id,
-            "block_type": block.metadata.block_type,
-            "vibe_tags": list(block.metadata.vibe_tags),
-            "slots": {
-                name: {
-                    "kind": s.kind,
-                    "max_chars": s.max_chars,
-                    "tone": s.tone,
-                    "pexels_query_template": s.pexels_query_template,
-                }
-                for name, s in block.metadata.slots.items()
-            },
-            "palette_slots": list(block.metadata.palette_slots),
-        }
-
     all_blocks = list(registry._blocks.values())
     if not vibe:
-        return [_shape(b) for b in all_blocks]
+        return [_shape_block(b) for b in all_blocks]
     filtered = [b for b in all_blocks if vibe in b.metadata.vibe_tags]
     essential = {"hero", "services", "contact", "footer"}
     types_present = {b.metadata.block_type for b in filtered}
     if not essential.issubset(types_present):
-        # log + fall back
-        try:
-            from pebble.log import log as _log
-            _log.warning(
-                "[build_v2] vibe pin %r left menu without essential types %s; falling back to full menu",
-                vibe, sorted(essential - types_present),
-            )
-        except Exception:
-            pass
-        return [_shape(b) for b in all_blocks]
-    return [_shape(b) for b in filtered]
+        log.warning(
+            "[build_v2] vibe pin %r left menu without essential types %s; falling back to full menu",
+            vibe, sorted(essential - types_present),
+        )
+        return [_shape_block(b) for b in all_blocks]
+    return [_shape_block(b) for b in filtered]
 
 
 def build_v2_core(brief: dict, progress_cb=None) -> dict:
