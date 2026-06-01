@@ -8,5 +8,5 @@
     "headline": {"kind": "text", "max_chars": 70, "tone": "plain"},
     "projects": {"kind": "list", "tone": "3-6 items; each {caption (60), image (pexels query)}"}
   },
-  "palette_slots": ["bg", "fg", "accent", "muted"]
+  "palette_slots": ["bg", "fg", "accent"]
 }

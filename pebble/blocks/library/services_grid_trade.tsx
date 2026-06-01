@@ -24,7 +24,7 @@ export default function ServicesGridTrade() {
             <h3 className="text-{{fg}} text-lg font-semibold leading-snug">
               {{services[].title}}
             </h3>
-            <p className="text-{{muted}} text-base leading-relaxed flex-1">
+            <p className="text-slate-600 text-base leading-relaxed flex-1">
               {{services[].body}}
             </p>
             <span className="inline-block self-start bg-{{accent}}/10 text-{{accent}} text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded">

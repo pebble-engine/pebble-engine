@@ -13,7 +13,7 @@ export default function ContactQuoteTrade() {
             <h2 className="text-{{fg}} text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6">
               <RevealWords>{{headline}}</RevealWords>
             </h2>
-            <p className="text-{{muted}} text-base leading-relaxed mb-10 max-w-xs">
+            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs">
               {{subheadline}}
             </p>
 
@@ -79,7 +79,7 @@ export default function ContactQuoteTrade() {
                 <p className="text-{{fg}} text-xs font-semibold uppercase tracking-[0.15em] mb-2">
                   Address
                 </p>
-                <p className="text-{{muted}} text-base leading-relaxed flex items-start gap-2">
+                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"

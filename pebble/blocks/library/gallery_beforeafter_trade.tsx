@@ -29,7 +29,7 @@ export default function GalleryBeforeafterTrade() {
                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
               />
             </div>
-            <p className="mt-3 text-sm text-{{muted}}">{{projects[].caption}}</p>
+            <p className="mt-3 text-sm text-slate-600">{{projects[].caption}}</p>
           </StaggerItem>
           {/* {{projects_list_end}} */}
         </Stagger>

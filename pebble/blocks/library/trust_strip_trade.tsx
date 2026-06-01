@@ -13,7 +13,7 @@ export default function TrustStripTrade() {
             <p className="text-3xl md:text-5xl font-semibold tabular-nums text-{{accent}} leading-none">
               {{stats[].value}}
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-{{muted}} leading-snug mt-1">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1">
               {{stats[].label}}
             </p>
           </StaggerItem>

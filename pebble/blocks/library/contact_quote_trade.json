@@ -12,5 +12,5 @@
     "service_options": {"kind": "list", "tone": "the services list for the form dropdown (mirror services titles)"},
     "form_slug": {"kind": "text", "max_chars": 80, "tone": "project slug injected by the compiler for form action URL"}
   },
-  "palette_slots": ["bg", "fg", "accent", "accent_fg", "muted"]
+  "palette_slots": ["bg", "fg", "accent", "accent_fg"]
 }
