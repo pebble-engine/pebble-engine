@@ -25,12 +25,13 @@ Public API (used by the engine + tests):
 from __future__ import annotations
 
 import json
+import os
 import re
 import shutil
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 
 # Resolved against the project root (parent of this file's package).
@@ -60,6 +61,31 @@ def _history_root(slug: str) -> Path:
 
 def _site_dir(slug: str) -> Path:
     return OUTPUT_DIR / slug / "site"
+
+
+# Dependency / build-output directories that must NEVER be snapshotted or
+# diffed. Once a project's preview is warmed locally, `npm install` drops a
+# ~12k-file node_modules tree into site/; copytree'ing it inside the per-slug
+# project_lock held the lock for minutes, so every concurrent edit 409'd with
+# "another edit is already in progress" (the 2026-06-01 save-failure bug).
+# These mirror pebble/publish.py's exclude set — keep them in sync.
+_EXCLUDE_DIRS = frozenset({
+    "node_modules", ".next", ".vercel", "out", "dist", ".turbo", ".git", ".cache",
+})
+
+
+def _iter_source_files(root: Path) -> Iterator[Path]:
+    """Yield every file under ``root`` EXCEPT those inside an excluded dir.
+
+    Uses os.walk with in-place dir pruning so we never even descend into
+    node_modules/.next — orders of magnitude faster than rglob + filter on a
+    site that has dependencies installed.
+    """
+    for dirpath, dirnames, filenames in os.walk(root):
+        # Prune excluded directories in-place so os.walk skips them entirely.
+        dirnames[:] = [d for d in dirnames if d not in _EXCLUDE_DIRS]
+        for name in filenames:
+            yield Path(dirpath) / name
 
 
 _SAFE_REASON_RE = re.compile(r"[^a-z0-9-]+")
@@ -103,8 +129,10 @@ def snapshot_site(
     site = _site_dir(slug)
     if not site.exists() or not site.is_dir():
         return None
-    # Skip empty site dirs — nothing useful to record.
-    files = [p for p in site.rglob("*") if p.is_file()]
+    # Skip empty site dirs — nothing useful to record. Count SOURCE files
+    # only (node_modules/.next excluded) so a deps-only dir reads as empty
+    # and we don't pay a full node_modules walk just to check emptiness.
+    files = list(_iter_source_files(site))
     if not files:
         return None
 
@@ -114,7 +142,12 @@ def snapshot_site(
     target_site = target / "site"
 
     try:
-        shutil.copytree(site, target_site, dirs_exist_ok=True)
+        # ignore node_modules/.next/etc. — copying them held the per-slug
+        # lock for minutes and blocked all concurrent edits.
+        shutil.copytree(
+            site, target_site, dirs_exist_ok=True,
+            ignore=shutil.ignore_patterns(*_EXCLUDE_DIRS),
+        )
     except Exception:
         # If the copy fails partway through, leave whatever we got and move on.
         # A partial snapshot is better than aborting the active build.
@@ -333,11 +366,12 @@ def diff_against_snapshot(slug: str, snapshot_id: str) -> Optional[DiffSummary]:
         return None
 
     def _file_map(root: Path) -> dict[str, Path]:
+        # Exclude node_modules/.next/etc. — diffing them after every edit
+        # meant byte-comparing ~12k dependency files on each visual-edit.
         out: dict[str, Path] = {}
-        for p in root.rglob("*"):
-            if p.is_file():
-                rel = p.relative_to(root).as_posix()
-                out[rel] = p
+        for p in _iter_source_files(root):
+            rel = p.relative_to(root).as_posix()
+            out[rel] = p
         return out
 
     before_files = _file_map(snapshot_site_dir)
