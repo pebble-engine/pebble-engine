@@ -36,6 +36,10 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator, Optional
 
+# AAL claim reader (pure local base64 decode — no network, no GoTrue call).
+# Imported at module level so tests can monkeypatch ``pebble.security.get_aal``.
+from pebble.auth_admin import get_aal
+
 
 # --------- Slug validation ------------------------------------------------
 
@@ -376,6 +380,46 @@ def require_project_owner(handler, slug: str) -> Optional[str]:
     return uid
 
 
+def require_aal2_if_mfa_enrolled(handler, token: str, user: dict) -> bool:
+    """Step-up auth guard for billable/destructive routes.
+
+    Returns True (allow) when the request may proceed. Writes 401 and
+    returns False ONLY when the user has a verified MFA factor enrolled
+    but presented an AAL1 token — i.e. a session that pre-dates MFA
+    enrollment, or a stolen pre-MFA token still inside its ~1h TTL.
+
+    Crucially, users with NO verified MFA factor always pass: AAL1 is the
+    correct, MAXIMUM assurance level for them, so gating on AAL2 globally
+    would lock them out. Only an enrolled-but-unstepped session is denied.
+
+    This mirrors the per-endpoint guard that originated in
+    ``pebble/server/account.py`` (account delete + data export). It lives
+    here so the project routes that also spend money or mutate live state
+    (generate, refine, publish, rollback) share ONE implementation and
+    can't drift from the account version.
+
+    NLM 2026-05-25 finding: without step-up, a stolen AAL1 session can
+    reach money-spending / destructive endpoints for the full token
+    lifetime even after the user enables MFA.
+    """
+    verified_factors = [
+        f for f in (user.get("factors") or [])
+        if isinstance(f, dict) and f.get("status") == "verified"
+    ]
+    if not verified_factors:
+        return True  # no MFA enrolled — aal1 is the correct ceiling
+    if get_aal(token) == "aal2":
+        return True  # properly MFA-authenticated
+    handler._json(401, {
+        "error": (
+            "This action requires multi-factor authentication. "
+            "Please sign in again using your authenticator app."
+        ),
+        "aal_required": "aal2",
+    })
+    return False
+
+
 # --------- Trusted-proxy-aware client IP ----------------------------------
 
 def _trusted_proxy_networks() -> list[ipaddress._BaseNetwork]:
@@ -541,6 +585,7 @@ __all__ = [
     "RateLimiter",
     "client_ip",
     "require_project_owner",
+    "require_aal2_if_mfa_enrolled",
     "forms_submit_limiter",
     "track_view_limiter",
     "forgot_email_limiter",
