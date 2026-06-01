@@ -32,7 +32,6 @@ from typing import Optional
 from pebble.auth_admin import (
     AdminError,
     delete_user,
-    get_aal,
     get_profile,
     is_configured,
     update_profile,
@@ -115,36 +114,14 @@ def _bearer_token(handler) -> str:
 def _require_aal2_if_mfa_enrolled(handler, token: str, user: dict) -> bool:
     """AAL downgrade guard for destructive account endpoints.
 
-    Returns True (allow) if the request should proceed. Writes 401 and
-    returns False if the user has MFA enrolled but the JWT was issued at
-    AAL1 (e.g., a pre-MFA stolen token or a session that pre-dates MFA
-    enrollment).
-
-    Logic:
-    - No verified MFA factors → pass (aal1 is correct for non-MFA users).
-    - Has verified factor + aal2 JWT → pass (properly MFA-authenticated).
-    - Has verified factor + aal1 JWT → reject 401 with aal_required hint.
-
-    NLM 2026-05-25 finding: without this guard a stolen AAL1 session can
-    reach /api/account/delete and /api/account/export-* for the full token
-    lifetime (~1h) even after the user enables MFA.
+    Thin wrapper that delegates to the canonical implementation in
+    pebble.security so the account routes (delete, data export) and the
+    project routes (generate, refine, publish, rollback) share ONE
+    step-up guard and can't drift. Behaviour unchanged: pass for non-MFA
+    users, pass for verified+aal2, 401 for verified+aal1.
     """
-    verified_factors = [
-        f for f in (user.get("factors") or [])
-        if isinstance(f, dict) and f.get("status") == "verified"
-    ]
-    if not verified_factors:
-        return True  # user has no MFA enrolled — aal1 is fine
-    if get_aal(token) == "aal2":
-        return True  # properly MFA-authenticated
-    handler._json(401, {
-        "error": (
-            "This action requires multi-factor authentication. "
-            "Please sign in again using your authenticator app."
-        ),
-        "aal_required": "aal2",
-    })
-    return False
+    from pebble.security import require_aal2_if_mfa_enrolled
+    return require_aal2_if_mfa_enrolled(handler, token, user)
 
 
 def _output_dir() -> Path:
