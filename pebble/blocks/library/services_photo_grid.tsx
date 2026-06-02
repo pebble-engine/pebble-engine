@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
@@ -18,12 +19,13 @@ export default function ServicesPhotoGrid() {
         <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {/* {{services_list_start}} */}
           <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-{{bg}}">
-            <div className="aspect-[4/3] overflow-hidden bg-slate-100">
-              <img
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
                 src="{{services[].image}}"
                 alt="{{services[].title}}"
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
               />
             </div>
             <div className="p-6 flex flex-col gap-3 flex-1">
