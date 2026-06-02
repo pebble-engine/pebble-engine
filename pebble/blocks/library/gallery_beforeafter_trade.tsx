@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
@@ -20,12 +21,13 @@ export default function GalleryBeforeafterTrade() {
         <Stagger className="mt-12 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {/* {{projects_list_start}} */}
           <StaggerItem className="group">
-            <div className="aspect-[4/3] overflow-hidden rounded-md bg-slate-100">
-              <img
+            <div className="relative aspect-[4/3] overflow-hidden rounded-md bg-slate-100">
+              <Image
                 src="{{projects[].image}}"
                 alt="{{projects[].caption}}"
-                loading="lazy"
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-105"
               />
             </div>
             <p className="mt-3 text-sm text-slate-600">{{projects[].caption}}</p>
