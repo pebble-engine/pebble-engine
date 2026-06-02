@@ -38,6 +38,7 @@ from typing import Optional
 # Logger — set up early so any module-level code can use it. Independent of
 # the rest of the pebble/ package (no circular import risk).
 from pebble.log import log
+from pebble.server.preview_paths import preview_forward_path
 
 # --------------------------------------------------------------------------
 # PATHS
@@ -1789,7 +1790,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 from pebble.fly_preview import preview_url as _fly_preview_url
                 fly_url = _fly_preview_url(slug)
                 slug_prefix = "/preview/" + parts[0]
-                forward_path = self.path[len(slug_prefix):] or "/"
+                forward_path = preview_forward_path(
+                    getattr(self, "_raw_path", self.path), slug_prefix
+                )
                 # 20s timeout, NOT 90s. Originally tried 90s to cover cold
                 # wakes, but that made EVERY request wait 90s before falling
                 # back to local — terrible UX. With 20s we get:
@@ -1817,7 +1820,9 @@ class PebbleHandler(BaseHTTPRequestHandler):
             if dev_url:
                 # Strip /preview/<raw-slug> so next dev sees the real route.
                 slug_prefix = "/preview/" + parts[0]
-                forward_path = self.path[len(slug_prefix):] or "/"
+                forward_path = preview_forward_path(
+                    getattr(self, "_raw_path", self.path), slug_prefix
+                )
                 if self._proxy_to_dev(dev_url, forward_path, base_prefix=slug_prefix):
                     return
         except Exception:
