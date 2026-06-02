@@ -75,27 +75,38 @@ def _extract_plain_queries(source: str) -> list[str]:
     return out
 
 
-def _fetch_pexels_image_url(query: str) -> Optional[str]:
-    """Hit the Pexels API for `query`, return the first photo's large URL.
-    Returns None on API error or no results (caller falls back to placeholder)."""
+def _fetch_pexels_image_urls(query: str, n: int = 15) -> list[str]:
+    """Hit the Pexels API for `query`, return up to `n` photo large URLs.
+
+    Returns an empty list on API error, missing key, or no results. The
+    caller is responsible for picking the best unused candidate from the list.
+    """
     key = (os.environ.get("PEXELS_API_KEY") or "").strip()
     if not key:
-        return None
+        return []
     try:
         r = httpx.get(
             _PEXELS_API,
-            params={"query": query, "per_page": 1, "orientation": "landscape"},
+            params={"query": query, "per_page": n, "orientation": "landscape"},
             headers={"Authorization": key},
             timeout=10.0,
         )
         if r.status_code != 200:
-            return None
+            return []
         photos = r.json().get("photos") or []
-        if not photos:
-            return None
-        return photos[0]["src"]["large"]
+        return [p["src"]["large"] for p in photos if p.get("src", {}).get("large")]
     except Exception:
-        return None
+        return []
+
+
+def _fetch_pexels_image_url(query: str) -> Optional[str]:
+    """Hit the Pexels API for `query`, return the first photo's large URL.
+    Returns None on API error or no results (caller falls back to placeholder).
+
+    Kept for backwards compatibility with existing callers and tests.
+    """
+    candidates = _fetch_pexels_image_urls(query, n=1)
+    return candidates[0] if candidates else None
 
 
 def _placeholder_url(query: str) -> str:
@@ -106,7 +117,34 @@ def _placeholder_url(query: str) -> str:
     return f"https://picsum.photos/seed/{seed}/1200/800"
 
 
-def resolve_pexels_tags(source: str) -> str:
+def _resolve_query(query: str, used: set[str]) -> str:
+    """Return the best unused Pexels URL for *query*, updating *used* in-place.
+
+    Resolution order:
+    1. Fetch up to 15 candidate URLs from Pexels.
+    2. Return the first candidate not already in *used*.
+    3. If every candidate is already used, fall back to the first candidate
+       (a repeat is better than a placeholder).
+    4. If no candidates at all, return a Picsum placeholder.
+    """
+    candidates = _fetch_pexels_image_urls(query)
+    chosen: str
+    if not candidates:
+        chosen = _placeholder_url(query)
+    else:
+        # Pick the first candidate not yet claimed by another query.
+        for url in candidates:
+            if url not in used:
+                chosen = url
+                break
+        else:
+            # All candidates already used — prefer a photo repeat over picsum.
+            chosen = candidates[0]
+    used.add(chosen)
+    return chosen
+
+
+def resolve_pexels_tags(source: str, used: Optional[set] = None) -> str:
     """Scan source for image queries and swap each with a real image URL.
 
     Handles two patterns:
@@ -116,16 +154,31 @@ def resolve_pexels_tags(source: str) -> str:
 
     Each unique query is fetched once. Failed fetches fall back to a
     Picsum placeholder so the user never sees a broken site.
+
+    Args:
+        source: The source text (e.g. a .tsx file) to scan.
+        used:   Optional shared set of already-claimed URLs. Pass the same
+                set across multiple ``resolve_pexels_tags`` calls (e.g. for
+                all section files in a build) to prevent the same photo from
+                appearing in two different sections. When *None* a fresh local
+                set is created so single-call behaviour still dedups within
+                the source file.
     """
-    # Build a combined url_map for both formats
+    if used is None:
+        used = set()
+
+    # Build a combined url_map for both formats.
+    # Each query is resolved exactly once; a repeated query in the same source
+    # maps to the same URL (consistent card grid behaviour).
     url_map: dict[str, str] = {}
 
     for q in _extract_pexels_tags(source):
-        url_map[q] = _fetch_pexels_image_url(q) or _placeholder_url(q)
+        if q not in url_map:
+            url_map[q] = _resolve_query(q, used)
 
     for q in _extract_plain_queries(source):
         if q not in url_map:
-            url_map[q] = _fetch_pexels_image_url(q) or _placeholder_url(q)
+            url_map[q] = _resolve_query(q, used)
 
     if not url_map:
         return source

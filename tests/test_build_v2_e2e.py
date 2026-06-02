@@ -71,7 +71,7 @@ def test_v2_generate_produces_runnable_site(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(
         "pebble.server.build_v2.resolve_pexels_tags",
-        lambda src: src,
+        lambda src, used=None: src,
     )
 
     handler = _make_handler({
@@ -160,7 +160,7 @@ def test_v2_generate_works_for_any_industry(tmp_path, monkeypatch):
     monkeypatch.setattr("pebble.server.build_v2._output_dir", lambda: tmp_path)
     monkeypatch.setattr(
         "pebble.server.build_v2.resolve_pexels_tags",
-        lambda src: src,
+        lambda src, used=None: src,
     )
 
     handler = _make_handler({
@@ -195,7 +195,7 @@ def test_v2_extracts_clean_business_name_from_conversational_brief(tmp_path, mon
     fake_client.provider = "anthropic"
     monkeypatch.setattr("pebble.server.build_v2.get_llm_client", lambda: (fake_client, "ok"))
     monkeypatch.setattr("pebble.server.build_v2._output_dir", lambda: tmp_path)
-    monkeypatch.setattr("pebble.server.build_v2.resolve_pexels_tags", lambda src: src)
+    monkeypatch.setattr("pebble.server.build_v2.resolve_pexels_tags", lambda src, used=None: src)
 
     handler = _make_handler({
         "business_name": "My wife and I run a mobile dog grooming van called Sudsy Paws",

@@ -40,9 +40,10 @@ def test_no_tags_returns_empty():
 def test_resolve_swaps_tags_with_real_urls():
     src = '<img src="[pexels: bakery interior]" alt="Hero" />'
 
-    fake_fetch = MagicMock(return_value="https://images.pexels.com/photos/123/hero.jpg")
+    # Patch the plural fetcher (the new ground truth); return a single-item list.
+    fake_fetch = MagicMock(return_value=["https://images.pexels.com/photos/123/hero.jpg"])
 
-    with patch("pebble.pexels_resolver._fetch_pexels_image_url", fake_fetch):
+    with patch("pebble.pexels_resolver._fetch_pexels_image_urls", fake_fetch):
         out = resolve_pexels_tags(src)
 
     assert "[pexels:" not in out
@@ -55,9 +56,11 @@ def test_resolve_handles_multiple_unique_queries():
         <img src="[pexels: hero scene]" />
         <img src="[pexels: services close up]" />
     '''
-    fake_fetch = MagicMock(side_effect=lambda q: f"https://pexels.com/{q.replace(' ', '_')}.jpg")
+    fake_fetch = MagicMock(
+        side_effect=lambda q: [f"https://pexels.com/{q.replace(' ', '_')}.jpg"]
+    )
 
-    with patch("pebble.pexels_resolver._fetch_pexels_image_url", fake_fetch):
+    with patch("pebble.pexels_resolver._fetch_pexels_image_urls", fake_fetch):
         out = resolve_pexels_tags(src)
 
     assert "[pexels:" not in out
@@ -72,9 +75,9 @@ def test_resolve_fallback_to_placeholder_on_fetch_fail():
     output (would 404 in production). The placeholder should be a
     cheap, always-available image."""
     src = '<img src="[pexels: extremely obscure query nothing matches]" />'
-    fake_fetch = MagicMock(return_value=None)  # simulate no results
+    fake_fetch = MagicMock(return_value=[])  # simulate no results
 
-    with patch("pebble.pexels_resolver._fetch_pexels_image_url", fake_fetch):
+    with patch("pebble.pexels_resolver._fetch_pexels_image_urls", fake_fetch):
         out = resolve_pexels_tags(src)
 
     assert "[pexels:" not in out
@@ -85,9 +88,9 @@ def test_resolve_fallback_to_placeholder_on_fetch_fail():
 def test_resolve_caches_repeated_queries_within_a_call():
     """One Pexels API call per unique query, even if the tag appears 5x."""
     src = '<img src="[pexels: same query]" /><img src="[pexels: same query]" /><img src="[pexels: same query]" />'
-    fake_fetch = MagicMock(return_value="https://pexels.com/cached.jpg")
+    fake_fetch = MagicMock(return_value=["https://pexels.com/cached.jpg"])
 
-    with patch("pebble.pexels_resolver._fetch_pexels_image_url", fake_fetch):
+    with patch("pebble.pexels_resolver._fetch_pexels_image_urls", fake_fetch):
         resolve_pexels_tags(src)
 
     fake_fetch.assert_called_once_with("same query")

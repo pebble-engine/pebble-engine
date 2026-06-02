@@ -188,12 +188,17 @@ def build_v2_core(brief: dict, progress_cb=None) -> dict:
     except ValueError as e:
         raise BuildV2Error(500, f"compile failed: {e}")
 
-    # Pexels resolution across section files
+    # Pexels resolution across section files — thread a shared used-set so
+    # every image across the whole site is distinct (no repeated photos
+    # between the hero and the services grid, or within a card grid).
     sections_dir = site_dir / "components" / "sections"
     if sections_dir.exists():
+        used_urls: set[str] = set()
         for sec in sorted(sections_dir.glob("*.tsx")):
-            sec.write_text(resolve_pexels_tags(sec.read_text(encoding="utf-8")),
-                           encoding="utf-8")
+            sec.write_text(
+                resolve_pexels_tags(sec.read_text(encoding="utf-8"), used=used_urls),
+                encoding="utf-8",
+            )
 
     # data-pebble-id manifest for click-to-edit
     inject_pebble_ids(site_dir)
