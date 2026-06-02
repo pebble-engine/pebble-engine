@@ -81,3 +81,29 @@ def test_prefixes_every_srcset_candidate():
     # AND both srcset candidates are prefixed (no bare "/_next" left):
     assert ' /_next/image' not in out and '"/_next/image' not in out
     assert out.count("/preview/mechanic/_next/image") == 3  # src + 2 srcset
+
+
+def test_prefixes_image_preload_imagesrcset():
+    """next/image with priority emits a <link rel=preload as=image
+    imageSrcSet="..."> in <head>. That attribute (NOT srcset) must also be
+    prefixed, else the high-res hero preload 404s at the engine root."""
+    html = (
+        '<link rel="preload" as="image" '
+        'imageSrcSet="/_next/image?url=%2Fhero.jpg&w=640&q=75 640w, '
+        '/_next/image?url=%2Fhero.jpg&w=1920&q=75 1920w" '
+        'imageSizes="100vw">'
+    )
+    out = _rewrite(html, "/preview/mechanic")
+    assert ' /_next/image' not in out and '"/_next/image' not in out
+    assert out.count("/preview/mechanic/_next/image") == 2  # both candidates
+
+
+def test_prefixes_lowercase_imagesrcset():
+    """Browsers/SSR may emit the attribute lowercased (imagesrcset)."""
+    html = (
+        '<link rel=preload as=image '
+        'imagesrcset="/_next/image?url=%2Fh.jpg&w=750&q=75 750w">'
+    )
+    out = _rewrite(html, "/preview/mechanic")
+    assert "/preview/mechanic/_next/image?url=%2Fh.jpg&w=750&q=75" in out
+    assert ' /_next/image' not in out

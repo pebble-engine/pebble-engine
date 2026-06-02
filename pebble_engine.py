@@ -2096,7 +2096,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
             return f'{attr}={quote}{fixed}{quote}'
 
         out = re.sub(
-            r'''(srcset|srcSet)=(["'])(.*?)\2''',
+            r'''(imageSrcSet|imagesrcset|srcset|srcSet)=(["'])(.*?)\2''',
             _fix_srcset,
             out,
             flags=re.DOTALL,
