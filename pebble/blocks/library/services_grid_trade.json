@@ -6,7 +6,7 @@
   "slots": {
     "eyebrow": {"kind": "text", "max_chars": 40, "tone": "What we do / Our services"},
     "headline": {"kind": "text", "max_chars": 70, "tone": "plain scope statement"},
-    "services": {"kind": "list", "tone": "4-6 items; each {title (40), body (120, outcome-focused), from_price (optional, e.g. 'from $89')}"}
+    "services": {"kind": "list", "tone": "4-6 items; each {title (40), body (110, outcome-focused), from_price (optional, e.g. 'from $89'), image (a Pexels search query for THIS specific service so each card photo is distinct, e.g. 'water heater installation plumber', 'drain cleaning pipe wrench')}"}
   },
   "palette_slots": ["bg", "fg", "accent"]
 }
