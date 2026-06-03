@@ -1,7 +1,7 @@
 {
   "block_id": "library/services_photo_grid",
   "block_type": "services",
-  "vibe_tags": ["clean", "professional", "bold", "editorial", "modern", "versatile", "trust-building"],
+  "vibe_tags": ["clean", "professional", "bold", "editorial", "modern", "versatile", "trust-building", "showcase"],
   "dna_tags": ["swiss_magazine", "boutique_brokerage", "terminal_operator"],
   "slots": {
     "eyebrow": {"kind": "text", "max_chars": 40, "tone": "What we offer / Our services"},

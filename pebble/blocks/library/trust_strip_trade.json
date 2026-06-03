@@ -1,7 +1,7 @@
 {
   "block_id": "library/trust_strip_trade",
   "block_type": "trust",
-  "vibe_tags": ["trade-pro", "local-service", "trustworthy"],
+  "vibe_tags": ["trade-pro", "local-service", "trustworthy", "showcase"],
   "dna_tags": ["terminal_operator", "swiss_magazine"],
   "slots": {
     "stats": {"kind": "list", "tone": "3-4 items; each {value, label}. STRICT: only use credentials and value props that are universally true for this trade OR explicitly stated in the brief — Licensed & Insured, 24/7 Emergency, Family-Owned, Free Estimates, Same-Day Service, Upfront Pricing, BBB Accredited, Mobile Service. DO NOT invent years in business, job counts, star ratings, customer counts, founding dates, or ANY numeric metric. If you don't have hard evidence from the brief, use a credential-style value instead of a number. Example values: 'Licensed', '24/7', 'Free Quotes', 'Upfront Pricing'."}

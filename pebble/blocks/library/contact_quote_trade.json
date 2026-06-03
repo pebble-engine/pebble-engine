@@ -1,7 +1,7 @@
 {
   "block_id": "library/contact_quote_trade",
   "block_type": "contact",
-  "vibe_tags": ["trade-pro", "local-service", "trustworthy"],
+  "vibe_tags": ["trade-pro", "local-service", "trustworthy", "showcase"],
   "dna_tags": ["terminal_operator", "swiss_magazine"],
   "slots": {
     "headline": {"kind": "text", "max_chars": 60, "tone": "Get a Free Quote"},
