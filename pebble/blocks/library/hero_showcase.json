@@ -1,0 +1,16 @@
+{
+  "block_id": "library/hero_showcase",
+  "block_type": "hero",
+  "vibe_tags": ["showcase", "visual", "image-led", "local-service", "conversion-first"],
+  "dna_tags": ["cinematic_imax", "swiss_magazine", "terminal_operator"],
+  "slots": {
+    "eyebrow": {"kind": "text", "max_chars": 40, "tone": "credential-forward (Licensed & Insured · Serving <City>)"},
+    "headline": {"kind": "text", "max_chars": 60, "tone": "short, punchy, benefit-first — 3 to 6 words"},
+    "subheadline": {"kind": "text", "max_chars": 110, "tone": "one short line; outcome + reassurance"},
+    "phone": {"kind": "text", "max_chars": 24, "tone": "display phone number"},
+    "cta_primary": {"kind": "text", "max_chars": 24, "tone": "Get a Free Quote / See Our Work"},
+    "trust_line": {"kind": "text", "max_chars": 60, "tone": "Licensed • Insured • Free Estimates"},
+    "hero_image": {"kind": "image", "pexels_query_template": "{industry_scene} professional finished work wide shot natural light", "aspect": "16/9"}
+  },
+  "palette_slots": ["accent", "accent_fg"]
+}
