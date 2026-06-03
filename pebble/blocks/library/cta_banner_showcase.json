@@ -1,0 +1,14 @@
+{
+  "block_id": "library/cta_banner_showcase",
+  "block_type": "scroll-story",
+  "vibe_tags": ["showcase", "visual", "conversion-first", "local-service"],
+  "dna_tags": ["cinematic_imax", "terminal_operator"],
+  "slots": {
+    "headline": {"kind": "text", "max_chars": 60, "tone": "short, action-oriented — Ready to start? / Let's build something"},
+    "subheadline": {"kind": "text", "max_chars": 90, "tone": "one short reassurance line (optional)"},
+    "cta_primary": {"kind": "text", "max_chars": 24, "tone": "Get a Free Quote / Call Now"},
+    "phone": {"kind": "text", "max_chars": 24, "tone": "display phone number"},
+    "bg_image": {"kind": "image", "pexels_query_template": "{industry_scene} professional team at work wide dramatic", "aspect": "21/9"}
+  },
+  "palette_slots": ["accent", "accent_fg"]
+}
