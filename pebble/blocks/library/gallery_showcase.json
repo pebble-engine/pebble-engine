@@ -1,0 +1,12 @@
+{
+  "block_id": "library/gallery_showcase",
+  "block_type": "gallery",
+  "vibe_tags": ["showcase", "visual", "image-led", "local-service"],
+  "dna_tags": ["cinematic_imax", "swiss_magazine"],
+  "slots": {
+    "eyebrow": {"kind": "text", "max_chars": 40, "tone": "Our work / Recent projects"},
+    "headline": {"kind": "text", "max_chars": 50, "tone": "short — 2 to 5 words"},
+    "projects": {"kind": "list", "tone": "5-6 items; each {caption (50), image (a Pexels query for THIS specific finished job so each photo is distinct)}"}
+  },
+  "palette_slots": ["bg", "fg", "accent"]
+}
