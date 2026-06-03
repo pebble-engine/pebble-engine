@@ -55,7 +55,7 @@ TRADE_BRIEFS: list[dict[str, str]] = [
     {
         "business_name": "Cedar & Stone Landscapes",
         "industry": "landscaper",
-        "vibe": "trade-pro",
+        "vibe": "showcase",
         "extra_context": (
             "Raleigh, NC. Services: landscape design and installation, weekly lawn care, "
             "hardscape construction including patios and retaining walls, irrigation system install and repair, "
@@ -81,7 +81,7 @@ TRADE_BRIEFS: list[dict[str, str]] = [
     {
         "business_name": "Ridgeline Builders",
         "industry": "general contractor",
-        "vibe": "trade-pro",
+        "vibe": "showcase",
         "extra_context": (
             "Boise, ID. Services: whole-home remodels, room additions, kitchen renovations, "
             "bathroom upgrades, custom decks and outdoor living spaces. "
@@ -94,7 +94,7 @@ TRADE_BRIEFS: list[dict[str, str]] = [
     {
         "business_name": "Summit Ridge Roofing",
         "industry": "roofer",
-        "vibe": "trade-pro",
+        "vibe": "showcase",
         "extra_context": (
             "Kansas City, MO. Services: full roof replacement, storm damage repair, "
             "insurance claim assistance, residential inspections, gutter installation and cleaning. "
@@ -107,7 +107,7 @@ TRADE_BRIEFS: list[dict[str, str]] = [
     {
         "business_name": "Gearworks Auto Service",
         "industry": "auto repair",
-        "vibe": "trade-pro",
+        "vibe": "showcase",
         "extra_context": (
             "Columbus, OH. Services: computerized diagnostics, brake service, oil and filter changes, "
             "AC recharge and repair, tire sales and alignment, fleet maintenance contracts. "
