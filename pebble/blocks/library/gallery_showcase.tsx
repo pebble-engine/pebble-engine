@@ -18,10 +18,10 @@ export default function GalleryShowcase() {
         </div>
 
         {/* Showcase grid — first tile spans 2 cols for visual rhythm */}
-        <Stagger className="grid grid-cols-2 md:grid-cols-3 gap-4 [&>*:first-child]:col-span-2 [&>*:first-child]:row-span-2">
+        <Stagger className="grid grid-cols-2 md:grid-cols-3 gap-4 auto-rows-[180px] md:auto-rows-[220px] [&>*:first-child]:col-span-2 [&>*:first-child]:row-span-2">
           {/* {{projects_list_start}} */}
           <StaggerItem className="group">
-            <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-slate-100">
+            <div className="relative h-full overflow-hidden rounded-lg bg-slate-100">
               <Image
                 src="{{projects[].image}}"
                 alt="{{projects[].caption}}"
