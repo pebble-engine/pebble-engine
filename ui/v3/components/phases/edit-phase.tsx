@@ -234,6 +234,16 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         original_text: selected.text,
         new_text: newText,
       });
+      // Don't claim success on a no-op (text not found anywhere). Previously
+      // every 200 read as "Text updated" even when nothing changed.
+      if (result.no_match || !result.files_changed?.length) {
+        pushToast({
+          kind: "error",
+          message: "Couldn't find that text to edit — try selecting it again.",
+        });
+        setSelected(null);
+        return;
+      }
       setIframeBust((n) => n + 1);
       pushToast({
         kind: "success",

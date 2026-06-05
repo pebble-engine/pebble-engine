@@ -201,12 +201,23 @@ def _edit_style_by_id(site_dir: Path, pebble_id: str, manifest: dict,
 
 # ---- Edit operations ------------------------------------------------------
 
+_EDIT_SKIP_DIRS = frozenset({"node_modules", ".next", ".turbo", "dist", "build"})
+
+
 def _candidate_files(site_dir: Path) -> list[Path]:
     """Files we'll search through for a visual edit. Keep this list tight:
-    arbitrary scanning grows expensive as projects grow."""
+    arbitrary scanning grows expensive as projects grow.
+
+    ``**/*.ts`` is included so click-to-edit works on TEMPLATE sites, which
+    keep their copy in ``content/site.ts`` as exported constants and render
+    ``{HERO_HEADLINE}`` in the component (the literal lives in the .ts data
+    file, not the .tsx span). Build/dependency dirs are excluded so the
+    broadened glob never scans node_modules (slow + would corrupt deps)."""
     out: list[Path] = []
-    for pattern in ("**/*.tsx", "**/*.jsx", "**/*.html", "**/*.css"):
-        out.extend(site_dir.glob(pattern))
+    for pattern in ("**/*.tsx", "**/*.jsx", "**/*.ts", "**/*.html", "**/*.css"):
+        for f in site_dir.glob(pattern):
+            if not _EDIT_SKIP_DIRS.intersection(f.parts):
+                out.append(f)
     return out
 
 
@@ -729,10 +740,16 @@ def run_visual_edit(handler) -> None:
         except Exception as _exc:
             log.warning("diff_against_snapshot failed (visual-edit %s): %s", op, _exc)
 
+    # `applied` lets the UI tell the truth: an edit that matched nothing
+    # (files_changed empty) must NOT be shown as a success toast. Previously
+    # every 200 read as "Text updated" even on a silent no-op.
+    _changed = result.get("files_changed", [])
     handler._json(200, {
         "slug":          slug,
         "op":            op,
-        "files_changed": result.get("files_changed", []),
+        "files_changed": _changed,
+        "applied":       bool(_changed),
+        "no_match":      not _changed,
         "ambiguous":     bool(result.get("ambiguous")),
         "billable":      False,
         "snapshot_id":   snapshot_id,

@@ -901,6 +901,10 @@ export type VisualEditResponse = {
   slug: string;
   op: VisualEditOp;
   files_changed: string[];
+  /** True when the edit actually changed at least one file. False = no-op
+   * (e.g. the text/selector wasn't found) — the UI must NOT claim success. */
+  applied?: boolean;
+  no_match?: boolean;
   ambiguous: boolean;
   billable: false;
   snapshot_id: string | null;
