@@ -89,7 +89,7 @@ function ResetForm() {
   if (ready === "no-session") {
     return (
       <div className="text-center space-y-4">
-        <p className="text-2xl font-semibold">Reset link expired or already used.</p>
+        <h1 className="text-2xl font-semibold">Reset link expired or already used.</h1>
         <p className="text-sm text-[#1a1a1a]/65">
           Open the link from your latest reset email, or request a new one.
         </p>

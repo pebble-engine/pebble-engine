@@ -101,7 +101,7 @@ export function TopNav({
   return (
     <header
       style={{ viewTransitionName: "top-nav" }}
-      className="sticky top-0 inset-x-0 z-50 h-16 px-4 sm:px-8 flex items-center justify-between gap-2 border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)]"
+      className="sticky top-0 inset-x-0 z-50 h-16 px-4 sm:px-8 flex items-center justify-between gap-2 border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)] overflow-x-clip"
     >
       <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {showBack && (
@@ -145,12 +145,13 @@ export function TopNav({
               <button
                 type="button"
                 onClick={() => onProjectNameChange && setEditing(true)}
-                className="group inline-flex items-center gap-2 text-base font-medium text-white/85 hover:text-white transition-colors"
+                className="group inline-flex items-center gap-2 text-base font-medium text-white/85 hover:text-white transition-colors min-w-0"
                 title={onProjectNameChange ? "Click to rename" : undefined}
               >
                 <motion.span
                   layoutId="project-name"
                   style={{ viewTransitionName: "project-name" }}
+                  className="truncate"
                 >
                   {projectName}
                 </motion.span>
