@@ -101,9 +101,9 @@ export function TopNav({
   return (
     <header
       style={{ viewTransitionName: "top-nav" }}
-      className="sticky top-0 inset-x-0 z-50 h-16 px-8 flex items-center justify-between border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)]"
+      className="sticky top-0 inset-x-0 z-50 h-16 px-4 sm:px-8 flex items-center justify-between gap-2 border-b border-white/10 bg-black/60 backdrop-blur-xl font-[family-name:var(--font-plus-jakarta-sans)]"
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
         {showBack && (
           <button
             type="button"
@@ -176,7 +176,7 @@ export function TopNav({
           </>
         )}
       </div>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {rightSlot}
         <Link
           href="/templates"
@@ -184,7 +184,7 @@ export function TopNav({
           className={`${interactions.chip} inline-flex items-center gap-1.5 text-sm text-white/70 hover:text-white px-2 py-1 rounded-md`}
         >
           <Sparkles className="w-3.5 h-3.5" aria-hidden />
-          <span className={type.label}>Templates</span>
+          <span className={`${type.label} hidden sm:inline`}>Templates</span>
         </Link>
         <Link
           href="/help"
