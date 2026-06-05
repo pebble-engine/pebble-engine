@@ -12,7 +12,9 @@ import {
   fetchAttachmentSignedUrl,
   markSubmissionRead,
   deleteSubmission,
+  listProjects,
   type Submission,
+  type ProjectSummary,
 } from "@/lib/api";
 
 function InboxForSlug({ slug }: { slug: string }) {
@@ -321,21 +323,89 @@ function formatRelative(iso: string): string {
 function InboxRoute() {
   const params = useSearchParams();
   const slug = params.get("slug") || "";
-  if (!slug) {
+  if (!slug) return <InboxProjectPicker />;
+  return <InboxForSlug slug={slug} />;
+}
+
+/** No ?slug → don't dead-end the user. Fetch their projects and let them
+ *  pick one inline (each project's inbox is at /inbox?slug=<slug>). */
+function InboxProjectPicker() {
+  const [projects, setProjects] = useState<ProjectSummary[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    listProjects()
+      .then((r) => { if (alive) setProjects(r.projects); })
+      .catch((e) => {
+        if (alive) setError(e instanceof Error ? e.message : "Couldn't load your projects.");
+      });
+    return () => { alive = false; };
+  }, []);
+
+  if (error) {
     return (
       <div className="flex-1 flex items-center justify-center text-center px-6">
         <div className="max-w-md space-y-3">
           <InboxIcon className="w-10 h-10 mx-auto text-muted-foreground" />
-          <h1 className="font-display-sans text-3xl text-foreground">Pick a project</h1>
-          <p className="text-muted-foreground text-sm">
-            Open any project from the <Link href="/dashboard" className="text-primary hover:underline">dashboard</Link>;
-            its inbox shows submissions to its contact form.
-          </p>
+          <h1 className="font-display-sans text-3xl text-foreground">Couldn’t load your inbox</h1>
+          <p className="text-muted-foreground text-sm">{error}</p>
+          <Link href="/dashboard" className="inline-block text-primary hover:underline text-sm">Back to dashboard</Link>
         </div>
       </div>
     );
   }
-  return <InboxForSlug slug={slug} />;
+
+  if (projects === null) {
+    return <div className="flex-1 flex items-center justify-center text-muted-foreground">Loading your projects…</div>;
+  }
+
+  if (projects.length === 0) {
+    return (
+      <div className="flex-1 flex items-center justify-center text-center px-6">
+        <div className="max-w-md space-y-3">
+          <InboxIcon className="w-10 h-10 mx-auto text-muted-foreground" />
+          <h1 className="font-display-sans text-3xl text-foreground">No inboxes yet</h1>
+          <p className="text-muted-foreground text-sm">
+            Your contact-form submissions land here once you have a published site.
+          </p>
+          <Link
+            href="/workspace#phase=welcome"
+            className="inline-block rounded-full bg-foreground text-background px-5 py-2 text-sm font-medium hover:bg-foreground/90"
+          >
+            Build your first site →
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 px-6 py-10 max-w-2xl mx-auto w-full">
+      <h1 className="font-display-sans text-3xl text-foreground mb-1">Inbox</h1>
+      <p className="text-muted-foreground text-sm mb-6">Pick a project to see its contact-form submissions.</p>
+      <ul className="space-y-2">
+        {projects.map((p) => (
+          <li key={p.slug}>
+            <Link
+              href={`/inbox?slug=${encodeURIComponent(p.slug)}`}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3 hover:border-foreground/30 transition-colors"
+            >
+              <span className="flex items-center gap-2 min-w-0">
+                <InboxIcon className="w-4 h-4 text-muted-foreground shrink-0" />
+                <span className="truncate text-foreground font-medium">{p.business_name || p.slug}</span>
+              </span>
+              {p.inbox && p.inbox.unread > 0 && (
+                <span className="shrink-0 rounded-full bg-primary text-primary-foreground text-xs px-2 py-0.5">
+                  {p.inbox.unread} new
+                </span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 export default function InboxPage() {
