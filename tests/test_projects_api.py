@@ -122,6 +122,7 @@ def test_list_projects_returns_brief_and_meta(fake_output):
         "business_name": "Good Co",
         "business_type": "bakery",
         "_design_dna": "swiss_magazine",
+        "_user_id": "test-user",  # owned by the caller (fixture resolves test-user)
     }))
     (fake_output / slug / "build_meta.json").write_text(json.dumps({
         "built_at": "2026-05-14T12:00:00",
@@ -153,7 +154,7 @@ def test_list_projects_skips_non_project_dirs(fake_output):
 def test_list_projects_orders_newest_first(fake_output):
     for i, slug in enumerate(["older", "newer"]):
         (fake_output / slug).mkdir()
-        (fake_output / slug / "brief.json").write_text(json.dumps({"business_name": slug}))
+        (fake_output / slug / "brief.json").write_text(json.dumps({"business_name": slug, "_user_id": "test-user"}))
         (fake_output / slug / "build_meta.json").write_text(json.dumps({
             "built_at": f"2026-05-{10 + i:02d}T00:00:00",
         }))
@@ -554,3 +555,35 @@ def test_get_project_state_403_when_cross_tenant(tmp_path, monkeypatch):
     projects.run_get_project_state(h2, slug)
     assert h2.status == 200
     assert h2.json_body["brief"]["business_name"] == "Alice's Cafe"
+
+
+# ---- /api/activity — unclaimed-project isolation (2026-06-05) --------------
+
+def test_activity_feed_excludes_unclaimed_projects(fake_output):
+    """Regression: "Recently changed" must match the Projects list — a
+    signed-in user sees ONLY their own projects' activity, never an
+    unclaimed/anon project's. The old `owner and owner != uid` short-circuit
+    leaked unclaimed activity (a stray anon build showed up in the dashboard
+    while the Projects list stayed empty)."""
+    # Project owned by the caller ("test-user" per the fixture).
+    (fake_output / "mine").mkdir()
+    (fake_output / "mine" / "brief.json").write_text(
+        json.dumps({"business_name": "My Cafe", "_user_id": "test-user"})
+    )
+    _seed_site(fake_output, "mine", {"app/page.tsx": "x"})
+    history_mod.snapshot_site("mine", reason="visual-edit-text")
+
+    # Unclaimed/anon project — no _user_id. Must NOT appear.
+    (fake_output / "anon").mkdir()
+    (fake_output / "anon" / "brief.json").write_text(
+        json.dumps({"business_name": "Stray Anon Build"})
+    )
+    _seed_site(fake_output, "anon", {"app/page.tsx": "y"})
+    history_mod.snapshot_site("anon", reason="visual-edit-text")
+
+    h = FakeHandler()
+    projects.run_activity_feed(h)
+    assert h.status == 200
+    slugs = {r["slug"] for r in h.json_body["activity"]}
+    assert "mine" in slugs, "owner's own project activity must be visible"
+    assert "anon" not in slugs, "unclaimed project activity must NOT leak"

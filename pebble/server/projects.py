@@ -263,10 +263,15 @@ def run_activity_feed(handler) -> None:
             except Exception:
                 brief = {}
 
-        # User-scope filter — owner must match; unclaimed projects are
-        # visible to any signed-in user (consistent with list_projects).
+        # User-scope filter — must match run_list_projects EXACTLY: a
+        # signed-in user sees ONLY their own projects. Unclaimed projects
+        # (no _user_id) are NOT shown. The old `owner and owner != uid`
+        # short-circuit let unclaimed projects leak into "Recently changed"
+        # (e.g. a stray anon build), so the dashboard showed activity for
+        # projects the user couldn't see in their Projects list — the same
+        # P0 onboarding leak list_projects already closed on 2026-05-26.
         owner = brief.get("_user_id")
-        if owner and owner != current_uid:
+        if owner != current_uid:
             continue
 
         business_name = brief.get("business_name", project_dir.name)
