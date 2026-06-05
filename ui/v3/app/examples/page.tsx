@@ -209,6 +209,15 @@ function CloneDialog({
   const [needsAuth, setNeedsAuth] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Esc closes the modal — standard modal UX (backdrop-click already works).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const submit = async () => {
     setSubmitting(true);
     setError(null);

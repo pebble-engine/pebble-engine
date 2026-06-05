@@ -338,6 +338,13 @@ function PreviewPane({
   const [checkingAuth, setCheckingAuth] = useState(false);
   const [activeIdx, setActiveIdx] = useState(0);
 
+  // Esc closes the preview — standard modal UX (backdrop-click already works).
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   const family = getFamily(initialTemplate, allTemplates);
   const pages =
     current.preview_pages && current.preview_pages.length > 0
@@ -570,6 +577,13 @@ function InstantiateDialog({
   const [notes, setNotes] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Esc closes the dialog — standard modal UX.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   const submit = async () => {
     if (!businessName.trim()) {
