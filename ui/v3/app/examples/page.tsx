@@ -173,7 +173,11 @@ function ExampleCard({
       <div className="p-5">
         <div className="flex items-center justify-between gap-2 mb-2">
           <h3 className={`${type.dashboard.heading.m}`}>{e.name}</h3>
-          <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+          <span
+            className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0"
+            title={`${e.sections} sections`}
+            aria-label={`${e.sections} sections`}
+          >
             <Layers className="w-3 h-3" aria-hidden />
             {e.sections}
           </span>

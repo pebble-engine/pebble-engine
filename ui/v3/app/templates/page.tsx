@@ -409,9 +409,9 @@ function PreviewPane({
             <X className="w-5 h-5" />
           </button>
           <div className="min-w-0">
-            <p className={`${type.mono} text-[10px] uppercase tracking-wider text-white/50`}>
-              {current.vibe}
-            </p>
+            {/* Vibe codename (e.g. "glow-emerald-dual-theme") is internal
+                metadata — dropped from the header so users see the template
+                NAME, not jargon. Matches the card decision (2026-05-24). */}
             <h2 className={`${type.dashboard.heading.m} text-white truncate`}>{current.name}</h2>
           </div>
         </div>

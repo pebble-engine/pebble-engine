@@ -78,6 +78,8 @@ type NavChild = {
   label: string;
   href: string;
   icon: React.ElementType;
+  /** Not built yet — render a "Soon" badge so users don't click a dead page. */
+  soon?: boolean;
 };
 
 type NavItem =
@@ -95,9 +97,9 @@ const NAV_ITEMS: NavItem[] = [
     children: [
       { label: "Integrations",    href: "/integrations",          icon: Plug },
       { label: "Community",       href: "/community",             icon: Users },
-      { label: "Hire a Partner",  href: "/community/hire-a-partner", icon: Briefcase },
-      { label: "Launchpad",       href: "/community/launchpad",   icon: Rocket },
-      { label: "Affiliate Program", href: "/community/affiliate", icon: Gift },
+      { label: "Hire a Partner",  href: "/community/hire-a-partner", icon: Briefcase, soon: true },
+      { label: "Launchpad",       href: "/community/launchpad",   icon: Rocket, soon: true },
+      { label: "Affiliate Program", href: "/community/affiliate", icon: Gift, soon: true },
     ],
   },
   { label: "Settings",  href: "/settings",    icon: Settings },
@@ -205,6 +207,7 @@ export function DashboardSidebar({ plan }: { plan?: PebblePlan | null } = {}) {
                         Icon={child.icon}
                         label={child.label}
                         active={pathname.startsWith(child.href)}
+                        soon={child.soon}
                       />
                     ))}
                   </div>
@@ -363,12 +366,13 @@ function NavLink({
 }
 
 function SubNavLink({
-  href, Icon, label, active,
+  href, Icon, label, active, soon,
 }: {
   href: string;
   Icon: React.ElementType;
   label: string;
   active: boolean;
+  soon?: boolean;
 }) {
   return (
     <Link
@@ -378,7 +382,12 @@ function SubNavLink({
       }`}
     >
       <Icon className="w-3.5 h-3.5" />
-      {label}
+      <span>{label}</span>
+      {soon && (
+        <span className="ml-auto shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-medium uppercase tracking-wide text-muted-foreground">
+          Soon
+        </span>
+      )}
     </Link>
   );
 }
