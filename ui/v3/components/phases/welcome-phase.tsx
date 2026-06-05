@@ -1931,8 +1931,17 @@ export function WelcomePhase({ onAdvance }: Props) {
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Account</div>
-                <Link href="/login"  className="block text-muted-foreground hover:text-foreground">Log in</Link>
-                <Link href="/signup" className="block text-muted-foreground hover:text-foreground">Sign up</Link>
+                {!authLoading && user ? (
+                  <>
+                    <Link href="/dashboard" className="block text-muted-foreground hover:text-foreground">Dashboard</Link>
+                    <Link href="/settings"  className="block text-muted-foreground hover:text-foreground">Settings</Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href="/login"  className="block text-muted-foreground hover:text-foreground">Log in</Link>
+                    <Link href="/signup" className="block text-muted-foreground hover:text-foreground">Sign up</Link>
+                  </>
+                )}
               </div>
             </div>
           </div>
