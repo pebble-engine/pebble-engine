@@ -344,7 +344,15 @@ def update_profile(
         with urllib.request.urlopen(req, timeout=timeout_sec) as resp:
             rows = json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        raise AdminError(f"update_profile: HTTP {e.code}") from e
+        # Surface PostgREST's detail (e.g. PGRST204 "Could not find the
+        # 'display_name' column …") instead of a bare status — a swallowed
+        # body made a missing-column / un-run-migration bug undiagnosable.
+        detail = ""
+        try:
+            detail = e.read().decode("utf-8")[:300]
+        except Exception:
+            pass
+        raise AdminError(f"update_profile: HTTP {e.code}{(' — ' + detail) if detail else ''}") from e
     except urllib.error.URLError as e:
         raise AdminError(f"update_profile: Supabase unreachable: {e.reason}") from e
     if not isinstance(rows, list) or not rows:
