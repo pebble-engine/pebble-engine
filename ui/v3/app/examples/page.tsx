@@ -16,6 +16,7 @@
  */
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, Check, X, Loader2, Layers } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
@@ -76,8 +77,15 @@ export default function ExamplesPage() {
           </div>
           <h1 className={`${type.dashboard.display.l} mb-3`}>Start from a finished site</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-2xl mx-auto`}>
-            Fifteen real, animated sites across industries — built by the same engine you&apos;ll edit
-            with. Pick one, make it yours. Every word, color, and image is editable after.
+            Real, animated sites across industries — built by the same engine you&apos;ll edit
+            with. They copy to your account <strong className="text-foreground font-medium">instantly</strong> (no
+            build wait), then every word, color, and image is editable.
+          </p>
+          <p className={`${type.body.s} text-muted-foreground mt-3`}>
+            Want one tailored to your business instead?{" "}
+            <Link href="/templates" className="text-foreground underline underline-offset-2 hover:opacity-80">
+              Build a custom version from a Template →
+            </Link>
           </p>
         </header>
 

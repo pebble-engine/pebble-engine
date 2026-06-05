@@ -16,6 +16,7 @@
  */
 import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Lock, Upload } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
@@ -80,8 +81,15 @@ export default function TemplatesPage() {
           </div>
           <h1 className={`${type.dashboard.display.l} mb-3`}>Start with a template</h1>
           <p className={`${type.body.m} text-muted-foreground max-w-2xl mx-auto`}>
-            Hand-curated designs across industries. Pick one, fill in your business info,
-            ship in under a minute. Customize anything after.
+            Hand-curated designs across industries. Tell us your business and we build you a
+            <strong className="text-foreground font-medium"> custom version in about 30 seconds</strong> —
+            then customize anything.
+          </p>
+          <p className={`${type.body.s} text-muted-foreground mt-3`}>
+            Just want to start instantly?{" "}
+            <Link href="/examples" className="text-foreground underline underline-offset-2 hover:opacity-80">
+              Copy a finished site from Examples →
+            </Link>
           </p>
         </header>
 
@@ -693,7 +701,7 @@ function InstantiateDialog({
         <div className="mt-6 flex items-center justify-between">
           <p className={`${type.mono} text-xs text-muted-foreground`}>
             <Check className="inline w-3.5 h-3.5 mr-1 text-foreground" />
-            Templates are free. Customize after.
+            Free · takes ~30 seconds to build · customize after.
           </p>
           <button
             type="button"
@@ -702,7 +710,7 @@ function InstantiateDialog({
             className="px-5 py-2 rounded-full bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60 transition-colors flex items-center gap-2"
           >
             {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
-            {submitting ? "Building…" : "Use this template"}
+            {submitting ? "Building your version…" : "Build my version"}
           </button>
         </div>
       </motion.div>
