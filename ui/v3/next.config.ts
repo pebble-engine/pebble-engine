@@ -60,7 +60,7 @@ const SECURITY_HEADERS = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://*.vercel-scripts.com https://js.stripe.com",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://plausible.io https://*.vercel-scripts.com https://js.stripe.com https://challenges.cloudflare.com",
       // Sentry Replay (and any other monitoring SDK that spawns workers
       // from blob URLs) needs worker-src. Without an explicit directive,
       // browsers fall back to script-src — which is hostname-restricted
@@ -70,8 +70,8 @@ const SECURITY_HEADERS = [
       "style-src 'self' 'unsafe-inline'",
       "font-src 'self' data:",
       "img-src 'self' data: blob: https:",
-      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com${devConnectSrc}`,
-      `frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com${devFrameSrc}`,
+      `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://plausible.io https://*.up.railway.app https://api.stripe.com https://accounts.google.com https://github.com https://api.github.com https://challenges.cloudflare.com${devConnectSrc}`,
+      `frame-src 'self' https://*.up.railway.app https://js.stripe.com https://hooks.stripe.com https://accounts.google.com https://github.com https://maps.google.com https://challenges.cloudflare.com${devFrameSrc}`,
       "frame-ancestors 'self'",
       "base-uri 'self'",
       "form-action 'self' https://accounts.google.com https://github.com https://*.supabase.co",
