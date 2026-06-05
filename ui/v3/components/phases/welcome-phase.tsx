@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion, AnimatePresence, MotionConfig, useScroll, useTransform } from "framer-motion";
 import { ArrowRight, Sparkles, Palette, Rocket, Check, AlertCircle } from "lucide-react";
@@ -506,6 +506,17 @@ export function WelcomePhase({ onAdvance }: Props) {
     if (!user) { setSub(null); return; }
     fetchSubscription().then(setSub).catch(() => setSub(null));
   }, [user]);
+
+  // A logged-in user who clicked "New project" arrives at /workspace — skip
+  // the marketing welcome and drop them straight on the build prompt. The
+  // public homepage "/" (same component, via WorkspaceShell) keeps the full
+  // marketing welcome for everyone.
+  const pathname = usePathname();
+  useEffect(() => {
+    if (!authLoading && user && (pathname || "").startsWith("/workspace")) {
+      setStarted(true);
+    }
+  }, [authLoading, user, pathname]);
 
   const toggleTier = (name: string) => {
     // Phase 43.17 — single-expand. Click open card again → closes it.
