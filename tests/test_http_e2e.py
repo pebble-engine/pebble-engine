@@ -183,12 +183,18 @@ def test_list_projects_empty_initially(engine_server):
 
 
 def test_list_projects_returns_seeded_project(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    base = engine_server["base"]
+    cookie = _signin(base, "u@example.com", "valid-password")
+    # Resolve the caller's id so the seeded project is OWNED by them — a
+    # signed-in user only sees their own projects (unclaimed are excluded).
+    req_me = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
+    with urllib.request.urlopen(req_me, timeout=5) as r:
+        uid = json.loads(r.read().decode("utf-8"))["user"]["id"]
     _seed_project(
         engine_server["output"],
         "good-co",
         {"app/page.tsx": "x", "package.json": "y"},
-        brief={"business_name": "Good Co", "business_type": "bakery"},
+        brief={"business_name": "Good Co", "business_type": "bakery", "_user_id": uid},
     )
     status, body = _get_with_cookie(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
@@ -637,8 +643,9 @@ def test_auth_login_wrong_password_returns_401(engine_server):
 
 
 def test_projects_list_filters_by_logged_in_user(engine_server):
-    """Anonymous projects show to everyone; user-stamped projects only show
-    to their owner."""
+    """A signed-in user sees ONLY their own projects. Unclaimed/anonymous
+    projects (no _user_id) are NOT shown — the 2026-05-26 P0 fix: brand-new
+    users were landing on a dashboard pre-filled with stray legacy builds."""
     base = engine_server["base"]
     out = engine_server["output"]
 
@@ -664,13 +671,13 @@ def test_projects_list_filters_by_logged_in_user(engine_server):
     _seed_project(out, "a-site", {"index.html": "x"}, brief={"business_name": "A's", "_user_id": owner_a_id})
     _seed_project(out, "b-site", {"index.html": "x"}, brief={"business_name": "B's", "_user_id": "some-other-id"})
 
-    # User A sees their site + anonymous, not B's
+    # User A sees ONLY their own site — not the anonymous one, not B's.
     req = urllib.request.Request(f"{base}/api/projects", headers={"Cookie": cookie_a})
     with urllib.request.urlopen(req, timeout=5) as r:
         listing = json.loads(r.read().decode("utf-8"))
     slugs = {p["slug"] for p in listing["projects"]}
-    assert "anon-site" in slugs
     assert "a-site" in slugs
+    assert "anon-site" not in slugs   # unclaimed must NOT leak (2026-05-26 P0)
     assert "b-site" not in slugs
 
 
