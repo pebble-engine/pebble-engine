@@ -29,3 +29,33 @@ export function subscriptionStatusToTier(
   }
   return "free";
 }
+
+
+// ---------- Integration tier gates ----------
+//
+// 2026-05-26: integrations-phase.tsx imports canUseIntegration() and
+// minTierFor() but the helpers were missing from this file (task #146
+// was marked completed but the diff didn't include them — drift). v3
+// dev server crashed with "Export minTierFor doesn't exist" on every
+// page load that touches integrations. Stubs below restore startup;
+// real per-integration gating can replace these later.
+//
+// Current policy:
+//   - free: NO third-party integrations (forces upgrade prompt)
+//   - starter: basic ones (whatsapp, booking, maps)
+//   - pro / enterprise: everything
+// The minTierFor() return type is widened to PlanTier but consumers
+// cast it down to "starter" | "pro" — that cast stays safe because
+// we never return "free" or "enterprise" from this helper.
+
+const _STARTER_INTEGRATIONS = new Set(["whatsapp", "booking", "maps"]);
+
+export function minTierFor(integrationId: string): PlanTier {
+  return _STARTER_INTEGRATIONS.has(integrationId) ? "starter" : "pro";
+}
+
+export function canUseIntegration(tier: PlanTier, integrationId: string): boolean {
+  if (tier === "pro" || tier === "enterprise") return true;
+  if (tier === "starter") return _STARTER_INTEGRATIONS.has(integrationId);
+  return false;
+}
