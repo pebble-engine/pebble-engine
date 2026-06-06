@@ -253,7 +253,11 @@ export function PebbleChat({ greeting, onCollapse, projectContext }: PebbleChatP
         } else if (res.confirm_action) {
           setPendingConfirm({ action: res.confirm_action, reply: res.reply });
         } else if (res.navigate_to && res.navigate_to !== pathname) {
-          window.setTimeout(() => router.push(res.navigate_to!), 350);
+          // Give the user ~1.1s to actually READ the assistant's reply
+          // (rendered above) before we whisk them to the new page — at 350ms
+          // it felt like the chip "navigated away without answering", and the
+          // chat panel doesn't persist across the route change.
+          window.setTimeout(() => router.push(res.navigate_to!), 1100);
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : String(e));
