@@ -12,7 +12,7 @@ export default function HeroTradePro() {
       <div className="absolute inset-0">
         <Parallax className="absolute inset-0" distance={30}>
           <Image
-            src="https://images.pexels.com/photos/5463577/pexels-photo-5463577.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+            src="https://images.pexels.com/photos/32497161/pexels-photo-32497161.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
             alt="Heating & Cooling Built for Colorado's Climate"
             fill
             priority
@@ -28,18 +28,18 @@ export default function HeroTradePro() {
         <div className="max-w-lg">
 
           {/* Eyebrow — credential line */}
-          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-c8899e">
+          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-c455f3">
             Licensed & Insured · Serving Denver, CO
           </p>
 
           {/* Headline */}
-          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-8c1e6d">
+          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-56af85">
             <RevealWords>Heating & Cooling Built for Colorado's Climate</RevealWords>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-4cd531">
-            NATE-certified technicians, flat-rate pricing on every call, and 24/7 emergency service when Colorado weather doesn't wait.
+          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-efc6de">
+            Flat-rate pricing on every service call — no surprises. NATE-certified technicians available 24/7 for emergency HVAC repair, installation, and tune-ups.
           </p>
 
           {/* CTA row */}
@@ -55,7 +55,7 @@ export default function HeroTradePro() {
             {/* Tap-to-call — phone CTA */}
             <a
               href="tel:(720) 555-0198"
-              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-c9e6b0">
+              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-d25d2b">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -75,8 +75,8 @@ export default function HeroTradePro() {
 
           {/* Trust strip */}
           <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-slate-200 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-edac8f">
-              NATE-Certified • Licensed & Insured • 24/7 Emergency
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-35de9c">
+              NATE-Certified • Flat-Rate Pricing • 24/7 Emergency
             </p>
           </div>
 

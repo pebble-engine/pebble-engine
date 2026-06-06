@@ -348,5 +348,1055 @@
     "file": "components/sections/Section07.tsx",
     "tag": "p",
     "original_text": "Licensed &amp; insured"
+  },
+  "pb-29653c": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Serving Austin, TX"
+  },
+  "pb-cff3d9": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-c0895a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day diagnostic visits available \u2014 we arrive prepared, give you an upfront w"
+  },
+  "pb-d823bc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-14e703": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Fully Insured \u00b7 Permit-Ready Travis County"
+  },
+  "pb-b2fe58": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-09b5fb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Master Electrician"
+  },
+  "pb-be7703": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured"
+  },
+  "pb-2d281b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered, Every Job"
+  },
+  "pb-96b5eb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-103d0a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Diagnostic Visits"
+  },
+  "pb-5b1385": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront"
+  },
+  "pb-758824": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Written Estimates"
+  },
+  "pb-1b1d98": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-f96307": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-98ba89": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Electrical Panel Upgrades"
+  },
+  "pb-256234": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Safely upgrade your home's panel to handle modern loads, add capacity for EV cha"
+  },
+  "pb-26ad14": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-5d96d3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d9135b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "EV Charger Installation"
+  },
+  "pb-8b1d10": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Level 2 home EV charger installation with dedicated circuits, permit filing, and"
+  },
+  "pb-af7432": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-95c653": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-2544b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Lighting Design"
+  },
+  "pb-3feb11": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Indoor and outdoor lighting layouts that combine safety, efficiency, and aesthet"
+  },
+  "pb-1d971f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-33f948": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-970e64": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Circuit Troubleshooting"
+  },
+  "pb-3d040b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pinpoint tripping breakers, flickering outlets, or unexplained outages with syst"
+  },
+  "pb-a586fe": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-1ae522": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d668d5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Generators"
+  },
+  "pb-1415c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Standby generator installation sized for your home's load, transfer switch wirin"
+  },
+  "pb-f1746a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-9204f3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-284e9a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Travis County"
+  },
+  "pb-032a4b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-7ba76d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric is a licensed master electrical contractor serving homeowner"
+  },
+  "pb-c7b94b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We specialize in the work that matters most for today's homes: panel capacity up"
+  },
+  "pb-75d2a0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Before any tool touches your home, you receive a written estimate in plain langu"
+  },
+  "pb-81ab9d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric \u00b7 Licensed Master Electrician \u00b7 Austin, TX"
+  },
+  "pb-88ec0b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-8bd70a": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Brightwire upgraded our panel and ran a dedicated circuit for our new EV charger"
+  },
+  "pb-736c8f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Austin homeowner, panel upgrade & EV charger"
+  },
+  "pb-d3ab40": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c863e7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-8758c2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll confirm availability within one business hou"
+  },
+  "pb-f4a845": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-2eda6b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-0f9ffb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-deb957": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-151acf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-b60a73": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-a27abc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-2d57a2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-a6f0d8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-64b620": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-f85fbf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-c3e200": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric"
+  },
+  "pb-2d0554": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed master electrician serving Austin, TX and all of Travis County."
+  },
+  "pb-84ac04": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a85fb0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-88ebcf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1e911a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-5e6dbe": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a57bb9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-def2b6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fb615f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Get an Estimate"
+  },
+  "pb-908ba6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Brightwire Electric. All rights reserved."
+  },
+  "pb-15d2c6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-5e9973": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Serving Austin, TX"
+  },
+  "pb-1f999e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-bdadf1": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From panel upgrades to EV chargers and whole-home generators \u2014 same-day diagnost"
+  },
+  "pb-efabfe": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-e8949d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u2022 Fully Insured \u2022 Permit-Ready"
+  },
+  "pb-b27e12": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-27c5d0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Master Electrician"
+  },
+  "pb-802ed7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured"
+  },
+  "pb-623936": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered"
+  },
+  "pb-c596ab": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-c95e04": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Diagnostic Visits"
+  },
+  "pb-5081d8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront"
+  },
+  "pb-8f100a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Written Estimates"
+  },
+  "pb-5f4652": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-1f8bd4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-7ffbc1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Electrical Panel Upgrades"
+  },
+  "pb-dbcdcb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Safely replace or upgrade your breaker panel to handle modern electrical loads, "
+  },
+  "pb-bc93e6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-b36a3a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-13ac63": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "EV Charger Installation"
+  },
+  "pb-b38b5a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Level 2 home charging station installation sized to your vehicle and panel capac"
+  },
+  "pb-8d1050": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-e025f2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-30e70d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Indoor & Outdoor Lighting Design"
+  },
+  "pb-34f58a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "From recessed kitchen lighting to landscape and security lighting \u2014 designed for"
+  },
+  "pb-7aa442": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-4dd485": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d1ab9c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Circuit Troubleshooting"
+  },
+  "pb-47a4b8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Systematic diagnosis of tripping breakers, flickering lights, dead outlets, and "
+  },
+  "pb-cebc15": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-9010cd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-6cc678": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Generators"
+  },
+  "pb-90471f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Automatic standby generator installation keeps your home powered through outages"
+  },
+  "pb-54ce53": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-4e7ccf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-901d81": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Travis County"
+  },
+  "pb-4553a1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-1b2f05": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric is a licensed master electrician service operating throughou"
+  },
+  "pb-c55d6b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We approach every job with a safety-first mindset: no shortcuts on materials, no"
+  },
+  "pb-2ad229": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Before any work starts, you receive a written estimate in plain language. We exp"
+  },
+  "pb-4bf3e1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric \u00b7 Licensed Master Electrician \u00b7 Austin, TX"
+  },
+  "pb-7945a3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-d496ef": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We had a panel that kept tripping whenever we ran the AC and the dryer at the sa"
+  },
+  "pb-1beb46": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Austin Homeowner"
+  },
+  "pb-3eb8ed": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-06ec5c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f6f1c3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or submit a request and we'll get back to you promptly. Same-day diagnostic"
+  },
+  "pb-32b73b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-3ccef3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-2280d3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-1057dd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-4ca652": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-ecac30": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-6e5c54": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-827a18": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-055acc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-a53fcd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-5681f9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-94cd35": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric"
+  },
+  "pb-21a6d9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed master electrician serving Austin, TX and all of Travis County."
+  },
+  "pb-d86090": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e9be05": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-4cc93e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7ac65f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-0817f2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-94dc95": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-df8483": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b842a0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-4f27db": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Brightwire Electric. All rights reserved."
+  },
+  "pb-350c58": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-1d9ad6": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Serving Austin, TX"
+  },
+  "pb-6005d1": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-9eb3dd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From panel upgrades to EV charger installs, we offer same-day diagnostic visits "
+  },
+  "pb-ac1c8a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-15f9e6": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Fully Insured \u00b7 Permit-Ready \u00b7 Same-Day Available"
+  },
+  "pb-668452": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-175951": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Master Electrician"
+  },
+  "pb-91650a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured"
+  },
+  "pb-76dcf6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered, Every Job"
+  },
+  "pb-72f8ca": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-7e594e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Diagnostic Visits Available"
+  },
+  "pb-90cb2b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront"
+  },
+  "pb-287902": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Written Estimates Before Work Begins"
+  },
+  "pb-2eb9cd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-947d75": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-d598bf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Electrical Panel Upgrades"
+  },
+  "pb-3e09f1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Replace outdated or undersized panels to safely handle modern electrical loads. "
+  },
+  "pb-489e17": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-baece1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-2c20c5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "EV Charger Installation"
+  },
+  "pb-ce34e5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Level 2 home charging stations wired and installed correctly, so your vehicle is"
+  },
+  "pb-d63516": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-e9060e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-647ade": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Indoor & Outdoor Lighting Design"
+  },
+  "pb-dcfafa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Recessed lighting, landscape fixtures, and accent lighting planned and installed"
+  },
+  "pb-5a4ea7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-bd53b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-cfa858": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Circuit Troubleshooting"
+  },
+  "pb-7b052c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pinpoint tripping breakers, flickering lights, or dead outlets fast with same-da"
+  },
+  "pb-48124b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-9f63bc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-441e5d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Generators"
+  },
+  "pb-c52796": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Automatic standby generators sized, installed, and permitted so your home stays "
+  },
+  "pb-daf99f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-013e7e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3bd6e3": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Master Electrician \u00b7 Travis County"
+  },
+  "pb-5fd3bb": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e2bd6d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric is a licensed master electrician operation based in Austin, "
+  },
+  "pb-333ccf": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We specialize in the work that matters most to Austin homeowners: panel upgrades"
+  },
+  "pb-30dffa": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Safety-first isn't a slogan here \u2014 it shapes how we diagnose, plan, and execute "
+  },
+  "pb-4bca11": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric \u00b7 Licensed Master Electrician \u00b7 Austin, TX"
+  },
+  "pb-4469fd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-a8acd2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Brightwire upgraded our panel and ran a dedicated circuit for our new EV charger"
+  },
+  "pb-d49ccd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Austin homeowner, South Congress neighborhood"
+  },
+  "pb-1e199f": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ea1ff7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3dc8ae": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or submit a request and we'll get back to you promptly. Same-day diagnostic"
+  },
+  "pb-6a3b26": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-d61f5b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-d67743": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-25fadd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-a63d45": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-b250d4": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-76657a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-2118d1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-86f49c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-686953": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-feeff9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-d29228": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Brightwire Electric"
+  },
+  "pb-b569e6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed master electrician serving Austin, TX and all of Travis County."
+  },
+  "pb-80b7bc": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4c8ee7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-e10287": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c37c33": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-71c800": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-58feb6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-a5a5af": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0e8da1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Get a Quote"
+  },
+  "pb-27b598": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Brightwire Electric. All rights reserved."
+  },
+  "pb-c71360": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
   }
 }

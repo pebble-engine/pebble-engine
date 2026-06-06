@@ -11,23 +11,23 @@ export default function ContactQuoteTrade() {
 
           {/* Left — contact info panel */}
           <div>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-f3f58c">
-              <RevealWords>Get a Free Quote Today</RevealWords>
+            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-045059">
+              <RevealWords>Get a Free Estimate Today</RevealWords>
             </h2>
-            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-0d0928">
-              Fill out the form or call us directly. We respond fast — same-day on most requests, 24/7 for emergencies.
+            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-72dbe3">
+              Call or fill out the form and we'll get back to you quickly — same-day service available for most jobs in the Portland metro.
             </p>
 
             <div className="space-y-8">
 
               {/* Phone — tap-to-call */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-c5d571">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-7c17fe">
                   Phone
                 </p>
                 <a
-                  href="tel:(503) 555-0198"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-c9ee9b">
+                  href="tel:(503) 555-0187"
+                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-3e5807">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -42,18 +42,18 @@ export default function ContactQuoteTrade() {
                   >
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.63 5.63l1.62-1.62a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 14.92z" />
                   </svg>
-                  (503) 555-0198
+                  (503) 555-0187
                 </a>
               </div>
 
               {/* Email */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-396cfe">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-ec2f74">
                   Email
                 </p>
                 <a
-                  href="mailto:service@tidewaterplumbingco.com"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-c40cd3">
+                  href="mailto:info@tidewaterplumbingco.com"
+                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-9abfdb">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -69,16 +69,16 @@ export default function ContactQuoteTrade() {
                     <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                     <polyline points="22,6 12,13 2,6" />
                   </svg>
-                  service@tidewaterplumbingco.com
+                  info@tidewaterplumbingco.com
                 </a>
               </div>
 
               {/* Address */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-d61125">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-0ac73e">
                   Address
                 </p>
-                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-8277d7">
+                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-9dc04c">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -95,7 +95,7 @@ export default function ContactQuoteTrade() {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  Mobile service · Dispatched from SE Portland, OR
+                  Dispatched from SE Portland — Mobile Service Across the Metro
                 </p>
               </div>
 
@@ -114,7 +114,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-name"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-6c2b71">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-df25e3">
                   Your name
                 </label>
                 <input
@@ -131,7 +131,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-phone"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-838e8f">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-f81726">
                   Phone
                 </label>
                 <input
@@ -149,7 +149,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-service"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-1cc538">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-513d3c">
                   Service needed
                 </label>
                 <select
@@ -168,9 +168,9 @@ export default function ContactQuoteTrade() {
                   
                   <option value="Repiping">Repiping</option>
                   
-                  <option value="24/7 Emergency Plumbing">24/7 Emergency Plumbing</option>
+                  <option value="24/7 Emergency Call">24/7 Emergency Call</option>
                   
-                  <option value="Other">Other</option>
+                  <option value="Other / Not Sure">Other / Not Sure</option>
                   
                 </select>
               </div>
@@ -179,7 +179,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-message"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-2e61a1">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-fce3cd">
                   Tell us about the job
                 </label>
                 <textarea
@@ -193,7 +193,7 @@ export default function ContactQuoteTrade() {
 
               <button
                 type="submit"
-                className="w-full bg-sky-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none" data-pebble-id="pb-eec2ef">
+                className="w-full bg-sky-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none" data-pebble-id="pb-d8b213">
                 Request my free quote
               </button>
 

@@ -18,9 +18,9 @@ export default function TestimonialsQuote() {
 
         {/* The pull-quote itself */}
         <FadeUp>
-        <blockquote className="relative" data-pebble-id="pb-ce4983">
-          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-278142">
-            Our furnace quit on a Tuesday night in February. Northpeak had a tech at our door by 10 PM, diagnosed the problem fast, and had heat running before midnight. Flat-rate price matched exactly what they quoted on the phone. No surprises.
+        <blockquote className="relative" data-pebble-id="pb-45b965">
+          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-25299f">
+            Our furnace quit on a Tuesday night in February — it was 9°F outside. I called Northpeak and a tech was at the house within two hours. He diagnosed the problem, quoted a flat price on the spot, and had heat back on before midnight. That's exactly what you need in Colorado.
           </p>
 
           {/* Attribution block */}
@@ -28,7 +28,7 @@ export default function TestimonialsQuote() {
             {/* Headshot circle */}
             <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-sky-700/30">
               <Image
-                src="https://images.pexels.com/photos/30518659/pexels-photo-30518659.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                src="https://images.pexels.com/photos/7983227/pexels-photo-7983227.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
                 alt="Marcus T."
                 fill
                 priority
@@ -40,7 +40,7 @@ export default function TestimonialsQuote() {
               <cite className="text-slate-900 text-base font-semibold not-italic block">
                 Marcus T.
               </cite>
-              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-3d6c86">
+              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-7ac3ca">
                 Denver homeowner
               </span>
             </div>

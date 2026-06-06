@@ -8,11 +8,11 @@ export default function FooterAnchoredClean() {
 
           {/* Business identity */}
           <div className="flex-shrink-0">
-            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-6b48bb">
+            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-5f5ecc">
               Sparrow Home Cleaning
             </p>
-            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-853562">
-              Residential and small office cleaning service in Minneapolis, MN
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-97434a">
+              Professional home and office cleaning in Minneapolis, MN — insured, bonded, and satisfaction guaranteed.
             </p>
           </div>
 
@@ -20,42 +20,42 @@ export default function FooterAnchoredClean() {
           <nav aria-label="Footer navigation">
             <ul className="flex flex-wrap gap-x-8 gap-y-2">
               
-              <li data-pebble-id="pb-ac21ee">
+              <li data-pebble-id="pb-37de48">
                 <a
                   href="#services"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-36e5f1">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-df0733">
                   Services
                 </a>
               </li>
               
-              <li data-pebble-id="pb-db7a56">
+              <li data-pebble-id="pb-62f833">
                 <a
                   href="#about"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-91d9a7">
-                  About
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-277ddb">
+                  About Us
                 </a>
               </li>
               
-              <li data-pebble-id="pb-70481c">
+              <li data-pebble-id="pb-f70ad5">
                 <a
                   href="#coverage"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-5dbd47">
-                  Service Area
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-efa922">
+                  Service Areas
                 </a>
               </li>
               
-              <li data-pebble-id="pb-9e4b7e">
+              <li data-pebble-id="pb-d9af4b">
                 <a
                   href="#contact"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-ef352d">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-6de682">
                   Book Online
                 </a>
               </li>
               
-              <li data-pebble-id="pb-f9f877">
+              <li data-pebble-id="pb-d2b1e8">
                 <a
                   href="#contact"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-9944a7">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-13e88b">
                   Contact
                 </a>
               </li>
@@ -67,10 +67,10 @@ export default function FooterAnchoredClean() {
 
         {/* Bottom row — divider + copyright */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <p className="text-slate-600 text-xs" data-pebble-id="pb-09ecbb">
+          <p className="text-slate-600 text-xs" data-pebble-id="pb-e68b7f">
             &copy; 2025 Sparrow Home Cleaning. All rights reserved.
           </p>
-          <p className="text-slate-700 text-xs" data-pebble-id="pb-f74820">
+          <p className="text-slate-700 text-xs" data-pebble-id="pb-e2fff2">
             Licensed &amp; insured
           </p>
         </div>

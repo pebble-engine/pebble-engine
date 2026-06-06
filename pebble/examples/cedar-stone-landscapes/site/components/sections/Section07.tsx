@@ -11,23 +11,23 @@ export default function ContactQuoteTrade() {
 
           {/* Left — contact info panel */}
           <div>
-            <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-c14f8f">
-              <RevealWords>Schedule Your Free Design Consultation</RevealWords>
+            <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-1e179b">
+              <RevealWords>Get Your Free Design Consultation</RevealWords>
             </h2>
-            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-8d08a6">
-              Tell us about your project and we'll be in touch within one business day to set up your complimentary on-site consultation.
+            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-c45ecc">
+              Tell us about your project and we'll be in touch within one business day to schedule your free on-site consultation.
             </p>
 
             <div className="space-y-8">
 
               {/* Phone — tap-to-call */}
               <div>
-                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-3c296e">
+                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-a33597">
                   Phone
                 </p>
                 <a
-                  href="tel:(919) 555-0182"
-                  className="text-stone-900 hover:text-green-700 transition focus-visible:ring-2 focus-visible:ring-green-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-2444b5">
+                  href="tel:(919) 555-0142"
+                  className="text-stone-900 hover:text-green-800 transition focus-visible:ring-2 focus-visible:ring-green-800/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-e839aa">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -42,18 +42,18 @@ export default function ContactQuoteTrade() {
                   >
                     <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.63 5.63l1.62-1.62a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 14.92z" />
                   </svg>
-                  (919) 555-0182
+                  (919) 555-0142
                 </a>
               </div>
 
               {/* Email */}
               <div>
-                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-6f1c5a">
+                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-b6ba20">
                   Email
                 </p>
                 <a
                   href="mailto:hello@cedarandstone.com"
-                  className="text-stone-900 hover:text-green-700 transition focus-visible:ring-2 focus-visible:ring-green-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-527d5b">
+                  className="text-stone-900 hover:text-green-800 transition focus-visible:ring-2 focus-visible:ring-green-800/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-6d6b73">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -75,10 +75,10 @@ export default function ContactQuoteTrade() {
 
               {/* Address */}
               <div>
-                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-de191c">
+                <p className="text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-6a21d5">
                   Address
                 </p>
-                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-1ef65c">
+                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-85ff2c">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -95,7 +95,7 @@ export default function ContactQuoteTrade() {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  Serving the Triangle area — mobile service throughout Raleigh, Cary, Durham & beyond
+                  Serving Raleigh, NC & the Triangle — Mobile Service
                 </p>
               </div>
 
@@ -114,7 +114,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-name"
-                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-5f602c">
+                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-668005">
                   Your name
                 </label>
                 <input
@@ -123,7 +123,7 @@ export default function ContactQuoteTrade() {
                   name="name"
                   required
                   placeholder="Jane Smith"
-                  className="w-full min-h-[44px] bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700 transition"
+                  className="w-full min-h-[44px] bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-800/30 focus:border-green-800 transition"
                 />
               </div>
 
@@ -131,7 +131,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-phone"
-                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-f058ee">
+                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-3310f6">
                   Phone
                 </label>
                 <input
@@ -141,7 +141,7 @@ export default function ContactQuoteTrade() {
                   name="phone"
                   required
                   placeholder="(212) 555-0100"
-                  className="w-full min-h-[44px] bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700 transition"
+                  className="w-full min-h-[44px] bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-800/30 focus:border-green-800 transition"
                 />
               </div>
 
@@ -149,14 +149,14 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-service"
-                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-edceca">
+                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-7ce996">
                   Service needed
                 </label>
                 <select
                   id="quote-service"
                   name="service"
                   required
-                  className="w-full min-h-[44px] bg-white text-stone-900 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700 transition"
+                  className="w-full min-h-[44px] bg-white text-stone-900 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-800/30 focus:border-green-800 transition"
                 >
                   <option value="">Select a service…</option>
                   
@@ -168,7 +168,7 @@ export default function ContactQuoteTrade() {
                   
                   <option value="Irrigation Install & Repair">Irrigation Install & Repair</option>
                   
-                  <option value="Seasonal Cleanup & Mulching">Seasonal Cleanup & Mulching</option>
+                  <option value="Seasonal Cleanups & Mulching">Seasonal Cleanups & Mulching</option>
                   
                   <option value="Other / Not Sure Yet">Other / Not Sure Yet</option>
                   
@@ -179,7 +179,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-message"
-                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-a600ca">
+                  className="block text-stone-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-c36443">
                   Tell us about the job
                 </label>
                 <textarea
@@ -187,13 +187,13 @@ export default function ContactQuoteTrade() {
                   name="message"
                   rows={4}
                   placeholder="Describe the work you need done…"
-                  className="w-full bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-700/30 focus:border-green-700 transition resize-none"
+                  className="w-full bg-white text-stone-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-green-800/30 focus:border-green-800 transition resize-none"
                 />
               </div>
 
               <button
                 type="submit"
-                className="w-full bg-green-700 text-stone-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-green-700/50 outline-none" data-pebble-id="pb-0694bf">
+                className="w-full bg-green-800 text-stone-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-green-800/50 outline-none" data-pebble-id="pb-2bc047">
                 Request my free quote
               </button>
 

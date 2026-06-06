@@ -1,61 +1,208 @@
 "use client";
 
 import RevealWords from "@/components/motion/RevealWords";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
-export default function ServiceAreaTrade() {
+export default function ContactQuoteTrade() {
   return (
-    <section className="bg-slate-50 py-20 px-8">
-      <div className="max-w-5xl mx-auto text-center">
+    <section id="contact" className="bg-slate-50 py-24 px-8">
+      <div className="container mx-auto max-w-6xl">
 
-        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-00782d">
-          <RevealWords>Serving Columbus & the Surrounding Communities</RevealWords>
-        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
 
-        <Stagger className="mt-10 flex flex-wrap justify-center gap-3">
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Columbus
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Dublin
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Westerville
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Gahanna
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Hilliard
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Grove City
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Pickerington
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Upper Arlington
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Worthington
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-700/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            New Albany
-          </StaggerItem>
-          
-        </Stagger>
+          {/* Left — contact info panel */}
+          <div>
+            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-da49bc">
+              <RevealWords>Book Your Service Appointment</RevealWords>
+            </h2>
+            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-aed5ad">
+              Fill out the form and we'll confirm your appointment by end of business day. Prefer to call? We're ready.
+            </p>
 
+            <div className="space-y-8">
+
+              {/* Phone — tap-to-call */}
+              <div>
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-00c956">
+                  Phone
+                </p>
+                <a
+                  href="tel:(614) 555-0192"
+                  className="text-slate-900 hover:text-red-700 transition focus-visible:ring-2 focus-visible:ring-red-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-75a5c8">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.63 5.63l1.62-1.62a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 14.92z" />
+                  </svg>
+                  (614) 555-0192
+                </a>
+              </div>
+
+              {/* Email */}
+              <div>
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-302c1e">
+                  Email
+                </p>
+                <a
+                  href="mailto:service@gearworksauto.com"
+                  className="text-slate-900 hover:text-red-700 transition focus-visible:ring-2 focus-visible:ring-red-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-cfed03">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                  service@gearworksauto.com
+                </a>
+              </div>
+
+              {/* Address */}
+              <div>
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-4ba4a4">
+                  Address
+                </p>
+                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-c5d202">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="mt-0.5 shrink-0"
+                    aria-hidden="true"
+                  >
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                  Columbus, OH
+                </p>
+              </div>
+
+            </div>
+          </div>
+
+          {/* Right — quote form */}
+          <div className="bg-slate-50 border border-slate-200 rounded-md p-6 md:p-8">
+            <form
+              action="/api/forms/gearworks-auto-service"
+              method="POST"
+              className="space-y-5"
+            >
+
+              {/* Name */}
+              <div>
+                <label
+                  htmlFor="quote-name"
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-073442">
+                  Your name
+                </label>
+                <input
+                  id="quote-name"
+                  type="text"
+                  name="name"
+                  required
+                  placeholder="Jane Smith"
+                  className="w-full min-h-[44px] bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-700/30 focus:border-red-700 transition"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label
+                  htmlFor="quote-phone"
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-e51448">
+                  Phone
+                </label>
+                <input
+                  id="quote-phone"
+                  type="tel"
+                  inputMode="tel"
+                  name="phone"
+                  required
+                  placeholder="(212) 555-0100"
+                  className="w-full min-h-[44px] bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-700/30 focus:border-red-700 transition"
+                />
+              </div>
+
+              {/* Service select */}
+              <div>
+                <label
+                  htmlFor="quote-service"
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-57a6f3">
+                  Service needed
+                </label>
+                <select
+                  id="quote-service"
+                  name="service"
+                  required
+                  className="w-full min-h-[44px] bg-white text-slate-900 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-700/30 focus:border-red-700 transition"
+                >
+                  <option value="">Select a service…</option>
+                  
+                  <option value="Computerized Diagnostics">Computerized Diagnostics</option>
+                  
+                  <option value="Brake Service">Brake Service</option>
+                  
+                  <option value="Oil & Filter Change">Oil & Filter Change</option>
+                  
+                  <option value="AC Recharge & Repair">AC Recharge & Repair</option>
+                  
+                  <option value="Tire Sales & Alignment">Tire Sales & Alignment</option>
+                  
+                  <option value="Fleet Maintenance">Fleet Maintenance</option>
+                  
+                  <option value="Other / Not Sure">Other / Not Sure</option>
+                  
+                </select>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label
+                  htmlFor="quote-message"
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-9ce3d4">
+                  Tell us about the job
+                </label>
+                <textarea
+                  id="quote-message"
+                  name="message"
+                  rows={4}
+                  placeholder="Describe the work you need done…"
+                  className="w-full bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-700/30 focus:border-red-700 transition resize-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-red-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-red-700/50 outline-none" data-pebble-id="pb-a50fb3">
+                Request my free quote
+              </button>
+
+            </form>
+          </div>
+
+        </div>
       </div>
     </section>
   );

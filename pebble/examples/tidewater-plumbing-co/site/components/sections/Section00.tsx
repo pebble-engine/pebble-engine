@@ -28,18 +28,18 @@ export default function HeroTradePro() {
         <div className="max-w-lg">
 
           {/* Eyebrow — credential line */}
-          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-c551ca">
+          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-638f04">
             Licensed & Insured · Serving Portland, OR
           </p>
 
           {/* Headline */}
-          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-0b6823">
+          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-2529e3">
             <RevealWords>Portland's Plumber for Drains, Leaks & Water Heaters</RevealWords>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-a1c9f7">
-            Same-day service on most jobs, flat-rate pricing upfront — no hourly surprises. Call us and we'll get there fast.
+          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-226e81">
+            Same-day service on most jobs, upfront flat-rate pricing so you always know the cost before we start — no hourly surprises.
           </p>
 
           {/* CTA row */}
@@ -54,8 +54,8 @@ export default function HeroTradePro() {
 
             {/* Tap-to-call — phone CTA */}
             <a
-              href="tel:(503) 555-0198"
-              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-3b5ca3">
+              href="tel:(503) 555-0187"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-509220">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -69,14 +69,14 @@ export default function HeroTradePro() {
               >
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              (503) 555-0198
+              (503) 555-0187
             </a>
           </div>
 
           {/* Trust strip */}
           <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-slate-100 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-49d1c6">
-              Licensed • Insured • 24/7 Emergency Service
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-62a58b">
+              Licensed • Insured • 24/7 Emergency
             </p>
           </div>
 

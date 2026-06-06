@@ -2,64 +2,67 @@
 
 import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
-import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
-export default function AboutTeamClean() {
+export default function CtaBannerShowcase() {
   return (
-    <section className="bg-stone-50 py-24 px-8">
-      <div className="container mx-auto max-w-6xl">
+    <section className="relative overflow-hidden min-h-[420px] flex items-center justify-center">
+      {/* Full-bleed backdrop — decorative background image */}
+      <div className="absolute inset-0">
+        <Image
+          src="https://images.pexels.com/photos/5493661/pexels-photo-5493661.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+          alt=""
+          fill
+          className="object-cover"
+        />
+        {/* Dark overlay — ensures ≥4.5:1 contrast for white text over photo */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+      {/* Content — center-anchored column */}
+      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center py-16 md:py-20">
 
-          {/* Left — portrait */}
-          <div className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-              <Parallax className="absolute inset-0" distance={30}>
-                <Image
-                  src="https://images.pexels.com/photos/37556464/pexels-photo-37556464.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-                  alt="Ridgeline Builders — Built on Straight Talk and Solid Work"
-                  fill
-                  priority
-                  className="object-cover grayscale-[15%]"
-                />
-              </Parallax>
-            </div>
-            {/* Accent rule below portrait */}
-            <div className="mt-5 h-px w-16 bg-sky-600" aria-hidden="true" />
-          </div>
+        {/* Headline */}
+        <h2 className="text-white text-4xl md:text-6xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-1236cd">
+          <RevealWords>Let's Build Something Great</RevealWords>
+        </h2>
 
-          {/* Right — credentials + prose */}
-          <div className="md:pt-8">
-            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-9aaa4f">
-              Licensed General Contractor · Boise, ID
-            </p>
-            <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-4d8edc">
-              <RevealWords>Ridgeline Builders — Built on Straight Talk and Solid Work</RevealWords>
-            </h2>
+        {/* Subheadline — optional reassurance line */}
+        <p className="text-white/80 text-lg mt-4 leading-relaxed" data-pebble-id="pb-5d4732">
+          Fixed-price contracts, no surprises — just honest craftsmanship from start to finish.
+        </p>
 
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-0fea86">
-              Ridgeline Builders is a licensed general contractor based in Boise, Idaho. We handle whole-home remodels, additions, kitchens, bathrooms, and custom outdoor living spaces — all trades managed in-house or through a vetted network we trust.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-1437ff">
-              Every project starts with a free in-home estimate and a fixed-price contract. That means no surprise invoices, no mid-project negotiations, and no ambiguity about scope. You know the number before we touch a single wall.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-e2c4a8">
-              We're fully insured and bring the same level of craft to a bathroom tile job as we do to a full structural addition. Our reputation in the Treasure Valley is built one project at a time, and we intend to keep it that way.
-            </p>
-            
+        {/* CTA row */}
+        <div className="flex flex-wrap gap-4 justify-center mt-8">
+          {/* Primary CTA */}
+          <MagneticButton
+            href="#contact"
+            className="inline-flex items-center justify-center bg-amber-700 text-stone-50 px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-700 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            Get a Free Estimate
+          </MagneticButton>
 
-            {/* Signature / credentials line */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-stone-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-eade90">
-                Ridgeline Builders · Licensed General Contractor, Boise ID
-              </p>
-            </div>
-          </div>
-
+          {/* Tap-to-call — phone CTA */}
+          <a
+            href="tel:(208) 555-0187"
+            className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-e3787e">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="20"
+              height="20"
+              aria-hidden="true"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            (208) 555-0187
+          </a>
         </div>
+
       </div>
     </section>
   );

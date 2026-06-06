@@ -2,64 +2,67 @@
 
 import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
-import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
-export default function AboutTeamClean() {
+export default function CtaBannerShowcase() {
   return (
-    <section className="bg-slate-50 py-24 px-8">
-      <div className="container mx-auto max-w-6xl">
+    <section className="relative overflow-hidden min-h-[420px] flex items-center justify-center">
+      {/* Full-bleed backdrop — decorative background image */}
+      <div className="absolute inset-0">
+        <Image
+          src="https://images.pexels.com/photos/4489776/pexels-photo-4489776.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+          alt=""
+          fill
+          className="object-cover"
+        />
+        {/* Dark overlay — ensures ≥4.5:1 contrast for white text over photo */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+      {/* Content — center-anchored column */}
+      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center py-16 md:py-20">
 
-          {/* Left — portrait */}
-          <div className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-              <Parallax className="absolute inset-0" distance={30}>
-                <Image
-                  src="https://images.pexels.com/photos/7006668/pexels-photo-7006668.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-                  alt="Gearworks Auto Service — Columbus, OH"
-                  fill
-                  priority
-                  className="object-cover grayscale-[15%]"
-                />
-              </Parallax>
-            </div>
-            {/* Accent rule below portrait */}
-            <div className="mt-5 h-px w-16 bg-sky-600" aria-hidden="true" />
-          </div>
+        {/* Headline */}
+        <h2 className="text-white text-4xl md:text-6xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-655fd5">
+          <RevealWords>See the Problem Before You Approve</RevealWords>
+        </h2>
 
-          {/* Right — credentials + prose */}
-          <div className="md:pt-8">
-            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-ad1759">
-              ASE-Certified Technicians · Fully Insured Shop
-            </p>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-0cf045">
-              <RevealWords>Gearworks Auto Service — Columbus, OH</RevealWords>
-            </h2>
+        {/* Subheadline — optional reassurance line */}
+        <p className="text-white/80 text-lg mt-4 leading-relaxed" data-pebble-id="pb-66e731">
+          We send digital inspection reports with real photos straight to your phone — no surprises.
+        </p>
 
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-a70b57">
-              Our technicians hold ASE certifications across all major service categories. That means the person working on your vehicle has passed standardized exams in their specialty — not just clocked hours in a bay.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-f28e4c">
-              We built our process around transparency. Every vehicle gets a digital inspection with photos attached. You see what we see before you approve a single repair. No surprise line items, no pressure.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-2590be">
-              Gearworks carries full shop insurance, stocks loaner cars for customers who can't wait, and offers fleet contracts for local businesses that need reliable scheduled service. We run a professional operation because our customers depend on it.
-            </p>
-            
+        {/* CTA row */}
+        <div className="flex flex-wrap gap-4 justify-center mt-8">
+          {/* Primary CTA */}
+          <MagneticButton
+            href="#contact"
+            className="inline-flex items-center justify-center bg-red-700 text-slate-50 px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-700 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            Schedule Service
+          </MagneticButton>
 
-            {/* Signature / credentials line */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-slate-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-20153a">
-                Gearworks Auto Service · ASE-Certified · Columbus, OH
-              </p>
-            </div>
-          </div>
-
+          {/* Tap-to-call — phone CTA */}
+          <a
+            href="tel:(614) 555-0192"
+            className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-a6d76a">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="20"
+              height="20"
+              aria-hidden="true"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            (614) 555-0192
+          </a>
         </div>
+
       </div>
     </section>
   );

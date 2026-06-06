@@ -11,23 +11,23 @@ export default function ContactQuoteTrade() {
 
           {/* Left — contact info panel */}
           <div>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-af2f54">
+            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-19f0fe">
               <RevealWords>Get a Free Quote Today</RevealWords>
             </h2>
-            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-d0e329">
-              Call or submit the form and a Northpeak technician will respond promptly — same-day scheduling available for most services.
+            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-779dbc">
+              Call or submit a request and we'll get back to you fast. For emergencies, call directly — we're available 24/7, every day of the year.
             </p>
 
             <div className="space-y-8">
 
               {/* Phone — tap-to-call */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-48836a">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-6714eb">
                   Phone
                 </p>
                 <a
                   href="tel:(720) 555-0198"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-0db6e4">
+                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-772215">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -48,12 +48,12 @@ export default function ContactQuoteTrade() {
 
               {/* Email */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-44b51e">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-045927">
                   Email
                 </p>
                 <a
                   href="mailto:service@northpeakhvac.com"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-943494">
+                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-5be25b">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -75,10 +75,10 @@ export default function ContactQuoteTrade() {
 
               {/* Address */}
               <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-12b9e5">
+                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-8dab1e">
                   Address
                 </p>
-                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-ba325d">
+                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-7969c9">
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     width="20"
@@ -95,7 +95,7 @@ export default function ContactQuoteTrade() {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                   </svg>
-                  Mobile service — Greater Denver, CO
+                  Mobile service — Denver Metro & Front Range, CO
                 </p>
               </div>
 
@@ -114,7 +114,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-name"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-70a4ea">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-9be687">
                   Your name
                 </label>
                 <input
@@ -131,7 +131,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-phone"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-222ad8">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-08a2a4">
                   Phone
                 </label>
                 <input
@@ -149,7 +149,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-service"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-be7694">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-4a0f2b">
                   Service needed
                 </label>
                 <select
@@ -160,25 +160,17 @@ export default function ContactQuoteTrade() {
                 >
                   <option value="">Select a service…</option>
                   
-                  <option value="AC Installation">AC Installation</option>
+                  <option value="AC Installation & Repair">AC Installation & Repair</option>
                   
-                  <option value="AC Repair">AC Repair</option>
+                  <option value="Furnace Replacement & Tune-Up">Furnace Replacement & Tune-Up</option>
                   
-                  <option value="Furnace Replacement">Furnace Replacement</option>
+                  <option value="Heat Pump Installation & Service">Heat Pump Installation & Service</option>
                   
-                  <option value="Furnace Tune-Up">Furnace Tune-Up</option>
+                  <option value="Indoor Air Quality Testing & Filtration">Indoor Air Quality Testing & Filtration</option>
                   
-                  <option value="Heat Pump Installation">Heat Pump Installation</option>
+                  <option value="24/7 Emergency HVAC Service">24/7 Emergency HVAC Service</option>
                   
-                  <option value="Heat Pump Service">Heat Pump Service</option>
-                  
-                  <option value="Indoor Air Quality Testing">Indoor Air Quality Testing</option>
-                  
-                  <option value="Air Filtration">Air Filtration</option>
-                  
-                  <option value="24/7 Emergency Service">24/7 Emergency Service</option>
-                  
-                  <option value="Maintenance Plan">Maintenance Plan</option>
+                  <option value="Maintenance Plan Inquiry">Maintenance Plan Inquiry</option>
                   
                 </select>
               </div>
@@ -187,7 +179,7 @@ export default function ContactQuoteTrade() {
               <div>
                 <label
                   htmlFor="quote-message"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-717a93">
+                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-95068e">
                   Tell us about the job
                 </label>
                 <textarea
@@ -201,7 +193,7 @@ export default function ContactQuoteTrade() {
 
               <button
                 type="submit"
-                className="w-full bg-sky-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none" data-pebble-id="pb-ee0150">
+                className="w-full bg-sky-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none" data-pebble-id="pb-a2697b">
                 Request my free quote
               </button>
 

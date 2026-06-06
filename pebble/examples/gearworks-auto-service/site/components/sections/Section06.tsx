@@ -1,209 +1,73 @@
-"use client";
-
-import RevealWords from "@/components/motion/RevealWords";
-
-export default function ContactQuoteTrade() {
+export default function FooterAnchoredClean() {
   return (
-    <section id="contact" className="bg-slate-50 py-24 px-8">
+    <footer className="bg-slate-900 border-t border-slate-800 py-12 px-8">
       <div className="container mx-auto max-w-6xl">
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-start">
+        {/* Top row — name + links */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
 
-          {/* Left — contact info panel */}
-          <div>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight max-w-sm mb-6" data-pebble-id="pb-10e058">
-              <RevealWords>Schedule Your Service Today</RevealWords>
-            </h2>
-            <p className="text-slate-600 text-base leading-relaxed mb-10 max-w-xs" data-pebble-id="pb-14e553">
-              Call or fill out the form and we'll get back to you promptly to confirm your appointment. No runaround, no upsells — just straight answers.
+          {/* Business identity */}
+          <div className="flex-shrink-0">
+            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-7e09af">
+              Gearworks Auto Service
             </p>
-
-            <div className="space-y-8">
-
-              {/* Phone — tap-to-call */}
-              <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-fd026f">
-                  Phone
-                </p>
-                <a
-                  href="tel:(614) 555-0192"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-37301f">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.6 1.18h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.73a16 16 0 0 0 5.63 5.63l1.62-1.62a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 14.92z" />
-                  </svg>
-                  (614) 555-0192
-                </a>
-              </div>
-
-              {/* Email */}
-              <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-5c9f58">
-                  Email
-                </p>
-                <a
-                  href="mailto:service@gearworksauto.com"
-                  className="text-slate-900 hover:text-sky-700 transition focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none min-h-[44px] inline-flex items-center gap-2 text-base" data-pebble-id="pb-468577">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    aria-hidden="true"
-                  >
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-                    <polyline points="22,6 12,13 2,6" />
-                  </svg>
-                  service@gearworksauto.com
-                </a>
-              </div>
-
-              {/* Address */}
-              <div>
-                <p className="text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-aede9e">
-                  Address
-                </p>
-                <p className="text-slate-600 text-base leading-relaxed flex items-start gap-2" data-pebble-id="pb-af96d8">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    className="mt-0.5 shrink-0"
-                    aria-hidden="true"
-                  >
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  Columbus, OH
-                </p>
-              </div>
-
-            </div>
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-d7882a">
+              ASE-certified auto repair shop serving Columbus, OH.
+            </p>
           </div>
 
-          {/* Right — quote form */}
-          <div className="bg-slate-50 border border-slate-200 rounded-md p-6 md:p-8">
-            <form
-              action="/api/forms/gearworks-auto-service"
-              method="POST"
-              className="space-y-5"
-            >
-
-              {/* Name */}
-              <div>
-                <label
-                  htmlFor="quote-name"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-e87f68">
-                  Your name
-                </label>
-                <input
-                  id="quote-name"
-                  type="text"
-                  name="name"
-                  required
-                  placeholder="Jane Smith"
-                  className="w-full min-h-[44px] bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-700/30 focus:border-sky-700 transition"
-                />
-              </div>
-
-              {/* Phone */}
-              <div>
-                <label
-                  htmlFor="quote-phone"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-442f24">
-                  Phone
-                </label>
-                <input
-                  id="quote-phone"
-                  type="tel"
-                  inputMode="tel"
-                  name="phone"
-                  required
-                  placeholder="(212) 555-0100"
-                  className="w-full min-h-[44px] bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-700/30 focus:border-sky-700 transition"
-                />
-              </div>
-
-              {/* Service select */}
-              <div>
-                <label
-                  htmlFor="quote-service"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-eb4622">
-                  Service needed
-                </label>
-                <select
-                  id="quote-service"
-                  name="service"
-                  required
-                  className="w-full min-h-[44px] bg-white text-slate-900 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-700/30 focus:border-sky-700 transition"
-                >
-                  <option value="">Select a service…</option>
-                  
-                  <option value="Computerized Diagnostics">Computerized Diagnostics</option>
-                  
-                  <option value="Brake Service">Brake Service</option>
-                  
-                  <option value="Oil & Filter Change">Oil & Filter Change</option>
-                  
-                  <option value="AC Recharge & Repair">AC Recharge & Repair</option>
-                  
-                  <option value="Tire Sales & Alignment">Tire Sales & Alignment</option>
-                  
-                  <option value="Fleet Maintenance Contract">Fleet Maintenance Contract</option>
-                  
-                  <option value="Other / Not Sure">Other / Not Sure</option>
-                  
-                </select>
-              </div>
-
-              {/* Message */}
-              <div>
-                <label
-                  htmlFor="quote-message"
-                  className="block text-slate-900 text-xs font-semibold uppercase tracking-[0.15em] mb-2" data-pebble-id="pb-658b53">
-                  Tell us about the job
-                </label>
-                <textarea
-                  id="quote-message"
-                  name="message"
-                  rows={4}
-                  placeholder="Describe the work you need done…"
-                  className="w-full bg-white text-slate-900 placeholder-slate-300 border border-slate-200 rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-sky-700/30 focus:border-sky-700 transition resize-none"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full bg-sky-700 text-slate-50 px-6 py-3 rounded-md font-medium text-sm hover:opacity-90 transition tracking-wide min-h-[44px] focus-visible:ring-2 focus-visible:ring-sky-700/50 outline-none" data-pebble-id="pb-b72248">
-                Request my free quote
-              </button>
-
-            </form>
-          </div>
+          {/* Navigation links */}
+          <nav aria-label="Footer navigation">
+            <ul className="flex flex-wrap gap-x-8 gap-y-2">
+              
+              <li data-pebble-id="pb-13384b">
+                <a
+                  href="#services"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-9e7b74">
+                  Services
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-813d7e">
+                <a
+                  href="#gallery"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-492daf">
+                  Our Work
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-491f9a">
+                <a
+                  href="#contact"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-a82510">
+                  Book Service
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-759659">
+                <a
+                  href="tel:6145550192"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-df0983">
+                  Call Us
+                </a>
+              </li>
+              
+            </ul>
+          </nav>
 
         </div>
+
+        {/* Bottom row — divider + copyright */}
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <p className="text-slate-600 text-xs" data-pebble-id="pb-2832c6">
+            &copy; 2025 Gearworks Auto Service. All rights reserved.
+          </p>
+          <p className="text-slate-700 text-xs" data-pebble-id="pb-23b9d7">
+            Licensed &amp; insured
+          </p>
+        </div>
+
       </div>
-    </section>
+    </footer>
   );
 }

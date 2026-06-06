@@ -18,9 +18,9 @@ export default function TestimonialsQuote() {
 
         {/* The pull-quote itself */}
         <FadeUp>
-        <blockquote className="relative" data-pebble-id="pb-34ae97">
-          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-6ed0dc">
-            Our water heater went out on a Friday evening. Tidewater picked up right away, gave me a flat price over the phone, and had someone at our house by 8 a.m. Saturday. No runaround, no upsell — just fixed. That's exactly what you want in a plumber.
+        <blockquote className="relative" data-pebble-id="pb-208885">
+          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-2ed9db">
+            I had a slab leak I didn't catch for weeks. Tidewater found it in under an hour, gave me a flat price on the spot, and finished the repair the same afternoon. Straightforward people, zero runaround — exactly what you need when your floors are at stake.
           </p>
 
           {/* Attribution block */}
@@ -28,7 +28,7 @@ export default function TestimonialsQuote() {
             {/* Headshot circle */}
             <div className="relative w-16 h-16 rounded-full overflow-hidden ring-2 ring-sky-700/30">
               <Image
-                src="https://images.pexels.com/photos/11571111/pexels-photo-11571111.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                src="https://images.pexels.com/photos/30518659/pexels-photo-30518659.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
                 alt="Marcus T."
                 fill
                 priority
@@ -40,8 +40,8 @@ export default function TestimonialsQuote() {
               <cite className="text-slate-900 text-base font-semibold not-italic block">
                 Marcus T.
               </cite>
-              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-292d0c">
-                Homeowner, NE Portland
+              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-818ece">
+                SE Portland homeowner
               </span>
             </div>
           </footer>

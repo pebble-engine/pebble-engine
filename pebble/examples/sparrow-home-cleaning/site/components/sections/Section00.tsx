@@ -28,18 +28,18 @@ export default function HeroTradePro() {
         <div className="max-w-lg">
 
           {/* Eyebrow — credential line */}
-          <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-58191f">
+          <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-bed033">
             Fully Insured & Bonded · Serving Minneapolis, MN
           </p>
 
           {/* Headline */}
-          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-7641d5">
+          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-0c2986">
             <RevealWords>A Spotless Home, Every Single Visit</RevealWords>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-6d4d8d">
-            Book online in under two minutes and come home to a clean you can count on — your same dedicated team, every time, backed by our satisfaction guarantee.
+          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-dfa701">
+            Book your cleaning in under two minutes online — background-checked teams, eco-friendly options, and a satisfaction guarantee on every visit.
           </p>
 
           {/* CTA row */}
@@ -54,8 +54,8 @@ export default function HeroTradePro() {
 
             {/* Tap-to-call — phone CTA */}
             <a
-              href="tel:(612) 555-0182"
-              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-9c1534">
+              href="tel:(612) 555-0187"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-e1b5dd">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -69,14 +69,14 @@ export default function HeroTradePro() {
               >
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              (612) 555-0182
+              (612) 555-0187
             </a>
           </div>
 
           {/* Trust strip */}
           <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-slate-100 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-9165f8">
-              Insured & Bonded • Background-Checked Staff • Eco-Friendly Options
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-da0e83">
+              Insured & Bonded • Eco-Friendly Options • Guaranteed
             </p>
           </div>
 

@@ -11,38 +11,38 @@ export default function TrustStripTrade() {
         <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-200/30">
           
           <StaggerItem className="bg-slate-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-5e7c71">
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-668452">
               Licensed
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-1c84bd">
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-175951">
               Master Electrician
             </p>
           </StaggerItem>
           
           <StaggerItem className="bg-slate-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-437a57">
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-91650a">
+              Insured
+            </p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-76dcf6">
+              Fully Covered, Every Job
+            </p>
+          </StaggerItem>
+          
+          <StaggerItem className="bg-slate-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-72f8ca">
               Same-Day
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-9ef46b">
-              Diagnostic Visits
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-7e594e">
+              Diagnostic Visits Available
             </p>
           </StaggerItem>
           
           <StaggerItem className="bg-slate-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-160706">
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-90cb2b">
               Upfront
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-afdc47">
-              Written Estimates
-            </p>
-          </StaggerItem>
-          
-          <StaggerItem className="bg-slate-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-amber-600 leading-none" data-pebble-id="pb-d606cb">
-              Permit-Ready
-            </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-495618">
-              All Travis County Jurisdictions
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-287902">
+              Written Estimates Before Work Begins
             </p>
           </StaggerItem>
           

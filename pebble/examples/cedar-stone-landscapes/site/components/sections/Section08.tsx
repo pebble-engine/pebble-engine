@@ -8,11 +8,11 @@ export default function FooterAnchoredClean() {
 
           {/* Business identity */}
           <div className="flex-shrink-0">
-            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-43dfb2">
+            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-6a83f0">
               Cedar & Stone Landscapes
             </p>
-            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-5ba78f">
-              Licensed and insured landscape design, lawn care, and hardscape construction in Raleigh, NC.
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-245563">
+              Licensed landscape contractor serving Raleigh, NC and the Triangle area.
             </p>
           </div>
 
@@ -20,42 +20,42 @@ export default function FooterAnchoredClean() {
           <nav aria-label="Footer navigation">
             <ul className="flex flex-wrap gap-x-8 gap-y-2">
               
-              <li data-pebble-id="pb-d3f7cd">
+              <li data-pebble-id="pb-95dde2">
                 <a
                   href="#services"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-7edac6">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-ee7a43">
                   Services
                 </a>
               </li>
               
-              <li data-pebble-id="pb-032ab3">
+              <li data-pebble-id="pb-9c4660">
                 <a
                   href="#gallery"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-0c9d98">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-90c159">
                   Our Work
                 </a>
               </li>
               
-              <li data-pebble-id="pb-69d28a">
+              <li data-pebble-id="pb-7751e4">
                 <a
                   href="#about"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-2c9ac5">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-80c59a">
                   About
                 </a>
               </li>
               
-              <li data-pebble-id="pb-81e849">
+              <li data-pebble-id="pb-4bd22b">
                 <a
                   href="#coverage"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-f9fd14">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-dfc5e9">
                   Service Area
                 </a>
               </li>
               
-              <li data-pebble-id="pb-5e7a59">
+              <li data-pebble-id="pb-1210ab">
                 <a
                   href="#contact"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-6aa416">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-d249e5">
                   Contact
                 </a>
               </li>
@@ -67,10 +67,10 @@ export default function FooterAnchoredClean() {
 
         {/* Bottom row — divider + copyright */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <p className="text-slate-600 text-xs" data-pebble-id="pb-1edb0f">
+          <p className="text-slate-600 text-xs" data-pebble-id="pb-c1ba33">
             &copy; 2025 Cedar & Stone Landscapes. All rights reserved.
           </p>
-          <p className="text-slate-700 text-xs" data-pebble-id="pb-3bb74c">
+          <p className="text-slate-700 text-xs" data-pebble-id="pb-00c87d">
             Licensed &amp; insured
           </p>
         </div>

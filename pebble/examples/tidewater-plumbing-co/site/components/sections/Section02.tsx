@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
@@ -10,100 +11,155 @@ export default function ServicesGridTrade() {
 
         {/* Section header */}
         <div className="mb-16">
-          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-4" data-pebble-id="pb-846190">
+          <p className="text-sky-700 text-xs font-semibold uppercase tracking-[0.2em] mb-4" data-pebble-id="pb-261a70">
             What We Do
           </p>
-          <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight max-w-xl tracking-tight" data-pebble-id="pb-ab7119">
+          <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight max-w-xl tracking-tight" data-pebble-id="pb-c28a10">
             <RevealWords>Plumbing Services for Portland Homes & Businesses</RevealWords>
           </h2>
         </div>
 
-        {/* Services grid */}
+        {/* Services grid — photo-top cards */}
         <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200">
           
-          <StaggerItem className="bg-slate-50 p-8 flex flex-col gap-4">
-            <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-d507d0">
-              Drain Cleaning
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-720a65">
-              Slow or fully blocked drains cleared fast. We clear kitchen, bath, and main lines and leave your pipes flowing clean.
-            </p>
-            <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-bba396">
-              From $89
-            </span>
-            <a
-              href="#contact"
-              className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-07f484">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="bg-slate-50 flex flex-col overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/29226620/pexels-photo-29226620.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Drain Cleaning"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-8 flex flex-col gap-4 flex-1">
+              <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-530d6a">
+                Drain Cleaning
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-883eef">
+                Slow or completely blocked drain? We clear clogs fast and leave your pipes flowing like they should — no mess, no guesswork.
+              </p>
+              <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-eb1dd4">
+                from $89
+              </span>
+              <a
+                href="#contact"
+                className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-4dd257">
+                Request a quote &rarr;
+              </a>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-slate-50 p-8 flex flex-col gap-4">
-            <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-57da1b">
-              Water Heater Install & Repair
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-1d9b80">
-              Hot water out? We install, replace, and repair tank and tankless water heaters with same-day availability on most calls.
-            </p>
-            <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-b7153e">
-              None
-            </span>
-            <a
-              href="#contact"
-              className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-9790c5">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="bg-slate-50 flex flex-col overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/9551366/pexels-photo-9551366.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Water Heater Install & Repair"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-8 flex flex-col gap-4 flex-1">
+              <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-5fb8fb">
+                Water Heater Install & Repair
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-bfc5ab">
+                Cold showers are not optional. We install and repair tank and tankless water heaters quickly, with parts that last.
+              </p>
+              <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-900976">
+                from $149
+              </span>
+              <a
+                href="#contact"
+                className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-e484a9">
+                Request a quote &rarr;
+              </a>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-slate-50 p-8 flex flex-col gap-4">
-            <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-4c72a3">
-              Leak Detection
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-3c5149">
-              Hidden leaks found without tearing up your walls. We pinpoint the source, explain the fix, and get it done right.
-            </p>
-            <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-119971">
-              None
-            </span>
-            <a
-              href="#contact"
-              className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-b09a17">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="bg-slate-50 flex flex-col overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/34295406/pexels-photo-34295406.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Leak Detection"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-8 flex flex-col gap-4 flex-1">
+              <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-15173b">
+                Leak Detection
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-fabafc">
+                A hidden leak can do serious damage before you ever see it. We locate the source accurately and stop it before costs compound.
+              </p>
+              <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-403aad">
+                
+              </span>
+              <a
+                href="#contact"
+                className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-b1955c">
+                Request a quote &rarr;
+              </a>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-slate-50 p-8 flex flex-col gap-4">
-            <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-56720a">
-              Repiping
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-bfbfcc">
-              Old, corroded, or failing pipes replaced from end to end. We repipe homes and businesses with minimal disruption.
-            </p>
-            <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-82bbc6">
-              None
-            </span>
-            <a
-              href="#contact"
-              className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-ae0ec6">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="bg-slate-50 flex flex-col overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/28169591/pexels-photo-28169591.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Repiping"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-8 flex flex-col gap-4 flex-1">
+              <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-17145a">
+                Repiping
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-bce4c9">
+                Old galvanized or corroded pipes dragging down your water pressure? We repipe homes with modern materials built for the long haul.
+              </p>
+              <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-c25887">
+                
+              </span>
+              <a
+                href="#contact"
+                className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-8fa8f0">
+                Request a quote &rarr;
+              </a>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-slate-50 p-8 flex flex-col gap-4">
-            <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-9f48ec">
-              24/7 Emergency Plumbing
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-951b7c">
-              Burst pipe at midnight? We answer every call around the clock and dispatch from SE Portland to reach you quickly.
-            </p>
-            <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-697bec">
-              None
-            </span>
-            <a
-              href="#contact"
-              className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-598f1b">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="bg-slate-50 flex flex-col overflow-hidden">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/16509869/pexels-photo-16509869.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="24/7 Emergency Calls"
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-8 flex flex-col gap-4 flex-1">
+              <h3 className="text-slate-900 text-lg font-semibold leading-snug" data-pebble-id="pb-65e37b">
+                24/7 Emergency Calls
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-7a2360">
+                Burst pipe at midnight? Flooding on a Sunday? Call us any hour. We dispatch from SE Portland and get there fast when it matters most.
+              </p>
+              <span className="inline-block self-start bg-sky-700/10 text-sky-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-0ab40d">
+                
+              </span>
+              <a
+                href="#contact"
+                className="text-sky-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-700/50 rounded" data-pebble-id="pb-2b6a64">
+                Request a quote &rarr;
+              </a>
+            </div>
           </StaggerItem>
           
         </Stagger>

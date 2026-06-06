@@ -718,5 +718,2525 @@
     "file": "components/sections/Section07.tsx",
     "tag": "p",
     "original_text": "Licensed &amp; insured"
+  },
+  "pb-10d789": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-fe9776": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-77f4db": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, upfront flat-rate pricing, and 24/7 emergency res"
+  },
+  "pb-c0c575": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-b74be1": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency"
+  },
+  "pb-8967cf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-5bc770": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully credentialed in Oregon"
+  },
+  "pb-cdc44c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-b216c2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency calls answered"
+  },
+  "pb-fffbf8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-0bb3d6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on most jobs"
+  },
+  "pb-b2e5e8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-749611": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront pricing, no surprises"
+  },
+  "pb-ce9685": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-8c5481": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-9fe5db": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-3e2740": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or blocked drains cleared fast. We get water moving again and leave your pi"
+  },
+  "pb-04ce9e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-d378fd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-063f9c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-2ac33f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hot water restored or upgraded the same day. We work with tank and tankless unit"
+  },
+  "pb-162711": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-bbae9d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-1ec028": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-be3859": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hidden leaks found without tearing up walls. We pinpoint the problem and give yo"
+  },
+  "pb-3a0740": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-162da8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-55073d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-8c54f2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old or failing pipes replaced with durable materials. We map out the job upfront"
+  },
+  "pb-bfc715": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-860f71": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c5d758": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-31a956": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at 2 a.m.? We pick up. Real dispatchers, real plumbers \u2014 not an answe"
+  },
+  "pb-971c95": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-408dcb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-25d64f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Oregon Plumber \u00b7 Family-Run"
+  },
+  "pb-2ca131": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ad6f0b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. is a family-run operation based in Southeast Portland. We"
+  },
+  "pb-03bdac": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every job comes with flat-rate pricing quoted before we start. You know the numb"
+  },
+  "pb-c2aba5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We serve Portland proper and the inner suburbs. Whether it's a clogged drain in "
+  },
+  "pb-37ecdf": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Team \u00b7 Licensed Oregon Plumbers \u00b7 Family-Owned"
+  },
+  "pb-6461f6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-f22b50": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Water was backing up into our kitchen sink on a Sunday evening. Tidewater answer"
+  },
+  "pb-b5d898": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "SE Portland homeowner"
+  },
+  "pb-b7bb46": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-8fc6ab": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f1e968": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you fast \u2014 usually within the ho"
+  },
+  "pb-f139da": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-88cbaf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-2d0e41": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-4181c1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-016a50": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-2f45e5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-b101ad": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-db10f1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-3da26b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-663ffd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-7f29e9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-7b48ec": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-eec4a5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed & insured plumbing \u2014 Portland, OR metro and inner suburbs"
+  },
+  "pb-a7a10e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e4367c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-478fee": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-87b1e1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-3a3811": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1e7f3b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-eeccde": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4e684d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-bf68a1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bf6a64": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Line"
+  },
+  "pb-931306": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-950a0c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-3108cb": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-f5a6e5": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-d5cd6e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, flat-rate pricing upfront \u2014 no hourly surprises. "
+  },
+  "pb-b0dea8": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-89eec2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency"
+  },
+  "pb-f1e960": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-82b82d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed Plumber"
+  },
+  "pb-389704": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-752305": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service Available"
+  },
+  "pb-80f5d0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-839e49": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on Most Jobs"
+  },
+  "pb-840cb7": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-0540c9": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing \u2014 No Surprises"
+  },
+  "pb-5113ea": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-3c1782": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-62ae2e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-94fdd1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or blocked drains cleared fast. We use the right tools to restore full flow"
+  },
+  "pb-41b2e8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-b5fabc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-61b982": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-01067f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hot water back the same day. We install, repair, and replace tank and tankless w"
+  },
+  "pb-ddaa90": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-264c55": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-567a5c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-abc9d1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "We find hidden leaks before they become big problems \u2014 walls, slabs, and supply "
+  },
+  "pb-d65587": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-764743": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-333d35": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-be5e04": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old or corroded pipes replaced cleanly and efficiently. We repipe whole homes or"
+  },
+  "pb-51bda8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-f60150": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d89877": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-cfca9e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at midnight? We pick up. Licensed plumbers dispatched from SE Portlan"
+  },
+  "pb-dfb9a8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-199fce": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-24810f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Oregon Plumber \u00b7 Family-Run"
+  },
+  "pb-c3198a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-672ac1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. is a family-run operation dispatched out of SE Portland. "
+  },
+  "pb-8d2dd9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every job gets a licensed, insured plumber \u2014 not a sub or a temp. We quote flat "
+  },
+  "pb-ba8e22": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We built this business on straight talk and reliable work. You call, we show up "
+  },
+  "pb-c176ee": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Team \u00b7 Licensed Plumbers \u00b7 SE Portland"
+  },
+  "pb-7e3940": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-ab8486": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our water heater died on a Friday night. Tidewater picked up immediately, gave m"
+  },
+  "pb-90fbbc": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Homeowner, Northeast Portland"
+  },
+  "pb-6574cf": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0d3e8f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-45738b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you fast \u2014 same-day response for"
+  },
+  "pb-39fc60": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-8af766": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-2a7b29": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-769c30": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-db6312": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-18b1cc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-986ea2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-d2d0ad": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-83c5ff": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-5364e5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-605777": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-4cef91": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-3d6c0d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed & insured plumbing services in Portland, OR \u2014 flat-rate pricing, same-d"
+  },
+  "pb-e35844": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-80ba90": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-0d73aa": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d52e3b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-dc63d4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f47411": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-814cd5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-aa5321": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-016ee4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-591c08": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency"
+  },
+  "pb-9acfb0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-71e2de": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-88eccc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-14ec1d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-243a5f": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, upfront flat-rate pricing \u2014 no hourly surprises. "
+  },
+  "pb-ac99b2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-ee5fbd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency Service"
+  },
+  "pb-623102": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-7609fd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed Plumber"
+  },
+  "pb-d9517f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-754fbd": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Calls"
+  },
+  "pb-0a2d41": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-d9f44b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service Available"
+  },
+  "pb-564d00": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-bbc864": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing"
+  },
+  "pb-89c981": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-059561": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-32152b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-5b9341": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or fully clogged drains cleared fast. We get water moving again without dam"
+  },
+  "pb-f20ee2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-26b7e1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-0b9f82": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-858242": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hot water back on the same day in most cases. We install, repair, and replace al"
+  },
+  "pb-a4cd30": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-a0fdcf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-622f7a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-cd861d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hidden leaks found before they become expensive damage. We pinpoint the source a"
+  },
+  "pb-1b52ab": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $99"
+  },
+  "pb-f66687": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-46960e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-290a07": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old or failing pipes replaced with modern materials. A lasting fix that protects"
+  },
+  "pb-73e29d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-d7fcfd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-af6525": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-7f3595": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe or flooded basement at 2 a.m.? We answer and dispatch fast \u2014 every da"
+  },
+  "pb-9fa16d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-21551a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-7479f0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Oregon Plumber \u00b7 Family-Run"
+  },
+  "pb-9568e0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-811153": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. is a family-run operation dispatched from SE Portland. We"
+  },
+  "pb-40fe84": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We built this business on one principle: no surprises on the bill. Every job get"
+  },
+  "pb-7eaa6b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From routine drain clogs to full repiping projects, we handle it all. Licensed, "
+  },
+  "pb-13e08e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. \u00b7 Family-Owned, SE Portland"
+  },
+  "pb-b22381": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-48e06d": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I called at 7 a.m. with a burst pipe and they were at my door by 9. The tech wal"
+  },
+  "pb-7c48cd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "SE Portland homeowner"
+  },
+  "pb-541b4a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c47559": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-601a98": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you fast \u2014 same-day response for"
+  },
+  "pb-4fe705": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-b39d5f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-a0a011": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-9d321d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-4fd559": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-1c3e44": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-a80f66": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-d9e03d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-82123b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-1752a1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-9ec20d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-d57fcc": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-4e67cb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed & insured plumbing services in Portland, OR \u2014 flat-rate pricing, same-d"
+  },
+  "pb-012f43": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-24d96a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-02557a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ffd6b8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-f68c5b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0a7827": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-510413": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a7a9d0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-bb0dba": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0b2093": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Line"
+  },
+  "pb-c000b7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-04e58b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-ec8597": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-debb81": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-ce84ab": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, flat-rate pricing upfront \u2014 no hourly surprises. "
+  },
+  "pb-a408ce": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-1a8e5e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency Service"
+  },
+  "pb-a074f4": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-668c98": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed Plumber"
+  },
+  "pb-6bf71f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-e5bd51": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service Available"
+  },
+  "pb-284b8b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-66dd03": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on Most Jobs"
+  },
+  "pb-d27097": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-8a0723": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing, No Surprises"
+  },
+  "pb-7a446a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-369a49": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b4fb7f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-c90511": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or fully blocked drain? We clear clogs fast and leave your pipes flowing cl"
+  },
+  "pb-1c7a34": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-836b92": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d2f198": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-36276c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Cold showers or a leaking tank? We install and repair all major brands, same day"
+  },
+  "pb-0f64b0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-63f03a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-366e39": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-83776b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hidden leaks drive up your water bill and damage your home. We locate the source"
+  },
+  "pb-ecdf88": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $99"
+  },
+  "pb-5c8467": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c3375e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-779671": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old galvanized or corroded pipes replaced with modern materials \u2014 less disruptio"
+  },
+  "pb-dabb2a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-b9984f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-45c86f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-6d4062": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at midnight? We answer around the clock and dispatch from SE Portland"
+  },
+  "pb-e100af": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-9a02c7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-e1528e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed & Insured Plumbing Contractor"
+  },
+  "pb-2422b3": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-2fac6b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. is a family-run operation based in SE Portland. We dispat"
+  },
+  "pb-658913": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every job is handled by a licensed, insured plumber. We don't subcontract. When "
+  },
+  "pb-26dd73": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We built this business on straight talk and dependable service. No hourly billin"
+  },
+  "pb-dafa28": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Plumbing Team \u00b7 Licensed Plumbers \u00b7 SE Portland"
+  },
+  "pb-e0cc93": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-7111b2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I called Tidewater at 11 PM with a burst pipe and they were at my door within th"
+  },
+  "pb-8c95a4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "NE Portland homeowner"
+  },
+  "pb-b68110": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-cfd10c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b1a9aa": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll get back to you fast \u2014 usually same day. Or just giv"
+  },
+  "pb-8b49e6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-25e6a1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-f51038": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-e663e0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-9e7fc0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-63ec02": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-57025d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-01e952": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-25d849": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-e412d2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-32af68": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-da8e61": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-4f7ff5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed plumbing contractor serving Portland, OR and the inner metro"
+  },
+  "pb-fd0141": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-53cbf6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-7b7b7d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-dff400": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-9db81e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-977081": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-bec97a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-956755": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Get a Quote"
+  },
+  "pb-7862fe": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d7a667": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Line"
+  },
+  "pb-ebafd3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-1c280d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-13b382": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-194555": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-86a7c0": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, flat-rate pricing upfront \u2014 no hourly surprises, "
+  },
+  "pb-9d02bd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-767f88": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency Service"
+  },
+  "pb-7c9036": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-3c8317": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Oregon State Licensed"
+  },
+  "pb-97fce2": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-5507e0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Availability"
+  },
+  "pb-1930f6": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-a3d780": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on Most Jobs"
+  },
+  "pb-ac6d8d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-1af979": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing, No Surprises"
+  },
+  "pb-ad672a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-454e1f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f82b2b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-5fb3ad": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or fully blocked drains cleared fast. We get your pipes flowing again witho"
+  },
+  "pb-eb54c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-6dcf4e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-b49b0a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-447de0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hot water out? We install, replace, and repair tank and tankless water heaters \u2014"
+  },
+  "pb-bf32ac": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-0586a4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-255833": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-213b22": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hidden leaks caught early save walls, floors, and money. We pinpoint the source "
+  },
+  "pb-cc8a6c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-07415c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-252221": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-dfc864": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old galvanized or corroded pipes replaced with durable copper or PEX \u2014 whole-hom"
+  },
+  "pb-8037fd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-e627aa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-2d44ac": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-8e13fe": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at midnight? We answer. Real people, real response \u2014 around the clock"
+  },
+  "pb-785d51": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-50f9e0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-60efd0": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed & Insured \u00b7 Family-Run"
+  },
+  "pb-1891d4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-7f30ca": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We're a family-run plumbing outfit dispatched right out of SE Portland. When you"
+  },
+  "pb-92f1ac": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We handle everything from a stubborn drain to a full repipe, and we show up read"
+  },
+  "pb-8b5171": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We serve Portland and the inner suburbs. Same-day appointments for most jobs, an"
+  },
+  "pb-c7cc28": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Team \u00b7 Licensed Plumbers \u00b7 SE Portland"
+  },
+  "pb-8caf64": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-12a293": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Had a pipe burst under the kitchen sink on a Sunday night. Tidewater picked up o"
+  },
+  "pb-3e4f26": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "NE Portland homeowner"
+  },
+  "pb-592d95": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-3e407e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e1f85b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Send us a message or give us a call. We respond fast \u2014 most inquiries answered w"
+  },
+  "pb-cdf3de": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-9870f7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-4a86b2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-c344a2": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-064e7e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-11dafe": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-d3ed64": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-b8e9bb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-ef7ff6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-2711dd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-443834": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-272599": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-c592c3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Family-run plumbing service in Portland, OR \u2014 licensed, insured, and available 2"
+  },
+  "pb-d837f6": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9c1237": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-68d1d4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b3d2b0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-4a041e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b025ab": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-1d68ca": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-838a4f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-67c612": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b5acf1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Line"
+  },
+  "pb-2cab65": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-e60764": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-e2d98b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-781606": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-a0f336": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, upfront flat-rate pricing, and 24/7 emergency res"
+  },
+  "pb-e7e077": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-f23bc4": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency"
+  },
+  "pb-7175fe": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-b0ae3b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully credentialed in Oregon"
+  },
+  "pb-b2a87b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-827fbb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency response, any hour"
+  },
+  "pb-47624b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-33f590": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on most jobs"
+  },
+  "pb-7c7969": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-d30190": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront pricing, no hourly surprises"
+  },
+  "pb-03f0c7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-a7ad36": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e33193": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-7ce539": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow drains and blockages cleared fast. We get your pipes flowing again without "
+  },
+  "pb-84adf0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-11a8c7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a02d54": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-17b218": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hot water back where it belongs. We install, repair, and replace tank and tankle"
+  },
+  "pb-207774": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-755cc9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a6c567": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-9cca11": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Hidden leaks cost money and cause damage. We locate the source accurately and fi"
+  },
+  "pb-a4d542": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $99"
+  },
+  "pb-d27085": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-47cfd0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-a1331d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old or corroded pipes replaced with durable, modern materials. We plan the work "
+  },
+  "pb-ca6bba": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-3702e1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3bcdfa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-a26352": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at midnight? We pick up the phone and get someone to you fast \u2014 any d"
+  },
+  "pb-60e698": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-620107": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-8ce68f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Licensed Oregon Plumber \u00b7 Family-Run"
+  },
+  "pb-3dbc72": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-bfb985": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We're a family-run operation based in Southeast Portland. Every job we take, we "
+  },
+  "pb-837c48": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Our flat-rate pricing means the quote you get is the price you pay. We built the"
+  },
+  "pb-b4fb1f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We serve Portland and the inner suburbs: from NE and SE Portland out to Gresham,"
+  },
+  "pb-7d21c7": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Team \u00b7 Licensed Oregon Plumbers \u00b7 Family-Owned"
+  },
+  "pb-c45fd9": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-261cfd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I called Tidewater at 7 a.m. with a pipe that had burst overnight. Someone was a"
+  },
+  "pb-d73a7f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "SE Portland homeowner"
+  },
+  "pb-009db4": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-af8394": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-9dd0d7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll get back to you fast \u2014 usually the same day. For eme"
+  },
+  "pb-038661": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-93ba23": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-d8fe9e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-98f211": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-baf7b6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-1f7ad7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-483ebf": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-68b323": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-9164d8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-d752e9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-234420": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-2842a0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-e3105d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed plumbing contractor serving Portland, OR and the inner metro suburbs."
+  },
+  "pb-f0610d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bfbf23": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-86beaa": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e7dbaa": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-48f3b4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f74b57": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-0162a4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e6c100": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-0571f4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-38fff9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Line"
+  },
+  "pb-805786": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-abc780": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-638f04": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Portland, OR"
+  },
+  "pb-2529e3": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-226e81": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Same-day service on most jobs, upfront flat-rate pricing so you always know the "
+  },
+  "pb-509220": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-62a58b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u2022 Insured \u2022 24/7 Emergency"
+  },
+  "pb-aed23e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-6f3933": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed Plumber"
+  },
+  "pb-f40d16": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-7f89d5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service"
+  },
+  "pb-8bb6bb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Same-Day"
+  },
+  "pb-d62355": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Service on Most Jobs"
+  },
+  "pb-086976": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-4b6a22": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing, No Surprises"
+  },
+  "pb-261a70": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-c28a10": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-530d6a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Drain Cleaning"
+  },
+  "pb-883eef": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Slow or completely blocked drain? We clear clogs fast and leave your pipes flowi"
+  },
+  "pb-eb1dd4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-4dd257": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-5fb8fb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Water Heater Install & Repair"
+  },
+  "pb-bfc5ab": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Cold showers are not optional. We install and repair tank and tankless water hea"
+  },
+  "pb-900976": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $149"
+  },
+  "pb-e484a9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-15173b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Leak Detection"
+  },
+  "pb-fabafc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A hidden leak can do serious damage before you ever see it. We locate the source"
+  },
+  "pb-403aad": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-b1955c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-17145a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Repiping"
+  },
+  "pb-bce4c9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Old galvanized or corroded pipes dragging down your water pressure? We repipe ho"
+  },
+  "pb-c25887": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-8fa8f0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-65e37b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency Calls"
+  },
+  "pb-7a2360": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Burst pipe at midnight? Flooding on a Sunday? Call us any hour. We dispatch from"
+  },
+  "pb-0ab40d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-2b6a64": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a36495": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Oregon Licensed & Insured Plumbing Contractor"
+  },
+  "pb-377c67": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-587268": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co. is a family-run operation dispatched out of SE Portland. "
+  },
+  "pb-eec838": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every technician we send is licensed and trained on the full range of work: drai"
+  },
+  "pb-08fb1f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Flat-rate pricing means the quote you get is the number you pay. We think that's"
+  },
+  "pb-0ba8e4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Tidewater Team \u00b7 Licensed Plumbers \u00b7 SE Portland"
+  },
+  "pb-208885": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-2ed9db": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I had a slab leak I didn't catch for weeks. Tidewater found it in under an hour,"
+  },
+  "pb-818ece": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "SE Portland homeowner"
+  },
+  "pb-6c3646": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-045059": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-72dbe3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you quickly \u2014 same-day service a"
+  },
+  "pb-7c17fe": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-3e5807": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-ec2f74": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-9abfdb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-0ac73e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-9dc04c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-df25e3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-f81726": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-513d3c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-fce3cd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-d8b213": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-d53666": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tidewater Plumbing Co."
+  },
+  "pb-062a0c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed & insured plumbing \u2014 SE Portland, serving the metro and inner suburbs."
+  },
+  "pb-5667d9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4657c7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-75bb7c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0f78d1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-c34936": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bf523f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-eed396": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d24871": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Get a Quote"
+  },
+  "pb-2ee8a1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d11122": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency"
+  },
+  "pb-06a829": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Tidewater Plumbing Co.. All rights reserved."
+  },
+  "pb-5badd5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
   }
 }

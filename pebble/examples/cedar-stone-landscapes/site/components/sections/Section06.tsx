@@ -1,62 +1,73 @@
-"use client";
-
-import RevealWords from "@/components/motion/RevealWords";
-import { Stagger, StaggerItem } from "@/components/motion/Stagger";
-
-export default function ServiceAreaTrade() {
+export default function FooterAnchoredClean() {
   return (
-    <section className="bg-stone-50 py-20 px-8">
-      <div className="max-w-5xl mx-auto text-center">
+    <footer className="bg-slate-900 border-t border-slate-800 py-12 px-8">
+      <div className="container mx-auto max-w-6xl">
 
-        <h2 className="text-stone-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-71f6fb">
-          <RevealWords>Proudly Serving Raleigh & the Triangle Area</RevealWords>
-        </h2>
+        {/* Top row — name + links */}
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-8 mb-10">
 
-        <Stagger className="mt-10 flex flex-wrap justify-center gap-3">
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Raleigh
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Cary
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Durham
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Chapel Hill
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Morrisville
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Apex
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Wake Forest
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Garner
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Holly Springs
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-green-700/40 text-stone-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Fuquay-Varina
-          </StaggerItem>
-          
-        </Stagger>
+          {/* Business identity */}
+          <div className="flex-shrink-0">
+            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-2c6a44">
+              Cedar & Stone Landscapes
+            </p>
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-e04005">
+              Licensed landscaping and hardscape contractor serving the Raleigh–Durham Triangle, NC.
+            </p>
+          </div>
+
+          {/* Navigation links */}
+          <nav aria-label="Footer navigation">
+            <ul className="flex flex-wrap gap-x-8 gap-y-2">
+              
+              <li data-pebble-id="pb-33f53b">
+                <a
+                  href="#services"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-4074dc">
+                  Services
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-48e30a">
+                <a
+                  href="#gallery"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-2f5e3e">
+                  Our Work
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-c7601d">
+                <a
+                  href="#contact"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-55e2da">
+                  Free Consultation
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-460197">
+                <a
+                  href="tel:+19195550182"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-3a1363">
+                  Call Us
+                </a>
+              </li>
+              
+            </ul>
+          </nav>
+
+        </div>
+
+        {/* Bottom row — divider + copyright */}
+        <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <p className="text-slate-600 text-xs" data-pebble-id="pb-6f26f5">
+            &copy; 2025 Cedar & Stone Landscapes. All rights reserved.
+          </p>
+          <p className="text-slate-700 text-xs" data-pebble-id="pb-36e94e">
+            Licensed &amp; insured
+          </p>
+        </div>
 
       </div>
-    </section>
+    </footer>
   );
 }

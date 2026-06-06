@@ -11,38 +11,38 @@ export default function TrustStripTrade() {
         <Stagger className="grid grid-cols-2 md:grid-cols-4 gap-px bg-slate-200/30">
           
           <StaggerItem className="bg-stone-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-700 leading-none" data-pebble-id="pb-46c842">
-              Licensed & Insured
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-800 leading-none" data-pebble-id="pb-91fea0">
+              Licensed
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-94ee7d">
-              Fully credentialed in NC
-            </p>
-          </StaggerItem>
-          
-          <StaggerItem className="bg-stone-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-700 leading-none" data-pebble-id="pb-1ec380">
-              Free Consultations
-            </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-1ac39e">
-              No-obligation design meeting
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-43ebd6">
+              & Fully Insured
             </p>
           </StaggerItem>
           
           <StaggerItem className="bg-stone-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-700 leading-none" data-pebble-id="pb-2654ab">
-              Warranty Backed
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-800 leading-none" data-pebble-id="pb-1c211e">
+              Free
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-7c125d">
-              Workmanship guarantee on all projects
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-3779d3">
+              Design Consultations
             </p>
           </StaggerItem>
           
           <StaggerItem className="bg-stone-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
-            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-700 leading-none" data-pebble-id="pb-3bb700">
-              Local Roots
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-800 leading-none" data-pebble-id="pb-11d0a8">
+              Warranty
             </p>
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-08f3a7">
-              Proudly serving the Triangle area
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-b9c77d">
+              on All Workmanship
+            </p>
+          </StaggerItem>
+          
+          <StaggerItem className="bg-stone-50 flex flex-col items-center justify-center gap-2 px-6 py-10 text-center md:border-l md:border-slate-200/30 md:first:border-l-0">
+            <p className="text-3xl md:text-5xl font-semibold tabular-nums text-green-800 leading-none" data-pebble-id="pb-a15fcf">
+              Local
+            </p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-600 leading-snug mt-1" data-pebble-id="pb-956f23">
+              Rooted in the Triangle
             </p>
           </StaggerItem>
           

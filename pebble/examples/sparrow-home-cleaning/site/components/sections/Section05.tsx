@@ -8,7 +8,7 @@ export default function ServiceAreaTrade() {
     <section className="bg-sky-50 py-20 px-8">
       <div className="max-w-5xl mx-auto text-center">
 
-        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-ec777e">
+        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-6f4cb1">
           <RevealWords>Proudly Serving Minneapolis & Surrounding Areas</RevealWords>
         </h2>
 
@@ -47,19 +47,11 @@ export default function ServiceAreaTrade() {
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            St. Louis Park
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
             Golden Valley
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Fridley
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-sky-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Roseville
+            St. Louis Park
           </StaggerItem>
           
         </Stagger>

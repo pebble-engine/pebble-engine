@@ -2,64 +2,67 @@
 
 import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
-import Parallax from "@/components/motion/Parallax";
+import MagneticButton from "@/components/motion/MagneticButton";
 
-export default function AboutTeamClean() {
+export default function CtaBannerShowcase() {
   return (
-    <section className="bg-stone-50 py-24 px-8">
-      <div className="container mx-auto max-w-6xl">
+    <section className="relative overflow-hidden min-h-[420px] flex items-center justify-center">
+      {/* Full-bleed backdrop — decorative background image */}
+      <div className="absolute inset-0">
+        <Image
+          src="https://images.pexels.com/photos/30674593/pexels-photo-30674593.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+          alt=""
+          fill
+          className="object-cover"
+        />
+        {/* Dark overlay — ensures ≥4.5:1 contrast for white text over photo */}
+        <div className="absolute inset-0 bg-black/60" />
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-16 items-start">
+      {/* Content — center-anchored column */}
+      <div className="relative z-10 max-w-3xl mx-auto px-6 text-center py-16 md:py-20">
 
-          {/* Left — portrait */}
-          <div className="relative">
-            <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
-              <Parallax className="absolute inset-0" distance={30}>
-                <Image
-                  src="https://images.pexels.com/photos/35181295/pexels-photo-35181295.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-                  alt="Cedar & Stone Landscapes — Raleigh, NC"
-                  fill
-                  priority
-                  className="object-cover grayscale-[15%]"
-                />
-              </Parallax>
-            </div>
-            {/* Accent rule below portrait */}
-            <div className="mt-5 h-px w-16 bg-sky-600" aria-hidden="true" />
-          </div>
+        {/* Headline */}
+        <h2 className="text-white text-4xl md:text-6xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-f10297">
+          <RevealWords>Let's Shape Your Outdoor Space</RevealWords>
+        </h2>
 
-          {/* Right — credentials + prose */}
-          <div className="md:pt-8">
-            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-a8e1e6">
-              Licensed · Insured · Triangle Area Landscapers
-            </p>
-            <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-db0ad3">
-              <RevealWords>Cedar & Stone Landscapes — Raleigh, NC</RevealWords>
-            </h2>
+        {/* Subheadline — optional reassurance line */}
+        <p className="text-white/80 text-lg mt-4 leading-relaxed" data-pebble-id="pb-1b7d2d">
+          Every project starts with a free consultation — no pressure, just good ideas.
+        </p>
 
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-a957ba">
-              Cedar & Stone Landscapes is a licensed and insured landscaping company based in Raleigh, NC, serving homeowners and properties across the Triangle. Our work spans design, installation, hardscape construction, and ongoing maintenance.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-b931af">
-              Every project begins with a free design consultation — a chance to understand your space, your goals, and the conditions that shape what will actually thrive. We work methodically, with attention to drainage, soil, sun exposure, and long-term plant health.
-            </p>
-            
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-ab5562">
-              We stand behind every job with a workmanship warranty, because a landscape is an investment. Whether you're building a patio, installing an irrigation system, or simply keeping your lawn in top shape, we deliver work that holds up.
-            </p>
-            
+        {/* CTA row */}
+        <div className="flex flex-wrap gap-4 justify-center mt-8">
+          {/* Primary CTA */}
+          <MagneticButton
+            href="#contact"
+            className="inline-flex items-center justify-center bg-green-800 text-stone-50 px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] hover:opacity-90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-800 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+          >
+            Book Your Free Consult
+          </MagneticButton>
 
-            {/* Signature / credentials line */}
-            <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-stone-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-721a98">
-                Cedar & Stone Landscapes · Raleigh, NC
-              </p>
-            </div>
-          </div>
-
+          {/* Tap-to-call — phone CTA */}
+          <a
+            href="tel:(919) 555-0182"
+            className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-107b82">
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              width="20"
+              height="20"
+              aria-hidden="true"
+            >
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            (919) 555-0182
+          </a>
         </div>
+
       </div>
     </section>
   );

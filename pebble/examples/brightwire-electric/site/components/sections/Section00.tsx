@@ -28,18 +28,18 @@ export default function HeroTradePro() {
         <div className="max-w-lg">
 
           {/* Eyebrow — credential line */}
-          <p className="text-amber-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-76b78d">
+          <p className="text-amber-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-1d9ad6">
             Licensed Master Electrician · Serving Austin, TX
           </p>
 
           {/* Headline */}
-          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-c734b1">
+          <h1 className="text-white text-5xl md:text-7xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-6005d1">
             <RevealWords>Austin's Trusted Electrician for Home & Business</RevealWords>
           </h1>
 
           {/* Subheadline */}
-          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-7108b9">
-            Same-day diagnostic visits available — upfront written estimates before any work begins, so you know exactly what to expect.
+          <p className="text-white/80 text-lg mt-6 leading-relaxed max-w-md" data-pebble-id="pb-9eb3dd">
+            From panel upgrades to EV charger installs, we offer same-day diagnostic visits and upfront written estimates before any work begins.
           </p>
 
           {/* CTA row */}
@@ -54,8 +54,8 @@ export default function HeroTradePro() {
 
             {/* Tap-to-call — phone CTA */}
             <a
-              href="tel:(512) 555-0192"
-              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-f1f6eb">
+              href="tel:(512) 555-0190"
+              className="inline-flex items-center justify-center gap-2 bg-white/10 text-white px-7 py-3 rounded-md font-semibold text-sm tracking-wide min-h-[44px] border border-white/30 hover:bg-white/20 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-transparent" data-pebble-id="pb-ac1c8a">
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -69,14 +69,14 @@ export default function HeroTradePro() {
               >
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
-              (512) 555-0192
+              (512) 555-0190
             </a>
           </div>
 
           {/* Trust strip */}
           <div className="mt-8 pt-6 border-t border-white/20">
-            <p className="text-slate-100 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-25dafa">
-              Licensed Master Electrician • Fully Insured • Permit-Ready
+            <p className="text-white/70 text-xs font-medium uppercase tracking-widest" data-pebble-id="pb-15f9e6">
+              Licensed · Fully Insured · Permit-Ready · Same-Day Available
             </p>
           </div>
 

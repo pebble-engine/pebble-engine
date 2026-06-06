@@ -378,5 +378,1155 @@
     "file": "components/sections/Section07.tsx",
     "tag": "p",
     "original_text": "Licensed &amp; insured"
+  },
+  "pb-ba5c62": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Denver, CO"
+  },
+  "pb-c1bd13": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-48b43d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "NATE-certified technicians, flat-rate pricing, and 24/7 emergency service \u2014 so y"
+  },
+  "pb-65e059": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-dcc9a2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 NATE-Certified \u00b7 24/7 Emergency"
+  },
+  "pb-439695": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified"
+  },
+  "pb-43d6fe": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Technicians"
+  },
+  "pb-c32347": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-6ca32b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service"
+  },
+  "pb-fcf83b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-57dc13": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing"
+  },
+  "pb-6f67e1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-8b95ae": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered"
+  },
+  "pb-fd0293": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-5cb977": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-d8d1fa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "AC Installation & Repair"
+  },
+  "pb-7aa4ed": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Stay cool through Denver summers with a properly sized, efficiently installed AC"
+  },
+  "pb-9fea8c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Free estimate"
+  },
+  "pb-966137": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d862b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Furnace Replacement & Tune-Ups"
+  },
+  "pb-b6802b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Keep your furnace running reliably through Colorado winters. We handle full repl"
+  },
+  "pb-de350d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-ebf367": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-e066c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Heat Pumps"
+  },
+  "pb-ff0102": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Efficient year-round comfort with heat pump systems sized and installed for Colo"
+  },
+  "pb-c88ca0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Free estimate"
+  },
+  "pb-084a25": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c8c9ba": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Indoor Air Quality"
+  },
+  "pb-383157": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Professional air quality testing and filtration solutions to remove allergens, p"
+  },
+  "pb-bcbc05": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $99"
+  },
+  "pb-633e67": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-c3dca5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency HVAC"
+  },
+  "pb-03b813": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "HVAC failures don't keep business hours. Our technicians are on call around the "
+  },
+  "pb-1ba836": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Flat-rate pricing"
+  },
+  "pb-24d7c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-a1bea4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Maintenance Plans"
+  },
+  "pb-2f307f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Year-round comfort plans designed for Colorado's extremes \u2014 regular inspections,"
+  },
+  "pb-0b5a40": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Ask about plans"
+  },
+  "pb-b4c03c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-71f100": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified \u00b7 Licensed & Insured \u00b7 Denver, CO"
+  },
+  "pb-35dbb9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e988ad": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air is a Denver-based HVAC company staffed by NATE-certified"
+  },
+  "pb-6a1d0a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We don't upsell work you don't need. Every service call is flat-rate priced upfr"
+  },
+  "pb-698877": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From high-altitude heat pump installs to emergency furnace calls at midnight in "
+  },
+  "pb-7f9164": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air \u00b7 Licensed HVAC Contractor \u00b7 Denver, CO"
+  },
+  "pb-d25180": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-e60104": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our furnace died on a Friday night in February \u2014 single digits outside. Northpea"
+  },
+  "pb-1b3381": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Denver homeowner"
+  },
+  "pb-171f93": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ddc0fb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-af96c9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or submit the form \u2014 we respond fast. For emergencies, call directly and we"
+  },
+  "pb-695275": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-477963": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-5fdb6e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-5e2fe5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-36ff44": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-e9673b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-72009a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-a9a441": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-438824": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-ab08ee": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-17d653": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-fa6507": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air"
+  },
+  "pb-80eb63": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed HVAC contractor serving Denver and the Front Range, CO"
+  },
+  "pb-4ceeaf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bc3994": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-e13beb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d91658": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-931251": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-29ec25": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-f9a660": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d0135b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-9119e7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-184373": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Service"
+  },
+  "pb-36a2c3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Northpeak Heating & Air. All rights reserved."
+  },
+  "pb-0f2f3e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-1747cc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Denver, CO"
+  },
+  "pb-c74813": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-580855": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Flat-rate pricing on every call \u2014 no surprises. NATE-certified technicians ready"
+  },
+  "pb-a296b2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-f2fce2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified \u00b7 Flat-Rate Pricing \u00b7 24/7 Emergency"
+  },
+  "pb-aa0f0d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified"
+  },
+  "pb-e06b7f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Technicians"
+  },
+  "pb-e335a5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-65ab92": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service"
+  },
+  "pb-899b72": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-615901": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing"
+  },
+  "pb-d475bc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-00a0e8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered"
+  },
+  "pb-e35cff": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-f71d07": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e60ca6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "AC Installation & Repair"
+  },
+  "pb-74ed88": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Stay cool through Denver summers. We install, diagnose, and repair all makes and"
+  },
+  "pb-462033": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-1ea570": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3acad5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Furnace Replacement & Tune-Ups"
+  },
+  "pb-bef692": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Don't let a failing furnace catch you in a Colorado winter. We replace aging uni"
+  },
+  "pb-a16ec8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-da24b0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-b6442c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Heat Pumps"
+  },
+  "pb-afae16": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Efficient year-round comfort in one system. We size, install, and service heat p"
+  },
+  "pb-90d951": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-e5c300": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d0f340": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Indoor Air Quality"
+  },
+  "pb-69db41": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Testing, filtration, and purification solutions to remove allergens and pollutan"
+  },
+  "pb-304bae": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-79a200": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-3381e7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency HVAC"
+  },
+  "pb-7dae94": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "When your system fails at midnight in January, we pick up. Real technicians, aro"
+  },
+  "pb-d4b67c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-319241": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-8a6e06": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Maintenance Plans"
+  },
+  "pb-279c56": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Year-round comfort starts with routine care. Our maintenance plans cover seasona"
+  },
+  "pb-e6a263": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-89e5e9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-90995e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified \u00b7 Licensed & Insured"
+  },
+  "pb-04c95b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-fa4b83": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak technicians are NATE-certified and trained specifically for Colorado's"
+  },
+  "pb-37f376": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every service call is quoted at a flat rate before work begins. No hidden fees, "
+  },
+  "pb-dfe908": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "From a summer AC failure in Stapleton to a furnace out in the middle of a Februa"
+  },
+  "pb-75bae5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air \u00b7 Licensed HVAC Contractor \u00b7 Denver, CO"
+  },
+  "pb-2db5d3": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-896585": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our furnace quit on the coldest night of the year. Northpeak had a tech at our d"
+  },
+  "pb-87c7f0": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Denver homeowner"
+  },
+  "pb-0034ce": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0139c0": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-1d3c0a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or fill out the form and we'll get back to you fast \u2014 same-day response for"
+  },
+  "pb-49e725": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-a68a96": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-67003e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-d6c236": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8dccc6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-3c0b75": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-5855c1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-05ef4f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-f96f7a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-204c8c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-3fa103": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-cd6f50": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air"
+  },
+  "pb-bc0a5a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed HVAC contractor serving Denver, CO and the Front Range"
+  },
+  "pb-2f2f9b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fd5f45": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-cca23d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4112cd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-448963": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-47f6a0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-a53afb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-5b2dca": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-50c66c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2e3b89": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Service"
+  },
+  "pb-773287": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Northpeak Heating & Air. All rights reserved."
+  },
+  "pb-3a6cf3": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-c455f3": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Denver, CO"
+  },
+  "pb-56af85": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-efc6de": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Flat-rate pricing on every service call \u2014 no surprises. NATE-certified technicia"
+  },
+  "pb-d25d2b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-35de9c": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified \u2022 Flat-Rate Pricing \u2022 24/7 Emergency"
+  },
+  "pb-18cc7d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified"
+  },
+  "pb-0e2c7b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed Technicians"
+  },
+  "pb-a11fe5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "24/7"
+  },
+  "pb-d32eca": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Emergency Service"
+  },
+  "pb-4ec658": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Flat-Rate"
+  },
+  "pb-f9173c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Upfront Pricing"
+  },
+  "pb-d0c091": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured"
+  },
+  "pb-85ab90": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Credentialed"
+  },
+  "pb-a20e88": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-d13d08": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-be6368": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "AC Installation & Repair"
+  },
+  "pb-0f76c9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Stay cool through Denver's summer swings. We install and repair all major AC sys"
+  },
+  "pb-4fbaa8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-ee2a0b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-661b74": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Furnace Replacement & Tune-Ups"
+  },
+  "pb-eab161": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Keep your furnace running efficiently through Colorado's harshest winters. We ha"
+  },
+  "pb-43a963": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "from $89"
+  },
+  "pb-ec3032": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d6eb6f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Heat Pumps"
+  },
+  "pb-59b81c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Year-round efficiency for Colorado's climate swings. We size, install, and servi"
+  },
+  "pb-6173ff": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-d60b18": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-f1ae95": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Indoor Air Quality"
+  },
+  "pb-fe35a5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Professional air quality testing and filtration solutions that remove pollutants"
+  },
+  "pb-a422c4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-caa7a8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-871b8e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "24/7 Emergency HVAC"
+  },
+  "pb-100b5e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "When heat fails at 2 AM in January or AC quits mid-August, our technicians are d"
+  },
+  "pb-cc46e8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-e73625": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-6bbe78": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Maintenance Plans"
+  },
+  "pb-99204b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Year-round comfort starts with scheduled maintenance. Our plans keep systems tun"
+  },
+  "pb-0dc32b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-a26773": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-b5ab30": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "NATE-Certified \u00b7 Licensed & Insured \u00b7 Denver, CO"
+  },
+  "pb-24a012": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-20c0eb": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak is a Denver-based HVAC company built around one principle: give custom"
+  },
+  "pb-76ba44": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Colorado's climate demands more from heating and cooling systems than most. Bitt"
+  },
+  "pb-ddfab4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every service call comes with upfront pricing before work begins. Maintenance pl"
+  },
+  "pb-4cd9d5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air \u00b7 Denver, CO \u00b7 Licensed & Insured"
+  },
+  "pb-45b965": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-25299f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our furnace quit on a Tuesday night in February \u2014 it was 9\u00b0F outside. I called N"
+  },
+  "pb-7ac3ca": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Denver homeowner"
+  },
+  "pb-ed3fe5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-19f0fe": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-779dbc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Call or submit a request and we'll get back to you fast. For emergencies, call d"
+  },
+  "pb-6714eb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-772215": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-045927": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-5be25b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8dab1e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-7969c9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-9be687": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-08a2a4": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-4a0f2b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-95068e": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-a2697b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-ccba15": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Northpeak Heating & Air"
+  },
+  "pb-62447c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed HVAC contractor serving Denver, CO and the Front Range"
+  },
+  "pb-38382e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b2095c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-acd00b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7ad9fd": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-a3b786": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6ace17": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-3b17ff": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-0d2c4f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Maintenance Plans"
+  },
+  "pb-b04445": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-64430c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Emergency Service"
+  },
+  "pb-bebab1": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f9c5a8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-397b7a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Northpeak Heating & Air. All rights reserved."
+  },
+  "pb-115bfc": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
   }
 }

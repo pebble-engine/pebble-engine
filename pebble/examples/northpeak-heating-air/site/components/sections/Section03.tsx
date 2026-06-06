@@ -16,7 +16,7 @@ export default function AboutTeamClean() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-sm">
               <Parallax className="absolute inset-0" distance={30}>
                 <Image
-                  src="https://images.pexels.com/photos/36085816/pexels-photo-36085816.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                  src="https://images.pexels.com/photos/32845660/pexels-photo-32845660.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
                   alt="Northpeak Heating & Air — Straight Talk, Solid Work"
                   fill
                   priority
@@ -30,31 +30,31 @@ export default function AboutTeamClean() {
 
           {/* Right — credentials + prose */}
           <div className="md:pt-8">
-            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-ec4b5f">
+            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-b5ab30">
               NATE-Certified · Licensed & Insured · Denver, CO
             </p>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-71fbf4">
+            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-24a012">
               <RevealWords>Northpeak Heating & Air — Straight Talk, Solid Work</RevealWords>
             </h2>
 
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-2d558d">
-              Northpeak operates on one principle: show up prepared, diagnose accurately, and fix it right the first time. Our NATE-certified technicians carry the training and tools to handle Denver's full range of HVAC demands.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-20c0eb">
+              Northpeak is a Denver-based HVAC company built around one principle: give customers an honest diagnosis and a fair, flat-rate price — no upsells, no runaround. Our technicians are NATE-certified and carry full licensing and insurance.
             </p>
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-20cd82">
-              Colorado's climate is not average — high altitude, dry winters, and temperature swings that can hit both extremes in a single week. We spec and install equipment that performs at altitude, not just at sea level.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-76ba44">
+              Colorado's climate demands more from heating and cooling systems than most. Bitter winters, dry summers, and rapid temperature swings mean equipment works harder here. We spec and service systems with that reality in mind, not just the manufacturer's baseline.
             </p>
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-b7296d">
-              Every service call is flat-rate priced before we start. No hidden fees, no upsell pressure. We give you the number, you approve the work, and we get it done. That's the Northpeak standard.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-ddfab4">
+              Every service call comes with upfront pricing before work begins. Maintenance plan members get priority scheduling and year-round coverage so their systems are ready when the weather turns — and in Colorado, it always does.
             </p>
             
 
             {/* Signature / credentials line */}
             <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-slate-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-2239b1">
-                Northpeak Heating & Air · Licensed HVAC Contractor · Denver, CO
+              <p className="text-slate-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-4cd9d5">
+                Northpeak Heating & Air · Denver, CO · Licensed & Insured
               </p>
             </div>
           </div>

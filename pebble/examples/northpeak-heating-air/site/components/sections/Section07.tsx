@@ -8,11 +8,11 @@ export default function FooterAnchoredClean() {
 
           {/* Business identity */}
           <div className="flex-shrink-0">
-            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-9dcc71">
+            <p className="text-slate-100 text-sm font-semibold tracking-wide" data-pebble-id="pb-ccba15">
               Northpeak Heating & Air
             </p>
-            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-e40f60">
-              Licensed HVAC contractor serving Denver and the Front Range — flat-rate pricing, NATE-certified technicians.
+            <p className="text-slate-500 text-xs mt-1 leading-relaxed max-w-xs" data-pebble-id="pb-62447c">
+              Licensed HVAC contractor serving Denver, CO and the Front Range
             </p>
           </div>
 
@@ -20,42 +20,50 @@ export default function FooterAnchoredClean() {
           <nav aria-label="Footer navigation">
             <ul className="flex flex-wrap gap-x-8 gap-y-2">
               
-              <li data-pebble-id="pb-c2a4c6">
+              <li data-pebble-id="pb-38382e">
                 <a
                   href="#services"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-f04363">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-b2095c">
                   Services
                 </a>
               </li>
               
-              <li data-pebble-id="pb-50973e">
+              <li data-pebble-id="pb-acd00b">
                 <a
                   href="#about"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-5fdd66">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-7ad9fd">
                   About
                 </a>
               </li>
               
-              <li data-pebble-id="pb-2d614b">
+              <li data-pebble-id="pb-a3b786">
                 <a
                   href="#coverage"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-f1a13e">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-6ace17">
                   Service Area
                 </a>
               </li>
               
-              <li data-pebble-id="pb-157c38">
+              <li data-pebble-id="pb-3b17ff">
                 <a
                   href="#contact"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-8982a6">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-0d2c4f">
+                  Maintenance Plans
+                </a>
+              </li>
+              
+              <li data-pebble-id="pb-b04445">
+                <a
+                  href="#contact"
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-64430c">
                   Emergency Service
                 </a>
               </li>
               
-              <li data-pebble-id="pb-6aca04">
+              <li data-pebble-id="pb-bebab1">
                 <a
                   href="#contact"
-                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-a0e29f">
+                  className="text-slate-400 text-sm hover:text-slate-100 transition" data-pebble-id="pb-f9c5a8">
                   Contact
                 </a>
               </li>
@@ -67,10 +75,10 @@ export default function FooterAnchoredClean() {
 
         {/* Bottom row — divider + copyright */}
         <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <p className="text-slate-600 text-xs" data-pebble-id="pb-796532">
+          <p className="text-slate-600 text-xs" data-pebble-id="pb-397b7a">
             &copy; 2025 Northpeak Heating & Air. All rights reserved.
           </p>
-          <p className="text-slate-700 text-xs" data-pebble-id="pb-d146df">
+          <p className="text-slate-700 text-xs" data-pebble-id="pb-115bfc">
             Licensed &amp; insured
           </p>
         </div>

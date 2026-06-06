@@ -1,113 +1,125 @@
 "use client";
 
+import Image from "next/image";
 import RevealWords from "@/components/motion/RevealWords";
 import { Stagger, StaggerItem } from "@/components/motion/Stagger";
 
-export default function ServicesGridTrade() {
+export default function ServicesPhotoGrid() {
   return (
     <section className="bg-stone-50 py-24 px-8">
       <div className="max-w-6xl mx-auto">
-
-        {/* Section header */}
-        <div className="mb-16">
-          <p className="text-green-700 text-xs font-semibold uppercase tracking-[0.2em] mb-4" data-pebble-id="pb-f7fec0">
-            What We Do
+        <div className="mb-14 max-w-2xl">
+          <p className="text-green-800 text-xs font-semibold uppercase tracking-[0.2em] mb-4" data-pebble-id="pb-98a3da">
+            What We Offer
           </p>
-          <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight max-w-xl tracking-tight" data-pebble-id="pb-84a2ff">
-            <RevealWords>Full-Service Landscaping for Every Outdoor Need</RevealWords>
+          <h2 className="text-stone-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-07f4f9">
+            <RevealWords>Full-Service Landscaping for Every Season</RevealWords>
           </h2>
         </div>
 
-        {/* Services grid */}
-        <Stagger className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-slate-200">
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           
-          <StaggerItem className="bg-stone-50 p-8 flex flex-col gap-4">
-            <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-5c9bc2">
-              Landscape Design & Installation
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-352cb0">
-              Custom garden and yard plans brought to life — from initial sketch to final planting, tailored to Raleigh's climate and your home's character.
-            </p>
-            <span className="inline-block self-start bg-green-700/10 text-green-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-6fbefe">
-              
-            </span>
-            <a
-              href="#contact"
-              className="text-green-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/50 rounded" data-pebble-id="pb-5794b4">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-stone-50">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/34553671/pexels-photo-34553671.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Landscape Design & Installation"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
+              <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-71ae9d">
+                Landscape Design & Installation
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-162f5a">
+                We transform bare yards into curated outdoor living spaces — from concept sketches to the final planted bed.
+              </p>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-stone-50 p-8 flex flex-col gap-4">
-            <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-99b9ba">
-              Weekly Lawn Care
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-bc80fb">
-              Reliable, recurring maintenance that keeps your lawn healthy and presentable through every season without you lifting a finger.
-            </p>
-            <span className="inline-block self-start bg-green-700/10 text-green-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-bfcb2d">
-              
-            </span>
-            <a
-              href="#contact"
-              className="text-green-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/50 rounded" data-pebble-id="pb-937568">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-stone-50">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/6728925/pexels-photo-6728925.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Weekly Lawn Care"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
+              <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-6dc792">
+                Weekly Lawn Care
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-3884a7">
+                Consistent, detail-oriented mowing, edging, and turf maintenance that keeps your lawn looking sharp all season long.
+              </p>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-stone-50 p-8 flex flex-col gap-4">
-            <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-4d33e8">
-              Hardscape Construction
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-e36e25">
-              Patios, retaining walls, walkways, and outdoor living spaces built with precision craftsmanship and materials that stand the test of time.
-            </p>
-            <span className="inline-block self-start bg-green-700/10 text-green-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-d17dc6">
-              
-            </span>
-            <a
-              href="#contact"
-              className="text-green-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/50 rounded" data-pebble-id="pb-7a5e07">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-stone-50">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/37340278/pexels-photo-37340278.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Hardscape Construction"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
+              <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-e17118">
+                Hardscape Construction
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-0e4943">
+                Custom patios, retaining walls, and stone walkways built with precision — beautiful structures that stand the test of time.
+              </p>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-stone-50 p-8 flex flex-col gap-4">
-            <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-3f1698">
-              Irrigation Install & Repair
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-7db6d7">
-              Smart irrigation systems designed for efficiency — and fast, accurate repairs when existing systems need attention.
-            </p>
-            <span className="inline-block self-start bg-green-700/10 text-green-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-6c2a06">
-              
-            </span>
-            <a
-              href="#contact"
-              className="text-green-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/50 rounded" data-pebble-id="pb-78471f">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-stone-50">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/32974053/pexels-photo-32974053.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Irrigation Systems"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
+              <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-98b2e0">
+                Irrigation Systems
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-a04773">
+                Expert installation and repair of irrigation systems that protect your investment and keep your landscape thriving efficiently.
+              </p>
+            </div>
           </StaggerItem>
           
-          <StaggerItem className="bg-stone-50 p-8 flex flex-col gap-4">
-            <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-fed679">
-              Seasonal Cleanups & Mulching
-            </h3>
-            <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-3092a1">
-              Spring and fall cleanups, fresh mulch application, and bed edging that refresh your landscape and protect your plantings year-round.
-            </p>
-            <span className="inline-block self-start bg-green-700/10 text-green-700 text-xs font-semibold uppercase tracking-wide px-2.5 py-1 rounded" data-pebble-id="pb-602c34">
-              
-            </span>
-            <a
-              href="#contact"
-              className="text-green-700 text-sm font-semibold tracking-wide hover:opacity-75 transition-opacity mt-2 min-h-[44px] inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-700/50 rounded" data-pebble-id="pb-8abf32">
-              Request a quote &rarr;
-            </a>
+          <StaggerItem className="flex flex-col rounded-2xl overflow-hidden border border-slate-200 bg-stone-50">
+            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+              <Image
+                src="https://images.pexels.com/photos/5735203/pexels-photo-5735203.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
+                alt="Seasonal Cleanups & Mulching"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-500 hover:scale-105"
+              />
+            </div>
+            <div className="p-6 flex flex-col gap-3 flex-1">
+              <h3 className="text-stone-900 text-lg font-semibold leading-snug" data-pebble-id="pb-429e10">
+                Seasonal Cleanups & Mulching
+              </h3>
+              <p className="text-slate-600 text-base leading-relaxed flex-1" data-pebble-id="pb-a8fd0f">
+                Spring and fall cleanups plus fresh mulching that give your property a polished, well-tended look all year round.
+              </p>
+            </div>
           </StaggerItem>
           
         </Stagger>
-
       </div>
     </section>
   );

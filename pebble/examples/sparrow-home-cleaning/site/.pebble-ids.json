@@ -358,5 +358,1085 @@
     "file": "components/sections/Section07.tsx",
     "tag": "p",
     "original_text": "Licensed &amp; insured"
+  },
+  "pb-23685b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured & Bonded \u00b7 Serving Minneapolis, MN"
+  },
+  "pb-f2e45a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-32bb24": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Book online in under two minutes, get a consistent assigned team, and come home "
+  },
+  "pb-fbae39": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-65112d": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded \u2022 Background-Checked \u2022 Eco-Friendly"
+  },
+  "pb-1759cb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded"
+  },
+  "pb-a912a3": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Full coverage on every job"
+  },
+  "pb-06aacc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Background-Checked"
+  },
+  "pb-da8650": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Staff you can trust in your home"
+  },
+  "pb-0d52e8": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Satisfaction Guarantee"
+  },
+  "pb-877b86": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "On every single visit"
+  },
+  "pb-829da3": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Eco-Friendly"
+  },
+  "pb-1d359a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Green products available on request"
+  },
+  "pb-be76fd": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our Services"
+  },
+  "pb-ee7070": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-61cb0a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Weekly & Biweekly Cleaning"
+  },
+  "pb-0a67cb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Recurring visits keep your home consistently fresh. Your assigned team learns yo"
+  },
+  "pb-c35ce4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-e92240": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-e1a98d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Deep Cleans"
+  },
+  "pb-3425b9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A top-to-bottom scrub that reaches every corner \u2014 baseboards, appliances, grout,"
+  },
+  "pb-adf7cf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-f7cfc6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-41484c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-In Cleaning"
+  },
+  "pb-60e50f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Start fresh in your new Minneapolis home. We clean every surface so you can unpa"
+  },
+  "pb-220196": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-3d6e14": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-90b946": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-Out Cleaning"
+  },
+  "pb-f97f4d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Leave your old place spotless. Our thorough move-out clean gives you the best ch"
+  },
+  "pb-15dd64": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-52da28": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-fedc8a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Small Office Cleaning"
+  },
+  "pb-313964": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A tidy workspace keeps your team focused and makes the right impression on clien"
+  },
+  "pb-617bd3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "Custom quote"
+  },
+  "pb-0c9314": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-03a6d4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured \u00b7 Background-Checked Staff"
+  },
+  "pb-6f31f2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e9daa6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every Sparrow cleaner is background-checked, insured, and trained on our detaile"
+  },
+  "pb-ca383a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "You'll be matched with a consistent assigned team who learn your home's layout a"
+  },
+  "pb-7f2673": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Eco-friendly cleaning products are available on request at no additional charge."
+  },
+  "pb-be1d96": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Sparrow Home Cleaning Team \u00b7 Minneapolis, MN"
+  },
+  "pb-5eb8dd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-f96e1f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I've had cleaners cancel last-minute or send different people every week \u2014 Sparr"
+  },
+  "pb-028e77": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Recurring biweekly customer, Minneapolis"
+  },
+  "pb-d7aa37": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-40237b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-b9ea0b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Book online in under two minutes or send us a message \u2014 we'll get back to you pr"
+  },
+  "pb-3e535b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-b5aafd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-a8d849": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-6a9524": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-665adb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-9ec647": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-a99b52": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-62dc0f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-e37d5b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-6481e5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-f0a4ec": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-09606c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Sparrow Home Cleaning"
+  },
+  "pb-d7ac2d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Residential and small office cleaning services in Minneapolis, MN \u2014 insured, bon"
+  },
+  "pb-543576": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fc69c8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-74a234": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b8b157": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-43b7ab": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-9fcde0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Areas"
+  },
+  "pb-77d4d8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-f4dbc2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Get a Quote"
+  },
+  "pb-c83864": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-bf2826": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Book Online"
+  },
+  "pb-8042ad": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Sparrow Home Cleaning. All rights reserved."
+  },
+  "pb-5029d7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-bf3aff": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured & Bonded \u00b7 Serving Minneapolis, MN"
+  },
+  "pb-d3ce59": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-19eb11": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Book online in under two minutes, get the same trusted team each visit, and enjo"
+  },
+  "pb-0810dc": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-253c92": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded \u2022 Background-Checked Staff \u2022 Eco-Friendly Options"
+  },
+  "pb-0277f5": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded"
+  },
+  "pb-41cc8f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every visit fully covered"
+  },
+  "pb-b8534c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Background-Checked"
+  },
+  "pb-d4eefb": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Vetted, trusted staff"
+  },
+  "pb-bfb1f0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Eco-Friendly"
+  },
+  "pb-81236c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Green products available"
+  },
+  "pb-8eb22a": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Satisfaction Guaranteed"
+  },
+  "pb-a28f8e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "On every single visit"
+  },
+  "pb-e40b83": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Do"
+  },
+  "pb-e0a512": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6f25a6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Weekly & Biweekly Cleaning"
+  },
+  "pb-e28d70": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Consistent recurring cleans by your assigned team, so your home stays fresh with"
+  },
+  "pb-5f8949": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-949bb8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-9882d1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Deep Cleans"
+  },
+  "pb-5a2a19": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A thorough top-to-bottom clean covering baseboards, appliances, grout, and every"
+  },
+  "pb-86e1ab": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-c4a41e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-835adc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-In Cleaning"
+  },
+  "pb-2b11ca": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Start fresh in your new space with a detailed clean that covers every surface be"
+  },
+  "pb-f2d354": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-5a50a6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-14f17d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-Out Cleaning"
+  },
+  "pb-49cbc9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Leave your old place spotless for the next occupants \u2014 and protect your security"
+  },
+  "pb-0241f2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-b01840": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-629f77": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Small Office Cleaning"
+  },
+  "pb-f6ffaf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Keep your workspace professional and productive with regular, reliable office cl"
+  },
+  "pb-4f7c4b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "None"
+  },
+  "pb-a6d8bf": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-827ee1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-648965": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "I've tried other cleaning services before, but Sparrow is the first one that act"
+  },
+  "pb-e6d2b6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "span",
+    "original_text": "Recurring biweekly customer, Minneapolis"
+  },
+  "pb-c4e2fe": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured \u00b7 Bonded \u00b7 Background-Checked Staff"
+  },
+  "pb-40a4c6": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-9812bf": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Every Sparrow cleaner is background-checked before their first shift and trained"
+  },
+  "pb-f30c8e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We assign consistent teams to each home so you're never greeting a stranger at y"
+  },
+  "pb-03498e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Eco-friendly cleaning products are available on request at no extra charge. We c"
+  },
+  "pb-af6153": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "The Sparrow Team \u00b7 Minneapolis, MN"
+  },
+  "pb-04b9a6": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-dc97e1": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6edfe7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Fill out the form and we'll confirm your appointment by the next business day. P"
+  },
+  "pb-702ffa": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-305962": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-09f1fd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-cf830a": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-3cebea": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-e48f38": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-022424": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-da7aaa": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-11dd27": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-048321": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-74c350": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-f375c9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Sparrow Home Cleaning"
+  },
+  "pb-0fff99": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Professional home and office cleaning service in Minneapolis, MN"
+  },
+  "pb-a7f22b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-43673d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-372d3d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-4c2a9a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-0918e9": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e7f31b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Areas"
+  },
+  "pb-7a021e": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-709881": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Book Now"
+  },
+  "pb-e6a1b7": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2c95d0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-bd1543": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Sparrow Home Cleaning. All rights reserved."
+  },
+  "pb-8b93ef": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-bed033": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured & Bonded \u00b7 Serving Minneapolis, MN"
+  },
+  "pb-0c2986": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-dfa701": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Book your cleaning in under two minutes online \u2014 background-checked teams, eco-f"
+  },
+  "pb-e1b5dd": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-da0e83": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Insured & Bonded \u2022 Eco-Friendly Options \u2022 Guaranteed"
+  },
+  "pb-7c41bc": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured"
+  },
+  "pb-c2c549": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "& Bonded"
+  },
+  "pb-6b25c0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Background"
+  },
+  "pb-7e8111": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Checked Staff"
+  },
+  "pb-f2d80c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Satisfaction"
+  },
+  "pb-0ffd1d": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Guarantee Every Visit"
+  },
+  "pb-2b9f37": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Eco-Friendly"
+  },
+  "pb-d01041": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Products Available"
+  },
+  "pb-0b5257": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Our Services"
+  },
+  "pb-787e8a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0f2548": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Recurring Weekly Cleaning"
+  },
+  "pb-14d7ca": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Consistent, thorough cleaning on your schedule with the same trusted team assign"
+  },
+  "pb-0a0d13": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $120"
+  },
+  "pb-545e40": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-ade994": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Biweekly Home Cleaning"
+  },
+  "pb-2c5638": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Stay on top of household upkeep with a reliable biweekly visit \u2014 fresh, detailed"
+  },
+  "pb-062641": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $140"
+  },
+  "pb-d42518": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-53a2d0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Deep Clean"
+  },
+  "pb-d61983": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "A thorough top-to-bottom clean covering baseboards, appliances, grout, and every"
+  },
+  "pb-41692d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $250"
+  },
+  "pb-2a6cfe": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-2933a7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Move-In & Move-Out Clean"
+  },
+  "pb-6acb1e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Leave your old space spotless or arrive to a fresh start \u2014 detailed cleaning tai"
+  },
+  "pb-aa27a0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $200"
+  },
+  "pb-04a4c0": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-8cb6b6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Small Office Cleaning"
+  },
+  "pb-7e5ee2": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Keep your workspace tidy and professional with scheduled cleaning designed for s"
+  },
+  "pb-a6bd40": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": "From $130"
+  },
+  "pb-364dd7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-f5794e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured, Bonded & Background-Checked"
+  },
+  "pb-425b4b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-514df4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Every Sparrow team member is thoroughly background-checked, insured, and trained"
+  },
+  "pb-30f720": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "We assign consistent teams to each home so you always have familiar, trusted fac"
+  },
+  "pb-e441f9": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "For clients who prefer it, we offer eco-friendly cleaning products that are effe"
+  },
+  "pb-96c57d": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "The Sparrow Home Cleaning Team \u00b7 Minneapolis, MN"
+  },
+  "pb-ac3a86": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-20b046": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "I've tried a few cleaning services over the years, but Sparrow is the first one "
+  },
+  "pb-a4555c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "span",
+    "original_text": "Recurring biweekly customer, Minneapolis"
+  },
+  "pb-6f4cb1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6f2db5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-c53019": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Get a free quote or book in under two minutes online. We'll confirm your appoint"
+  },
+  "pb-aa2ba6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-d672c7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-056134": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-590655": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-a8e5dc": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-9db8cb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-112fa7": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-562693": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-5cf1cb": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-f71e0d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-797438": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-5f5ecc": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Sparrow Home Cleaning"
+  },
+  "pb-97434a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Professional home and office cleaning in Minneapolis, MN \u2014 insured, bonded, and "
+  },
+  "pb-37de48": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-df0733": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-62f833": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-277ddb": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "About Us"
+  },
+  "pb-f70ad5": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-efa922": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Service Areas"
+  },
+  "pb-d9af4b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-6de682": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Book Online"
+  },
+  "pb-d2b1e8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-13e88b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": "Contact"
+  },
+  "pb-e68b7f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Sparrow Home Cleaning. All rights reserved."
+  },
+  "pb-e2fff2": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
   }
 }

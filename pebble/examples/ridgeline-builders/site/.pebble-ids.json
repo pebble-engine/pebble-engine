@@ -788,5 +788,1405 @@
     "file": "components/sections/Section08.tsx",
     "tag": "p",
     "original_text": "Licensed &amp; insured"
+  },
+  "pb-cadb42": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Boise, ID"
+  },
+  "pb-ef8eaa": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-826005": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Fixed-price contracts, no hidden change orders \u2014 get a free in-home estimate and"
+  },
+  "pb-ef0769": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-bc3387": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Insured \u00b7 Fixed-Price Contracts"
+  },
+  "pb-5b96ba": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-d7bc62": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "General Contractor, ID"
+  },
+  "pb-f99030": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured"
+  },
+  "pb-58107e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "All Trades Covered"
+  },
+  "pb-8de62f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free Estimates"
+  },
+  "pb-043231": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "In-Home, No Obligation"
+  },
+  "pb-9ce9ba": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fixed-Price"
+  },
+  "pb-274028": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "No Hidden Change Orders"
+  },
+  "pb-34f04e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Build"
+  },
+  "pb-754945": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-d5729f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Remodels"
+  },
+  "pb-0a5793": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Complete gut-to-finish renovations that transform your entire home with cohesive"
+  },
+  "pb-70ad3a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-2e8636": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-e07c47": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Room Additions"
+  },
+  "pb-c79b16": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Need more space? We design and build seamless additions that match your existing"
+  },
+  "pb-af75aa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-f2a5c5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-79ad22": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Kitchen Renovations"
+  },
+  "pb-dc753a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Custom cabinetry, countertops, layout redesigns, and full trade work \u2014 kitchens "
+  },
+  "pb-3cd2d9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-7cdb08": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-05ef9e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Bathroom Upgrades"
+  },
+  "pb-8f6ae6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Tile work, fixtures, vanities, and waterproofing done properly. Walk-in showers,"
+  },
+  "pb-75f518": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-f15091": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-484528": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Custom Decks & Outdoor Living"
+  },
+  "pb-597961": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Composite or wood decks, pergolas, and outdoor kitchens designed for Idaho weath"
+  },
+  "pb-7089ad": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-da867f": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-8ef39c": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent Work"
+  },
+  "pb-4b0853": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e369c2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Full kitchen gut-and-rebuild, North End Boise"
+  },
+  "pb-77e3c6": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Master bath tile & vanity overhaul, Eagle, ID"
+  },
+  "pb-a3fe42": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "480 sq ft room addition, Meridian, ID"
+  },
+  "pb-ee84b2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Composite deck with pergola, Boise foothills"
+  },
+  "pb-b7fb4e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Whole-home renovation, Boise East End"
+  },
+  "pb-4728b4": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Licensed General Contractor \u00b7 Boise, ID"
+  },
+  "pb-c331ca": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-f1afaf": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders is a licensed, fully insured general contracting firm based i"
+  },
+  "pb-f92327": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Every project starts with a free in-home estimate and ends with a fixed-price co"
+  },
+  "pb-18a83f": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We operate throughout the Treasure Valley and take on projects where quality of "
+  },
+  "pb-e0b9e7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders \u00b7 Licensed General Contractor, Boise, ID"
+  },
+  "pb-f883f5": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-7b1b23": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline took our dated 1980s split-level and turned it into the home we always"
+  },
+  "pb-b750d2": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Whole-Home Remodel \u2014 Boise, North End"
+  },
+  "pb-fdae91": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-71ce44": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ee3a25": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Submit your project details and we'll reach out within one business day to sched"
+  },
+  "pb-72f1e8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-9acba8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-98afb8": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-c20794": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8ed8af": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-bb0b6b": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-c941a4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-9f5655": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-6ac6bf": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-cbd581": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-6b560a": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-eb1e51": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders"
+  },
+  "pb-a2650d": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed general contractor serving Boise, ID \u2014 remodels, additions, kitchens, b"
+  },
+  "pb-d4c220": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-fc1584": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-e2c141": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c9d3df": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-a6f635": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7a6917": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-6c7d9c": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-e260f0": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-a306ad": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ea5296": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Get an Estimate"
+  },
+  "pb-e41b5b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Ridgeline Builders. All rights reserved."
+  },
+  "pb-0637b2": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-e64107": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Boise, ID"
+  },
+  "pb-c13eea": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-0729be": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "From kitchen renovations to whole-home remodels, Ridgeline Builders delivers fix"
+  },
+  "pb-439c19": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-76de73": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Fully Insured \u00b7 Free In-Home Estimates"
+  },
+  "pb-bc2162": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-27b402": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Idaho Licensed Contractor"
+  },
+  "pb-2d686c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured"
+  },
+  "pb-1ac84e": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured, All Trades"
+  },
+  "pb-2ca996": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fixed-Price"
+  },
+  "pb-cabace": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "No Hidden Change Orders"
+  },
+  "pb-3bc384": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free"
+  },
+  "pb-c43ca4": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "In-Home Estimates"
+  },
+  "pb-ec7032": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Build"
+  },
+  "pb-808113": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-09314a": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Remodels"
+  },
+  "pb-1260be": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Complete interior transformations handled under one contract \u2014 one crew, one poi"
+  },
+  "pb-10e61b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-d986aa": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-21ab39": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Room Additions"
+  },
+  "pb-aa8a86": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Expand your footprint with a room addition built to match your home's existing s"
+  },
+  "pb-11f9f3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-62a1e1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-84fba6": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Kitchen Renovations"
+  },
+  "pb-c0caa1": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "New cabinetry, countertops, layout reconfigurations, and appliance hookups \u2014 kit"
+  },
+  "pb-0477a7": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-c672c5": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-bb4764": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Bathroom Upgrades"
+  },
+  "pb-de36fb": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Tile work, fixtures, vanities, and waterproofing done right the first time. We h"
+  },
+  "pb-a28d43": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-d81a82": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d60bf3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Custom Decks & Outdoor Living"
+  },
+  "pb-650f7c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Pressure-treated, composite, or hardwood decks and covered outdoor spaces built "
+  },
+  "pb-b8c65b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "span",
+    "original_text": ""
+  },
+  "pb-0759d8": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "a",
+    "original_text": "Request a quote &rarr;"
+  },
+  "pb-d8d1cd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent Projects"
+  },
+  "pb-abb688": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-923f0b": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Eagle Road Kitchen \u2014 Full gut renovation"
+  },
+  "pb-0f7e54": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "North End Master Bath Upgrade"
+  },
+  "pb-a0f22e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Meridian Whole-Home Remodel"
+  },
+  "pb-fc89e8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Boise Foothills Covered Deck"
+  },
+  "pb-3afefd": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Garden City Primary Suite Addition"
+  },
+  "pb-99f333": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Licensed General Contractor \u00b7 Boise, ID"
+  },
+  "pb-e76a8b": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-fbd4e2": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders is a Boise-based general contracting company handling remodel"
+  },
+  "pb-9a1025": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "We manage all trades in-house or through a vetted network of subcontractors we'v"
+  },
+  "pb-0a106c": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Our approach is straightforward: show up when we say we will, build what we agre"
+  },
+  "pb-332fc7": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders \u00b7 Licensed General Contractor, Boise ID"
+  },
+  "pb-e0252d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "blockquote",
+    "original_text": ""
+  },
+  "pb-ed7ddd": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "We'd gotten burned on a kitchen remodel before \u2014 cost overruns, crew no-shows, t"
+  },
+  "pb-5b620d": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "span",
+    "original_text": "Boise homeowners, kitchen renovation"
+  },
+  "pb-63ce13": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-555e61": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-45c481": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Tell us about your project and we'll schedule a free in-home walkthrough. Most e"
+  },
+  "pb-b24d42": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-03bd7c": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8d5437": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-6b53d4": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8a4306": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-92d81f": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-7f2501": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-55a6d0": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-33760d": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-e98972": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-fcf900": {
+    "file": "components/sections/Section07.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-8efff3": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders"
+  },
+  "pb-904b7c": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed general contractor serving Boise, ID and the Treasure Valley."
+  },
+  "pb-12c59b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-c6e2be": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-8305d9": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ac0d2f": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-e9dff5": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-d06356": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "About"
+  },
+  "pb-382626": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-739ad1": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Service Area"
+  },
+  "pb-ad5bcd": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-7bda6b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "a",
+    "original_text": "Free Estimate"
+  },
+  "pb-4db74b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Ridgeline Builders. All rights reserved."
+  },
+  "pb-cb741b": {
+    "file": "components/sections/Section08.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-f731ab": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Boise, ID"
+  },
+  "pb-07eba2": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-560623": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Full-service remodeling and additions with fixed-price contracts and no surprise"
+  },
+  "pb-1ab15b": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-fc923a": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Fully Insured \u00b7 Free In-Home Estimates"
+  },
+  "pb-9fb517": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-ad4869": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "General Contractor"
+  },
+  "pb-d0a833": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Insured"
+  },
+  "pb-429375": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Covered"
+  },
+  "pb-d8a32c": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fixed Price"
+  },
+  "pb-479062": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "No Hidden Change Orders"
+  },
+  "pb-5a8e89": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free"
+  },
+  "pb-9aed46": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "In-Home Estimates"
+  },
+  "pb-0bc3fc": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Offer"
+  },
+  "pb-0039a9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-16660d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Remodels"
+  },
+  "pb-d08744": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Transform your entire home with a single trusted team managing every trade from "
+  },
+  "pb-a11140": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Room Additions"
+  },
+  "pb-45d039": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Add the square footage your family needs \u2014 seamlessly matched to your home's exi"
+  },
+  "pb-9cba24": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Kitchen Renovations"
+  },
+  "pb-dfcaf4": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Custom cabinetry, modern layouts, and quality finishes that make your kitchen th"
+  },
+  "pb-78e9a9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Bathroom Upgrades"
+  },
+  "pb-81b6be": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "From tile and fixtures to full gut-and-rebuilds, we deliver clean, functional ba"
+  },
+  "pb-15ec64": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Custom Decks & Outdoor Living"
+  },
+  "pb-2767ff": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Extend your living space outdoors with handcrafted decks, pergolas, and entertai"
+  },
+  "pb-824f1a": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Our Recent Projects"
+  },
+  "pb-b88882": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-ca92b8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Open-concept kitchen remodel, North End Boise"
+  },
+  "pb-87f5e2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Master suite addition, Eagle, ID"
+  },
+  "pb-6990c2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Spa-style bathroom renovation, Meridian"
+  },
+  "pb-d1c585": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Multi-level cedar deck, Foothills home"
+  },
+  "pb-3b1be2": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Whole-home remodel, Boise Heights"
+  },
+  "pb-1b6fe1": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Covered outdoor kitchen and pergola"
+  },
+  "pb-d894cd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6e3b14": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Fixed-price contracts, no surprises \u2014 just quality work delivered on time."
+  },
+  "pb-914990": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-9ce926": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-0eed79": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Tell us about your project and we'll reach out within one business day to schedu"
+  },
+  "pb-7a24e8": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-c9575c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8bc13b": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-1971d0": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-4fd3da": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-c548d3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-955e94": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-327e42": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-8bbabc": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-135074": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-d30c57": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-da01bd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders"
+  },
+  "pb-9dd481": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Licensed general contractor serving Boise, ID and the Treasure Valley."
+  },
+  "pb-7eeaf3": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-2b6126": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-93a3c5": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-1bbf48": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-acbd6c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-08c371": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Free Estimate"
+  },
+  "pb-295f0b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-b4107d": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Call Us"
+  },
+  "pb-94ebd8": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Ridgeline Builders. All rights reserved."
+  },
+  "pb-58010f": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
+  },
+  "pb-33744c": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed & Insured \u00b7 Serving Boise, ID"
+  },
+  "pb-71f445": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "h1",
+    "original_text": ""
+  },
+  "pb-ff7d22": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Whole-home remodels, additions, and outdoor living spaces \u2014 delivered on a fixed"
+  },
+  "pb-394a1e": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-d194ab": {
+    "file": "components/sections/Section00.tsx",
+    "tag": "p",
+    "original_text": "Licensed \u00b7 Fully Insured \u00b7 Free In-Home Estimates"
+  },
+  "pb-fd3adf": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Licensed"
+  },
+  "pb-03f8ff": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "General Contractor"
+  },
+  "pb-4ab17f": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fully Insured"
+  },
+  "pb-dd0749": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Every Project, Every Trade"
+  },
+  "pb-4ef071": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Fixed Price"
+  },
+  "pb-73d1d1": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "No Hidden Change Orders"
+  },
+  "pb-87dc0b": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "Free Estimates"
+  },
+  "pb-b789f0": {
+    "file": "components/sections/Section01.tsx",
+    "tag": "p",
+    "original_text": "In-Home Consultations"
+  },
+  "pb-a20fe3": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "What We Build"
+  },
+  "pb-f36d4b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-687a0d": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Whole-Home Remodels"
+  },
+  "pb-6cb75e": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Transform your entire home from top to bottom. We handle every trade in-house or"
+  },
+  "pb-78008c": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Room Additions"
+  },
+  "pb-0b3e12": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Need more space? We design and build seamless additions that match your existing"
+  },
+  "pb-aaa337": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Kitchen Renovations"
+  },
+  "pb-70bf19": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Custom cabinetry, updated layouts, and quality finishes that make your kitchen t"
+  },
+  "pb-5a2682": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Bathroom Upgrades"
+  },
+  "pb-9f92e9": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "From spa-inspired master baths to efficient guest bathrooms \u2014 tile work, fixture"
+  },
+  "pb-edc84b": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "h3",
+    "original_text": "Custom Decks & Outdoor Living"
+  },
+  "pb-5a6455": {
+    "file": "components/sections/Section02.tsx",
+    "tag": "p",
+    "original_text": "Extend your living space outdoors with a custom-built deck, pergola, or covered "
+  },
+  "pb-a4de7f": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Recent Projects"
+  },
+  "pb-9e55a8": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-e2af76": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Open-Concept Kitchen Remodel, Boise"
+  },
+  "pb-9ffbe4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Master Suite Addition, Eagle ID"
+  },
+  "pb-a92982": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Spa Bathroom Renovation"
+  },
+  "pb-a7205e": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Covered Outdoor Deck, Meridian ID"
+  },
+  "pb-1c81c4": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Whole-Home Remodel, Boise Foothills"
+  },
+  "pb-d1efb5": {
+    "file": "components/sections/Section03.tsx",
+    "tag": "p",
+    "original_text": "Custom Mudroom & Laundry Addition"
+  },
+  "pb-1236cd": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-5d4732": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "p",
+    "original_text": "Fixed-price contracts, no surprises \u2014 just honest craftsmanship from start to fi"
+  },
+  "pb-e3787e": {
+    "file": "components/sections/Section04.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-8f633e": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "h2",
+    "original_text": ""
+  },
+  "pb-6ccfc3": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Tell us about your project and we'll get back to you within one business day to "
+  },
+  "pb-15625a": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Phone"
+  },
+  "pb-c48b26": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-6544cf": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Email"
+  },
+  "pb-04eb96": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "a",
+    "original_text": ""
+  },
+  "pb-6d94b1": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": "Address"
+  },
+  "pb-690123": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "p",
+    "original_text": ""
+  },
+  "pb-cf3b04": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Your name"
+  },
+  "pb-d703b9": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Phone"
+  },
+  "pb-9dc41c": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Service needed"
+  },
+  "pb-81da73": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "label",
+    "original_text": "Tell us about the job"
+  },
+  "pb-8c4190": {
+    "file": "components/sections/Section05.tsx",
+    "tag": "button",
+    "original_text": "Request my free quote"
+  },
+  "pb-b7cd40": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Ridgeline Builders"
+  },
+  "pb-13e713": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Licensed general contractor serving Boise, ID \u2014 remodels, additions, and outdoor"
+  },
+  "pb-80364b": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-a4fd7c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Services"
+  },
+  "pb-54e491": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-ee8148": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Our Work"
+  },
+  "pb-f249f6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-8a5e57": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Get an Estimate"
+  },
+  "pb-a69fcd": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "li",
+    "original_text": ""
+  },
+  "pb-772ef6": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "a",
+    "original_text": "Call Us"
+  },
+  "pb-ab9c7c": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "&copy; 2025 Ridgeline Builders. All rights reserved."
+  },
+  "pb-879fb9": {
+    "file": "components/sections/Section06.tsx",
+    "tag": "p",
+    "original_text": "Licensed &amp; insured"
   }
 }

@@ -8,8 +8,8 @@ export default function ServiceAreaTrade() {
     <section className="bg-slate-50 py-20 px-8">
       <div className="max-w-5xl mx-auto text-center">
 
-        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-134cff">
-          <RevealWords>Proudly Serving Austin & All of Travis County</RevealWords>
+        <h2 className="text-slate-900 text-3xl md:text-4xl font-semibold leading-tight tracking-tight" data-pebble-id="pb-1e199f">
+          <RevealWords>Proudly Serving Austin & Travis County</RevealWords>
         </h2>
 
         <Stagger className="mt-10 flex flex-wrap justify-center gap-3">
@@ -31,7 +31,15 @@ export default function ServiceAreaTrade() {
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Bee Cave
+            Manor
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Buda
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Kyle
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
@@ -39,15 +47,15 @@ export default function ServiceAreaTrade() {
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            Manor
+            Bee Cave
+          </StaggerItem>
+          
+          <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
+            Sunset Valley
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
             Rollingwood
-          </StaggerItem>
-          
-          <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">
-            West Lake Hills
           </StaggerItem>
           
           <StaggerItem className="inline-block border border-amber-600/40 text-slate-900 px-4 py-2 rounded-full text-sm tracking-wide">

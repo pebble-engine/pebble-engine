@@ -17,7 +17,7 @@ export default function AboutTeamClean() {
               <Parallax className="absolute inset-0" distance={30}>
                 <Image
                   src="https://images.pexels.com/photos/29491360/pexels-photo-29491360.jpeg?auto=compress&cs=tinysrgb&h=650&w=940"
-                  alt="Brightwire Electric — Technical Work Done Right"
+                  alt="Brightwire Electric — Built on Safe, Code-Compliant Work"
                   fill
                   priority
                   className="object-cover grayscale-[15%]"
@@ -30,30 +30,30 @@ export default function AboutTeamClean() {
 
           {/* Right — credentials + prose */}
           <div className="md:pt-8">
-            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-5529ba">
-              Licensed Master Electrician · Fully Insured
+            <p className="text-sky-600 text-xs font-semibold uppercase tracking-[0.2em] mb-5" data-pebble-id="pb-3bd6e3">
+              Licensed Master Electrician · Travis County
             </p>
-            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-a55b44">
-              <RevealWords>Brightwire Electric — Technical Work Done Right</RevealWords>
+            <h2 className="text-slate-900 text-4xl md:text-5xl font-semibold leading-tight tracking-tight mb-8 max-w-sm" data-pebble-id="pb-5fd3bb">
+              <RevealWords>Brightwire Electric — Built on Safe, Code-Compliant Work</RevealWords>
             </h2>
 
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-cd2712">
-              Brightwire Electric is a licensed master electrician service based in Austin, TX, built on straightforward trade practices: diagnose accurately, quote honestly, and complete the work to code the first time.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-e2bd6d">
+              Brightwire Electric is a licensed master electrician operation based in Austin, TX. Every job — from a single circuit repair to a full panel replacement — is handled to code and permitted for every jurisdiction in Travis County.
             </p>
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-209db1">
-              Every project is permit-ready for all Travis County jurisdictions. Before any work begins, you receive a written estimate in full — no surprise line items, no pressure tactics. Safety compliance is the baseline, not an upsell.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-333ccf">
+              We specialize in the work that matters most to Austin homeowners: panel upgrades for aging infrastructure, EV charger installs as the city grows, and whole-home generators for Texas storm season. No subcontractors, no shortcuts.
             </p>
             
-            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-4cb031">
-              From a panel upgrade to a whole-home generator or EV charger circuit, each job is handled with the technical rigor it requires. Same-day diagnostic visits mean you're not waiting days to find out what's wrong.
+            <p className="text-slate-600 text-base leading-relaxed mb-5" data-pebble-id="pb-30dffa">
+              Safety-first isn't a slogan here — it shapes how we diagnose, plan, and execute every project. You receive a written estimate before we touch anything, so there are no surprises when the job is done.
             </p>
             
 
             {/* Signature / credentials line */}
             <div className="mt-8 pt-6 border-t border-slate-200">
-              <p className="text-slate-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-d544e8">
+              <p className="text-slate-900 text-sm font-semibold tracking-wide" data-pebble-id="pb-4bca11">
                 Brightwire Electric · Licensed Master Electrician · Austin, TX
               </p>
             </div>

@@ -18,9 +18,9 @@ export default function TestimonialsQuote() {
 
         {/* The pull-quote itself */}
         <FadeUp>
-        <blockquote className="relative" data-pebble-id="pb-1850a3">
-          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-b07a35">
-            They showed up the same day I called, walked me through exactly what was wrong with my panel, and handed me a written estimate before touching a single wire. Work was done clean, permit closed without a hitch. That's how it should always go.
+        <blockquote className="relative" data-pebble-id="pb-4469fd">
+          <p className="text-slate-900 text-3xl md:text-5xl font-semibold leading-tight tracking-tight max-w-3xl mx-auto" data-pebble-id="pb-a8acd2">
+            Brightwire upgraded our panel and ran a dedicated circuit for our new EV charger in one visit. The estimate they gave us the day before matched the final invoice exactly — not a penny over. That kind of transparency is rare.
           </p>
 
           {/* Attribution block */}
@@ -40,8 +40,8 @@ export default function TestimonialsQuote() {
               <cite className="text-slate-900 text-base font-semibold not-italic block">
                 Marcus T.
               </cite>
-              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-bc4394">
-                Austin homeowner, panel upgrade & EV charger install
+              <span className="text-slate-900/50 text-sm tracking-wide mt-1 block" data-pebble-id="pb-d49ccd">
+                Austin homeowner, South Congress neighborhood
               </span>
             </div>
           </footer>
