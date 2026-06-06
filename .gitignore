@@ -48,3 +48,7 @@ Thumbs.db
 # Local-only backups + research bundles (not for git)
 .env.bak-*
 .notebooklm-bundle/
+
+# QA screenshot artifacts
+docs/smoke-2026/
+docs/superpowers/wave1-screenshots/
