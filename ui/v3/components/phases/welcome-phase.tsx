@@ -1919,27 +1919,27 @@ export function WelcomePhase({ onAdvance }: Props) {
             <div className="grid grid-cols-3 gap-12 text-sm">
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Product</div>
-                <a href="#pricing" className="block text-muted-foreground hover:text-foreground">Pricing</a>
-                <Link href="/help"    className="block text-muted-foreground hover:text-foreground">Help</Link>
+                <a href="#pricing" className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Pricing</a>
+                <Link href="/help"    className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Help</Link>
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Legal</div>
-                <Link href="/trust"   className="block text-muted-foreground hover:text-foreground">Trust Commitment</Link>
-                <Link href="/privacy" className="block text-muted-foreground hover:text-foreground">Privacy</Link>
-                <Link href="/terms"   className="block text-muted-foreground hover:text-foreground">Terms</Link>
-                <Link href="/dpa"     className="block text-muted-foreground hover:text-foreground">DPA</Link>
+                <Link href="/trust"   className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Trust Commitment</Link>
+                <Link href="/privacy" className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Privacy</Link>
+                <Link href="/terms"   className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Terms</Link>
+                <Link href="/dpa"     className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">DPA</Link>
               </div>
               <div className="space-y-3">
                 <div className={`${type.eyebrow}`}>Account</div>
                 {!authLoading && user ? (
                   <>
-                    <Link href="/dashboard" className="block text-muted-foreground hover:text-foreground">Dashboard</Link>
-                    <Link href="/settings"  className="block text-muted-foreground hover:text-foreground">Settings</Link>
+                    <Link href="/dashboard" className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Dashboard</Link>
+                    <Link href="/settings"  className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Settings</Link>
                   </>
                 ) : (
                   <>
-                    <Link href="/login"  className="block text-muted-foreground hover:text-foreground">Log in</Link>
-                    <Link href="/signup" className="block text-muted-foreground hover:text-foreground">Sign up</Link>
+                    <Link href="/login"  className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Log in</Link>
+                    <Link href="/signup" className="block py-3 sm:py-1 text-muted-foreground hover:text-foreground">Sign up</Link>
                   </>
                 )}
               </div>
