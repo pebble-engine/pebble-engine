@@ -2535,5 +2535,77 @@
       "generic_stock_photography",
       "corporate_typography"
     ]
+  },
+  "plumber": {
+    "emotion": "relief, urgency, trust, security",
+    "visual_style": "clean professional, photo-forward with utility cues",
+    "hero_type": "video",
+    "video_keyword": "plumber fixing pipe water",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#1A5C8A",
+      "accent": "#F5820D",
+      "background": "#F4F6F8"
+    },
+    "tone": "urgent, reassuring, dependable, local",
+    "key_sections": [
+      "hero_with_cta",
+      "services_grid",
+      "trust_signals_bar",
+      "about_local_team",
+      "testimonials",
+      "contact_form_map"
+    ],
+    "trust_signals": [
+      "Licensed & insured badge",
+      "24/7 emergency availability",
+      "Years in business / founded year",
+      "Google review star rating with count",
+      "Same-day service guarantee",
+      "Upfront flat-rate pricing"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_moody_backgrounds",
+      "overly_decorative_fonts",
+      "autoplay_audio",
+      "cluttered_multiple_CTAs_above_fold"
+    ]
+  },
+  "cafe": {
+    "emotion": "warmth, comfort, belonging, indulgence",
+    "visual_style": "warm editorial, texture-rich, cozy and artisanal",
+    "hero_type": "video",
+    "video_keyword": "cozy cafe coffee steam morning",
+    "threejs_type": "none",
+    "colors": {
+      "primary": "#6B3F2A",
+      "accent": "#D4881E",
+      "background": "#FAF5EE"
+    },
+    "tone": "warm, inviting, artisanal, approachable",
+    "key_sections": [
+      "hero",
+      "menu_highlights",
+      "ambiance_gallery",
+      "our_story",
+      "visit_us",
+      "reviews"
+    ],
+    "trust_signals": [
+      "locally sourced ingredients badge",
+      "years in the neighborhood",
+      "customer review stars with photos",
+      "featured in local press logos",
+      "barista certifications or specialty coffee affiliations",
+      "real-time Google rating display"
+    ],
+    "avoid": [
+      "horizontal_scroll",
+      "dark_mode_default",
+      "corporate_stock_photography",
+      "cluttered_menu_walls_of_text",
+      "autoplay_audio"
+    ]
   }
 }
