@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -520,7 +521,9 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
         // messages) — generalize so the user sees something graceful.
         // The full error string is still surfaced in the red banner
         // below if it's set on the props.
-        appendLog(`Something went wrong on this step. Trying to recover…`, "info");
+        // Don't promise auto-recovery — some errors (e.g. out of credits) are
+        // terminal. The real outcome is shown in the banner below.
+        appendLog(`Something interrupted this step…`, "info");
         break;
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -992,23 +995,52 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
             transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
             className="mt-6 w-full max-w-2xl"
           >
-            <div className="p-5 bg-destructive/10 border border-destructive/30 rounded-2xl flex items-start gap-4">
-              <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-destructive">Build failed</p>
-                <p className="text-sm text-destructive/80 mt-1 leading-relaxed break-words">{error}</p>
-                {onRetry && (
-                  <button
-                    type="button"
-                    onClick={onRetry}
-                    className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold hover:bg-foreground/90 transition-colors"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    Try again
-                  </button>
-                )}
+            {/^.*(insufficient|credit|quota|out of (build|credit)).*/i.test(error) ? (
+              // Out-of-credits is NOT a transient failure — retrying loops.
+              // Explain it and point to the upgrade path instead of "Try again".
+              <div className="p-5 bg-amber-500/10 border border-amber-500/30 rounded-2xl flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-foreground">You&apos;re out of build credits</p>
+                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">
+                    AI builds use credits, and your plan has none left. The Free plan includes
+                    instant template &amp; example clones; upgrade for AI engine builds.
+                  </p>
+                  <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <Link
+                      href="/pricing"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold hover:bg-foreground/90 transition-colors"
+                    >
+                      See plans &amp; upgrade
+                    </Link>
+                    <Link
+                      href="/examples"
+                      className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border text-sm font-medium text-foreground hover:bg-accent transition-colors"
+                    >
+                      Start from a finished site (free) →
+                    </Link>
+                  </div>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="p-5 bg-destructive/10 border border-destructive/30 rounded-2xl flex items-start gap-4">
+                <AlertCircle className="w-6 h-6 text-destructive shrink-0 mt-0.5" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-destructive">Build failed</p>
+                  <p className="text-sm text-destructive/80 mt-1 leading-relaxed break-words">{error}</p>
+                  {onRetry && (
+                    <button
+                      type="button"
+                      onClick={onRetry}
+                      className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-foreground text-background text-sm font-bold hover:bg-foreground/90 transition-colors"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      Try again
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
           </motion.div>
         )}
       </AnimatePresence>
