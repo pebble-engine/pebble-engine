@@ -405,6 +405,12 @@ export async function saveAccountKnowledge(knowledge: string): Promise<{ knowled
   return postJSON("/api/account/knowledge", { knowledge });
 }
 
+// P2 — curated "power moves" (skills).
+export type Skill = { id: string; label: string; description: string; billable: boolean };
+export async function listSkills(): Promise<{ skills: Skill[] }> {
+  return getJSON("/api/skills");
+}
+
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});

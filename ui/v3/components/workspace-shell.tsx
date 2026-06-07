@@ -38,6 +38,7 @@ import { DraftPhase } from "@/components/phases/draft-phase";
 import { ReadyPhase } from "@/components/phases/ready-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { BusinessInfoButton } from "@/components/workspace/business-info-button";
+import { PowerMovesButton } from "@/components/workspace/power-moves-button";
 import { PublishPhase } from "@/components/phases/publish-phase";
 import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 import { PlanPickerModal } from "@/components/plan-picker-modal";
@@ -679,6 +680,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         >
           <History className="w-5 h-5" />
         </motion.button>
+        {build?.slug && <PowerMovesButton slug={build.slug} />}
         {build?.slug && <BusinessInfoButton slug={build.slug} />}
         <motion.button
           variants={safeFadeUp}
