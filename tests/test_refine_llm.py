@@ -180,6 +180,29 @@ def test_friendlier_records_call_details(fake_engine):
     assert "app/page.tsx" in user_prompt  # the existing file was included as context
 
 
+def test_refine_prompt_includes_business_knowledge(fake_engine):
+    """P1 T4 — a project's business_knowledge is prepended to the refine
+    prompt so LLM edits respect the owner's standing context."""
+    _seed_site(fake_engine["output"], "p1", {
+        "app/page.tsx": "export default function P() { return <main>Hi</main>; }",
+    })
+    # brief.json with durable knowledge
+    (fake_engine["output"] / "p1" / "brief.json").write_text(
+        json.dumps({"business_knowledge": "We never work weekends."}),
+        encoding="utf-8",
+    )
+    client = FakeLLMClient(
+        response='<pebble-file path="app/page.tsx">export default function P() { return <main>Howdy</main>; }</pebble-file>'
+    )
+    fake_engine["client_holder"]["client"] = client
+    h = FakeHandler({"slug": "p1", "refinement_id": "friendlier"})
+    refine_mod.run_refine(h)
+    assert len(client.calls) == 1
+    user_prompt = client.calls[0]["user"]
+    assert "We never work weekends." in user_prompt
+    assert "ABOUT THIS BUSINESS" in user_prompt
+
+
 def test_professional_uses_llm(fake_engine):
     _seed_site(fake_engine["output"], "p1", {
         "app/page.tsx": "export default function P() { return <main>Yo!</main>; }",

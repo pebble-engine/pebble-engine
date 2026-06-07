@@ -227,8 +227,24 @@ def _run_llm_refinement(slug: str, refinement_id: str) -> dict:
     if not instruction:
         return {"files_changed": [], "error": f"unknown LLM refinement: {refinement_id}"}
 
+    # P1 — prepend durable "about your business" context so refines respect
+    # the owner's standing facts/voice (per-project brief + per-account).
+    from pebble import knowledge as _knowledge
+    _brief: dict = {}
+    _brief_path = site_dir.parent / "brief.json"
+    try:
+        if _brief_path.exists():
+            _brief = json.loads(_brief_path.read_text(encoding="utf-8"))
+    except Exception:
+        _brief = {}
+    _kb = _knowledge.render_knowledge_block(
+        _knowledge.project_knowledge(_brief),
+        _knowledge.load_account_knowledge(pe.OUTPUT_DIR, (_brief.get("_user_id") or "")),
+    )
+
     user_prompt = (
-        f"{instruction}\n\n"
+        (f"{_kb}\n\n" if _kb else "")
+        + f"{instruction}\n\n"
         "--- CURRENT FILES ---\n\n"
         + "".join(existing_files)
         + "\n\n"
