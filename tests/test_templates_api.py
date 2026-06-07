@@ -155,6 +155,34 @@ def test_prompt_includes_full_template_content_as_schema():
     assert template_ts in prompt
 
 
+def test_prompt_includes_copywriting_craft_guidance():
+    """The content-swap prompt must push for distinctive, benefit-first copy
+    (value-prop headlines, memorable guarantees, real expertise signals) so
+    output doesn't read like a generic filled-in template. Added 2026-06-06
+    after a Lovable competitive eval found our copy was competent-but-generic."""
+    prompt = templates_api._build_content_swap_prompt(
+        "service_pro",
+        "export const X = 1;",
+        {"business_name": "T", "business_type": "pest control"},
+    )
+    low = prompt.lower()
+    assert "copywriting craft" in low
+    assert "value proposition" in low
+    assert "benefit-first" in low or "outcome" in low
+    assert "guarantee" in low or "promise" in low
+
+
+def test_copywriting_craft_is_subordinate_to_anti_slop():
+    """Craft guidance must explicitly defer to the anti-slop rules so the LLM
+    never starts inventing facts (numbers, years, names) in the name of voice."""
+    prompt = templates_api._build_content_swap_prompt(
+        "service_pro", "export const X = 1;", {"business_name": "T"}
+    )
+    # The craft section appears before anti-slop, and explicitly says it never overrides it.
+    assert prompt.index("Copywriting craft") < prompt.index("Anti-slop rules")
+    assert "never override the anti-slop" in prompt.lower()
+
+
 # ------------------------------------------------------------------ #
 # Typescript-block extraction from LLM responses                      #
 # ------------------------------------------------------------------ #

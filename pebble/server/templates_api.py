@@ -159,6 +159,31 @@ def _build_content_swap_prompt(template_id: str, current_site_ts: str, brief: di
 - Brand tone: {tone}
 - Owner notes: {notes or "(none)"}
 
+# Copywriting craft (sound like a real, specific business — not a filled-in template)
+
+The stock template copy is competent but generic. Rewrite it so it reads like a confident
+local business with a point of view. Apply these ONLY to constants that already exist
+(never add new ones):
+
+- HEADLINE: lead with a value proposition or a feeling, not just the category. Prefer
+  "Pest control that respects your home" over "Family-Owned Pest Control". Say what the
+  customer GETS, not merely what the business IS.
+- GUARANTEE / PROMISE: if a tagline, promise, or CTA-adjacent line exists, make it concrete
+  and memorable (e.g. "If pests come back, so do we — free"; "Booked today, done tomorrow").
+  A specific promise beats a generic adjective like "professional" or "reliable".
+- EXPERTISE SIGNALS: in service descriptions, name the REAL methods, tools, or standards a
+  pro in this trade actually uses (for pest control: perimeter treatments, exclusion
+  sealing, re-treat warranties; for HVAC: load calculations, SEER ratings). Specific
+  technique signals competence WITHOUT inventing facts.
+- BENEFIT-FIRST: describe the customer's outcome first, then the method. Replace feature-list
+  voice ("Targeted treatments that reduce insect populations") with outcome voice ("Keep your
+  yard usable all summer — we knock mosquitoes and ticks down at the source").
+- VOICE: match the brand tone above, vary sentence rhythm, and cut corporate filler
+  ("solutions", "cutting-edge", "we strive to"). Write like the person who does the work.
+
+These craft rules NEVER override the anti-slop rules below. Be specific in CRAFT; never be
+specific about FACTS you were not given (numbers, years, names, quotes, phone/email/address).
+
 # Anti-slop rules (CRITICAL)
 
 - Phone: use exactly "[BUSINESS PHONE]" — do NOT invent a real-looking number.
