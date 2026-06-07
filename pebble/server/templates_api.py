@@ -148,6 +148,15 @@ def _build_content_swap_prompt(template_id: str, current_site_ts: str, brief: di
     notes = (brief.get("notes_freeform") or brief.get("extra_context") or "").strip()
     tone = (brief.get("brand_tone") or "professional").strip()
 
+    # P1 — durable "about your business" context (per-project + per-account).
+    # render_knowledge_block sanitizes braces, so it's f-string safe.
+    from pebble.knowledge import render_knowledge_block, project_knowledge
+    knowledge_section = render_knowledge_block(
+        project_knowledge(brief),
+        (brief.get("_account_knowledge") or "").strip(),
+    )
+    knowledge_section = ("\n\n" + knowledge_section) if knowledge_section else ""
+
     return f"""You are editing a Next.js template's content file. Your ONLY job is to rewrite the values of the exported constants in `content/site.ts` so they match this customer's business. Do NOT change variable names. Do NOT change types. Do NOT add new exports. Do NOT remove exports. Do NOT change array shapes (if an array starts empty, keep it empty unless the customer's brief explicitly provided data for it).
 
 # Customer brief
@@ -157,7 +166,7 @@ def _build_content_swap_prompt(template_id: str, current_site_ts: str, brief: di
 - Location: {location or "(not provided — use [BUSINESS ADDRESS] placeholder)"}
 - Services / offerings: {services_str or "(infer 4-6 industry-typical services)"}
 - Brand tone: {tone}
-- Owner notes: {notes or "(none)"}
+- Owner notes: {notes or "(none)"}{knowledge_section}
 
 # Copywriting craft (sound like a real, specific business — not a filled-in template)
 
@@ -345,6 +354,17 @@ def run_instantiate_template(handler) -> None:
     except Exception as e:
         handler._json(500, {"error": f"could not read template content file: {e}"})
         return
+
+    # P1 — fold the caller's account-wide knowledge default into the brief so
+    # the content swap honors it (best-effort; anonymous instantiation skips).
+    try:
+        from pebble.security import resolve_user_id
+        from pebble.knowledge import load_account_knowledge
+        _uid = resolve_user_id(handler) or ""
+        if _uid:
+            brief["_account_knowledge"] = load_account_knowledge(OUTPUT_DIR, _uid)
+    except Exception:
+        pass
 
     # Content-swap LLM call. Uses the engine's default client (which is
     # tier-aware — free users get Qwen Flash, paid get the configured

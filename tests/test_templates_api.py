@@ -172,6 +172,30 @@ def test_prompt_includes_copywriting_craft_guidance():
     assert "guarantee" in low or "promise" in low
 
 
+def test_content_swap_prompt_includes_business_knowledge():
+    """P1 T3 — per-project + per-account knowledge is injected into the
+    content-swap prompt so template instantiation honors owner context."""
+    prompt = templates_api._build_content_swap_prompt(
+        "service_pro",
+        "export const X = 1;",
+        {
+            "business_name": "T",
+            "business_knowledge": "We only serve commercial clients.",
+            "_account_knowledge": "Always mention 24/7 availability.",
+        },
+    )
+    assert "ABOUT THIS BUSINESS" in prompt
+    assert "commercial clients" in prompt
+    assert "24/7 availability" in prompt
+
+
+def test_content_swap_prompt_no_knowledge_section_when_absent():
+    prompt = templates_api._build_content_swap_prompt(
+        "service_pro", "export const X = 1;", {"business_name": "T"}
+    )
+    assert "ABOUT THIS BUSINESS" not in prompt
+
+
 def test_prompt_blocks_passthrough_of_sample_rating_numbers():
     """Templates ship sample social-proof defaults (RATING_VALUE 5.0 /
     RATING_COUNT 237). The content-swap prompt must instruct the LLM to
