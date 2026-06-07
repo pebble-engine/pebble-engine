@@ -170,6 +170,11 @@ def route_get(handler) -> None:
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/history"):
             slug = handler.path[len("/api/projects/"):-len("/history")]
             handler._handle_get_history(slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish-check"):
+            # 2026-06-06 — pre-publish transparency guard. Owner-gated, read-only.
+            slug = handler.path[len("/api/projects/"):-len("/publish-check")]
+            from pebble.server.publish import run_publish_check
+            run_publish_check(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish"):
             slug = handler.path[len("/api/projects/"):-len("/publish")]
             handler._handle_get_publish_state(slug)

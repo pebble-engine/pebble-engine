@@ -98,6 +98,18 @@ def _output_dir() -> Path:
     return _engine().OUTPUT_DIR
 
 
+def _placeholder_check(slug: str) -> dict:
+    """Run the publish-time transparency guard for ``slug``. Fail-open:
+    any error returns a ready=True sentinel so we never block or noise up
+    a publish because of our own scan failure."""
+    try:
+        from pebble.publish_check import publish_readiness
+        return publish_readiness(_output_dir() / slug / "site")
+    except Exception as e:  # pragma: no cover — defensive
+        log.warning("placeholder check failed for %s: %s", slug, e)
+        return {"ready": True, "count": 0, "items": [], "message": ""}
+
+
 def _read_body(handler) -> Optional[dict]:
     try:
         length = int(handler.headers.get("Content-Length", "0"))
@@ -228,6 +240,7 @@ def run_publish(handler) -> None:
         write_publish_state(slug, result)
         payload = result.to_dict()
         payload["elapsed_seconds"] = round(time.time() - started, 3)
+        payload["placeholder_check"] = _placeholder_check(slug)
         handler._json(200, payload); return
 
     # ---- Zip path (always works) ----
@@ -268,7 +281,25 @@ def run_publish(handler) -> None:
 
     payload = result.to_dict()
     payload["elapsed_seconds"] = round(time.time() - started, 3)
+    payload["placeholder_check"] = _placeholder_check(slug)
     handler._json(200, payload)
+
+
+# --------- GET /api/projects/<slug>/publish-check ---------
+
+def run_publish_check(handler, slug: str) -> None:
+    """Read-only pre-publish transparency check. Returns publish_readiness
+    so the UI can warn 'you still have N placeholders' BEFORE the owner
+    goes live. Owner-gated (same as publish). Purely additive — never
+    mutates or blocks."""
+    if not _safe_slug(slug):
+        handler._json(400, {"error": "invalid slug"}); return
+    if require_project_owner(handler, slug) is None:
+        return  # 401/403 already written
+    project_dir = _output_dir() / slug
+    if not project_dir.exists():
+        handler._json(404, {"error": f"project not found: {slug}"}); return
+    handler._json(200, _placeholder_check(slug))
 
 
 # --------- GET /api/projects/<slug>/publish ---------
