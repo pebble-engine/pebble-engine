@@ -11,6 +11,8 @@ import { ChevronDown, Mail, User } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import { BusinessKnowledgeCard } from "@/components/workspace/business-knowledge-card";
+import { getAccountKnowledge, saveAccountKnowledge } from "@/lib/api";
 
 // ── types ─────────────────────────────────────────────────────────────────────
 
@@ -362,6 +364,12 @@ export function ProfileTab() {
         </div>
       </motion.section>
 
+      <BusinessKnowledgeCard
+        title="Tell Pebble about your business"
+        subtitle="Applies to every site you build. Pebble remembers it so you never repeat yourself."
+        load={async () => (await getAccountKnowledge()).knowledge}
+        save={async (t) => { await saveAccountKnowledge(t); }}
+      />
     </div>
   );
 }

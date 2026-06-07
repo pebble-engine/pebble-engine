@@ -391,6 +391,20 @@ export async function listProjects(): Promise<{ projects: ProjectSummary[]; coun
   return getJSON("/api/projects");
 }
 
+// P1 — "Tell Pebble about your business" (durable knowledge context).
+export async function getProjectKnowledge(slug: string): Promise<{ slug: string; knowledge: string }> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/knowledge`);
+}
+export async function saveProjectKnowledge(slug: string, knowledge: string): Promise<{ slug: string; knowledge: string; ok: boolean }> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/knowledge`, { knowledge });
+}
+export async function getAccountKnowledge(): Promise<{ knowledge: string }> {
+  return getJSON("/api/account/knowledge");
+}
+export async function saveAccountKnowledge(knowledge: string): Promise<{ knowledge: string; ok: boolean }> {
+  return postJSON("/api/account/knowledge", { knowledge });
+}
+
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});
