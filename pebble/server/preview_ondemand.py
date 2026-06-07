@@ -189,18 +189,27 @@ def render_splash_html(slug: str, status: Status) -> str:
         </details>
         """
 
-    title = "Starting preview…" if status == "starting" else "Preview failed"
+    title = "Starting preview…" if status == "starting" else "Still warming up…"
     body_msg = (
-        "Warming up your project's dev server. First load can take 30-90 seconds."
+        "Warming up your project's dev server. The first load can take up to a "
+        "couple of minutes — this page updates itself when it's ready."
         if status == "starting"
-        else "Could not start the preview server. Showing the last error below."
+        else "That attempt timed out, but we're retrying automatically — no need "
+             "to reload. Details below if you're curious."
     )
 
-    # 2s refresh while starting; 5s when failed (gives user time to read).
-    # The page is intentionally minimal so it looks tasteful inside the
-    # workspace iframe — no Pebble branding (the parent shell already brands
-    # the surrounding chrome).
-    refresh_meta = '<meta http-equiv="refresh" content="2">' if status == "starting" else ""
+    # Auto-refresh in BOTH states. While "starting" we poll fast (2s) so the
+    # real preview swaps in the instant it's ready. On "failed" we MUST keep
+    # refreshing too: a transient cold-compile timeout clears after the failure
+    # cooldown, and the next auto-reload respawns the warmup with zero user
+    # action. The failed interval is set just past the cooldown so each reload
+    # actually re-triggers a warmup instead of re-rendering the failure.
+    # (Regression: this used to be "" for failed, leaving users on a dead
+    # screen until they manually reloaded.)
+    starting_refresh = 2
+    failed_refresh = int(_FAILURE_TTL_SEC) + 2
+    refresh_secs = starting_refresh if status == "starting" else failed_refresh
+    refresh_meta = f'<meta http-equiv="refresh" content="{refresh_secs}">'
 
     return f"""<!doctype html>
 <html lang=\"en\">
@@ -223,7 +232,7 @@ def render_splash_html(slug: str, status: Status) -> str:
 </head>
 <body>
   <div class=\"card\">
-    {"<div class='spinner'></div>" if status == "starting" else ""}
+    <div class='spinner'></div>
     <h1>{title}</h1>
     <p>{body_msg}</p>
     {err_block}
