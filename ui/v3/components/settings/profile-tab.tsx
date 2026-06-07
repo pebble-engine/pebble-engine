@@ -12,6 +12,7 @@ import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { BusinessKnowledgeCard } from "@/components/workspace/business-knowledge-card";
+import { BrandKitCard } from "@/components/settings/brand-kit-card";
 import { getAccountKnowledge, saveAccountKnowledge } from "@/lib/api";
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -370,6 +371,8 @@ export function ProfileTab() {
         load={async () => (await getAccountKnowledge()).knowledge}
         save={async (t) => { await saveAccountKnowledge(t); }}
       />
+
+      <BrandKitCard />
     </div>
   );
 }

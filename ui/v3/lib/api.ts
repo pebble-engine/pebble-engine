@@ -411,6 +411,15 @@ export async function listSkills(): Promise<{ skills: Skill[] }> {
   return getJSON("/api/skills");
 }
 
+// P3 — account brand kit.
+export type BrandKit = { primary_color?: string; accent_color?: string; font?: string; voice?: string };
+export async function getBrandKit(): Promise<{ brand_kit: BrandKit }> {
+  return getJSON("/api/account/brand-kit");
+}
+export async function saveBrandKit(brand_kit: BrandKit): Promise<{ brand_kit: BrandKit; ok: boolean }> {
+  return postJSON("/api/account/brand-kit", { brand_kit });
+}
+
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});
