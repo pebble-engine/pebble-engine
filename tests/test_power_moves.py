@@ -35,3 +35,23 @@ def test_list_skills_is_ui_safe():
 def test_instructions_by_id_maps_id_to_body():
     m = pm.instructions_by_id()
     assert "seo_check" in m and "pebble-file" in m["seo_check"]
+
+
+EXPECTED_SKILLS = {
+    "seo_check", "make_it_accessible", "write_about_page",
+    "holiday_sale", "refresh_look",
+}
+
+
+def test_all_five_launch_skills_load():
+    ids = {s["id"] for s in pm.list_skills()}
+    assert EXPECTED_SKILLS <= ids
+
+
+def test_every_skill_ends_with_pebble_file_contract_and_has_triggers():
+    for sid in EXPECTED_SKILLS:
+        s = pm.get_skill(sid)
+        assert s, f"missing skill {sid}"
+        assert "pebble-file" in s["instruction"], f"{sid} missing output contract"
+        assert s["triggers"], f"{sid} has no triggers"
+        assert len(s["instruction"]) > 80, f"{sid} instruction too thin"
