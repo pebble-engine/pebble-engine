@@ -175,6 +175,14 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/publish-check")]
             from pebble.server.publish import run_publish_check
             run_publish_check(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/knowledge"):
+            # P1 (2026-06-07) — durable "about your business" context. Owner-gated.
+            slug = handler.path[len("/api/projects/"):-len("/knowledge")]
+            from pebble.server.knowledge_api import run_get_project_knowledge
+            run_get_project_knowledge(handler, slug)
+        elif handler.path == "/api/account/knowledge":
+            from pebble.server.knowledge_api import run_get_account_knowledge
+            run_get_account_knowledge(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish"):
             slug = handler.path[len("/api/projects/"):-len("/publish")]
             handler._handle_get_publish_state(slug)
@@ -406,6 +414,14 @@ def route_post(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/claim")]
             from pebble.server.projects import run_claim_project
             run_claim_project(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/knowledge"):
+            # P1 (2026-06-07) — save per-project "about your business" context.
+            slug = handler.path[len("/api/projects/"):-len("/knowledge")]
+            from pebble.server.knowledge_api import run_put_project_knowledge
+            run_put_project_knowledge(handler, slug)
+        elif handler.path == "/api/account/knowledge":
+            from pebble.server.knowledge_api import run_put_account_knowledge
+            run_put_account_knowledge(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_set_domain(slug)
