@@ -976,6 +976,13 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 - [ ] All `@/` imports resolve to files emitted in the same build (no orphan imports)
 - [ ] Every npm package imported is declared in `package.json` dependencies (do NOT import `react-icons` or `lucide-react` without adding them — prefer inline SVG)
 
+**COPYWRITING CRAFT — write like a confident local business, not a filled-in template:**
+- [ ] HEADLINE leads with a value proposition or a feeling, not the bare category. Prefer "Pest control that respects your home" over "Family-Owned Pest Control" — say what the customer GETS, not just what the business IS. (Still specific and arguable — never "Unrivaled / World-class / Unleash".)
+- [ ] Include ONE concrete, memorable promise or guarantee where the layout has room (e.g. "If pests come back, so do we — free", "Booked today, done tomorrow"). A specific promise beats a generic adjective like "professional" or "reliable".
+- [ ] Service descriptions name REAL methods, tools, or standards a pro in this trade actually uses (pest control: perimeter treatments, exclusion sealing, re-treat warranties; HVAC: load calculations, SEER ratings) — specific technique signals competence WITHOUT inventing facts.
+- [ ] Benefit-first voice: lead with the customer's outcome, then the method. Replace feature-list phrasing ("Targeted treatments that reduce insect populations") with outcome phrasing ("Keep your yard usable all summer — we knock mosquitoes and ticks down at the source"). Cut corporate filler ("solutions", "cutting-edge", "we strive to").
+- [ ] These craft rules NEVER override the ANTI-SLOP rules — be specific in CRAFT, never specific about FACTS you were not given (numbers, years, names, quotes, phone/email/address).
+
 **COMPONENT REUSE — no duplicated UI primitives:**
 - [ ] Any UI primitive that appears on more than one page MUST live in `components/` and be imported, never duplicated inline. Specifically: the literal `<form>` opening tag MUST appear in `components/forms/ContactForm.tsx` and nowhere else — `app/contact/page.tsx` imports `ContactForm`, it does NOT redefine the form inline. Same rule for testimonials, pricing tables, FAQ accordions, and CTA sections. — eval `no_duplicate_inline_forms`
 - [ ] Industry-specific page-content sections (service-area maps, booking widgets, menu blocks) live in `components/sections/<Name>.tsx` and are imported by the page that uses them. A page file is composition only; no inline section definitions longer than a few lines of JSX.
