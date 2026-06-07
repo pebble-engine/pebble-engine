@@ -187,6 +187,9 @@ def route_get(handler) -> None:
         elif handler.path == "/api/account/knowledge":
             from pebble.server.knowledge_api import run_get_account_knowledge
             run_get_account_knowledge(handler)
+        elif handler.path == "/api/account/brand-kit":
+            from pebble.server.brand_kit_api import run_get_brand_kit
+            run_get_brand_kit(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish"):
             slug = handler.path[len("/api/projects/"):-len("/publish")]
             handler._handle_get_publish_state(slug)
@@ -426,6 +429,9 @@ def route_post(handler) -> None:
         elif handler.path == "/api/account/knowledge":
             from pebble.server.knowledge_api import run_put_account_knowledge
             run_put_account_knowledge(handler)
+        elif handler.path == "/api/account/brand-kit":
+            from pebble.server.brand_kit_api import run_put_brand_kit
+            run_put_brand_kit(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_set_domain(slug)
