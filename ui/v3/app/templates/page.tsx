@@ -18,13 +18,17 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Lock, Upload } from "lucide-react";
+import { Sparkles, Check, X, Loader2, Eye, ExternalLink, Lock, Upload, Bookmark, Trash2 } from "lucide-react";
 import { TopNav } from "@/components/top-nav";
 import { type } from "@/lib/type";
 import {
   listTemplates,
   instantiateTemplate,
+  listPersonalTemplates,
+  usePersonalTemplate,
+  deletePersonalTemplate,
   type TemplateSummary,
+  type PersonalTemplate,
 } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type Brief } from "@/lib/state";
@@ -53,12 +57,27 @@ export default function TemplatesPage() {
   const [previewing, setPreviewing] = useState<TemplateSummary | null>(null);
   const [picked, setPicked] = useState<TemplateSummary | null>(null);
   const [activeTab, setActiveTab] = useState<TierTab>("free");
+  // P4 — the caller's own saved templates (empty / unauthed → hidden section).
+  const [personal, setPersonal] = useState<PersonalTemplate[]>([]);
+  const [usingPersonal, setUsingPersonal] = useState<PersonalTemplate | null>(null);
 
   useEffect(() => {
     listTemplates()
       .then((res) => setTemplates(res.templates))
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
+
+  const reloadPersonal = () => {
+    listPersonalTemplates()
+      .then((res) => setPersonal(res.templates || []))
+      .catch(() => setPersonal([])); // unauthed / none → silently hide section
+  };
+  useEffect(() => { reloadPersonal(); }, []);
+
+  const handleDeletePersonal = async (id: string) => {
+    setPersonal((prev) => prev.filter((t) => t.id !== id)); // optimistic
+    try { await deletePersonalTemplate(id); } catch { reloadPersonal(); }
+  };
 
   // Pre-bucket once per templates load so the tab counters + filtered
   // list don't recompute every keystroke.
@@ -92,6 +111,49 @@ export default function TemplatesPage() {
             </Link>
           </p>
         </header>
+
+        {/* P4 — "Your templates": sites the owner saved as reusable starts.
+            Hidden entirely when the user has none (or isn't signed in). */}
+        {personal.length > 0 && (
+          <section className="mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <Bookmark className="w-4 h-4 text-foreground" />
+              <h2 className={`${type.dashboard.heading.m}`}>Your templates</h2>
+              <span className={`${type.mono} px-2 py-0.5 rounded-full bg-muted text-xs text-muted-foreground`}>
+                {personal.length}
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {personal.map((t) => (
+                <div
+                  key={t.id}
+                  className="group relative bg-card border border-border rounded-2xl p-5 flex flex-col hover:border-foreground/30 transition-colors"
+                >
+                  <button
+                    type="button"
+                    onClick={() => handleDeletePersonal(t.id)}
+                    title="Delete this template"
+                    aria-label="Delete template"
+                    className="absolute top-3 right-3 p-1.5 rounded-md text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive transition-opacity"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                  <h3 className={`${type.dashboard.heading.m} mb-1 pr-8`}>{t.label}</h3>
+                  <p className={`${type.body.s} text-muted-foreground mb-4`}>
+                    {t.has_content_ts ? "Re-brands for a new business in ~30s." : "Exact copy you can edit."}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setUsingPersonal(t)}
+                    className="mt-auto px-4 py-2 rounded-full bg-foreground text-background text-sm font-medium hover:bg-foreground/90 self-start"
+                  >
+                    Use this template
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {error && (
           <div className="max-w-md mx-auto p-4 rounded-lg border border-red-300 bg-red-50 text-red-900 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
@@ -184,6 +246,145 @@ export default function TemplatesPage() {
         />
       )}
       {picked && <InstantiateDialog template={picked} onClose={() => setPicked(null)} router={router} />}
+      {usingPersonal && (
+        <PersonalUseDialog
+          template={usingPersonal}
+          onClose={() => setUsingPersonal(null)}
+          router={router}
+        />
+      )}
+    </div>
+  );
+}
+
+// ------------------------------------------------------------------ //
+// Personal-template use dialog (P4) — minimal brief → usePersonalTemplate //
+// ------------------------------------------------------------------ //
+
+function PersonalUseDialog({
+  template,
+  onClose,
+  router,
+}: {
+  template: PersonalTemplate;
+  onClose: () => void;
+  router: ReturnType<typeof useRouter>;
+}) {
+  const [businessName, setBusinessName] = useState("");
+  const [location, setLocation] = useState("");
+  const [notes, setNotes] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const submit = async () => {
+    if (!businessName.trim()) { setError("Please give your business a name"); return; }
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await usePersonalTemplate(template.id, {
+        business_name: businessName.trim(),
+        location: location.trim(),
+        notes_freeform: notes.trim(),
+      });
+      if (!res.ok || !res.slug) throw new Error(res.swap_message || "Couldn't create the project");
+      router.push(`/workspace/${encodeURIComponent(res.slug)}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.96, y: 8 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ duration: SHORT_S, ease: EASE_CINEMATIC }}
+        className="w-full max-w-lg bg-card border border-border rounded-2xl p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <div>
+            <p className={`${type.mono} text-xs uppercase tracking-wider text-muted-foreground mb-1`}>
+              Your template
+            </p>
+            <h2 className={`${type.dashboard.heading.l}`}>Use {template.label}</h2>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 rounded-md text-muted-foreground hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className={`${type.body.s} text-muted-foreground mb-5`}>
+          {template.has_content_ts
+            ? "We'll spin up a new project and re-brand the copy for this business."
+            : "We'll create an exact copy you can customize."}
+        </p>
+
+        <div className="space-y-4">
+          <FieldLabel label="Your business name" required>
+            <input
+              type="text"
+              value={businessName}
+              onChange={(e) => setBusinessName(e.target.value)}
+              placeholder="e.g. Coastal Pro Services"
+              className="w-full px-3 py-2 rounded-md bg-background border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
+              autoFocus
+            />
+          </FieldLabel>
+          <FieldLabel label="Where you serve (optional)">
+            <input
+              type="text"
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="e.g. Long Island, NY"
+              className="w-full px-3 py-2 rounded-md bg-background border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60"
+            />
+          </FieldLabel>
+          {template.has_content_ts && (
+            <FieldLabel label="Anything else? (optional)">
+              <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="What you offer, what makes you different, key services…"
+                rows={3}
+                className="w-full px-3 py-2 rounded-md bg-background border border-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60 resize-none"
+              />
+            </FieldLabel>
+          )}
+        </div>
+
+        {error && (
+          <div className="mt-4 p-3 rounded-md bg-red-50 dark:bg-red-950 border border-red-300 dark:border-red-900 text-red-900 dark:text-red-200 text-sm">
+            {error}
+          </div>
+        )}
+
+        <div className="mt-6 flex items-center justify-end">
+          <button
+            type="button"
+            onClick={submit}
+            disabled={submitting}
+            className="px-5 py-2 rounded-full bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-60 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-foreground/60 transition-colors flex items-center gap-2"
+          >
+            {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
+            {submitting ? "Creating…" : "Create my project"}
+          </button>
+        </div>
+      </motion.div>
     </div>
   );
 }

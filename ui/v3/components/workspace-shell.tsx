@@ -39,6 +39,7 @@ import { ReadyPhase } from "@/components/phases/ready-phase";
 import { EditPhase, type EditPhaseHandle } from "@/components/phases/edit-phase";
 import { BusinessInfoButton } from "@/components/workspace/business-info-button";
 import { PowerMovesButton } from "@/components/workspace/power-moves-button";
+import { SaveTemplateButton } from "@/components/workspace/save-template-button";
 import { PublishPhase } from "@/components/phases/publish-phase";
 import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 import { PlanPickerModal } from "@/components/plan-picker-modal";
@@ -682,6 +683,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         </motion.button>
         {build?.slug && <PowerMovesButton slug={build.slug} />}
         {build?.slug && <BusinessInfoButton slug={build.slug} />}
+        {build?.slug && <SaveTemplateButton slug={build.slug} defaultLabel={brief?.business_name || ""} />}
         <motion.button
           variants={safeFadeUp}
           onClick={() => setPhase("publish")}

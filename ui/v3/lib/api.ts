@@ -420,6 +420,31 @@ export async function saveBrandKit(brand_kit: BrandKit): Promise<{ brand_kit: Br
   return postJSON("/api/account/brand-kit", { brand_kit });
 }
 
+// P4 — personal templates (save a finished site as a reusable starting point).
+export type PersonalTemplate = {
+  id: string;
+  label: string;
+  source_slug: string;
+  created_at: string;
+  file_count: number;
+  has_content_ts: boolean;
+};
+export async function listPersonalTemplates(): Promise<{ templates: PersonalTemplate[] }> {
+  return getJSON("/api/account/templates");
+}
+export async function savePersonalTemplate(slug: string, label: string): Promise<{ template: PersonalTemplate; ok: boolean }> {
+  return postJSON("/api/account/templates", { slug, label });
+}
+export async function usePersonalTemplate(
+  id: string,
+  brief: Record<string, unknown>,
+): Promise<{ ok: boolean; slug: string; swap_ok: boolean; swap_message: string }> {
+  return postJSON(`/api/account/templates/${encodeURIComponent(id)}/use`, { brief });
+}
+export async function deletePersonalTemplate(id: string): Promise<{ ok: boolean }> {
+  return deleteJSON(`/api/account/templates/${encodeURIComponent(id)}`);
+}
+
 export async function toggleStar(slug: string, starred?: boolean): Promise<{ slug: string; starred: boolean }> {
   return postJSON(`/api/projects/${encodeURIComponent(slug)}/star`,
     typeof starred === "boolean" ? { starred } : {});
