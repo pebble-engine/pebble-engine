@@ -100,6 +100,10 @@ def route_get(handler) -> None:
         elif handler.path == "/api/blocks":
             from pebble.server.blocks import run_list_blocks
             run_list_blocks(handler)
+        elif handler.path == "/api/skills":
+            # P2 (2026-06-07) — curated 'power moves' list for the workspace.
+            from pebble.server.skills_api import run_list_skills
+            run_list_skills(handler)
         elif handler.path == "/api/templates":
             # Phase 31 (2026-05-20) — template gallery list. Powers the
             # v3 /templates route and the workspace's "Start from template"
