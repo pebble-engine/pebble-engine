@@ -492,6 +492,11 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
         _knowledge.project_knowledge(answers),
         _knowledge.load_account_knowledge(OUTPUT_DIR, caller_uid or ""),
     )
+    # P3 — account brand kit (colors/font/voice) the owner pinned once.
+    from pebble import brand_kit as _brand_kit
+    _brand_kit_block = _brand_kit.render_brand_kit_block(
+        _brand_kit.load_account_brand_kit(OUTPUT_DIR, caller_uid or ""),
+    )
 
     prompt = build_prompt(
         answers, ds_text, notes, research_text,
@@ -500,6 +505,7 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
         design_dna=design_dna,
         language=answers.get("_language", "en"),
         knowledge_block=_knowledge_block,
+        brand_kit_block=_brand_kit_block,
     )
 
     out_dir = OUTPUT_DIR / slug

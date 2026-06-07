@@ -62,7 +62,7 @@ def test_template_still_renders_via_str_format():
         "no_slop_block", "ios_skill_block", "stack_block",
         "business_intelligence_block", "industry_research_block",
         "design_system_block", "images_block", "anti_slop_block",
-        "knowledge_block",
+        "knowledge_block", "brand_kit_block",
     ]
     rendered = pe.PROMPT_TEMPLATE.format(**{k: "" for k in keys})
     assert "COPYWRITING CRAFT" in rendered

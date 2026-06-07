@@ -23,6 +23,8 @@ You are building a complete, production-quality website. Read every section of t
 
 {knowledge_block}
 
+{brand_kit_block}
+
 ---
 
 ## INDUSTRY INTELLIGENCE — Design DNA For This Industry

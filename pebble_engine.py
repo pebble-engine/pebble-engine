@@ -980,6 +980,7 @@ def build_prompt(
     design_dna: Optional[dict] = None,
     language: Optional[str] = None,
     knowledge_block: str = "",
+    brand_kit_block: str = "",
 ) -> str:
     # Map quiz fields -> template variables
     industry = answers.get("industry", answers.get("business_type", ""))
@@ -1292,6 +1293,7 @@ Extract and synthesize across all references:
         images_block=images_block,
         anti_slop_block=anti_slop_block,
         knowledge_block=knowledge_block,
+        brand_kit_block=brand_kit_block,
     )
 
     # Language block — non-empty only when the build's target language is
