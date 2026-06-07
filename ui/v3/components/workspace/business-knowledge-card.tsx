@@ -29,13 +29,21 @@ export function BusinessKnowledgeCard({ title, subtitle, load, save }: Props) {
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSaved = useRef("");
 
+  // Load ONCE on mount. We deliberately do NOT depend on `load`: callers often
+  // pass an inline arrow (new identity every render), and re-running this effect
+  // would re-fetch and clobber whatever the user is currently typing — wiping
+  // input and spamming GETs. The ref keeps us calling the latest `load` without
+  // retriggering. (Regression fix: the account-settings card lost typed text.)
+  const loadRef = useRef(load);
+  loadRef.current = load;
   useEffect(() => {
     let alive = true;
-    load()
+    loadRef.current()
       .then((v) => { if (alive) { setText(v || ""); lastSaved.current = v || ""; setStatus("idle"); } })
       .catch(() => { if (alive) setStatus("error"); });
     return () => { alive = false; };
-  }, [load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const doSave = useCallback(async (value: string) => {
     if (value === lastSaved.current) return;
