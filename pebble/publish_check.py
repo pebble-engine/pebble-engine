@@ -40,6 +40,17 @@ CONTACT_TOKENS = [
     "[PHONE]",
 ]
 
+# Labeled metric/social-proof placeholders the content-swap prompt emits when
+# the brief gives no real numbers (kind "sample"). Lowercase / "#"-leading, so
+# they need explicit matching — the generic bracket pattern alone misses them.
+METRIC_TOKENS = [
+    "[rating]",
+    "[# of reviews]",
+    "[# served]",
+    "[# of years]",
+    "[year]",
+]
+
 # Curated sample phrases. Deliberately specific so they don't fire on real
 # marketing copy (e.g. we do NOT include broad strings like "your area").
 SAMPLE_PHRASES = [
@@ -51,11 +62,13 @@ SAMPLE_PHRASES = [
     "lorem ipsum",
     "placeholder text",
     "edit this text",
-    "[year]",
 ]
 
-# Generic bracket token: starts with a letter, letters/spaces inside.
-_BRACKET_RE = re.compile(r"\[([A-Za-z][A-Za-z ]*)\]")
+# Generic bracket token (content files only). Any 2–60 chars inside [...];
+# we filter out pure-numeric / single-char (code like [0], [i]) below.
+_BRACKET_RE = re.compile(r"\[([^\[\]]{2,60})\]")
+_PURE_NUMERIC_RE = re.compile(r"^[\d\s,.;:]+$")
+_COMMENT_PREFIXES = ("//", "*", "/*")
 
 _CONTENT_GLOBS = ("content/*.ts", "content/*.tsx")
 _CODE_DIRS = ("app", "components", "lib")
@@ -64,13 +77,23 @@ _SKIP_DIRS = {"node_modules", ".next", "dist", "build", ".git"}
 
 
 def _is_placeholder_bracket(inner: str) -> bool:
-    """A bracketed token is a placeholder when it reads like prose
-    (contains a space) or is an ALL-CAPS field name. Single lowercase
-    words / digits (`[0]`, `[i]`, `[open]`) are code, not placeholders."""
+    """In a content data file, a bracketed token is a placeholder unless it
+    is purely numeric (`[0]`, `[1,2]`) or a single character (`[i]`).
+    Everything else inside brackets in a .ts data file is a fill-me slot."""
     inner = inner.strip()
-    if not inner:
+    if len(inner) < 2:
         return False
-    return (" " in inner) or (inner.isupper() and len(inner) >= 2)
+    if _PURE_NUMERIC_RE.match(inner):
+        return False
+    # JS array/string literals (["Portland", "Metro"]) and object-ish content
+    # contain quotes/braces — they are real data, not fill-me placeholders.
+    if any(c in inner for c in ('"', "'", "{", "}")):
+        return False
+    return True
+
+
+def _is_comment_line(stripped: str) -> bool:
+    return stripped.startswith(_COMMENT_PREFIXES)
 
 
 def find_placeholders(text: str, *, loose: bool) -> list[dict[str, Any]]:
@@ -78,11 +101,16 @@ def find_placeholders(text: str, *, loose: bool) -> list[dict[str, Any]]:
 
     Each hit: {kind: contact|sample|bracket, token, line, snippet}.
     ``loose`` enables the generic bracket pattern (content data files).
+    Comment lines are skipped in both modes so the file's own convention
+    docs ("use [SQUARE BRACKETS]") and dev comments never false-positive.
     """
     hits: list[dict[str, Any]] = []
     seen: set[tuple[int, str]] = set()
 
     for lineno, line in enumerate(text.splitlines(), start=1):
+        stripped = line.strip()
+        if not stripped or _is_comment_line(stripped):
+            continue
         low = line.lower()
 
         for tok in CONTACT_TOKENS:
@@ -91,7 +119,18 @@ def find_placeholders(text: str, *, loose: bool) -> list[dict[str, Any]]:
                 if key not in seen:
                     seen.add(key)
                     hits.append({"kind": "contact", "token": tok,
-                                 "line": lineno, "snippet": line.strip()[:140]})
+                                 "line": lineno, "snippet": stripped[:140]})
+
+        for tok in METRIC_TOKENS:
+            if tok in low:
+                # preserve original casing of the match
+                pos = low.find(tok)
+                matched = line[pos:pos + len(tok)]
+                key = (lineno, matched.lower())
+                if key not in seen:
+                    seen.add(key)
+                    hits.append({"kind": "sample", "token": matched,
+                                 "line": lineno, "snippet": stripped[:140]})
 
         for ph in SAMPLE_PHRASES:
             pos = low.find(ph.lower())
@@ -101,20 +140,20 @@ def find_placeholders(text: str, *, loose: bool) -> list[dict[str, Any]]:
                 if key not in seen:
                     seen.add(key)
                     hits.append({"kind": "sample", "token": matched,
-                                 "line": lineno, "snippet": line.strip()[:140]})
+                                 "line": lineno, "snippet": stripped[:140]})
 
         if loose:
             for m in _BRACKET_RE.finditer(line):
                 if not _is_placeholder_bracket(m.group(1)):
                     continue
                 tok = m.group(0)
-                if tok in CONTACT_TOKENS:
-                    continue  # already recorded as contact
+                if tok in CONTACT_TOKENS or tok.lower() in (t.lower() for t in METRIC_TOKENS):
+                    continue  # already recorded
                 key = (lineno, tok)
                 if key not in seen:
                     seen.add(key)
                     hits.append({"kind": "bracket", "token": tok,
-                                 "line": lineno, "snippet": line.strip()[:140]})
+                                 "line": lineno, "snippet": stripped[:140]})
 
     return hits
 

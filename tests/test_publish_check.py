@@ -63,6 +63,24 @@ def test_clean_copy_produces_no_hits():
     assert pc.find_placeholders(clean, loose=True) == []
 
 
+def test_detects_metric_placeholders_both_modes():
+    # The exact labeled placeholders the content-swap prompt emits for
+    # missing social-proof numbers ([rating], [# of reviews]).
+    for loose in (True, False):
+        for txt in ('export const RATING_VALUE = "[rating]";',
+                    'export const RATING_COUNT = "[# of reviews]";'):
+            hits = pc.find_placeholders(txt, loose=loose)
+            assert hits, f"missed metric placeholder in {txt!r} (loose={loose})"
+
+
+def test_skips_convention_comment_lines():
+    # site.ts ships a JSDoc convention doc that literally says
+    # "[SQUARE BRACKETS]" — that's documentation, not content. Must NOT flag.
+    doc = " * Convention for unknown data: use placeholder strings in [SQUARE BRACKETS]."
+    assert pc.find_placeholders(doc, loose=True) == []
+    assert pc.find_placeholders("// TODO: handle [edge case] here", loose=True) == []
+
+
 # ---- scan_site + publish_readiness ------------------------------------ #
 
 def _make_site(tmp_path: Path, files: dict[str, str]) -> Path:
@@ -115,3 +133,9 @@ def test_publish_readiness_handles_missing_dir(tmp_path):
     r = pc.publish_readiness(tmp_path / "does-not-exist")
     assert r["ready"] is True  # nothing to flag; fail-open, never block on our own error
     assert r["count"] == 0
+
+
+def test_does_not_flag_js_array_literals():
+    # A real service-area array is content, not a placeholder.
+    txt = 'export const AREAS = ["Portland", "Portland Metro", "Beaverton"];'
+    assert pc.find_placeholders(txt, loose=True) == []

@@ -981,6 +981,7 @@ If Imagen is not enabled, implement the hero purely with CSS (gradient mesh, ani
 - [ ] Include ONE concrete, memorable promise or guarantee where the layout has room (e.g. "If pests come back, so do we — free", "Booked today, done tomorrow"). A specific promise beats a generic adjective like "professional" or "reliable".
 - [ ] Service descriptions name REAL methods, tools, or standards a pro in this trade actually uses (pest control: perimeter treatments, exclusion sealing, re-treat warranties; HVAC: load calculations, SEER ratings) — specific technique signals competence WITHOUT inventing facts.
 - [ ] Benefit-first voice: lead with the customer's outcome, then the method. Replace feature-list phrasing ("Targeted treatments that reduce insect populations") with outcome phrasing ("Keep your yard usable all summer — we knock mosquitoes and ticks down at the source"). Cut corporate filler ("solutions", "cutting-edge", "we strive to").
+- [ ] The example phrasings above ("Pest control that respects your home", "knock mosquitoes down at the source", etc.) ILLUSTRATE the pattern — never reuse them verbatim. Write fresh copy specific to THIS business.
 - [ ] These craft rules NEVER override the ANTI-SLOP rules — be specific in CRAFT, never specific about FACTS you were not given (numbers, years, names, quotes, phone/email/address).
 
 **COMPONENT REUSE — no duplicated UI primitives:**

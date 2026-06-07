@@ -181,6 +181,10 @@ local business with a point of view. Apply these ONLY to constants that already 
 - VOICE: match the brand tone above, vary sentence rhythm, and cut corporate filler
   ("solutions", "cutting-edge", "we strive to"). Write like the person who does the work.
 
+The example phrasings above (e.g. "Pest control that respects your home", "knock mosquitoes
+down at the source") ILLUSTRATE the pattern — they are not copy to reuse. Write fresh lines
+specific to THIS business; never output the example sentences verbatim.
+
 These craft rules NEVER override the anti-slop rules below. Be specific in CRAFT; never be
 specific about FACTS you were not given (numbers, years, names, quotes, phone/email/address).
 
