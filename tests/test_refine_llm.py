@@ -203,6 +203,25 @@ def test_refine_prompt_includes_business_knowledge(fake_engine):
     assert "ABOUT THIS BUSINESS" in user_prompt
 
 
+def test_power_move_seo_check_runs_via_refine(fake_engine):
+    """P2 T3 — a power-move id resolves to its SKILL.md instruction and runs
+    through the existing refine LLM path."""
+    _seed_site(fake_engine["output"], "p1", {
+        "app/page.tsx": "export default function P(){ return <main><h1>Hi</h1></main>; }",
+    })
+    client = FakeLLMClient(
+        response='<pebble-file path="app/page.tsx">export default function P(){ return <main><h1>Hello</h1></main>; }</pebble-file>'
+    )
+    fake_engine["client_holder"]["client"] = client
+    h = FakeHandler({"slug": "p1", "refinement_id": "seo_check"})
+    refine_mod.run_refine(h)
+    assert h.status == 200
+    assert h.json_body["kind"] == "llm"
+    assert "app/page.tsx" in h.json_body["files_changed"]
+    user_prompt = client.calls[0]["user"]
+    assert "on-page SEO" in user_prompt or "meta description" in user_prompt.lower()
+
+
 def test_professional_uses_llm(fake_engine):
     _seed_site(fake_engine["output"], "p1", {
         "app/page.tsx": "export default function P() { return <main>Yo!</main>; }",

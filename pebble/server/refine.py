@@ -37,6 +37,7 @@ from pebble.user_plan import (
 from pebble.history import snapshot_site, diff_against_snapshot
 from pebble.log import log
 from pebble.security import project_lock, require_project_owner
+from pebble import power_moves
 
 
 def _engine():
@@ -223,7 +224,10 @@ def _run_llm_refinement(slug: str, refinement_id: str) -> dict:
     if not existing_files:
         return {"files_changed": [], "error": "no .tsx files in site"}
 
-    instruction = _LLM_REFINE_PROMPTS.get(refinement_id, "")
+    # Merge curated power-move (skill) instructions into the LLM-refinement
+    # lookup so a skill id resolves to its SKILL.md body and runs through this
+    # same path (snapshot → LLM → apply → bill). P1 knowledge already prepends.
+    instruction = {**_LLM_REFINE_PROMPTS, **power_moves.instructions_by_id()}.get(refinement_id, "")
     if not instruction:
         return {"files_changed": [], "error": f"unknown LLM refinement: {refinement_id}"}
 
@@ -285,7 +289,7 @@ DETERMINISTIC_REFINEMENTS: dict[str, Callable[[Path], dict]] = {
     "colors":   _refine_colors,
 }
 
-LLM_REFINEMENTS = set(_LLM_REFINE_PROMPTS.keys())
+LLM_REFINEMENTS = set(_LLM_REFINE_PROMPTS.keys()) | set(power_moves.instructions_by_id().keys())
 
 # Free-tier refinements — execution is mechanical AND perceived value is low.
 # The complement (deterministic-but-NOT-free) is the "Magic Restyle" tier:
