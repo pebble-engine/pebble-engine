@@ -190,6 +190,10 @@ def route_get(handler) -> None:
         elif handler.path == "/api/account/brand-kit":
             from pebble.server.brand_kit_api import run_get_brand_kit
             run_get_brand_kit(handler)
+        elif handler.path == "/api/account/templates":
+            # P4 (2026-06-07) — list the caller's personal saved templates.
+            from pebble.server.personal_templates_api import run_list_personal_templates
+            run_list_personal_templates(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/publish"):
             slug = handler.path[len("/api/projects/"):-len("/publish")]
             handler._handle_get_publish_state(slug)
@@ -432,6 +436,15 @@ def route_post(handler) -> None:
         elif handler.path == "/api/account/brand-kit":
             from pebble.server.brand_kit_api import run_put_brand_kit
             run_put_brand_kit(handler)
+        elif handler.path.startswith("/api/account/templates/") and handler.path.endswith("/use"):
+            # P4 (2026-06-07) — spin up a new project from a saved template.
+            template_id = handler.path[len("/api/account/templates/"):-len("/use")]
+            from pebble.server.personal_templates_api import run_use_personal_template
+            run_use_personal_template(handler, template_id)
+        elif handler.path == "/api/account/templates":
+            # P4 (2026-06-07) — save {slug,label} as a personal template.
+            from pebble.server.personal_templates_api import run_save_personal_template
+            run_save_personal_template(handler)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_set_domain(slug)
@@ -534,6 +547,12 @@ def route_delete(handler) -> None:
             session_id = handler.path[len("/api/account/sessions/"):]
             from pebble.server.account_sessions import run_revoke_session
             run_revoke_session(handler, session_id)
+            return
+        if handler.path.startswith("/api/account/templates/"):
+            # P4 (2026-06-07) — DELETE a personal saved template.
+            template_id = handler.path[len("/api/account/templates/"):]
+            from pebble.server.personal_templates_api import run_delete_personal_template
+            run_delete_personal_template(handler, template_id)
             return
         if handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
