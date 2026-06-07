@@ -484,12 +484,22 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
         answers.setdefault("_language", "en")
 
     notes = audit_design_system(ds_text) if ds_text else []
+    # P1 — durable "about your business" context (per-project brief field +
+    # per-account default), injected so the build honors the owner's standing
+    # facts/voice. Owner-provided instructions; anti-slop still governs facts.
+    from pebble import knowledge as _knowledge
+    _knowledge_block = _knowledge.render_knowledge_block(
+        _knowledge.project_knowledge(answers),
+        _knowledge.load_account_knowledge(OUTPUT_DIR, caller_uid or ""),
+    )
+
     prompt = build_prompt(
         answers, ds_text, notes, research_text,
         industry_intel=industry_intel,
         design_reference=design_reference or None,
         design_dna=design_dna,
         language=answers.get("_language", "en"),
+        knowledge_block=_knowledge_block,
     )
 
     out_dir = OUTPUT_DIR / slug

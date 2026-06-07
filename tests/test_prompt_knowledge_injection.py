@@ -1,0 +1,22 @@
+"""P1 Task 2 — business knowledge is injected into the full build prompt."""
+from __future__ import annotations
+
+import pebble_engine as pe
+
+
+def test_template_has_knowledge_slot():
+    assert "{knowledge_block}" in pe.PROMPT_TEMPLATE
+
+
+def test_build_prompt_injects_knowledge():
+    out = pe.build_prompt(
+        {"industry": "pest control"}, "", [],
+        knowledge_block="OWNER SAYS: closed Sundays.",
+    )
+    assert "closed Sundays" in out
+
+
+def test_build_prompt_blank_knowledge_renders_clean():
+    out = pe.build_prompt({"industry": "pest control"}, "", [])
+    # placeholder must be consumed by .format even when empty
+    assert "{knowledge_block}" not in out

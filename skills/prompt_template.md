@@ -21,6 +21,8 @@ You are building a complete, production-quality website. Read every section of t
 
 {intent_block}
 
+{knowledge_block}
+
 ---
 
 ## INDUSTRY INTELLIGENCE — Design DNA For This Industry
