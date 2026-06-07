@@ -98,6 +98,34 @@ def test_use_unauthed_401(env, monkeypatch):
     assert h.status == 401
 
 
+def test_use_plain_clone_happy_path(env, monkeypatch):
+    """A saved template without content/site.ts → plain clone into a new slug,
+    swap skipped, brief + build_meta stamped, owned by caller."""
+    # Save a generated-style project (no content/site.ts).
+    _make_project(env, "src-proj", with_content_ts=False)
+    save = FakeHandler({"slug": "src-proj", "label": "Source"})
+    api.run_save_personal_template(save)
+    tid = save.json_body["template"]["id"]
+
+    # Stub the engine surface the use path needs.
+    class _PE:
+        _slugify = staticmethod(lambda s: (s or "untitled").lower().replace(" ", "-"))
+    monkeypatch.setattr(api, "_engine", lambda: _PE())
+
+    h = FakeHandler({"brief": {"business_name": "New Biz"}})
+    api.run_use_personal_template(h, tid)
+    assert h.status == 200
+    assert h.json_body["ok"] is True
+    assert h.json_body["swap_ok"] is False  # no content/site.ts → swap skipped
+    slug = h.json_body["slug"]
+    # Cloned files + stamps exist; new project owned by caller.
+    assert (env / slug / "site" / "app" / "page.tsx").exists()
+    brief = json.loads((env / slug / "brief.json").read_text(encoding="utf-8"))
+    assert brief["_user_id"] == "u1"
+    assert brief["_personal_template_id"] == tid
+    assert (env / slug / "build_meta.json").exists()
+
+
 def test_delete(env):
     _make_project(env, "acme")
     save = FakeHandler({"slug": "acme", "label": "Acme"})
