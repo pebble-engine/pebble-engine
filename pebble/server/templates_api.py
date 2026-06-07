@@ -192,6 +192,7 @@ specific about FACTS you were not given (numbers, years, names, quotes, phone/em
 - Testimonials: if the brief did NOT include real testimonials, KEEP the TESTIMONIALS array empty (`TESTIMONIALS = []`). Never invent quotes, names, ratings, or counts.
 - Featured products / numbered stats: same rule — empty arrays stay empty unless the brief explicitly supplied values.
 - Founding year / years-in-business: do NOT mention unless the brief provided it. If the brief is silent, omit the time signal entirely.
+- Scalar social-proof numbers (star RATINGS, review COUNTS, "X+ homes served / jobs completed", any headline metric) that the brief did NOT provide: do NOT pass through the template's sample number — the template ships example values like RATING_VALUE = "5.0" / RATING_COUNT = "237" purely as formatting samples. Replace each with a clearly-labeled placeholder in [SQUARE BRACKETS]: RATING_VALUE = "[rating]", RATING_COUNT = "[# of reviews]", a sample "237" becomes "[# served]". Presenting the template's example numbers as this business's real numbers is fabrication; a bracketed placeholder is honest and our pre-publish check reminds the owner to fill it in.
 
 # Current template file (the schema you must preserve)
 

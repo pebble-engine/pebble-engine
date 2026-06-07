@@ -172,6 +172,22 @@ def test_prompt_includes_copywriting_craft_guidance():
     assert "guarantee" in low or "promise" in low
 
 
+def test_prompt_blocks_passthrough_of_sample_rating_numbers():
+    """Templates ship sample social-proof defaults (RATING_VALUE 5.0 /
+    RATING_COUNT 237). The content-swap prompt must instruct the LLM to
+    placeholder these rather than pass them through as the business's real
+    numbers (that's fabrication). Added 2026-06-06 after finding instantiated
+    sites silently displayed a fake '5.0 / 237' rating."""
+    prompt = templates_api._build_content_swap_prompt(
+        "service_pro", "export const X = 1;", {"business_name": "T"}
+    )
+    low = prompt.lower()
+    assert "social-proof" in low
+    assert "rating" in low and "[# of reviews]" in prompt
+    # explicitly names the sample numbers so the LLM recognizes them
+    assert "237" in prompt
+
+
 def test_copywriting_craft_is_subordinate_to_anti_slop():
     """Craft guidance must explicitly defer to the anti-slop rules so the LLM
     never starts inventing facts (numbers, years, names) in the name of voice."""
