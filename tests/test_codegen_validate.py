@@ -93,3 +93,33 @@ def test_find_truncated_files_scans_site(tmp_path):
     assert "components/sections/CtaMinimal.tsx" in rels
     assert "app/page.tsx" not in rels
     assert not any("node_modules" in r for r in rels)
+
+
+def test_build_integrity_flags_and_unbills(tmp_path):
+    site = tmp_path / "site"
+    (site / "components").mkdir(parents=True)
+    (site / "components" / "Bad.tsx").write_text(TRUNCATED, encoding="utf-8")
+    info = cv.build_integrity(site, response_truncated_count=0)
+    assert info["truncated"] is True
+    assert info["billable"] is False  # never charge for a broken site
+    assert any(b["file"] == "components/Bad.tsx" for b in info["broken_files"])
+
+
+def test_build_integrity_clean_site_is_billable(tmp_path):
+    site = tmp_path / "site"
+    (site / "app").mkdir(parents=True)
+    (site / "app" / "page.tsx").write_text(COMPLETE, encoding="utf-8")
+    info = cv.build_integrity(site, response_truncated_count=0)
+    assert info["truncated"] is False
+    assert info["billable"] is True
+    assert info["broken_files"] == []
+
+
+def test_build_integrity_honours_response_level_signal(tmp_path):
+    # Even with no file-level breakage, an unmatched <pebble-file> open marks it.
+    site = tmp_path / "site"
+    (site / "app").mkdir(parents=True)
+    (site / "app" / "page.tsx").write_text(COMPLETE, encoding="utf-8")
+    info = cv.build_integrity(site, response_truncated_count=1)
+    assert info["truncated"] is True
+    assert info["billable"] is False

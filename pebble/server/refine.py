@@ -269,16 +269,48 @@ def _run_llm_refinement(slug: str, refinement_id: str) -> dict:
     if not files:
         return {"files_changed": [], "error": "LLM returned no <pebble-file> blocks"}
 
-    files_changed: list[str] = []
+    from pebble.codegen_validate import check_source_complete
+
+    # Capture originals before overwriting so a truncated refinement can be
+    # fully reverted. A refine whose LLM output was cut mid-file would
+    # otherwise replace a working component with a broken one — strictly worse
+    # than doing nothing. We validate the new content and, if any source file
+    # is incomplete, restore everything and fail cleanly (no charge on error).
+    _CODE_EXT = (".tsx", ".ts", ".jsx", ".js", ".mjs")
+    originals: dict[Path, "bytes | None"] = {}
+    accepted: list[tuple[str, str, Path]] = []
     for path, content in files:
         safe = path.lstrip("/\\")
         if ".." in Path(safe).parts or safe.startswith("/"):
             continue
         full = site_dir / safe
+        originals[full] = full.read_bytes() if full.is_file() else None
         full.parent.mkdir(parents=True, exist_ok=True)
         full.write_text(content, encoding="utf-8")
-        files_changed.append(safe)
+        accepted.append((safe, content, full))
 
+    broken = [
+        safe for safe, content, _full in accepted
+        if safe.endswith(_CODE_EXT) and not check_source_complete(content)[0]
+    ]
+    if broken:
+        for full, original in originals.items():
+            try:
+                if original is None:
+                    full.unlink()
+                else:
+                    full.write_bytes(original)
+            except OSError:
+                pass
+        return {
+            "files_changed": [],
+            "error": (
+                f"the refinement came back incomplete ({broken[0]} was cut off) — "
+                "nothing was changed. Try again, it's free."
+            ),
+        }
+
+    files_changed = [safe for safe, _content, _full in accepted]
     return {"files_changed": files_changed, "details": f"LLM applied refinement '{refinement_id}'."}
 
 

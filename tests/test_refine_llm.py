@@ -162,6 +162,33 @@ def test_friendlier_uses_llm_and_writes_returned_files(fake_engine):
     assert "Hey, welcome 👋" in content
 
 
+def test_truncated_refine_reverts_and_does_not_persist(fake_engine):
+    """If the refinement LLM output is cut mid-file, the original is restored
+    and the broken content is NOT left on disk (refine must never break a
+    working site)."""
+    original = (
+        'export default function P() {\n'
+        '  return <main><h1>Welcome</h1></main>;\n'
+        '}'
+    )
+    _seed_site(fake_engine["output"], "p1", {"app/page.tsx": original})
+    # Truncated block: function brace + bracket left open (stream cut).
+    fake_engine["client_holder"]["client"] = FakeLLMClient(
+        response='<pebble-file path="app/page.tsx">\n'
+                 'export default function P() {\n'
+                 '  return <main><h1>Welcome — call [BUSINESS'
+                 '</pebble-file>'
+    )
+    h = FakeHandler({"slug": "p1", "refinement_id": "friendlier"})
+    refine_mod.run_refine(h)
+    # Original content preserved on disk (revert happened):
+    content = (fake_engine["output"] / "p1" / "site" / "app" / "page.tsx").read_text(encoding="utf-8")
+    assert content == original
+    # No files reported changed; not a clean billable success.
+    body = h.json_body or {}
+    assert not body.get("files_changed")
+
+
 def test_friendlier_records_call_details(fake_engine):
     _seed_site(fake_engine["output"], "p1", {
         "app/page.tsx": "export default function P() { return <main>Hi</main>; }",

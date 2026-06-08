@@ -963,6 +963,27 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
     # behind an audit trail of how expensive this generation was. The
     # billable flag is true here (full /api/generate is a paid action);
     # /api/refine and /api/visual-edit set their own billable flags.
+    # Build-integrity check. detect_truncation (above) only catches unmatched
+    # <pebble-file> *wrappers* — it misses a file whose wrapper closed but whose
+    # CONTENT was cut mid-statement (real incident: components/sections/
+    # CtaMinimal.tsx ended at `href="tel:[BUSINESS`). codegen_validate scans the
+    # written files and flags those, so a site that won't `next build`/publish is
+    # never reported as a clean, billable success.
+    from pebble.codegen_validate import build_integrity
+    integrity = build_integrity(site_dir, truncated_count)
+    if integrity["broken_files"]:
+        log.warning(
+            "[build] %s: %d file(s) look truncated/incomplete — marking "
+            "non-billable: %s",
+            slug, len(integrity["broken_files"]),
+            ", ".join(b["file"] for b in integrity["broken_files"][:5]),
+        )
+        _emit("warning", {
+            "kind": "truncated_files",
+            "message": "Some files came out incomplete and were not charged — rebuilding is free.",
+            "files": [b["file"] for b in integrity["broken_files"]],
+        })
+
     cost = estimate_cost(prompt=full_user, response=response, model=client.model)
     (out_dir / "build_meta.json").write_text(json.dumps({
         "model":            client.model,
@@ -970,12 +991,13 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
         "elapsed_seconds":  round(elapsed, 1),
         "file_count":       len(written),
         "built_at":         datetime.now().isoformat(),
-        # Truncated responses produce broken sites — flag non-billable
-        # so the user isn't charged. truncated_count surfaces the
-        # severity (1 = last file cut, 2+ = multiple files cut).
-        "billable":         truncated_count == 0,
-        "truncated":        bool(truncated_count),
+        # Truncated responses OR truncated file contents produce broken sites —
+        # flag non-billable so the user isn't charged. truncated_count is the
+        # response-level signal; broken_files is the file-content signal.
+        "billable":         integrity["billable"],
+        "truncated":        integrity["truncated"],
         "truncated_count":  truncated_count,
+        "broken_files":     integrity["broken_files"],
         "tokens_used":      {"input": cost.input_tokens, "output": cost.output_tokens},
         "estimated_cost_usd": round(cost.estimated_cost_usd, 6),
         "rate_card_used":   cost.rate_card_used,

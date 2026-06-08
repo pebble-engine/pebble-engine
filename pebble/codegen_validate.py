@@ -73,4 +73,22 @@ def find_truncated_files(site_dir: Path) -> list[dict[str, Any]]:
     return broken
 
 
-__all__ = ["check_source_complete", "find_truncated_files"]
+def build_integrity(site_dir: Path, response_truncated_count: int = 0) -> dict[str, Any]:
+    """Combine the response-level truncation signal (unmatched <pebble-file>
+    opens, from pe.detect_truncation) with file-level content validation
+    (this module). Returns a dict the build pipeline folds into build_meta.
+
+    ``billable`` is False when ANYTHING looks truncated/broken — the user must
+    not be charged for a site that won't compile or publish.
+    """
+    broken = find_truncated_files(site_dir)
+    truncated = bool(response_truncated_count) or bool(broken)
+    return {
+        "truncated": truncated,
+        "billable": not truncated,
+        "broken_files": broken,
+        "response_truncated_count": int(response_truncated_count),
+    }
+
+
+__all__ = ["check_source_complete", "find_truncated_files", "build_integrity"]
