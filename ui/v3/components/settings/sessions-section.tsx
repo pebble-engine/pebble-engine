@@ -23,6 +23,7 @@ import { Loader2, Monitor, RefreshCw, Smartphone, Trash2 } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import { ENGINE_BASE } from "@/lib/engine-base";
 
 type SessionRow = {
   id: string;
@@ -78,7 +79,6 @@ export function SessionsSection() {
         setState({ phase: "error", message: "Sign in to view active sessions." });
         return;
       }
-      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
       const resp = await fetch(`${ENGINE_BASE}/api/account/sessions`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -110,7 +110,6 @@ export function SessionsSection() {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) return;
-      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
       const resp = await fetch(`${ENGINE_BASE}/api/account/sessions/${encodeURIComponent(id)}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },

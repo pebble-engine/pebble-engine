@@ -13,6 +13,7 @@ import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { BusinessKnowledgeCard } from "@/components/workspace/business-knowledge-card";
 import { BrandKitCard } from "@/components/settings/brand-kit-card";
+import { ENGINE_BASE } from "@/lib/engine-base";
 import { getAccountKnowledge, saveAccountKnowledge } from "@/lib/api";
 
 // ── types ─────────────────────────────────────────────────────────────────────
@@ -165,7 +166,6 @@ export function ProfileTab() {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) { setEmailChangeError("Please sign in again."); return; }
-      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
       const resp = await fetch(`${ENGINE_BASE}/api/account/change-email-request`, {
         method: "POST",
         headers: {

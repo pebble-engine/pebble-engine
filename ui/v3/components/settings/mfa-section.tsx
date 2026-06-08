@@ -24,6 +24,7 @@ import { CheckCircle, Loader2, ShieldCheck, ShieldOff } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import { ENGINE_BASE } from "@/lib/engine-base";
 
 // ── state machine ────────────────────────────────────────────────────────────
 //
@@ -48,7 +49,6 @@ async function recordMfaEvent(
   token: string,
   event_type: "mfa_enabled" | "mfa_disabled",
 ): Promise<void> {
-  const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
   // Fire-and-forget — failure to log MUST NOT break the UX. The Supabase
   // SDK call already succeeded; the audit row is best-effort.
   try {

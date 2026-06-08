@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
-
-const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+import { ENGINE_BASE } from "@/lib/engine-base";
 
 type AuditEvent = {
   id: string;

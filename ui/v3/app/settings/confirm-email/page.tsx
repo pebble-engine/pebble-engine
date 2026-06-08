@@ -15,8 +15,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle, XCircle } from "lucide-react";
 import { type } from "@/lib/type";
-
-const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+import { ENGINE_BASE } from "@/lib/engine-base";
 
 function ConfirmEmailContent() {
   const params = useSearchParams();

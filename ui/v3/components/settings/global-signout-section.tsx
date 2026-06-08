@@ -27,6 +27,7 @@ import { motion } from "framer-motion";
 import { LogOut, Loader2, ShieldAlert } from "lucide-react";
 import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
+import { ENGINE_BASE } from "@/lib/engine-base";
 import { createClient } from "@/lib/supabase/client";
 
 type Phase = "idle" | "confirming" | "submitting" | "done" | "error";
@@ -51,7 +52,6 @@ export function GlobalSignoutSection() {
         router.replace("/login");
         return;
       }
-      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
       const resp = await fetch(`${ENGINE_BASE}/api/account/global-signout`, {
         method: "POST",
         headers: {

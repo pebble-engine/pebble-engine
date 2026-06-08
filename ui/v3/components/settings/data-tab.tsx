@@ -8,11 +8,7 @@ import { useState } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 
 import { DeleteAccountSection } from "./delete-account-section";
-
-const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(
-  /\/+$/,
-  ""
-);
+import { ENGINE_BASE } from "@/lib/engine-base";
 
 export function DataTab() {
   const [exportStatus, setExportStatus] = useState<

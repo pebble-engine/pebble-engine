@@ -31,6 +31,7 @@ import {
   type PersonalTemplate,
 } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC } from "@/lib/motion";
+import { ENGINE_BASE } from "@/lib/engine-base";
 import { type Brief } from "@/lib/state";
 
 // 2026-05-23: tier-tab model. Marc's design-night ask was three tabs —
@@ -570,8 +571,8 @@ function PreviewPane({
   // Templates with absolute preview_urls (legacy localhost:3199 entries) load
   // as-is. Engine-served static-export URLs (/preview-template/<id>/...) need
   // the engine origin prefixed so the iframe resolves to port 8000, not v3's
-  // port 3001. Mirror the ENGINE_BASE logic from lib/api.ts exactly.
-  const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+  // port 3001. ENGINE_BASE (shared, normalized to an absolute https origin)
+  // comes from @/lib/engine-base.
   const previewUrl = current.preview_url ?? "";
   // Both preview_url and active.path may carry a leading/trailing slash —
   // naive concat ("/preview-template/<id>/" + "/about") emits a double slash

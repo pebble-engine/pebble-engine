@@ -12,6 +12,7 @@ import { type } from "@/lib/type";
 import { useAuth } from "@/components/auth-provider";
 import { createClient } from "@/lib/supabase/client";
 import { MfaSection } from "@/components/settings/mfa-section";
+import { ENGINE_BASE } from "@/lib/engine-base";
 import { SessionsSection } from "@/components/settings/sessions-section";
 import { GlobalSignoutSection } from "@/components/settings/global-signout-section";
 
@@ -47,7 +48,6 @@ export function SecurityTab() {
       const { data: session } = await supabase.auth.getSession();
       const token = session?.session?.access_token;
       if (!token) { setPwError("Please sign in again."); return; }
-      const ENGINE_BASE = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
       const resp = await fetch(`${ENGINE_BASE}/api/account/change-password`, {
         method: "POST",
         headers: {
