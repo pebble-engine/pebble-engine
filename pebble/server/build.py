@@ -1007,6 +1007,25 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
     # ---- POST-BUILD CHAIN ----
     # Each step degrades gracefully: failure does not block the response.
 
+    # Vercel preview (PEBBLE_PREVIEW_BACKEND=vercel): build a real SSR preview
+    # on Vercel in a daemon thread so the response returns immediately. Skipped
+    # when the build has incomplete files (don't waste a Vercel build on a site
+    # that won't compile). The workspace iframe shows the "building" splash
+    # until .vercel-preview.json lands, then /preview proxies it.
+    if os.environ.get("PEBBLE_PREVIEW_BACKEND", "").strip().lower() == "vercel" \
+            and not integrity["broken_files"]:
+        def _vercel_bg(_slug: str = slug) -> None:
+            try:
+                from pebble.vercel_deploy import deploy_preview
+                res = deploy_preview(_slug)
+                if res.get("error"):
+                    log.warning("[vercel] preview deploy failed for %s: %s", _slug, res["error"])
+                else:
+                    log.info("[vercel] preview ready for %s: %s", _slug, res.get("url"))
+            except Exception as e:
+                log.warning("[vercel] preview deploy errored for %s: %s", _slug, e)
+        threading.Thread(target=_vercel_bg, daemon=True, name=f"vercel-preview-{slug}").start()
+
     # Phase 20c (2026-05-20): patch the generated next.config.mjs so its
     # `allowedDevOrigins` accepts 127.0.0.1/localhost. Without this, Next.js
     # 15.5+ logs a cross-origin warning for every /_next/* dev request, and

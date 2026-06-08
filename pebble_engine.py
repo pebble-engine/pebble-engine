@@ -1814,6 +1814,43 @@ class PebbleHandler(BaseHTTPRequestHandler):
             except Exception as exc:
                 log.info("[fly] proxy errored for %s, falling back to local: %s", slug, exc)
 
+        # When PEBBLE_PREVIEW_BACKEND=vercel, route /preview/<slug>/... to the
+        # site's Vercel deployment (built with full SSR on Vercel's infra — see
+        # pebble.vercel_deploy). We PROXY it through the engine (rather than
+        # iframing the raw *.vercel.app) so the response stays same-origin and
+        # the visual-edit bridge can be injected, keeping click-to-edit working.
+        # If no .vercel-preview.json exists yet (build still deploying), fall
+        # through to the on-demand splash ("Still warming up…").
+        if preview_backend == "vercel" and not public_mode:
+            try:
+                state_path = OUTPUT_DIR / slug / ".vercel-preview.json"
+                vurl = ""
+                if state_path.exists():
+                    vurl = (json.loads(state_path.read_text(encoding="utf-8")) or {}).get("url", "").rstrip("/")
+                if vurl:
+                    slug_prefix = "/preview/" + parts[0]
+                    forward_path = preview_forward_path(
+                        getattr(self, "_raw_path", self.path), slug_prefix
+                    )
+                    if self._proxy_to_dev(vurl, forward_path, remote_timeout=20,
+                                          base_prefix=slug_prefix):
+                        return
+                    log.info("[vercel] proxy returned False for %s; showing splash", slug)
+                # No deployment yet (build still deploying) OR a transient proxy
+                # miss: serve the auto-refreshing splash and DO NOT fall through
+                # to the local npm warmup (Railway has no Node). The next splash
+                # refresh re-attempts the proxy once .vercel-preview.json lands.
+                from pebble.server.preview_ondemand import render_splash_html
+                body = render_splash_html(slug, "starting").encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html; charset=utf-8")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
+            except Exception as exc:
+                log.info("[vercel] errored for %s, falling back: %s", slug, exc)
+
         # If a live `next dev` process is registered for this slug, proxy to
         # it so SSR routes work (Next.js apps have no compiled index.html on
         # disk — static-file serving would 404). Falls through to static

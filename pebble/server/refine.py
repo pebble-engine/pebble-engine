@@ -20,6 +20,7 @@ adding a handler here.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sys
 import time
@@ -311,6 +312,19 @@ def _run_llm_refinement(slug: str, refinement_id: str) -> dict:
         }
 
     files_changed = [safe for safe, _content, _full in accepted]
+
+    # Refresh the Vercel preview (PEBBLE_PREVIEW_BACKEND=vercel) so the edit
+    # shows up — in a daemon thread so the refine response returns immediately.
+    if files_changed and os.environ.get("PEBBLE_PREVIEW_BACKEND", "").strip().lower() == "vercel":
+        import threading
+        def _vercel_bg(_slug: str = slug) -> None:
+            try:
+                from pebble.vercel_deploy import deploy_preview
+                deploy_preview(_slug)
+            except Exception:
+                pass
+        threading.Thread(target=_vercel_bg, daemon=True, name=f"vercel-refine-{slug}").start()
+
     return {"files_changed": files_changed, "details": f"LLM applied refinement '{refinement_id}'."}
 
 
