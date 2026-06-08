@@ -1026,6 +1026,15 @@ def run_build(handler, generate: bool, progress_cb=None, skip_rate_limit: bool =
                 log.warning("[vercel] preview deploy errored for %s: %s", _slug, e)
         threading.Thread(target=_vercel_bg, daemon=True, name=f"vercel-preview-{slug}").start()
 
+    # Fly-fleet preview (PEBBLE_PREVIEW_BACKEND=fly-fleet): ensure a machine +
+    # sync the source for HMR. Self-gates on the flag + integrity; no-op otherwise.
+    if not integrity["broken_files"]:
+        try:
+            from pebble.server.fleet_preview import kick_preview as _kick_fleet
+            _kick_fleet(slug)
+        except Exception as e:
+            log.warning("[fleet] kick failed for %s: %s", slug, e)
+
     # Phase 20c (2026-05-20): patch the generated next.config.mjs so its
     # `allowedDevOrigins` accepts 127.0.0.1/localhost. Without this, Next.js
     # 15.5+ logs a cross-origin warning for every /_next/* dev request, and

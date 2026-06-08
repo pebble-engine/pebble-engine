@@ -325,6 +325,15 @@ def _run_llm_refinement(slug: str, refinement_id: str) -> dict:
                 pass
         threading.Thread(target=_vercel_bg, daemon=True, name=f"vercel-refine-{slug}").start()
 
+    # Fly-fleet preview: re-sync the edited source to the machine for HMR
+    # (self-gates on PEBBLE_PREVIEW_BACKEND=fly-fleet; no-op otherwise).
+    if files_changed:
+        try:
+            from pebble.server.fleet_preview import kick_preview as _kick_fleet
+            _kick_fleet(slug)
+        except Exception:
+            pass
+
     return {"files_changed": files_changed, "details": f"LLM applied refinement '{refinement_id}'."}
 
 
