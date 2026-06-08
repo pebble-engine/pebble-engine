@@ -35,6 +35,25 @@ def test_collect_files_skips_artifacts(tmp_path):
     assert all("data" in f for f in files)  # inline {file, data}
 
 
+def test_apply_preview_config_replaces_next_config(tmp_path):
+    files = [
+        {"file": "app/page.tsx", "data": "x"},
+        {"file": "next.config.mjs", "data": "export default { reactStrictMode: true }"},
+        {"file": "next.config.ts", "data": "// stray"},
+    ]
+    out = vd.apply_preview_config(files)
+    cfg = [f for f in out if f["file"] == "next.config.mjs"][0]
+    assert "ignoreBuildErrors: true" in cfg["data"]  # tolerant build
+    assert "output:" not in cfg["data"]  # SSR preserved (no static export)
+    assert not any(f["file"] == "next.config.ts" for f in out)  # stray dropped
+
+
+def test_apply_preview_config_adds_when_missing(tmp_path):
+    files = [{"file": "app/page.tsx", "data": "x"}]
+    out = vd.apply_preview_config(files)
+    assert any(f["file"] == "next.config.mjs" and "ignoreBuildErrors" in f["data"] for f in out)
+
+
 # ---- Task 2: create deployment -------------------------------------------
 
 def test_create_deployment_posts_files_and_returns_id_url(monkeypatch):

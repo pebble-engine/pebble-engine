@@ -57,6 +57,40 @@ def _now_iso() -> str:
 # File collection
 # --------------------------------------------------------------------------- #
 
+# Tolerant preview config: generated sites often have TS/eslint nits that
+# `next dev` ignores but `next build` (which Vercel runs) rejects. A preview
+# only needs to RENDER, so we ignore those. SSR is preserved (no output:export),
+# so Server Actions + the contact form still work. images.unoptimized avoids
+# needing to whitelist every remote image host for the preview.
+_PREVIEW_NEXT_CONFIG = """/** @type {import('next').NextConfig} */
+// Pebble preview build (Vercel) — written by pebble.vercel_deploy.
+const nextConfig = {
+  typescript: { ignoreBuildErrors: true },
+  eslint: { ignoreDuringBuilds: true },
+  images: { unoptimized: true },
+};
+export default nextConfig;
+"""
+
+def apply_preview_config(files: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Replace the site's next.config.mjs with a tolerant preview config so the
+    Vercel build renders even with TS/lint nits (Pebble sites are always .mjs —
+    a hard rule). Drops any stray .js/.ts config to avoid a multi-config error.
+    Mutates + returns *files*."""
+    kept: list[dict[str, Any]] = []
+    found = False
+    for f in files:
+        if f["file"] in ("next.config.js", "next.config.ts"):
+            continue  # drop — only .mjs is canonical
+        if f["file"] == "next.config.mjs":
+            f["data"] = _PREVIEW_NEXT_CONFIG
+            found = True
+        kept.append(f)
+    if not found:
+        kept.append({"file": "next.config.mjs", "data": _PREVIEW_NEXT_CONFIG})
+    return kept
+
+
 def collect_files(site_dir: Path) -> list[dict[str, Any]]:
     """Inline {file, data} list of the site's source (text files only).
 
@@ -149,6 +183,7 @@ def deploy_preview(slug: str) -> dict[str, Any]:
     files = collect_files(out / "site")
     if not files:
         return {"error": "no source files to deploy"}
+    files = apply_preview_config(files)
     created = create_deployment(files, name=_vercel_name(slug))
     final = poll_deployment(created["id"])
     if final.get("readyState") != "READY":
