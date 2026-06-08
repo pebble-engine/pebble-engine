@@ -20,6 +20,7 @@ Prompt caching strategy (Anthropic only):
 from __future__ import annotations
 import json
 import os
+import time
 from typing import Iterator, Optional
 
 
@@ -69,6 +70,62 @@ _OPENROUTER_DEFAULT_MODEL = "qwen/qwen3.6-plus-04-02"
 class LLMError(Exception):
     """Wraps any provider error so callers handle one exception type."""
     pass
+
+
+# ---- Transient-error retry --------------------------------------------------
+# A streamed generate can take minutes; a single dropped TCP connection
+# (WinError 10054 "connection forcibly closed", a reset proxy, a flaky link to
+# the provider) used to kill an entire build with no recovery. We retry the
+# WHOLE call on transient connection errors — partial stream output is
+# discarded and we start fresh. The system prompt is cache_control'd, so a
+# retry re-reads the cached prefix cheaply.
+_MAX_LLM_ATTEMPTS = 3
+_RETRY_BACKOFF_S = 1.5  # multiplied by attempt number; monkeypatched to 0 in tests
+
+# Substrings that unambiguously signal a transient network/connection reset,
+# used as a fallback when the SDK wraps the cause in a generic exception type.
+_TRANSIENT_MARKERS = (
+    "10054",
+    "forcibly closed",
+    "connection reset",
+    "connection aborted",
+    "peer closed",
+    "incomplete",
+    "remoteprotocol",
+    "server disconnected",
+    "connection error",
+    "timed out",
+    "temporarily unavailable",
+    "overloaded",
+    "502",
+    "503",
+    "529",
+)
+
+
+def _is_transient_conn_error(exc: Exception) -> bool:
+    """True if *exc* (or anything in its cause/context chain) looks like a
+    transient connection/network failure worth retrying. Deterministic errors
+    (auth, 400 validation, model-not-found) return False so we fail fast."""
+    seen: set[int] = set()
+    e: Optional[BaseException] = exc
+    while e is not None and id(e) not in seen:
+        seen.add(id(e))
+        # ConnectionResetError/ConnectionError/TimeoutError are all OSError
+        # subclasses raised on socket-level resets.
+        if isinstance(e, (ConnectionError, TimeoutError)):
+            return True
+        try:
+            import httpx  # transitive dep of anthropic
+            if isinstance(e, httpx.TransportError):
+                return True
+        except Exception:
+            pass
+        msg = str(e).lower()
+        if any(m in msg for m in _TRANSIENT_MARKERS):
+            return True
+        e = e.__cause__ or e.__context__
+    return False
 
 
 # ---- Clients ------------------------------------------------------------
@@ -167,16 +224,42 @@ class AnthropicClient:
             # Streaming is required for requests that could exceed 10 minutes —
             # our prompt + 32k max_tokens trips that threshold. We collect the
             # stream into a single string so the caller still sees a sync return.
-            parts: list[str] = []
-            with self.client.messages.stream(
-                model=self.model,
-                max_tokens=max_tokens,
-                system=system_param,
-                messages=messages,
-            ) as stream:
-                for chunk in stream.text_stream:
-                    parts.append(chunk)
-            return "".join(parts)
+            #
+            # Retry the WHOLE stream on transient connection resets: a mid-stream
+            # WinError 10054 / dropped link otherwise kills the entire build. We
+            # discard any partial output and start over (the cached system prompt
+            # keeps retries cheap). Deterministic errors (auth, 400) raise on the
+            # first attempt — _is_transient_conn_error returns False for them.
+            last_exc: Optional[Exception] = None
+            for attempt in range(_MAX_LLM_ATTEMPTS):
+                try:
+                    parts: list[str] = []
+                    with self.client.messages.stream(
+                        model=self.model,
+                        max_tokens=max_tokens,
+                        system=system_param,
+                        messages=messages,
+                    ) as stream:
+                        for chunk in stream.text_stream:
+                            parts.append(chunk)
+                    return "".join(parts)
+                except Exception as e:  # noqa: BLE001 — classify then re-raise
+                    last_exc = e
+                    if attempt < _MAX_LLM_ATTEMPTS - 1 and _is_transient_conn_error(e):
+                        try:
+                            from pebble.log import log
+                            log.warning(
+                                "[llm] transient Anthropic error (attempt %d/%d), retrying: %s",
+                                attempt + 1, _MAX_LLM_ATTEMPTS, e,
+                            )
+                        except Exception:
+                            pass
+                        time.sleep(_RETRY_BACKOFF_S * (attempt + 1))
+                        continue
+                    break
+            raise LLMError(f"Anthropic API call failed: {last_exc}")
+        except LLMError:
+            raise
         except Exception as e:
             raise LLMError(f"Anthropic API call failed: {e}")
 
