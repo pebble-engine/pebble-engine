@@ -14,7 +14,22 @@
 
 import type { Brief, PebblePlan } from "./state";
 
-const ENGINE_BASE: string = (process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "").replace(/\/+$/, "");
+// Normalize the engine base so a host-only value still produces an ABSOLUTE
+// origin. If NEXT_PUBLIC_PEBBLE_ENGINE_URL is set WITHOUT a scheme (e.g.
+// "web-production-xxxx.up.railway.app"), naive concat yields a scheme-less
+// string the browser resolves RELATIVE to the current origin — so
+// `/api/templates` becomes `https://<app-domain>/<engine-host>/api/templates`
+// and every API call 404s against the frontend. Forcing https:// keeps the
+// direct cross-origin call pointed at the real engine.
+// (Prod incident 2026-06-08: Vercel had the var set without the scheme.)
+function normalizeEngineBase(raw: string): string {
+  const trimmed = (raw || "").trim().replace(/\/+$/, "");
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return `https://${trimmed}`;
+}
+
+const ENGINE_BASE: string = normalizeEngineBase(process.env.NEXT_PUBLIC_PEBBLE_ENGINE_URL || "");
 
 function engineUrl(path: string): string {
   // path always starts with /, ENGINE_BASE has no trailing slash, so concat works.
