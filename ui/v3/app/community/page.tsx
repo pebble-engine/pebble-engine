@@ -46,8 +46,10 @@ import { interactions } from "@/lib/interactions";
 import {
   fetchCommunityFeed,
   fetchCommunityStats,
+  fetchLaunchpadShowcase,
   type CommunityFeedEvent,
   type CommunityStats,
+  type LaunchpadEntry,
 } from "@/lib/api";
 
 // Community stats. Marc 2026-05-23: numbers visible enough to be
@@ -149,23 +151,39 @@ const ACTIVITY_LABELS: Record<ActivityKind, string> = {
 function useCommunityData() {
   const [serverEvents, setServerEvents] = useState<CommunityFeedEvent[] | null>(null);
   const [serverStats, setServerStats] = useState<CommunityStats | null>(null);
+  const [showcaseEntries, setShowcaseEntries] = useState<LaunchpadEntry[] | null>(null);
+  const [feedError, setFeedError] = useState(false);
+  const [statsError, setStatsError] = useState(false);
+  const [showcaseError, setShowcaseError] = useState(false);
   useEffect(() => {
     void (async () => {
       try {
         const res = await fetchCommunityFeed();
         setServerEvents(res.events || []);
+        setFeedError(false);
       } catch {
         setServerEvents([]);
+        setFeedError(true);
       }
       try {
         const res = await fetchCommunityStats();
         setServerStats(res.stats || null);
+        setStatsError(false);
       } catch {
         setServerStats(null);
+        setStatsError(true);
+      }
+      try {
+        const res = await fetchLaunchpadShowcase();
+        setShowcaseEntries(res.entries || []);
+        setShowcaseError(false);
+      } catch {
+        setShowcaseEntries([]);
+        setShowcaseError(true);
       }
     })();
   }, []);
-  return { serverEvents, serverStats };
+  return { serverEvents, serverStats, showcaseEntries, feedError, statsError, showcaseError };
 }
 
 // Translate a server kind ('site_published') into the activity-feed
@@ -195,9 +213,10 @@ function relativeTime(iso: string): string {
 }
 
 export default function CommunityHomePage() {
-  const { serverEvents, serverStats } = useCommunityData();
+  const { serverEvents, serverStats, showcaseEntries, feedError, statsError, showcaseError } = useCommunityData();
 
-  // Merge: server events first, fill to 5 with seed if we're light.
+  // Real feed first. Only fall back to curated seed when the API fails —
+  // not when the community is simply quiet yet.
   const liveActivity = (() => {
     const fromServer = (serverEvents || []).map((e) => ({
       id:    `srv-${e.id}`,
@@ -206,19 +225,47 @@ export default function CommunityHomePage() {
       body:  e.body || "",
       meta:  relativeTime(e.created_at),
     }));
-    if (fromServer.length >= 5) return fromServer.slice(0, 5);
-    const padding = ACTIVITY.slice(0, 5 - fromServer.length);
-    return [...fromServer, ...padding];
+    if (!feedError) return fromServer.slice(0, 8);
+    return [...fromServer, ...ACTIVITY].slice(0, 5);
   })();
 
-  // Stats: prefer live values, fall back to seed for any missing field.
+  const feedLoading = serverEvents === null;
+  const feedEmpty = !feedLoading && !feedError && liveActivity.length === 0;
+
+  const liveShowcase = (() => {
+    const fromApi = (showcaseEntries || []).slice(0, 6).map((e) => ({
+      key:   e.slug,
+      name:  e.business_name,
+      kind:  e.industry || "Pebble site",
+      image: e.screenshot_url || "/templates-preview/cinematic_hero.png",
+      href:  e.url || e.preview_url,
+      external: Boolean(e.url),
+    }));
+    if (!showcaseError && fromApi.length > 0) return fromApi;
+    return SHOWCASE.map((s) => ({
+      key: s.name + s.kind,
+      name: s.name,
+      kind: s.kind,
+      image: s.image,
+      href: s.href,
+      external: false,
+    }));
+  })();
+
+  // Stats: prefer live values; seed only when stats API failed.
   const liveStats = serverStats
     ? [
-        { label: "Builders building",  value: serverStats.total_users.toLocaleString() + "+",          Icon: Users     },
-        { label: "Templates to remix", value: serverStats.templates_count.toString(),                  Icon: Sparkles  },
-        { label: "Launches this week", value: serverStats.launches_this_week.toString(),               Icon: Rocket    },
+        { label: "Builders building",  value: serverStats.total_users > 0
+            ? serverStats.total_users.toLocaleString()
+            : "Growing",                                              Icon: Users     },
+        { label: "Templates to remix", value: serverStats.templates_count.toString(), Icon: Sparkles  },
+        { label: "Launches this week", value: serverStats.launches_this_week.toString(), Icon: Rocket    },
       ]
-    : STATS;
+    : statsError ? STATS : [
+        { label: "Builders building",  value: "…", Icon: Users     },
+        { label: "Templates to remix", value: "…", Icon: Sparkles  },
+        { label: "Launches this week", value: "…", Icon: Rocket    },
+      ];
 
   const topRightSlot = (
     <div className="flex items-center gap-2">
@@ -313,7 +360,9 @@ export default function CommunityHomePage() {
                   <div>
                     <h2 className={`${type.dashboard.heading.l} text-foreground`}>This week in Pebble</h2>
                     <p className={`${type.body.s} text-muted-foreground mt-1`}>
-                      Launches, features, fresh tips, and 38 new builders joining the conversation.
+                      {feedEmpty
+                        ? "Be the first to launch — publish a site and it shows up here."
+                        : "Launches, new builders, and tips from the Pebble community."}
                     </p>
                   </div>
                   <Link
@@ -325,6 +374,25 @@ export default function CommunityHomePage() {
                 </div>
 
                 <ul className="space-y-2">
+                  {feedLoading && (
+                    <li className={`${type.body.s} text-muted-foreground px-1 py-3`}>
+                      Loading activity…
+                    </li>
+                  )}
+                  {!feedLoading && feedEmpty && (
+                    <li className="bg-card border border-dashed border-border rounded-xl p-6 text-center">
+                      <p className={`${type.dashboard.heading.m} text-foreground`}>Quiet week so far</p>
+                      <p className={`${type.body.s} text-muted-foreground mt-2 max-w-md mx-auto`}>
+                        When builders publish sites or new people sign up, you&apos;ll see it here live.
+                      </p>
+                      <Link
+                        href="/workspace#phase=welcome"
+                        className={`${type.label} text-primary inline-flex items-center gap-1 mt-4 hover:underline`}
+                      >
+                        Build something <ArrowRight className="w-3.5 h-3.5" />
+                      </Link>
+                    </li>
+                  )}
                   {liveActivity.map((a) => (
                     <li
                       key={a.id}
@@ -367,25 +435,39 @@ export default function CommunityHomePage() {
                 </div>
 
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {SHOWCASE.map((s) => (
-                    <Link
-                      key={s.name}
-                      href={s.href}
-                      className={`${interactions.card} group relative aspect-[4/3] rounded-xl overflow-hidden border border-border bg-card`}
-                    >
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={s.image}
-                        alt={`${s.name} preview`}
-                        className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                        <p className="text-sm font-bold text-white leading-tight">{s.name}</p>
-                        <p className="text-[10px] uppercase tracking-widest text-white/70 mt-0.5">{s.kind}</p>
-                      </div>
-                    </Link>
-                  ))}
+                  {liveShowcase.map((s) => {
+                    const inner = (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={s.image}
+                          alt={`${s.name} preview`}
+                          className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-500 group-hover:scale-105"
+                          loading="lazy"
+                        />
+                        <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+                          <p className="text-sm font-bold text-white leading-tight">{s.name}</p>
+                          <p className="text-[10px] uppercase tracking-widest text-white/70 mt-0.5">{s.kind}</p>
+                        </div>
+                      </>
+                    );
+                    const cls = `${interactions.card} group relative aspect-[4/3] rounded-xl overflow-hidden border border-border bg-card block`;
+                    return s.external ? (
+                      <a
+                        key={s.key}
+                        href={s.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={cls}
+                      >
+                        {inner}
+                      </a>
+                    ) : (
+                      <Link key={s.key} href={s.href} className={cls}>
+                        {inner}
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
 

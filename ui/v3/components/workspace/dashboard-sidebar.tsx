@@ -98,7 +98,7 @@ const NAV_ITEMS: NavItem[] = [
       { label: "Integrations",    href: "/integrations",          icon: Plug },
       { label: "Community",       href: "/community",             icon: Users },
       { label: "Hire a Partner",  href: "/community/hire-a-partner", icon: Briefcase, soon: true },
-      { label: "Launchpad",       href: "/community/launchpad",   icon: Rocket, soon: true },
+      { label: "Launchpad",       href: "/community/launchpad",   icon: Rocket },
       { label: "Affiliate Program", href: "/community/affiliate", icon: Gift, soon: true },
     ],
   },

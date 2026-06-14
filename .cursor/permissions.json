@@ -1,0 +1,14 @@
+{
+  "approvalMode": "unrestricted",
+  "terminalAllowlist": [
+    "python pebble_engine.py",
+    "python -m pytest",
+    "python -m pebble",
+    "python scripts/",
+    "npm run",
+    "cd ui/v3",
+    "curl",
+    "git"
+  ],
+  "mcpAllowlist": ["cursor-ide-browser:*", "cursor-app-control:*"]
+}

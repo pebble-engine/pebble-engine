@@ -154,6 +154,15 @@ def route_get(handler) -> None:
             # template count). 15-min refresh-on-stale.
             from pebble.server.community_feed import run_community_stats
             run_community_stats(handler)
+        elif handler.path == "/api/launchpad/showcase":
+            # Batch D (2026-06-12) — public gallery of builder-submitted
+            # published sites. No auth; rate-limited by IP.
+            from pebble.server.launchpad_api import run_list_showcase
+            run_list_showcase(handler)
+        elif handler.path.startswith("/api/launchpad/screenshot/"):
+            slug = handler.path[len("/api/launchpad/screenshot/"):]
+            from pebble.server.launchpad_api import run_get_launchpad_screenshot
+            run_get_launchpad_screenshot(handler, slug)
         elif (handler.path.startswith("/api/projects/")
               and "/" not in handler.path[len("/api/projects/"):]):
             slug = handler.path[len("/api/projects/"):]
@@ -207,6 +216,11 @@ def route_get(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/published")]
             from pebble.server.publish_instant import run_get_instant_state
             run_get_instant_state(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/launchpad"):
+            # Batch D — Launchpad submission state (owner-gated).
+            slug = handler.path[len("/api/projects/"):-len("/launchpad")]
+            from pebble.server.launchpad_api import run_get_project_launchpad
+            run_get_project_launchpad(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/domain"):
             slug = handler.path[len("/api/projects/"):-len("/domain")]
             handler._handle_get_domain(slug)
@@ -528,6 +542,11 @@ def route_post(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/forms/autoresponder")]
             from pebble.server.forms import run_set_autoresponder_config
             run_set_autoresponder_config(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/launchpad"):
+            # Batch D — submit published site to public gallery.
+            slug = handler.path[len("/api/projects/"):-len("/launchpad")]
+            from pebble.server.launchpad_api import run_submit_launchpad
+            run_submit_launchpad(handler, slug)
         else:
             handler.send_response(404); handler.end_headers()
     except Exception as exc:
@@ -570,6 +589,10 @@ def route_delete(handler) -> None:
             slug = handler.path[len("/api/projects/"):-len("/forms/autoresponder")]
             from pebble.server.forms import run_delete_autoresponder_config
             run_delete_autoresponder_config(handler, slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/launchpad"):
+            slug = handler.path[len("/api/projects/"):-len("/launchpad")]
+            from pebble.server.launchpad_api import run_withdraw_launchpad
+            run_withdraw_launchpad(handler, slug)
         elif handler.path.startswith("/api/projects/") and "/integrations/" in handler.path:
             # Phase 56a (2026-05-22) — DELETE /api/projects/<slug>/integrations/<id>
             parts = handler.path[len("/api/projects/"):].split("/integrations/")

@@ -141,11 +141,17 @@ def refresh_stats() -> Optional[dict]:
         if launches_this_week is None:
             launches_this_week = existing.get("launches_this_week", 0)
 
-        # templates_count — public_templates that are approved
+        # templates_count — public_templates that are approved, else engine registry
         templates_count = _count_rows(
             "public_templates",
             filters={"status": "eq.approved"},
         )
+        if not templates_count:
+            try:
+                from pebble.server.templates_api import load_registry
+                templates_count = len(load_registry().get("templates", []) or [])
+            except Exception:
+                templates_count = None
         if templates_count is None:
             templates_count = existing.get("templates_count", 0)
 

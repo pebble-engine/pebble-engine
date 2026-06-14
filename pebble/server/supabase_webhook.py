@@ -198,6 +198,19 @@ def run_supabase_webhook(handler) -> None:
         handler._json(200, {"ok": True, "action": "queued_with_error", "error": str(e)})
         return
 
+    # Public community feed row — no email/PII in title or body.
+    try:
+        from pebble import events as _events
+        _events.record(
+            user_id=user_id or None,
+            kind=_events.KIND_JOINED_PEBBLE,
+            title="A new builder joined Pebble",
+            body="Someone new just signed up. Welcome them to the community.",
+            visibility=_events.VISIBILITY_PUBLIC,
+        )
+    except Exception as e:
+        log.warning("joined_pebble event failed for %s: %s", redacted, e)
+
     log.info("welcome email queued for %s (first_name_len=%d)",
              redacted, len(first_name) if first_name else 0)
     # 2026-05-24 security smoke M5: redact raw email in response so it

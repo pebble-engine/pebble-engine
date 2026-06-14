@@ -40,6 +40,14 @@ function SignupForm() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   const redirect = safeRedirect(params.get("redirect"));
+  const inviteCode = params.get("invite");
+
+  // Beta invite — persist for build API header (see docs/BETA_INVITE.md).
+  if (typeof window !== "undefined" && inviteCode) {
+    try {
+      localStorage.setItem("pebble_invite_code", inviteCode.trim());
+    } catch { /* private mode */ }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();

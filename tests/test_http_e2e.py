@@ -157,12 +157,53 @@ def _seed_project(output: Path, slug: str, files: dict[str, str], brief: dict | 
 
 # ---- /api/health --------------------------------------------------------
 
-def test_health_returns_engine_status(engine_server):
+def test_health_returns_engine_status(engine_server, monkeypatch):
+    monkeypatch.delenv("VERCEL_TOKEN", raising=False)
     status, body = _get(engine_server["base"], "/api/health")
     assert status == 200
     assert isinstance(body, dict)
     assert "engine_ok" in body
     assert "llm_ready" in body
+    assert body.get("preview_backend") == "local"
+    assert body.get("vercel_configured") is False
+    assert body.get("preview_prod_ready") is False
+
+
+def test_health_reports_vercel_preview_ready(engine_server, monkeypatch):
+    monkeypatch.setenv("PEBBLE_PREVIEW_BACKEND", "vercel")
+    monkeypatch.setenv("VERCEL_TOKEN", "tok")
+    status, body = _get(engine_server["base"], "/api/health")
+    assert status == 200
+    assert body["preview_backend"] == "vercel"
+    assert body["vercel_configured"] is True
+    assert body["preview_prod_ready"] is True
+
+
+# ---- /api/community ---------------------------------------------------
+
+def test_community_feed_is_public(engine_server):
+    status, body = _get(engine_server["base"], "/api/community/feed")
+    assert status == 200
+    assert isinstance(body, dict)
+    assert "events" in body
+    assert "count" in body
+    assert isinstance(body["events"], list)
+
+
+def test_community_stats_is_public(engine_server):
+    status, body = _get(engine_server["base"], "/api/community/stats")
+    assert status == 200
+    assert isinstance(body, dict)
+    assert "stats" in body or body.get("fallback") is True
+
+
+def test_launchpad_showcase_is_public(engine_server):
+    status, body = _get(engine_server["base"], "/api/launchpad/showcase")
+    assert status == 200
+    assert isinstance(body, dict)
+    assert "entries" in body
+    assert "count" in body
+    assert isinstance(body["entries"], list)
 
 
 # ---- /api/projects ------------------------------------------------------
@@ -729,6 +770,21 @@ def test_preview_non_html_files_pass_through(engine_server):
     status, body = _get(engine_server["base"], "/preview/good-co/app/globals.css")
     assert status == 200
     assert "pebble-bridge" not in body
+
+
+def test_preview_vercel_backend_shows_splash_without_deployment(engine_server, monkeypatch):
+    """When PEBBLE_PREVIEW_BACKEND=vercel and no .vercel-preview.json exists,
+    Railway must NOT fall through to npm warmup — show the splash instead."""
+    monkeypatch.setenv("PEBBLE_PREVIEW_BACKEND", "vercel")
+    _seed_project(engine_server["output"], "bakery-co", {
+        "site/package.json": '{"name":"bakery-co","scripts":{"dev":"next dev"}}',
+        "site/app/page.tsx": "export default ()=>null",
+    })
+    status, body = _get(engine_server["base"], "/preview/bakery-co/")
+    assert status == 200
+    assert isinstance(body, str)
+    assert "pebble-bridge" not in body  # splash, not proxied HTML
+    assert "refresh" in body.lower() or "warming" in body.lower()
 
 
 # ---- /api/migrate -------------------------------------------------------

@@ -1608,7 +1608,13 @@ class PebbleHandler(BaseHTTPRequestHandler):
         client, reason = get_llm_client()
         provider = getattr(client, "provider", None) if client else None
         model = getattr(client, "model", None) if client else None
-        self._json(200, {
+        preview_backend = os.environ.get("PEBBLE_PREVIEW_BACKEND", "local").strip().lower()
+        try:
+            from pebble.vercel_deploy import vercel_configured as _vercel_configured
+            vercel_ok = _vercel_configured()
+        except Exception:
+            vercel_ok = bool(os.environ.get("VERCEL_TOKEN", "").strip())
+        payload = {
             "engine_ok": _ENGINE_OK,
             "google_installed": _GOOGLE_OK,
             "anthropic_installed": _ANTHROPIC_OK,
@@ -1621,7 +1627,21 @@ class PebbleHandler(BaseHTTPRequestHandler):
             "llm_reason": reason,
             "provider": provider,
             "model": model,
-        })
+            "preview_backend": preview_backend,
+            "vercel_configured": vercel_ok,
+            "preview_prod_ready": preview_backend == "vercel" and vercel_ok,
+        }
+        try:
+            from pebble.build_queue import stats as _bq_stats
+            payload["build_queue"] = _bq_stats()
+        except Exception:
+            pass
+        try:
+            from pebble.beta_invite import is_enabled as _beta_on
+            payload["beta_invite_only"] = _beta_on()
+        except Exception:
+            pass
+        self._json(200, payload)
 
     def _handle_list_industries(self):
         """Expose the curated industries.json as a flat list for UI autocomplete.
@@ -2266,6 +2286,23 @@ class PebbleHandler(BaseHTTPRequestHandler):
         """Build pipeline route. Body lives in :mod:`pebble.server.build` so
         the handler class stays focused on dispatch."""
         from pebble.server.build import run_build
+        if generate:
+            from pebble.beta_invite import check_build_allowed
+            blocked = check_build_allowed(self)
+            if blocked:
+                self._json(blocked[0], blocked[1])
+                return
+            from pebble.build_queue import QueueFull, slot
+            try:
+                with slot():
+                    run_build(self, generate)
+            except QueueFull:
+                self._json(503, {
+                    "error": "build queue full — try again in a minute",
+                    "code": "queue_full",
+                    "retry_after": 60,
+                })
+            return
         run_build(self, generate)
 
     def _handle_plan(self):

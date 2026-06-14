@@ -99,11 +99,22 @@ async function getAuthHeader(): Promise<Record<string, string>> {
   return {};
 }
 
+/** Beta invite code from signup URL (?invite=) — sent on build requests. */
+function getInviteHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const code = localStorage.getItem("pebble_invite_code");
+    return code ? { "X-Pebble-Invite": code } : {};
+  } catch {
+    return {};
+  }
+}
+
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
   const authHeader = await getAuthHeader();
   const resp = await fetch(engineUrl(path), {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader },
+    headers: { "Content-Type": "application/json", ...authHeader, ...getInviteHeader() },
     body: JSON.stringify(body),
   });
   const text = await resp.text();
@@ -244,7 +255,7 @@ export async function streamGenerateSite(
 
   const resp = await fetch(engineUrl(buildPath), {
     method: "POST",
-    headers: { "Content-Type": "application/json", ...authHeader },
+    headers: { "Content-Type": "application/json", ...authHeader, ...getInviteHeader() },
     body: JSON.stringify(brief),
     signal,
   });
@@ -622,6 +633,47 @@ export type CommunityStats = {
 
 export async function fetchCommunityStats(): Promise<{ stats: CommunityStats | null; fallback?: boolean }> {
   return getJSON("/api/community/stats");
+}
+
+// ---------- /api/launchpad (Batch D, 2026-06-12) ---------------------------
+
+export type LaunchpadEntry = {
+  slug:           string;
+  business_name:  string;
+  industry:       string | null;
+  tagline:        string | null;
+  url:            string | null;
+  submitted_at:   string;
+  preview_url:    string;
+  screenshot_url: string | null;
+  meta:           Record<string, unknown> | null;
+};
+
+export async function fetchLaunchpadShowcase(): Promise<{ entries: LaunchpadEntry[]; count: number }> {
+  return getJSON("/api/launchpad/showcase");
+}
+
+export type ProjectLaunchpadState = {
+  slug:      string;
+  published: boolean;
+  submitted: boolean;
+  entry:     LaunchpadEntry | null;
+  url:       string | null;
+};
+
+export async function getProjectLaunchpad(slug: string): Promise<ProjectLaunchpadState> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/launchpad`);
+}
+
+export async function submitToLaunchpad(
+  slug: string,
+  body?: { tagline?: string },
+): Promise<{ ok: boolean; entry: LaunchpadEntry }> {
+  return postJSON(`/api/projects/${encodeURIComponent(slug)}/launchpad`, body || {});
+}
+
+export async function withdrawFromLaunchpad(slug: string): Promise<{ ok: boolean; removed: boolean }> {
+  return deleteJSON(`/api/projects/${encodeURIComponent(slug)}/launchpad`);
 }
 
 // ---------- /api/projects/<slug>/integrity (Phase 36, 2026-05-21) ----------

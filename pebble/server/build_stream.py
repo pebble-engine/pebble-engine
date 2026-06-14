@@ -66,15 +66,30 @@ def build_stream_generator(
 
     def _run() -> None:
         try:
-            # skip_rate_limit=True — pebble.app.generate_stream already
-            # debited generate_limiter for this client_host. Without this
-            # run_build would double-decrement → 5-burst bucket empty
-            # after ~3 browser clicks → silent 429 inside the thread →
-            # client sees "Stream ended without a done event" (the surface-
-            # late-errors path below catches it, but the user STILL can't
-            # build, just with a more accurate error message). See
-            # build.py's run_build docstring for the full bug story.
-            run_build(shim, generate=True, progress_cb=_cb, skip_rate_limit=True)
+            from pebble.beta_invite import check_build_allowed
+            blocked = check_build_allowed(shim)
+            if blocked:
+                q.put(("error", {"error": blocked[1].get("error"), "status": blocked[0]}))
+                return
+            from pebble.build_queue import QueueFull, slot
+            try:
+                with slot():
+                    # skip_rate_limit=True — pebble.app.generate_stream already
+                    # debited generate_limiter for this client_host. Without this
+                    # run_build would double-decrement → 5-burst bucket empty
+                    # after ~3 browser clicks → silent 429 inside the thread →
+                    # client sees "Stream ended without a done event" (the surface-
+                    # late-errors path below catches it, but the user STILL can't
+                    # build, just with a more accurate error message). See
+                    # build.py's run_build docstring for the full bug story.
+                    run_build(shim, generate=True, progress_cb=_cb, skip_rate_limit=True)
+            except QueueFull:
+                q.put(("error", {
+                    "error": "build queue full — try again in a minute",
+                    "status": 503,
+                    "code": "queue_full",
+                }))
+                return
             # If run_build short-circuited with a non-2xx response (rate
             # limit 429, quota gate 402, auth 401, validation 400, etc.),
             # the body was captured on the shim instead of surfacing
