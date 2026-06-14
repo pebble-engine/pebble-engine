@@ -61,7 +61,7 @@ def main() -> int:
     print("Pebble production smoke suite\n")
     failed = 0
     for script, label in AUTOMATED:
-        print(f"▶ {label}")
+        print(f">> {label}")
         code = run_script(script)
         if code != 0:
             failed += 1
