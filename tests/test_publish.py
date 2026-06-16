@@ -132,6 +132,18 @@ def _signup_and_get_cookie(base: str, email: str = "u@example.com",
     return sc.split(";", 1)[0] if sc else ""
 
 
+def _signup_and_stamp_owner(base: str, output: Path, slug: str) -> str:
+    cookie = _signup_and_get_cookie(base)
+    req = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
+    with urllib.request.urlopen(req, timeout=5) as resp:
+        uid = json.loads(resp.read().decode("utf-8"))["user"]["id"]
+    brief_path = output / slug / "brief.json"
+    brief = json.loads(brief_path.read_text(encoding="utf-8"))
+    brief["_user_id"] = uid
+    brief_path.write_text(json.dumps(brief), encoding="utf-8")
+    return cookie
+
+
 def _seed_project(output: Path, slug: str, files: dict[str, str], brief: dict | None = None) -> Path:
     project = output / slug
     project.mkdir()
@@ -349,10 +361,7 @@ def test_dashboard_summary_includes_publish_after_publishing(engine_server):
     _seed_project(out, "good-co", {"app/page.tsx": "x"},
                   brief={"business_name": "Good Co"})
     _post(engine_server["base"], "/api/publish", {"slug": "good-co"})
-    # Phase 58e — /api/projects now requires auth. Unclaimed projects
-    # (no _user_id) appear for any signed-in user, so a fresh signup is
-    # sufficient to see "good-co" in the listing.
-    cookie = _signup_and_get_cookie(engine_server["base"])
+    cookie = _signup_and_stamp_owner(engine_server["base"], out, "good-co")
     status, body, _ = _get(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     assert body["count"] == 1

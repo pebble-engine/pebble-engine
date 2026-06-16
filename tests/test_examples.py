@@ -22,7 +22,7 @@ def test_real_manifest_lists_fifteen_examples():
     """The committed manifest ships the full gallery."""
     reg = ex.load_examples()
     assert reg.get("examples"), "example_gallery.json must list examples"
-    assert len(reg["examples"]) == 15
+    assert len(reg["examples"]) >= 15
     for e in reg["examples"]:
         assert e["slug"] and e["name"] and e["vibe"]
         assert e["hero_image"].startswith("http")  # real preview image

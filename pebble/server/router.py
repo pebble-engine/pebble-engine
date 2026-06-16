@@ -142,6 +142,9 @@ def route_get(handler) -> None:
             # brand-new signup sees their plan's grant immediately.
             from pebble.server.credits_api import run_get_credits
             run_get_credits(handler)
+        elif handler.path == "/api/onboarding/status":
+            from pebble.server.onboarding_api import run_onboarding_status
+            run_onboarding_status(handler)
         elif handler.path == "/api/community/feed":
             # 2026-05-24 — public events list for the /community page.
             # Public read (no auth) — visibility filter on the table
@@ -403,6 +406,12 @@ def route_post(handler) -> None:
             # industries.json hints first (free), falls back to gpt-4o-mini.
             from pebble.server.smart_defaults import run_smart_defaults
             run_smart_defaults(handler)
+        elif handler.path == "/api/brief-infer":
+            from pebble.server.brief_infer_api import run_brief_infer
+            run_brief_infer(handler)
+        elif handler.path == "/api/brief-compose":
+            from pebble.server.brief_compose_api import run_brief_compose
+            run_brief_compose(handler)
         elif handler.path == "/api/publish":
             handler._handle_publish()
         elif handler.path == "/api/publish/instant":

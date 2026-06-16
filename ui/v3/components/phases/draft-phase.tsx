@@ -613,36 +613,9 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
           </span>
         </motion.div>
 
-        {/* Phase A.5 — preview-ready CTA. Surfaces the moment the
-            foundation files are on disk (~60-90s into the build) so the
-            user can open the homepage in a new tab while inner pages
-            continue streaming. The biggest perceived-time win in the
-            whole build flow. */}
-        <AnimatePresence>
-          {previewUrl && !done && (
-            <motion.a
-              key="preview-cta"
-              href={previewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              initial={{ opacity: 0, y: 12, scale: 0.96 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.96 }}
-              transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
-              className="mt-5 mx-auto inline-flex items-center gap-3 px-6 py-3 rounded-full bg-foreground text-background hover:bg-foreground/90 transition-colors group"
-            >
-              <span className={`${type.label}`}>
-                View your homepage now
-              </span>
-              <span className={`${type.mono} text-background/70 group-hover:text-background/90 transition-colors`}>
-                opens in new tab →
-              </span>
-            </motion.a>
-          )}
-        </AnimatePresence>
         {previewUrl && !done && previewReadyAt !== null && (
           <p className={`${type.mono} text-muted-foreground/70 mt-2`}>
-            ready at {formatElapsed(previewReadyAt)} — inner pages still streaming in
+            Homepage live at {formatElapsed(previewReadyAt)} — scroll down to preview
           </p>
         )}
       </motion.section>
@@ -780,6 +753,40 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
                 </motion.div>
               )}
             </AnimatePresence>
+          </motion.section>
+        )}
+      </AnimatePresence>
+
+      {/* Phase A.5 — inline live preview (Lovable-style). */}
+      <AnimatePresence>
+        {previewUrl && !done && (
+          <motion.section
+            key="live-preview"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: STANDARD_S, ease: EASE_CINEMATIC }}
+            className="w-full max-w-3xl mb-6 relative z-10"
+          >
+            <div className="flex items-center justify-between gap-2 mb-2 px-1">
+              <p className={`${type.label} text-foreground`}>Live preview</p>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${type.body.s} text-muted-foreground hover:text-foreground underline underline-offset-2`}
+              >
+                Open in new tab
+              </a>
+            </div>
+            <div className="rounded-2xl border border-border overflow-hidden bg-card shadow-[var(--shadow-1)]">
+              <iframe
+                title="Live site preview"
+                src={previewUrl}
+                className="w-full h-[min(420px,50vh)] bg-white"
+                sandbox="allow-scripts allow-same-origin allow-forms"
+              />
+            </div>
           </motion.section>
         )}
       </AnimatePresence>

@@ -513,6 +513,7 @@ def test_prompt_handles_no_src_directory_with_prose_not_file_embed(broken_build)
 # repair_build — end-to-end with FakeClient
 # ---------------------------------------------------------------------------
 
+@pytest.mark.integration
 def test_repair_short_circuits_when_no_failures(tmp_path):
     """A build that already passes everything → no LLM call, exit clean."""
     # Build a minimal-but-complete build inline (avoid pulling the bigger fixture).
@@ -568,6 +569,7 @@ def test_repair_short_circuits_when_no_failures(tmp_path):
     assert report.baseline_score == report.final_score
 
 
+@pytest.mark.integration
 def test_repair_improves_score_and_writes_files(broken_build):
     """Canned response fixes both failures → score goes up, files committed."""
     canned = """<pebble-file path="app/page.tsx">
@@ -649,6 +651,7 @@ class SequenceClient:
         return self.responses.pop(0)
 
 
+@pytest.mark.integration
 def test_retry_path_kicks_in_when_primary_does_not_improve(broken_build, monkeypatch):
     """Primary attempt returns garbage; retry returns a real fix. Both attempts
     should appear in rounds, and the retry's kept=True.

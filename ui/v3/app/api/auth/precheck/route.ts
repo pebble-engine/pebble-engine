@@ -52,6 +52,21 @@ export async function POST(req: NextRequest) {
   const token = typeof body.token === "string" ? body.token : "";
   const email = typeof body.email === "string" ? body.email.trim() : "";
 
+  // Local dev: widget sends DEV_BYPASS when hostname is localhost (Turnstile
+  // keys are bound to pebbleapp.ai). Accept before siteverify.
+  if (process.env.NODE_ENV !== "production" && token === "DEV_BYPASS") {
+    if (email && isDisposableEmail(email)) {
+      return NextResponse.json(
+        {
+          ok: false,
+          reason: "Please use a permanent email address. Throwaway providers aren't supported.",
+        },
+        { status: 400 },
+      );
+    }
+    return NextResponse.json({ ok: true, fallback: "dev_bypass" });
+  }
+
   // Disposable-email check first — cheap, no network call, blocks
   // before we burn a Cloudflare siteverify request on a doomed signup.
   if (email && isDisposableEmail(email)) {

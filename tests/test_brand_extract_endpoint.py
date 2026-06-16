@@ -39,10 +39,14 @@ class _StubHandler:
 
 
 @pytest.fixture(autouse=True)
-def _reset_rate_limit():
-    """Reset the plan_limiter bucket between tests so 429s don't bleed across."""
+def _allow_safe_urls_and_reset_rate_limit(monkeypatch):
+    """Patch SSRF DNS check; reset plan_limiter between tests."""
+    monkeypatch.setattr(
+        endpoint_module,
+        "_is_safe_url",
+        lambda url: (True, ""),
+    )
     from pebble.security import plan_limiter
-    # Try the public reset() method first; fall back to clearing internal state.
     try:
         plan_limiter.reset()
     except Exception:
@@ -56,7 +60,6 @@ def _reset_rate_limit():
     except Exception:
         pass
     yield
-    # Also reset after each test to be safe
     try:
         plan_limiter.reset()
     except Exception:

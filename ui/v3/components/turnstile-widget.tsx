@@ -89,9 +89,12 @@ export function TurnstileWidget({ onToken, onError, theme = "auto" }: TurnstileW
 
   useEffect(() => {
     const siteKey = (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || "").trim();
-    if (!siteKey) {
-      // Dev fallback — no key set, fire the dev bypass token. The
-      // server-side precheck route also accepts unconfigured state.
+    const isLocalHost =
+      typeof window !== "undefined"
+      && (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1");
+    // Production Turnstile keys are hostname-bound (pebbleapp.ai). On
+    // localhost the widget fails silently and signup stays disabled.
+    if (!siteKey || isLocalHost) {
       onToken("DEV_BYPASS");
       return;
     }

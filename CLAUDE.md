@@ -206,13 +206,15 @@ This project uses Claude Code skills as part of the workflow. Invoke these when 
 
 Invoke via the Skill tool. Don't propose them; just use them when the trigger matches.
 
-## The three-tool workflow
+## The builder workflow
 
-This project runs on a triangle:
+This project uses one builder and one captain:
 
-- **Claude Code** (this) — writes code, makes architecture calls, enforces quality. The builder.
-- **Hermes Agent** — installed locally, Telegram-gateway, scheduled tasks (cron), capture-and-monitor. The watcher. Config keys are in `.env` (`OPENROUTER_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_ALLOWED_CHAT_ID`).
-- **NotebookLM** (via `notebooklm-mcp`) — adversarial critique, deep research, source-grounded review. The critic. Used heavily for strategic decisions; tends to overshoot for code-level questions.
+- **Cursor Agent** — writes code, runs `python scripts/verify_all.py`, produces `VERIFICATION_REPORT.md` and `HANDOFF_*.md`. The builder.
+- **Marc (Captain)** — Vercel, Railway, DNS, Stripe dashboards. Reads `VERIFICATION_REPORT.md` for PASS/FAIL only.
+- **NotebookLM** (optional, via `notebooklm-mcp`) — adversarial critique for big strategic questions only.
+
+Verification contract: [docs/VERIFICATION.md](docs/VERIFICATION.md). Hermes/Telegram is **not** part of this repo workflow.
 
 See `.claude/SENIOR_LEVEL_ROADMAP.md` for the strategic frame and the per-session memory files in `~/.claude/projects/C--Users-marci-pebble-engine/memory/project_2026-05-*.md` for the rolling hand-off log.
 

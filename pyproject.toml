@@ -2,3 +2,6 @@
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: tests that need live LLM, DNS, or full eval corpus (excluded in verify_all --ci)",
+]

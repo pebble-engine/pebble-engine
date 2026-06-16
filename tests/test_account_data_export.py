@@ -197,6 +197,16 @@ def test_download_with_valid_token_streams_zip(tmp_path, monkeypatch):
     )
 
     h = _FakeHandler(path="/api/account/export-download?token=good-token-abc")
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_data_export_manifest",
+        lambda t: {
+            "token": "good-token-abc",
+            "zip_path": str(zip_path),
+            "user_id": user_id,
+            "expires_at": expires_at,
+            "requested_at": "2026-05-24T00:00:00+00:00",
+        } if t == "good-token-abc" else None,
+    )
     account_mod.run_download_export(h)
     assert h.sent_status == 200
     assert "attachment" in h.sent_headers.get("Content-Disposition", "")
@@ -247,8 +257,12 @@ def test_download_with_unknown_token_404(tmp_path, monkeypatch):
     )
 
     h = _FakeHandler(path="/api/account/export-download?token=does-not-exist")
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_data_export_manifest",
+        lambda t: None,
+    )
     account_mod.run_download_export(h)
-    assert h.responses[-1][0] == 404
+    assert h.responses[-1][0] == 410
 
 
 # ---- Fix 3 (2026-05-24): Bearer-JWT match for export-download ------------
@@ -329,6 +343,16 @@ def test_download_other_user_returns_403_and_audits(tmp_path, monkeypatch):
     }))
 
     h = _FakeHandler(path="/api/account/export-download?token=user-b-token")
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_data_export_manifest",
+        lambda t: {
+            "token": "user-b-token",
+            "zip_path": str(zip_b),
+            "user_id": "user-B",
+            "expires_at": "2099-01-01T00:00:00+00:00",
+            "requested_at": "2026-05-24T00:00:00+00:00",
+        } if t == "user-b-token" else None,
+    )
     account_mod.run_download_export(h)
 
     assert h.responses[-1][0] == 403, \

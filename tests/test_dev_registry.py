@@ -14,6 +14,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 DEV_REGISTRY = REPO_ROOT / "pebble" / "server" / "dev_registry.py"
 BUILD_PY = REPO_ROOT / "pebble" / "server" / "build.py"
 ENGINE_PY = REPO_ROOT / "pebble_engine.py"
+PREVIEW_SERVE_PY = REPO_ROOT / "pebble" / "server" / "preview_serve.py"
 
 
 # ── registry module ──────────────────────────────────────────────────────────
@@ -83,27 +84,31 @@ def test_engine_has_proxy_to_dev_method():
 
 
 def test_engine_preview_checks_dev_registry():
-    src = ENGINE_PY.read_text(encoding="utf-8")
+    src = PREVIEW_SERVE_PY.read_text(encoding="utf-8")
     assert "dev_registry" in src or "get_url" in src, (
-        "pebble_engine._handle_preview must import from dev_registry "
+        "preview_serve.run_preview must import from dev_registry "
         "to check for a live next dev process"
     )
     assert "_proxy_to_dev" in src, (
-        "pebble_engine._handle_preview must call _proxy_to_dev"
+        "preview_serve.run_preview must call handler._proxy_to_dev"
     )
+
+
+def test_engine_preview_delegate_exists():
+    src = ENGINE_PY.read_text(encoding="utf-8")
+    assert "from pebble.server.preview_serve import run_preview" in src
+    assert "run_preview(self)" in src
 
 
 def test_engine_proxy_falls_through_to_static():
     """The proxy call must be guarded so a failed proxy still serves static
     files (engine restart case / old builds without a dev server)."""
-    src = ENGINE_PY.read_text(encoding="utf-8")
-    # The proxy block must be wrapped in try/except or check a bool return.
-    # Look for the pattern: `if self._proxy_to_dev(...)` or try/except around it.
+    src = PREVIEW_SERVE_PY.read_text(encoding="utf-8")
     assert re.search(
-        r"if\s+self\._proxy_to_dev|try:.*_proxy_to_dev",
+        r"if\s+handler\._proxy_to_dev|try:.*_proxy_to_dev",
         src,
         re.DOTALL,
     ), (
-        "pebble_engine must guard _proxy_to_dev so failures fall through "
+        "preview_serve must guard _proxy_to_dev so failures fall through "
         "to static file serving"
     )

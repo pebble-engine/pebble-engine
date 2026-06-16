@@ -220,11 +220,32 @@ def _seed_pending(output_dir: Path, token: str, new_email: str, user_id: str,
     return p
 
 
+def _pending_row(token: str, new_email: str, user_id: str, *, expired: bool = False) -> dict:
+    now = datetime.now(timezone.utc)
+    expires = now - timedelta(hours=25) if expired else now + timedelta(hours=24)
+    return {
+        "token": token,
+        "new_email": new_email,
+        "user_id": user_id,
+        "requested_at": now.isoformat(),
+        "expires_at": expires.isoformat(),
+    }
+
+
 def test_confirm_with_valid_token_updates_email(tmp_path, monkeypatch, output_dir):
     """Token in pending file → Supabase admin called, audit logged,
     notification sent to OLD email, pending file deleted."""
     token = "valid-token-abc123"
     pending = _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"])
+
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_email_change_pending",
+        lambda t: _pending_row(token, "new@example.com", _FAKE_USER["id"]) if t == token else None,
+    )
+    monkeypatch.setattr(
+        "pebble.pending_state.delete_email_change_pending",
+        lambda t: pending.unlink(missing_ok=True) or True,
+    )
 
     monkeypatch.setattr(account_mod, "_update_user_email",
                         lambda user_id, new_email: True)
@@ -260,9 +281,14 @@ def test_confirm_with_valid_token_updates_email(tmp_path, monkeypatch, output_di
 
 
 def test_confirm_with_expired_token_rejected(tmp_path, monkeypatch, output_dir):
-    """Token > 24h old → 400, pending file deleted (cleanup), no Supabase call."""
+    """Expired token → 410 after file-fallback hard-kill (re-request from settings)."""
     token = "expired-token-xyz"
-    pending = _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"], expired=True)
+    _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"], expired=True)
+
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_email_change_pending",
+        lambda t: None,
+    )
 
     update_calls = []
     monkeypatch.setattr(account_mod, "_update_user_email",
@@ -275,29 +301,44 @@ def test_confirm_with_expired_token_rejected(tmp_path, monkeypatch, output_dir):
     h = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
     account_server.run_confirm_email_change(h)
 
-    assert h.status == 400
-    assert "expired" in (h.json_body or {}).get("error", "").lower()
-
-    # Pending file cleaned up even on expiry
-    assert not pending.exists(), "expired pending file must be deleted (cleanup)"
+    assert h.status == 410
+    assert "re-request" in (h.json_body or {}).get("error", "").lower()
 
     # Supabase NOT called
     assert len(update_calls) == 0
 
 
 def test_confirm_with_unknown_token_rejected(tmp_path, monkeypatch, output_dir):
-    """Token not in any pending file → 404."""
+    """Unknown token → 410 when legacy file fallback is hard-killed."""
+    monkeypatch.setattr(
+        "pebble.pending_state.lookup_email_change_pending",
+        lambda t: None,
+    )
     # No pending file seeded
     h = _FakeHandler(path="/api/account/change-email-confirm?token=nonexistent-token")
     account_server.run_confirm_email_change(h)
 
-    assert h.status == 404
+    assert h.status == 410
 
 
 def test_confirm_token_is_single_use(tmp_path, monkeypatch, output_dir):
     """After successful confirm, re-using the same token → 404 (file deleted)."""
     token = "single-use-token-456"
     _seed_pending(output_dir, token, "new@example.com", _FAKE_USER["id"])
+
+    consumed: list[str] = []
+
+    def _lookup(t: str):
+        if t != token or token in consumed:
+            return None
+        return _pending_row(token, "new@example.com", _FAKE_USER["id"])
+
+    def _delete(t: str) -> bool:
+        consumed.append(t)
+        return True
+
+    monkeypatch.setattr("pebble.pending_state.lookup_email_change_pending", _lookup)
+    monkeypatch.setattr("pebble.pending_state.delete_email_change_pending", _delete)
 
     monkeypatch.setattr(account_mod, "_update_user_email",
                         lambda uid, email: True)
@@ -311,10 +352,10 @@ def test_confirm_token_is_single_use(tmp_path, monkeypatch, output_dir):
     account_server.run_confirm_email_change(h1)
     assert h1.status == 200
 
-    # Second use: file is gone → 404
+    # Second use: token consumed → 410 (legacy file fallback hard-killed)
     h2 = _FakeHandler(path=f"/api/account/change-email-confirm?token={token}")
     account_server.run_confirm_email_change(h2)
-    assert h2.status == 404
+    assert h2.status == 410
 
 
 # ---- Fix 4 (2026-05-24): file-fallback hard-kill date --------------------

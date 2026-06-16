@@ -4,10 +4,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Edit3, Sparkles, Loader2, ChevronDown, ChevronUp } from "lucide-react";
 import { getBrief, getPlan, setPlan, patchBrief, type PebblePlan, type PebbleSetupItem } from "@/lib/state";
-import { fetchPlan, generateSite, type GenerateResponse } from "@/lib/api";
+import { fetchPlan, fetchBriefCompose, generateSite, type GenerateResponse } from "@/lib/api";
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
+import { PlanWireframeSkeleton } from "@/components/phases/plan-wireframe-skeleton";
 
 /**
  * Plan phase — Phase 46b (2026-05-22) Base44-style restructure.
@@ -54,6 +55,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   const [rerolling, setRerolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showLess, setShowLess] = useState(false);
+  const [composing, setComposing] = useState(true);
   const startedRef = useRef(false);
 
   const safeCardVariants = useMemo(() => withReducedMotion(cardVariants), []);
@@ -86,47 +88,71 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   };
 
   useEffect(() => {
-    const cached = getPlan();
-    if (cached) {
-      setPlanLocal(cached);
-      return;
-    }
-    if (startedRef.current) return;
-    startedRef.current = true;
-    setLoading(true);
-    fetchPlan(getBrief())
-      .then((result) => {
+    let cancelled = false;
+
+    async function loadPlan() {
+      const brief = getBrief();
+      setComposing(true);
+      try {
+        const composed = await fetchBriefCompose({
+          _raw_prompt: brief._raw_prompt || brief.extra_context,
+          business_name: brief.business_name,
+          business_type: brief.business_type,
+          location: brief.location,
+          audience: brief.audience,
+          site_functions: brief.site_functions,
+          brand_tone: brief.brand_tone,
+          intent: brief.intent,
+        });
+        if (!cancelled && composed.ok && composed.brief_patch) {
+          patchBrief(composed.brief_patch as Partial<typeof brief>);
+        }
+      } catch {
+        /* hidden enrichment — plan still loads from visible fields */
+      } finally {
+        if (!cancelled) setComposing(false);
+      }
+
+      if (cancelled) return;
+
+      const cached = getPlan();
+      if (cached) {
+        setPlanLocal(cached);
+        return;
+      }
+      if (startedRef.current) return;
+      startedRef.current = true;
+      setLoading(true);
+      try {
+        const result = await fetchPlan(getBrief());
+        if (cancelled) return;
         setPlan(result.plan);
         patchBrief({
           _industry_intel_key: result.industry_key || undefined,
           _design_dna_id: result.dna_id || undefined,
         });
         setPlanLocal(result.plan);
-      })
-      .catch((e: Error) => setError(e.message))
-      .finally(() => setLoading(false));
+      } catch (e: unknown) {
+        if (!cancelled) {
+          const msg = e instanceof Error ? e.message : String(e);
+          setError(msg);
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void loadPlan();
+    return () => { cancelled = true; };
   }, []);
 
   const handleGenerate = () => {
-    if (!plan) return;
+    if (!plan || composing) return;
     onGenerate(() => generateSite(getBrief()));
   };
 
   if (loading && !error) {
-    return (
-      <div className="w-full max-w-3xl mx-auto px-4 py-12">
-        <div className="bg-card border border-border rounded-2xl p-8 space-y-6 animate-pulse">
-          <div className="h-6 bg-muted rounded w-24" />
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="space-y-2 pb-4 border-b border-border last:border-0">
-              <div className="h-3 bg-muted rounded w-32" />
-              <div className="h-4 bg-muted rounded w-full" />
-              <div className="h-4 bg-muted rounded w-4/5" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
+    return <PlanWireframeSkeleton />;
   }
 
   if (!plan) {
@@ -356,9 +382,10 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         <motion.button
           whileTap={{ scale: 0.97 }}
           onClick={handleGenerate}
-          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-bold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2`}
+          disabled={composing || !plan}
+          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-bold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2 disabled:opacity-50`}
         >
-          <Sparkles className="w-4 h-4" /> Start Building
+          <Sparkles className="w-4 h-4" /> {composing ? "Preparing…" : "Start Building"}
         </motion.button>
       </div>
 

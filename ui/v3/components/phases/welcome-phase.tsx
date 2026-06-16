@@ -735,6 +735,7 @@ export function WelcomePhase({ onAdvance }: Props) {
         business_type: res.industry || undefined,
         brand_tone:    res.tone || undefined,
         extra_context: blurbParts.join(" "),
+        _raw_prompt:   `Imported from ${sourceUrl}`,
         user_first_name: firstName || undefined,
         _inspired_by:  sourceUrl,
         _brand_palette: res.palette,
@@ -867,6 +868,7 @@ export function WelcomePhase({ onAdvance }: Props) {
     const derivedName = deriveProjectName(message);
     patchBrief({
       extra_context: message,
+      _raw_prompt: message,
       business_name: derivedName,
       user_first_name: firstName || undefined,
     });

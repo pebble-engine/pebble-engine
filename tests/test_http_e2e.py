@@ -179,6 +179,79 @@ def test_health_reports_vercel_preview_ready(engine_server, monkeypatch):
     assert body["preview_prod_ready"] is True
 
 
+# ---- /api/brief-infer + /api/brief-compose + /api/onboarding/status ---
+
+def test_brief_infer_returns_structured_fields(engine_server):
+    status, body = _post(
+        engine_server["base"],
+        "/api/brief-infer",
+        {"raw_prompt": "I own a bakery in Brooklyn"},
+    )
+    assert status == 200
+    assert body["ok"] is True
+    assert "bakery" in body.get("business_type", "").lower()
+    assert body.get("location") == "Brooklyn"
+    assert "extra_context" not in body
+
+
+def test_brief_infer_rejects_empty(engine_server):
+    status, body = _post(engine_server["base"], "/api/brief-infer", {"raw_prompt": ""})
+    assert status == 400
+
+
+def test_brief_compose_returns_patch_not_display_narrative(engine_server):
+    status, body = _post(
+        engine_server["base"],
+        "/api/brief-compose",
+        {
+            "_raw_prompt": "bakery in Brooklyn",
+            "business_name": "Brooklyn Bakery",
+            "business_type": "bakery",
+            "location": "Brooklyn",
+            "audience": ["locals"],
+            "site_functions": ["leads"],
+            "brand_tone": "warm",
+        },
+    )
+    assert status == 200
+    assert body["ok"] is True
+    assert body.get("fields_ready") is True
+    patch = body.get("brief_patch") or {}
+    assert patch.get("_composed") is True
+    assert patch.get("_composed_at")
+    assert "Brooklyn" in (patch.get("extra_context") or "")
+
+
+def test_onboarding_status_requires_auth(engine_server):
+    status, _ = _get(engine_server["base"], "/api/onboarding/status")
+    assert status == 401
+
+
+def test_onboarding_status_plan_required_until_two_builds(engine_server):
+    base = engine_server["base"]
+    cookie, _ = _signin(base, "onboard@example.com", "valid-password")
+    req = urllib.request.Request(
+        f"{base}/api/auth/me",
+        headers={"Cookie": cookie},
+    )
+    with urllib.request.urlopen(req, timeout=5) as r:
+        uid = json.loads(r.read().decode("utf-8"))["user"]["id"]
+    _seed_project(
+        engine_server["output"],
+        "onboard-a",
+        {"app/page.tsx": "x"},
+        brief={"business_name": "A", "_user_id": uid},
+    )
+    (engine_server["output"] / "onboard-a" / "build_meta.json").write_text(
+        json.dumps({"built_at": "2026-01-01"}), encoding="utf-8",
+    )
+    status, body = _get_with_cookie(base, "/api/onboarding/status", cookie=cookie)
+    assert status == 200
+    assert body["builds_completed"] == 1
+    assert body["plan_required"] is True
+    assert body["plan_required_until"] == 2
+
+
 # ---- /api/community ---------------------------------------------------
 
 def test_community_feed_is_public(engine_server):
@@ -217,7 +290,7 @@ def test_list_projects_401_when_signed_out(engine_server):
 
 
 def test_list_projects_empty_initially(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    cookie, _ = _signin(engine_server["base"], "u@example.com", "valid-password")
     status, body = _get_with_cookie(engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     assert body["count"] == 0
@@ -225,7 +298,7 @@ def test_list_projects_empty_initially(engine_server):
 
 def test_list_projects_returns_seeded_project(engine_server):
     base = engine_server["base"]
-    cookie = _signin(base, "u@example.com", "valid-password")
+    cookie, _ = _signin(base, "u@example.com", "valid-password")
     # Resolve the caller's id so the seeded project is OWNED by them — a
     # signed-in user only sees their own projects (unclaimed are excluded).
     req_me = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
@@ -490,10 +563,14 @@ def _extract_cookie(set_cookie_header: str | None) -> str:
     return set_cookie_header.split(";", 1)[0].strip()
 
 
-def _signin(base: str, email: str, password: str) -> str:
-    """Sign up and return the session cookie."""
-    _, _, sc = _post_with_cookie(base, "/api/auth/signup", {"email": email, "password": password})
-    return _extract_cookie(sc)
+def _signin(base: str, email: str, password: str) -> tuple[str, str]:
+    """Sign up and return (session cookie, user id)."""
+    status, body, sc = _post_with_cookie(base, "/api/auth/signup", {"email": email, "password": password})
+    assert status == 201
+    cookie = _extract_cookie(sc)
+    user_id = (body or {}).get("user", {}).get("id", "")
+    assert user_id
+    return cookie, user_id
 
 
 def _get_with_cookie(base: str, path: str, cookie: str | None = None) -> tuple[int, dict | str]:
@@ -516,8 +593,9 @@ def test_activity_feed_401_when_signed_out(engine_server):
 
 
 def test_activity_feed_empty_when_no_history(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
-    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"})
+    cookie, user_id = _signin(engine_server["base"], "u@example.com", "valid-password")
+    _seed_project(engine_server["output"], "good-co", {"app/page.tsx": "x"},
+                  brief={"business_name": "Good Co", "_user_id": user_id})
     status, body = _get_with_cookie(engine_server["base"], "/api/activity", cookie=cookie)
     assert status == 200
     assert body["count"] == 0
@@ -525,9 +603,9 @@ def test_activity_feed_empty_when_no_history(engine_server):
 
 def test_activity_feed_lists_snapshots_newest_first(engine_server):
     out = engine_server["output"]
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    cookie, user_id = _signin(engine_server["base"], "u@example.com", "valid-password")
     _seed_project(out, "good-co", {"app/page.tsx": "ORIGINAL"},
-                  brief={"business_name": "Good Co"})
+                  brief={"business_name": "Good Co", "_user_id": user_id})
     history_mod.snapshot_site("good-co", reason="generate", source="POST /api/generate")
     time.sleep(1.05)
     history_mod.snapshot_site("good-co", reason="refine-friendlier", source="POST /api/refine")
@@ -912,7 +990,7 @@ def test_usage_401_when_signed_out(engine_server):
 
 
 def test_usage_empty_when_no_projects(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    cookie, _ = _signin(engine_server["base"], "u@example.com", "valid-password")
     status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
     assert status == 200
     assert body["projects"] == 0
@@ -921,7 +999,7 @@ def test_usage_empty_when_no_projects(engine_server):
 
 
 def test_usage_aggregates_build_meta(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    cookie, _ = _signin(engine_server["base"], "u@example.com", "valid-password")
     out = engine_server["output"]
     _seed_project(out, "p1", {"app/page.tsx": "x"})
     (out / "p1" / "build_meta.json").write_text(json.dumps({
@@ -951,7 +1029,7 @@ def test_usage_aggregates_build_meta(engine_server):
 
 
 def test_usage_skips_projects_without_build_meta(engine_server):
-    cookie = _signin(engine_server["base"], "u@example.com", "valid-password")
+    cookie, _ = _signin(engine_server["base"], "u@example.com", "valid-password")
     out = engine_server["output"]
     _seed_project(out, "still-cooking", {"app/page.tsx": "x"})  # no build_meta.json
     status, body = _get_with_cookie(engine_server["base"], "/api/usage", cookie=cookie)
@@ -961,7 +1039,7 @@ def test_usage_skips_projects_without_build_meta(engine_server):
 def test_usage_filters_other_users_projects(engine_server):
     """Phase 58e (2026-05-22) — usage is now per-caller. A project
     owned by another user must not appear in the caller's aggregation."""
-    cookie = _signin(engine_server["base"], "alice@example.com", "valid-password")
+    cookie, _ = _signin(engine_server["base"], "alice@example.com", "valid-password")
     out = engine_server["output"]
     # Alice's project
     _seed_project(out, "alice-co", {"app/page.tsx": "x"},

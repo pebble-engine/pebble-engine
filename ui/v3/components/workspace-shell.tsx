@@ -23,7 +23,7 @@ import {
   type Brief,
   type PebblePlan,
 } from "@/lib/state";
-import { streamGenerateSite, enrichContent, fetchProjectState, CreditError, type GenerateResponse, type SSEEvent } from "@/lib/api";
+import { streamGenerateSite, enrichContent, fetchProjectState, fetchOnboardingStatus, CreditError, type GenerateResponse, type SSEEvent } from "@/lib/api";
 import { PaywallModal, type PaywallReason } from "@/components/paywall-modal";
 import { type CollectedAnswer } from "@/components/phases/build-chat";
 import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phase";
@@ -32,6 +32,7 @@ import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 import { safeStartViewTransition } from "@/lib/view-transitions";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
+import { ConfirmBriefPhase } from "@/components/phases/confirm-brief-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
 import { PlanPhase } from "@/components/phases/plan-phase";
 import { DraftPhase } from "@/components/phases/draft-phase";
@@ -44,6 +45,7 @@ import { PublishPhase } from "@/components/phases/publish-phase";
 import { IntegrationsPhase } from "@/components/phases/integrations-phase";
 import { PlanPickerModal } from "@/components/plan-picker-modal";
 import { TemplateMatchModal } from "@/components/template-match-modal";
+import { PostBuildChecklist } from "@/components/post-build-checklist";
 import { fetchSubscription } from "@/lib/api";
 import type { PlanTier } from "@/lib/plan-features";
 import { useAuth } from "@/components/auth-provider";
@@ -158,17 +160,40 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
   }, [authUser, authLoading]);
 
   // 2026-05-24 funnel restructure: post-signup template-match modal.
-  // Fires once per signup. The sessionStorage key is cleared as soon
-  // as the prompt is read so a re-render doesn't re-open the modal.
+  // Demoted (2026-06): prompt autostart skips the modal — funnel goes confirm → plan.
   const [matchPrompt, setMatchPrompt] = useState<string | null>(null);
   useEffect(() => {
     if (typeof window === "undefined") return;
     const stashed = sessionStorage.getItem("pebble.first_signup_prompt");
     if (stashed && stashed.trim()) {
-      setMatchPrompt(stashed);
       sessionStorage.removeItem("pebble.first_signup_prompt");
+      patchBrief({ _raw_prompt: stashed, extra_context: stashed });
     }
   }, []);
+
+  // Onboarding gate: Plan required until 2 completed builds (default true until fetched).
+  const [planRequired, setPlanRequired] = useState(true);
+  const [buildsCompleted, setBuildsCompleted] = useState(0);
+  useEffect(() => {
+    if (authLoading || !authUser) {
+      setPlanRequired(true);
+      return;
+    }
+    let cancelled = false;
+    fetchOnboardingStatus()
+      .then((st) => {
+        if (cancelled) return;
+        setPlanRequired(st.plan_required);
+        setBuildsCompleted(st.builds_completed);
+      })
+      .catch(() => {
+        if (!cancelled) setPlanRequired(true);
+      });
+    return () => { cancelled = true; };
+  }, [authUser, authLoading]);
+
+  const [showPostBuildChecklist, setShowPostBuildChecklist] = useState(false);
+  const pendingChecklistRef = useRef(false);
 
   // Plan tier (used by TemplateMatchModal's "Build from scratch" CTA).
   // Defaults to "free" until subscription resolves — safe default
@@ -272,7 +297,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
       // 12-second auto-advance countdown before state hydrates. For a
       // returning user with a slug URL, design is the right landing —
       // they've already seen the post-build celebration.
-      if (resolvedPhase === "welcome" || resolvedPhase === "idea" || resolvedPhase === "ready") {
+      if (resolvedPhase === "welcome" || resolvedPhase === "idea" || resolvedPhase === "confirm" || resolvedPhase === "ready") {
         setPhase("design");
       }
       return;
@@ -364,32 +389,26 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
     }).catch(() => { /* engine offline / slug not built — iframe handles fallback */ });
   }, [slugProp]);
 
-  // FRESH idea capture. Bad UX (and bad for the user's wallet — every fire
-  // is a billed build).
-  //
-  // The planFirst escape hatch: if the user explicitly chose plan-first
-  // mode, don't autostart — they want to see the plan preview first.
+  // Post-signup / welcome autostart: route to micro-confirm (not straight to generate).
+  // Template-match modal is demoted when the user arrived with a prompt.
   useEffect(() => {
     const flagSet = sessionStorage.getItem("pebble.autostart") === "1";
     if (!flagSet) return;
-    // 2026-05-24 funnel: if the template-match modal will show (fresh
-    // signup with prompt stashed), DON'T autostart the engine build.
-    // The modal's "Build from scratch" CTA hands control back here by
-    // re-setting pebble.autostart before closing.
-    const templateMatchPending = sessionStorage.getItem("pebble.first_signup_prompt");
-    if (templateMatchPending) return;
     sessionStorage.removeItem("pebble.autostart");
 
     const currentBrief = getBrief();
-    const currentBuild = getLastBuild();
-    const hasBrief = !!(currentBrief.business_name || currentBrief.extra_context);
-    const wantsPlan = currentBrief.planFirst === true;
+    const hasPrompt = !!(
+      (currentBrief._raw_prompt as string)?.trim()
+      || (currentBrief.extra_context as string)?.trim()
+      || currentBrief.business_name
+    );
+    if (!hasPrompt) return;
 
-    if (wantsPlan) return;
-    if (!hasBrief) return;
-    if (currentBuild) return;
-
-    handleGenerate(() => Promise.resolve({} as GenerateResponse));
+    if (pathname === "/") {
+      router.push("/workspace#phase=confirm");
+    } else {
+      setPhase("confirm");
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -456,57 +475,37 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
 
   function handleAdvanceFromWelcome() {
     const currentBrief = getBrief();
+    const rawPrompt =
+      (currentBrief._raw_prompt as string)
+      || (currentBrief.extra_context as string)
+      || "";
 
-    // Phase 58a / Phase 54c — signup gate. Unauthenticated visitors must
-    // sign up before they can land on /workspace (proxy.ts middleware
-    // would otherwise bounce them to /login, which feels broken — they
-    // submitted a Build prompt, not a Sign In). Route to /signup with
-    // ?redirect=/workspace so the brief is preserved in sessionStorage
-    // (same-tab navigation through signup → workspace keeps it intact)
-    // and they autostart on return. Wait for auth to resolve so we don't
-    // accidentally signup-route a logged-in user whose session is still
-    // hydrating.
     if (!authLoading && !authUser && pathname === "/") {
-      // Ensure the autostart flag is set so /workspace kicks off the
-      // build automatically after signup completes.
       sessionStorage.setItem("pebble.autostart", "1");
-      // 2026-05-24 funnel restructure: also stash the prompt so the
-      // post-signup TemplateMatchModal can surface matching templates.
-      // The shell reads + clears this key once on mount; the modal's
-      // "Build from scratch" CTA hands control back to the autostart
-      // engine-build flow.
-      const briefNow = getBrief();
-      const promptStash = (briefNow.extra_context as string) || "";
-      if (promptStash.trim()) {
-        sessionStorage.setItem("pebble.first_signup_prompt", promptStash);
+      if (rawPrompt.trim()) {
+        sessionStorage.setItem("pebble.first_signup_prompt", rawPrompt);
+        patchBrief({ _raw_prompt: rawPrompt });
       }
-      router.push(`/signup?redirect=${encodeURIComponent("/workspace")}`);
+      router.push(`/signup?redirect=${encodeURIComponent("/workspace#phase=confirm")}`);
       return;
     }
 
-    if (currentBrief.planFirst === true) {
-      // Plan mode: show the plan preview before building.
-      if (pathname === "/") {
-        // Bypass view-transition (same reason as the standard-mode branch).
-        router.push("/workspace#phase=plan");
-      } else {
-        setPhase("plan");
-      }
+    if (pathname === "/") {
+      router.push("/workspace#phase=confirm");
     } else {
-      // Standard mode: skip the questionnaire — go straight to build.
-      if (pathname === "/") {
-        // Flag for the auto-start useEffect above, then navigate to workspace.
-        sessionStorage.setItem("pebble.autostart", "1");
-        // Phase 58a — bypass safeStartViewTransition for this navigation.
-        // The View Transitions wrap was swallowing the router.push silently
-        // in some browser/Next combos (URL stayed at / after submit). Direct
-        // router.push always works; the visual transition is non-essential
-        // for this specific hop (welcome → workspace mount swap).
-        router.push("/workspace");
-      } else {
-        // Already inside workspace — kick off generation immediately.
-        handleGenerate(() => Promise.resolve({} as GenerateResponse));
-      }
+      setPhase("confirm");
+    }
+  }
+
+  function handleAdvanceFromConfirm() {
+    setBrief(getBrief());
+    const currentBrief = getBrief();
+    const needsPlan = planRequired || currentBrief.planFirst === true;
+    if (needsPlan) {
+      patchBrief({ planFirst: true });
+      setPhase("plan");
+    } else {
+      handleGenerate(() => Promise.resolve({} as GenerateResponse));
     }
   }
 
@@ -579,6 +578,14 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         setBuild(built);
         setPlan(getPlan());
         setGenerateDone(true);
+        if (authUser) {
+          fetchOnboardingStatus()
+            .then((st) => {
+              setBuildsCompleted(st.builds_completed);
+              setPlanRequired(st.plan_required);
+            })
+            .catch(() => { /* non-blocking */ });
+        }
         // Capture elapsed for ReadyPhase summary.
         if (generateStartedAtRef.current) {
           setBuildElapsedSec(Math.round((Date.now() - generateStartedAtRef.current) / 1000));
@@ -597,6 +604,9 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
             });
           }
           // Phase 49 — draft → ready → (user clicks) → design.
+          if (buildsCompleted === 0 && !sessionStorage.getItem("pebble.checklist_dismissed")) {
+            pendingChecklistRef.current = true;
+          }
           setPhase("ready");
         }, 600);
       })
@@ -622,6 +632,14 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
       .finally(() => {
         generatingRef.current = false;
       });
+  }
+
+  function openDesignEditor() {
+    if (pendingChecklistRef.current && !sessionStorage.getItem("pebble.checklist_dismissed")) {
+      setShowPostBuildChecklist(true);
+      pendingChecklistRef.current = false;
+    }
+    setPhase("design");
   }
 
   function handleJumpPhase(target: Phase | "features" | "setup") {
@@ -754,6 +772,9 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
             rather than relying on AnimatePresence at the shell level. */}
         <div className={`flex-1 flex flex-col ${isWelcome ? "" : "overflow-hidden"}`}>
           {phase === "welcome" && <WelcomePhase onAdvance={handleAdvanceFromWelcome} />}
+          {phase === "confirm" && (
+            <ConfirmBriefPhase onConfirm={handleAdvanceFromConfirm} planRequired={planRequired} />
+          )}
           {phase === "design"  && (
             <EditPhase
               ref={editPhaseRef}
@@ -778,7 +799,7 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
             <ReadyPhase
               build={build}
               elapsedSeconds={buildElapsedSec ?? undefined}
-              onOpenEditor={() => setPhase("design")}
+              onOpenEditor={openDesignEditor}
               onPublish={() => setPhase("publish")}
             />
           )}
@@ -836,6 +857,18 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
         reason={paywallReason}
         onClose={() => setPaywallReason(null)}
       />
+
+      {showPostBuildChecklist && build?.slug && (
+        <PostBuildChecklist
+          slug={build.slug}
+          published={false}
+          onDismiss={() => {
+            sessionStorage.setItem("pebble.checklist_dismissed", "1");
+            setShowPostBuildChecklist(false);
+          }}
+          onPublish={() => setPhase("publish")}
+        />
+      )}
     </div>
     </MotionConfig>
   );

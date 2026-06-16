@@ -6,33 +6,25 @@ One batch = one goal, one branch, tests before "done."
 
 | Role | Tool |
 |------|------|
-| Builder | Cursor Agent |
-| Watcher | Hermes (read-only monitor + Telegram) |
+| Builder | Cursor Agent (any LLM session in this repo) |
 | Captain | Marc (Vercel, Railway, DNS, Stripe) |
 
 ## Rules
 
 1. **One batch, one scope** — finish or block before starting the next.
-2. **Test gate:** `python -m pytest -q` must pass before claiming done (or note pre-existing failures).
-3. **Deploy:** push to `squitopest/main` when executing the senior plan; otherwise no commit unless Marc asks.
-4. **End every batch** with `HANDOFF_BATCH_*.md` in repo root.
+2. **Verification gate:** `python scripts/verify_all.py` must exit 0 before claiming done.
+3. **Deploy:** push to `squitopest/main` when Marc asks or plan says ship.
+4. **End every batch** with `HANDOFF_*.md` using [HANDOFF_TEMPLATE.md](HANDOFF_TEMPLATE.md).
 5. **Marc-only:** production env vars, DNS, Stripe dashboard clicks.
-6. **Notify:** `python scripts/notify_batch_complete.py --handoff HANDOFF_*.md` when Telegram is configured.
+6. **Marc reads:** [VERIFICATION_REPORT.md](VERIFICATION_REPORT.md) — PASS/FAIL at top; no terminal required.
 
-## Batch order (2026-06-12 plan) — status
-
-| Batch | Goal | Status |
-|-------|------|--------|
-| A | Prod engine connection | ✅ verify_prod |
-| B | Preview backend (Vercel Deploy API) | ✅ see docs/PREVIEW_STRATEGY.md |
-| C | Community feed from real Supabase events | ✅ code shipped |
-| D | Launchpad v1 (submit + showcase) | ✅ code shipped |
-
-## Prod smoke
+## Verification
 
 ```bash
-python scripts/prod_smoke.py
+python scripts/verify_all.py
 ```
+
+See [docs/VERIFICATION.md](docs/VERIFICATION.md).
 
 ## Starter phrase (Marc)
 

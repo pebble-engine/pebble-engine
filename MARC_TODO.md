@@ -1,25 +1,17 @@
-# Marc — after senior plan execution
+# Marc — captain checklist
 
-Builder completed all plan todos. Pushed to `squitopest/main` (`013e413d`).
+You do **not** run terminal commands for verification. Open **[VERIFICATION_REPORT.md](VERIFICATION_REPORT.md)** after any agent batch — top line says PASS or FAIL.
 
-## Your short list (dashboard clicks only)
+## Dashboard-only tasks
 
 | # | Task | Doc |
 |---|------|-----|
-| 1 | Run Supabase migrations if APIs 500 on `events` / `public_templates` | `supabase/migrations/009_*.sql`, `010_*.sql` |
+| 1 | Supabase migrations if APIs 500 | `supabase/migrations/009_*.sql`, `010_*.sql` |
 | 2 | Cloudflare wildcard `*.pebbleapp.ai` | `docs/DNS_WILDCARD_SETUP.md` |
 | 3 | Stripe webhook + one test payment | `docs/STRIPE_E2E.md` |
-| 4 | Pre-build golden demo slug | `docs/GOLDEN_DEMO.md` |
-| 5 | Enable beta invites when ready | `docs/BETA_INVITE.md` |
+| 4 | Golden demo backup slug | `docs/GOLDEN_DEMO.md` |
+| 5 | Beta invites when ready | `docs/BETA_INVITE.md` |
 
-## Verify (anytime)
+## If verification FAILs
 
-```bash
-python scripts/prod_smoke.py
-```
-
-## Telegram ping (optional)
-
-```bash
-python scripts/notify_batch_complete.py --handoff HANDOFF_PLAN_EXECUTION_2026-06-12.md
-```
+Tell the agent: "Fix failures in VERIFICATION_REPORT.md and re-run verify_all."

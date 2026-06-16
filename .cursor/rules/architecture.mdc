@@ -1,0 +1,38 @@
+---
+description: Where new Pebble code belongs — senior-dev layout
+globs:
+  - pebble/**/*.py
+  - pebble_engine.py
+  - tests/**/*.py
+alwaysApply: false
+---
+
+# Architecture rules
+
+## Layout
+
+| Layer | Path | Responsibility |
+|-------|------|----------------|
+| HTTP routes | `pebble/server/router.py` | Dispatch only |
+| Handlers | `pebble/server/<feature>.py` | `run_*` functions; parse request, call domain |
+| Domain | `pebble/<module>.py` | Pure logic, Supabase, filesystem |
+| Engine shell | `pebble_engine.py` | `PebbleHandler` wiring, `main()` — **no new business logic** |
+| Frontend | `ui/v3/` | Next.js app |
+| Tests | `tests/test_<feature>.py` | Mirror `pebble/` modules |
+| Prod checks | `scripts/verify_*_prod.py` | User-facing API smoke |
+
+## Adding a feature
+
+1. Route in `pebble/server/router.py`
+2. Handler in `pebble/server/<name>.py`
+3. Logic in `pebble/<name>.py` if non-trivial
+4. `tests/test_<name>.py` + e2e if public API
+5. `scripts/verify_<name>_prod.py` if Marc-facing
+6. Run `python scripts/verify_all.py`
+
+## Do not
+
+- Add logic blocks to `pebble_engine.py` (delegate to `pebble/server/`)
+- Claim done without `VERIFICATION_REPORT.md` PASS
+
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) and [docs/ONBOARDING.md](docs/ONBOARDING.md).

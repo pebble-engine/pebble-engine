@@ -108,8 +108,7 @@ def _request(method: str, base: str, path: str, body: dict | None = None,
 
 def _signup_and_get_cookie(base: str, email: str = "u@example.com",
                            password: str = "valid-password") -> str:
-    """Sign up via the legacy auth endpoint and return the session cookie.
-    Used for tests that need to hit signed-in-only endpoints."""
+    """Sign up via the legacy auth endpoint and return the session cookie."""
     data = json.dumps({"email": email, "password": password}).encode("utf-8")
     req = urllib.request.Request(f"{base}/api/auth/signup", data=data,
                                   headers={"Content-Type": "application/json"},
@@ -119,12 +118,27 @@ def _signup_and_get_cookie(base: str, email: str = "u@example.com",
     return sc.split(";", 1)[0] if sc else ""
 
 
-def _seed_project(output: Path, slug: str) -> Path:
+def _signup_and_stamp_owner(base: str, output: Path, slug: str) -> str:
+    """Sign up and stamp ``_user_id`` on the project's brief (dashboard filter)."""
+    cookie = _signup_and_get_cookie(base)
+    req_me = urllib.request.Request(f"{base}/api/auth/me", headers={"Cookie": cookie})
+    with urllib.request.urlopen(req_me, timeout=5) as resp:
+        uid = json.loads(resp.read().decode("utf-8"))["user"]["id"]
+    brief_path = output / slug / "brief.json"
+    brief = json.loads(brief_path.read_text(encoding="utf-8"))
+    brief["_user_id"] = uid
+    brief_path.write_text(json.dumps(brief), encoding="utf-8")
+    return cookie
+
+
+def _seed_project(output: Path, slug: str, brief: dict | None = None) -> Path:
     project = output / slug
     project.mkdir()
     (project / "site").mkdir()
     (project / "site" / "app").mkdir()
     (project / "site" / "app" / "page.tsx").write_text("x")
+    brief_data = brief if brief is not None else {"business_name": slug}
+    (project / "brief.json").write_text(json.dumps(brief_data), encoding="utf-8")
     return project
 
 
@@ -261,10 +275,8 @@ def test_dashboard_summary_includes_domain_after_attach(engine_server):
     _seed_project(engine_server["output"], "good-co")
     _request("POST", engine_server["base"], "/api/projects/good-co/domain",
              {"host": "example.com"})
-    # Phase 58e — /api/projects now requires auth. Unclaimed projects
-    # (no _user_id) appear for any signed-in user, so a fresh signup is
-    # sufficient to see "good-co" in the listing.
-    cookie = _signup_and_get_cookie(engine_server["base"])
+    # Phase 58e — /api/projects requires auth + ownership (claim after signup).
+    cookie = _signup_and_stamp_owner(engine_server["base"], engine_server["output"], "good-co")
     status, body = _request("GET", engine_server["base"], "/api/projects", cookie=cookie)
     assert status == 200
     proj = next(p for p in body["projects"] if p["slug"] == "good-co")

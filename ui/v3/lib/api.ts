@@ -732,6 +732,50 @@ export async function fetchSmartDefaults(input: {
   return postJSON("/api/smart-defaults", input);
 }
 
+// ---------- /api/brief-infer + /api/brief-compose (onboarding 2026-06) ----
+
+export type BriefInferResponse = {
+  ok: boolean;
+  business_name?: string;
+  business_type?: string;
+  industry_key?: string;
+  location?: string;
+  phone?: string;
+  audience?: string[];
+  site_functions?: string[];
+  brand_tone?: string;
+  intent?: string;
+  source?: string;
+  error?: string;
+};
+
+export async function fetchBriefInfer(raw_prompt: string, intent?: string): Promise<BriefInferResponse> {
+  return postJSON("/api/brief-infer", { raw_prompt, intent: intent || "business" });
+}
+
+export type BriefComposeResponse = {
+  ok: boolean;
+  fields_ready?: boolean;
+  compose_source?: string;
+  brief_patch?: Record<string, unknown>;
+  error?: string;
+};
+
+/** Hidden merge — client applies brief_patch silently (never show extra_context). */
+export async function fetchBriefCompose(fields: Record<string, unknown>): Promise<BriefComposeResponse> {
+  return postJSON("/api/brief-compose", fields);
+}
+
+export type OnboardingStatusResponse = {
+  builds_completed: number;
+  plan_required: boolean;
+  plan_required_until: number;
+};
+
+export async function fetchOnboardingStatus(): Promise<OnboardingStatusResponse> {
+  return getJSON("/api/onboarding/status");
+}
+
 // ---------- /api/brand-extract (Phase 33a/b, 2026-05-21) -------------------
 //
 // URL ingestion: paste a URL, get a partial brief back. Pre-fills the

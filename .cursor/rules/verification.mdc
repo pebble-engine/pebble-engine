@@ -1,0 +1,20 @@
+---
+description: Evidence before completion — run verify_all before claiming done
+globs:
+alwaysApply: true
+---
+
+# Verification before completion
+
+Before claiming work is **complete**, **fixed**, **deployed**, or **passing**:
+
+1. Run `python scripts/verify_all.py` (use `--ci` only in GitHub Actions).
+2. Read `VERIFICATION_REPORT.md` — Status must be **PASS** for a success claim.
+3. Write or update `HANDOFF_*.md` using [HANDOFF_TEMPLATE.md](HANDOFF_TEMPLATE.md).
+4. Paste the **Evidence** section from the report (not a summary).
+
+Forbidden without fresh report: "done", "deployed", "all tests pass", "should work".
+
+If verify fails: state FAIL with evidence; do not claim success.
+
+See [docs/VERIFICATION.md](docs/VERIFICATION.md).

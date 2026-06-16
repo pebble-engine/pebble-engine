@@ -44,6 +44,7 @@ def _corpus_cases() -> list[Path]:
 
 
 @pytest.mark.parametrize("case_dir", _corpus_cases(), ids=lambda p: p.name)
+@pytest.mark.integration
 def test_repair_corpus_case(tmp_path, case_dir):
     """Run a corpus case through repair_build and assert the expected outcome.
 

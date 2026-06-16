@@ -79,6 +79,8 @@ def test_is_configured_false_when_service_role_missing(monkeypatch):
 
 def test_is_configured_false_when_anon_missing(monkeypatch):
     monkeypatch.delenv("PEBBLE_SUPABASE_ANON_KEY")
+    monkeypatch.delenv("SUPABASE_ANON_KEY", raising=False)
+    monkeypatch.delenv("NEXT_PUBLIC_SUPABASE_ANON_KEY", raising=False)
     assert auth_admin.is_configured() is False
 
 
