@@ -69,3 +69,20 @@ Production Cloudflare Turnstile keys are bound to `pebbleapp.ai`. On **localhost
 | Plan card (or wireframe) | < 2s |
 | First preview pixel | < 60s p50 full build |
 | Interactive preview | < 90s p50 |
+
+---
+
+## Live run — 2026-06-16 — prod (post-beta deploy)
+
+**Engine:** `https://www.pebbleapp.ai` (`python scripts/benchmark_funnel.py --engine https://www.pebbleapp.ai`)
+
+| Step | Seconds |
+|------|---------|
+| `/api/health` | 0.235 |
+| `/api/brief-infer` | 0.190 |
+| `/api/brief-compose` | 0.173 |
+| `/api/plan` | 0.210 |
+| **Total before generate** | **0.808** |
+
+Lovable / Base44 columns: run post-beta per [PROMPT_SPEED_PLAN.md](../PROMPT_SPEED_PLAN.md).
+

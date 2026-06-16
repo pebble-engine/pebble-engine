@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 AUTOMATED = [
     ("verify_prod.py", "Core API"),
+    ("verify_onboarding_prod.py", "Onboarding funnel"),
     ("verify_preview_prod.py", "Preview backend"),
     ("verify_community_prod.py", "Community"),
     ("verify_launchpad_prod.py", "Launchpad"),
