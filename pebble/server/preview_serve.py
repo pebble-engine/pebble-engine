@@ -51,6 +51,14 @@ def run_preview(handler) -> None:
     # toggle SAFE — flipping to "fly" never breaks projects that haven't
     # been deployed to Fly yet.
     preview_backend = os.environ.get("PEBBLE_PREVIEW_BACKEND", "local").strip().lower()
+    vercel_proxy_headers: dict[str, str] = {}
+    if preview_backend == "vercel":
+        try:
+            from pebble.vercel_deploy import preview_proxy_headers as _vercel_hdrs
+            vercel_proxy_headers = _vercel_hdrs(slug)
+        except Exception:
+            vercel_proxy_headers = {}
+
     if preview_backend == "fly" and not public_mode:
         try:
             from pebble.fly_preview import preview_url as _fly_preview_url
@@ -95,7 +103,8 @@ def run_preview(handler) -> None:
                     getattr(handler, "_raw_path", handler.path), slug_prefix
                 )
                 if handler._proxy_to_dev(vurl, forward_path, remote_timeout=20,
-                                      base_prefix=slug_prefix):
+                                      base_prefix=slug_prefix,
+                                      extra_headers=vercel_proxy_headers):
                     return
                 log.info("[vercel] proxy returned False for %s; showing splash", slug)
             # No deployment yet (build still deploying) OR a transient proxy

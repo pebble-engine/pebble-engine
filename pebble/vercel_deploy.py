@@ -137,6 +137,67 @@ def create_deployment(files: list[dict[str, Any]], *, name: str,
     return {"id": data.get("id", ""), "url": url}
 
 
+def protection_bypass_from_env() -> str:
+    """Optional team-wide bypass secret (32 alphanumeric chars)."""
+    return os.environ.get("VERCEL_AUTOMATION_BYPASS_SECRET", "").strip()
+
+
+def _parse_bypass_secret(data: dict[str, Any]) -> str:
+    """Extract the automation bypass secret from a protection-bypass PATCH body."""
+    pb = data.get("protectionBypass")
+    if isinstance(pb, dict):
+        for key in pb:
+            if isinstance(key, str) and len(key) == 32 and key.isalnum():
+                return key
+    return ""
+
+
+def ensure_protection_bypass(project_name: str) -> str:
+    """Enable Protection Bypass for Automation on a Vercel project.
+
+    Vercel teams with Deployment Protection (SSO / Vercel Authentication) return
+    an auth wall unless the engine sends ``x-vercel-protection-bypass`` on every
+    proxied request. Called after each preview deploy."""
+    env_secret = protection_bypass_from_env()
+    body: dict[str, Any] = {"generate": {"note": "Pebble preview proxy"}}
+    if env_secret:
+        if not re.fullmatch(r"[a-zA-Z0-9]{32}", env_secret):
+            return env_secret  # still try env value; Vercel may accept it
+        body["generate"]["secret"] = env_secret
+    try:
+        resp = httpx.patch(
+            f"{_API}/v1/projects/{project_name}/protection-bypass{_team_qs()}",
+            headers={"Authorization": f"Bearer {_token()}", "Content-Type": "application/json"},
+            json=body,
+            timeout=30.0,
+        )
+        if resp.status_code == 404:
+            return env_secret
+        resp.raise_for_status()
+        parsed = _parse_bypass_secret(resp.json())
+        return parsed or env_secret
+    except Exception as exc:
+        from pebble.log import log
+        log.warning("[vercel] protection bypass setup failed for %s: %s", project_name, exc)
+        return env_secret
+
+
+def preview_proxy_headers(slug: str) -> dict[str, str]:
+    """Headers the engine must send when proxying to a Vercel preview URL."""
+    secret = ""
+    state_path = _output_dir() / slug / ".vercel-preview.json"
+    if state_path.exists():
+        try:
+            secret = (json.loads(state_path.read_text(encoding="utf-8")) or {}).get(
+                "protection_bypass", ""
+            )
+        except Exception:
+            secret = ""
+    if not secret:
+        secret = protection_bypass_from_env()
+    return {"x-vercel-protection-bypass": secret} if secret else {}
+
+
 def poll_deployment(deployment_id: str, *, interval: float = 3.0,
                     timeout: float = 300.0) -> dict[str, Any]:
     """Poll GET /v13/deployments/<id> until READY/ERROR/CANCELED or timeout."""
@@ -189,9 +250,18 @@ def deploy_preview(slug: str) -> dict[str, Any]:
     if final.get("readyState") != "READY":
         return {"error": f"vercel build {final.get('readyState')}", "id": created.get("id")}
     url = created["url"]
+    project_name = _vercel_name(slug)
+    bypass = ensure_protection_bypass(project_name)
     (out / ".vercel-preview.json").write_text(
-        json.dumps({"url": url, "deployment_id": created["id"], "deployed_at": _now_iso()},
-                   indent=2), encoding="utf-8")
+        json.dumps({
+            "url": url,
+            "deployment_id": created["id"],
+            "deployed_at": _now_iso(),
+            "project_name": project_name,
+            "protection_bypass": bypass or None,
+        }, indent=2),
+        encoding="utf-8",
+    )
     # Best-effort dashboard thumbnail: screenshot the live preview into the
     # path the ProjectCard already reads (output/<slug>/screenshots/01-hero.png).
     try:
@@ -199,10 +269,49 @@ def deploy_preview(slug: str) -> dict[str, Any]:
         _ss.screenshot_project(_output_dir(), slug, url)
     except Exception:
         pass
-    return {"url": url, "deployment_id": created["id"]}
+    return {"url": url, "deployment_id": created["id"], "protection_bypass": bypass or None}
+
+
+def repair_preview_bypass(slug: str) -> dict[str, Any]:
+    """Re-enable deployment-protection bypass for an existing Vercel preview."""
+    if not vercel_configured():
+        return {"error": "VERCEL_TOKEN not configured"}
+    out = _output_dir() / slug
+    state_path = out / ".vercel-preview.json"
+    if not state_path.exists():
+        return {"error": "no .vercel-preview.json — run deploy_preview first"}
+    try:
+        state = json.loads(state_path.read_text(encoding="utf-8"))
+    except Exception:
+        return {"error": "invalid .vercel-preview.json"}
+    project_name = state.get("project_name") or _vercel_name(slug)
+    bypass = ensure_protection_bypass(project_name)
+    if bypass:
+        state["protection_bypass"] = bypass
+        state["project_name"] = project_name
+        state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    return {"slug": slug, "project_name": project_name, "protection_bypass": bypass or None}
 
 
 __all__ = [
     "vercel_configured", "collect_files", "create_deployment",
-    "poll_deployment", "deploy_preview",
+    "poll_deployment", "deploy_preview", "ensure_protection_bypass",
+    "preview_proxy_headers", "repair_preview_bypass", "protection_bypass_from_env",
 ]
+
+
+if __name__ == "__main__":
+    import argparse
+    p = argparse.ArgumentParser(description="Vercel preview deploy / repair")
+    p.add_argument("slug", nargs="?", help="Project slug")
+    p.add_argument("--repair-bypass", action="store_true", help="Fix deployment protection only")
+    p.add_argument("--deploy", action="store_true", help="Full Vercel preview deploy")
+    args = p.parse_args()
+    if not args.slug:
+        p.error("slug required")
+    if args.repair_bypass:
+        print(json.dumps(repair_preview_bypass(args.slug), indent=2))
+    elif args.deploy:
+        print(json.dumps(deploy_preview(args.slug), indent=2))
+    else:
+        p.error("pass --repair-bypass or --deploy")

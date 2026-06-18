@@ -1932,7 +1932,8 @@ class PebbleHandler(BaseHTTPRequestHandler):
         return out
 
     def _proxy_to_dev(self, dev_url: str, forward_path: str, remote_timeout: int = 10,
-                      base_prefix: Optional[str] = None) -> bool:
+                      base_prefix: Optional[str] = None,
+                      extra_headers: Optional[dict[str, str]] = None) -> bool:
         """Forward GET *forward_path* to the running next dev server at *dev_url*.
 
         Injects the visual-edit bridge into HTML responses (workspace iframe
@@ -1958,7 +1959,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 conn = http.client.HTTPSConnection(parsed.netloc, timeout=remote_timeout)
             else:
                 conn = http.client.HTTPConnection(parsed.netloc, timeout=remote_timeout)
-            conn.request("GET", forward_path)
+            conn.request("GET", forward_path, headers=extra_headers or {})
             resp = conn.getresponse()
             data = resp.read()
             ct = resp.getheader("Content-Type", "application/octet-stream")

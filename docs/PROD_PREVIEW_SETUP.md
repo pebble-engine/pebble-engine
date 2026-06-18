@@ -51,6 +51,22 @@ User opens /workspace/<slug>
 
 Build/refine triggers a background Vercel redeploy (not every click-edit).
 
+## Deployment Protection (Vercel Authentication)
+
+If the Vercel team has **Deployment Protection** enabled (common on Pro teams), preview
+URLs return an auth wall unless the engine sends `x-vercel-protection-bypass`. The engine
+now enables **Protection Bypass for Automation** on each preview project at deploy time and
+stores the secret in `output/<slug>/.vercel-preview.json`.
+
+**Repair an existing project** (after deploying this fix):
+
+```bash
+python -m pebble.vercel_deploy bakery --repair-bypass
+```
+
+Optional: set `VERCEL_AUTOMATION_BYPASS_SECRET` (32 alphanumeric chars) on Railway to use
+one team-wide secret for all preview projects.
+
 ## Verify end-to-end
 
 1. `python scripts/verify_preview_prod.py` — config OK

@@ -112,10 +112,49 @@ def test_deploy_preview_writes_state(tmp_path, monkeypatch):
     monkeypatch.setattr(vd, "_output_dir", lambda: out)
     monkeypatch.setattr(vd, "create_deployment", lambda files, **k: {"id": "dpl_1", "url": "https://x.vercel.app"})
     monkeypatch.setattr(vd, "poll_deployment", lambda i, **k: {"readyState": "READY", "url": "x.vercel.app"})
+    monkeypatch.setattr(vd, "ensure_protection_bypass", lambda name: "a" * 32)
     res = vd.deploy_preview("s1")
     assert res["url"] == "https://x.vercel.app"
     saved = json.loads((out / "s1" / ".vercel-preview.json").read_text(encoding="utf-8"))
     assert saved["url"] == "https://x.vercel.app"
+    assert saved["protection_bypass"] == "a" * 32
+
+
+def test_ensure_protection_bypass_parses_secret(monkeypatch):
+    monkeypatch.setenv("VERCEL_TOKEN", "tok")
+    secret = "b" * 32
+
+    class _Resp:
+        status_code = 200
+        def raise_for_status(self): pass
+        def json(self):
+            return {"protectionBypass": {secret: {"createdAt": "now", "scope": "automation"}}}
+
+    monkeypatch.setattr(vd.httpx, "patch", lambda url, **kw: _Resp())
+    assert vd.ensure_protection_bypass("bakery") == secret
+
+
+def test_preview_proxy_headers_reads_state(tmp_path, monkeypatch):
+    out = tmp_path / "output"
+    (out / "s1").mkdir(parents=True)
+    secret = "c" * 32
+    (out / "s1" / ".vercel-preview.json").write_text(
+        json.dumps({"url": "https://x.vercel.app", "protection_bypass": secret}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(vd, "_output_dir", lambda: out)
+    assert vd.preview_proxy_headers("s1") == {"x-vercel-protection-bypass": secret}
+
+
+def test_preview_proxy_headers_falls_back_to_env(tmp_path, monkeypatch):
+    monkeypatch.delenv("VERCEL_AUTOMATION_BYPASS_SECRET", raising=False)
+    out = tmp_path / "output"
+    (out / "s1").mkdir(parents=True)
+    monkeypatch.setattr(vd, "_output_dir", lambda: out)
+    assert vd.preview_proxy_headers("s1") == {}
+    secret = "d" * 32
+    monkeypatch.setenv("VERCEL_AUTOMATION_BYPASS_SECRET", secret)
+    assert vd.preview_proxy_headers("s1") == {"x-vercel-protection-bypass": secret}
 
 
 def test_deploy_preview_refuses_broken_build(tmp_path, monkeypatch):
