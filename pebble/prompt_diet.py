@@ -132,6 +132,45 @@ IMAGE_RULES_DIET = """
 
 
 # ─────────────────────────────────────────────────────────────────────
+# Universal design + craft + mobile UX (2026-06) — curated diet blocks
+# Distilled from skills/universal-design, skills/design-craft, and
+# ui-ux-pro-max UX guidelines. ~400–600 tokens combined.
+# ─────────────────────────────────────────────────────────────────────
+UNIVERSAL_DESIGN_DIET = """
+## Universal readability (all visitors)
+
+- **Body copy 16px+ on mobile** with line-height 1.5–1.65. Headlines clearly larger than body.
+- **Primary CTAs and nav links: min 44×44px** touch targets with adequate spacing between taps.
+- **High-contrast text** on every background (WCAG AA). No faint gray body on white.
+- **Plain-language CTAs** — "Call us", "Book now", "Get a quote" — not jargon.
+- **One primary action per viewport**; secondary actions are visually quieter.
+- **Form labels visible** (not placeholder-only); inputs 16px+; errors in plain English.
+"""
+
+DESIGN_CRAFT_DIET = """
+## Layout craft
+
+- **One focal point per section** — hero = headline + single primary CTA.
+- **Generous vertical rhythm** between sections; mobile stacks cleanly without horizontal scroll.
+- **Clear type hierarchy**: one h1 per page; avoid dense card grids on mobile when DNA allows panels.
+- **Accent color on CTAs and key stats only** — not every heading.
+"""
+
+UIUX_MOBILE_DIET = """
+## Mobile UX guardrails (iPhone-first)
+
+- **Touch targets ≥44px**; **8px+ gap** between adjacent buttons.
+- **Show loading feedback** during async work (skeleton or spinner) — no frozen blank UI.
+- **Respect prefers-reduced-motion** — wrap motion in `withReducedMotion` or equivalent.
+- **Primary interactions use click/tap** — do not rely on hover-only affordances.
+- **Reserve space for async content** (aspect-ratio on images) to prevent layout jump.
+- **Limit text line length** (~65–75ch) on wide screens; full width on mobile is fine with padding.
+- **Focus-visible rings** on all interactive elements for keyboard users.
+- **Use min-h-dvh / 100dvh** for full-height sections — not raw 100vh on mobile Safari.
+"""
+
+
+# ─────────────────────────────────────────────────────────────────────
 # Code Pattern verbatim-block stripper (Phase 15d, 2026-05-20)
 # ─────────────────────────────────────────────────────────────────────
 #
@@ -284,5 +323,8 @@ __all__ = [
     "BUSINESS_INTEL_DIET",
     "DESIGN_SYSTEM_DIET",
     "IMAGE_RULES_DIET",
+    "UNIVERSAL_DESIGN_DIET",
+    "DESIGN_CRAFT_DIET",
+    "UIUX_MOBILE_DIET",
     "strip_verbatim_code_patterns",
 ]

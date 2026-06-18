@@ -48,6 +48,7 @@ def test_all_diet_constants_present():
     from pebble.prompt_diet import (
         NO_SLOP_DIET, IOS_RULES_DIET, STACK_RULES_DIET,
         BUSINESS_INTEL_DIET, DESIGN_SYSTEM_DIET, IMAGE_RULES_DIET,
+        UNIVERSAL_DESIGN_DIET, DESIGN_CRAFT_DIET, UIUX_MOBILE_DIET,
     )
     for name, val in [
         ("NO_SLOP_DIET", NO_SLOP_DIET),
@@ -56,8 +57,32 @@ def test_all_diet_constants_present():
         ("BUSINESS_INTEL_DIET", BUSINESS_INTEL_DIET),
         ("DESIGN_SYSTEM_DIET", DESIGN_SYSTEM_DIET),
         ("IMAGE_RULES_DIET", IMAGE_RULES_DIET),
+        ("UNIVERSAL_DESIGN_DIET", UNIVERSAL_DESIGN_DIET),
+        ("DESIGN_CRAFT_DIET", DESIGN_CRAFT_DIET),
+        ("UIUX_MOBILE_DIET", UIUX_MOBILE_DIET),
     ]:
         assert isinstance(val, str) and val.strip(), f"{name} is empty"
+
+
+def test_new_diet_blocks_under_token_budget():
+    """Curated UX blocks stay compact — combined < ~800 tokens (~3200 chars)."""
+    from pebble.prompt_diet import (
+        UNIVERSAL_DESIGN_DIET, DESIGN_CRAFT_DIET, UIUX_MOBILE_DIET,
+    )
+    combined = UNIVERSAL_DESIGN_DIET + DESIGN_CRAFT_DIET + UIUX_MOBILE_DIET
+    assert len(combined) <= 3200, f"new diet blocks are {len(combined)} chars; cap 3200"
+
+
+def test_diet_on_includes_universal_design_in_prompt(monkeypatch):
+    import pebble_engine
+
+    monkeypatch.delenv("PEBBLE_PROMPT_DIET", raising=False)
+    import pebble.prompt_diet
+    importlib.reload(pebble.prompt_diet)
+    prompt = pebble_engine.build_prompt(_sample_brief(), ds_text="", notes=[])
+    assert "Universal readability" in prompt
+    assert "Mobile UX guardrails" in prompt
+    assert "44×44px" in prompt or "44px" in prompt
 
 
 def test_diet_constants_are_short():

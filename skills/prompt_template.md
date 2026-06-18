@@ -23,6 +23,12 @@ You are building a complete, production-quality website. Read every section of t
 
 {knowledge_block}
 
+{universal_design_block}
+
+{design_craft_block}
+
+{uiux_mobile_block}
+
 {brand_kit_block}
 
 ---

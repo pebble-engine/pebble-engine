@@ -1099,8 +1099,20 @@ Extract and synthesize across all references:
         STACK_RULES_DIET,
         BUSINESS_INTEL_DIET,
         DESIGN_SYSTEM_DIET,
+        UNIVERSAL_DESIGN_DIET,
+        DESIGN_CRAFT_DIET,
+        UIUX_MOBILE_DIET,
     )
     _DIET_ON = diet_enabled()
+
+    if _DIET_ON:
+        universal_design_block = UNIVERSAL_DESIGN_DIET
+        design_craft_block = DESIGN_CRAFT_DIET
+        uiux_mobile_block = UIUX_MOBILE_DIET
+    else:
+        universal_design_block = ""
+        design_craft_block = ""
+        uiux_mobile_block = ""
 
     # No-slop skill
     if _DIET_ON:
@@ -1294,6 +1306,9 @@ Extract and synthesize across all references:
         anti_slop_block=anti_slop_block,
         knowledge_block=knowledge_block,
         brand_kit_block=brand_kit_block,
+        universal_design_block=universal_design_block,
+        design_craft_block=design_craft_block,
+        uiux_mobile_block=uiux_mobile_block,
     )
 
     # Language block — non-empty only when the build's target language is

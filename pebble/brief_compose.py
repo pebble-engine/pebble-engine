@@ -5,6 +5,8 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Optional
 
+from pebble.brief_display import display_name
+
 _AUDIENCE_LABELS = {
     "locals": "local customers", "travelers": "travelers", "professionals": "professionals",
     "families": "families", "enthusiasts": "enthusiasts", "patients": "patients",
@@ -25,13 +27,17 @@ _COMPOSE_MAX_TOKENS = 350
 
 
 def _template_compose(data: dict[str, Any]) -> str:
-    name = data.get("business_name") or "the business"
+    raw = (data.get("_raw_prompt") or "").strip()
+    name = display_name(
+        str(data.get("business_name") or ""),
+        str(data.get("business_type") or ""),
+        raw,
+    ) or "the business"
     btype = (data.get("business_type") or "small business").replace("_", " ")
     loc = (data.get("location") or "").strip()
     audience = data.get("audience") or ["locals"]
     funcs = data.get("site_functions") or ["presence", "leads"]
     tone = data.get("brand_tone") or "professional"
-    raw = (data.get("_raw_prompt") or "").strip()
 
     aud = ", ".join(_AUDIENCE_LABELS.get(a, a) for a in audience[:2])
     goals = ", ".join(_FUNCTION_LABELS.get(f, f) for f in funcs[:3])

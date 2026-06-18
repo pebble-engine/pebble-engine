@@ -63,6 +63,7 @@ def test_template_still_renders_via_str_format():
         "business_intelligence_block", "industry_research_block",
         "design_system_block", "images_block", "anti_slop_block",
         "knowledge_block", "brand_kit_block",
+        "universal_design_block", "design_craft_block", "uiux_mobile_block",
     ]
     rendered = pe.PROMPT_TEMPLATE.format(**{k: "" for k in keys})
     assert "COPYWRITING CRAFT" in rendered

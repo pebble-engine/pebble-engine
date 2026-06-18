@@ -737,6 +737,7 @@ export async function fetchSmartDefaults(input: {
 export type BriefInferResponse = {
   ok: boolean;
   business_name?: string;
+  display_name?: string;
   business_type?: string;
   industry_key?: string;
   location?: string;

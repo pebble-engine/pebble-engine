@@ -7,7 +7,7 @@ from __future__ import annotations
 import re
 from typing import Any, Optional
 
-from pebble.text import sanitize_business_name
+from pebble.brief_display import display_name, extract_business_name
 
 _INDUSTRY_HINTS: list[tuple[str, str]] = [
     ("bakery", "bakery"), ("restaurant", "restaurant"), ("coffee", "cafe"), ("cafe", "cafe"),
@@ -37,16 +37,6 @@ def _guess_industry(text: str) -> str:
         if needle in lower:
             return key
     return "small_business"
-
-
-def _derive_name(raw: str) -> str:
-    if not raw or not raw.strip():
-        return "New project"
-    first = re.split(r"[.!?]", raw.strip(), maxsplit=1)[0].strip()
-    capped = first[:60].strip() if len(first) > 60 else first
-    name = sanitize_business_name(capped) or "New project"
-    name = re.sub(r"^(I\s+(?:own|run|have|started)\s+(?:a|an|the)\s+)", "", name, flags=re.I).strip()
-    return name or "New project"
 
 
 def _extract_location(text: str) -> Optional[str]:
@@ -96,9 +86,14 @@ def infer_brief(raw_prompt: str, *, intent: str = "business") -> dict[str, Any]:
             "fallback": True,
         }
 
+    short_name = extract_business_name(raw) or display_name("", business_type, raw)
+    if not short_name or short_name == "Business":
+        short_name = display_name("", industry_key, raw)
+
     return {
         "ok": True,
-        "business_name": _derive_name(raw),
+        "business_name": short_name,
+        "display_name": display_name(short_name, business_type, raw),
         "business_type": business_type,
         "industry_key": industry_key,
         "location": _extract_location(raw) or "",

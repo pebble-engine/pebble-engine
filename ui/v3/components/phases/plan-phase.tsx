@@ -8,6 +8,7 @@ import { fetchPlan, fetchBriefCompose, generateSite, type GenerateResponse } fro
 import { STANDARD_S, SHORT_S, EASE_CINEMATIC, EASE_QUIET, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
+import { formatProjectTitle } from "@/lib/brief-display";
 import { PlanWireframeSkeleton } from "@/components/phases/plan-wireframe-skeleton";
 
 /**
@@ -54,7 +55,9 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   const [loading, setLoading] = useState(false);
   const [rerolling, setRerolling] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showLess, setShowLess] = useState(false);
+  const [showLess, setShowLess] = useState(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 640px)").matches,
+  );
   const [composing, setComposing] = useState(true);
   const startedRef = useRef(false);
 
@@ -172,7 +175,13 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
   // through as-is (lists, palette swatches, etc.).
   const intentAndGoal = plan.goal;
   const audienceAndRoles = plan.audience;
-  const projectName = plan.meta?.business_name || "your project";
+  const brief = getBrief();
+  const projectTitle = formatProjectTitle({
+    business_name: brief.business_name as string,
+    business_type: brief.business_type as string,
+    location: brief.location as string,
+    _raw_prompt: (brief._raw_prompt as string) || (brief.extra_context as string),
+  });
 
   return (
     <div className="px-4 md:px-8 py-8 max-w-3xl mx-auto w-full space-y-6">
@@ -183,8 +192,9 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         className="space-y-2"
       >
         <h1 className={`${type.display.l} text-foreground`}>Plan</h1>
-        <p className={`${type.body.m} text-muted-foreground`}>
-          Here&apos;s what I&apos;ll build for <span className="text-foreground font-semibold">{projectName}</span>.
+        <p className={`${type.readable.body} text-muted-foreground`}>
+          Here&apos;s what I&apos;ll build for{" "}
+          <span className="text-foreground font-semibold">{projectTitle.headline}</span>.
           Edit anything before generating.
         </p>
       </motion.div>
@@ -199,19 +209,19 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         className="bg-card border border-border rounded-2xl shadow-[var(--shadow-1)] overflow-hidden"
       >
         <div className="p-6 md:p-8 space-y-6">
-          <Section label="Intent & Goal" condense={showLess} maxChars={180}>
-            <p className="leading-relaxed text-foreground">{intentAndGoal}</p>
+          <Section label="Your goal" condense={showLess} maxChars={180}>
+            <p className={`${type.readable.body} text-foreground`}>{intentAndGoal}</p>
           </Section>
 
-          <Section label="Audience & Roles" condense={showLess} maxChars={180}>
-            <p className="leading-relaxed text-foreground">{audienceAndRoles}</p>
+          <Section label="Who it's for" condense={showLess} maxChars={180}>
+            <p className={`${type.readable.body} text-foreground`}>{audienceAndRoles}</p>
           </Section>
 
-          <Section label="Core Flows" condense={showLess}>
-            <ul className="space-y-1.5">
+          <Section label="Pages we'll create" condense={showLess}>
+            <ul className="space-y-2">
               {plan.pages.map((page) => (
-                <li key={page.id} className="flex items-start gap-2 text-sm">
-                  <span className="text-muted-foreground/60 font-mono mt-0.5 shrink-0">•</span>
+                <li key={page.id} className={`flex items-start gap-2 ${type.readable.body}`}>
+                  <span className="text-muted-foreground/60 font-mono mt-1 shrink-0">•</span>
                   <div className="min-w-0">
                     <span className="font-semibold text-foreground">{page.title}</span>
                     {!showLess && page.purpose && (
@@ -223,12 +233,12 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
             </ul>
           </Section>
 
-          <Section label="Technical Requirements" condense={showLess}>
-            <div className="flex flex-wrap gap-1.5">
+          <Section label="What's included" condense={showLess}>
+            <div className="flex flex-wrap gap-2">
               {plan.features.map((f) => (
                 <span
                   key={f.id}
-                  className="px-2.5 py-1 bg-background border border-border rounded-full text-xs font-semibold text-foreground"
+                  className="px-3 py-2 min-h-10 bg-background border border-border rounded-full text-sm font-semibold text-foreground"
                 >
                   {f.label}
                 </span>
@@ -237,7 +247,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
           </Section>
 
           <Section
-            label="Design Preferences"
+            label="Look and feel"
             condense={showLess}
             rightSlot={
               <button
@@ -305,7 +315,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
         <button
           type="button"
           onClick={() => setShowLess((v) => !v)}
-          className={`w-full px-6 md:px-8 py-3 border-t border-border text-xs font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 flex items-center justify-center gap-1.5 transition-colors`}
+          className={`w-full px-6 md:px-8 py-3.5 border-t border-border text-sm font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 flex items-center justify-center gap-1.5 transition-colors min-h-11`}
         >
           {showLess ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronUp className="w-3.5 h-3.5" />}
           {showLess ? "Show more" : "Show less"}
@@ -347,7 +357,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
                 <div className="flex justify-between items-center gap-2">
                   <span className={type.label}>{item.label}</span>
                   <span
-                    className={`text-[10px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full ${
+                    className={`text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full ${
                       item.status === "auto"
                         ? "bg-foreground/10 text-foreground"
                         : item.status === "pending"
@@ -359,7 +369,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
                   </span>
                 </div>
                 {blockingDeps.length > 0 && (
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80 leading-tight">
+                  <p className="text-xs font-semibold text-muted-foreground leading-snug">
                     Unlocks after: {blockingDeps.map((d) => d.label).join(" + ")}
                   </p>
                 )}
@@ -371,7 +381,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
 
       {/* Action row — Edit (back) + Start Building (primary). Base44's
           big-button-bottom-of-card pattern. */}
-      <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="pt-2 pb-safe flex flex-col sm:flex-row items-center justify-between gap-3">
         <button
           onClick={onBack}
           className={`${interactions.chip} flex items-center gap-2 text-muted-foreground hover:text-foreground px-3 py-2 rounded-md ${type.label}`}
@@ -383,7 +393,7 @@ export function PlanPhase({ onBack, onGenerate, planFirst = false }: Props) {
           whileTap={{ scale: 0.97 }}
           onClick={handleGenerate}
           disabled={composing || !plan}
-          className={`${interactions.button} w-full sm:w-auto min-w-[260px] bg-primary text-primary-foreground font-bold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2 disabled:opacity-50`}
+          className={`${interactions.button} w-full sm:w-auto min-w-[260px] min-h-[52px] text-base bg-primary text-primary-foreground font-bold py-3.5 px-7 rounded-full shadow-lg flex items-center justify-center gap-2 disabled:opacity-50`}
         >
           <Sparkles className="w-4 h-4" /> {composing ? "Preparing…" : "Start Building"}
         </motion.button>
@@ -443,7 +453,7 @@ function Section({
   return (
     <div className="border-b border-border last:border-0 pb-6 last:pb-0">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <h3 className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+        <h3 className={`${type.readable.label} mb-2`}>
           {label}
         </h3>
         {rightSlot}

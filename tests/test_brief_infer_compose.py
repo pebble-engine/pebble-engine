@@ -6,6 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from pebble.brief_compose import compose_brief
+from pebble.brief_display import display_name, extract_business_name, industry_label, looks_like_meta_name
 from pebble.brief_infer import infer_brief
 from pebble.onboarding import completed_build_count, onboarding_status
 
@@ -22,6 +23,39 @@ def test_infer_bakery_in_brooklyn():
 def test_infer_empty_rejected():
     r = infer_brief("")
     assert r.get("ok") is False
+
+
+def test_infer_alpine_bakery_meta_prompt():
+    prompt = "Build a website for my bakery business, it's called Alpine Bakery"
+    r = infer_brief(prompt)
+    assert r["ok"] is True
+    assert "Alpine" in r["business_name"]
+    assert r["display_name"] == r["business_name"]
+    assert looks_like_meta_name(r["business_name"]) is False
+
+
+def test_infer_bakery_meta_only_falls_back_to_industry():
+    prompt = "Build a website for my bakery business"
+    r = infer_brief(prompt)
+    assert r["ok"] is True
+    assert r["display_name"] == "Bakery"
+
+
+def test_extract_business_name_called():
+    assert extract_business_name("it's called Alpine Bakery") == "Alpine Bakery"
+
+
+def test_display_name_prefers_short_business_name():
+    assert display_name("Alpine Bakery", "bakery", "") == "Alpine Bakery"
+
+
+def test_display_name_rejects_meta():
+    meta = "Build A Website For My Bakery Business"
+    assert display_name(meta, "bakery", meta) == "Bakery"
+
+
+def test_industry_label():
+    assert industry_label("hair_salon") == "Hair Salon"
 
 
 def test_compose_template_includes_facts():

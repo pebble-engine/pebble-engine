@@ -1,22 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, MotionConfig } from "framer-motion";
 import { ArrowRight, Pencil } from "lucide-react";
 import { fetchBriefInfer } from "@/lib/api";
+import { formatProjectTitle, industryLabel } from "@/lib/brief-display";
 import { getBrief, patchBrief } from "@/lib/state";
 import { STANDARD_S, EASE_CINEMATIC } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
 
-const AUDIENCE_LABELS: Record<string, string> = {
-  locals: "Locals", travelers: "Travelers", professionals: "Professionals",
-  families: "Families", enthusiasts: "Enthusiasts", patients: "Patients",
-  students: "Students", members: "Members", pet_owners: "Pet owners", other: "Other",
-};
 const FUNCTION_LABELS: Record<string, string> = {
-  presence: "See your story", leads: "Get in touch", booking: "Book online",
-  ecommerce: "Buy something", portfolio: "See your work", payment: "Pay or donate",
+  presence: "See your story",
+  leads: "Get in touch",
+  booking: "Book online",
+  ecommerce: "Buy something",
+  portfolio: "See your work",
+  payment: "Pay or donate",
 };
 const GOAL_CHIPS = [
   { id: "leads", label: "Get contacted" },
@@ -47,6 +47,17 @@ export function ConfirmBriefPhase({ onConfirm, planRequired }: Props) {
     brief._inspired_by || brief._extracted_logo_url || brief._extracted_hero_copy,
   );
 
+  const preview = useMemo(
+    () =>
+      formatProjectTitle({
+        business_name: name,
+        business_type: businessType,
+        location,
+        _raw_prompt: rawPrompt,
+      }),
+    [name, businessType, location, rawPrompt],
+  );
+
   useEffect(() => {
     let cancelled = false;
     void (async () => {
@@ -66,12 +77,13 @@ export function ConfirmBriefPhase({ onConfirm, planRequired }: Props) {
       try {
         const inferred = await fetchBriefInfer(rawPrompt, (brief.intent as string) || "business");
         if (cancelled || !inferred.ok) return;
-        if (!brief.business_name && inferred.business_name) setName(inferred.business_name);
+        const shortName = inferred.display_name || inferred.business_name;
+        if (shortName) setName(shortName);
         if (!brief.location && inferred.location) setLocation(inferred.location);
         if (!brief.business_type && inferred.business_type) setBusinessType(inferred.business_type);
         if (inferred.site_functions?.[0]) setGoal(inferred.site_functions[0]);
         patchBrief({
-          business_name: inferred.business_name,
+          business_name: shortName,
           business_type: inferred.business_type,
           location: inferred.location || undefined,
           audience: inferred.audience,
@@ -93,7 +105,7 @@ export function ConfirmBriefPhase({ onConfirm, planRequired }: Props) {
     const funcs = [goal];
     if (goal !== "presence" && !funcs.includes("presence")) funcs.push("presence");
     patchBrief({
-      business_name: name.trim() || "New project",
+      business_name: name.trim() || industryLabel(businessType) || "New project",
       business_type: businessType.trim() || "small_business",
       location: location.trim() || undefined,
       site_functions: funcs,
@@ -103,74 +115,76 @@ export function ConfirmBriefPhase({ onConfirm, planRequired }: Props) {
     onConfirm();
   }
 
-  const typeLabel = businessType.replace(/_/g, " ");
-
   return (
     <MotionConfig reducedMotion="user">
       <div className="flex flex-col h-full min-h-[60vh]">
-        <main className="flex-grow flex flex-col items-center justify-center px-4 md:px-8 py-8">
+        <main className="flex-grow flex flex-col items-center justify-center px-4 md:px-8 py-8 pb-safe">
           <div className="max-w-xl w-full space-y-8">
             <div className="text-center space-y-2">
-              <h1 className={`${type.heading.l} text-foreground`}>Here&apos;s what we heard</h1>
-              <p className={`${type.body.m} text-muted-foreground`}>
-                Sound right? You can tweak anything before we start.
+              <h1 className={`${type.readable.title} text-center`}>Here&apos;s what we heard</h1>
+              <p className={`${type.readable.body} text-muted-foreground`}>
+                Sound right? You can change anything before we start.
               </p>
             </div>
 
             {loading ? (
-              <p className={`${type.body.m} text-center text-muted-foreground`}>One moment…</p>
+              <p className={`${type.readable.body} text-center text-muted-foreground`}>One moment…</p>
             ) : (
-              <div className="rounded-2xl bg-card border border-border p-6 space-y-5 shadow-[var(--shadow-1)]">
+              <div className="rounded-2xl bg-card border border-border p-6 space-y-6 shadow-[var(--shadow-1)]">
                 {!editing ? (
                   <>
-                    <div>
-                      <p className={`${type.eyebrow} text-muted-foreground`}>Business</p>
-                      <p className={`${type.heading.m} text-foreground`}>{name || "Your business"}</p>
-                      {typeLabel && (
-                        <p className={`${type.body.s} text-muted-foreground capitalize`}>{typeLabel}</p>
+                    <div className="break-words">
+                      <p className={`${type.readable.label} mb-1`}>Your business</p>
+                      <p className={`${type.readable.title} break-words`}>
+                        {preview.headline || "Your business"}
+                      </p>
+                      {preview.subline && (
+                        <p className={`${type.readable.body} text-muted-foreground mt-1 capitalize`}>
+                          {preview.subline}
+                        </p>
                       )}
                     </div>
                     {location && (
                       <div>
-                        <p className={`${type.eyebrow} text-muted-foreground`}>Area</p>
-                        <p className={`${type.body.m} text-foreground`}>{location}</p>
+                        <p className={`${type.readable.label} mb-1`}>Area</p>
+                        <p className={`${type.readable.body} text-foreground`}>{location}</p>
                       </div>
                     )}
                     <div>
-                      <p className={`${type.eyebrow} text-muted-foreground`}>Main goal</p>
-                      <p className={`${type.body.m} text-foreground`}>
+                      <p className={`${type.readable.label} mb-1`}>Main goal</p>
+                      <p className={`${type.readable.body} text-foreground`}>
                         {FUNCTION_LABELS[goal] ?? goal}
                       </p>
                     </div>
                   </>
                 ) : (
                   <div className="space-y-4">
-                    <label className="block space-y-1">
-                      <span className={`${type.eyebrow} text-muted-foreground`}>Business name</span>
+                    <label className="block space-y-2">
+                      <span className={type.readable.label}>Business name</span>
                       <input
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                        className={`w-full rounded-lg border border-border bg-background px-4 py-3 ${type.readable.body}`}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                       />
                     </label>
-                    <label className="block space-y-1">
-                      <span className={`${type.eyebrow} text-muted-foreground`}>Location</span>
+                    <label className="block space-y-2">
+                      <span className={type.readable.label}>Location</span>
                       <input
-                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                        className={`w-full rounded-lg border border-border bg-background px-4 py-3 ${type.readable.body}`}
                         placeholder="City or neighborhood"
                         value={location}
                         onChange={(e) => setLocation(e.target.value)}
                       />
                     </label>
-                    <label className="block space-y-1">
-                      <span className={`${type.eyebrow} text-muted-foreground`}>What should visitors do?</span>
+                    <div className="block space-y-2">
+                      <span className={type.readable.label}>What should visitors do?</span>
                       <div className="flex flex-wrap gap-2 pt-1">
                         {GOAL_CHIPS.map((c) => (
                           <button
                             key={c.id}
                             type="button"
                             onClick={() => setGoal(c.id)}
-                            className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                            className={`${type.readable.chip} rounded-full border transition-colors ${
                               goal === c.id
                                 ? "bg-primary text-primary-foreground border-primary"
                                 : "border-border hover:border-foreground/40"
@@ -180,35 +194,35 @@ export function ConfirmBriefPhase({ onConfirm, planRequired }: Props) {
                           </button>
                         ))}
                       </div>
-                    </label>
+                    </div>
                   </div>
                 )}
               </div>
             )}
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-3 pb-safe">
               <motion.button
                 whileTap={{ scale: 0.97 }}
                 disabled={loading}
                 onClick={handleConfirm}
-                className={`${interactions.button} w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 py-3 rounded-lg shadow-md ${type.label} disabled:opacity-50`}
+                className={`${interactions.button} ${type.readable.cta} w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground px-8 rounded-lg shadow-md font-semibold disabled:opacity-50`}
               >
-                Yes, let&apos;s go <ArrowRight className="w-4 h-4" />
+                Yes, let&apos;s go <ArrowRight className="w-5 h-5" />
               </motion.button>
               {!editing ? (
                 <button
                   type="button"
                   onClick={() => setEditing(true)}
-                  className={`${interactions.chip} w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground py-2 ${type.label}`}
+                  className={`${interactions.chip} w-full flex items-center justify-center gap-2 text-muted-foreground hover:text-foreground min-h-11 ${type.readable.body}`}
                 >
-                  <Pencil className="w-3.5 h-3.5" aria-hidden />
+                  <Pencil className="w-4 h-4" aria-hidden />
                   Change anything
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={() => setEditing(false)}
-                  className={`${type.body.s} text-muted-foreground hover:text-foreground text-center`}
+                  className={`${type.readable.body} text-muted-foreground hover:text-foreground text-center min-h-11`}
                 >
                   Done editing
                 </button>

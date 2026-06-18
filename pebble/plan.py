@@ -34,6 +34,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Optional
 
+from pebble.brief_display import display_name as brief_display_name
 from pebble.industry import PAGE_CATALOG, UNIVERSAL_EXTRA_PAGES
 
 
@@ -300,7 +301,11 @@ def build_pebble_plan(
             "html_lang":    lang["html_lang"],
         },
         "meta": {
-            "business_name":  answers.get("business_name", ""),
+            "business_name": brief_display_name(
+                str(answers.get("business_name", "") or ""),
+                str(answers.get("business_type", "") or answers.get("industry", "") or ""),
+                str(answers.get("_raw_prompt", "") or answers.get("extra_context", "") or ""),
+            ),
             "industry_key":   answers.get("_industry_intel_key"),
             "generated_at":   datetime.now().isoformat(),
             "engine_version": engine_version,

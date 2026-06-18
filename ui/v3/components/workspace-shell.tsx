@@ -30,7 +30,7 @@ import { usePhase, phaseToStage, type Phase } from "@/components/phases/use-phas
 import { STANDARD_S, EASE_CINEMATIC, phaseVariants, chipDeck, fadeUp, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { interactions } from "@/lib/interactions";
-import { safeStartViewTransition } from "@/lib/view-transitions";
+import { formatProjectTitle } from "@/lib/brief-display";
 import { WelcomePhase } from "@/components/phases/welcome-phase";
 import { ConfirmBriefPhase } from "@/components/phases/confirm-brief-phase";
 import { IdeaPhase } from "@/components/phases/idea-phase";
@@ -669,7 +669,12 @@ export function WorkspaceShell({ slug: slugProp }: { slug?: string } = {}) {
 
   const projectName = phase === "welcome"
     ? undefined
-    : (brief.business_name as string) || "Untitled Project";
+    : formatProjectTitle({
+        business_name: brief.business_name as string,
+        business_type: brief.business_type as string,
+        location: brief.location as string,
+        _raw_prompt: (brief._raw_prompt as string) || (brief.extra_context as string),
+      }).headline || "Untitled Project";
 
   const showLeftRail = phase !== "welcome";
   const railStage = phaseToStage(phase);

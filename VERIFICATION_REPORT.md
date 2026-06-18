@@ -1,8 +1,8 @@
 # Verification report
 
 **Status:** PASS
-**When:** 2026-06-16T23:42:20Z
-**Commit:** 9273b4df
+**When:** 2026-06-18T12:52:21Z
+**Commit:** b8c5d2e9
 
 ## Summary for Marc
 
@@ -12,12 +12,12 @@ All automated checks passed. Safe to trust this batch.
 
 | Check | Result | Exit |
 |-------|--------|------|
-| pytest | 2689 passed, 0 failed (CI: not integration) | 0 |
+| pytest | 2697 passed, 0 failed (CI: not integration) | 0 |
 | prod_smoke | 5/5 scripts OK | 0 |
 | handoff | OK | 0 |
 
 ## Raw pytest tail
 
 ```
-========== 2689 passed, 4 deselected, 1 warning in 208.85s (0:03:28) ==========
+========== 2697 passed, 4 deselected, 1 warning in 201.14s (0:03:21) ==========
 ```

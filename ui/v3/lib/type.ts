@@ -74,4 +74,12 @@ export const type = {
   eyebrow: "text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground",
   badge:   "text-[11px] font-bold uppercase tracking-wider",
   mono:    "font-mono text-xs uppercase tracking-widest",
+  /** Onboarding phases — larger body for senior/iPhone readability */
+  readable: {
+    title: "text-2xl md:text-3xl font-semibold leading-snug text-foreground",
+    body: "text-base leading-relaxed",
+    label: "text-sm font-semibold text-muted-foreground",
+    chip: "text-base min-h-11 px-4",
+    cta: "text-base min-h-[52px] py-4",
+  },
 } as const;
