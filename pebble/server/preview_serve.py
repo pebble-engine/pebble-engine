@@ -93,29 +93,38 @@ def run_preview(handler) -> None:
     # through to the on-demand splash ("Still warming up…").
     if preview_backend == "vercel" and not public_mode:
         try:
+            from pebble.server.preview_vercel_kick import (
+                kick_if_needed as _vercel_kick,
+                read_vercel_url as _read_vercel_url,
+                render_vercel_splash_html as _vercel_splash,
+            )
             state_path = OUTPUT_DIR / slug / ".vercel-preview.json"
-            vurl = ""
-            if state_path.exists():
-                vurl = (json.loads(state_path.read_text(encoding="utf-8")) or {}).get("url", "").rstrip("/")
+            vurl = _read_vercel_url(slug)
+            if not vurl and state_path.exists():
+                try:
+                    vurl = (json.loads(state_path.read_text(encoding="utf-8")) or {}).get("url", "").rstrip("/")
+                except Exception:
+                    vurl = ""
+            proxy_ok = False
             if vurl:
                 slug_prefix = "/preview/" + parts[0]
                 forward_path = preview_forward_path(
                     getattr(handler, "_raw_path", handler.path), slug_prefix
                 )
-                if handler._proxy_to_dev(vurl, forward_path, remote_timeout=20,
-                                      base_prefix=slug_prefix,
-                                      extra_headers=vercel_proxy_headers):
+                proxy_ok = handler._proxy_to_dev(
+                    vurl, forward_path, remote_timeout=45,
+                    base_prefix=slug_prefix,
+                    extra_headers=vercel_proxy_headers,
+                )
+                if proxy_ok:
                     return
-                log.info("[vercel] proxy returned False for %s; showing splash", slug)
-            # No deployment yet (build still deploying) OR a transient proxy
-            # miss: serve the auto-refreshing splash and DO NOT fall through
-            # to the local npm warmup (Railway has no Node). The next splash
-            # refresh re-attempts the proxy once .vercel-preview.json lands.
-            from pebble.server.preview_ondemand import render_splash_html
-            body = render_splash_html(slug, "starting").encode("utf-8")
+                log.info("[vercel] proxy returned False for %s; kicking redeploy", slug)
+            status = _vercel_kick(slug, proxy_failed=bool(vurl))
+            body = _vercel_splash(slug, status).encode("utf-8")
             handler.send_response(200)
             handler.send_header("Content-Type", "text/html; charset=utf-8")
             handler.send_header("Content-Length", str(len(body)))
+            handler.send_header("Cache-Control", "no-store")
             handler.end_headers()
             handler.wfile.write(body)
             return

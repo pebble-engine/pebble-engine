@@ -248,7 +248,17 @@ def deploy_preview(slug: str) -> dict[str, Any]:
     created = create_deployment(files, name=_vercel_name(slug))
     final = poll_deployment(created["id"])
     if final.get("readyState") != "READY":
-        return {"error": f"vercel build {final.get('readyState')}", "id": created.get("id")}
+        err = f"vercel build {final.get('readyState')}"
+        (out / ".vercel-preview.json").write_text(
+            json.dumps({
+                "url": None,
+                "error": err,
+                "deployment_id": created.get("id"),
+                "deployed_at": _now_iso(),
+            }, indent=2),
+            encoding="utf-8",
+        )
+        return {"error": err, "id": created.get("id")}
     url = created["url"]
     project_name = _vercel_name(slug)
     bypass = ensure_protection_bypass(project_name)

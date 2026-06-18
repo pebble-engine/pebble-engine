@@ -1955,14 +1955,30 @@ class PebbleHandler(BaseHTTPRequestHandler):
         parsed = urlsplit(dev_url)
         conn: http.client.HTTPConnection | http.client.HTTPSConnection | None = None
         try:
-            if parsed.scheme == "https":
-                conn = http.client.HTTPSConnection(parsed.netloc, timeout=remote_timeout)
+            # Vercel previews: httpx handles TLS + redirects more reliably than
+            # stdlib http.client on some cloud hosts (Railway → *.vercel.app).
+            if parsed.scheme == "https" and extra_headers:
+                import httpx
+                target = f"{parsed.scheme}://{parsed.netloc}{forward_path}"
+                resp = httpx.get(
+                    target,
+                    headers=extra_headers,
+                    timeout=remote_timeout,
+                    follow_redirects=True,
+                )
+                data = resp.content
+                ct = resp.headers.get("Content-Type", "application/octet-stream")
+                status = resp.status
             else:
-                conn = http.client.HTTPConnection(parsed.netloc, timeout=remote_timeout)
-            conn.request("GET", forward_path, headers=extra_headers or {})
-            resp = conn.getresponse()
-            data = resp.read()
-            ct = resp.getheader("Content-Type", "application/octet-stream")
+                if parsed.scheme == "https":
+                    conn = http.client.HTTPSConnection(parsed.netloc, timeout=remote_timeout)
+                else:
+                    conn = http.client.HTTPConnection(parsed.netloc, timeout=remote_timeout)
+                conn.request("GET", forward_path, headers=extra_headers or {})
+                resp = conn.getresponse()
+                data = resp.read()
+                ct = resp.getheader("Content-Type", "application/octet-stream")
+                status = resp.status
             if "text/html" in ct and not public_mode:
                 try:
                     from pebble.server.visual_edit import PEBBLE_VISUAL_EDIT_BRIDGE
@@ -1982,7 +1998,7 @@ class PebbleHandler(BaseHTTPRequestHandler):
                 "public, max-age=60" if public_mode
                 else "no-store, no-cache, must-revalidate, max-age=0"
             )
-            self.send_response(resp.status)
+            self.send_response(status)
             self.send_header("Content-Type", ct)
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", cache_header)
