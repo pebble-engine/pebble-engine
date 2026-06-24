@@ -18,7 +18,7 @@ import {
   RefreshCw,
   type LucideIcon,
 } from "lucide-react";
-import { type SSEEvent, fetchBotMessage } from "@/lib/api";
+import { type SSEEvent, fetchBotMessage, resolvePreviewPath } from "@/lib/api";
 import { fadeUp, MICRO_S, SHORT_S, STANDARD_S, SLOW_S, EASE_CINEMATIC, withReducedMotion } from "@/lib/motion";
 import { type } from "@/lib/type";
 import { BuildChatPanel, type CollectedAnswer } from "./build-chat";
@@ -466,7 +466,7 @@ export function DraftPhase({ error, done, sseEvents, onRetry, onEnrich }: Props)
         // This is the killer UX move: ~60-90s to clickable preview vs
         // 8-10 min of blind waiting. Fire ONCE per build.
         if (latest.data.url && !previewUrl) {
-          setPreviewUrl(latest.data.url);
+          setPreviewUrl(resolvePreviewPath(latest.data.url));
           setPreviewReadyAt(elapsedSec);
           appendLog(`✓ Preview ready — open in a new tab while we finish the rest`, "step");
         }

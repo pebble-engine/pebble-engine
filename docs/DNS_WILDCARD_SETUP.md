@@ -26,8 +26,15 @@ PEBBLE_PUBLIC_SCHEME=https
 ## Verify
 
 1. Publish a test slug via workspace publish phase
-2. Open `https://<subdomain>.pebbleapp.ai/` on phone (same WiFi not required — public URL)
+2. Open `https://<subdomain>.pebbleapp.ai/` on phone **LTE** (not WiFi-only) — DNS must resolve publicly
 3. Confirm **no** visual-edit bridge on public subdomain (owner uses `/preview/<slug>/` in workspace)
+
+### Beta checklist (before sending invites)
+
+- [ ] Wildcard CNAME `*` → Railway public hostname (grey cloud OK)
+- [ ] Railway custom domain `*.pebbleapp.ai` if prompted
+- [ ] `PEBBLE_PUBLIC_DOMAIN=pebbleapp.ai` on Railway engine
+- [ ] One test publish opens on LTE within 60s of clicking Publish
 
 ## Optional: Cloudflare Pages full deploy
 

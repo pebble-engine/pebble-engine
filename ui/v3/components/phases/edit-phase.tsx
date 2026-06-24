@@ -43,6 +43,8 @@ import {
   visualEdit,
   chatEdit,
   pickPreviewUrl,
+  fetchPreviewStatus,
+  type PreviewStatus,
   type RefinementId,
   type HistorySnapshot,
   type DevServerInfo,
@@ -122,7 +124,39 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
   const [device, setDevice] = useState<"desktop" | "mobile">("desktop");
   const [chatMessage, setChatMessage] = useState("");
   const [chatBusy, setChatBusy] = useState(false);
+  const [previewStatus, setPreviewStatus] = useState<PreviewStatus | null>(null);
   const toastIdRef = useRef(0);
+  const previewWasReadyRef = useRef(false);
+
+  // Poll Vercel preview deploy while the iframe may show a warmup splash.
+  useEffect(() => {
+    if (!build?.slug) return;
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const st = await fetchPreviewStatus(build.slug!);
+        if (cancelled) return;
+        setPreviewStatus(st);
+        if (st.ready && !previewWasReadyRef.current) {
+          previewWasReadyRef.current = true;
+          setIframeBust((n) => n + 1);
+        }
+        if (!st.ready) {
+          previewWasReadyRef.current = false;
+        }
+      } catch {
+        /* owner session may lag — ignore transient poll errors */
+      }
+    }
+
+    poll();
+    const id = setInterval(poll, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, [build?.slug]);
 
   function pushToast(t: Omit<Toast, "id">) {
     const id = ++toastIdRef.current;
@@ -501,7 +535,29 @@ export const EditPhase = forwardRef<EditPhaseHandle, Props>(function EditPhase(
         </motion.div>
 
         {/* Full-bleed iframe — fills the remaining space below the chrome strip */}
-        <div className={`flex-1 bg-background flex justify-center overflow-hidden ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
+        <div className={`flex-1 bg-background flex justify-center overflow-hidden relative ${device === "mobile" ? "p-4 overflow-y-auto" : ""}`}>
+          {previewStatus && !previewStatus.ready && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center bg-background/80 backdrop-blur-sm px-6">
+              <div className="max-w-md text-center space-y-2">
+                <p className={`${type.body.m} text-foreground font-medium`}>
+                  {previewStatus.deploying
+                    ? "Building your preview…"
+                    : previewStatus.error
+                      ? "Preview needs another try"
+                      : "Starting preview…"}
+                </p>
+                <p className={`${type.body.s} text-muted-foreground`}>
+                  {previewStatus.deploying
+                    ? "First compile on Vercel usually takes 1–2 minutes."
+                    : previewStatus.error
+                      ? previewStatus.error
+                      : previewStatus.has_source
+                        ? "Hang tight — we're preparing your site."
+                        : "Project files missing on the server — try rebuilding."}
+                </p>
+              </div>
+            </div>
+          )}
           <iframe
             src={previewUrl}
             className={`bg-white transition-[max-width] duration-300 ease-out ${

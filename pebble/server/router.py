@@ -186,6 +186,10 @@ def route_get(handler) -> None:
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/history"):
             slug = handler.path[len("/api/projects/"):-len("/history")]
             handler._handle_get_history(slug)
+        elif handler.path.startswith("/api/projects/") and handler.path.endswith("/preview-status"):
+            slug = handler.path[len("/api/projects/"):-len("/preview-status")].strip("/")
+            from pebble.server.preview_status import run_get_preview_status
+            run_get_preview_status(handler, slug)
         elif handler.path.startswith("/api/projects/") and handler.path.endswith("/preview-url"):
             # Fly-fleet preview machine URL + readiness (owner-gated).
             slug = handler.path[len("/api/projects/"):-len("/preview-url")]

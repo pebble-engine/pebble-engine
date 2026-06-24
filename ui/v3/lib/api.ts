@@ -372,6 +372,32 @@ export function pickPreviewUrl(build: PreviewBuild | null | undefined): string {
   return "about:blank";
 }
 
+/** Resolve a relative /preview/<slug>/ path for iframe src (prod engine base). */
+export function resolvePreviewPath(url: string): string {
+  if (!url) return "about:blank";
+  if (url.startsWith("/") && ENGINE_BASE) return `${ENGINE_BASE}${url}`;
+  return url;
+}
+
+export type PreviewStatus = {
+  slug: string;
+  backend: string;
+  ready: boolean;
+  deploying: boolean;
+  status: string;
+  preview_url: string;
+  vercel_url: string | null;
+  error: string | null;
+  deployed_at: string | null;
+  deployment_id?: string | null;
+  has_source: boolean;
+  site_files: number;
+};
+
+export async function fetchPreviewStatus(slug: string): Promise<PreviewStatus> {
+  return getJSON(`/api/projects/${encodeURIComponent(slug)}/preview-status`);
+}
+
 // ---------- /api/projects (new) --------------------------------------------
 
 export type ProjectSummary = {

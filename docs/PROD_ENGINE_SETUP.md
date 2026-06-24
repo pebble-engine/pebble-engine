@@ -30,11 +30,16 @@ Project: **pebble-engine** (or whichever serves `pebbleapp.ai`)
 
 Apply to **Production** (and Preview if you test preview deploys).
 
-### 3. Redeploy Vercel
+### 3. Persistent volume for customer projects
+
+Without a Railway volume on `output/`, redeploys can wipe every customer project.
+See **[RAILWAY_VOLUME.md](RAILWAY_VOLUME.md)** and run `python scripts/verify_railway_volume.py` after mounting.
+
+### 4. Redeploy Vercel
 
 After saving env vars: **Deployments → Redeploy** latest (or push any commit).
 
-### 4. Verify
+### 5. Verify
 
 ```bash
 curl -s https://www.pebbleapp.ai/api/health
@@ -57,4 +62,8 @@ User → pebbleapp.ai (Vercel / v3)
      → NEXT_PUBLIC_PEBBLE_ENGINE_URL for SSE + direct fetch
 ```
 
-Preview and publish are separate batches (B and DNS wildcard).
+## Preview and publish
+
+Preview: [PROD_PREVIEW_SETUP.md](PROD_PREVIEW_SETUP.md) — `python scripts/golden_path_prod.py`
+
+See `docs/PROD_PREVIEW_SETUP.md` for the full runbook.

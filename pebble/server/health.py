@@ -47,6 +47,28 @@ def run_health(handler) -> None:
         payload["beta_invite_only"] = _beta_on()
     except Exception:
         pass
+    try:
+        out = pe.OUTPUT_DIR
+        writable = False
+        project_count = 0
+        if out.exists():
+            try:
+                probe = out / ".pebble_volume_probe"
+                probe.write_text("ok", encoding="utf-8")
+                writable = probe.read_text(encoding="utf-8") == "ok"
+            except OSError:
+                writable = False
+            project_count = sum(
+                1 for d in out.iterdir()
+                if d.is_dir() and not d.name.startswith(".") and (d / "brief.json").exists()
+            )
+        payload["output_volume"] = {
+            "path": str(out),
+            "writable": writable,
+            "project_count": project_count,
+        }
+    except Exception:
+        pass
     handler._json(200, payload)
 
 

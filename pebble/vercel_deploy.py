@@ -198,6 +198,19 @@ def preview_proxy_headers(slug: str) -> dict[str, str]:
     return {"x-vercel-protection-bypass": secret} if secret else {}
 
 
+def _deployment_error_message(final: dict[str, Any]) -> str:
+    """Human-readable Vercel deploy failure from poll response."""
+    rs = final.get("readyState") or final.get("status") or "UNKNOWN"
+    parts = [f"vercel build {rs}"]
+    err = final.get("errorMessage") or final.get("error")
+    if err:
+        parts.append(str(err))
+    for key in ("errorCode", "aliasError"):
+        if final.get(key):
+            parts.append(f"{key}={final[key]}")
+    return " — ".join(parts)
+
+
 def poll_deployment(deployment_id: str, *, interval: float = 3.0,
                     timeout: float = 300.0) -> dict[str, Any]:
     """Poll GET /v13/deployments/<id> until READY/ERROR/CANCELED or timeout."""
@@ -248,13 +261,14 @@ def deploy_preview(slug: str) -> dict[str, Any]:
     created = create_deployment(files, name=_vercel_name(slug))
     final = poll_deployment(created["id"])
     if final.get("readyState") != "READY":
-        err = f"vercel build {final.get('readyState')}"
+        err = _deployment_error_message(final)
         (out / ".vercel-preview.json").write_text(
             json.dumps({
                 "url": None,
                 "error": err,
                 "deployment_id": created.get("id"),
                 "deployed_at": _now_iso(),
+                "ready_state": final.get("readyState"),
             }, indent=2),
             encoding="utf-8",
         )
@@ -307,7 +321,19 @@ __all__ = [
     "vercel_configured", "collect_files", "create_deployment",
     "poll_deployment", "deploy_preview", "ensure_protection_bypass",
     "preview_proxy_headers", "repair_preview_bypass", "protection_bypass_from_env",
+    "read_vercel_preview_state",
 ]
+
+
+def read_vercel_preview_state(slug: str) -> dict[str, Any]:
+    """Load .vercel-preview.json or {}."""
+    path = _output_dir() / slug / ".vercel-preview.json"
+    if not path.exists():
+        return {}
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return {}
 
 
 if __name__ == "__main__":

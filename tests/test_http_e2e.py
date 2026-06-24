@@ -167,6 +167,8 @@ def test_health_returns_engine_status(engine_server, monkeypatch):
     assert body.get("preview_backend") == "local"
     assert body.get("vercel_configured") is False
     assert body.get("preview_prod_ready") is False
+    assert isinstance(body.get("output_volume"), dict)
+    assert body["output_volume"].get("writable") is True
 
 
 def test_health_reports_vercel_preview_ready(engine_server, monkeypatch):
@@ -177,6 +179,14 @@ def test_health_reports_vercel_preview_ready(engine_server, monkeypatch):
     assert body["preview_backend"] == "vercel"
     assert body["vercel_configured"] is True
     assert body["preview_prod_ready"] is True
+
+
+def test_preview_status_requires_auth(engine_server):
+    out = engine_server["output"]
+    (out / "demo").mkdir(exist_ok=True)
+    (out / "demo" / "brief.json").write_text("{}", encoding="utf-8")
+    status, _body = _get(engine_server["base"], "/api/projects/demo/preview-status")
+    assert status == 401
 
 
 # ---- /api/brief-infer + /api/brief-compose + /api/onboarding/status ---

@@ -51,6 +51,8 @@ User opens /workspace/<slug>
 
 Build/refine triggers a background Vercel redeploy (not every click-edit).
 
+Workspace polls `GET /api/projects/<slug>/preview-status` for deploy progress while the iframe warms up.
+
 ## Deployment Protection (Vercel Authentication)
 
 If the Vercel team has **Deployment Protection** enabled (common on Pro teams), preview
